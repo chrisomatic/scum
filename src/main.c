@@ -10,6 +10,7 @@
 #include "particles.h"
 #include "effects.h"
 #include "camera.h"
+#include "level.h"
 #include "text_list.h"
 
 
@@ -47,6 +48,7 @@ enum PlayerActions
     PLAYER_ACTION_RIGHT,
     PLAYER_ACTION_RUN,
     PLAYER_ACTION_SCUM,
+    PLAYER_ACTION_GENERATE_ROOMS,
 
     PLAYER_ACTION_MAX
 };
@@ -111,6 +113,7 @@ int main(int argc, char* argv[])
     window_controls_add_key(&player->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_D);
     window_controls_add_key(&player->actions[PLAYER_ACTION_RUN].state, GLFW_KEY_LEFT_SHIFT);
     window_controls_add_key(&player->actions[PLAYER_ACTION_SCUM].state, GLFW_KEY_SPACE);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
 
     map_view_area.w = VIEW_WIDTH;
     map_view_area.h = VIEW_HEIGHT;
@@ -347,6 +350,12 @@ void update(float _dt)
         text_list_add(text_lst, 3.0, (char*)text[rand()%sizeof(text)/sizeof(text[0])]);
     }
 
+    bool generate = p->actions[PLAYER_ACTION_GENERATE_ROOMS].toggled_on;
+    if(generate)
+    {
+        level_generate(time(0));
+        level_draw();
+    }
 
     text_list_update(text_lst, _dt);
 
