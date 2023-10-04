@@ -1,0 +1,50 @@
+#pragma once
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include <math.h>
+#include <time.h>
+#include <unistd.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include "log.h"
+#include "timer.h"
+#include "math2d.h"
+#include "core/text_list.h"
+
+
+
+// #define VIEW_WIDTH   1200
+// #define VIEW_HEIGHT  800
+// #define ROOM_W  320
+// #define ROOM_H  320
+
+
+#define VIEW_WIDTH   600
+#define VIEW_HEIGHT  400
+#define ROOM_W  320
+#define ROOM_H  320
+
+// #define VIEW_WIDTH   600
+// #define VIEW_HEIGHT  400
+// #define ROOM_W  800
+// #define ROOM_H  800
+
+
+// strings
+#define STR_EMPTY(x)      (x == 0 || strlen(x) == 0)
+#define STR_EQUAL(x,y)    (strncmp((x),(y),strlen((x))) == 0 && strlen(x) == strlen(y))
+#define STRN_EQUAL(x,y,n) (strncmp((x),(y),(n)) == 0)
+
+#define FREE(p) do{ if(p != NULL) {free(p); p = NULL;} }while(0)
+
+#define DEBUG()   printf("%d %s %s()\n", __LINE__, __FILE__, __func__)
+
+extern bool initialized;
+extern bool debug_enabled;
+extern Timer game_timer;
+extern text_list_t* text_lst;
+extern uint32_t background_color;
