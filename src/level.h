@@ -22,5 +22,11 @@ typedef struct
     bool doors[4];
 } Room;
 
-void level_generate(unsigned int seed);
-void level_draw();
+typedef struct
+{
+    Room rooms[MAX_ROOMS_X][MAX_ROOMS_Y];
+} Level;
+
+
+Level level_generate(unsigned int seed);
+void level_draw(Level* level);

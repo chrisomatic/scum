@@ -71,8 +71,7 @@ typedef struct
 Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
 
-
-
+Level level;
 
 // =========================
 // Function Prototypes
@@ -130,6 +129,7 @@ int main(int argc, char* argv[])
     room_area.x = room_area.w / 2.0;
     room_area.y = room_area.h / 2.0;
 
+    level = level_generate(time(0));
 
     camera_move(view_width/2.0, view_height/2.0, true, NULL);
 
@@ -137,7 +137,6 @@ int main(int argc, char* argv[])
     // camera_zoom(cam_zoom,false);
 
     text_lst = text_list_init(50, 10.0, view_height - 10.0, 0.08, COLOR_WHITE, false, TEXT_ALIGN_LEFT);
-
 
     run();
 
@@ -353,8 +352,8 @@ void update(float _dt)
     bool generate = p->actions[PLAYER_ACTION_GENERATE_ROOMS].toggled_on;
     if(generate)
     {
-        level_generate(time(0));
-        level_draw();
+        level = level_generate(time(0));
+        level_draw(&level);
     }
 
     text_list_update(text_lst, _dt);
