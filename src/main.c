@@ -424,25 +424,25 @@ void draw()
 
                 if(room.doors[DOOR_UP])
                 {
-                    Rect door = RECT(draw_x, draw_y-rh/2.0, margin, margin*2);
+                    Rect door = RECT(draw_x-2.0, draw_y-rh/2.0, 2.0, margin*2);
                     gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, 1.0, true, true);
                 }
 
                 if(room.doors[DOOR_DOWN])
                 {
-                    Rect door = RECT(draw_x, draw_y+rh/2.0, margin, margin*2);
+                    Rect door = RECT(draw_x+2.0, draw_y+rh/2.0, 2.0, margin*2);
                     gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, 1.0, true, true);
                 }
 
                 if(room.doors[DOOR_RIGHT])
                 {
-                    Rect door = RECT(draw_x+rw/2.0, draw_y, margin*2, margin);
+                    Rect door = RECT(draw_x+rw/2.0, draw_y-2.0, margin*2, 2.0);
                     gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, 1.0, true, true);
                 }
 
                 if(room.doors[DOOR_LEFT])
                 {
-                    Rect door = RECT(draw_x-rw/2.0, draw_y, margin*2, margin);
+                    Rect door = RECT(draw_x-rw/2.0, draw_y+2.0, margin*2, 2.0);
                     gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, 1.0, true, true);
                 }
 
