@@ -27,8 +27,12 @@ uint32_t background_color = 0x00303030;
 // uint32_t background_color = COLOR_BLACK;
 
 
-Rect map_view_area = {0};
+// Rect map_view_area = {0};
 Rect room_area = {0};
+Rect margin_left = {0};
+Rect margin_right = {0};
+Rect margin_top = {0};
+Rect margin_bottom = {0};
 
 
 Vector2f aim_camera_offset = {0};
@@ -114,20 +118,46 @@ int main(int argc, char* argv[])
     window_controls_add_key(&player->actions[PLAYER_ACTION_SCUM].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
 
-    map_view_area.w = VIEW_WIDTH;
-    map_view_area.h = VIEW_HEIGHT;
-    // map_view_area.w = 500;
-    // map_view_area.h = 500;
-    map_view_area.x = map_view_area.w / 2.0;
-    map_view_area.y = map_view_area.h / 2.0;
+    // map_view_area.w = VIEW_WIDTH;
+    // map_view_area.h = VIEW_HEIGHT;
+    // map_view_area.x = map_view_area.w / 2.0;
+    // map_view_area.y = map_view_area.h / 2.0;
 
-    player->pos.x = map_view_area.x;
-    player->pos.y = map_view_area.y;
+    player->pos.x = CENTER_X;
+    player->pos.y = CENTER_Y;
 
     room_area.w = ROOM_W;
     room_area.h = ROOM_H;
-    room_area.x = room_area.w / 2.0;
-    room_area.y = room_area.h / 2.0;
+    room_area.x = CENTER_X;
+    room_area.y = CENTER_Y;
+
+    // margins
+    float margin_left_w = room_area.x - room_area.w/2.0;
+    float margin_right_w = view_width - (room_area.x + room_area.w/2.0);
+
+    float margin_top_h = room_area.y - room_area.h/2.0;
+    float margin_bottom_h = view_height - (room_area.y + room_area.h/2.0);
+
+    margin_left.w = margin_left_w;
+    margin_left.h = view_height - margin_top_h - margin_bottom_h;
+    margin_left.x = margin_left.w/2.0;
+    margin_left.y = CENTER_Y;
+
+    margin_right.w = margin_right_w;
+    margin_right.h = view_height - margin_top_h - margin_bottom_h;
+    margin_right.x = view_width - margin_right.w/2.0;
+    margin_right.y = CENTER_Y;
+
+    margin_top.w = view_width;
+    margin_top.h = margin_top_h;
+    margin_top.x = CENTER_X;
+    margin_top.y = margin_top_h/2.0;
+
+    margin_bottom.w = view_width;
+    margin_bottom.h = margin_bottom_h;
+    margin_bottom.x = CENTER_X;
+    margin_bottom.y = view_height - margin_bottom_h/2.0;
+
 
     level = level_generate(seed);
 
@@ -366,37 +396,26 @@ void update(float _dt)
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 }
 
-
 void draw()
 {
     gfx_clear_buffer(background_color);
 
 
-    // gfx_draw_rect(&map_view_area, COLOR_RED, NOT_SCALED, NO_ROTATION, FULL_OPACITY, false, true);
-    gfx_draw_rect(&map_view_area, COLOR_BLACK, NOT_SCALED, NO_ROTATION, FULL_OPACITY, true, true);
-
-
-    // camera center
-    Rect cr;
-    get_camera_rect(&cr);
-    // gfx_draw_string(cr.x, cr.y, COLOR_BLUE, title_scale, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "SCUM");
-    cr.w = 3;
-    cr.h = 3;
-    gfx_draw_rect(&cr, COLOR_BLUE, NOT_SCALED, NO_ROTATION, FULL_OPACITY, true, true);
-
-    // room_area
-    room_area.x = map_view_area.x;
-    room_area.y = map_view_area.y;
+    // // camera center
+    // Rect cr;
+    // get_camera_rect(&cr);
+    // // gfx_draw_string(cr.x, cr.y, COLOR_BLUE, title_scale, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "SCUM");
+    // cr.w = 3;
+    // cr.h = 3;
+    // gfx_draw_rect(&cr, COLOR_BLUE, NOT_SCALED, NO_ROTATION, FULL_OPACITY, true, true);
 
     float title_scale = 0.5;
     Vector2f title_size = gfx_string_get_size(title_scale, "SCUM");
-    float title_x = (view_width-title_size.x)/2.0;
-    float title_y = (room_area.y - room_area.h/2.0 - title_size.y - 5.0);
-    gfx_draw_string(title_x, title_y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "SCUM");
-
+    Rect title_r = RECT(margin_top.w/2.0, margin_top.h/2.0, title_size.x, title_size.y);
+    gfx_get_absolute_coords(&title_r, ALIGN_CENTER, &margin_top, ALIGN_TOP_LEFT);
+    gfx_draw_string(title_r.x, title_r.y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "SCUM");
 
     gfx_draw_string(2, 2, COLOR_WHITE, 0.08, NO_ROTATION, FULL_OPACITY, IN_WORLD, DROP_SHADOW, "seed: %u", seed);
-
 
     // draw level
     uint32_t color_room = COLOR(0x22,0x48,0x70);
@@ -426,25 +445,25 @@ void draw()
 
                 if(room.doors[DOOR_UP])
                 {
-                    Rect door = RECT(draw_x, draw_y-rh/2.0, margin, margin*2);
+                    Rect door = RECT(draw_x-2.0, draw_y-rh/2.0, 2.0, margin*2);
                     gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, 1.0, true, true);
                 }
 
                 if(room.doors[DOOR_DOWN])
                 {
-                    Rect door = RECT(draw_x, draw_y+rh/2.0, margin, margin*2);
+                    Rect door = RECT(draw_x+2.0, draw_y+rh/2.0, 2.0, margin*2);
                     gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, 1.0, true, true);
                 }
 
                 if(room.doors[DOOR_RIGHT])
                 {
-                    Rect door = RECT(draw_x+rw/2.0, draw_y, margin*2, margin);
+                    Rect door = RECT(draw_x+rw/2.0, draw_y-2.0, margin*2, 2.0);
                     gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, 1.0, true, true);
                 }
 
                 if(room.doors[DOOR_LEFT])
                 {
-                    Rect door = RECT(draw_x-rw/2.0, draw_y, margin*2, margin);
+                    Rect door = RECT(draw_x-rw/2.0, draw_y+2.0, margin*2, 2.0);
                     gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, 1.0, true, true);
                 }
 
@@ -458,6 +477,28 @@ void draw()
 
     // @TEMP
     //level_draw_room(&level.rooms[0][0]);
+    gfx_draw_rect(&margin_left, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+    gfx_draw_rect(&margin_right, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+    gfx_draw_rect(&margin_top, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+    gfx_draw_rect(&margin_bottom, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+
+#if 0
+    {
+        Rect r = RECT(50, 50, 5,10);
+        gfx_get_absolute_coords(&r, ALIGN_CENTER, &margin_right, ALIGN_CENTER);
+        gfx_draw_rect(&r, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+        r.w = 1.0;
+        r.h = 1.0;
+        gfx_draw_rect(&r, COLOR_BLUE, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+    }
+    {
+        float scale = 0.1;
+        Vector2f size = gfx_string_get_size(scale, "SCUM");
+        Rect r = RECT(0,0, size.x, size.y);
+        gfx_get_absolute_coords(&r, ALIGN_BOTTOM_RIGHT, &margin_right, ALIGN_TOP_LEFT);
+        gfx_draw_string(r.x, r.y, COLOR_WHITE, scale, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "SCUM");
+    }
+#endif
 
     text_list_draw(text_lst);
 }
