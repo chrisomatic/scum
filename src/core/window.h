@@ -8,6 +8,9 @@
 
 #define TARGET_FPS 60.0f
 
+#define CENTER_X (view_width/2.0)
+#define CENTER_Y (view_height/2.0)
+
 typedef enum
 {
     KEY_MODE_NONE,

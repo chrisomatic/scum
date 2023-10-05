@@ -1083,6 +1083,80 @@ void gfx_anim_update(GFXAnimation* anim, double delta_t)
 
 // Misc
 
+// rel_area: relative coordinates where to draw (e.g. 0,0 translates to the top left of abs_area)
+//           w,h should be the size of the object being drawn
+// draw_orientation: alignment of the object being drawn
+// abs_area: the area to translate the drawing to
+// gfx_orientation: how the object is aligned when drawn with gfx
+void gfx_get_absolute_coords(Rect* rel_area, GFXAlignment draw_orientation, Rect* abs_area, GFXAlignment gfx_orientation)
+{
+    // translate x,y to area space
+    float tx = rel_area->x + (abs_area->x - abs_area->w/2.0);
+    float ty = rel_area->y + (abs_area->y - abs_area->h/2.0);
+
+    if(gfx_orientation == ALIGN_CENTER)
+    {
+        switch(draw_orientation)
+        {
+            case ALIGN_CENTER:
+            {
+                //nothing
+            } break;
+            case ALIGN_TOP_LEFT:
+            {
+                tx += rel_area->w/2.0;
+                ty += rel_area->h/2.0;
+            } break;
+            case ALIGN_TOP_RIGHT:
+            {
+                tx -= rel_area->w/2.0;
+                ty += rel_area->h/2.0;
+            } break;
+            case ALIGN_BOTTOM_LEFT:
+            {
+                tx += rel_area->w/2.0;
+                ty -= rel_area->h/2.0;
+            } break;
+            case ALIGN_BOTTOM_RIGHT:
+            {
+                tx -= rel_area->w/2.0;
+                ty -= rel_area->h/2.0;
+            } break;
+        }
+    }
+    else if(gfx_orientation == ALIGN_TOP_LEFT)
+    {
+        switch(draw_orientation)
+        {
+            case ALIGN_CENTER:
+            {
+                tx -= rel_area->w/2.0;
+                ty -= rel_area->h/2.0;
+            } break;
+            case ALIGN_TOP_LEFT:
+            {
+                // nothing
+            } break;
+            case ALIGN_TOP_RIGHT:
+            {
+                tx -= rel_area->w;
+            } break;
+            case ALIGN_BOTTOM_LEFT:
+            {
+                ty -= rel_area->h;
+            } break;
+            case ALIGN_BOTTOM_RIGHT:
+            {
+                tx -= rel_area->w;
+                ty -= rel_area->h;
+            } break;
+        }
+    }
+
+    rel_area->x = tx;
+    rel_area->y = ty;
+}
+
 void gfx_color2floats(uint32_t color, float* r, float* g, float* b)
 {
     *r = ((color >> 16) & 0xFF)/255.0f;

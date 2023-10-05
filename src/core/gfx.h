@@ -78,6 +78,17 @@ typedef struct
     int max_loops;
 } GFXAnimation;
 
+
+typedef enum
+{
+    ALIGN_CENTER,
+    ALIGN_TOP_LEFT,
+    ALIGN_TOP_RIGHT,
+    ALIGN_BOTTOM_LEFT,
+    ALIGN_BOTTOM_RIGHT
+} GFXAlignment;
+
+
 // global vars
 // --------------------------------------------------------
 
@@ -133,6 +144,7 @@ Vector2f gfx_string_get_size_array(float scale, float* size_arr, int len, int* r
 void gfx_anim_update(GFXAnimation* anim, double delta_t);
 
 // Misc
+void gfx_get_absolute_coords(Rect* rel_area, GFXAlignment draw_orientation, Rect* abs_area, GFXAlignment gfx_orientation);
 void gfx_color2floats(uint32_t color, float* r, float* g, float* b);
 void gfx_print_times();
 uint32_t gfx_blend_colors(uint32_t color1, uint32_t color2, float factor);
