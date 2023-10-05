@@ -72,6 +72,7 @@ Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
 
 Level level;
+unsigned int seed = 0;
 
 // =========================
 // Function Prototypes
@@ -129,7 +130,7 @@ int main(int argc, char* argv[])
     room_area.x = room_area.w / 2.0;
     room_area.y = room_area.h / 2.0;
 
-    level = level_generate(time(0));
+    level = level_generate(seed);
 
     camera_move(view_width/2.0, view_height/2.0, true, NULL);
 
@@ -352,7 +353,8 @@ void update(float _dt)
     bool generate = p->actions[PLAYER_ACTION_GENERATE_ROOMS].toggled_on;
     if(generate)
     {
-        level = level_generate(time(0));
+        seed = time(0)+rand()%1000;
+        level = level_generate(seed);
         level_draw(&level);
     }
 
@@ -372,13 +374,6 @@ void draw()
     gfx_draw_rect(&map_view_area, COLOR_BLACK, NOT_SCALED, NO_ROTATION, FULL_OPACITY, true, true);
 
 
-    float title_scale = 1.0;
-    Vector2f title_size = gfx_string_get_size(title_scale, "SCUM");
-    float title_x = (view_width-title_size.x)/2.0;
-    float title_y = (view_height-title_size.y)/4.0;
-    gfx_draw_string(title_x, title_y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "SCUM");
-
-
     // camera center
     Rect cr;
     get_camera_rect(&cr);
@@ -390,12 +385,74 @@ void draw()
     // room_area
     room_area.x = map_view_area.x;
     room_area.y = map_view_area.y;
-    gfx_draw_rect(&room_area, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 0.5, true, true);
 
+    float title_scale = 0.5;
+    Vector2f title_size = gfx_string_get_size(title_scale, "SCUM");
+    float title_x = (view_width-title_size.x)/2.0;
+    float title_y = (room_area.y - room_area.h/2.0 - title_size.y - 5.0);
+    gfx_draw_string(title_x, title_y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "SCUM");
+
+
+    gfx_draw_string(2, 2, COLOR_WHITE, 0.08, NO_ROTATION, FULL_OPACITY, IN_WORLD, DROP_SHADOW, "seed: %u", seed);
+
+
+    // draw level
+    uint32_t color_room = COLOR(0x22,0x48,0x70);
+    uint32_t color_bg = COLOR(0x12,0x2c,0x34);
+    // uint32_t color_door = COLOR(0x4e,0xa5,0xd9);
+    uint32_t color_door = color_room;
+
+    float margin = 6.0;
+    float rw = room_area.w/MAX_ROOMS_X;
+    float rh = room_area.h/MAX_ROOMS_Y;
+    float tlx = room_area.x - room_area.w/2.0;
+    float tly = room_area.y - room_area.h/2.0;
+
+    gfx_draw_rect(&room_area, color_bg, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+
+    for(int x = 0; x < MAX_ROOMS_X; ++x)
+    {
+        for(int y = 0; y < MAX_ROOMS_Y; ++y)
+        {
+            Room room = level.rooms[x][y];
+            if(room.valid)
+            {
+                float draw_x = tlx + x*rw + rw/2.0;
+                float draw_y = tly + y*rh + rh/2.0;
+                Rect r = RECT(draw_x, draw_y, rw-margin, rh-margin);
+                gfx_draw_rect(&r, color_room, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+
+                if(room.doors[DOOR_UP])
+                {
+                    Rect door = RECT(draw_x, draw_y-rh/2.0, margin, margin*2);
+                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+                }
+
+                if(room.doors[DOOR_DOWN])
+                {
+                    Rect door = RECT(draw_x, draw_y+rh/2.0, margin, margin*2);
+                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+                }
+
+                if(room.doors[DOOR_RIGHT])
+                {
+                    Rect door = RECT(draw_x+rw/2.0, draw_y, margin*2, margin);
+                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+                }
+
+                if(room.doors[DOOR_LEFT])
+                {
+                    Rect door = RECT(draw_x-rw/2.0, draw_y, margin*2, margin);
+                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+                }
+
+            }
+
+        }
+    }
 
     Rect p = RECT(player->pos.x, player->pos.y, 3, 3);
     gfx_draw_rect(&p, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
-
 
     text_list_draw(text_lst);
 }
