@@ -13,7 +13,6 @@
 #include "level.h"
 #include "text_list.h"
 
-
 // =========================
 // Global Vars
 // =========================
@@ -274,6 +273,9 @@ void init()
     LOGI(" - Effects.");
     effects_load_all();
 
+    LOGI(" - Room Data.");
+    level_init();
+
     imgui_load_theme("retro.theme");
 }
 
@@ -355,7 +357,7 @@ void update(float _dt)
     {
         seed = time(0)+rand()%1000;
         level = level_generate(seed);
-        level_draw(&level);
+        level_print(&level);
     }
 
     text_list_update(text_lst, _dt);
@@ -403,16 +405,16 @@ void draw()
     uint32_t color_door = color_room;
 
     float margin = 6.0;
-    float rw = room_area.w/MAX_ROOMS_X;
-    float rh = room_area.h/MAX_ROOMS_Y;
+    float rw = room_area.w/MAX_ROOMS_GRID_X;
+    float rh = room_area.h/MAX_ROOMS_GRID_Y;
     float tlx = room_area.x - room_area.w/2.0;
     float tly = room_area.y - room_area.h/2.0;
 
     gfx_draw_rect(&room_area, color_bg, NOT_SCALED, NO_ROTATION, 1.0, true, true);
 
-    for(int x = 0; x < MAX_ROOMS_X; ++x)
+    for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
     {
-        for(int y = 0; y < MAX_ROOMS_Y; ++y)
+        for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
         {
             Room room = level.rooms[x][y];
             if(room.valid)
@@ -453,6 +455,9 @@ void draw()
 
     Rect p = RECT(player->pos.x, player->pos.y, 3, 3);
     gfx_draw_rect(&p, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+
+    // @TEMP
+    //level_draw_room(&level.rooms[0][0]);
 
     text_list_draw(text_lst);
 }
