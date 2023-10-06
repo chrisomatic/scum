@@ -36,6 +36,8 @@ typedef struct
     Vector2i curr_room;
     Vector2i curr_tile;
 
+    bool in_door; // used to prevent flip-flopping between doorways
+
 } Player;
 
 extern Player players[MAX_PLAYERS];

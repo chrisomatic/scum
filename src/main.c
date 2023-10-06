@@ -427,7 +427,7 @@ void draw()
     // draw room
     // uint32_t color_bg = COLOR(0x12,0x2c,0x34);
     // gfx_draw_rect(&room_area, color_bg, NOT_SCALED, NO_ROTATION, 1.0, true, true);
-    level_draw_room(&level.rooms[3][3]);
+    level_draw_room(&level.rooms[player->curr_room.x][player->curr_room.y]);
     gfx_draw_rect(&room_area, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, true);
 
     // draw map

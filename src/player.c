@@ -187,9 +187,48 @@ void player_draw(Player* p)
 
         if(collision)
         {
-            if(c.x == 0 && c.y == 4)
+            if(i == 0)
             {
-                p->curr_room.x--;
+                if(room->doors[DOOR_LEFT] && c.x == 0 && c.y == 4)
+                {
+                    if(!p->in_door)
+                    {
+                        p->curr_room.x--;
+                        p->pos.x = view_width - p->pos.x;
+                        p->in_door = true;
+                    }
+                }
+                else if(room->doors[DOOR_RIGHT] && c.x == 14 && c.y == 4)
+                {
+                    if(!p->in_door)
+                    {
+                        p->curr_room.x++;
+                        p->pos.x = view_width - p->pos.x;
+                        p->in_door = true;
+                    }
+                }
+                else if(room->doors[DOOR_UP] && c.x == 7 && c.y == 0)
+                {
+                    if(!p->in_door)
+                    {
+                        p->curr_room.y--;
+                        p->pos.y = view_height - p->pos.y;
+                        p->in_door = true;
+                    }
+                }
+                else if(room->doors[DOOR_DOWN] && c.x == 7 && c.y == 8)
+                {
+                    if(!p->in_door)
+                    {
+                        p->curr_room.y++;
+                        p->pos.y = view_height - p->pos.y;
+                        p->in_door = true;
+                    }
+                }
+                else
+                {
+                    p->in_door = false;
+                }
             }
 
             TileType tt = rdata->tiles[checks[i].x-1][checks[i].y-1];
