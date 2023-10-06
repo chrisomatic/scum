@@ -5,11 +5,18 @@
 #include "level.h"
 #include "player.h"
 
+int player_image = -1;
 Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
 
 void player_init()
 {
+
+    if(player_image == -1)
+    {
+        player_image = gfx_load_image("src/img/player.png", false, false, 32, 32);
+    }
+
     player = &players[0];
 
     window_controls_clear_keys();
@@ -18,11 +25,13 @@ void player_init()
     window_controls_add_key(&player->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_A);
     window_controls_add_key(&player->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_D);
     window_controls_add_key(&player->actions[PLAYER_ACTION_RUN].state, GLFW_KEY_LEFT_SHIFT);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_SCUM].state, GLFW_KEY_SPACE);
+    // window_controls_add_key(&player->actions[PLAYER_ACTION_SCUM].state, GLFW_KEY_SPACE);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_TEST].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
 
     player->pos.x = CENTER_X;
     player->pos.y = CENTER_Y;
+    player->sprite_index = 0;
 }
 
 void player_update()
@@ -51,6 +60,16 @@ void player_update()
         }
         pa->prior_state = pa->state;
     }
+
+    bool test = p->actions[PLAYER_ACTION_TEST].toggled_on;
+    if(test)
+    {
+        if(p->sprite_index == 0)
+            p->sprite_index = 1;
+        else
+            p->sprite_index = 0;
+    }
+
 
     bool up    = p->actions[PLAYER_ACTION_UP].state;
     bool down  = p->actions[PLAYER_ACTION_DOWN].state;
@@ -99,6 +118,30 @@ void player_update()
 
 void player_draw()
 {
-    Rect p = RECT(player->pos.x, player->pos.y, 3, 3);
-    gfx_draw_rect(&p, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+    Player* p = player;
+    gfx_draw_image(player_image, p->sprite_index, p->pos.x, p->pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+
+    Rect r = RECT(player->pos.x, player->pos.y, 2, 2);
+    gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+
+    print_rect(&r);
+
+    GFXImage* img = &gfx_images[player_image];
+    Rect* vr = &img->visible_rects[p->sprite_index];
+    Rect box = *vr;
+    box.x = p->pos.x;
+    box.y = p->pos.y;
+
+    gfx_draw_rect(&box, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+
+    {
+        Rect r = RECT(0,0,10,10);
+        gfx_draw_rect(&r, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+    }
+
+    {
+        Rect r = RECT(5,5,10,10);
+        gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+    }
+
 }

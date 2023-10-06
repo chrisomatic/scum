@@ -9,6 +9,7 @@ enum PlayerActions
     PLAYER_ACTION_RIGHT,
     PLAYER_ACTION_RUN,
     PLAYER_ACTION_SCUM,
+    PLAYER_ACTION_TEST,
     PLAYER_ACTION_GENERATE_ROOMS,
 
     PLAYER_ACTION_MAX
@@ -26,6 +27,8 @@ typedef struct
 {
     Vector2f pos;
     PlayerAction actions[PLAYER_ACTION_MAX];
+
+    int sprite_index;
 
 } Player;
 
