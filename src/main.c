@@ -351,6 +351,10 @@ void draw_level(Rect* area)
 
         }
     }
+    
+    // @TEMP
+    
+    level_draw_room(&level.rooms[player->curr_room_x][player->curr_room_y]);
 
     float px = player->pos.x - (room_area.x - room_area.w/2.0);
     float py = player->pos.y - (room_area.y - room_area.h/2.0);
@@ -410,7 +414,7 @@ void draw()
 
 
     // draw player
-    player_draw();
+    player_draw(player);
 
     if(debug_enabled)
     {

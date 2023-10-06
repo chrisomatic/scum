@@ -8,6 +8,13 @@
 int player_image = -1;
 Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
+int player_image;
+
+static void update_player_boxes(Player* p)
+{
+    player->hitbox.x = p->pos.x;
+    player->hitbox.y = p->pos.y;
+}
 
 void player_init()
 {
@@ -18,6 +25,7 @@ void player_init()
     }
 
     player = &players[0];
+    player_image = gfx_load_image("src/img/spaceman.png", false, true, 32, 32);
 
     window_controls_clear_keys();
     window_controls_add_key(&player->actions[PLAYER_ACTION_UP].state, GLFW_KEY_W);
@@ -31,12 +39,15 @@ void player_init()
 
     player->pos.x = CENTER_X;
     player->pos.y = CENTER_Y;
+
     player->sprite_index = 0;
+
+    player->curr_room_x = (MAX_ROOMS_GRID_X-1)/2;
+    player->curr_room_y = (MAX_ROOMS_GRID_Y-1)/2;
 }
 
 void player_update()
 {
-    
     Player* p = player;
     
     for(int i = 0; i < PLAYER_ACTION_MAX; ++i)
@@ -77,6 +88,7 @@ void player_update()
     bool right = p->actions[PLAYER_ACTION_RIGHT].state;
     bool run = p->actions[PLAYER_ACTION_RUN].state;
     float v = 2.0;
+
     if(run) v = 8.0;
     if(up) p->pos.y -= v;
     if(down) p->pos.y += v;
@@ -114,17 +126,17 @@ void player_update()
         level = level_generate(seed);
         level_print(&level);
     }
+
+
+
 }
 
-void player_draw()
+void player_draw(Player* p)
 {
-    Player* p = player;
     gfx_draw_image(player_image, p->sprite_index, p->pos.x, p->pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
 
     Rect r = RECT(player->pos.x, player->pos.y, 2, 2);
     gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
-
-    print_rect(&r);
 
     GFXImage* img = &gfx_images[player_image];
     Rect* vr = &img->visible_rects[p->sprite_index];
@@ -133,15 +145,5 @@ void player_draw()
     box.y = p->pos.y;
 
     gfx_draw_rect(&box, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-
-    {
-        Rect r = RECT(0,0,10,10);
-        gfx_draw_rect(&r, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, true, true);
-    }
-
-    {
-        Rect r = RECT(5,5,10,10);
-        gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
-    }
 
 }

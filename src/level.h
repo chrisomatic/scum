@@ -1,6 +1,6 @@
 #pragma once
 
-#define MAX_ROOMS_GRID_X 13
+#define MAX_ROOMS_GRID_X 7
 #define MAX_ROOMS_GRID_Y 7
 #define MAX_ROOMS_GRID (MAX_ROOMS_GRID_X*MAX_ROOMS_GRID_Y)
 

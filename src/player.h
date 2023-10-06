@@ -1,5 +1,7 @@
 #pragma once
 
+#include "math2d.h"
+
 #define MAX_PLAYERS 2
 enum PlayerActions
 {
@@ -29,6 +31,10 @@ typedef struct
     PlayerAction actions[PLAYER_ACTION_MAX];
 
     int sprite_index;
+    Rect hitbox;
+
+    int curr_room_x;
+    int curr_room_y;
 
 } Player;
 
@@ -37,4 +43,4 @@ extern Player* player;
 
 void player_init();
 void player_update();
-void player_draw();
+void player_draw(Player* p);
