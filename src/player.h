@@ -30,10 +30,7 @@ typedef struct
     Vector2f pos;
     PlayerAction actions[PLAYER_ACTION_MAX];
 
-<<<<<<< Updated upstream
     int sprite_index;
-=======
->>>>>>> Stashed changes
     Rect hitbox;
 
     int curr_room_x;

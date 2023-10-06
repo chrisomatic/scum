@@ -356,7 +356,6 @@ void draw_level(Rect* area)
     
     level_draw_room(&level.rooms[player->curr_room_x][player->curr_room_y]);
 
-<<<<<<< Updated upstream
     float px = player->pos.x - (room_area.x - room_area.w/2.0);
     float py = player->pos.y - (room_area.y - room_area.h/2.0);
     px /= (rw-margin);
@@ -424,14 +423,6 @@ void draw()
         gfx_draw_rect(&margin_top, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
         gfx_draw_rect(&margin_bottom, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
     }
-=======
-    player_draw();
-
-    gfx_draw_rect(&margin_left, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-    gfx_draw_rect(&margin_right, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-    gfx_draw_rect(&margin_top, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-    gfx_draw_rect(&margin_bottom, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
->>>>>>> Stashed changes
 
 #if 0
     {
