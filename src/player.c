@@ -12,20 +12,27 @@ int player_image;
 
 static void update_player_boxes(Player* p)
 {
-    player->hitbox.x = p->pos.x;
-    player->hitbox.y = p->pos.y;
+    GFXImage* img = &gfx_images[player_image];
+
+    Rect* vr = &img->visible_rects[p->sprite_index];
+
+    p->hitbox.x = vr->x+p->pos.x-img->w/2.0;
+    p->hitbox.y = vr->y+p->pos.y-img->h/2.0;
+    p->hitbox.w = vr->w;
+    p->hitbox.h = vr->h;
+
+    p->hitbox.y += 0.3*p->hitbox.h;
+    p->hitbox.h *= 0.4;
 }
 
 void player_init()
 {
 
+    player = &players[0];
     if(player_image == -1)
     {
-        player_image = gfx_load_image("src/img/player.png", false, false, 32, 32);
+        player_image = gfx_load_image("src/img/spaceman.png", false, true, 32, 32);
     }
-
-    player = &players[0];
-    player_image = gfx_load_image("src/img/spaceman.png", false, true, 32, 32);
 
     window_controls_clear_keys();
     window_controls_add_key(&player->actions[PLAYER_ACTION_UP].state, GLFW_KEY_W);
@@ -42,14 +49,12 @@ void player_init()
 
     player->sprite_index = 0;
 
-    player->curr_room_x = (MAX_ROOMS_GRID_X-1)/2;
-    player->curr_room_y = (MAX_ROOMS_GRID_Y-1)/2;
+    player->curr_room.x = (MAX_ROOMS_GRID_X-1)/2;
+    player->curr_room.y = (MAX_ROOMS_GRID_Y-1)/2;
 }
 
-void player_update()
+void player_update(Player* p)
 {
-    Player* p = player;
-    
     for(int i = 0; i < PLAYER_ACTION_MAX; ++i)
     {
         PlayerAction* pa = &p->actions[i];
@@ -59,8 +64,7 @@ void player_update()
         }
         else
         {
-            pa->toggled_on = false;
-        }
+            pa->toggled_on = false; }
         if(!pa->state && pa->prior_state)
         {
             pa->toggled_off = true;
@@ -95,6 +99,18 @@ void player_update()
     if(left) p->pos.x -= v;
     if(right) p->pos.x += v;
 
+    // update player current tile
+    GFXImage* img = &gfx_images[player_image];
+    Rect* vr = &img->visible_rects[p->sprite_index];
+
+    int dx = (int)(p->hitbox.x-room_area.x+room_area.w/2.0) / 32.0;
+    int dy = (int)(p->hitbox.y-room_area.y+room_area.h/2.0) / 32.0;
+
+    p->curr_tile.x = dx;
+    p->curr_tile.y = dy;
+
+    update_player_boxes(p);
+
     bool scum = p->actions[PLAYER_ACTION_SCUM].toggled_on;
     if(scum)
     {
@@ -127,6 +143,7 @@ void player_update()
         level_print(&level);
     }
 
+    // check tiles around player
 
 
 }
@@ -138,12 +155,67 @@ void player_draw(Player* p)
     Rect r = RECT(player->pos.x, player->pos.y, 2, 2);
     gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
 
-    GFXImage* img = &gfx_images[player_image];
-    Rect* vr = &img->visible_rects[p->sprite_index];
-    Rect box = *vr;
-    box.x = p->pos.x;
-    box.y = p->pos.y;
+    gfx_draw_rect(&p->hitbox, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
 
-    gfx_draw_rect(&box, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+    int x = room_area.x - room_area.w/2.0;
+    int y = room_area.y - room_area.h/2.0;
 
+    int w = 32;
+    int h = 32;
+
+    Vector2i checks[] = {
+        {p->curr_tile.x, p->curr_tile.y},
+        {p->curr_tile.x, p->curr_tile.y-1},
+        {p->curr_tile.x+1, p->curr_tile.y-1},
+        {p->curr_tile.x+1, p->curr_tile.y},
+        {p->curr_tile.x+1, p->curr_tile.y+1},
+        {p->curr_tile.x, p->curr_tile.y+1},
+        {p->curr_tile.x-1, p->curr_tile.y+1},
+        {p->curr_tile.x-1, p->curr_tile.y},
+        {p->curr_tile.x-1, p->curr_tile.y-1}
+    };
+
+    Room* room = &level.rooms[p->curr_room.x][p->curr_room.y];
+    RoomData* rdata = &room_list[room->layout];
+
+    for(int i = 0; i < sizeof(checks)/sizeof(checks[0]); ++i)
+    {
+        Vector2i c = checks[i];
+
+        Rect rc = {x+w/2.0 + w*c.x, y + h/2.0 + h*c.y, w, h};
+        bool collision = rectangles_colliding(&p->hitbox, &rc);
+
+        if(collision)
+        {
+            if(c.x == 0 && c.y == 4)
+            {
+                p->curr_room.x--;
+            }
+
+            TileType tt = rdata->tiles[checks[i].x-1][checks[i].y-1];
+
+            if(tt == TILE_BOULDER)
+            {
+                // correct collision
+                float x_diff = (rc.w + p->hitbox.w)/2.0 - ABS(rc.x - p->hitbox.x);
+                float y_diff = (rc.h + p->hitbox.h)/2.0 - ABS(rc.y - p->hitbox.y);
+
+                switch(i)
+                {
+                    case 0: p->pos.x += 0.0;    p->pos.y += 0.0;    break;
+                    case 1: p->pos.x += 0.0;    p->pos.y += y_diff; break;
+                    case 2: p->pos.x -= x_diff; p->pos.y += y_diff; break;
+                    case 3: p->pos.x -= x_diff; p->pos.y += 0.0;    break;
+                    case 4: p->pos.x -= x_diff; p->pos.y -= y_diff; break;
+                    case 5: p->pos.x += 0.0;    p->pos.y -= y_diff; break;
+                    case 6: p->pos.x += x_diff; p->pos.y -= y_diff; break;
+                    case 7: p->pos.x += x_diff; p->pos.y += 0.0;    break;
+                    case 8: p->pos.x += x_diff; p->pos.y += y_diff; break;
+                    default: break;
+                }
+
+            }
+        }
+        gfx_draw_rect_xywh(x+w/2.0 + w*c.x,y + h/2.0 + h*c.y,w,h, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+    }
 }

@@ -281,7 +281,7 @@ void update(float _dt)
 
     window_get_mouse_view_coords(&mx, &my);
 
-    player_update();
+    player_update(player);
 
     text_list_update(text_lst, _dt);
 
@@ -355,7 +355,6 @@ void draw_level(Rect* area)
                 }
 
             }
-
         }
     }
 
@@ -366,8 +365,8 @@ void draw_level(Rect* area)
     Rect pr = RECT(px, py, margin, margin);
 
     // translate to minimap
-    float draw_x = tlx + player->curr_room_x*rwh + rwh/2.0;
-    float draw_y = tly + player->curr_room_y*rwh + rwh/2.0;
+    float draw_x = tlx + player->curr_room.x*rwh + rwh/2.0;
+    float draw_y = tly + player->curr_room.y*rwh + rwh/2.0;
 
     Rect r = RECT(draw_x, draw_y, room_wh, room_wh);
     gfx_get_absolute_coords(&pr, ALIGN_CENTER, &r, ALIGN_CENTER);

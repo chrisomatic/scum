@@ -33,8 +33,8 @@ typedef struct
     int sprite_index;
     Rect hitbox;
 
-    int curr_room_x;
-    int curr_room_y;
+    Vector2i curr_room;
+    Vector2i curr_tile;
 
 } Player;
 
@@ -42,5 +42,5 @@ extern Player players[MAX_PLAYERS];
 extern Player* player;
 
 void player_init();
-void player_update();
+void player_update(Player* p);
 void player_draw(Player* p);
