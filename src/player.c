@@ -40,8 +40,11 @@ void player_init()
     player->pos.x = CENTER_X;
     player->pos.y = CENTER_Y;
 
+<<<<<<< Updated upstream
     player->sprite_index = 0;
 
+=======
+>>>>>>> Stashed changes
     player->curr_room_x = (MAX_ROOMS_GRID_X-1)/2;
     player->curr_room_y = (MAX_ROOMS_GRID_Y-1)/2;
 }
@@ -133,6 +136,7 @@ void player_update()
 
 void player_draw(Player* p)
 {
+<<<<<<< Updated upstream
     gfx_draw_image(player_image, p->sprite_index, p->pos.x, p->pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
 
     Rect r = RECT(player->pos.x, player->pos.y, 2, 2);
@@ -146,4 +150,8 @@ void player_draw(Player* p)
 
     gfx_draw_rect(&box, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
 
+=======
+    Rect p = RECT(player->pos.x, player->pos.y, 32, 32);
+    gfx_draw_image(player_image, 0, p.x,p.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+>>>>>>> Stashed changes
 }
