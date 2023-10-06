@@ -25,8 +25,8 @@
 
 #define VIEW_WIDTH   600
 #define VIEW_HEIGHT  400
-#define ROOM_W  320
-#define ROOM_H  320
+#define ROOM_W  480
+#define ROOM_H  288
 
 // #define VIEW_WIDTH   600
 // #define VIEW_HEIGHT  400
@@ -42,6 +42,8 @@
 #define FREE(p) do{ if(p != NULL) {free(p); p = NULL;} }while(0)
 
 #define DEBUG()   printf("%d %s %s()\n", __LINE__, __FILE__, __func__)
+
+extern Rect room_area;
 
 extern bool initialized;
 extern bool debug_enabled;

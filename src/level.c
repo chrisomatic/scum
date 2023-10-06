@@ -1,5 +1,6 @@
 #include "headers.h"
 #include "core/gfx.h"
+#include "main.h"
 #include "level.h"
 
 RoomData room_list[32] = {0};
@@ -149,33 +150,27 @@ static bool level_load_room_list()
         }
     }
 
-#if 0
+    return true;
+}
 
-    // print rooms
-    printf("Room list Count: %d\n", room_list_count);
-    for(int n = 0; n < room_list_count; ++n)
+static void print_room(Room* room)
+{
+    RoomData* room_data = &room_list[room->layout];
+    for(int j = 0; j < ROOM_TILE_SIZE_Y; ++j)
     {
-        RoomData* room_data = &room_list[n];
-        for(int j = 0; j < ROOM_TILE_SIZE_Y; ++j)
+        for(int i = 0; i < ROOM_TILE_SIZE_X; ++i)
         {
-            for(int i = 0; i < ROOM_TILE_SIZE_X; ++i)
+            TileType* tile = &room_data->tiles[i][j];
+            switch(*tile)
             {
-                TileType* tile = &room_data->tiles[i][j];
-                switch(*tile)
-                {
-                    case TILE_FLOOR:   printf("."); break;
-                    case TILE_BOULDER: printf("o"); break;
-                    default: printf("%c", *tile+65);break;
-                }
+                case TILE_FLOOR:   printf("."); break;
+                case TILE_BOULDER: printf("o"); break;
+                default: printf("%c", *tile+65);break;
             }
-            printf("\n");
         }
         printf("\n");
     }
     printf("\n");
-#endif
-
-    return true;
 }
 
 void level_init()
@@ -201,7 +196,65 @@ void level_print(Level* level)
 
 void level_draw_room(Room* room)
 {
-    gfx_draw_image(dungeon_image, 0, 100,100, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+    if(!room->valid)
+        return;
+
+    int x = room_area.x - room_area.w/2.0;
+    int y = room_area.y - room_area.h/2.0;
+    int w = 32;
+    int h = 32;
+
+    Rect r = {(x+w/2.0), (y+h/2.0), w,h};
+
+    // draw walls
+    for(int i = 1; i < ROOM_TILE_SIZE_X+1; ++i) // top
+        gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_UP, r.x + i*w,r.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+    for(int i = 1; i < ROOM_TILE_SIZE_Y+1; ++i) // right
+        gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_RIGHT, r.x + (ROOM_TILE_SIZE_X+1)*w,r.y+i*h, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+    for(int i = 1; i < ROOM_TILE_SIZE_X+1; ++i) // bottom
+        gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_DOWN, r.x + i*w,r.y+(ROOM_TILE_SIZE_Y+1)*h, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+    for(int i = 1; i < ROOM_TILE_SIZE_Y+1; ++i) // left
+        gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_LEFT, r.x,r.y+i*h, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+
+    // wall corners
+    gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_CORNER_LU, r.x,r.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+    gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_CORNER_UR, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+    gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_CORNER_RD, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y+(ROOM_TILE_SIZE_Y+1)*h, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+    gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_CORNER_DL, r.x,r.y+(ROOM_TILE_SIZE_Y+1)*h, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+    
+    // draw doors
+    if(room->doors[DOOR_UP])
+        gfx_draw_image(dungeon_image, SPRITE_TILE_DOOR_UP, r.x+w*(ROOM_TILE_SIZE_X+1)/2.0,r.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+    if(room->doors[DOOR_RIGHT])
+        gfx_draw_image(dungeon_image, SPRITE_TILE_DOOR_RIGHT, r.x+w*(ROOM_TILE_SIZE_X+1),r.y+h*(ROOM_TILE_SIZE_Y+1)/2.0, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+
+    if(room->doors[DOOR_DOWN])
+        gfx_draw_image(dungeon_image, SPRITE_TILE_DOOR_DOWN, r.x+w*(ROOM_TILE_SIZE_X+1)/2.0,r.y+h*(ROOM_TILE_SIZE_Y+1), COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+
+    if(room->doors[DOOR_LEFT])
+        gfx_draw_image(dungeon_image, SPRITE_TILE_DOOR_LEFT, r.x,r.y+h*(ROOM_TILE_SIZE_Y+1)/2.0, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+
+    RoomData* rdata = &room_list[room->layout];
+
+    // draw room
+    for(int j = 1; j < ROOM_TILE_SIZE_Y+1; ++j)
+    {
+        for(int i = 1; i < ROOM_TILE_SIZE_X+1; ++i)
+        {
+            TileType tt = rdata->tiles[i-1][j-1];
+
+            SpriteTileType sprite = SPRITE_TILE_MAX;
+
+            switch(tt)
+            {
+                case TILE_FLOOR:   sprite = SPRITE_TILE_FLOOR; break;
+                case TILE_BOULDER: sprite = SPRITE_TILE_BLOCK; break;
+                default: break;
+            }
+            gfx_draw_image(dungeon_image, sprite, r.x + i*w,r.y + j*h, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+        }
+
+    }
 }
 
 Level level_generate(unsigned int seed)
