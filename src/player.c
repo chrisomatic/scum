@@ -99,6 +99,16 @@ void player_update(Player* p)
     if(left) p->pos.x -= v;
     if(right) p->pos.x += v;
 
+    update_player_boxes(p);
+
+    Vector2f adj = limit_rect_pos(&room_area, &p->hitbox);
+    if(!FEQ0(adj.x) || !FEQ0(adj.y))
+    {
+        p->pos.x += adj.x;
+        p->pos.y += adj.y;
+        update_player_boxes(p);
+    }
+
     // update player current tile
     GFXImage* img = &gfx_images[player_image];
     Rect* vr = &img->visible_rects[p->sprite_index];
@@ -108,8 +118,6 @@ void player_update(Player* p)
 
     p->curr_tile.x = dx;
     p->curr_tile.y = dy;
-
-    update_player_boxes(p);
 
     bool scum = p->actions[PLAYER_ACTION_SCUM].toggled_on;
     if(scum)
