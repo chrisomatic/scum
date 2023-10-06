@@ -72,14 +72,14 @@ void player_update()
         pa->prior_state = pa->state;
     }
 
-    bool test = p->actions[PLAYER_ACTION_TEST].toggled_on;
-    if(test)
-    {
-        if(p->sprite_index == 0)
-            p->sprite_index = 1;
-        else
-            p->sprite_index = 0;
-    }
+    // bool test = p->actions[PLAYER_ACTION_TEST].toggled_on;
+    // if(test)
+    // {
+    //     if(p->sprite_index == 0)
+    //         p->sprite_index = 1;
+    //     else
+    //         p->sprite_index = 0;
+    // }
 
 
     bool up    = p->actions[PLAYER_ACTION_UP].state;

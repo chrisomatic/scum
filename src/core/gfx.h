@@ -35,8 +35,6 @@
 #define NOT_SCALED      1.0
 #define FULL_OPACITY    1.0
 
-#define RECT_CENTER_X(r)    (r->w / 2.0)
-#define RECT_CENTER_Y(r)    (r->h / 2.0)
 
 #define RECT(_x,_y,_w,_h) {.x=_x,.y=_y,.w=_w,.h=_h}
 

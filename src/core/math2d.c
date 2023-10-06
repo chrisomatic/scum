@@ -670,6 +670,16 @@ bool rects_equal(Rect* r1, Rect* r2)
     return true;
 }
 
+float rect_tlx(Rect* r)
+{
+    return r->x - r->w/2.0;
+}
+
+float rect_tly(Rect* r)
+{
+    return r->y - r->h/2.0;
+}
+
 void print_rect(Rect* r)
 {
     // printf("Rectangle (x,y,w,h): %.3f, %.3f, %.3f, %.3f\n", r->x, r->y, r->w, r->h);

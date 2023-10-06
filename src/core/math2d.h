@@ -83,6 +83,15 @@ typedef struct
     float y[4];
 } RectXY;
 
+typedef enum
+{
+    TL,
+    TR,
+    BR,
+    BL
+} RXYpoint;
+
+// top left, top right, bottom right, bottom left
 
 extern Matrix IDENTITY_MATRIX;
 
@@ -126,6 +135,8 @@ void rotate_rect(Rect* in, float rotation, float rotation_x, float rotation_y, R
 void rect_to_rectxy(Rect* in, RectXY* out);
 void rectxy_to_rect(RectXY* in, Rect* out);
 bool rects_equal(Rect* r1, Rect* r2);
+float rect_tlx(Rect* r);
+float rect_tly(Rect* r);
 void print_rect(Rect* r);
 void print_rectxy(RectXY* r);
 

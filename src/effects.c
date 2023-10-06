@@ -52,9 +52,9 @@ void effects_load_all()
         char* filename = io_get_filename(files[i]);
         char full_path[100] = {0};
         snprintf(full_path,99,"src/effects/%s",filename);
-        printf("files[%d]: %s\n",i, filename);
+        // printf("files[%d]: %s\n",i, filename);
         int index = get_effect_map_index(filename);
-        printf("Loading %s into index %d\n",filename, index);
+        // printf("Loading %s into index %d\n",filename, index);
 
         if(index == -1)
         {
@@ -69,7 +69,7 @@ void effects_load_all()
             effects_load(full_path,&particle_effects[index]);
             strncpy(particle_effects[index].name,filename,100);
 
-            LOGI("%d: %s",i,filename);
+            // LOGI("%d: %s",i,filename);
         }
     }
 }
