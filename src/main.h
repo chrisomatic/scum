@@ -13,6 +13,7 @@
 #include "log.h"
 #include "timer.h"
 #include "math2d.h"
+#include "level.h"
 #include "core/text_list.h"
 
 
@@ -44,9 +45,11 @@
 #define DEBUG()   printf("%d %s %s()\n", __LINE__, __FILE__, __func__)
 
 extern Rect room_area;
+extern Level level;
 
 extern bool initialized;
 extern bool debug_enabled;
 extern Timer game_timer;
 extern text_list_t* text_lst;
 extern uint32_t background_color;
+extern unsigned int seed;

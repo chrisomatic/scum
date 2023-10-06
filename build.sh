@@ -16,6 +16,7 @@ gcc core/gfx.c \
     core/particles.c \
     core/camera.c \
     effects.c \
+    player.c \
     level.c \
     main.c \
     -Icore \
