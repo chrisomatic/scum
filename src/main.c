@@ -20,11 +20,13 @@
 
 bool initialized = false;
 bool debug_enabled = false;
+GameState game_state = GAME_STATE_MENU;
 Timer game_timer = {0};
 text_list_t* text_lst = NULL;
 
 // Settings
-uint32_t background_color = 0x00303030;
+// uint32_t background_color = 0x00303030;
+uint32_t background_color = 0x00202020;
 // uint32_t background_color = COLOR_BLACK;
 
 int mx=0, my=0;
@@ -42,6 +44,24 @@ float cam_zoom = 0.00;
 Level level;
 unsigned int seed = 0;
 
+enum
+{
+    MENU_KEY_UP,
+    MENU_KEY_DOWN,
+    MENU_KEY_ENTER,
+    MENU_KEY_MAX
+};
+PlayerInput menu_keys[MENU_KEY_MAX] = {0};
+int menu_selected_option = 0;
+const char* menu_options[] = {
+    "Play Local",
+    "Play Online",
+    "Host Local Server",
+    "Join Local Server",
+    "Settings",
+    "Help",
+    "Exit"
+};
 
 
 // =========================
@@ -52,8 +72,9 @@ void camera_set();
 void run();
 void parse_args(int argc, char* argv[]);
 void init();
+void set_menu_keys();
 void deinit();
-void update(float _dt);
+void update(float dt);
 void draw();
 void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods);
 
@@ -75,45 +96,6 @@ int main(int argc, char* argv[])
 
     init();
 
-    room_area.w = ROOM_W;
-    room_area.h = ROOM_H;
-    room_area.x = CENTER_X;
-    room_area.y = CENTER_Y;
-
-
-
-    RectXY rxy = {0};
-    rect_to_rectxy(&room_area, &rxy);
-
-    float margin_left_w = rxy.x[TL];
-    float margin_right_w = view_width - rxy.x[TR];
-
-    float margin_top_h = rxy.y[TL];
-    float margin_bottom_h = view_height - rxy.y[BL];
-
-    margin_left.w = margin_left_w;
-    margin_left.h = view_height - margin_top_h - margin_bottom_h;
-    margin_left.x = margin_left.w/2.0;
-    margin_left.y = CENTER_Y;
-
-    margin_right.w = margin_right_w;
-    margin_right.h = view_height - margin_top_h - margin_bottom_h;
-    margin_right.x = view_width - margin_right.w/2.0;
-    margin_right.y = CENTER_Y;
-
-    margin_top.w = view_width;
-    margin_top.h = margin_top_h;
-    margin_top.x = CENTER_X;
-    margin_top.y = margin_top_h/2.0;
-
-    margin_bottom.w = view_width;
-    margin_bottom.h = margin_bottom_h;
-    margin_bottom.x = CENTER_X;
-    margin_bottom.y = view_height - margin_bottom_h/2.0;
-
-
-    level = level_generate(seed);
-
     camera_move(view_width/2.0, view_height/2.0, true, NULL);
 
     // camera_move(player->pos.x, player->pos.y, true, &map_view_area);
@@ -125,6 +107,73 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+
+
+void update_input_state(PlayerInput* input, float dt)
+{
+    input->hold = false;
+
+    if(input->state && !input->prior_state)
+    {
+        input->toggled_on = true;
+        input->hold_counter = 0;
+    }
+    else
+    {
+        input->toggled_on = false;
+    }
+    if(!input->state && input->prior_state)
+    {
+        input->toggled_off = true;
+    }
+    else
+    {
+        input->toggled_off = false;
+    }
+    input->prior_state = input->state;
+
+    if(input->state && !input->toggled_on && !FEQ0(input->hold_period))
+    {
+        input->hold_counter += dt;
+        if(input->hold_counter >= input->hold_period)
+        {
+            input->hold = true;
+            input->hold_counter = 0;
+        }
+    }
+}
+
+void set_menu_keys()
+{
+    window_controls_clear_keys();
+    window_controls_add_key(&menu_keys[MENU_KEY_UP].state, GLFW_KEY_W);
+    window_controls_add_key(&menu_keys[MENU_KEY_DOWN].state, GLFW_KEY_S);
+    window_controls_add_key(&menu_keys[MENU_KEY_ENTER].state, GLFW_KEY_ENTER);
+
+    menu_keys[MENU_KEY_UP].hold_period = 0.3;
+    menu_keys[MENU_KEY_DOWN].hold_period = 0.3;
+}
+
+void set_game_state(GameState state)
+{
+    if(state != game_state)
+    {
+        game_state = state;
+        LOGI("Set game state: %d", game_state);
+        switch(game_state)
+        {
+            case GAME_STATE_MENU:
+            {
+                set_menu_keys();
+            } break;
+            case GAME_STATE_PLAYING:
+            {
+                player_init_keys();
+            } break;
+        }
+    }
+}
+
 
 // also checks if the mouse is off the screen
 void camera_set()
@@ -263,8 +312,45 @@ void init()
     player_init();
 
     imgui_load_theme("retro.theme");
-}
 
+    level = level_generate(seed);
+
+    room_area.w = ROOM_W;
+    room_area.h = ROOM_H;
+    room_area.x = CENTER_X;
+    room_area.y = CENTER_Y;
+
+    RectXY rxy = {0};
+    rect_to_rectxy(&room_area, &rxy);
+
+    float margin_left_w = rxy.x[TL];
+    float margin_right_w = view_width - rxy.x[TR];
+
+    float margin_top_h = rxy.y[TL];
+    float margin_bottom_h = view_height - rxy.y[BL];
+
+    margin_left.w = margin_left_w;
+    margin_left.h = view_height - margin_top_h - margin_bottom_h;
+    margin_left.x = margin_left.w/2.0;
+    margin_left.y = CENTER_Y;
+
+    margin_right.w = margin_right_w;
+    margin_right.h = view_height - margin_top_h - margin_bottom_h;
+    margin_right.x = view_width - margin_right.w/2.0;
+    margin_right.y = CENTER_Y;
+
+    margin_top.w = view_width;
+    margin_top.h = margin_top_h;
+    margin_top.x = CENTER_X;
+    margin_top.y = margin_top_h/2.0;
+
+    margin_bottom.w = view_width;
+    margin_bottom.h = margin_bottom_h;
+    margin_bottom.x = CENTER_X;
+    margin_bottom.y = view_height - margin_bottom_h/2.0;
+
+    set_menu_keys();
+}
 
 void deinit()
 {
@@ -275,15 +361,77 @@ void deinit()
 }
 
 
-void update(float _dt)
+void update(float dt)
 {
     gfx_clear_lines();
 
     window_get_mouse_view_coords(&mx, &my);
 
-    player_update(player);
+    if(game_state == GAME_STATE_MENU)
+    {
 
-    text_list_update(text_lst, _dt);
+
+        for(int i = 0; i < MENU_KEY_MAX; ++i)
+        {
+            update_input_state(&menu_keys[i], dt);
+        }
+
+        int num_opts = sizeof(menu_options)/sizeof(menu_options[0]);
+
+        if(menu_keys[MENU_KEY_UP].toggled_on || menu_keys[MENU_KEY_UP].hold)
+        {
+            menu_selected_option--;
+            if(menu_selected_option < 0) menu_selected_option = num_opts-1;
+        }
+
+        if(menu_keys[MENU_KEY_DOWN].toggled_on || menu_keys[MENU_KEY_DOWN].hold)
+        {
+            menu_selected_option++;
+            if(menu_selected_option >= num_opts) menu_selected_option = 0;
+        }
+
+        if(menu_keys[MENU_KEY_ENTER].toggled_on)
+        {
+            //TODO
+            if(STR_EQUAL(menu_options[menu_selected_option], "Play Local"))
+            {
+                set_game_state(GAME_STATE_PLAYING);
+            }
+            else if(STR_EQUAL(menu_options[menu_selected_option], "Play Online"))
+            {
+                text_list_add(text_lst, 2.0, "'%s' not supported", menu_options[menu_selected_option]);
+            }
+            else if(STR_EQUAL(menu_options[menu_selected_option], "Host Local Server"))
+            {
+                text_list_add(text_lst, 2.0, "'%s' not supported", menu_options[menu_selected_option]);
+            }
+            else if(STR_EQUAL(menu_options[menu_selected_option], "Join Local Server"))
+            {
+                text_list_add(text_lst, 2.0, "'%s' not supported", menu_options[menu_selected_option]);
+            }
+            else if(STR_EQUAL(menu_options[menu_selected_option], "Settings"))
+            {
+                text_list_add(text_lst, 2.0, "'%s' not supported", menu_options[menu_selected_option]);
+            }
+            else if(STR_EQUAL(menu_options[menu_selected_option], "Help"))
+            {
+                text_list_add(text_lst, 2.0, "'%s' not supported", menu_options[menu_selected_option]);
+            }
+            else if(STR_EQUAL(menu_options[menu_selected_option], "Exit"))
+            {
+                exit(0);
+            }
+
+        }
+
+    }
+    else if(game_state == GAME_STATE_PLAYING)
+    {
+        player_update(player, dt);
+    }
+
+
+    text_list_update(text_lst, dt);
 
     // camera_set();
     camera_zoom(cam_zoom,false);
@@ -376,7 +524,6 @@ void draw_level(Rect* area)
 
 void draw_minimap()
 {
-
     float w = margin_left.w;
     // define the minimap location and size
     Rect minimap_area = RECT(w/2.0, w/2.0, w, w);
@@ -404,10 +551,6 @@ void draw_minimap()
     seed_rect.y += minimap_area.h/2.0 + seed_rect.h/2.0;
     gfx_draw_rect(&seed_rect, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.5, true, true);
 
-    // Rect seed_rect2 = seed_rect;
-    // seed_rect2.x = 0.0;
-    // seed_rect2.y = 0.0;
-    // gfx_get_absolute_coords(&seed_rect2, ALIGN_TOP_LEFT, &seed_rect, ALIGN_TOP_LEFT);
     gfx_draw_string(rect_tlx(&seed_rect), rect_tly(&seed_rect), COLOR_WHITE, seed_scale, NO_ROTATION, FULL_OPACITY, IN_WORLD, DROP_SHADOW, "Level Seed: %u", seed);
 }
 
@@ -422,22 +565,61 @@ void draw()
     gfx_draw_string(title_r.x, title_r.y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "SCUM");
 
 
-    gfx_draw_string(10, 10, COLOR_WHITE, 0.1, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "%d, %d", mx, my);
 
     // draw room
-    // uint32_t color_bg = COLOR(0x12,0x2c,0x34);
-    // gfx_draw_rect(&room_area, color_bg, NOT_SCALED, NO_ROTATION, 1.0, true, true);
-    level_draw_room(&level.rooms[player->curr_room.x][player->curr_room.y]);
-    gfx_draw_rect(&room_area, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+    if(game_state == GAME_STATE_PLAYING)
+    {
+        level_draw_room(&level.rooms[player->curr_room.x][player->curr_room.y]);
+        gfx_draw_rect(&room_area, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+    }
+    else if(game_state == GAME_STATE_MENU)
+    {
+        //TODO
+        level_draw_room(&level.rooms[player->curr_room.x][player->curr_room.y]);
+        gfx_draw_rect(&room_area, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+    }
+
+
+    if(game_state == GAME_STATE_MENU)
+    {
+
+        // draw menu
+        float menu_item_scale = 0.3;
+
+        // get text height first
+        Vector2f text_size = gfx_string_get_size(menu_item_scale, "A");
+        float margin = 1.0;
+
+        int num_opts = sizeof(menu_options)/sizeof(menu_options[0]);
+
+        float total_height = num_opts * (text_size.y+margin);
+
+        float x = view_width*0.35;
+        float y = CENTER_Y - total_height / 2.0;
+
+        for(int i = 0; i < num_opts; ++i)
+        {
+            uint32_t color = COLOR_WHITE;
+            if(i == menu_selected_option) color = COLOR_BLUE;
+            gfx_draw_string(x,y, color, menu_item_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, (char*)menu_options[i]);
+            y += (text_size.y+margin);
+        }
+
+    }
+
 
     // draw map
     draw_minimap();
 
-    // draw player
-    player_draw(player);
+    if(game_state == GAME_STATE_PLAYING)
+    {
+        // draw player
+        player_draw(player);
+    }
 
     if(debug_enabled)
     {
+        gfx_draw_string(10, 10, COLOR_WHITE, 0.08, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "%d, %d", mx, my);
         gfx_draw_rect(&margin_left, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
         gfx_draw_rect(&margin_right, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
         gfx_draw_rect(&margin_top, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
@@ -464,10 +646,13 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
             }
             if(key == GLFW_KEY_ESCAPE)
             {
-
                 if(debug_enabled)
                 {
                     debug_enabled = false;
+                }
+                else if(game_state != GAME_STATE_MENU)
+                {
+                    set_game_state(GAME_STATE_MENU);
                 }
             }
             else if(key == GLFW_KEY_F2)

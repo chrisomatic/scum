@@ -25,6 +25,7 @@ static void update_player_boxes(Player* p)
     p->hitbox.h *= 0.4;
 }
 
+
 void player_init()
 {
 
@@ -34,15 +35,7 @@ void player_init()
         player_image = gfx_load_image("src/img/spaceman.png", false, true, 32, 32);
     }
 
-    window_controls_clear_keys();
-    window_controls_add_key(&player->actions[PLAYER_ACTION_UP].state, GLFW_KEY_W);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_S);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_A);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_D);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_RUN].state, GLFW_KEY_LEFT_SHIFT);
-    // window_controls_add_key(&player->actions[PLAYER_ACTION_SCUM].state, GLFW_KEY_SPACE);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_TEST].state, GLFW_KEY_SPACE);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
+    player_init_keys();
 
     player->pos.x = CENTER_X;
     player->pos.y = CENTER_Y;
@@ -53,28 +46,45 @@ void player_init()
     player->curr_room.y = (MAX_ROOMS_GRID_Y-1)/2;
 }
 
-void player_update(Player* p)
+void player_init_keys()
+{
+    window_controls_clear_keys();
+    window_controls_add_key(&player->actions[PLAYER_ACTION_UP].state, GLFW_KEY_W);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_S);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_A);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_D);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_RUN].state, GLFW_KEY_LEFT_SHIFT);
+    // window_controls_add_key(&player->actions[PLAYER_ACTION_SCUM].state, GLFW_KEY_SPACE);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_TEST].state, GLFW_KEY_SPACE);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
+}
+
+void player_update(Player* p, float dt)
 {
     for(int i = 0; i < PLAYER_ACTION_MAX; ++i)
     {
-        PlayerAction* pa = &p->actions[i];
-        if(pa->state && !pa->prior_state)
-        {
-            pa->toggled_on = true;
-        }
-        else
-        {
-            pa->toggled_on = false; }
-        if(!pa->state && pa->prior_state)
-        {
-            pa->toggled_off = true;
-        }
-        else
-        {
-            pa->toggled_off = false;
-        }
-        pa->prior_state = pa->state;
+        PlayerInput* pa = &p->actions[i];
+        update_input_state(pa, dt);
     }
+
+    //     if(pa->state && !pa->prior_state)
+    //     {
+    //         pa->toggled_on = true;
+    //     }
+    //     else
+    //     {
+    //         pa->toggled_on = false;
+    //     }
+    //     if(!pa->state && pa->prior_state)
+    //     {
+    //         pa->toggled_off = true;
+    //     }
+    //     else
+    //     {
+    //         pa->toggled_off = false;
+    //     }
+    //     pa->prior_state = pa->state;
+    // }
 
     // bool test = p->actions[PLAYER_ACTION_TEST].toggled_on;
     // if(test)

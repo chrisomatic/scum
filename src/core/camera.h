@@ -14,5 +14,5 @@ void camera_zoom(float z, bool immediate);
 float camera_get_zoom();
 void camera_get_pos(Vector3f* p);
 Matrix* get_camera_transform();
-void get_camera_rect(Rect* rect);
+Rect get_camera_rect();
 bool is_in_camera_view(Rect* r);

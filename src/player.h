@@ -19,16 +19,8 @@ enum PlayerActions
 
 typedef struct
 {
-    bool state;
-    bool prior_state;
-    bool toggled_on;
-    bool toggled_off;
-} PlayerAction;
-
-typedef struct
-{
     Vector2f pos;
-    PlayerAction actions[PLAYER_ACTION_MAX];
+    PlayerInput actions[PLAYER_ACTION_MAX];
 
     int sprite_index;
     Rect hitbox;
@@ -44,5 +36,6 @@ extern Player players[MAX_PLAYERS];
 extern Player* player;
 
 void player_init();
-void player_update(Player* p);
+void player_init_keys();
+void player_update(Player* p, float dt);
 void player_draw(Player* p);

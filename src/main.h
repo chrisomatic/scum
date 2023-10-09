@@ -44,6 +44,27 @@
 
 #define DEBUG()   printf("%d %s %s()\n", __LINE__, __FILE__, __func__)
 
+typedef enum
+{
+    GAME_STATE_MENU,
+    GAME_STATE_PLAYING,
+} GameState;
+
+typedef struct
+{
+    bool state;
+    bool prior_state;
+    bool toggled_on;
+    bool toggled_off;
+
+    bool hold;
+    float hold_counter;
+    float hold_period;
+} PlayerInput;
+
+void set_game_state(GameState state);
+void update_input_state(PlayerInput* input, float _dt);
+
 extern Rect room_area;
 extern Level level;
 

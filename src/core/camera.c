@@ -137,7 +137,7 @@ Matrix* get_camera_transform()
     return &view_matrix;
 }
 
-void get_camera_rect(Rect* rect)
+Rect get_camera_rect()
 {
     float vw = cam_view_width / 2.0;
     float vh = cam_view_height / 2.0;
@@ -145,15 +145,16 @@ void get_camera_rect(Rect* rect)
     float x = camera.pos.x-vw;
     float y = camera.pos.y-vh;
 
-    rect->w = vw*2.0;
-    rect->h = vh*2.0;
-    rect->x = x+rect->w/2.0;
-    rect->y = y+rect->h/2.0;
+    Rect rect = {0};
+    rect.w = vw*2.0;
+    rect.h = vh*2.0;
+    rect.x = x+rect.w/2.0;
+    rect.y = y+rect.h/2.0;
+    return rect;
 }
 
 bool is_in_camera_view(Rect* r)
 {
-    Rect r1 = {0};
-    get_camera_rect(&r1);
+    Rect r1 = get_camera_rect(&r1);
     return rectangles_colliding(&r1, r);
 }
