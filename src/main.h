@@ -72,5 +72,6 @@ extern bool initialized;
 extern bool debug_enabled;
 extern Timer game_timer;
 extern text_list_t* text_lst;
+extern bool show_big_map;
 extern uint32_t background_color;
 extern unsigned int seed;

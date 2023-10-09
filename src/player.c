@@ -71,6 +71,8 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_A);
     window_controls_add_key(&player->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_D);
     window_controls_add_key(&player->actions[PLAYER_ACTION_RUN].state, GLFW_KEY_LEFT_SHIFT);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_SHOW_MAP].state, GLFW_KEY_M);
+    
     // window_controls_add_key(&player->actions[PLAYER_ACTION_SCUM].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_TEST].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
@@ -191,6 +193,12 @@ void player_update(Player* p, float dt)
         update_input_state(pa, dt);
     }
 
+    bool map = p->actions[PLAYER_ACTION_SHOW_MAP].toggled_on;
+    if(map)
+    {
+        show_big_map = !show_big_map;
+    }
+
     bool up    = p->actions[PLAYER_ACTION_UP].state;
     bool down  = p->actions[PLAYER_ACTION_DOWN].state;
     bool left  = p->actions[PLAYER_ACTION_LEFT].state;
@@ -300,9 +308,10 @@ void player_draw(Player* p)
 {
     gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->pos.x, p->pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
 
-    Rect r = RECT(player->pos.x, player->pos.y, 2, 2);
-    gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
-
-    gfx_draw_rect(&p->hitbox, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-
+    if(debug_enabled)
+    {
+        Rect r = RECT(player->pos.x, player->pos.y, 1, 1);
+        gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+        gfx_draw_rect(&p->hitbox, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+    }
 }

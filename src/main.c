@@ -23,6 +23,8 @@ bool debug_enabled = false;
 GameState game_state = GAME_STATE_MENU;
 Timer game_timer = {0};
 text_list_t* text_lst = NULL;
+bool show_big_map = false;
+
 
 // Settings
 // uint32_t background_color = 0x00303030;
@@ -417,7 +419,7 @@ void update(float dt)
             }
             else if(STR_EQUAL(menu_options[menu_selected_option], "Exit"))
             {
-                exit(0);
+                window_set_close(0);
             }
 
         }
@@ -436,15 +438,18 @@ void update(float dt)
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 }
 
-void draw_level(Rect* area)
+void draw_level(Rect* area, uint32_t color_bg, float opacity_bg, uint32_t color_room, float opacity_room, uint32_t color_player, float opacity_player)
 {
-    uint32_t color_room = COLOR(0x22,0x48,0x70);
-    // uint32_t color_bg = COLOR(0x12,0x2c,0x34);
-    uint32_t color_bg = COLOR_BLACK;
-    // uint32_t color_door = COLOR(0x4e,0xa5,0xd9);
+    // float opacity_bg = 0.3;
+    // uint32_t color_bg = COLOR_BLACK;
+
+    // float opacity_room = 0.3;
+    // uint32_t color_room = COLOR(0x22,0x48,0x70);
+
+    float opacity_door = opacity_room;
     uint32_t color_door = color_room;
 
-    gfx_draw_rect(area, color_bg, NOT_SCALED, NO_ROTATION, 0.3, true, true);
+    gfx_draw_rect(area, color_bg, NOT_SCALED, NO_ROTATION, opacity_bg, true, true);
 
     float tlx = area->x - area->w/2.0;
     float tly = area->y - area->h/2.0;
@@ -474,30 +479,30 @@ void draw_level(Rect* area)
                 float draw_x = tlx + x*rwh + rwh/2.0;
                 float draw_y = tly + y*rwh + rwh/2.0;
                 Rect r = RECT(draw_x, draw_y, room_wh, room_wh);
-                gfx_draw_rect(&r, color_room, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+                gfx_draw_rect(&r, color_room, NOT_SCALED, NO_ROTATION, opacity_room, true, true);
 
                 if(room.doors[DOOR_UP])
                 {
                     Rect door = RECT(draw_x-door_offset, draw_y-rwh/2.0, door_w, door_h);
-                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, true);
                 }
 
                 if(room.doors[DOOR_DOWN])
                 {
                     Rect door = RECT(draw_x+door_offset, draw_y+rwh/2.0, door_w, door_h);
-                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, true);
                 }
 
                 if(room.doors[DOOR_RIGHT])
                 {
                     Rect door = RECT(draw_x+rwh/2.0, draw_y-door_offset, door_h, door_w);
-                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, true);
                 }
 
                 if(room.doors[DOOR_LEFT])
                 {
                     Rect door = RECT(draw_x-rwh/2.0, draw_y+door_offset, door_h, door_w);
-                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, true);
                 }
 
             }
@@ -517,7 +522,7 @@ void draw_level(Rect* area)
     Rect r = RECT(draw_x, draw_y, room_wh, room_wh);
     gfx_get_absolute_coords(&pr, ALIGN_CENTER, &r, ALIGN_CENTER);
 
-    gfx_draw_rect(&pr, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+    gfx_draw_rect(&pr, color_player, NOT_SCALED, NO_ROTATION, opacity_player, true, true);
 }
 
 void draw_minimap()
@@ -527,8 +532,9 @@ void draw_minimap()
     Rect minimap_area = RECT(w/2.0, w/2.0, w, w);
     // translate the location
     gfx_get_absolute_coords(&minimap_area, ALIGN_CENTER, &margin_left, ALIGN_CENTER);
-    draw_level(&minimap_area);
+    draw_level(&minimap_area, COLOR_BLACK,0.3,  COLOR(0x22,0x48,0x70),0.4,  COLOR_RED,0.5);
 
+#if 1
     // solve for size
     float s = 0.01;
     for(int i = 0; i < 100; ++i)
@@ -550,6 +556,7 @@ void draw_minimap()
     gfx_draw_rect(&seed_rect, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.5, true, true);
 
     gfx_draw_string(rect_tlx(&seed_rect), rect_tly(&seed_rect), COLOR_WHITE, seed_scale, NO_ROTATION, FULL_OPACITY, IN_WORLD, DROP_SHADOW, "Level Seed: %u", seed);
+#endif
 }
 
 void draw()
@@ -611,13 +618,22 @@ void draw()
 
     if(game_state == GAME_STATE_PLAYING)
     {
+
+        if(show_big_map)
+        {
+            float len = MIN(room_area.w, room_area.h);
+            Rect minimap_area = RECT(room_area.x, room_area.y, len, len);
+            draw_level(&minimap_area, COLOR_BLACK,0.0,  COLOR_BLACK,0.3,  COLOR_RED,0.2);
+        }
+
+
         // draw player
         player_draw(player);
     }
 
     if(debug_enabled)
     {
-        gfx_draw_string(10, 10, COLOR_WHITE, 0.08, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "%d, %d", mx, my);
+        gfx_draw_string(1, 0, COLOR_WHITE, 0.07, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "mouse: %d, %d", mx, my);
         gfx_draw_rect(&margin_left, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
         gfx_draw_rect(&margin_right, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
         gfx_draw_rect(&margin_top, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
