@@ -3,6 +3,7 @@
 #include "window.h"
 #include "gfx.h"
 #include "level.h"
+#include "projectile.h"
 #include "player.h"
 
 int player_image = -1;
@@ -16,14 +17,17 @@ static void update_player_boxes(Player* p)
 
     Rect* vr = &img->visible_rects[p->sprite_index];
 
+    int w = img->element_width;
+    int h = img->element_height;
 
-    p->hitbox.x = vr->x+p->pos.x-img->element_width/2.0;
-    p->hitbox.y = vr->y+p->pos.y-img->element_height/2.0;
-    p->hitbox.w = vr->w;
-    p->hitbox.h = vr->h;
+    p->hitbox.x = p->pos.x;
+    p->hitbox.y = p->pos.y;
+    p->hitbox.w = w;
+    p->hitbox.h = h;
 
     p->hitbox.y += 0.3*p->hitbox.h;
     p->hitbox.h *= 0.4;
+    p->hitbox.w *= 0.6;
 }
 
 
@@ -74,7 +78,7 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOW_MAP].state, GLFW_KEY_M);
     
     // window_controls_add_key(&player->actions[PLAYER_ACTION_SCUM].state, GLFW_KEY_SPACE);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_TEST].state, GLFW_KEY_SPACE);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
 }
 
@@ -264,30 +268,24 @@ void player_update(Player* p, float dt)
     p->curr_tile.x = dx;
     p->curr_tile.y = dy;
 
-    bool scum = p->actions[PLAYER_ACTION_SCUM].toggled_on;
-    if(scum)
+    const float pcooldown = 0.1; //seconds
+
+    if(p->actions[PLAYER_ACTION_SHOOT].state)
     {
-        const char* text[] = {
-            "Scum is fun",
-            "Never stop playing Scum",
-            "Scummer 4 life",
-            "Scumeron waz here",
-            "Sup scummy",
-            "Dedicate your life to Scum",
-            "Scum over family",
-            "No Scum for Aaron",
-            "Endulge yourself with Scum",
-            "I want more Scum",
-            "Time for more Scum",
-            "SCUM",
-            "I dedicate my life to Scum",
-            "Scum is all I care about",
-            "WANT MORE SCUM"
-        };
-
-        text_list_add(text_lst, 3.0, (char*)text[rand()%sizeof(text)/sizeof(text[0])]);
+        p->proj_cooldown -= dt;
+        if(p->proj_cooldown <= 0.0)
+        {
+            if(p->sprite_index >= 0 && p->sprite_index <= 3)
+                projectile_add(p, 90.0);
+            else if(p->sprite_index >= 4 && p->sprite_index <= 7)
+                projectile_add(p, 270.0);
+            else if(p->sprite_index >= 8 && p->sprite_index <= 11)
+                projectile_add(p, 180.0);
+            else if(p->sprite_index >= 12)
+                projectile_add(p, 0.0);
+            p->proj_cooldown = pcooldown;
+        }
     }
-
     bool generate = p->actions[PLAYER_ACTION_GENERATE_ROOMS].toggled_on;
     if(generate)
     {
@@ -302,6 +300,8 @@ void player_update(Player* p, float dt)
     // update animation
     if(ABS(p->vel.x) > 0.0 || ABS(p->vel.y) > 0.0)
         gfx_anim_update(&p->anim, dt);
+    else
+        p->anim.curr_frame = 0;
 }
 
 void player_draw(Player* p)

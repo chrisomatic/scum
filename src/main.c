@@ -11,6 +11,7 @@
 #include "effects.h"
 #include "camera.h"
 #include "level.h"
+#include "projectile.h"
 #include "player.h"
 #include "text_list.h"
 
@@ -313,6 +314,9 @@ void init()
     LOGI(" - Player.");
     player_init();
 
+    LOGI(" - Projectiles.");
+    projectile_init();
+
     imgui_load_theme("retro.theme");
 
     level = level_generate(seed);
@@ -428,6 +432,7 @@ void update(float dt)
     else if(game_state == GAME_STATE_PLAYING)
     {
         player_update(player, dt);
+        projectile_update(dt);
     }
 
 
@@ -628,7 +633,13 @@ void draw()
 
 
         // draw player
+
         player_draw(player);
+
+        for(int i = 0; i < plist->count; ++i)
+        {
+            projectile_draw(&projectiles[i]);
+        }
     }
 
     if(debug_enabled)

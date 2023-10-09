@@ -13,7 +13,7 @@ enum PlayerActions
     PLAYER_ACTION_RUN,
     PLAYER_ACTION_SHOW_MAP,
     PLAYER_ACTION_SCUM,
-    PLAYER_ACTION_TEST,
+    PLAYER_ACTION_SHOOT,
     PLAYER_ACTION_GENERATE_ROOMS,
 
     PLAYER_ACTION_MAX
@@ -33,6 +33,8 @@ typedef struct
 
     Vector2i curr_room;
     Vector2i curr_tile;
+
+    float proj_cooldown;
 
     bool in_door; // used to prevent flip-flopping between doorways
 
