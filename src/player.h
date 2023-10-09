@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gfx.h"
 #include "math2d.h"
 
 #define MAX_PLAYERS 2
@@ -19,8 +20,12 @@ enum PlayerActions
 
 typedef struct
 {
+    Vector2f vel;
     Vector2f pos;
+
     PlayerInput actions[PLAYER_ACTION_MAX];
+
+    GFXAnimation anim;
 
     int sprite_index;
     Rect hitbox;

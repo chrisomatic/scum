@@ -369,8 +369,6 @@ void update(float dt)
 
     if(game_state == GAME_STATE_MENU)
     {
-
-
         for(int i = 0; i < MENU_KEY_MAX; ++i)
         {
             update_input_state(&menu_keys[i], dt);
