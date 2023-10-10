@@ -1,7 +1,7 @@
 #pragma once
 
 #include "gfx.h"
-#include "math2d.h"
+#include "net.h"
 
 #define MAX_PLAYERS 2
 enum PlayerActions
@@ -33,6 +33,7 @@ typedef struct
 
     int sprite_index;
     Rect hitbox;
+    Rect hitbox_prior;
 
     Vector2i curr_room;
     Vector2i curr_tile;
@@ -41,12 +42,24 @@ typedef struct
 
     // bool in_door; // used to prevent flip-flopping between doorways
 
+    // Networking
+    NetPlayerInput input;
+    NetPlayerInput input_prior;
+
+    float lerp_t;
+    ObjectState server_state_prior;
+    ObjectState server_state_target;
+
 } Player;
 
 extern Player players[MAX_PLAYERS];
 extern Player* player;
+extern int num_players;
 
 void player_init();
 void player_init_keys();
 void player_update(Player* p, float dt);
 void player_draw(Player* p);
+void player_reset(Player* p);
+void player_lerp(Player* p, float dt);
+void player_handle_net_inputs(Player* p, double dt);

@@ -229,4 +229,30 @@ void projectile_draw(Projectile* proj)
         gfx_draw_rect(&proj->hit_box_prior, COLOR_GREEN, 1.0, 0.0, 1.0, false, true);
         gfx_draw_rect(&proj->hit_box, COLOR_BLUE, 1.0, 0.0, 1.0, false, true);
     }
+
+}
+
+void projectile_lerp(Projectile* p, double dt)
+{
+    p->lerp_t += dt;
+
+    float tick_time = 1.0/TICK_RATE;
+    float t = (p->lerp_t / tick_time);
+
+    if((p->server_state_prior.pos.x == 0.0 && p->server_state_prior.pos.y == 0.0) || p->server_state_prior.id != p->server_state_target.id)
+    {
+        // new projectile, set position and id directly
+        p->server_state_prior.id = p->server_state_target.id;
+        p->id = p->server_state_target.id;
+        memcpy(&p->server_state_prior.pos, &p->server_state_target.pos, sizeof(Vector2f));
+        //TODO:
+        p->hit_box.w = 10;
+        p->hit_box.h = 10;
+    }
+
+    Vector2f lp = lerp2f(&p->server_state_prior.pos,&p->server_state_target.pos,t);
+    p->pos.x = lp.x;
+    p->pos.y = lp.y;
+
+    //printf("prior_pos: %f %f, target_pos: %f %f, pos: %f %f, t: %f\n",p->server_state_prior.pos.x, p->server_state_prior.pos.y, p->server_state_target.pos.x, p->server_state_target.pos.y, p->pos.x, p->pos.y, t);
 }

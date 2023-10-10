@@ -10,6 +10,7 @@ int player_image = -1;
 Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
 int player_image;
+int num_players;
 
 static void update_player_boxes(Player* p)
 {
@@ -107,6 +108,11 @@ void player_init_keys()
     // window_controls_add_key(&player->actions[PLAYER_ACTION_SCUM].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
+}
+
+void player_reset(Player* p)
+{
+    return;
 }
 
 static void handle_room_collision(Player* p)
@@ -328,5 +334,45 @@ void player_draw(Player* p)
         Rect r = RECT(player->pos.x, player->pos.y, 1, 1);
         gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
         gfx_draw_rect(&p->hitbox, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+    }
+}
+
+void player_lerp(Player* p, float dt)
+{
+    if(!p->active) return;
+
+    p->lerp_t += dt;
+
+    float tick_time = 1.0/TICK_RATE;
+    float t = (p->lerp_t / tick_time);
+
+    // printf("[lerp prior]  %.2f, %.2f\n", p->server_state_prior.pos.x, p->server_state_prior.pos.y);
+    // printf("[lerp target] %.2f, %.2f\n", p->server_state_target.pos.x, p->server_state_target.pos.y);
+
+    Vector2f lp = lerp2f(&p->server_state_prior.pos,&p->server_state_target.pos,t);
+    p->pos.x = lp.x;
+    p->pos.y = lp.y;
+}
+
+void player_handle_net_inputs(Player* p, double dt)
+{
+    // handle input
+    memcpy(&p->input_prior, &p->input, sizeof(NetPlayerInput));
+
+    p->input.delta_t = dt;
+
+    p->input.keys = 0;
+
+    for(int i = 0; i < PLAYER_ACTION_MAX; ++i)
+    {
+        if(p->actions[i].state)
+        {
+            p->input.keys |= (1<<i);
+        }
+    }
+
+    if(p->input.keys != p->input_prior.keys)
+    {
+        net_client_add_player_input(&p->input);
     }
 }

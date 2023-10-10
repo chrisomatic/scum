@@ -2,6 +2,7 @@
 
 #include "player.h"
 #include "glist.h"
+#include "net.h"
 
 #define MAX_PROJECTILES 256
 
@@ -38,6 +39,11 @@ typedef struct
     float ttl;
     bool dead;
     
+    // Networking
+    float lerp_t;
+    ObjectState server_state_prior;
+    ObjectState server_state_target;
+    
 } Projectile;
 
 extern Projectile projectiles[MAX_PROJECTILES];
@@ -51,3 +57,4 @@ void projectile_update_hit_box(Projectile* proj);
 void projectile_update(float delta_t);
 void projectile_handle_collisions(float delta_t);
 void projectile_draw(Projectile* proj);
+void projectile_lerp(Projectile* p, double dt);

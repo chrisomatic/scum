@@ -13,6 +13,7 @@
 #include "level.h"
 #include "projectile.h"
 #include "player.h"
+#include "net.h"
 #include "text_list.h"
 
 // =========================
@@ -26,6 +27,7 @@ GameState game_state = GAME_STATE_MENU;
 Timer game_timer = {0};
 text_list_t* text_lst = NULL;
 bool show_big_map = false;
+GameRole role = ROLE_UNKNOWN;
 
 
 // Settings
@@ -377,6 +379,38 @@ void deinit()
 
 void update(float dt)
 {
+    if(role == ROLE_CLIENT)
+    {
+        if(net_client_get_state() == DISCONNECTED)
+        {
+            int client_id = net_client_connect();
+            if(client_id == -1)
+                return;
+        }
+
+        net_client_update();
+
+        player_handle_net_inputs(player, dt);
+
+        for(int i = 0; i < plist->count; ++i)
+        {
+            projectile_lerp(&projectiles[i], dt);
+            projectile_update_hit_box(&projectiles[i]);
+        }
+
+        for(int i = 0; i < MAX_CLIENTS; ++i)
+        {
+            Player* p = &players[i];
+            if(p->active)
+            {
+                memcpy(&p->hitbox_prior, &p->hitbox, sizeof(Rect));
+                player_lerp(p, dt);
+            }
+        }
+
+        return;
+    }
+
     gfx_clear_lines();
 
     window_get_mouse_view_coords(&mx, &my);
@@ -417,10 +451,20 @@ void update(float dt)
             else if(STR_EQUAL(s, "Host Local Server"))
             {
                 text_list_add(text_lst, 2.0, "'%s' not supported", s);
+                role = ROLE_SERVER;
+                deinit();
+
+                // init
+                gfx_image_init();
+                //players_init();
+                projectile_init();
+
+                net_server_start();
             }
             else if(STR_EQUAL(s, "Join Local Server"))
             {
-                text_list_add(text_lst, 2.0, "'%s' not supported", s);
+                role = ROLE_CLIENT;
+                set_game_state(GAME_STATE_PLAYING);
             }
             else if(STR_EQUAL(s, "Settings"))
             {
@@ -435,7 +479,6 @@ void update(float dt)
                 window_set_close(1);
             }
         }
-
     }
     else if(game_state == GAME_STATE_PLAYING)
     {

@@ -18,6 +18,7 @@ gcc core/gfx.c \
     effects.c \
     projectile.c \
     player.c \
+    net.c \
     level.c \
     main.c \
     -Icore \

@@ -46,6 +46,14 @@
 
 typedef enum
 {
+    ROLE_UNKNOWN,
+    ROLE_LOCAL,
+    ROLE_CLIENT,
+    ROLE_SERVER,
+} GameRole;
+
+typedef enum
+{
     GAME_STATE_MENU,
     GAME_STATE_PLAYING,
 } GameState;
@@ -77,3 +85,4 @@ extern text_list_t* text_lst;
 extern bool show_big_map;
 extern uint32_t background_color;
 extern unsigned int seed;
+extern GameRole role;
