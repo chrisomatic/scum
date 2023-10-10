@@ -66,10 +66,12 @@ void set_game_state(GameState state);
 void update_input_state(PlayerInput* input, float _dt);
 
 extern Rect room_area;
+extern Rect player_area;
 extern Level level;
 
 extern bool initialized;
 extern bool debug_enabled;
+extern bool paused;
 extern Timer game_timer;
 extern text_list_t* text_lst;
 extern bool show_big_map;

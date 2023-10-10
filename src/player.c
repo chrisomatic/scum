@@ -30,45 +30,71 @@ static void update_player_boxes(Player* p)
     p->hitbox.w *= 0.6;
 }
 
+static void set_hit_box_pos(Player* p, float x, float y)
+{
+    // memcpy(p->hitbox_prior, p->hitbox, sizeof(p->hitbox));
+
+    float dx = p->pos.x - p->hitbox.x;
+    float dy = p->pos.y - p->hitbox.y;
+
+    p->hitbox.x = x;
+    p->hitbox.y = y;
+
+    p->pos.x = x + dx;
+    p->pos.y = y + dy;
+}
+
 
 void player_init()
 {
-    player = &players[0];
     if(player_image == -1)
     {
         player_image = gfx_load_image("src/img/spaceman.png", false, true, 32, 32);
     }
 
-    player_init_keys();
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        Player* p = &players[i];
+        if(p == player)
+        {
+            player_init_keys();
+            p->active = true;
+        }
 
-    player->pos.x = CENTER_X;
-    player->pos.y = CENTER_Y;
+        p->active = false;
 
-    player->vel.x = 0.0;
-    player->vel.y = 0.0;
+        p->pos.x = CENTER_X;
+        p->pos.y = CENTER_Y;
 
-    player->sprite_index = 4;
+        p->vel.x = 0.0;
+        p->vel.y = 0.0;
 
-    player->curr_room.x = (MAX_ROOMS_GRID_X-1)/2;
-    player->curr_room.y = (MAX_ROOMS_GRID_Y-1)/2;
+        p->sprite_index = 4;
 
-    // animation
-    // --------------------------------------------------------
-    player->anim.curr_frame = 0;
-    player->anim.max_frames = 4;
-    player->anim.curr_frame_time = 0.0f;
-    player->anim.max_frame_time = 0.10f;
-    player->anim.finite = false;
-    player->anim.curr_loop = 0;
-    player->anim.max_loops = 0;
-    player->anim.frame_sequence[0] = 0;
-    player->anim.frame_sequence[1] = 1;
-    player->anim.frame_sequence[2] = 2;
-    player->anim.frame_sequence[3] = 3;
+        p->curr_room.x = (MAX_ROOMS_GRID_X-1)/2;
+        p->curr_room.y = (MAX_ROOMS_GRID_Y-1)/2;
+
+        // animation
+        // --------------------------------------------------------
+        p->anim.curr_frame = 0;
+        p->anim.max_frames = 4;
+        p->anim.curr_frame_time = 0.0f;
+        p->anim.max_frame_time = 0.10f;
+        p->anim.finite = false;
+        p->anim.curr_loop = 0;
+        p->anim.max_loops = 0;
+        p->anim.frame_sequence[0] = 0;
+        p->anim.frame_sequence[1] = 1;
+        p->anim.frame_sequence[2] = 2;
+        p->anim.frame_sequence[3] = 3;
+    }
+
 }
 
 void player_init_keys()
 {
+    if(player == NULL) return;
+
     window_controls_clear_keys();
     window_controls_add_key(&player->actions[PLAYER_ACTION_UP].state, GLFW_KEY_W);
     window_controls_add_key(&player->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_S);
@@ -76,7 +102,8 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_D);
     window_controls_add_key(&player->actions[PLAYER_ACTION_RUN].state, GLFW_KEY_LEFT_SHIFT);
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOW_MAP].state, GLFW_KEY_M);
-    
+    window_controls_add_key(&player->actions[PLAYER_ACTION_DOOR].state, GLFW_KEY_ENTER);
+
     // window_controls_add_key(&player->actions[PLAYER_ACTION_SCUM].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
@@ -105,6 +132,7 @@ static void handle_room_collision(Player* p)
     Room* room = &level.rooms[p->curr_room.x][p->curr_room.y];
     RoomData* rdata = &room_list[room->layout];
 
+    bool go_through_door = p->actions[PLAYER_ACTION_DOOR].toggled_off;
     //text_list_add(text_lst, 3.0, "num_checks: %d" ,num_checks);
 
     for(int i = 0; i < sizeof(checks)/sizeof(checks[0]); ++i)
@@ -118,46 +146,38 @@ static void handle_room_collision(Player* p)
         {
             if(i == 0)
             {
-                if(room->doors[DOOR_LEFT] && c.x == 0 && c.y == 4)
+                if(go_through_door)
                 {
-                    if(!p->in_door)
+                    RectXY rxy = {0};
+                    rect_to_rectxy(&room_area, &rxy);
+
+                    if(room->doors[DOOR_LEFT] && c.x == 0 && c.y == 4)
                     {
                         p->curr_room.x--;
-                        p->pos.x = view_width - p->pos.x;
-                        p->in_door = true;
+                        float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
+                        set_hit_box_pos(p, x1, p->hitbox.y);
                     }
-                }
-                else if(room->doors[DOOR_RIGHT] && c.x == 14 && c.y == 4)
-                {
-                    if(!p->in_door)
+                    else if(room->doors[DOOR_RIGHT] && c.x == 14 && c.y == 4)
                     {
                         p->curr_room.x++;
-                        p->pos.x = view_width - p->pos.x;
-                        p->in_door = true;
+                        float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
+                        set_hit_box_pos(p, x1, p->hitbox.y);
                     }
-                }
-                else if(room->doors[DOOR_UP] && c.x == 7 && c.y == 0)
-                {
-                    if(!p->in_door)
+                    else if(room->doors[DOOR_UP] && c.x == 7 && c.y == 0)
                     {
                         p->curr_room.y--;
-                        p->pos.y = view_height - p->pos.y;
-                        p->in_door = true;
+                        float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
+                        set_hit_box_pos(p, p->hitbox.x, y1);
                     }
-                }
-                else if(room->doors[DOOR_DOWN] && c.x == 7 && c.y == 8)
-                {
-                    if(!p->in_door)
+                    else if(room->doors[DOOR_DOWN] && c.x == 7 && c.y == 8)
                     {
                         p->curr_room.y++;
-                        p->pos.y = view_height - p->pos.y;
-                        p->in_door = true;
+                        float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
+                        set_hit_box_pos(p, p->hitbox.x, y1);
                     }
                 }
-                else
-                {
-                    p->in_door = false;
-                }
+
+
             }
 
             TileType tt = rdata->tiles[checks[i].x-1][checks[i].y-1];
@@ -191,6 +211,7 @@ static void handle_room_collision(Player* p)
 
 void player_update(Player* p, float dt)
 {
+    if(!p->active) return;
     for(int i = 0; i < PLAYER_ACTION_MAX; ++i)
     {
         PlayerInput* pa = &p->actions[i];
@@ -243,14 +264,7 @@ void player_update(Player* p, float dt)
 
     update_player_boxes(p);
 
-    Rect walkable_room = {
-        room_area.x,
-        room_area.y,
-        room_area.w-38,
-        room_area.h-48,
-    };
-
-    Vector2f adj = limit_rect_pos(&walkable_room, &p->hitbox);
+    Vector2f adj = limit_rect_pos(&player_area, &p->hitbox);
     if(!FEQ0(adj.x) || !FEQ0(adj.y))
     {
         p->pos.x += adj.x;
@@ -306,6 +320,7 @@ void player_update(Player* p, float dt)
 
 void player_draw(Player* p)
 {
+    if(!p->active) return;
     gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->pos.x, p->pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
 
     if(debug_enabled)

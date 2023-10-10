@@ -21,6 +21,7 @@
 
 bool initialized = false;
 bool debug_enabled = false;
+bool paused = false;
 GameState game_state = GAME_STATE_MENU;
 Timer game_timer = {0};
 text_list_t* text_lst = NULL;
@@ -35,6 +36,7 @@ uint32_t background_color = 0x00202020;
 int mx=0, my=0;
 
 Rect room_area = {0};
+Rect player_area = {0};
 Rect margin_left = {0};
 Rect margin_right = {0};
 Rect margin_top = {0};
@@ -171,6 +173,7 @@ void set_game_state(GameState state)
             } break;
             case GAME_STATE_PLAYING:
             {
+                player->active = true;
                 player_init_keys();
             } break;
         }
@@ -312,6 +315,7 @@ void init()
     level_init();
 
     LOGI(" - Player.");
+    player = &players[0];
     player_init();
 
     LOGI(" - Projectiles.");
@@ -325,6 +329,10 @@ void init()
     room_area.h = ROOM_H;
     room_area.x = CENTER_X;
     room_area.y = CENTER_Y;
+
+    memcpy(&player_area, &room_area, sizeof(Rect));
+    player_area.w -= 32;
+    player_area.h -= 48;
 
     RectXY rxy = {0};
     rect_to_rectxy(&room_area, &rxy);
@@ -396,43 +404,46 @@ void update(float dt)
 
         if(menu_keys[MENU_KEY_ENTER].toggled_on)
         {
+            const char* s = menu_options[menu_selected_option];
             //TODO
-            if(STR_EQUAL(menu_options[menu_selected_option], "Play Local"))
+            if(STR_EQUAL(s, "Play Local"))
             {
                 set_game_state(GAME_STATE_PLAYING);
             }
-            else if(STR_EQUAL(menu_options[menu_selected_option], "Play Online"))
+            else if(STR_EQUAL(s, "Play Online"))
             {
-                text_list_add(text_lst, 2.0, "'%s' not supported", menu_options[menu_selected_option]);
+                text_list_add(text_lst, 2.0, "'%s' not supported", s);
             }
-            else if(STR_EQUAL(menu_options[menu_selected_option], "Host Local Server"))
+            else if(STR_EQUAL(s, "Host Local Server"))
             {
-                text_list_add(text_lst, 2.0, "'%s' not supported", menu_options[menu_selected_option]);
+                text_list_add(text_lst, 2.0, "'%s' not supported", s);
             }
-            else if(STR_EQUAL(menu_options[menu_selected_option], "Join Local Server"))
+            else if(STR_EQUAL(s, "Join Local Server"))
             {
-                text_list_add(text_lst, 2.0, "'%s' not supported", menu_options[menu_selected_option]);
+                text_list_add(text_lst, 2.0, "'%s' not supported", s);
             }
-            else if(STR_EQUAL(menu_options[menu_selected_option], "Settings"))
+            else if(STR_EQUAL(s, "Settings"))
             {
-                text_list_add(text_lst, 2.0, "'%s' not supported", menu_options[menu_selected_option]);
+                text_list_add(text_lst, 2.0, "'%s' not supported", s);
             }
-            else if(STR_EQUAL(menu_options[menu_selected_option], "Help"))
+            else if(STR_EQUAL(s, "Help"))
             {
-                text_list_add(text_lst, 2.0, "'%s' not supported", menu_options[menu_selected_option]);
+                text_list_add(text_lst, 2.0, "'%s' not supported", s);
             }
-            else if(STR_EQUAL(menu_options[menu_selected_option], "Exit"))
+            else if(STR_EQUAL(s, "Exit"))
             {
-                window_set_close(0);
+                window_set_close(1);
             }
-
         }
 
     }
     else if(game_state == GAME_STATE_PLAYING)
     {
-        player_update(player, dt);
-        projectile_update(dt);
+        if(!paused)
+        {
+            player_update(player, dt);
+            projectile_update(dt);
+        }
     }
 
 
@@ -684,9 +695,14 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
             {
                 debug_enabled = !debug_enabled;
             }
-            else if(key == GLFW_KEY_ENTER)
+            else if(key == GLFW_KEY_P)
             {
-
+                // if(role == ROLE_LOCAL && game_state == GAME_STATE_PLAYING)
+                // TODO
+                if(game_state == GAME_STATE_PLAYING)
+                {
+                    paused = !paused;
+                }
             }
 
         }

@@ -140,8 +140,8 @@ void projectile_add(Player* p, float angle_deg)
 
     proj.hit_box.x = proj.pos.x;
     proj.hit_box.y = proj.pos.y;
-    GFXImage* img = &gfx_images[projectile_image];
-    float wh = MAX(img->element_width, img->element_height);
+    Rect* vr = &gfx_images[projectile_image].visible_rects[0];
+    float wh = MAX(vr->w, vr->h);
     proj.hit_box.w = wh;
     proj.hit_box.h = wh;
 
@@ -153,6 +153,7 @@ void projectile_add(Player* p, float angle_deg)
 
 void projectile_update(float delta_t)
 {
+
     // printf("projectile update\n");
 
     for(int i = plist->count - 1; i >= 0; --i)
@@ -221,11 +222,11 @@ void projectile_handle_collisions(float delta_t)
 
 void projectile_draw(Projectile* proj)
 {
-    gfx_draw_image(projectile_image, 0, proj->pos.x, proj->pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, true, true);
+    gfx_draw_image(projectile_image, 0, proj->pos.x, proj->pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
 
     if(debug_enabled)
     {
-        gfx_draw_rect(&proj->hit_box_prior, COLOR_GREEN, 0, 1.0, 1.0, false, true);
-        gfx_draw_rect(&proj->hit_box, COLOR_BLUE, 0, 1.0, 1.0, false, true);
+        gfx_draw_rect(&proj->hit_box_prior, COLOR_GREEN, 1.0, 0.0, 1.0, false, true);
+        gfx_draw_rect(&proj->hit_box, COLOR_BLUE, 1.0, 0.0, 1.0, false, true);
     }
 }

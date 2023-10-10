@@ -12,6 +12,7 @@ enum PlayerActions
     PLAYER_ACTION_RIGHT,
     PLAYER_ACTION_RUN,
     PLAYER_ACTION_SHOW_MAP,
+    PLAYER_ACTION_DOOR,
     PLAYER_ACTION_SCUM,
     PLAYER_ACTION_SHOOT,
     PLAYER_ACTION_GENERATE_ROOMS,
@@ -21,6 +22,8 @@ enum PlayerActions
 
 typedef struct
 {
+    bool active;
+
     Vector2f vel;
     Vector2f pos;
 
@@ -36,7 +39,7 @@ typedef struct
 
     float proj_cooldown;
 
-    bool in_door; // used to prevent flip-flopping between doorways
+    // bool in_door; // used to prevent flip-flopping between doorways
 
 } Player;
 

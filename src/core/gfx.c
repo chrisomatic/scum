@@ -918,8 +918,15 @@ static Vector2f gfx_draw_string_internal(float x, float y, uint32_t color, uint3
             get_model_transform(&pos_shadow,&rot,&sca,&model_shadow);
 
             glUniformMatrix4fv(loc_font_model,1,GL_TRUE,&model_shadow.m[0][0]);
-            glUniform4f(loc_font_fg_color,0.0,0.0,0.0,opacity);//black
-            // glUniform4f(loc_font_fg_color,1.0,1.0,1.0,opacity);//white
+
+            if(color == COLOR_BLACK)
+            {
+                glUniform4f(loc_font_fg_color,1.0,1.0,1.0,opacity);//white
+            }
+            else
+            {
+                glUniform4f(loc_font_fg_color,0.0,0.0,0.0,opacity);//black
+            }
             glDrawArrays(GL_TRIANGLE_STRIP,0,4);
         }
 
