@@ -567,6 +567,9 @@ void update(float dt)
         }
 
         text_list_update(text_lst, dt);
+        camera_set();
+        // camera_zoom(cam_zoom, false);
+        camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 
         return;
     }
