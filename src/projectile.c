@@ -182,7 +182,7 @@ void projectile_update(float delta_t)
 
         projectile_update_hit_box(proj);
 
-        if(!rectangles_colliding(&proj->hit_box, &room_area))
+        if(!rectangles_colliding(&proj->hit_box, &player_area))
         {
             proj->dead = true;
             continue;

@@ -313,7 +313,7 @@ void player_update(Player* p, float dt)
         level = level_generate(seed);
         level_print(&level);
     }
-    
+
     // check tiles around player
     handle_room_collision(p);
 

@@ -4,6 +4,7 @@
 
 #include "math2d.h"
 #include "imgui.h"
+#include "camera.h"
 #include "window.h"
 
 typedef struct
@@ -120,7 +121,6 @@ bool window_init(int _view_width, int _view_height)
     return true;
 }
 
-
 void window_get_mouse_coords(int* x, int* y)
 {
     *x = (int)(window_coord_x);
@@ -140,6 +140,49 @@ void window_set_mouse_view_coords(int x, int y)
     double _x = (double)x / (view_width/(float)window_width);
     double _y = (double)y / (view_height/(float)window_height);
     glfwSetCursorPos(window, _x, _y);
+}
+
+void window_get_mouse_world_coords(int* x, int* y)
+{
+    window_get_mouse_view_coords(x,y);
+    window_translate_view_to_world(x,y);
+}
+
+void window_set_mouse_world_coords(float x, float y)
+{
+    Matrix* view = get_camera_transform();
+    float cam_x = view->m[0][3];
+    float cam_y = view->m[1][3];
+    double _x = x + cam_x;
+    double _y = y + cam_y;
+    _x = (double)_x / (view_width/(float)window_width);
+    _y = (double)_y / (view_height/(float)window_height);
+    // printf("setting mouse world: %.2f, %.2f\n", x, y);
+    glfwSetCursorPos(window, _x, _y);
+}
+
+
+float window_scale_view_to_world(float distance)
+{
+    float cam_z = camera_get_zoom();
+    float factor = 1.0 - cam_z;
+    return (distance * factor);
+}
+
+void window_translate_view_to_world(int* x, int* y)
+{
+    Rect r = get_camera_rect();
+
+    float cam_z = camera_get_zoom();
+    float factor = 1.0 - cam_z;
+
+    Vector2i top_left = {r.x - r.w/2.0, r.y - r.h/2.0};
+
+    int view_x = *x;
+    int view_y = *y;
+
+    *x = top_left.x + (factor * view_x);
+    *y = top_left.y + (factor * view_y);
 }
 
 void window_deinit()
