@@ -87,7 +87,9 @@ void camera_move(float x, float y, bool immediate, Rect* limit)
 
         if(cam_rect.w > limit->w || cam_rect.h > limit->h)
         {
-            // unable to limit camera
+            printf("unable to limit camera\n");
+            print_rect(&cam_rect);
+            print_rect(limit);
         }
         else
         {

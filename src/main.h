@@ -17,22 +17,10 @@
 #include "core/text_list.h"
 
 
-
-// #define VIEW_WIDTH   1200
-// #define VIEW_HEIGHT  800
-// #define ROOM_W  320
-// #define ROOM_H  320
-
-
-#define VIEW_WIDTH   600
-#define VIEW_HEIGHT  400
+#define VIEW_WIDTH   1200
+#define VIEW_HEIGHT  800
 #define ROOM_W  480
 #define ROOM_H  288
-
-// #define VIEW_WIDTH   600
-// #define VIEW_HEIGHT  400
-// #define ROOM_W  800
-// #define ROOM_H  800
 
 
 // strings

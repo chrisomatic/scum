@@ -77,6 +77,7 @@ typedef struct
     float w,h;
 } Rect;
 
+// top left, top right, bottom right, bottom left
 typedef struct
 {
     float x[4];
@@ -91,7 +92,6 @@ typedef enum
     BL
 } RXYpoint;
 
-// top left, top right, bottom right, bottom left
 
 extern Matrix IDENTITY_MATRIX;
 

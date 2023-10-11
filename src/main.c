@@ -21,7 +21,7 @@
 // =========================
 
 bool initialized = false;
-bool debug_enabled = false;
+bool debug_enabled = true;
 bool paused = false;
 GameState game_state = GAME_STATE_MENU;
 Timer game_timer = {0};
@@ -30,11 +30,11 @@ bool show_big_map = false;
 GameRole role = ROLE_UNKNOWN;
 
 // Settings
-// uint32_t background_color = 0x00303030;
-uint32_t background_color = 0x00202020;
-// uint32_t background_color = COLOR_BLACK;
+uint32_t background_color = COLOR_BLACK;
+uint32_t margin_color = 0x00202020;
 
 int mx=0, my=0;
+int wmx=0, wmy=0;
 
 Rect room_area = {0};
 Rect player_area = {0};
@@ -43,8 +43,11 @@ Rect margin_right = {0};
 Rect margin_top = {0};
 Rect margin_bottom = {0};
 
+
+float cam_zoom = 0.60;
+Rect camera_limit = {0};    // based on margins and room_area
 Vector2f aim_camera_offset = {0};
-float cam_zoom = 0.00;
+float ascale = 1.0;
 
 Level level;
 unsigned int seed = 0;
@@ -107,7 +110,7 @@ int main(int argc, char* argv[])
 
     init();
 
-    camera_move(view_width/2.0, view_height/2.0, true, NULL);
+    // camera_move(view_width/2.0, view_height/2.0, true, NULL);
 
     // camera_move(player->pos.x, player->pos.y, true, &map_view_area);
     // camera_zoom(cam_zoom,false);
@@ -188,10 +191,6 @@ void set_game_state(GameState state)
 // also checks if the mouse is off the screen
 void camera_set()
 {
-    int mx, my;
-    window_get_mouse_view_coords(&mx, &my);
-
-    // if(player->item.mouse_aim)
     if(false)
     {
         float _vw = view_width;
@@ -229,8 +228,17 @@ void camera_set()
     float cam_pos_y = player->pos.y + aim_camera_offset.y;
 
     camera_zoom(cam_zoom,false);
-    // camera_move(cam_pos_x, cam_pos_y, false, &map_view_area);
-    camera_move(cam_pos_x, cam_pos_y, false, NULL);
+
+
+    float zscale = 1.0 - camera_get_zoom();
+    camera_limit.w = (margin_left.w + margin_right.w)*zscale;
+    camera_limit.w += room_area.w;
+    camera_limit.h = (margin_top.h + margin_bottom.h)*zscale;
+    camera_limit.h += room_area.h;
+    camera_limit.x = room_area.x;
+    camera_limit.y = room_area.y;
+
+    camera_move(cam_pos_x, cam_pos_y, false, &camera_limit);
 }
 
 void run()
@@ -353,6 +361,8 @@ void init()
 
     LOGI(" - Graphics.");
     gfx_init(VIEW_WIDTH, VIEW_HEIGHT);
+    ascale = view_width / 1200.0;
+    LOGI("   ascale: %.2f", ascale);
 
     LOGI(" - Camera.");
     camera_init();
@@ -374,6 +384,15 @@ void init()
 
     level = level_generate(seed);
 
+    camera_zoom(cam_zoom, true);
+    camera_move(0,0,false,NULL);
+    camera_update(VIEW_WIDTH, VIEW_HEIGHT);
+    Rect cr = get_camera_rect();
+    print_rect(&cr);
+    // ascale = 240.0 / cr.w;
+
+    // mscale = / view_width;
+
     room_area.w = ROOM_W;
     room_area.h = ROOM_H;
     room_area.x = CENTER_X;
@@ -383,34 +402,51 @@ void init()
     player_area.w -= 32;
     player_area.h -= 48;
 
-    RectXY rxy = {0};
-    rect_to_rectxy(&room_area, &rxy);
+    // RectXY rxy = {0};
+    // rect_to_rectxy(&room_area, &rxy);
 
-    float margin_left_w = rxy.x[TL];
-    float margin_right_w = view_width - rxy.x[TR];
+    // 120->214
 
-    float margin_top_h = rxy.y[TL];
-    float margin_bottom_h = view_height - rxy.y[BL];
+    // margins scaled with reference to view_width and view_height
+    float mscale = view_width/1200.0;
 
-    margin_left.w = margin_left_w;
-    margin_left.h = view_height - margin_top_h - margin_bottom_h;
-    margin_left.x = margin_left.w/2.0;
-    margin_left.y = CENTER_Y;
+    margin_left.w = 120.0 * mscale;
+    margin_left.h = 550.0 * mscale;
+    margin_left.x = margin_left.w / 2.0;
+    margin_left.y = view_height / 2.0;
 
-    margin_right.w = margin_right_w;
-    margin_right.h = view_height - margin_top_h - margin_bottom_h;
-    margin_right.x = view_width - margin_right.w/2.0;
-    margin_right.y = CENTER_Y;
+    margin_right.w = margin_left.w;
+    margin_right.h = margin_left.h;
+    margin_right.x = view_width - margin_left.w / 2.0;
+    margin_right.y = margin_left.y;
 
     margin_top.w = view_width;
-    margin_top.h = margin_top_h;
+    margin_top.h = (view_height - margin_left.h) / 2.0;
     margin_top.x = CENTER_X;
-    margin_top.y = margin_top_h/2.0;
+    margin_top.y = margin_top.h / 2.0;
 
-    margin_bottom.w = view_width;
-    margin_bottom.h = margin_bottom_h;
-    margin_bottom.x = CENTER_X;
-    margin_bottom.y = view_height - margin_bottom_h/2.0;
+    margin_bottom.w = margin_top.w;
+    margin_bottom.h = margin_top.h;
+    margin_bottom.x = margin_top.x;
+    margin_bottom.y = view_height - margin_bottom.h / 2.0;
+
+    // camera_limit.w = margin_left.w + margin_right.w + room_area.w;
+    // camera_limit.h = margin_left.h + margin_right.h + room_area.h;
+    // camera_limit.x = camera_limit.w/2.0;
+    // camera_limit.y = camera_limit.h/2.0;
+
+    // camera_limit.w
+
+#if 0
+    printf("top:\n");
+    print_rect(&margin_top);
+    printf("bottom:\n");
+    print_rect(&margin_bottom);
+    printf("left:\n");
+    print_rect(&margin_left);
+    printf("right:\n");
+    print_rect(&margin_right);
+#endif
 
     set_menu_keys();
 }
@@ -539,6 +575,7 @@ void update(float dt)
     // ------------------------------
 
     window_get_mouse_view_coords(&mx, &my);
+    window_get_mouse_world_coords(&wmx, &wmy);
 
     if(game_state == GAME_STATE_MENU)
     {
@@ -619,8 +656,8 @@ void update(float dt)
 
     text_list_update(text_lst, dt);
 
-    // camera_set();
-    camera_zoom(cam_zoom,false);
+    camera_set();
+    // camera_zoom(cam_zoom, false);
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 }
 
@@ -635,12 +672,16 @@ void draw_level(Rect* area, uint32_t color_bg, float opacity_bg, uint32_t color_
     float opacity_door = opacity_room;
     uint32_t color_door = color_room;
 
-    gfx_draw_rect(area, color_bg, NOT_SCALED, NO_ROTATION, opacity_bg, true, true);
+    gfx_draw_rect(area, color_bg, NOT_SCALED, NO_ROTATION, opacity_bg, true, NOT_IN_WORLD);
 
     float tlx = area->x - area->w/2.0;
+    // tlx *= ascale;
     float tly = area->y - area->h/2.0;
+    // tly *= ascale;
 
     // room width/height
+    // float rw = area->w/MAX_ROOMS_GRID_X * ascale;
+    // float rh = area->h/MAX_ROOMS_GRID_Y * ascale;
     float rw = area->w/MAX_ROOMS_GRID_X;
     float rh = area->h/MAX_ROOMS_GRID_Y;
     float rwh = MIN(rw, rh);
@@ -665,30 +706,30 @@ void draw_level(Rect* area, uint32_t color_bg, float opacity_bg, uint32_t color_
                 float draw_x = tlx + x*rwh + rwh/2.0;
                 float draw_y = tly + y*rwh + rwh/2.0;
                 Rect r = RECT(draw_x, draw_y, room_wh, room_wh);
-                gfx_draw_rect(&r, color_room, NOT_SCALED, NO_ROTATION, opacity_room, true, true);
+                gfx_draw_rect(&r, color_room, NOT_SCALED, NO_ROTATION, opacity_room, true, NOT_IN_WORLD);
 
                 if(room.doors[DOOR_UP])
                 {
                     Rect door = RECT(draw_x-door_offset, draw_y-rwh/2.0, door_w, door_h);
-                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, true);
+                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
                 }
 
                 if(room.doors[DOOR_DOWN])
                 {
                     Rect door = RECT(draw_x+door_offset, draw_y+rwh/2.0, door_w, door_h);
-                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, true);
+                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
                 }
 
                 if(room.doors[DOOR_RIGHT])
                 {
                     Rect door = RECT(draw_x+rwh/2.0, draw_y-door_offset, door_h, door_w);
-                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, true);
+                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
                 }
 
                 if(room.doors[DOOR_LEFT])
                 {
                     Rect door = RECT(draw_x-rwh/2.0, draw_y+door_offset, door_h, door_w);
-                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, true);
+                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
                 }
 
             }
@@ -708,7 +749,8 @@ void draw_level(Rect* area, uint32_t color_bg, float opacity_bg, uint32_t color_
     Rect r = RECT(draw_x, draw_y, room_wh, room_wh);
     gfx_get_absolute_coords(&pr, ALIGN_CENTER, &r, ALIGN_CENTER);
 
-    gfx_draw_rect(&pr, color_player, NOT_SCALED, NO_ROTATION, opacity_player, true, true);
+    // gfx_draw_rect(&pr, color_player, ascale*NOT_SCALED, NO_ROTATION, opacity_player, true, NOT_IN_WORLD);
+    gfx_draw_rect(&pr, color_player, NOT_SCALED, NO_ROTATION, opacity_player, true, NOT_IN_WORLD);
 }
 
 void draw_minimap()
@@ -720,7 +762,7 @@ void draw_minimap()
     gfx_get_absolute_coords(&minimap_area, ALIGN_CENTER, &margin_left, ALIGN_CENTER);
     draw_level(&minimap_area, COLOR_BLACK,0.3,  COLOR(0x22,0x48,0x70),0.4,  COLOR_RED,0.5);
 
-#if 1
+#if 0
     // solve for size
     float s = 0.01;
     for(int i = 0; i < 100; ++i)
@@ -741,7 +783,7 @@ void draw_minimap()
     seed_rect.y += minimap_area.h/2.0 + seed_rect.h/2.0;
     gfx_draw_rect(&seed_rect, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.5, true, true);
 
-    gfx_draw_string(rect_tlx(&seed_rect), rect_tly(&seed_rect), COLOR_WHITE, seed_scale, NO_ROTATION, FULL_OPACITY, IN_WORLD, DROP_SHADOW, "Level Seed: %u", seed);
+    gfx_draw_string(rect_tlx(&seed_rect), rect_tly(&seed_rect), COLOR_WHITE, seed_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, "Level Seed: %u", seed);
 #endif
 }
 
@@ -761,7 +803,7 @@ void draw()
     if(game_state == GAME_STATE_PLAYING)
     {
         level_draw_room(&level.rooms[player->curr_room.x][player->curr_room.y]);
-        gfx_draw_rect(&room_area, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+        gfx_draw_rect(&room_area, COLOR_WHITE, NOT_SCALED, NO_ROTATION, 1.0, false, true);
     }
     else if(game_state == GAME_STATE_MENU)
     {
@@ -775,7 +817,7 @@ void draw()
     {
 
         // draw menu
-        float menu_item_scale = 0.3;
+        float menu_item_scale = 0.6 * ascale;
 
         // get text height first
         Vector2f text_size = gfx_string_get_size(menu_item_scale, "A");
@@ -797,10 +839,6 @@ void draw()
         }
 
     }
-
-
-    // draw map
-    draw_minimap();
 
     if(game_state == GAME_STATE_PLAYING)
     {
@@ -834,13 +872,65 @@ void draw()
         }
     }
 
+    gfx_draw_rect(&margin_left, margin_color, NOT_SCALED, NO_ROTATION, 1.0, true, false);
+    gfx_draw_rect(&margin_right, margin_color, NOT_SCALED, NO_ROTATION, 1.0, true, false);
+    gfx_draw_rect(&margin_top, margin_color, NOT_SCALED, NO_ROTATION, 1.0, true, false);
+    gfx_draw_rect(&margin_bottom, margin_color, NOT_SCALED, NO_ROTATION, 1.0, true, false);
+
+    // draw map
+    draw_minimap();
+
+
     if(debug_enabled)
     {
-        gfx_draw_string(1, 0, COLOR_WHITE, 0.07, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "mouse: %d, %d", mx, my);
-        gfx_draw_rect(&margin_left, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-        gfx_draw_rect(&margin_right, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-        gfx_draw_rect(&margin_top, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-        gfx_draw_rect(&margin_bottom, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+
+        gfx_draw_rect(&margin_left, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
+        gfx_draw_rect(&margin_right, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
+        gfx_draw_rect(&margin_top, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
+        gfx_draw_rect(&margin_bottom, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
+
+        Rect xaxis = RECT(0,0,1000,1);
+        Rect yaxis = RECT(0,0,1,1000);
+        gfx_draw_rect(&xaxis, COLOR_PURPLE, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+        gfx_draw_rect(&yaxis, COLOR_PURPLE, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+
+        float zscale = 1.0 - camera_get_zoom();
+        Rect limit = camera_limit;
+        // print_rect(&limit);
+        // limit.w *= zscale;
+        // limit.h *= zscale;
+        // limit.x = limit.w/2.0;
+        // limit.y = limit.h/2.0;
+        Rect cr = get_camera_rect();
+        float sc = 0.2*ascale;
+        int yincr = 15*ascale;
+        int y = 0;
+        int x = 1;
+        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "view mouse:  %d, %d", mx, my); y += yincr;
+        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "world mouse: %d, %d", wmx, wmy); y += yincr;
+        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "pos: %.1f, %.1f", player->pos.x, player->pos.y); y += yincr;
+        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "camera: %.1f, %.1f, %.1f, %.1f", cr.x, cr.y, cr.w, cr.h); y += yincr;
+        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "limit: %.1f, %.1f, %.1f, %.1f", limit.x, limit.y, limit.w, limit.h); y += yincr;
+        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "view:   %d, %d", view_width, view_height); y += yincr;
+        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "window: %d, %d", window_width, window_height); y += yincr;
+
+
+
+
+
+
+
+        Rect l = margin_left;
+        l.w *= zscale;
+        l.h *= zscale;
+        l.x = cr.x-cr.w/2.0 + l.w/2.0;
+        l.y = cr.y;
+
+        gfx_draw_rect(&l, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+        // gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "l: %.1f, %.1f, %.1f, %.1f", l.x, l.y, l.w, l.h); y += yincr;
+
+
+
     }
 
     text_list_draw(text_lst);
