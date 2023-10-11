@@ -331,7 +331,7 @@ void player_draw(Player* p)
 
     if(debug_enabled)
     {
-        Rect r = RECT(player->pos.x, player->pos.y, 1, 1);
+        Rect r = RECT(p->pos.x, p->pos.y, 1, 1);
         gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
         gfx_draw_rect(&p->hitbox, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
     }

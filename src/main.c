@@ -44,7 +44,6 @@ Rect margin_right = {0};
 Rect margin_top = {0};
 Rect margin_bottom = {0};
 
-
 Vector2f aim_camera_offset = {0};
 float cam_zoom = 0.00;
 
@@ -379,15 +378,50 @@ void deinit()
 
 void update(float dt)
 {
+    gfx_clear_lines();
+
+    // Update Client
+    // ------------------------------
     if(role == ROLE_CLIENT)
     {
-        if(net_client_get_state() == DISCONNECTED)
+        ConnectionState check_state = net_client_get_state();
+
+        if(check_state != CONNECTED)
         {
-            int client_id = net_client_connect();
-            if(client_id == -1)
+            net_client_connect_update(); // progress through connection routine
+
+            ConnectionState curr_state = net_client_get_state();
+
+            if(curr_state != check_state)
+            {
+                // connection state changed
+                switch(curr_state)
+                {
+                    case DISCONNECTED:
+                        text_list_add(text_lst, 3.0, "Disconnected from Server.");
+                        break;
+                    case SENDING_CONNECTION_REQUEST:
+                        text_list_add(text_lst, 3.0, "Sending Connection Request.");
+                        break;
+                    case SENDING_CHALLENGE_RESPONSE:
+                        text_list_add(text_lst, 3.0, "Sending Challenge Response.");
+                        break;
+                    case CONNECTED:
+                    {
+                        text_list_add(text_lst, 3.0, "Connected to Server.");
+                        int id = net_client_get_id();
+                        player = &players[id];
+                        player_init_keys();
+
+                    } break;
+                }
+            }
+
+            if(curr_state != CONNECTED)
                 return;
         }
 
+        // Client connected
         net_client_update();
 
         player_handle_net_inputs(player, dt);
@@ -408,10 +442,13 @@ void update(float dt)
             }
         }
 
+        text_list_update(text_lst, dt);
+
         return;
     }
 
-    gfx_clear_lines();
+    // Update Local
+    // ------------------------------
 
     window_get_mouse_view_coords(&mx, &my);
 
@@ -464,6 +501,8 @@ void update(float dt)
             else if(STR_EQUAL(s, "Join Local Server"))
             {
                 role = ROLE_CLIENT;
+                net_client_init();
+                net_client_set_server_ip(LOCAL_SERVER_IP);
                 set_game_state(GAME_STATE_PLAYING);
             }
             else if(STR_EQUAL(s, "Settings"))
@@ -685,10 +724,21 @@ void draw()
             draw_level(&minimap_area, COLOR_BLACK,0.0,  COLOR_BLACK,0.3,  COLOR_RED,0.2);
         }
 
-
         // draw player
-
-        player_draw(player);
+        for(int i = 0; i < MAX_PLAYERS; ++i)
+        {
+            Player* p = &players[i];
+            if(p->active)
+            {
+                if(   p->curr_room.x == player->curr_room.x && 
+                      p->curr_room.y == player->curr_room.y
+                )
+                {
+                    // draw players if they are in the same room as you
+                    player_draw(p);
+                }
+            }
+        }
 
         for(int i = 0; i < plist->count; ++i)
         {

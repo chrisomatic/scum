@@ -3,7 +3,8 @@
 #include "gfx.h"
 #include "net.h"
 
-#define MAX_PLAYERS 2
+#define MAX_PLAYERS 4
+
 enum PlayerActions
 {
     PLAYER_ACTION_UP,
@@ -31,7 +32,7 @@ typedef struct
 
     GFXAnimation anim;
 
-    int sprite_index;
+    uint8_t sprite_index;
     Rect hitbox;
     Rect hitbox_prior;
 

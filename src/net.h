@@ -3,6 +3,7 @@
 #include "math2d.h"
 
 #define TICK_RATE 20.0f
+#define LOCAL_SERVER_IP "127.0.0.1"
 
 #define MAX_CLIENTS     MAX_PLAYERS
 #define MAX_PACKET_DATA_SIZE 32768
@@ -41,6 +42,7 @@ typedef enum
 
 typedef enum
 {
+    INVALID = -1,
     DISCONNECTED = 0,
     SENDING_CONNECTION_REQUEST,
     SENDING_CHALLENGE_RESPONSE,
@@ -116,15 +118,12 @@ void server_send_message(uint8_t to, uint8_t from, char* fmt, ...);
 
 // Client
 bool net_client_init();
-int net_client_connect();
-
-void net_client_connect_request();
-int net_client_connect_data_waiting();
-int net_client_connect_recv_data();
-
+int net_client_connect(); // blocking
+bool net_client_connect_update(); // non-blocking
 
 void net_client_update();
 uint8_t net_client_get_player_count();
+int net_client_get_id();
 ConnectionState net_client_get_state();
 int net_client_get_input_count();
 uint16_t net_client_get_latest_local_packet_id();
@@ -133,7 +132,7 @@ bool net_client_is_connected();
 void net_client_disconnect();
 bool net_client_set_server_ip(char* address);
 void net_client_get_server_ip_str(char* ip_str);
-bool net_client_data_waiting();
+int net_client_data_waiting();
 double net_client_get_rtt();
 void net_client_send_message(uint8_t to, char* fmt, ...);
 int net_client_send(uint8_t* data, uint32_t len);
