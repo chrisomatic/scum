@@ -72,3 +72,4 @@ void level_init();
 Level level_generate(unsigned int seed);
 void level_draw_room(Room* room);
 void level_print(Level* level);
+void level_print_room(Room* room);

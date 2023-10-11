@@ -153,7 +153,7 @@ static bool level_load_room_list()
     return true;
 }
 
-static void print_room(Room* room)
+void level_print_room(Room* room)
 {
     RoomData* room_data = &room_list[room->layout];
     for(int j = 0; j < ROOM_TILE_SIZE_Y; ++j)

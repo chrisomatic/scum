@@ -29,7 +29,6 @@ text_list_t* text_lst = NULL;
 bool show_big_map = false;
 GameRole role = ROLE_UNKNOWN;
 
-
 // Settings
 // uint32_t background_color = 0x00303030;
 uint32_t background_color = 0x00202020;
@@ -84,6 +83,8 @@ void update(float dt);
 void draw();
 void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods);
 
+void start_server();
+
 
 // =========================
 // Main Loop
@@ -91,14 +92,18 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods);
 
 int main(int argc, char* argv[])
 {
-
     init_timer();
     log_init(0);
 
-    parse_args(argc, argv);
-
     time_t t;
     srand((unsigned) time(&t));
+
+    parse_args(argc, argv);
+
+    if(role == ROLE_SERVER)
+    {
+        start_server();
+    }
 
     init();
 
@@ -107,13 +112,11 @@ int main(int argc, char* argv[])
     // camera_move(player->pos.x, player->pos.y, true, &map_view_area);
     // camera_zoom(cam_zoom,false);
 
-    text_lst = text_list_init(50, 10.0, view_height - 10.0, 0.08, COLOR_WHITE, false, TEXT_ALIGN_LEFT);
 
     run();
 
     return 0;
 }
-
 
 void update_input_state(PlayerInput* input, float dt)
 {
@@ -267,24 +270,71 @@ void run()
     }
 }
 
-
-void parse_args(int argc, char* argv[])
+void start_server()
 {
-    // if(argc > 1)
-    // {
-    //     for(int i = 1; i < argc; ++i)
-    //     {
-    //         if(argv[i][0] == '-' && argv[i][1] == '-')
-    //         {
-    //         }
-    //     }
-    // }
+    //init
+    gfx_image_init();
+    player_init();
+
+    level_init();
+    level = level_generate(seed);
+    level_print(&level);
+
+    projectile_init();
+
+    view_width = VIEW_WIDTH;
+    view_height = VIEW_HEIGHT;
+
+    room_area.w = ROOM_W;
+    room_area.h = ROOM_H;
+    room_area.x = CENTER_X;
+    room_area.y = CENTER_Y;
+
+    memcpy(&player_area, &room_area, sizeof(Rect));
+    player_area.w -= 32;
+    player_area.h -= 48;
+
+    RectXY rxy = {0};
+    rect_to_rectxy(&room_area, &rxy);
+
+    float margin_left_w = rxy.x[TL];
+    float margin_right_w = view_width - rxy.x[TR];
+
+    float margin_top_h = rxy.y[TL];
+    float margin_bottom_h = view_height - rxy.y[BL];
+
+    margin_left.w = margin_left_w;
+    margin_left.h = view_height - margin_top_h - margin_bottom_h;
+    margin_left.x = margin_left.w/2.0;
+    margin_left.y = CENTER_Y;
+
+    margin_right.w = margin_right_w;
+    margin_right.h = view_height - margin_top_h - margin_bottom_h;
+    margin_right.x = view_width - margin_right.w/2.0;
+    margin_right.y = CENTER_Y;
+
+    margin_top.w = view_width;
+    margin_top.h = margin_top_h;
+    margin_top.x = CENTER_X;
+    margin_top.y = margin_top_h/2.0;
+
+    margin_bottom.w = view_width;
+    margin_bottom.h = margin_bottom_h;
+    margin_bottom.x = CENTER_X;
+    margin_bottom.y = view_height - margin_bottom_h/2.0;
+
+    // start
+    net_server_start();
 }
 
 void init()
 {
     if(initialized) return;
     initialized = true;
+
+    text_lst = text_list_init(50, 10.0, view_height - 10.0, 0.08, COLOR_WHITE, false, TEXT_ALIGN_LEFT);
+
+    LOGI("Initializing...");
 
     LOGI("Resolution: %d %d",VIEW_WIDTH, VIEW_HEIGHT);
     bool success = window_init(VIEW_WIDTH, VIEW_HEIGHT);
@@ -298,8 +348,6 @@ void init()
     window_controls_set_cb(key_cb);
     window_controls_set_key_mode(KEY_MODE_NORMAL);
 
-    LOGI("Initializing...");
-
     LOGI(" - Shaders.");
     shader_load_all();
 
@@ -309,15 +357,15 @@ void init()
     LOGI(" - Camera.");
     camera_init();
 
+    LOGI(" - Player.");
+    player = &players[0];
+    player_init();
+
     LOGI(" - Effects.");
     effects_load_all();
 
     LOGI(" - Room Data.");
     level_init();
-
-    LOGI(" - Player.");
-    player = &players[0];
-    player_init();
 
     LOGI(" - Projectiles.");
     projectile_init();
@@ -375,6 +423,46 @@ void deinit()
     window_deinit();
 }
 
+void parse_args(int argc, char* argv[])
+{
+    // --local
+    // --server
+    // --client <ip-addr>
+
+    role = ROLE_UNKNOWN;
+
+    if(argc > 1)
+    {
+        for(int i = 1; i < argc; ++i)
+        {
+            if(argv[i][0] == '-' && argv[i][1] == '-')
+            {
+                // local
+                if(strncmp(argv[i]+2,"local",5) == 0)
+                {
+                    role = ROLE_LOCAL;
+                }
+
+                // server
+                else if(strncmp(argv[i]+2,"server",6) == 0)
+                {
+                    role = ROLE_SERVER;
+                }
+
+                // client
+                else if(strncmp(argv[i]+2,"client",6) == 0)
+                {
+                    role = ROLE_CLIENT;
+                }
+            }
+            else
+            {
+                if(role == ROLE_CLIENT)
+                    net_client_set_server_ip(argv[i]);
+            }
+        }
+    }
+}
 
 void update(float dt)
 {
@@ -493,7 +581,7 @@ void update(float dt)
 
                 // init
                 gfx_image_init();
-                //players_init();
+                player_init();
                 projectile_init();
 
                 net_server_start();

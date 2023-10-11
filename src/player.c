@@ -50,7 +50,8 @@ void player_init()
 {
     if(player_image == -1)
     {
-        player_image = gfx_load_image("src/img/spaceman.png", false, true, 32, 32);
+        if(role != ROLE_SERVER)
+            player_image = gfx_load_image("src/img/spaceman.png", false, true, 32, 32);
     }
 
     for(int i = 0; i < MAX_PLAYERS; ++i)
@@ -120,6 +121,7 @@ static void handle_room_collision(Player* p)
     int x = room_area.x - room_area.w/2.0;
     int y = room_area.y - room_area.h/2.0;
 
+
     int w = 32;
     int h = 32;
 
@@ -182,8 +184,6 @@ static void handle_room_collision(Player* p)
                         set_hit_box_pos(p, p->hitbox.x, y1);
                     }
                 }
-
-
             }
 
             TileType tt = rdata->tiles[checks[i].x-1][checks[i].y-1];
@@ -193,6 +193,8 @@ static void handle_room_collision(Player* p)
                 // correct collision
                 float x_diff = (rc.w + p->hitbox.w)/2.0 - ABS(rc.x - p->hitbox.x);
                 float y_diff = (rc.h + p->hitbox.h)/2.0 - ABS(rc.y - p->hitbox.y);
+
+                //printf("i: %d, collide with boulder! x_diff: %f, y_diff: %f\n",i, x_diff, y_diff);
 
                 switch(i)
                 {
@@ -207,10 +209,8 @@ static void handle_room_collision(Player* p)
                     case 8: p->pos.x += p->vel.x > p->vel.y ? x_diff : 0.0; p->pos.y += p->vel.x > p->vel.y ? 0.0 : y_diff; break;
                     default: break;
                 }
-
             }
         }
-        gfx_draw_rect_xywh(x+w/2.0 + w*c.x,y + h/2.0 + h*c.y,w,h, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
     }
 
 }
