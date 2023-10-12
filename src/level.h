@@ -13,6 +13,8 @@
 #define ROOM_TILE_SIZE_X 13
 #define ROOM_TILE_SIZE_Y 7
 
+#define TILE_SIZE 32
+
 typedef enum
 {
     TILE_NONE = 0,
@@ -22,12 +24,12 @@ typedef enum
 
 typedef enum
 {
-    DOOR_UP,
-    DOOR_RIGHT,
-    DOOR_DOWN,
-    DOOR_LEFT,
-    DOOR_NONE,
-} Door;
+    DIR_UP = 0,
+    DIR_RIGHT,
+    DIR_DOWN,
+    DIR_LEFT,
+    DIR_NONE,
+} Dir;
 
 typedef enum
 {
@@ -50,8 +52,17 @@ typedef enum
 
 typedef struct
 {
+    Dir dir;
+    Vector2f p0;
+    Vector2f p1;
+} Wall;
+
+typedef struct
+{
     bool valid;
     bool doors[4];
+    Wall walls[100];
+    int wall_count;
     int layout;
     bool discovered;
 } Room;

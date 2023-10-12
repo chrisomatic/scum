@@ -4,19 +4,14 @@
 #include "gfx.h"
 #include "level.h"
 #include "projectile.h"
-#include "camera.h"
 #include "player.h"
+#include "camera.h"
 
 int player_image = -1;
 Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
 int player_image;
 int num_players;
-
-#define SPRITE_UP    0
-#define SPRITE_DOWN  4
-#define SPRITE_LEFT  8
-#define SPRITE_RIGHT 12
 
 static void update_player_boxes(Player* p)
 {
@@ -64,6 +59,7 @@ void player_init()
 
         p->sprite_index = 4;
 
+        p->radius = 8.0;
         p->curr_room.x = (MAX_ROOMS_GRID_X-1)/2;
         p->curr_room.y = (MAX_ROOMS_GRID_Y-1)/2;
 
@@ -102,6 +98,22 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
 }
 
+void player_set_hit_box_pos(Player* p, float x, float y)
+{
+    // memcpy(p->hitbox_prior, p->hitbox, sizeof(p->hitbox));
+
+    float dx = p->pos.x - p->hitbox.x;
+    float dy = p->pos.y - p->hitbox.y;
+
+    p->hitbox.x = x;
+    p->hitbox.y = y;
+
+    p->pos.x = x + dx;
+    p->pos.y = y + dy;
+}
+
+
+
 void player_reset(Player* p)
 {
     return;
@@ -109,191 +121,196 @@ void player_reset(Player* p)
 
 static void handle_room_collision(Player* p)
 {
-    int x = room_area.x - room_area.w/2.0;
-    int y = room_area.y - room_area.h/2.0;
-
-
-    int w = 32;
-    int h = 32;
-
-    Vector2i checks[] = {
-        {p->curr_tile.x, p->curr_tile.y},
-        {p->curr_tile.x, p->curr_tile.y-1},
-        {p->curr_tile.x+1, p->curr_tile.y-1},
-        {p->curr_tile.x+1, p->curr_tile.y},
-        {p->curr_tile.x+1, p->curr_tile.y+1},
-        {p->curr_tile.x, p->curr_tile.y+1},
-        {p->curr_tile.x-1, p->curr_tile.y+1},
-        {p->curr_tile.x-1, p->curr_tile.y},
-        {p->curr_tile.x-1, p->curr_tile.y-1}
-    };
-
     Room* room = &level.rooms[p->curr_room.x][p->curr_room.y];
-    RoomData* rdata = &room_list[room->layout];
 
-    bool go_through_door = p->actions[PLAYER_ACTION_DOOR].toggled_off;
-    //text_list_add(text_lst, 3.0, "num_checks: %d" ,num_checks);
-
-    for(int i = 0; i < sizeof(checks)/sizeof(checks[0]); ++i)
+    for(int i = 0; i < room->wall_count; ++i)
     {
-        Vector2i c = checks[i];
+        Wall* wall = &room->walls[i];
 
-        Rect rc = {x+w/2.0 + w*c.x, y + h/2.0 + h*c.y, w, h};
-        bool collision = rectangles_colliding(&p->hitbox, &rc);
+        bool collision = false;
+        bool check = false;
+        Vector2f check_point;
 
-        if(collision)
+        float px = p->pos.x;
+        float py = p->pos.y + 8;
+
+        switch(wall->dir)
         {
-            if(i == 0)
-            {
-                if(go_through_door)
+            case DIR_UP: case DIR_DOWN:
+                if(px+p->radius >= wall->p0.x && px-p->radius <= wall->p1.x)
                 {
-                    RectXY rxy = {0};
-                    rect_to_rectxy(&room_area, &rxy);
+                    check_point.x = px;
+                    check_point.y = wall->p0.y;
+                    check = true;
+                }
+                break;
+            case DIR_LEFT: case DIR_RIGHT:
+                if(py+p->radius >= wall->p0.y && py-p->radius <= wall->p1.y)
+                {
+                    check_point.x = wall->p0.x;
+                    check_point.y = py;
+                    check = true;
+                }
+                break;
+        }
 
-                    if(room->doors[DOOR_LEFT] && c.x == 0 && c.y == 4)
-                    {
-#if 1
-                        transition_room = true;
-                        transition_offsets.x = 0;
-                        transition_offsets.y = 0;
+        if(check)
+        {
+            float d = dist(px, py, check_point.x, check_point.y);
+            bool collision = (d < p->radius);
 
-                        Rect cr = get_camera_rect();
-                        float zscale = 1.0 - camera_get_zoom();
-                        float w = (cr.w - (margin_left.w + margin_right.w)*zscale);
+            if(collision)
+            {
+                //printf("Collision! player: %f %f. Wall point: %f %f. Dist: %f\n", px, py, check_point.x, check_point.y, d);
 
-                        transition_targets.x = w;
-                        transition_targets.y = 0;
-
-                        transition_next_room.x = p->curr_room.x - 1;
-                        transition_next_room.y = p->curr_room.y;
-
-                        float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
-                        transition_player_target.x = x1;
-                        transition_player_target.y = p->hitbox.y;
-#else
-                        p->curr_room.x--;
-                        float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
-                        player_set_hit_box_pos(p, x1, p->hitbox.y);
-#endif
-
-                        p->sprite_index = SPRITE_LEFT;
-
-
-                    }
-                    else if(room->doors[DOOR_RIGHT] && c.x == 14 && c.y == 4)
-                    {
-
-#if 1
-                        transition_room = true;
-                        transition_offsets.x = 0;
-                        transition_offsets.y = 0;
-
-                        Rect cr = get_camera_rect();
-                        float zscale = 1.0 - camera_get_zoom();
-                        float w = -(cr.w - (margin_left.w + margin_right.w)*zscale);
-
-                        transition_targets.x = w;
-                        transition_targets.y = 0;
-
-                        transition_next_room.x = p->curr_room.x + 1;
-                        transition_next_room.y = p->curr_room.y;
-
-                        float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
-                        transition_player_target.x = x1;
-                        transition_player_target.y = p->hitbox.y;
-#else
-                        p->curr_room.x++;
-                        float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
-                        player_set_hit_box_pos(p, x1, p->hitbox.y);
-#endif
-                        p->sprite_index = SPRITE_RIGHT;
-
-                    }
-                    else if(room->doors[DOOR_UP] && c.x == 7 && c.y == 0)
-                    {
-#if 1
-                        transition_room = true;
-                        transition_offsets.x = 0;
-                        transition_offsets.y = 0;
-
-                        Rect cr = get_camera_rect();
-                        float zscale = 1.0 - camera_get_zoom();
-                        float h = (cr.h - (margin_top.h + margin_top.h)*zscale);
-
-                        transition_targets.x = 0;
-                        transition_targets.y = h;
-
-                        transition_next_room.x = p->curr_room.x;
-                        transition_next_room.y = p->curr_room.y-1;
-
-                        float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
-                        transition_player_target.x = p->hitbox.x;
-                        transition_player_target.y = y1;
-#else
-                        p->curr_room.y--;
-                        float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
-                        player_set_hit_box_pos(p, p->hitbox.x, y1);
-#endif
-
-                        p->sprite_index = SPRITE_UP;
-
-                    }
-                    else if(room->doors[DOOR_DOWN] && c.x == 7 && c.y == 8)
-                    {
-#if 1
-                        transition_room = true;
-                        transition_offsets.x = 0;
-                        transition_offsets.y = 0;
-
-                        Rect cr = get_camera_rect();
-                        float zscale = 1.0 - camera_get_zoom();
-                        float h = -(cr.h - (margin_top.h + margin_top.h)*zscale);
-
-                        transition_targets.x = 0;
-                        transition_targets.y = h;
-
-                        transition_next_room.x = p->curr_room.x;
-                        transition_next_room.y = p->curr_room.y+1;
-
-                        float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
-                        transition_player_target.x = p->hitbox.x;
-                        transition_player_target.y = y1;
-#else
-                        p->curr_room.y--;
-                        float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
-                        player_set_hit_box_pos(p, p->hitbox.x, y1);
-#endif
-
-                        p->sprite_index = SPRITE_DOWN;
-
-                    }
+                float delta = p->radius - d + 1.0;
+                switch(wall->dir)
+                {
+                    case DIR_UP:    p->pos.y -= delta; break;
+                    case DIR_DOWN:  p->pos.y += delta; break;
+                    case DIR_LEFT:  p->pos.x -= delta; break;
+                    case DIR_RIGHT: p->pos.x += delta; break;
                 }
             }
+        }
+    }
 
-            TileType tt = rdata->tiles[checks[i].x-1][checks[i].y-1];
+    for(int i = 0; i < 4; ++i)
+    {
+        bool is_door = room->doors[i];
 
-            if(tt == TILE_BOULDER)
+        if(!is_door)
+            continue;
+
+        Vector2f door_point;
+
+        int x0 = room_area.x - room_area.w/2.0;
+        int y0 = room_area.y - room_area.h/2.0;
+
+        switch(i)
+        {
+            case DIR_UP:
+                door_point.x = x0 + TILE_SIZE*((ROOM_TILE_SIZE_X+2)/2.0);
+                door_point.y = y0 + TILE_SIZE*(1);
+                break;
+            case DIR_RIGHT:
+                door_point.x = x0 + TILE_SIZE*(ROOM_TILE_SIZE_X+1);
+                door_point.y = y0 + TILE_SIZE*((ROOM_TILE_SIZE_Y+2)/2.0);
+                break;
+            case DIR_DOWN:
+                door_point.x = x0 + TILE_SIZE*((ROOM_TILE_SIZE_X+2)/2.0);
+                door_point.y = y0 + TILE_SIZE*(ROOM_TILE_SIZE_Y+1);
+                break;
+            case DIR_LEFT:
+                door_point.x = x0 + TILE_SIZE*(1);
+                door_point.y = y0 + TILE_SIZE*((ROOM_TILE_SIZE_Y+2)/2.0);
+                break;
+        }
+
+        float d = dist(p->pos.x, p->pos.y+p->radius, door_point.x, door_point.y);
+
+        bool colliding_with_door = (d < 10.0);
+        bool go_through_door = p->actions[PLAYER_ACTION_DOOR].toggled_off;
+
+        if(colliding_with_door && go_through_door)
+        {
+            // through door
+            RectXY rxy = {0};
+            rect_to_rectxy(&room_area, &rxy);
+
+            switch(i)
             {
-                // correct collision
-                float x_diff = (rc.w + p->hitbox.w)/2.0 - ABS(rc.x - p->hitbox.x);
-                float y_diff = (rc.h + p->hitbox.h)/2.0 - ABS(rc.y - p->hitbox.y);
-
-                //printf("i: %d, collide with boulder! x_diff: %f, y_diff: %f\n",i, x_diff, y_diff);
-
-                switch(i)
+                case DIR_UP:
                 {
-                    case 0: p->pos.x += 0.0;    p->pos.y += 0.0;    break;
-                    case 1: p->pos.x += 0.0;    p->pos.y += y_diff; break;
-                    case 2: p->pos.x -= p->vel.x > p->vel.y ? x_diff : 0.0; p->pos.y += p->vel.x > p->vel.y ? 0.0 : y_diff; break;
-                    case 3: p->pos.x -= x_diff; p->pos.y += 0.0;    break;
-                    case 4: p->pos.x -= p->vel.x > p->vel.y ? x_diff : 0.0; p->pos.y -= p->vel.x > p->vel.y ? 0.0 : y_diff; break;
-                    case 5: p->pos.x += 0.0;    p->pos.y -= y_diff; break;
-                    case 6: p->pos.x += p->vel.x > p->vel.y ? x_diff : 0.0; p->pos.y -= p->vel.x > p->vel.y ? 0.0 : y_diff; break;
-                    case 7: p->pos.x += x_diff; p->pos.y += 0.0;    break;
-                    case 8: p->pos.x += p->vel.x > p->vel.y ? x_diff : 0.0; p->pos.y += p->vel.x > p->vel.y ? 0.0 : y_diff; break;
-                    default: break;
-                }
+                    transition_room = true;
+                    transition_offsets.x = 0;
+                    transition_offsets.y = 0;
+
+                    Rect cr = get_camera_rect();
+                    float zscale = 1.0 - camera_get_zoom();
+                    float h = (cr.h - (margin_top.h + margin_top.h)*zscale);
+
+                    transition_targets.x = 0;
+                    transition_targets.y = h;
+
+                    transition_next_room.x = p->curr_room.x;
+                    transition_next_room.y = p->curr_room.y-1;
+
+                    float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
+                    transition_player_target.x = p->hitbox.x;
+                    transition_player_target.y = y1;
+                    player_set_hit_box_pos(player, transition_player_target.x, transition_player_target.y);
+                    p->sprite_index = SPRITE_UP;
+
+                }   break;
+                case DIR_RIGHT:
+                {
+                    transition_room = true;
+                    transition_offsets.x = 0;
+                    transition_offsets.y = 0;
+
+                    Rect cr = get_camera_rect();
+                    float zscale = 1.0 - camera_get_zoom();
+                    float w = -(cr.w - (margin_left.w + margin_right.w)*zscale);
+
+                    transition_targets.x = w;
+                    transition_targets.y = 0;
+
+                    transition_next_room.x = p->curr_room.x + 1;
+                    transition_next_room.y = p->curr_room.y;
+
+                    float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
+                    transition_player_target.x = x1;
+                    transition_player_target.y = p->hitbox.y;
+                    player_set_hit_box_pos(player, transition_player_target.x, transition_player_target.y);
+                    p->sprite_index = SPRITE_RIGHT;
+                }   break;
+                case DIR_DOWN:
+                {
+                    transition_room = true;
+                    transition_offsets.x = 0;
+                    transition_offsets.y = 0;
+
+                    Rect cr = get_camera_rect();
+                    float zscale = 1.0 - camera_get_zoom();
+                    float h = -(cr.h - (margin_top.h + margin_top.h)*zscale);
+
+                    transition_targets.x = 0;
+                    transition_targets.y = h;
+
+                    transition_next_room.x = p->curr_room.x;
+                    transition_next_room.y = p->curr_room.y+1;
+
+                    float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
+                    transition_player_target.x = p->hitbox.x;
+                    transition_player_target.y = y1;
+                    player_set_hit_box_pos(player, transition_player_target.x, transition_player_target.y);
+                    p->sprite_index = SPRITE_DOWN;
+                }   break;
+                case DIR_LEFT:
+                {
+                    transition_room = true;
+                    transition_offsets.x = 0;
+                    transition_offsets.y = 0;
+
+                    Rect cr = get_camera_rect();
+                    float zscale = 1.0 - camera_get_zoom();
+                    float w = (cr.w - (margin_left.w + margin_right.w)*zscale);
+
+                    transition_targets.x = w;
+                    transition_targets.y = 0;
+
+                    transition_next_room.x = p->curr_room.x - 1;
+                    transition_next_room.y = p->curr_room.y;
+
+                    float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
+                    transition_player_target.x = x1;
+                    transition_player_target.y = p->hitbox.y;
+                    player_set_hit_box_pos(player, transition_player_target.x, transition_player_target.y);
+                    p->sprite_index = SPRITE_LEFT;
+                }   break;
             }
+            //printf("colliding with door, dist: %f\n", d);
         }
     }
 
@@ -302,7 +319,6 @@ static void handle_room_collision(Player* p)
 void player_update(Player* p, float dt)
 {
     if(!p->active) return;
-
     if(transition_room) return;
 
     for(int i = 0; i < PLAYER_ACTION_MAX; ++i)
@@ -331,25 +347,25 @@ void player_update(Player* p, float dt)
     if(up)
     {
         p->vel.y = -v;
-        p->sprite_index = SPRITE_UP;
+        p->sprite_index = 0;
     }
 
     if(down)
     {
         p->vel.y = +v;
-        p->sprite_index = SPRITE_DOWN;
+        p->sprite_index = 4;
     }
 
     if(left)
     {
         p->vel.x = -v;
-        p->sprite_index = SPRITE_LEFT;
+        p->sprite_index = 8;
     }
 
     if(right)
     {
         p->vel.x = +v;
-        p->sprite_index = SPRITE_RIGHT;
+        p->sprite_index = 12;
     }
 
     p->pos.x += p->vel.x*dt;
@@ -357,15 +373,12 @@ void player_update(Player* p, float dt)
 
     update_player_boxes(p);
 
-    if(!transition_room)
+    Vector2f adj = limit_rect_pos(&player_area, &p->hitbox);
+    if(!FEQ0(adj.x) || !FEQ0(adj.y))
     {
-        Vector2f adj = limit_rect_pos(&player_area, &p->hitbox);
-        if(!FEQ0(adj.x) || !FEQ0(adj.y))
-        {
-            p->pos.x += adj.x;
-            p->pos.y += adj.y;
-            update_player_boxes(p);
-        }
+        p->pos.x += adj.x;
+        p->pos.y += adj.y;
+        update_player_boxes(p);
     }
 
     // update player current tile
@@ -405,8 +418,7 @@ void player_update(Player* p, float dt)
     }
 
     // check tiles around player
-    if(!transition_room)
-        handle_room_collision(p);
+    handle_room_collision(p);
     level.rooms[p->curr_room.x][p->curr_room.y].discovered = true;
 
 
@@ -420,8 +432,10 @@ void player_update(Player* p, float dt)
 void player_draw(Player* p)
 {
     if(!p->active) return;
-    if(transition_room) return;
     gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->pos.x, p->pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+
+    // @TEMP
+    gfx_draw_circle(p->pos.x, p->pos.y+8, p->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
 
     if(debug_enabled)
     {
@@ -469,18 +483,4 @@ void player_handle_net_inputs(Player* p, double dt)
     {
         net_client_add_player_input(&p->input);
     }
-}
-
-void player_set_hit_box_pos(Player* p, float x, float y)
-{
-    // memcpy(p->hitbox_prior, p->hitbox, sizeof(p->hitbox));
-
-    float dx = p->pos.x - p->hitbox.x;
-    float dy = p->pos.y - p->hitbox.y;
-
-    p->hitbox.x = x;
-    p->hitbox.y = y;
-
-    p->pos.x = x + dx;
-    p->pos.y = y + dy;
 }

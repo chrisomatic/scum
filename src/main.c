@@ -198,7 +198,7 @@ void set_game_state(GameState state)
 // also checks if the mouse is off the screen
 void camera_set()
 {
-    // if(transition_room) return;
+    if(transition_room) return;
     // if(transition_room)
     // {
     //     // camera_zoom(cam_zoom-0.1,false);
@@ -370,6 +370,11 @@ void init()
     window_controls_set_cb(key_cb);
     window_controls_set_key_mode(KEY_MODE_NORMAL);
 
+    room_area.w = ROOM_W;
+    room_area.h = ROOM_H;
+    room_area.x = CENTER_X;
+    room_area.y = CENTER_Y;
+
     LOGI(" - Shaders.");
     shader_load_all();
 
@@ -403,11 +408,6 @@ void init()
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
     Rect cr = get_camera_rect();
     // print_rect(&cr);
-
-    room_area.w = ROOM_W;
-    room_area.h = ROOM_H;
-    room_area.x = CENTER_X;
-    room_area.y = CENTER_Y;
 
     memcpy(&player_area, &room_area, sizeof(Rect));
     player_area.w -= 32;
@@ -663,6 +663,15 @@ void update(float dt)
         }
     }
 
+    /*
+    Room* room = &level.rooms[player->curr_room.x][player->curr_room.y];
+
+    for(int i = 0; i < room->wall_count; ++i)
+    {
+        Wall* wall = &room->walls[i];
+        gfx_add_line(wall->p0.x, wall->p0.y, wall->p1.x, wall->p1.y, COLOR_RED);
+    }
+    */
 
     text_list_update(text_lst, dt);
 
@@ -714,7 +723,7 @@ void draw_level(Rect* area, bool show_all, uint32_t color_bg, float opacity_bg, 
                 Rect r = RECT(draw_x, draw_y, room_wh, room_wh);
                 gfx_draw_rect(&r, color_room, NOT_SCALED, NO_ROTATION, opacity_room, true, NOT_IN_WORLD);
 
-                if(room.doors[DOOR_UP])
+                if(room.doors[DIR_UP])
                 {
                     if(show_all || level_is_room_discovered(&level, x, y-1))
                     {
@@ -723,7 +732,7 @@ void draw_level(Rect* area, bool show_all, uint32_t color_bg, float opacity_bg, 
                     }
                 }
 
-                if(room.doors[DOOR_DOWN])
+                if(room.doors[DIR_DOWN])
                 {
                     if(show_all || level_is_room_discovered(&level, x, y+1))
                     {
@@ -732,7 +741,7 @@ void draw_level(Rect* area, bool show_all, uint32_t color_bg, float opacity_bg, 
                     }
                 }
 
-                if(room.doors[DOOR_RIGHT])
+                if(room.doors[DIR_RIGHT])
                 {
                     if(show_all || level_is_room_discovered(&level, x+1, y))
                     {
@@ -741,7 +750,7 @@ void draw_level(Rect* area, bool show_all, uint32_t color_bg, float opacity_bg, 
                     }
                 }
 
-                if(room.doors[DOOR_LEFT])
+                if(room.doors[DIR_LEFT])
                 {
                     if(show_all || level_is_room_discovered(&level, x-1, y))
                     {
@@ -823,6 +832,9 @@ void draw()
 
 
     // draw room
+
+    Room* room = &level.rooms[player->curr_room.x][player->curr_room.y];
+
     if(game_state == GAME_STATE_PLAYING)
     {
         // static int c = 0;
@@ -845,7 +857,7 @@ void draw()
                 player->curr_room.x = transition_next_room.x;
                 player->curr_room.y = transition_next_room.y;
 
-                player_set_hit_box_pos(player, transition_player_target.x, transition_player_target.y);
+                //player_set_hit_box_pos(player, transition_player_target.x, transition_player_target.y);
                 camera_move(player->pos.x, player->pos.y, true, &camera_limit);
                 camera_update(VIEW_WIDTH, VIEW_HEIGHT);
                 transition_room = false;
@@ -899,7 +911,7 @@ void draw()
 
         if(!transition_room)
         {
-            level_draw_room(&level.rooms[player->curr_room.x][player->curr_room.y], 0, 0);
+            level_draw_room(room, 0, 0);
         }
 
 
@@ -922,8 +934,7 @@ void draw()
     }
     else if(game_state == GAME_STATE_MENU)
     {
-        //TODO
-        level_draw_room(&level.rooms[player->curr_room.x][player->curr_room.y], 0, 0);
+        level_draw_room(room, 0, 0);
         gfx_draw_rect(&room_area, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, true);
     }
 
@@ -995,7 +1006,6 @@ void draw()
     // draw map
     draw_minimap();
 
-
     if(debug_enabled)
     {
 
@@ -1031,9 +1041,25 @@ void draw()
         // l.x = cr.x-cr.w/2.0 + l.w/2.0;
         // l.y = cr.y;
         // gfx_draw_rect(&l, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+
+        for(int i = 0; i < room->wall_count; ++i)
+        {
+            Wall* wall = &room->walls[i];
+
+            float x = wall->p0.x;
+            float y = wall->p0.y;
+            float w = ABS(wall->p0.x - wall->p1.x)+1;
+            float h = ABS(wall->p0.y - wall->p1.y)+1;
+
+            gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_WHITE, NOT_SCALED, NO_ROTATION, FULL_OPACITY, true, IN_WORLD);
+        }
+
+
     }
 
+
     text_list_draw(text_lst);
+    //gfx_draw_lines();
 }
 
 

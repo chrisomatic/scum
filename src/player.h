@@ -5,6 +5,11 @@
 
 #define MAX_PLAYERS 4
 
+#define SPRITE_UP    0
+#define SPRITE_DOWN  4
+#define SPRITE_LEFT  8
+#define SPRITE_RIGHT 12
+
 enum PlayerActions
 {
     PLAYER_ACTION_UP,
@@ -35,6 +40,7 @@ typedef struct
     uint8_t sprite_index;
     Rect hitbox;
     Rect hitbox_prior;
+    float radius;
 
     Vector2i curr_room;
     Vector2i curr_tile;
