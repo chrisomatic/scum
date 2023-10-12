@@ -856,6 +856,7 @@ void draw()
             {
                 player->curr_room.x = transition_next_room.x;
                 player->curr_room.y = transition_next_room.y;
+                room = &level.rooms[player->curr_room.x][player->curr_room.y];
 
                 //player_set_hit_box_pos(player, transition_player_target.x, transition_player_target.y);
                 camera_move(player->pos.x, player->pos.y, true, &camera_limit);
