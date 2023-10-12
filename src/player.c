@@ -4,6 +4,7 @@
 #include "gfx.h"
 #include "level.h"
 #include "projectile.h"
+#include "camera.h"
 #include "player.h"
 
 int player_image = -1;
@@ -11,6 +12,11 @@ Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
 int player_image;
 int num_players;
+
+#define SPRITE_UP    0
+#define SPRITE_DOWN  4
+#define SPRITE_LEFT  8
+#define SPRITE_RIGHT 12
 
 static void update_player_boxes(Player* p)
 {
@@ -30,21 +36,6 @@ static void update_player_boxes(Player* p)
     p->hitbox.h *= 0.4;
     p->hitbox.w *= 0.6;
 }
-
-static void set_hit_box_pos(Player* p, float x, float y)
-{
-    // memcpy(p->hitbox_prior, p->hitbox, sizeof(p->hitbox));
-
-    float dx = p->pos.x - p->hitbox.x;
-    float dy = p->pos.y - p->hitbox.y;
-
-    p->hitbox.x = x;
-    p->hitbox.y = y;
-
-    p->pos.x = x + dx;
-    p->pos.y = y + dy;
-}
-
 
 void player_init()
 {
@@ -161,27 +152,120 @@ static void handle_room_collision(Player* p)
 
                     if(room->doors[DOOR_LEFT] && c.x == 0 && c.y == 4)
                     {
+#if 1
+                        transition_room = true;
+                        transition_offsets.x = 0;
+                        transition_offsets.y = 0;
+
+                        Rect cr = get_camera_rect();
+                        float zscale = 1.0 - camera_get_zoom();
+                        float w = (cr.w - (margin_left.w + margin_right.w)*zscale);
+
+                        transition_targets.x = w;
+                        transition_targets.y = 0;
+
+                        transition_next_room.x = p->curr_room.x - 1;
+                        transition_next_room.y = p->curr_room.y;
+
+                        float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
+                        transition_player_target.x = x1;
+                        transition_player_target.y = p->hitbox.y;
+#else
                         p->curr_room.x--;
                         float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
-                        set_hit_box_pos(p, x1, p->hitbox.y);
+                        player_set_hit_box_pos(p, x1, p->hitbox.y);
+#endif
+
+                        p->sprite_index = SPRITE_LEFT;
+
+
                     }
                     else if(room->doors[DOOR_RIGHT] && c.x == 14 && c.y == 4)
                     {
+
+#if 1
+                        transition_room = true;
+                        transition_offsets.x = 0;
+                        transition_offsets.y = 0;
+
+                        Rect cr = get_camera_rect();
+                        float zscale = 1.0 - camera_get_zoom();
+                        float w = -(cr.w - (margin_left.w + margin_right.w)*zscale);
+
+                        transition_targets.x = w;
+                        transition_targets.y = 0;
+
+                        transition_next_room.x = p->curr_room.x + 1;
+                        transition_next_room.y = p->curr_room.y;
+
+                        float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
+                        transition_player_target.x = x1;
+                        transition_player_target.y = p->hitbox.y;
+#else
                         p->curr_room.x++;
                         float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
-                        set_hit_box_pos(p, x1, p->hitbox.y);
+                        player_set_hit_box_pos(p, x1, p->hitbox.y);
+#endif
+                        p->sprite_index = SPRITE_RIGHT;
+
                     }
                     else if(room->doors[DOOR_UP] && c.x == 7 && c.y == 0)
                     {
+#if 1
+                        transition_room = true;
+                        transition_offsets.x = 0;
+                        transition_offsets.y = 0;
+
+                        Rect cr = get_camera_rect();
+                        float zscale = 1.0 - camera_get_zoom();
+                        float h = (cr.h - (margin_top.h + margin_top.h)*zscale);
+
+                        transition_targets.x = 0;
+                        transition_targets.y = h;
+
+                        transition_next_room.x = p->curr_room.x;
+                        transition_next_room.y = p->curr_room.y-1;
+
+                        float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
+                        transition_player_target.x = p->hitbox.x;
+                        transition_player_target.y = y1;
+#else
                         p->curr_room.y--;
                         float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
-                        set_hit_box_pos(p, p->hitbox.x, y1);
+                        player_set_hit_box_pos(p, p->hitbox.x, y1);
+#endif
+
+                        p->sprite_index = SPRITE_UP;
+
                     }
                     else if(room->doors[DOOR_DOWN] && c.x == 7 && c.y == 8)
                     {
-                        p->curr_room.y++;
+#if 1
+                        transition_room = true;
+                        transition_offsets.x = 0;
+                        transition_offsets.y = 0;
+
+                        Rect cr = get_camera_rect();
+                        float zscale = 1.0 - camera_get_zoom();
+                        float h = -(cr.h - (margin_top.h + margin_top.h)*zscale);
+
+                        transition_targets.x = 0;
+                        transition_targets.y = h;
+
+                        transition_next_room.x = p->curr_room.x;
+                        transition_next_room.y = p->curr_room.y+1;
+
                         float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
-                        set_hit_box_pos(p, p->hitbox.x, y1);
+                        transition_player_target.x = p->hitbox.x;
+                        transition_player_target.y = y1;
+#else
+                        p->curr_room.y--;
+                        float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
+                        player_set_hit_box_pos(p, p->hitbox.x, y1);
+#endif
+
+                        p->sprite_index = SPRITE_DOWN;
+
                     }
                 }
             }
@@ -218,6 +302,9 @@ static void handle_room_collision(Player* p)
 void player_update(Player* p, float dt)
 {
     if(!p->active) return;
+
+    if(transition_room) return;
+
     for(int i = 0; i < PLAYER_ACTION_MAX; ++i)
     {
         PlayerInput* pa = &p->actions[i];
@@ -244,25 +331,25 @@ void player_update(Player* p, float dt)
     if(up)
     {
         p->vel.y = -v;
-        p->sprite_index = 0;
+        p->sprite_index = SPRITE_UP;
     }
 
     if(down)
     {
         p->vel.y = +v;
-        p->sprite_index = 4;
+        p->sprite_index = SPRITE_DOWN;
     }
 
     if(left)
     {
         p->vel.x = -v;
-        p->sprite_index = 8;
+        p->sprite_index = SPRITE_LEFT;
     }
 
     if(right)
     {
         p->vel.x = +v;
-        p->sprite_index = 12;
+        p->sprite_index = SPRITE_RIGHT;
     }
 
     p->pos.x += p->vel.x*dt;
@@ -270,12 +357,15 @@ void player_update(Player* p, float dt)
 
     update_player_boxes(p);
 
-    Vector2f adj = limit_rect_pos(&player_area, &p->hitbox);
-    if(!FEQ0(adj.x) || !FEQ0(adj.y))
+    if(!transition_room)
     {
-        p->pos.x += adj.x;
-        p->pos.y += adj.y;
-        update_player_boxes(p);
+        Vector2f adj = limit_rect_pos(&player_area, &p->hitbox);
+        if(!FEQ0(adj.x) || !FEQ0(adj.y))
+        {
+            p->pos.x += adj.x;
+            p->pos.y += adj.y;
+            update_player_boxes(p);
+        }
     }
 
     // update player current tile
@@ -315,7 +405,8 @@ void player_update(Player* p, float dt)
     }
 
     // check tiles around player
-    handle_room_collision(p);
+    if(!transition_room)
+        handle_room_collision(p);
     level.rooms[p->curr_room.x][p->curr_room.y].discovered = true;
 
 
@@ -329,6 +420,7 @@ void player_update(Player* p, float dt)
 void player_draw(Player* p)
 {
     if(!p->active) return;
+    if(transition_room) return;
     gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->pos.x, p->pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
 
     if(debug_enabled)
@@ -377,4 +469,18 @@ void player_handle_net_inputs(Player* p, double dt)
     {
         net_client_add_player_input(&p->input);
     }
+}
+
+void player_set_hit_box_pos(Player* p, float x, float y)
+{
+    // memcpy(p->hitbox_prior, p->hitbox, sizeof(p->hitbox));
+
+    float dx = p->pos.x - p->hitbox.x;
+    float dy = p->pos.y - p->hitbox.y;
+
+    p->hitbox.x = x;
+    p->hitbox.y = y;
+
+    p->pos.x = x + dx;
+    p->pos.y = y + dy;
 }

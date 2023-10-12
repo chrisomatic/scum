@@ -41,8 +41,6 @@ typedef struct
 
     float proj_cooldown;
 
-    // bool in_door; // used to prevent flip-flopping between doorways
-
     // Networking
     NetPlayerInput input;
     NetPlayerInput input_prior;
@@ -64,3 +62,4 @@ void player_draw(Player* p);
 void player_reset(Player* p);
 void player_lerp(Player* p, float dt);
 void player_handle_net_inputs(Player* p, double dt);
+void player_set_hit_box_pos(Player* p, float x, float y);

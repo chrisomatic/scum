@@ -63,7 +63,18 @@ void update_input_state(PlayerInput* input, float _dt);
 
 extern Rect room_area;
 extern Rect player_area;
+extern Rect margin_left;
+extern Rect margin_right;
+extern Rect margin_top;
+extern Rect margin_bottom;
+
 extern Level level;
+
+extern bool transition_room;
+extern Vector2f transition_offsets;
+extern Vector2f transition_targets;
+extern Vector2i transition_next_room;
+extern Vector2f transition_player_target;
 
 extern bool initialized;
 extern bool debug_enabled;

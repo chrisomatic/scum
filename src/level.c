@@ -195,15 +195,15 @@ void level_print(Level* level)
     printf("\n");
 }
 
-void level_draw_room(Room* room)
+void level_draw_room(Room* room, float xoffset, float yoffset)
 {
     if(!room->valid)
         return;
 
-    int x = room_area.x - room_area.w/2.0;
-    int y = room_area.y - room_area.h/2.0;
-    int w = 32;
-    int h = 32;
+    float x = room_area.x - room_area.w/2.0 + xoffset;
+    float y = room_area.y - room_area.h/2.0 + yoffset;
+    float w = 32;
+    float h = 32;
 
     Rect r = {(x+w/2.0), (y+h/2.0), w,h};
 

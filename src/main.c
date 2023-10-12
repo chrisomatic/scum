@@ -51,6 +51,12 @@ Rect camera_limit = {0};    // based on margins and room_area
 Vector2f aim_camera_offset = {0};
 float ascale = 1.0;
 
+bool transition_room = false;
+Vector2f transition_offsets = {0};
+Vector2f transition_targets = {0};
+Vector2i transition_next_room = {0};
+Vector2f transition_player_target = {0};
+
 Level level;
 unsigned int seed = 0;
 
@@ -114,7 +120,7 @@ int main(int argc, char* argv[])
 
 
     camera_zoom(cam_zoom,true);
-    camera_move(CENTER_X, CENTER_Y, true, &camera_limit);
+    camera_move(CENTER_X, CENTER_Y, true, NULL);
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 
     run();
@@ -192,6 +198,13 @@ void set_game_state(GameState state)
 // also checks if the mouse is off the screen
 void camera_set()
 {
+    // if(transition_room) return;
+    // if(transition_room)
+    // {
+    //     // camera_zoom(cam_zoom-0.1,false);
+    //     return;
+    // }
+
     if(false)
     {
         float _vw = view_width;
@@ -389,10 +402,7 @@ void init()
     camera_move(0,0,false,NULL);
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
     Rect cr = get_camera_rect();
-    print_rect(&cr);
-    // ascale = 240.0 / cr.w;
-
-    // mscale = / view_width;
+    // print_rect(&cr);
 
     room_area.w = ROOM_W;
     room_area.h = ROOM_H;
@@ -430,13 +440,6 @@ void init()
     margin_bottom.h = margin_top.h;
     margin_bottom.x = margin_top.x;
     margin_bottom.y = view_height - margin_bottom.h / 2.0;
-
-    // camera_limit.w = margin_left.w + margin_right.w + room_area.w;
-    // camera_limit.h = margin_left.h + margin_right.h + room_area.h;
-    // camera_limit.x = camera_limit.w/2.0;
-    // camera_limit.y = camera_limit.h/2.0;
-
-    // camera_limit.w
 
 #if 0
     printf("top:\n");
@@ -664,17 +667,11 @@ void update(float dt)
     text_list_update(text_lst, dt);
 
     camera_set();
-    // camera_zoom(cam_zoom, false);
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 }
 
 void draw_level(Rect* area, bool show_all, uint32_t color_bg, float opacity_bg, uint32_t color_room, float opacity_room, uint32_t color_player, float opacity_player)
 {
-    // float opacity_bg = 0.3;
-    // uint32_t color_bg = COLOR_BLACK;
-
-    // float opacity_room = 0.3;
-    // uint32_t color_room = COLOR(0x22,0x48,0x70);
 
     float opacity_door = opacity_room;
     uint32_t color_door = color_room;
@@ -682,13 +679,9 @@ void draw_level(Rect* area, bool show_all, uint32_t color_bg, float opacity_bg, 
     gfx_draw_rect(area, color_bg, NOT_SCALED, NO_ROTATION, opacity_bg, true, NOT_IN_WORLD);
 
     float tlx = area->x - area->w/2.0;
-    // tlx *= ascale;
     float tly = area->y - area->h/2.0;
-    // tly *= ascale;
 
     // room width/height
-    // float rw = area->w/MAX_ROOMS_GRID_X * ascale;
-    // float rh = area->h/MAX_ROOMS_GRID_Y * ascale;
     float rw = area->w/MAX_ROOMS_GRID_X;
     float rh = area->h/MAX_ROOMS_GRID_Y;
     float rwh = MIN(rw, rh);
@@ -709,8 +702,12 @@ void draw_level(Rect* area, bool show_all, uint32_t color_bg, float opacity_bg, 
             Room room = level.rooms[x][y];
             if(room.valid)
             {
+                // bool curr = (x == player->curr_room.x && y == player->curr_room.y);
+
                 if(!show_all && !level.rooms[x][y].discovered)
+                {
                     continue;
+                }
 
                 float draw_x = tlx + x*rwh + rwh/2.0;
                 float draw_y = tly + y*rwh + rwh/2.0;
@@ -719,42 +716,38 @@ void draw_level(Rect* area, bool show_all, uint32_t color_bg, float opacity_bg, 
 
                 if(room.doors[DOOR_UP])
                 {
-                    if(!show_all && !level_is_room_discovered(&level, x, y-1))
+                    if(show_all || level_is_room_discovered(&level, x, y-1))
                     {
-                        continue;
+                        Rect door = RECT(draw_x-door_offset, draw_y-rwh/2.0, door_w, door_h);
+                        gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
                     }
-                    Rect door = RECT(draw_x-door_offset, draw_y-rwh/2.0, door_w, door_h);
-                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
                 }
 
                 if(room.doors[DOOR_DOWN])
                 {
-                    if(!show_all && !level_is_room_discovered(&level, x, y+1))
+                    if(show_all || level_is_room_discovered(&level, x, y+1))
                     {
-                        continue;
+                        Rect door = RECT(draw_x+door_offset, draw_y+rwh/2.0, door_w, door_h);
+                        gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
                     }
-                    Rect door = RECT(draw_x+door_offset, draw_y+rwh/2.0, door_w, door_h);
-                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
                 }
 
                 if(room.doors[DOOR_RIGHT])
                 {
-                    if(!show_all && !level_is_room_discovered(&level, x+1, y))
+                    if(show_all || level_is_room_discovered(&level, x+1, y))
                     {
-                        continue;
+                        Rect door = RECT(draw_x+rwh/2.0, draw_y-door_offset, door_h, door_w);
+                        gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
                     }
-                    Rect door = RECT(draw_x+rwh/2.0, draw_y-door_offset, door_h, door_w);
-                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
                 }
 
                 if(room.doors[DOOR_LEFT])
                 {
-                    if(!show_all && !level_is_room_discovered(&level, x-1, y))
+                    if(show_all || level_is_room_discovered(&level, x-1, y))
                     {
-                        continue;
+                        Rect door = RECT(draw_x-rwh/2.0, draw_y+door_offset, door_h, door_w);
+                        gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
                     }
-                    Rect door = RECT(draw_x-rwh/2.0, draw_y+door_offset, door_h, door_w);
-                    gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
                 }
 
             }
@@ -779,7 +772,6 @@ void draw_level(Rect* area, bool show_all, uint32_t color_bg, float opacity_bg, 
         Rect r = RECT(draw_x, draw_y, room_wh, room_wh);
         gfx_get_absolute_coords(&pr, ALIGN_CENTER, &r, ALIGN_CENTER);
 
-        // gfx_draw_rect(&pr, color_player, ascale*NOT_SCALED, NO_ROTATION, opacity_player, true, NOT_IN_WORLD);
         gfx_draw_rect(&pr, color_player, NOT_SCALED, NO_ROTATION, opacity_player, true, NOT_IN_WORLD);
     }
 }
@@ -833,13 +825,105 @@ void draw()
     // draw room
     if(game_state == GAME_STATE_PLAYING)
     {
-        level_draw_room(&level.rooms[player->curr_room.x][player->curr_room.y]);
+        // static int c = 0;
+        // if(!transition_room) c = 0;
+
+        if(transition_room)
+        {
+            // c++;
+            float dx = transition_targets.x/30.0;
+            float dy = transition_targets.y/30.0;
+
+            transition_offsets.x += dx;
+            transition_offsets.y += dy;
+
+            // transition_offsets.x += transition_deltas.x;
+            // transition_offsets.y += transition_deltas.y;
+
+            if(ABS(transition_offsets.x) >= ABS(transition_targets.x) && ABS(transition_offsets.y) >= ABS(transition_targets.y))
+            {
+                player->curr_room.x = transition_next_room.x;
+                player->curr_room.y = transition_next_room.y;
+
+                player_set_hit_box_pos(player, transition_player_target.x, transition_player_target.y);
+                camera_move(player->pos.x, player->pos.y, true, &camera_limit);
+                camera_update(VIEW_WIDTH, VIEW_HEIGHT);
+                transition_room = false;
+
+                // printf("final: %.2f, %.2f\n", player->pos.x, player->pos.y);
+                // printf("c: %d\n", c);
+            }
+            else
+            {
+                // float pdx = transition_player_target.x/60.0;
+                // float pdy = transition_player_target.y/60.0;
+                // player_set_hit_box_pos(player, pdx, pdy);
+
+                // printf("%.2f, %.2f  ->  ", player->pos.x, player->pos.y);
+
+
+                // player_set_hit_box_pos(player, player->hitbox.x+dx, player->hitbox.y+dy);
+                // // player_set_hit_box_pos(player, player->hitbox.x+transition_player_target.x, player->hitbox.y+transition_player_target.y);
+                // // player_set_hit_box_pos(player, player->hitbox.x-transition_offsets.x, player->hitbox.y-transition_offsets.y);
+
+                // printf("%.2f, %.2f\n", player->pos.x, player->pos.y);
+
+                float x0 = transition_offsets.x;
+                float y0 = transition_offsets.y;
+
+                float xoff = 0.0;
+                if(!FEQ0(transition_targets.x))
+                {
+                    if(transition_targets.x > 0)
+                        xoff = -room_area.w;
+                    else
+                        xoff = room_area.w;
+                }
+                float yoff = 0.0;
+                if(!FEQ0(transition_targets.y))
+                {
+                    if(transition_targets.y > 0)
+                        yoff = -room_area.h;
+                    else
+                        yoff = room_area.h;
+                }
+
+                float x1 = transition_offsets.x+xoff;
+                float y1 = transition_offsets.y+yoff;
+
+                level_draw_room(&level.rooms[player->curr_room.x][player->curr_room.y], x0, y0);
+                level_draw_room(&level.rooms[transition_next_room.x][transition_next_room.y], x1, y1);
+            }
+
+        }
+
+        if(!transition_room)
+        {
+            level_draw_room(&level.rooms[player->curr_room.x][player->curr_room.y], 0, 0);
+        }
+
+
+        // static float yoffset = 0.0;
+        // static float yincr = 10.0;
+        // level_draw_room(&level.rooms[player->curr_room.x][player->curr_room.y], 0, yoffset);
+        // yoffset += yincr;
+        // if(yoffset >= room_area.h)
+        // {
+        //     yoffset = room_area.h;
+        //     yincr *= -1.0;
+        // }
+        // else if(yoffset <= -room_area.h)
+        // {
+        //     yoffset = -room_area.h;
+        //     yincr *= -1.0;
+        // }
+
         gfx_draw_rect(&room_area, COLOR_WHITE, NOT_SCALED, NO_ROTATION, 1.0, false, true);
     }
     else if(game_state == GAME_STATE_MENU)
     {
         //TODO
-        level_draw_room(&level.rooms[player->curr_room.x][player->curr_room.y]);
+        level_draw_room(&level.rooms[player->curr_room.x][player->curr_room.y], 0, 0);
         gfx_draw_rect(&room_area, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, true);
     }
 
