@@ -30,8 +30,10 @@ bool show_big_map = false;
 GameRole role = ROLE_UNKNOWN;
 
 // Settings
-uint32_t background_color = COLOR_BLACK;
-uint32_t margin_color = 0x00202020;
+// uint32_t background_color = COLOR_BLACK;
+// uint32_t margin_color = 0x00202020;
+uint32_t background_color = COLOR_YELLOW;
+uint32_t margin_color = COLOR_BLACK;
 
 int mx=0, my=0;
 int wmx=0, wmy=0;
@@ -110,11 +112,10 @@ int main(int argc, char* argv[])
 
     init();
 
-    // camera_move(view_width/2.0, view_height/2.0, true, NULL);
 
-    // camera_move(player->pos.x, player->pos.y, true, &map_view_area);
-    // camera_zoom(cam_zoom,false);
-
+    camera_zoom(cam_zoom,true);
+    camera_move(CENTER_X, CENTER_Y, true, &camera_limit);
+    camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 
     run();
 
@@ -667,7 +668,7 @@ void update(float dt)
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 }
 
-void draw_level(Rect* area, uint32_t color_bg, float opacity_bg, uint32_t color_room, float opacity_room, uint32_t color_player, float opacity_player)
+void draw_level(Rect* area, bool show_all, uint32_t color_bg, float opacity_bg, uint32_t color_room, float opacity_room, uint32_t color_player, float opacity_player)
 {
     // float opacity_bg = 0.3;
     // uint32_t color_bg = COLOR_BLACK;
@@ -708,6 +709,8 @@ void draw_level(Rect* area, uint32_t color_bg, float opacity_bg, uint32_t color_
             Room room = level.rooms[x][y];
             if(room.valid)
             {
+                if(!show_all && !level.rooms[x][y].discovered)
+                    continue;
 
                 float draw_x = tlx + x*rwh + rwh/2.0;
                 float draw_y = tly + y*rwh + rwh/2.0;
@@ -716,24 +719,40 @@ void draw_level(Rect* area, uint32_t color_bg, float opacity_bg, uint32_t color_
 
                 if(room.doors[DOOR_UP])
                 {
+                    if(!show_all && !level_is_room_discovered(&level, x, y-1))
+                    {
+                        continue;
+                    }
                     Rect door = RECT(draw_x-door_offset, draw_y-rwh/2.0, door_w, door_h);
                     gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
                 }
 
                 if(room.doors[DOOR_DOWN])
                 {
+                    if(!show_all && !level_is_room_discovered(&level, x, y+1))
+                    {
+                        continue;
+                    }
                     Rect door = RECT(draw_x+door_offset, draw_y+rwh/2.0, door_w, door_h);
                     gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
                 }
 
                 if(room.doors[DOOR_RIGHT])
                 {
+                    if(!show_all && !level_is_room_discovered(&level, x+1, y))
+                    {
+                        continue;
+                    }
                     Rect door = RECT(draw_x+rwh/2.0, draw_y-door_offset, door_h, door_w);
                     gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
                 }
 
                 if(room.doors[DOOR_LEFT])
                 {
+                    if(!show_all && !level_is_room_discovered(&level, x-1, y))
+                    {
+                        continue;
+                    }
                     Rect door = RECT(draw_x-rwh/2.0, draw_y+door_offset, door_h, door_w);
                     gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
                 }
@@ -742,21 +761,27 @@ void draw_level(Rect* area, uint32_t color_bg, float opacity_bg, uint32_t color_
         }
     }
 
-    float px = player->pos.x - rect_tlx(&room_area);
-    float py = player->pos.y - rect_tly(&room_area);
-    px *= (room_wh/room_area.w);
-    py *= (room_wh/room_area.h);
-    Rect pr = RECT(px, py, margin, margin);
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        Player* p = &player[i];
+        if(!p->active) continue;
 
-    // translate to minimap
-    float draw_x = tlx + player->curr_room.x*rwh + rwh/2.0;
-    float draw_y = tly + player->curr_room.y*rwh + rwh/2.0;
+        float px = p->pos.x - rect_tlx(&room_area);
+        float py = p->pos.y - rect_tly(&room_area);
+        px *= (room_wh/room_area.w);
+        py *= (room_wh/room_area.h);
+        Rect pr = RECT(px, py, margin, margin);
 
-    Rect r = RECT(draw_x, draw_y, room_wh, room_wh);
-    gfx_get_absolute_coords(&pr, ALIGN_CENTER, &r, ALIGN_CENTER);
+        // translate to minimap
+        float draw_x = tlx + p->curr_room.x*rwh + rwh/2.0;
+        float draw_y = tly + p->curr_room.y*rwh + rwh/2.0;
 
-    // gfx_draw_rect(&pr, color_player, ascale*NOT_SCALED, NO_ROTATION, opacity_player, true, NOT_IN_WORLD);
-    gfx_draw_rect(&pr, color_player, NOT_SCALED, NO_ROTATION, opacity_player, true, NOT_IN_WORLD);
+        Rect r = RECT(draw_x, draw_y, room_wh, room_wh);
+        gfx_get_absolute_coords(&pr, ALIGN_CENTER, &r, ALIGN_CENTER);
+
+        // gfx_draw_rect(&pr, color_player, ascale*NOT_SCALED, NO_ROTATION, opacity_player, true, NOT_IN_WORLD);
+        gfx_draw_rect(&pr, color_player, NOT_SCALED, NO_ROTATION, opacity_player, true, NOT_IN_WORLD);
+    }
 }
 
 void draw_minimap()
@@ -766,7 +791,7 @@ void draw_minimap()
     Rect minimap_area = RECT(w/2.0, w/2.0, w, w);
     // translate the location
     gfx_get_absolute_coords(&minimap_area, ALIGN_CENTER, &margin_left, ALIGN_CENTER);
-    draw_level(&minimap_area, COLOR_BLACK,0.3,  COLOR(0x22,0x48,0x70),0.4,  COLOR_RED,0.5);
+    draw_level(&minimap_area, false, COLOR_BLACK,0.3,  COLOR(0x22,0x48,0x70),0.4,  COLOR_RED,0.5);
 
 #if 0
     // solve for size
@@ -853,7 +878,7 @@ void draw()
         {
             float len = MIN(room_area.w, room_area.h);
             Rect minimap_area = RECT(room_area.x, room_area.y, len, len);
-            draw_level(&minimap_area, COLOR_BLACK,0.0,  COLOR_BLACK,0.3,  COLOR_RED,0.2);
+            draw_level(&minimap_area, true, COLOR_BLACK,0.0,  COLOR_BLACK,0.4,  COLOR_RED,0.3);
         }
 
         // draw player
@@ -902,11 +927,6 @@ void draw()
 
         float zscale = 1.0 - camera_get_zoom();
         Rect limit = camera_limit;
-        // print_rect(&limit);
-        // limit.w *= zscale;
-        // limit.h *= zscale;
-        // limit.x = limit.w/2.0;
-        // limit.y = limit.h/2.0;
         Rect cr = get_camera_rect();
         float sc = 0.2*ascale;
         int yincr = 15*ascale;
@@ -920,23 +940,13 @@ void draw()
         gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "view:   %d, %d", view_width, view_height); y += yincr;
         gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "window: %d, %d", window_width, window_height); y += yincr;
 
-
-
-
-
-
-
-        Rect l = margin_left;
-        l.w *= zscale;
-        l.h *= zscale;
-        l.x = cr.x-cr.w/2.0 + l.w/2.0;
-        l.y = cr.y;
-
-        gfx_draw_rect(&l, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-        // gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "l: %.1f, %.1f, %.1f, %.1f", l.x, l.y, l.w, l.h); y += yincr;
-
-
-
+        // //TEST
+        // Rect l = margin_left;
+        // l.w *= zscale;
+        // l.h *= zscale;
+        // l.x = cr.x-cr.w/2.0 + l.w/2.0;
+        // l.y = cr.y;
+        // gfx_draw_rect(&l, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
     }
 
     text_list_draw(text_lst);

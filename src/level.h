@@ -53,6 +53,7 @@ typedef struct
     bool valid;
     bool doors[4];
     int layout;
+    bool discovered;
 } Room;
 
 typedef struct
@@ -73,3 +74,5 @@ Level level_generate(unsigned int seed);
 void level_draw_room(Room* room);
 void level_print(Level* level);
 void level_print_room(Room* room);
+bool level_is_room_valid(Level* level, int x, int y);
+bool level_is_room_discovered(Level* level, int x, int y);

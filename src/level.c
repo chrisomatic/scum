@@ -16,6 +16,7 @@ static void generate_rooms(Level* level, int x, int y, Door came_from, int depth
 {
     Room* room = &level->rooms[x][y];
     room->valid = true;
+    room->discovered = false;
 
     room->layout = rand() % room_list_count;
 
@@ -272,4 +273,18 @@ Level level_generate(unsigned int seed)
     generate_rooms(&level, start_x, start_y, DOOR_NONE, 0);
 
     return level;
+}
+
+bool level_is_room_valid(Level* level, int x, int y)
+{
+    if(x >= MAX_ROOMS_GRID_X || y >= MAX_ROOMS_GRID_Y)
+        return false;
+    return level->rooms[x][y].valid;
+}
+
+bool level_is_room_discovered(Level* level, int x, int y)
+{
+    if(!level_is_room_valid(level, x, y))
+        return false;
+    return level->rooms[x][y].discovered;
 }

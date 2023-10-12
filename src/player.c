@@ -316,6 +316,8 @@ void player_update(Player* p, float dt)
 
     // check tiles around player
     handle_room_collision(p);
+    level.rooms[p->curr_room.x][p->curr_room.y].discovered = true;
+
 
     // update animation
     if(ABS(p->vel.x) > 0.0 || ABS(p->vel.y) > 0.0)
