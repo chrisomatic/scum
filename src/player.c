@@ -96,6 +96,9 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOW_MAP].state, GLFW_KEY_M);
     window_controls_add_key(&player->actions[PLAYER_ACTION_DOOR].state, GLFW_KEY_ENTER);
 
+    for(int i = 0;  i < PLAYER_ACTION_MAX; ++i)
+        memset(&player->actions[i], 0, sizeof(PlayerInput));
+
     // window_controls_add_key(&player->actions[PLAYER_ACTION_SCUM].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
@@ -129,8 +132,8 @@ void player_draw_room_transition()
 
     if(p->curr_room != p->transition_room)
     {
-        float dx = transition_targets.x/30.0;
-        float dy = transition_targets.y/30.0;
+        float dx = transition_targets.x/20.0;
+        float dy = transition_targets.y/20.0;
 
         transition_offsets.x += dx;
         transition_offsets.y += dy;

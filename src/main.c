@@ -165,8 +165,11 @@ void set_menu_keys()
     window_controls_add_key(&menu_keys[MENU_KEY_DOWN].state, GLFW_KEY_S);
     window_controls_add_key(&menu_keys[MENU_KEY_ENTER].state, GLFW_KEY_ENTER);
 
-    menu_keys[MENU_KEY_UP].hold_period = 0.3;
-    menu_keys[MENU_KEY_DOWN].hold_period = 0.3;
+    for(int i = 0;  i < MENU_KEY_MAX; ++i)
+        memset(&menu_keys[i], 0, sizeof(PlayerInput));
+
+    menu_keys[MENU_KEY_UP].hold_period = 0.2;
+    menu_keys[MENU_KEY_DOWN].hold_period = 0.2;
 }
 
 void set_game_state(GameState state)
@@ -791,15 +794,15 @@ void draw()
             level_draw_room(room, 0, 0);
         }
 
-        gfx_draw_rect(&room_area, COLOR_WHITE, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+        // gfx_draw_rect(&room_area, COLOR_WHITE, NOT_SCALED, NO_ROTATION, 1.0, false, true);
     }
     else if(game_state == GAME_STATE_MENU)
     {
-        //TODO
-        Vector2i roomxy = level_get_room_coords((int)player->curr_room);
-        Room* room = &level.rooms[roomxy.x][roomxy.y];
-        level_draw_room(room, 0, 0);
-        gfx_draw_rect(&room_area, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+        // //TODO
+        // Vector2i roomxy = level_get_room_coords((int)player->curr_room);
+        // Room* room = &level.rooms[roomxy.x][roomxy.y];
+        // level_draw_room(room, 0, 0);
+        gfx_draw_rect(&room_area, COLOR(30,30,30), NOT_SCALED, NO_ROTATION, 1.0, true, true);
     }
 
 
@@ -870,6 +873,9 @@ void draw()
 
     if(debug_enabled)
     {
+
+        // room border
+        // gfx_draw_rect(&room_area, COLOR_WHITE, NOT_SCALED, NO_ROTATION, 1.0, false, true);
 
         gfx_draw_rect(&margin_left, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
         gfx_draw_rect(&margin_right, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
@@ -950,11 +956,11 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
             }
             if(key == GLFW_KEY_ESCAPE)
             {
-                if(debug_enabled)
-                {
-                    debug_enabled = false;
-                }
-                else if(game_state != GAME_STATE_MENU)
+                // if(debug_enabled)
+                // {
+                //     debug_enabled = false;
+                // }
+                if(game_state != GAME_STATE_MENU)
                 {
                     set_game_state(GAME_STATE_MENU);
                 }
