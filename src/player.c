@@ -507,7 +507,11 @@ void player_update(Player* p, float dt)
 void player_draw(Player* p)
 {
     if(!p->active) return;
-    if(p->transition_room != p->curr_room) return;
+
+    if(role == ROLE_LOCAL)
+    {
+        if(p->curr_room != p->transition_room) return;
+    }
 
     Vector2i roomxy = level_get_room_coords((int)p->curr_room);
     Room* room = &level.rooms[roomxy.x][roomxy.y];
