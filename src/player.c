@@ -378,7 +378,7 @@ static void handle_room_collision(Player* p)
         {
             if(go_through_door)
             {
-                player->door = i;
+                p->door = i;
                 player_start_room_transition(p);
             }
             break;
