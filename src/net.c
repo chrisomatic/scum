@@ -15,6 +15,7 @@
 #include "main.h"
 #include "net.h"
 #include "player.h"
+#include "level.h"
 #include "projectile.h"
 
 //#define SERVER_PRINT_SIMPLE 1
@@ -272,7 +273,7 @@ static bool validate_packet_format(Packet* pkt)
         return false;
     }
 
-    if(pkt->hdr.type < PACKET_TYPE_INIT || pkt->hdr.type > PACKET_TYPE_ERROR)
+    if(pkt->hdr.type < 0 || pkt->hdr.type >= PACKET_TYPE_MAX)
     {
         LOGN("Invalid Packet Type: %d", pkt->hdr.type);
         return false;
@@ -372,7 +373,10 @@ static void server_send(PacketType type, ClientInfo* cli)
     switch(type)
     {
         case PACKET_TYPE_INIT:
-            break;
+        {
+            pack_u32(&pkt,seed);
+            net_send(&server.info,&cli->address,&pkt);
+        } break;
 
         case PACKET_TYPE_CONNECT_CHALLENGE:
         {
@@ -659,6 +663,7 @@ int net_server_start()
                         players[cli->client_id].active = true;
 
                         server_send(PACKET_TYPE_CONNECT_ACCEPTED,cli);
+                        server_send(PACKET_TYPE_INIT, cli);
                         server_send(PACKET_TYPE_STATE,cli);
  
                     } break;
@@ -834,6 +839,7 @@ struct
     double time_of_last_ping;
     double time_of_last_received_ping;
     double rtt;
+    bool received_init_packet;
     uint8_t player_count;
     uint8_t server_salt[8];
     uint8_t client_salt[8];
@@ -947,6 +953,7 @@ static bool _client_data_waiting()
 static void client_clear()
 {
     circbuf_clear_items(&client.input_packets);
+    client.received_init_packet = false;
     client.time_of_latest_sent_packet = 0.0;
     client.time_of_last_ping = 0.0;
     client.time_of_last_received_ping = 0.0;
@@ -1229,6 +1236,13 @@ void net_client_update()
         {
             switch(srvpkt.hdr.type)
             {
+                case PACKET_TYPE_INIT:
+                {
+                    seed = unpack_u32(&srvpkt,&offset);
+                    level = level_generate(seed);
+
+                    client.received_init_packet = true;
+                } break;
                 case PACKET_TYPE_STATE:
                 {
                     num_players = unpack_u8(&srvpkt, &offset);
@@ -1393,6 +1407,11 @@ void net_client_disconnect()
         client.state = DISCONNECTED;
         client_clear();
     }
+}
+
+bool net_client_received_init_packet()
+{
+    return client.received_init_packet;
 }
 
 void net_client_send_message(uint8_t to, char* fmt, ...)

@@ -39,6 +39,7 @@ typedef enum
     PACKET_TYPE_STATE,
     PACKET_TYPE_MESSAGE,
     PACKET_TYPE_ERROR,
+    PACKET_TYPE_MAX,
 } PacketType;
 
 typedef enum
@@ -129,6 +130,7 @@ ConnectionState net_client_get_state();
 int net_client_get_input_count();
 uint16_t net_client_get_latest_local_packet_id();
 bool net_client_add_player_input(NetPlayerInput* input);
+bool net_client_received_init_packet();
 bool net_client_is_connected();
 void net_client_disconnect();
 bool net_client_set_server_ip(char* address);

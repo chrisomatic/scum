@@ -27,7 +27,7 @@ GameState game_state = GAME_STATE_MENU;
 Timer game_timer = {0};
 text_list_t* text_lst = NULL;
 bool show_big_map = false;
-GameRole role = ROLE_UNKNOWN;
+GameRole role = ROLE_LOCAL;
 
 // Settings
 // uint32_t background_color = COLOR_BLACK;
@@ -295,14 +295,6 @@ void run()
 void start_server()
 {
     //init
-    gfx_image_init();
-    player_init();
-
-    level_init();
-    level = level_generate(seed);
-    level_print(&level);
-
-    projectile_init();
 
     view_width = VIEW_WIDTH;
     view_height = VIEW_HEIGHT;
@@ -312,38 +304,44 @@ void start_server()
     room_area.x = CENTER_X;
     room_area.y = CENTER_Y;
 
+    gfx_image_init();
+    ascale = view_width / 1200.0;
+    camera_init();
+    player_init();
+
+    level_init();
+    seed = time(0)+rand()%1000;
+    level = level_generate(seed);
+    level_print(&level);
+
+    projectile_init();
+
     memcpy(&player_area, &room_area, sizeof(Rect));
     player_area.w -= 32;
     player_area.h -= 48;
+    
+    // margins scaled with reference to view_width and view_height
+    float mscale = view_width/1200.0;
 
-    RectXY rxy = {0};
-    rect_to_rectxy(&room_area, &rxy);
+    margin_left.w = 120.0 * mscale;
+    margin_left.h = 550.0 * mscale;
+    margin_left.x = margin_left.w / 2.0;
+    margin_left.y = view_height / 2.0;
 
-    float margin_left_w = rxy.x[TL];
-    float margin_right_w = view_width - rxy.x[TR];
-
-    float margin_top_h = rxy.y[TL];
-    float margin_bottom_h = view_height - rxy.y[BL];
-
-    margin_left.w = margin_left_w;
-    margin_left.h = view_height - margin_top_h - margin_bottom_h;
-    margin_left.x = margin_left.w/2.0;
-    margin_left.y = CENTER_Y;
-
-    margin_right.w = margin_right_w;
-    margin_right.h = view_height - margin_top_h - margin_bottom_h;
-    margin_right.x = view_width - margin_right.w/2.0;
-    margin_right.y = CENTER_Y;
+    margin_right.w = margin_left.w;
+    margin_right.h = margin_left.h;
+    margin_right.x = view_width - margin_left.w / 2.0;
+    margin_right.y = margin_left.y;
 
     margin_top.w = view_width;
-    margin_top.h = margin_top_h;
+    margin_top.h = (view_height - margin_left.h) / 2.0;
     margin_top.x = CENTER_X;
-    margin_top.y = margin_top_h/2.0;
+    margin_top.y = margin_top.h / 2.0;
 
-    margin_bottom.w = view_width;
-    margin_bottom.h = margin_bottom_h;
-    margin_bottom.x = CENTER_X;
-    margin_bottom.y = view_height - margin_bottom_h/2.0;
+    margin_bottom.w = margin_top.w;
+    margin_bottom.h = margin_top.h;
+    margin_bottom.x = margin_top.x;
+    margin_bottom.y = view_height - margin_bottom.h / 2.0;
 
     // start
     net_server_start();
@@ -401,7 +399,8 @@ void init()
 
     imgui_load_theme("retro.theme");
 
-    level = level_generate(seed);
+    if(role == ROLE_LOCAL)
+        level = level_generate(seed);
 
     camera_zoom(cam_zoom, true);
     camera_move(0,0,false,NULL);
@@ -469,7 +468,7 @@ void parse_args(int argc, char* argv[])
     // --server
     // --client <ip-addr>
 
-    role = ROLE_UNKNOWN;
+    role = ROLE_LOCAL;
 
     if(argc > 1)
     {
@@ -516,6 +515,7 @@ void update(float dt)
 
         if(check_state != CONNECTED)
         {
+
             net_client_connect_update(); // progress through connection routine
 
             ConnectionState curr_state = net_client_get_state();
@@ -551,6 +551,12 @@ void update(float dt)
 
         // Client connected
         net_client_update();
+
+        if(!net_client_received_init_packet())
+        {
+            // haven't received init packet from server yet
+            return;
+        }
 
         player_handle_net_inputs(player, dt);
 

@@ -162,8 +162,6 @@ static void handle_room_collision(Player* p)
 
             if(collision)
             {
-                //printf("Collision! player: %f %f. Wall point: %f %f. Dist: %f\n", px, py, check_point.x, check_point.y, d);
-
                 float delta = p->radius - d + 1.0;
                 switch(wall->dir)
                 {
@@ -240,7 +238,7 @@ static void handle_room_collision(Player* p)
                     float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
                     transition_player_target.x = p->hitbox.x;
                     transition_player_target.y = y1;
-                    player_set_hit_box_pos(player, transition_player_target.x, transition_player_target.y);
+                    player_set_hit_box_pos(p, transition_player_target.x, transition_player_target.y);
                     p->sprite_index = SPRITE_UP;
 
                 }   break;
@@ -263,7 +261,7 @@ static void handle_room_collision(Player* p)
                     float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
                     transition_player_target.x = x1;
                     transition_player_target.y = p->hitbox.y;
-                    player_set_hit_box_pos(player, transition_player_target.x, transition_player_target.y);
+                    player_set_hit_box_pos(p, transition_player_target.x, transition_player_target.y);
                     p->sprite_index = SPRITE_RIGHT;
                 }   break;
                 case DIR_DOWN:
@@ -285,7 +283,7 @@ static void handle_room_collision(Player* p)
                     float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
                     transition_player_target.x = p->hitbox.x;
                     transition_player_target.y = y1;
-                    player_set_hit_box_pos(player, transition_player_target.x, transition_player_target.y);
+                    player_set_hit_box_pos(p, transition_player_target.x, transition_player_target.y);
                     p->sprite_index = SPRITE_DOWN;
                 }   break;
                 case DIR_LEFT:
@@ -303,11 +301,10 @@ static void handle_room_collision(Player* p)
 
                     transition_next_room.x = p->curr_room.x - 1;
                     transition_next_room.y = p->curr_room.y;
-
                     float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
                     transition_player_target.x = x1;
                     transition_player_target.y = p->hitbox.y;
-                    player_set_hit_box_pos(player, transition_player_target.x, transition_player_target.y);
+                    player_set_hit_box_pos(p, transition_player_target.x, transition_player_target.y);
                     p->sprite_index = SPRITE_LEFT;
                 }   break;
             }
@@ -386,12 +383,6 @@ void player_update(Player* p, float dt)
     GFXImage* img = &gfx_images[player_image];
     Rect* vr = &img->visible_rects[p->sprite_index];
 
-    int dx = (int)(p->hitbox.x-room_area.x+room_area.w/2.0) / 32.0;
-    int dy = (int)(p->hitbox.y-room_area.y+room_area.h/2.0) / 32.0;
-
-    p->curr_tile.x = dx;
-    p->curr_tile.y = dy;
-
     const float pcooldown = 0.1; //seconds
 
     if(p->actions[PLAYER_ACTION_SHOOT].state)
@@ -410,12 +401,16 @@ void player_update(Player* p, float dt)
             p->proj_cooldown = pcooldown;
         }
     }
-    bool generate = p->actions[PLAYER_ACTION_GENERATE_ROOMS].toggled_on;
-    if(generate)
+
+    if(role == ROLE_LOCAL)
     {
-        seed = time(0)+rand()%1000;
-        level = level_generate(seed);
-        level_print(&level);
+        bool generate = p->actions[PLAYER_ACTION_GENERATE_ROOMS].toggled_on;
+        if(generate)
+        {
+            seed = time(0)+rand()%1000;
+            level = level_generate(seed);
+            level_print(&level);
+        }
     }
 
     // check tiles around player
@@ -432,8 +427,10 @@ void player_update(Player* p, float dt)
 
 void player_draw(Player* p)
 {
+    Room* room = &level.rooms[p->curr_room.x][p->curr_room.y];
+
     if(!p->active) return;
-    gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->pos.x, p->pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+    gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->pos.x, p->pos.y, room->color, 1.0, 0.0, 1.0, false, true);
 
     // @TEMP
     gfx_draw_circle(p->pos.x, p->pos.y+8, p->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);

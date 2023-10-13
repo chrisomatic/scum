@@ -62,6 +62,7 @@ typedef struct
 {
     bool valid;
     bool doors[4];
+    uint32_t color;
     Wall walls[100];
     int wall_count;
     int layout;

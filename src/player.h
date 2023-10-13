@@ -43,7 +43,6 @@ typedef struct
     float radius;
 
     Vector2i curr_room;
-    Vector2i curr_tile;
 
     float proj_cooldown;
 
