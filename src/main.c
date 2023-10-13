@@ -1043,6 +1043,8 @@ void draw()
         // l.y = cr.y;
         // gfx_draw_rect(&l, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
 
+        /*
+        // draw walls
         for(int i = 0; i < room->wall_count; ++i)
         {
             Wall* wall = &room->walls[i];
@@ -1054,7 +1056,7 @@ void draw()
 
             gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_WHITE, NOT_SCALED, NO_ROTATION, FULL_OPACITY, true, IN_WORLD);
         }
-
+        */
 
     }
 

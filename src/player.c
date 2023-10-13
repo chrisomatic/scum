@@ -113,7 +113,6 @@ void player_set_hit_box_pos(Player* p, float x, float y)
 }
 
 
-
 void player_reset(Player* p)
 {
     return;
@@ -122,6 +121,8 @@ void player_reset(Player* p)
 static void handle_room_collision(Player* p)
 {
     Room* room = &level.rooms[p->curr_room.x][p->curr_room.y];
+
+    level_sort_walls(room->walls,room->wall_count,p->pos.x, p->pos.y+p->radius,p->radius);
 
     for(int i = 0; i < room->wall_count; ++i)
     {

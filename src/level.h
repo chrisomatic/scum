@@ -55,6 +55,7 @@ typedef struct
     Dir dir;
     Vector2f p0;
     Vector2f p1;
+    float distance_to_player; // used for sorting walls
 } Wall;
 
 typedef struct
@@ -87,3 +88,4 @@ void level_print(Level* level);
 void level_print_room(Room* room);
 bool level_is_room_valid(Level* level, int x, int y);
 bool level_is_room_discovered(Level* level, int x, int y);
+void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radius);

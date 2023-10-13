@@ -95,6 +95,120 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
     }
 }
 
+static void generate_walls(Level* level)
+{
+    for(int j = 0; j < MAX_ROOMS_GRID_Y; ++j)
+    {
+        for(int i = 0; i < MAX_ROOMS_GRID_X; ++i)
+        {
+            Room* room = &level->rooms[i][j];
+
+            if(room->valid)
+            {
+                int x0 = room_area.x - room_area.w/2.0;
+                int y0 = room_area.y - room_area.h/2.0;
+
+                Wall* wall_top = &room->walls[room->wall_count];
+                wall_top->p0.x = x0+TILE_SIZE-6;
+                wall_top->p0.y = y0+TILE_SIZE-6;
+                wall_top->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+6;
+                wall_top->p1.y = wall_top->p0.y;
+                wall_top->dir = DIR_DOWN;
+                room->wall_count++;
+
+                Wall* wall_right = &room->walls[room->wall_count];
+                wall_right->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+6;
+                wall_right->p0.y = y0+TILE_SIZE-6;
+                wall_right->p1.x = wall_right->p0.x;
+                wall_right->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+6;
+                wall_right->dir = DIR_LEFT;
+                room->wall_count++;
+
+                Wall* wall_bottom = &room->walls[room->wall_count];
+                wall_bottom->p0.x = x0+TILE_SIZE-6;
+                wall_bottom->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+6;
+                wall_bottom->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+6;
+                wall_bottom->p1.y = wall_bottom->p0.y;
+                wall_bottom->dir = DIR_UP;
+                room->wall_count++;
+
+                Wall* wall_left = &room->walls[room->wall_count];
+                wall_left->p0.x = x0+TILE_SIZE-6;
+                wall_left->p0.y = y0+TILE_SIZE-6;
+                wall_left->p1.x = wall_left->p0.x;
+                wall_left->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+6;
+                wall_left->dir = DIR_RIGHT;
+                room->wall_count++;
+
+                RoomData* rdata = &room_list[room->layout];
+
+                for(int dir = 0; dir < 4; ++dir)
+                {
+                    for(int rj = 0; rj < ROOM_TILE_SIZE_Y; ++rj)
+                    {
+                        for(int ri = 0; ri < ROOM_TILE_SIZE_X; ++ri)
+                        {
+                            TileType tt = rdata->tiles[ri][rj];
+
+                            if(tt == TILE_BOULDER)
+                            {
+                                TileType check_tile = rdata->tiles[ri][rj];
+                                bool is_vertical = false;
+
+                                switch(dir)
+                                {
+                                    case DIR_UP:    check_tile = rdata->tiles[ri][rj-1]; break;
+                                    case DIR_RIGHT: check_tile = rdata->tiles[ri+1][rj]; is_vertical = true; break;
+                                    case DIR_DOWN:  check_tile = rdata->tiles[ri][rj+1]; break;
+                                    case DIR_LEFT:  check_tile = rdata->tiles[ri-1][rj]; is_vertical = true; break;
+                                    default: break;
+                                }
+
+                                if(check_tile != TILE_BOULDER)
+                                {
+                                    Wall* w = &room->walls[room->wall_count++];
+
+                                    // start at top left
+                                    w->p0.x = x0+TILE_SIZE*(ri+1);
+                                    w->p0.y = y0+TILE_SIZE*(rj+1);
+
+                                    w->p1.x = x0+TILE_SIZE*(ri+1);
+                                    w->p1.y = y0+TILE_SIZE*(rj+1);
+
+                                    switch(dir)
+                                    {
+                                        case DIR_UP: // top
+                                            w->p1.x += TILE_SIZE;
+                                            w->dir = DIR_UP;
+                                        break;
+                                        case DIR_RIGHT: // right
+                                            w->p0.x += TILE_SIZE;
+                                            w->p1.x += TILE_SIZE;
+                                            w->p1.y += TILE_SIZE;
+                                            w->dir = DIR_RIGHT;
+                                        break;
+                                        case DIR_DOWN: // bottom
+                                            w->p0.y += TILE_SIZE;
+                                            w->p1.x += TILE_SIZE;
+                                            w->p1.y += TILE_SIZE;
+                                            w->dir = DIR_DOWN;
+                                        break;
+                                        case DIR_LEFT: // left
+                                            w->p1.y += TILE_SIZE;
+                                            w->dir = DIR_LEFT;
+                                        break;
+                                    }
+
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 static bool level_load_room_list()
 {
     FILE* fp = fopen("src/rooms/rooms.txt", "r");
@@ -271,120 +385,59 @@ Level level_generate(unsigned int seed)
 
     // memset(level->rooms,0, sizeof(level->rooms));
     generate_rooms(&level, start_x, start_y, DIR_NONE, 0);
+    generate_walls(&level);
 
-    // fill out walls
-    for(int j = 0; j < MAX_ROOMS_GRID_Y; ++j)
+    return level;
+}
+
+void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radius)
+{
+    if(!walls)
+        return;
+
+    // calculate and store distance to player
+    for(int i = 0; i < wall_count; ++i)
     {
-        for(int i = 0; i < MAX_ROOMS_GRID_X; ++i)
+        Wall* wall = &walls[i];
+
+        if(wall->dir == DIR_UP || wall->dir == DIR_DOWN)
         {
-            Room* room = &level.rooms[i][j];
-
-            if(room->valid)
-            {
-                int x0 = room_area.x - room_area.w/2.0;
-                int y0 = room_area.y - room_area.h/2.0;
-
-                Wall* wall_top = &room->walls[room->wall_count];
-                wall_top->p0.x = x0+TILE_SIZE-6;
-                wall_top->p0.y = y0+TILE_SIZE-6;
-                wall_top->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+6;
-                wall_top->p1.y = wall_top->p0.y;
-                wall_top->dir = DIR_DOWN;
-                room->wall_count++;
-
-                Wall* wall_right = &room->walls[room->wall_count];
-                wall_right->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+6;
-                wall_right->p0.y = y0+TILE_SIZE-6;
-                wall_right->p1.x = wall_right->p0.x;
-                wall_right->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+6;
-                wall_right->dir = DIR_LEFT;
-                room->wall_count++;
-
-                Wall* wall_bottom = &room->walls[room->wall_count];
-                wall_bottom->p0.x = x0+TILE_SIZE-6;
-                wall_bottom->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+6;
-                wall_bottom->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+6;
-                wall_bottom->p1.y = wall_bottom->p0.y;
-                wall_bottom->dir = DIR_UP;
-                room->wall_count++;
-
-                Wall* wall_left = &room->walls[room->wall_count];
-                wall_left->p0.x = x0+TILE_SIZE-6;
-                wall_left->p0.y = y0+TILE_SIZE-6;
-                wall_left->p1.x = wall_left->p0.x;
-                wall_left->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+6;
-                wall_left->dir = DIR_RIGHT;
-                room->wall_count++;
-
-                RoomData* rdata = &room_list[room->layout];
-
-                for(int dir = 0; dir < 4; ++dir)
-                {
-                    for(int rj = 0; rj < ROOM_TILE_SIZE_Y; ++rj)
-                    {
-                        for(int ri = 0; ri < ROOM_TILE_SIZE_X; ++ri)
-                        {
-                            TileType tt = rdata->tiles[ri][rj];
-
-                            if(tt == TILE_BOULDER)
-                            {
-                                TileType check_tile = rdata->tiles[ri][rj];
-                                bool is_vertical = false;
-
-                                switch(dir)
-                                {
-                                    case DIR_UP:    check_tile = rdata->tiles[ri][rj-1]; break;
-                                    case DIR_RIGHT: check_tile = rdata->tiles[ri+1][rj]; is_vertical = true; break;
-                                    case DIR_DOWN:  check_tile = rdata->tiles[ri][rj+1]; break;
-                                    case DIR_LEFT:  check_tile = rdata->tiles[ri-1][rj]; is_vertical = true; break;
-                                    default: break;
-                                }
-
-                                if(check_tile != TILE_BOULDER)
-                                {
-                                    Wall* w = &room->walls[room->wall_count++];
-
-                                    // start at top left
-                                    w->p0.x = x0+TILE_SIZE*(ri+1);
-                                    w->p0.y = y0+TILE_SIZE*(rj+1);
-
-                                    w->p1.x = x0+TILE_SIZE*(ri+1);
-                                    w->p1.y = y0+TILE_SIZE*(rj+1);
-
-                                    switch(dir)
-                                    {
-                                        case DIR_UP: // top
-                                            w->p1.x += TILE_SIZE;
-                                            w->dir = DIR_UP;
-                                        break;
-                                        case DIR_RIGHT: // right
-                                            w->p0.x += TILE_SIZE;
-                                            w->p1.x += TILE_SIZE;
-                                            w->p1.y += TILE_SIZE;
-                                            w->dir = DIR_RIGHT;
-                                        break;
-                                        case DIR_DOWN: // bottom
-                                            w->p0.y += TILE_SIZE;
-                                            w->p1.x += TILE_SIZE;
-                                            w->p1.y += TILE_SIZE;
-                                            w->dir = DIR_DOWN;
-                                        break;
-                                        case DIR_LEFT: // left
-                                            w->p1.y += TILE_SIZE;
-                                            w->dir = DIR_LEFT;
-                                        break;
-                                    }
-
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            if(x+radius < wall->p0.x)
+                wall->distance_to_player = dist(x,y, wall->p0.x, wall->p0.y);
+            else if(x-radius > wall->p1.x)
+                wall->distance_to_player = dist(x,y, wall->p1.x, wall->p1.y);
+            else
+                wall->distance_to_player = ABS(y - wall->p0.y);
+        }
+        else if(wall->dir == DIR_LEFT || wall->dir == DIR_RIGHT)
+        {
+            if(y+radius < wall->p0.y)
+                wall->distance_to_player = dist(x,y, wall->p0.x, wall->p0.y);
+            else if(y-radius > wall->p1.y)
+                wall->distance_to_player = dist(x,y, wall->p1.x, wall->p1.y);
+            else
+                wall->distance_to_player = ABS(x - wall->p0.x);
         }
     }
 
-    return level;
+    // insertion sort
+    int i, j;
+    Wall key;
+
+    for (i = 1; i < wall_count; ++i) 
+    {
+        memcpy(&key, &walls[i], sizeof(Wall));
+        j = i - 1;
+
+        while (j >= 0 && walls[j].distance_to_player < key.distance_to_player)
+        {
+            memcpy(&walls[j+1], &walls[j], sizeof(Wall));
+            j = j - 1;
+        }
+        memcpy(&walls[j+1], &key, sizeof(Wall));
+    }
+
+    return;
 }
 
 bool level_is_room_valid(Level* level, int x, int y)
