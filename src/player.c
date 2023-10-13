@@ -46,7 +46,7 @@ void player_init()
         if(p == player)
         {
             player_init_keys();
-            p->active = true;
+            // p->active = true;
         }
 
         p->active = false;
@@ -60,8 +60,11 @@ void player_init()
         p->sprite_index = 4;
 
         p->radius = 8.0;
-        p->curr_room.x = (MAX_ROOMS_GRID_X-1)/2;
-        p->curr_room.y = (MAX_ROOMS_GRID_Y-1)/2;
+
+        int room_y = (MAX_ROOMS_GRID_X-1)/2;
+        int room_x = (MAX_ROOMS_GRID_Y-1)/2;
+        p->curr_room = (uint8_t)level_get_room_index(room_x, room_y);
+        p->transition_room = p->curr_room;
 
         // animation
         // --------------------------------------------------------
@@ -118,9 +121,160 @@ void player_reset(Player* p)
     return;
 }
 
+// also does the drawing
+void player_draw_room_transition()
+{
+    Player* p = player;
+    if(!p->active) return;
+
+    if(p->curr_room != p->transition_room)
+    {
+        float dx = transition_targets.x/30.0;
+        float dy = transition_targets.y/30.0;
+
+        transition_offsets.x += dx;
+        transition_offsets.y += dy;
+
+        if(ABS(transition_offsets.x) >= ABS(transition_targets.x) && ABS(transition_offsets.y) >= ABS(transition_targets.y))
+        {
+            // printf("room transition complete\n");
+            p->transition_room = p->curr_room;
+            camera_move(p->pos.x, p->pos.y, true, &camera_limit);
+            camera_update(VIEW_WIDTH, VIEW_HEIGHT);
+        }
+        else
+        {
+            // float pdx = transition_player_target.x/60.0;
+            // float pdy = transition_player_target.y/60.0;
+            // player_set_hit_box_pos(player, pdx, pdy);
+
+            float x0 = transition_offsets.x;
+            float y0 = transition_offsets.y;
+
+            float xoff = 0.0;
+            if(!FEQ0(transition_targets.x))
+            {
+                if(transition_targets.x > 0)
+                    xoff = -room_area.w;
+                else
+                    xoff = room_area.w;
+            }
+            float yoff = 0.0;
+            if(!FEQ0(transition_targets.y))
+            {
+                if(transition_targets.y > 0)
+                    yoff = -room_area.h;
+                else
+                    yoff = room_area.h;
+            }
+
+            float x1 = transition_offsets.x+xoff;
+            float y1 = transition_offsets.y+yoff;
+
+            Vector2i t = level_get_room_coords(p->transition_room);
+            level_draw_room(&level.rooms[t.x][t.y], x0, y0);
+
+            Vector2i roomxy = level_get_room_coords((int)p->curr_room);
+            level_draw_room(&level.rooms[roomxy.x][roomxy.y], x1, y1);
+        }
+    }
+}
+
+
+void player_start_room_transition(Player* p)
+{
+    Vector2i roomxy = level_get_room_coords((int)p->curr_room);
+
+    // new player positions
+    RectXY rxy = {0};
+    rect_to_rectxy(&room_area, &rxy);
+    float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
+    float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
+
+    if(role == ROLE_SERVER || role == ROLE_LOCAL)
+    {
+        p->transition_room = p->curr_room;
+
+        switch(p->door)
+        {
+            case DIR_UP:
+                p->curr_room = (uint8_t)level_get_room_index(roomxy.x, roomxy.y-1);
+                player_set_hit_box_pos(p, p->hitbox.x, y1);
+                p->sprite_index = SPRITE_UP;
+                break;
+
+            case DIR_RIGHT:
+                p->curr_room = (uint8_t)level_get_room_index(roomxy.x+1, roomxy.y);
+                player_set_hit_box_pos(p, x1, p->hitbox.y);
+                p->sprite_index = SPRITE_RIGHT;
+                break;
+
+            case DIR_DOWN:
+                p->curr_room = (uint8_t)level_get_room_index(roomxy.x, roomxy.y+1);
+                player_set_hit_box_pos(p, p->hitbox.x, y1);
+                p->sprite_index = SPRITE_DOWN;
+                break;
+
+            case DIR_LEFT:
+                p->curr_room = (uint8_t)level_get_room_index(roomxy.x-1, roomxy.y);
+                player_set_hit_box_pos(p, x1, p->hitbox.y);
+                p->sprite_index = SPRITE_LEFT;
+                break;
+
+            default:
+                break;
+        }
+
+        // printf("start room transition: %d -> %d\n", p->transition_room, p->curr_room);
+    }
+
+    if(role == ROLE_SERVER)
+        return;
+
+    transition_offsets.x = 0;
+    transition_offsets.y = 0;
+    transition_targets.x = 0;
+    transition_targets.y = 0;
+
+    Rect cr = get_camera_rect();
+    float zscale = 1.0 - camera_get_zoom();
+    float vw = (cr.w - (margin_left.w + margin_right.w)*zscale);
+    float vh = (cr.h - (margin_top.h + margin_top.h)*zscale);
+
+    switch(p->door)
+    {
+        case DIR_UP:
+        {
+            transition_targets.y = vh;
+        } break;
+
+        case DIR_RIGHT:
+        {
+            transition_targets.x = -vw;
+        } break;
+
+        case DIR_DOWN:
+        {
+            transition_targets.y = -vh;
+        } break;
+
+        case DIR_LEFT:
+        {
+            transition_targets.x = vw;
+        } break;
+
+        default:
+            break;
+    }
+
+    // printf("transition_targets: %.2f, %.2f  door: %d     (%.2f, %.2f)\n", transition_targets.x, transition_targets.y, p->door, vw, vh);
+}
+
 static void handle_room_collision(Player* p)
 {
-    Room* room = &level.rooms[p->curr_room.x][p->curr_room.y];
+    Vector2i roomxy = level_get_room_coords((int)p->curr_room);
+
+    Room* room = &level.rooms[roomxy.x][roomxy.y];
 
     level_sort_walls(room->walls,room->wall_count,p->pos.x, p->pos.y+p->radius,p->radius);
 
@@ -162,6 +316,7 @@ static void handle_room_collision(Player* p)
 
             if(collision)
             {
+                //printf("Collision! player: %f %f. Wall point: %f %f. Dist: %f\n", px, py, check_point.x, check_point.y, d);
                 float delta = p->radius - d + 1.0;
                 switch(wall->dir)
                 {
@@ -176,6 +331,11 @@ static void handle_room_collision(Player* p)
 
     for(int i = 0; i < 4; ++i)
     {
+        if(role == ROLE_LOCAL)
+        {
+            if(player->curr_room != player->transition_room) break;
+        }
+
         bool is_door = room->doors[i];
 
         if(!is_door)
@@ -211,105 +371,16 @@ static void handle_room_collision(Player* p)
         bool colliding_with_door = (d < 10.0);
         bool go_through_door = p->actions[PLAYER_ACTION_DOOR].toggled_off;
 
-        if(colliding_with_door && go_through_door)
+        if(colliding_with_door)
         {
-            // through door
-            RectXY rxy = {0};
-            rect_to_rectxy(&room_area, &rxy);
-
-            switch(i)
+            if(go_through_door)
             {
-                case DIR_UP:
-                {
-                    transition_room = true;
-                    transition_offsets.x = 0;
-                    transition_offsets.y = 0;
-
-                    Rect cr = get_camera_rect();
-                    float zscale = 1.0 - camera_get_zoom();
-                    float h = (cr.h - (margin_top.h + margin_top.h)*zscale);
-
-                    transition_targets.x = 0;
-                    transition_targets.y = h;
-
-                    transition_next_room.x = p->curr_room.x;
-                    transition_next_room.y = p->curr_room.y-1;
-
-                    float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
-                    transition_player_target.x = p->hitbox.x;
-                    transition_player_target.y = y1;
-                    player_set_hit_box_pos(p, transition_player_target.x, transition_player_target.y);
-                    p->sprite_index = SPRITE_UP;
-
-                }   break;
-                case DIR_RIGHT:
-                {
-                    transition_room = true;
-                    transition_offsets.x = 0;
-                    transition_offsets.y = 0;
-
-                    Rect cr = get_camera_rect();
-                    float zscale = 1.0 - camera_get_zoom();
-                    float w = -(cr.w - (margin_left.w + margin_right.w)*zscale);
-
-                    transition_targets.x = w;
-                    transition_targets.y = 0;
-
-                    transition_next_room.x = p->curr_room.x + 1;
-                    transition_next_room.y = p->curr_room.y;
-
-                    float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
-                    transition_player_target.x = x1;
-                    transition_player_target.y = p->hitbox.y;
-                    player_set_hit_box_pos(p, transition_player_target.x, transition_player_target.y);
-                    p->sprite_index = SPRITE_RIGHT;
-                }   break;
-                case DIR_DOWN:
-                {
-                    transition_room = true;
-                    transition_offsets.x = 0;
-                    transition_offsets.y = 0;
-
-                    Rect cr = get_camera_rect();
-                    float zscale = 1.0 - camera_get_zoom();
-                    float h = -(cr.h - (margin_top.h + margin_top.h)*zscale);
-
-                    transition_targets.x = 0;
-                    transition_targets.y = h;
-
-                    transition_next_room.x = p->curr_room.x;
-                    transition_next_room.y = p->curr_room.y+1;
-
-                    float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
-                    transition_player_target.x = p->hitbox.x;
-                    transition_player_target.y = y1;
-                    player_set_hit_box_pos(p, transition_player_target.x, transition_player_target.y);
-                    p->sprite_index = SPRITE_DOWN;
-                }   break;
-                case DIR_LEFT:
-                {
-                    transition_room = true;
-                    transition_offsets.x = 0;
-                    transition_offsets.y = 0;
-
-                    Rect cr = get_camera_rect();
-                    float zscale = 1.0 - camera_get_zoom();
-                    float w = (cr.w - (margin_left.w + margin_right.w)*zscale);
-
-                    transition_targets.x = w;
-                    transition_targets.y = 0;
-
-                    transition_next_room.x = p->curr_room.x - 1;
-                    transition_next_room.y = p->curr_room.y;
-                    float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
-                    transition_player_target.x = x1;
-                    transition_player_target.y = p->hitbox.y;
-                    player_set_hit_box_pos(p, transition_player_target.x, transition_player_target.y);
-                    p->sprite_index = SPRITE_LEFT;
-                }   break;
+                player->door = i;
+                player_start_room_transition(p);
             }
-            //printf("colliding with door, dist: %f\n", d);
+            break;
         }
+
     }
 
 }
@@ -317,7 +388,11 @@ static void handle_room_collision(Player* p)
 void player_update(Player* p, float dt)
 {
     if(!p->active) return;
-    if(transition_room) return;
+
+    if(role == ROLE_LOCAL)
+    {
+        if(player->curr_room != player->transition_room) return;
+    }
 
     for(int i = 0; i < PLAYER_ACTION_MAX; ++i)
     {
@@ -415,8 +490,9 @@ void player_update(Player* p, float dt)
 
     // check tiles around player
     handle_room_collision(p);
-    level.rooms[p->curr_room.x][p->curr_room.y].discovered = true;
 
+    Vector2i roomxy = level_get_room_coords((int)p->curr_room);
+    level.rooms[roomxy.x][roomxy.y].discovered = true;
 
     // update animation
     if(ABS(p->vel.x) > 0.0 || ABS(p->vel.y) > 0.0)
@@ -427,9 +503,11 @@ void player_update(Player* p, float dt)
 
 void player_draw(Player* p)
 {
-    Room* room = &level.rooms[p->curr_room.x][p->curr_room.y];
-
     if(!p->active) return;
+    if(p->transition_room != p->curr_room) return;
+
+    Vector2i roomxy = level_get_room_coords((int)p->curr_room);
+    Room* room = &level.rooms[roomxy.x][roomxy.y];
     gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->pos.x, p->pos.y, room->color, 1.0, 0.0, 1.0, false, true);
 
     // @TEMP
@@ -455,9 +533,20 @@ void player_lerp(Player* p, float dt)
     // printf("[lerp prior]  %.2f, %.2f\n", p->server_state_prior.pos.x, p->server_state_prior.pos.y);
     // printf("[lerp target] %.2f, %.2f\n", p->server_state_target.pos.x, p->server_state_target.pos.y);
 
-    Vector2f lp = lerp2f(&p->server_state_prior.pos,&p->server_state_target.pos,t);
-    p->pos.x = lp.x;
-    p->pos.y = lp.y;
+    if(p->transition_room == p->curr_room)
+    {
+        Vector2f lp = lerp2f(&p->server_state_prior.pos,&p->server_state_target.pos,t);
+        p->pos.x = lp.x;
+        p->pos.y = lp.y;
+    }
+    else
+    {
+        // printf("not lerping position\n");
+    }
+
+    Vector2i roomxy = level_get_room_coords((int)p->curr_room);
+    level.rooms[roomxy.x][roomxy.y].discovered = true;
+
 }
 
 void player_handle_net_inputs(Player* p, double dt)

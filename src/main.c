@@ -30,8 +30,6 @@ bool show_big_map = false;
 GameRole role = ROLE_LOCAL;
 
 // Settings
-// uint32_t background_color = COLOR_BLACK;
-// uint32_t margin_color = 0x00202020;
 uint32_t background_color = COLOR_YELLOW;
 uint32_t margin_color = COLOR_BLACK;
 
@@ -51,10 +49,8 @@ Rect camera_limit = {0};    // based on margins and room_area
 Vector2f aim_camera_offset = {0};
 float ascale = 1.0;
 
-bool transition_room = false;
 Vector2f transition_offsets = {0};
 Vector2f transition_targets = {0};
-Vector2i transition_next_room = {0};
 Vector2f transition_player_target = {0};
 
 Level level;
@@ -187,7 +183,8 @@ void set_game_state(GameState state)
             } break;
             case GAME_STATE_PLAYING:
             {
-                player->active = true;
+                if(role == ROLE_LOCAL)
+                    player->active = true;
                 player_init_keys();
             } break;
         }
@@ -198,12 +195,11 @@ void set_game_state(GameState state)
 // also checks if the mouse is off the screen
 void camera_set()
 {
-    if(transition_room) return;
-    // if(transition_room)
-    // {
-    //     // camera_zoom(cam_zoom-0.1,false);
-    //     return;
-    // }
+    if(player->curr_room != player->transition_room)
+    {
+        // printf("not updating camera\n");
+        return;
+    }
 
     if(false)
     {
@@ -292,130 +288,16 @@ void run()
     }
 }
 
-void start_server()
+void init_areas()
 {
-    //init
-
-    view_width = VIEW_WIDTH;
-    view_height = VIEW_HEIGHT;
-
     room_area.w = ROOM_W;
     room_area.h = ROOM_H;
     room_area.x = CENTER_X;
     room_area.y = CENTER_Y;
 
-    gfx_image_init();
-    ascale = view_width / 1200.0;
-    camera_init();
-    player_init();
-
-    level_init();
-    seed = time(0)+rand()%1000;
-    level = level_generate(seed);
-    level_print(&level);
-
-    projectile_init();
-
     memcpy(&player_area, &room_area, sizeof(Rect));
     player_area.w -= 32;
     player_area.h -= 48;
-    
-    // margins scaled with reference to view_width and view_height
-    float mscale = view_width/1200.0;
-
-    margin_left.w = 120.0 * mscale;
-    margin_left.h = 550.0 * mscale;
-    margin_left.x = margin_left.w / 2.0;
-    margin_left.y = view_height / 2.0;
-
-    margin_right.w = margin_left.w;
-    margin_right.h = margin_left.h;
-    margin_right.x = view_width - margin_left.w / 2.0;
-    margin_right.y = margin_left.y;
-
-    margin_top.w = view_width;
-    margin_top.h = (view_height - margin_left.h) / 2.0;
-    margin_top.x = CENTER_X;
-    margin_top.y = margin_top.h / 2.0;
-
-    margin_bottom.w = margin_top.w;
-    margin_bottom.h = margin_top.h;
-    margin_bottom.x = margin_top.x;
-    margin_bottom.y = view_height - margin_bottom.h / 2.0;
-
-    // start
-    net_server_start();
-}
-
-void init()
-{
-    if(initialized) return;
-    initialized = true;
-
-    text_lst = text_list_init(50, 10.0, view_height - 10.0, 0.08, COLOR_WHITE, false, TEXT_ALIGN_LEFT);
-
-    LOGI("Initializing...");
-
-    LOGI("Resolution: %d %d",VIEW_WIDTH, VIEW_HEIGHT);
-    bool success = window_init(VIEW_WIDTH, VIEW_HEIGHT);
-
-    if(!success)
-    {
-        fprintf(stderr,"Failed to initialize window!\n");
-        exit(1);
-    }
-
-    window_controls_set_cb(key_cb);
-    window_controls_set_key_mode(KEY_MODE_NORMAL);
-
-    room_area.w = ROOM_W;
-    room_area.h = ROOM_H;
-    room_area.x = CENTER_X;
-    room_area.y = CENTER_Y;
-
-    LOGI(" - Shaders.");
-    shader_load_all();
-
-    LOGI(" - Graphics.");
-    gfx_init(VIEW_WIDTH, VIEW_HEIGHT);
-    ascale = view_width / 1200.0;
-    LOGI("   ascale: %.2f", ascale);
-
-    LOGI(" - Camera.");
-    camera_init();
-
-    LOGI(" - Player.");
-    player = &players[0];
-    player_init();
-
-    LOGI(" - Effects.");
-    effects_load_all();
-
-    LOGI(" - Room Data.");
-    level_init();
-
-    LOGI(" - Projectiles.");
-    projectile_init();
-
-    imgui_load_theme("retro.theme");
-
-    if(role == ROLE_LOCAL)
-        level = level_generate(seed);
-
-    camera_zoom(cam_zoom, true);
-    camera_move(0,0,false,NULL);
-    camera_update(VIEW_WIDTH, VIEW_HEIGHT);
-    Rect cr = get_camera_rect();
-    // print_rect(&cr);
-
-    memcpy(&player_area, &room_area, sizeof(Rect));
-    player_area.w -= 32;
-    player_area.h -= 48;
-
-    // RectXY rxy = {0};
-    // rect_to_rectxy(&room_area, &rxy);
-
-    // 120->214
 
     // margins scaled with reference to view_width and view_height
     float mscale = view_width/1200.0;
@@ -450,6 +332,84 @@ void init()
     printf("right:\n");
     print_rect(&margin_right);
 #endif
+
+}
+
+void start_server()
+{
+    //init
+    gfx_image_init();
+    player_init();
+
+    level_init();
+    level = level_generate(seed);
+    level_print(&level);
+
+    projectile_init();
+
+    view_width = VIEW_WIDTH;
+    view_height = VIEW_HEIGHT;
+    init_areas();
+
+    // start
+    net_server_start();
+}
+
+void init()
+{
+    if(initialized) return;
+    initialized = true;
+
+    text_lst = text_list_init(50, 10.0, view_height - 10.0, 0.08, COLOR_WHITE, false, TEXT_ALIGN_LEFT);
+
+    LOGI("Initializing...");
+
+    LOGI("Resolution: %d %d",VIEW_WIDTH, VIEW_HEIGHT);
+    bool success = window_init(VIEW_WIDTH, VIEW_HEIGHT);
+
+    if(!success)
+    {
+        fprintf(stderr,"Failed to initialize window!\n");
+        exit(1);
+    }
+
+    window_controls_set_cb(key_cb);
+    window_controls_set_key_mode(KEY_MODE_NORMAL);
+
+    init_areas();
+
+    LOGI(" - Shaders.");
+    shader_load_all();
+
+    LOGI(" - Graphics.");
+    gfx_init(VIEW_WIDTH, VIEW_HEIGHT);
+    ascale = view_width / 1200.0;
+    LOGI("   ascale: %.2f", ascale);
+
+    LOGI(" - Camera.");
+    camera_init();
+
+    LOGI(" - Player.");
+    player = &players[0];
+    player_init();
+
+    LOGI(" - Effects.");
+    effects_load_all();
+
+    LOGI(" - Room Data.");
+    level_init();
+
+    LOGI(" - Projectiles.");
+    projectile_init();
+
+    imgui_load_theme("retro.theme");
+
+    if(role == ROLE_LOCAL)
+        level = level_generate(seed);
+
+    camera_zoom(cam_zoom, true);
+    camera_move(0,0,false,NULL);
+    camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 
     set_menu_keys();
 }
@@ -577,8 +537,8 @@ void update(float dt)
         }
 
         text_list_update(text_lst, dt);
+
         camera_set();
-        // camera_zoom(cam_zoom, false);
         camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 
         return;
@@ -614,9 +574,10 @@ void update(float dt)
         if(menu_keys[MENU_KEY_ENTER].toggled_on)
         {
             const char* s = menu_options[menu_selected_option];
-            //TODO
+
             if(STR_EQUAL(s, "Play Local"))
             {
+                role = ROLE_LOCAL;
                 set_game_state(GAME_STATE_PLAYING);
             }
             else if(STR_EQUAL(s, "Play Online"))
@@ -717,7 +678,6 @@ void draw_level(Rect* area, bool show_all, uint32_t color_bg, float opacity_bg, 
             Room room = level.rooms[x][y];
             if(room.valid)
             {
-                // bool curr = (x == player->curr_room.x && y == player->curr_room.y);
 
                 if(!show_all && !level.rooms[x][y].discovered)
                 {
@@ -781,8 +741,14 @@ void draw_level(Rect* area, bool show_all, uint32_t color_bg, float opacity_bg, 
         Rect pr = RECT(px, py, margin, margin);
 
         // translate to minimap
-        float draw_x = tlx + p->curr_room.x*rwh + rwh/2.0;
-        float draw_y = tly + p->curr_room.y*rwh + rwh/2.0;
+
+        Vector2i roomxy = level_get_room_coords(p->curr_room);
+        // if(p->curr_room != p->transition_room)
+        // {
+        //     roomxy = level_get_room_coords(p->curr_room);
+        // }
+        float draw_x = tlx + roomxy.x*rwh + rwh/2.0;
+        float draw_y = tly + roomxy.y*rwh + rwh/2.0;
 
         Rect r = RECT(draw_x, draw_y, room_wh, room_wh);
         gfx_get_absolute_coords(&pr, ALIGN_CENTER, &r, ALIGN_CENTER);
@@ -799,30 +765,6 @@ void draw_minimap()
     // translate the location
     gfx_get_absolute_coords(&minimap_area, ALIGN_CENTER, &margin_left, ALIGN_CENTER);
     draw_level(&minimap_area, false, COLOR_BLACK,0.3,  COLOR(0x22,0x48,0x70),0.4,  COLOR_RED,0.5);
-
-#if 0
-    // solve for size
-    float s = 0.01;
-    for(int i = 0; i < 100; ++i)
-    {
-        Vector2f seed_size = gfx_string_get_size(s, "Level Seed: %u", seed);
-        if(ABS(seed_size.y - minimap_area.h/14.0) <= 0.2)
-        {
-            break;
-        }
-        s += 0.01;
-    }
-
-    float seed_scale = s;
-    Vector2f seed_size = gfx_string_get_size(seed_scale, "Level Seed: %u", seed);
-
-    Rect seed_rect = minimap_area;
-    seed_rect.h = seed_size.y + 2.0;
-    seed_rect.y += minimap_area.h/2.0 + seed_rect.h/2.0;
-    gfx_draw_rect(&seed_rect, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.5, true, true);
-
-    gfx_draw_string(rect_tlx(&seed_rect), rect_tly(&seed_rect), COLOR_WHITE, seed_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, "Level Seed: %u", seed);
-#endif
 }
 
 void draw()
@@ -835,112 +777,27 @@ void draw()
     gfx_get_absolute_coords(&title_r, ALIGN_CENTER, &margin_top, ALIGN_TOP_LEFT);
     gfx_draw_string(title_r.x, title_r.y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "SCUM");
 
-
-
     // draw room
-
-    Room* room = &level.rooms[player->curr_room.x][player->curr_room.y];
 
     if(game_state == GAME_STATE_PLAYING)
     {
-        // static int c = 0;
-        // if(!transition_room) c = 0;
 
-        if(transition_room)
+        player_draw_room_transition();
+
+        if(player->curr_room == player->transition_room)
         {
-            // c++;
-            float dx = transition_targets.x/30.0;
-            float dy = transition_targets.y/30.0;
-
-            transition_offsets.x += dx;
-            transition_offsets.y += dy;
-
-            // transition_offsets.x += transition_deltas.x;
-            // transition_offsets.y += transition_deltas.y;
-
-            if(ABS(transition_offsets.x) >= ABS(transition_targets.x) && ABS(transition_offsets.y) >= ABS(transition_targets.y))
-            {
-                player->curr_room.x = transition_next_room.x;
-                player->curr_room.y = transition_next_room.y;
-                room = &level.rooms[player->curr_room.x][player->curr_room.y];
-
-                //player_set_hit_box_pos(player, transition_player_target.x, transition_player_target.y);
-                camera_move(player->pos.x, player->pos.y, true, &camera_limit);
-                camera_update(VIEW_WIDTH, VIEW_HEIGHT);
-                transition_room = false;
-
-                // printf("final: %.2f, %.2f\n", player->pos.x, player->pos.y);
-                // printf("c: %d\n", c);
-            }
-            else
-            {
-                // float pdx = transition_player_target.x/60.0;
-                // float pdy = transition_player_target.y/60.0;
-                // player_set_hit_box_pos(player, pdx, pdy);
-
-                // printf("%.2f, %.2f  ->  ", player->pos.x, player->pos.y);
-
-
-                // player_set_hit_box_pos(player, player->hitbox.x+dx, player->hitbox.y+dy);
-                // // player_set_hit_box_pos(player, player->hitbox.x+transition_player_target.x, player->hitbox.y+transition_player_target.y);
-                // // player_set_hit_box_pos(player, player->hitbox.x-transition_offsets.x, player->hitbox.y-transition_offsets.y);
-
-                // printf("%.2f, %.2f\n", player->pos.x, player->pos.y);
-
-                float x0 = transition_offsets.x;
-                float y0 = transition_offsets.y;
-
-                float xoff = 0.0;
-                if(!FEQ0(transition_targets.x))
-                {
-                    if(transition_targets.x > 0)
-                        xoff = -room_area.w;
-                    else
-                        xoff = room_area.w;
-                }
-                float yoff = 0.0;
-                if(!FEQ0(transition_targets.y))
-                {
-                    if(transition_targets.y > 0)
-                        yoff = -room_area.h;
-                    else
-                        yoff = room_area.h;
-                }
-
-                float x1 = transition_offsets.x+xoff;
-                float y1 = transition_offsets.y+yoff;
-
-                level_draw_room(&level.rooms[player->curr_room.x][player->curr_room.y], x0, y0);
-                level_draw_room(&level.rooms[transition_next_room.x][transition_next_room.y], x1, y1);
-            }
-
-        }
-
-        if(!transition_room)
-        {
+            Vector2i roomxy = level_get_room_coords((int)player->curr_room);
+            Room* room = &level.rooms[roomxy.x][roomxy.y];
             level_draw_room(room, 0, 0);
         }
-
-
-        // static float yoffset = 0.0;
-        // static float yincr = 10.0;
-        // level_draw_room(&level.rooms[player->curr_room.x][player->curr_room.y], 0, yoffset);
-        // yoffset += yincr;
-        // if(yoffset >= room_area.h)
-        // {
-        //     yoffset = room_area.h;
-        //     yincr *= -1.0;
-        // }
-        // else if(yoffset <= -room_area.h)
-        // {
-        //     yoffset = -room_area.h;
-        //     yincr *= -1.0;
-        // }
 
         gfx_draw_rect(&room_area, COLOR_WHITE, NOT_SCALED, NO_ROTATION, 1.0, false, true);
     }
     else if(game_state == GAME_STATE_MENU)
     {
+        //TODO
+        Vector2i roomxy = level_get_room_coords((int)player->curr_room);
+        Room* room = &level.rooms[roomxy.x][roomxy.y];
         level_draw_room(room, 0, 0);
         gfx_draw_rect(&room_area, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, true);
     }
@@ -989,9 +846,7 @@ void draw()
             Player* p = &players[i];
             if(p->active)
             {
-                if(   p->curr_room.x == player->curr_room.x && 
-                      p->curr_room.y == player->curr_room.y
-                )
+                if(p->curr_room == player->curr_room)
                 {
                     // draw players if they are in the same room as you
                     player_draw(p);
@@ -1040,6 +895,13 @@ void draw()
         gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "limit: %.1f, %.1f, %.1f, %.1f", limit.x, limit.y, limit.w, limit.h); y += yincr;
         gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "view:   %d, %d", view_width, view_height); y += yincr;
         gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "window: %d, %d", window_width, window_height); y += yincr;
+
+
+        y = 0;
+        x = 300;
+        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "curr room: %u", player->curr_room); y += yincr;
+        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "tran room: %u", player->transition_room); y += yincr;
+
 
         // //TEST
         // Rect l = margin_left;
@@ -1103,9 +965,7 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
             }
             else if(key == GLFW_KEY_P)
             {
-                // if(role == ROLE_LOCAL && game_state == GAME_STATE_PLAYING)
-                // TODO
-                if(game_state == GAME_STATE_PLAYING)
+                if(role == ROLE_LOCAL && game_state == GAME_STATE_PLAYING)
                 {
                     paused = !paused;
                 }

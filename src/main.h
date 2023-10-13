@@ -63,6 +63,7 @@ void update_input_state(PlayerInput* input, float _dt);
 
 extern Rect room_area;
 extern Rect player_area;
+extern Rect camera_limit;
 extern Rect margin_left;
 extern Rect margin_right;
 extern Rect margin_top;

@@ -449,6 +449,33 @@ void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radiu
     return;
 }
 
+// for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
+// {
+//     for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
+//     {
+//         printf("%2d | %d, %d\n", level_get_room_index(x,y), x, y);
+//     }
+// }
+
+// for(int i = 0; i < MAX_ROOMS_GRID_X*MAX_ROOMS_GRID_Y; ++i)
+// {
+//     Vector2i xy = level_get_room_coords(i);
+//     printf("%2d | %d, %d\n", i, xy.x, xy.y);
+// }
+
+int level_get_room_index(int x, int y)
+{
+    return y*MAX_ROOMS_GRID_X + x;
+}
+
+Vector2i level_get_room_coords(int index)
+{
+    Vector2i p = {0};
+    p.x = index % MAX_ROOMS_GRID_X;
+    p.y =  index / MAX_ROOMS_GRID_X;
+    return p;
+}
+
 bool level_is_room_valid(Level* level, int x, int y)
 {
     if(x >= MAX_ROOMS_GRID_X || y >= MAX_ROOMS_GRID_Y)
@@ -456,9 +483,21 @@ bool level_is_room_valid(Level* level, int x, int y)
     return level->rooms[x][y].valid;
 }
 
+bool level_is_room_valid_index(Level* level, int index)
+{
+    Vector2i p = level_get_room_coords(index);
+    return level_is_room_valid(level, p.x, p.y);
+}
+
 bool level_is_room_discovered(Level* level, int x, int y)
 {
     if(!level_is_room_valid(level, x, y))
         return false;
     return level->rooms[x][y].discovered;
+}
+
+bool level_is_room_discovered_index(Level* level, int index)
+{
+    Vector2i p = level_get_room_coords(index);
+    return level_is_room_discovered(level, p.x, p.y);
 }

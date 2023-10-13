@@ -428,8 +428,8 @@ static void server_send(PacketType type, ClientInfo* cli)
                     pack_u8(&pkt,(uint8_t)i);
                     pack_vec2(&pkt,p->pos);
                     pack_u8(&pkt, p->sprite_index+p->anim.curr_frame);
-                    pack_u8(&pkt, p->curr_room.x);
-                    pack_u8(&pkt, p->curr_room.y);
+                    pack_u8(&pkt, p->curr_room);
+                    pack_u8(&pkt, (uint8_t)p->door);
                     num_clients++;
                 }
             }
@@ -1270,15 +1270,27 @@ void net_client_update()
                         }
 
                         Player* p = &players[client_id];
+                        p->active = true;
 
                         Vector2f pos    = unpack_vec2(&srvpkt, &offset);
                         p->sprite_index = unpack_u8(&srvpkt, &offset);
-                        p->curr_room.x  = (int)unpack_u8(&srvpkt, &offset);
-                        p->curr_room.y  = (int)unpack_u8(&srvpkt, &offset);
+                        uint8_t curr_room  = unpack_u8(&srvpkt, &offset);
+                        p->door  = (Dir)unpack_u8(&srvpkt, &offset);
+
+                        if(curr_room != p->curr_room)
+                        {
+                            p->transition_room = p->curr_room;
+                            p->curr_room = curr_room;
+                            // printf("net recv: %d -> %d\n", p->transition_room, p->curr_room);
+                            // printf("door: %d\n", p->door);
+                            player_start_room_transition(p);
+                            p->pos.x = pos.x;
+                            p->pos.y = pos.y;
+                        }
 
                         //LOGN("      Pos: %f, %f. Angle: %f", pos.x, pos.y, angle);
 
-                        p->active = true;
+                        // p->active = true;
                         p->lerp_t = 0.0;
 
                         p->server_state_prior.pos.x = p->pos.x;
@@ -1289,7 +1301,7 @@ void net_client_update()
 
                         if(!prior_active[client_id])
                         {
-                            // printf("first state packet for %d\n", client_id);
+                            printf("first state packet for %d\n", client_id);
                             memcpy(&p->server_state_prior, &p->server_state_target, sizeof(p->server_state_target));
                         }
                         // printf("[prior]  %.2f, %.2f\n", p->server_state_prior.pos.x, p->server_state_prior.pos.y);

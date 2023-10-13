@@ -42,7 +42,11 @@ typedef struct
     Rect hitbox_prior;
     float radius;
 
-    Vector2i curr_room;
+    uint8_t curr_room;
+    uint8_t transition_room;
+    Dir door;
+
+    Vector2i curr_tile;
 
     float proj_cooldown;
 
@@ -68,3 +72,5 @@ void player_reset(Player* p);
 void player_lerp(Player* p, float dt);
 void player_handle_net_inputs(Player* p, double dt);
 void player_set_hit_box_pos(Player* p, float x, float y);
+void player_draw_room_transition();
+void player_start_room_transition(Player* p);
