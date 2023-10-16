@@ -341,6 +341,10 @@ void init_areas()
 void start_server()
 {
     //init
+    view_width = VIEW_WIDTH;
+    view_height = VIEW_HEIGHT;
+    init_areas();
+
     gfx_image_init();
     player_init();
 
@@ -349,10 +353,6 @@ void start_server()
     level_print(&level);
 
     projectile_init();
-
-    view_width = VIEW_WIDTH;
-    view_height = VIEW_HEIGHT;
-    init_areas();
 
     // start
     net_server_start();
