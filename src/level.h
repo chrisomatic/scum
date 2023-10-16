@@ -92,9 +92,9 @@ void level_print(Level* level);
 void level_print_room(Room* room);
 void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radius);
 
+Room* level_get_room(Level* level, int x, int y);
 uint8_t level_get_room_index(int x, int y);
 Vector2i level_get_room_coords(int index);
-
 bool level_is_room_valid(Level* level, int x, int y);
 bool level_is_room_valid_index(Level* level, int index);
 bool level_is_room_discovered(Level* level, int x, int y);

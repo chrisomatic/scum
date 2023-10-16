@@ -472,6 +472,13 @@ void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radiu
 //     printf("%2d | %d, %d\n", i, xy.x, xy.y);
 // }
 
+Room* level_get_room(Level* level, int x, int y)
+{
+    if(!level_is_room_valid(level, x, y))
+        return NULL;
+    return &level->rooms[x][y];
+}
+
 uint8_t level_get_room_index(int x, int y)
 {
     return y*MAX_ROOMS_GRID_X + x;

@@ -58,6 +58,25 @@ typedef struct
     float hold_period;
 } PlayerInput;
 
+typedef struct
+{
+    Rect area;
+    bool show_all;
+
+    uint32_t color_bg;
+    float opacity_bg;
+
+    uint32_t color_room;
+    float opacity_room;
+
+    //undiscovered room
+    uint32_t color_uroom;
+    float opacity_uroom;
+
+    uint32_t color_player;
+    float opacity_player;
+} DrawLevelParams;
+
 void set_game_state(GameState state);
 void update_input_state(PlayerInput* input, float _dt);
 
@@ -71,11 +90,8 @@ extern Rect margin_bottom;
 
 extern Level level;
 
-extern bool transition_room;
 extern Vector2f transition_offsets;
 extern Vector2f transition_targets;
-extern Vector2i transition_next_room;
-extern Vector2f transition_player_target;
 
 extern bool initialized;
 extern bool debug_enabled;
