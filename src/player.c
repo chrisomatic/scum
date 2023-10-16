@@ -93,13 +93,11 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_A);
     window_controls_add_key(&player->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_D);
     window_controls_add_key(&player->actions[PLAYER_ACTION_RUN].state, GLFW_KEY_LEFT_SHIFT);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_SHOW_MAP].state, GLFW_KEY_M);
     window_controls_add_key(&player->actions[PLAYER_ACTION_DOOR].state, GLFW_KEY_ENTER);
 
     for(int i = 0;  i < PLAYER_ACTION_MAX; ++i)
         memset(&player->actions[i], 0, sizeof(PlayerInput));
 
-    // window_controls_add_key(&player->actions[PLAYER_ACTION_SCUM].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
 }
@@ -140,7 +138,7 @@ void player_draw_room_transition()
 
         if(ABS(transition_offsets.x) >= ABS(transition_targets.x) && ABS(transition_offsets.y) >= ABS(transition_targets.y))
         {
-            printf("room transition complete\n");
+            // printf("room transition complete\n");
             p->transition_room = p->curr_room;
             camera_move(p->phys.pos.x, p->phys.pos.y, true, &camera_limit);
             camera_update(VIEW_WIDTH, VIEW_HEIGHT);
@@ -186,7 +184,7 @@ void player_draw_room_transition()
 
 void player_start_room_transition(Player* p)
 {
-    printf("start room transition\n");
+    // printf("start room transition\n");
 
     Vector2i roomxy = level_get_room_coords((int)p->curr_room);
 
@@ -408,12 +406,6 @@ void player_update(Player* p, float dt)
         update_input_state(pa, dt);
     }
 
-    bool map = p->actions[PLAYER_ACTION_SHOW_MAP].toggled_on;
-    if(map)
-    {
-        show_big_map = !show_big_map;
-    }
-
     bool up    = p->actions[PLAYER_ACTION_UP].state;
     bool down  = p->actions[PLAYER_ACTION_DOWN].state;
     bool left  = p->actions[PLAYER_ACTION_LEFT].state;
@@ -513,11 +505,6 @@ void player_draw(Player* p)
 {
     if(!p->active) return;
 
-    if(role == ROLE_LOCAL)
-    {
-        if(p->curr_room != p->transition_room) return;
-    }
-
     Vector2i roomxy = level_get_room_coords((int)p->curr_room);
     Room* room = &level.rooms[roomxy.x][roomxy.y];
     gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, p->phys.pos.y, room->color, 1.0, 0.0, 1.0, false, true);
@@ -546,20 +533,12 @@ void player_lerp(Player* p, float dt)
     // printf("[lerp prior]  %.2f, %.2f\n", p->server_state_prior.pos.x, p->server_state_prior.pos.y);
     // printf("[lerp target] %.2f, %.2f\n", p->server_state_target.pos.x, p->server_state_target.pos.y);
 
-    if(p->transition_room == p->curr_room)
-    {
-        Vector2f lp = lerp2f(&p->server_state_prior.pos,&p->server_state_target.pos,t);
-        p->phys.pos.x = lp.x;
-        p->phys.pos.y = lp.y;
-    }
-    else
-    {
-        // printf("not lerping position\n");
-    }
+    Vector2f lp = lerp2f(&p->server_state_prior.pos,&p->server_state_target.pos,t);
+    p->phys.pos.x = lp.x;
+    p->phys.pos.y = lp.y;
 
     Vector2i roomxy = level_get_room_coords((int)p->curr_room);
     level.rooms[roomxy.x][roomxy.y].discovered = true;
-
 }
 
 void player_handle_net_inputs(Player* p, double dt)
@@ -577,6 +556,11 @@ void player_handle_net_inputs(Player* p, double dt)
         {
             p->input.keys |= (1<<i);
         }
+    }
+
+    if(p->curr_room != p->transition_room)
+    {
+        p->input.keys = 0;
     }
 
     if(p->input.keys != p->input_prior.keys)
