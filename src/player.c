@@ -140,7 +140,7 @@ void player_draw_room_transition()
 
         if(ABS(transition_offsets.x) >= ABS(transition_targets.x) && ABS(transition_offsets.y) >= ABS(transition_targets.y))
         {
-            // printf("room transition complete\n");
+            printf("room transition complete\n");
             p->transition_room = p->curr_room;
             camera_move(p->pos.x, p->pos.y, true, &camera_limit);
             camera_update(VIEW_WIDTH, VIEW_HEIGHT);
@@ -186,6 +186,8 @@ void player_draw_room_transition()
 
 void player_start_room_transition(Player* p)
 {
+    printf("start room transition\n");
+
     Vector2i roomxy = level_get_room_coords((int)p->curr_room);
 
     // new player positions
@@ -232,6 +234,9 @@ void player_start_room_transition(Player* p)
     }
 
     if(role == ROLE_SERVER)
+        return;
+
+    if(p != player)
         return;
 
     transition_offsets.x = 0;
@@ -517,11 +522,12 @@ void player_draw(Player* p)
     Room* room = &level.rooms[roomxy.x][roomxy.y];
     gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->pos.x, p->pos.y, room->color, 1.0, 0.0, 1.0, false, true);
 
-    // @TEMP
-    gfx_draw_circle(p->pos.x, p->pos.y+8, p->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
 
     if(debug_enabled)
     {
+        // @TEMP
+        gfx_draw_circle(p->pos.x, p->pos.y+8, p->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
+
         Rect r = RECT(p->pos.x, p->pos.y, 1, 1);
         gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
         gfx_draw_rect(&p->hitbox, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);

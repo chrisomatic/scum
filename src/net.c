@@ -429,6 +429,8 @@ static void server_send(PacketType type, ClientInfo* cli)
                     pack_vec2(&pkt,p->pos);
                     pack_u8(&pkt, p->sprite_index+p->anim.curr_frame);
                     pack_u8(&pkt, p->curr_room);
+                    // pack_u8(&pkt, p->transition_room);
+                    pack_u8(&pkt, p->curr_room);    // @HACK: to get transitions working properly
                     pack_u8(&pkt, (uint8_t)p->door);
                     num_clients++;
                 }
@@ -1275,17 +1277,26 @@ void net_client_update()
                         Vector2f pos    = unpack_vec2(&srvpkt, &offset);
                         p->sprite_index = unpack_u8(&srvpkt, &offset);
                         uint8_t curr_room  = unpack_u8(&srvpkt, &offset);
+                        uint8_t transition_room  = unpack_u8(&srvpkt, &offset);
                         p->door  = (Dir)unpack_u8(&srvpkt, &offset);
 
-                        if(curr_room != p->curr_room)
+                        if(p == player)
                         {
-                            p->transition_room = p->curr_room;
+                            if(curr_room != p->curr_room)
+                            {
+                                p->transition_room = p->curr_room;
+                                p->curr_room = curr_room;
+                                printf("net recv: %d -> %d\n", p->transition_room, p->curr_room);
+                                printf("door: %d\n", p->door);
+                                player_start_room_transition(p);
+                                p->pos.x = pos.x;
+                                p->pos.y = pos.y;
+                            }
+                        }
+                        else
+                        {
+                            p->transition_room = transition_room;
                             p->curr_room = curr_room;
-                            // printf("net recv: %d -> %d\n", p->transition_room, p->curr_room);
-                            // printf("door: %d\n", p->door);
-                            player_start_room_transition(p);
-                            p->pos.x = pos.x;
-                            p->pos.y = pos.y;
                         }
 
                         //LOGN("      Pos: %f, %f. Angle: %f", pos.x, pos.y, angle);

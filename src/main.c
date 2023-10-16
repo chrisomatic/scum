@@ -415,6 +415,12 @@ void init()
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 
     set_menu_keys();
+
+    if(role == ROLE_CLIENT)
+    {
+        net_client_init();
+        set_game_state(GAME_STATE_PLAYING);
+    }
 }
 
 void deinit()
@@ -896,18 +902,23 @@ void draw()
         int x = 1;
         gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "view mouse:  %d, %d", mx, my); y += yincr;
         gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "world mouse: %d, %d", wmx, wmy); y += yincr;
-        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "pos: %.1f, %.1f", player->pos.x, player->pos.y); y += yincr;
         gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "camera: %.1f, %.1f, %.1f, %.1f", cr.x, cr.y, cr.w, cr.h); y += yincr;
         gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "limit: %.1f, %.1f, %.1f, %.1f", limit.x, limit.y, limit.w, limit.h); y += yincr;
         gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "view:   %d, %d", view_width, view_height); y += yincr;
         gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "window: %d, %d", window_width, window_height); y += yincr;
 
 
-        y = 0;
-        x = 300;
-        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "curr room: %u", player->curr_room); y += yincr;
-        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "tran room: %u", player->transition_room); y += yincr;
-
+        for(int i = 0; i < MAX_PLAYERS; ++i)
+        {
+            Player* p = &players[i];
+            if(!p->active) continue;
+            y = 0;
+            x = 300 +i*100;
+            gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "player %d", i); y += yincr;
+            gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "pos: %.1f, %.1f", p->pos.x, player->pos.y); y += yincr;
+            gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "c room: %u", p->curr_room); y += yincr;
+            gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "t room: %u", p->transition_room); y += yincr;
+        }
 
         // //TEST
         // Rect l = margin_left;
