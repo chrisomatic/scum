@@ -13,6 +13,7 @@
 #include "level.h"
 #include "projectile.h"
 #include "player.h"
+#include "creature.h"
 #include "net.h"
 #include "text_list.h"
 
@@ -347,6 +348,7 @@ void start_server()
 
     gfx_image_init();
     player_init();
+    creature_init();
 
     srand(time(0));
     seed = rand();
@@ -398,6 +400,9 @@ void init()
     LOGI(" - Player.");
     player = &players[0];
     player_init();
+
+    LOGI(" - Creatures.");
+    creature_init();
 
     LOGI(" - Effects.");
     effects_load_all();
@@ -634,6 +639,7 @@ void update(float dt)
         {
             player_update(player, dt);
             projectile_update(dt);
+            creature_update_all(dt);
         }
     }
 
@@ -844,6 +850,8 @@ void draw()
 
         if(player->curr_room == player->transition_room)
         {
+            creature_draw_all();
+
             // draw player
             for(int i = 0; i < MAX_PLAYERS; ++i)
             {

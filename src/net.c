@@ -446,9 +446,11 @@ static void server_send(PacketType type, ClientInfo* cli)
 
             for(int i = 0; i < plist->count; ++i)
             {
-                pack_u16(&pkt,projectiles[i].id);
-                pack_vec2(&pkt,projectiles[i].phys.pos);
-                pack_u8(&pkt,projectiles[i].player_id);
+                Projectile* p = &projectiles[i];
+                pack_u16(&pkt,p->id);
+                pack_vec2(&pkt,p->phys.pos);
+                pack_u8(&pkt,p->player_id);
+                pack_u8(&pkt,p->curr_room);
             }
 
             //print_packet(&pkt);
@@ -1335,7 +1337,9 @@ void net_client_update()
                             uint16_t id = unpack_u16(&srvpkt, &offset);
                             Vector2f pos = unpack_vec2(&srvpkt, &offset);
                             uint8_t player_id = unpack_u8(&srvpkt, &offset);
+                            uint8_t room_id = unpack_u8(&srvpkt, &offset);
 
+                            p->curr_room = room_id;
                             p->lerp_t = 0.0;
 
                             //LOGN("      Pos: %f, %f. Angle: %f", pos.x, pos.y, angle);

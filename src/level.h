@@ -19,6 +19,7 @@ typedef enum
 {
     TILE_NONE = 0,
     TILE_FLOOR,
+    TILE_PIT,
     TILE_BOULDER,
 } TileType;
 
@@ -47,6 +48,7 @@ typedef enum
     SPRITE_TILE_DOOR_RIGHT,
     SPRITE_TILE_DOOR_DOWN,
     SPRITE_TILE_DOOR_LEFT,
+    SPRITE_TILE_PIT,
     SPRITE_TILE_MAX,
 } SpriteTileType;
 
@@ -66,6 +68,7 @@ typedef struct
     Wall walls[100];
     int wall_count;
     int layout;
+    uint8_t index;
     bool discovered;
 } Room;
 
@@ -89,7 +92,7 @@ void level_print(Level* level);
 void level_print_room(Room* room);
 void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radius);
 
-int level_get_room_index(int x, int y);
+uint8_t level_get_room_index(int x, int y);
 Vector2i level_get_room_coords(int index);
 
 bool level_is_room_valid(Level* level, int x, int y);

@@ -458,7 +458,7 @@ void player_update(Player* p, float dt)
     GFXImage* img = &gfx_images[player_image];
     Rect* vr = &img->visible_rects[p->sprite_index];
 
-    const float pcooldown = 0.1; //seconds
+    const float pcooldown = 0.4; //seconds
 
     if(p->actions[PLAYER_ACTION_SHOOT].state)
     {

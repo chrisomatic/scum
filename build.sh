@@ -20,6 +20,7 @@ gcc core/gfx.c \
     projectile.c \
     player.c \
     net.c \
+    creature.c \
     level.c \
     main.c \
     -Icore \

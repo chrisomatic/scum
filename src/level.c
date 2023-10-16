@@ -1,6 +1,7 @@
 #include "headers.h"
 #include "core/gfx.h"
 #include "main.h"
+#include "creature.h"
 #include "level.h"
 
 RoomData room_list[32] = {0};
@@ -18,6 +19,11 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
     room->valid = true;
     room->discovered = false;
     room->color = rand();
+    room->index = level_get_room_index(x,y);
+
+    int n = rand() % 3;
+    for(int i = 0; i < n; ++i)
+        creature_add(room,CREATURE_TYPE_SLUG);
 
     if(x == (MAX_ROOMS_GRID_X / 2) && y == (MAX_ROOMS_GRID_Y / 2))
     {
@@ -158,7 +164,7 @@ static void generate_walls(Level* level)
                         {
                             TileType tt = rdata->tiles[ri][rj];
 
-                            if(tt == TILE_BOULDER)
+                            if(tt == TILE_PIT || tt == TILE_BOULDER)
                             {
                                 TileType check_tile = rdata->tiles[ri][rj];
                                 bool is_vertical = false;
@@ -172,7 +178,7 @@ static void generate_walls(Level* level)
                                     default: break;
                                 }
 
-                                if(check_tile != TILE_BOULDER)
+                                if(check_tile != TILE_PIT && check_tile != TILE_BOULDER)
                                 {
                                     Wall* w = &room->walls[room->wall_count++];
 
@@ -268,7 +274,8 @@ static bool level_load_room_list()
         switch(c)
         {
             case '.': *tile = TILE_FLOOR; break;
-            case 'o': *tile = TILE_BOULDER; break;
+            case 'p': *tile = TILE_PIT; break;
+            case 'b': *tile = TILE_BOULDER; break;
             default: break;
         }
     }
@@ -287,7 +294,8 @@ void level_print_room(Room* room)
             switch(*tile)
             {
                 case TILE_FLOOR:   printf("."); break;
-                case TILE_BOULDER: printf("o"); break;
+                case TILE_PIT:     printf("p"); break;
+                case TILE_BOULDER: printf("b"); break;
                 default: printf("%c", *tile+65);break;
             }
         }
@@ -372,6 +380,7 @@ void level_draw_room(Room* room, float xoffset, float yoffset)
             switch(tt)
             {
                 case TILE_FLOOR:   sprite = SPRITE_TILE_FLOOR; break;
+                case TILE_PIT:     sprite = SPRITE_TILE_PIT; break;
                 case TILE_BOULDER: sprite = SPRITE_TILE_BLOCK; break;
                 default: break;
             }
@@ -463,7 +472,7 @@ void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radiu
 //     printf("%2d | %d, %d\n", i, xy.x, xy.y);
 // }
 
-int level_get_room_index(int x, int y)
+uint8_t level_get_room_index(int x, int y)
 {
     return y*MAX_ROOMS_GRID_X + x;
 }
