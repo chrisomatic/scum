@@ -114,7 +114,6 @@ int main(int argc, char* argv[])
 
     init();
 
-
     camera_zoom(cam_zoom,true);
     camera_move(CENTER_X, CENTER_Y, true, NULL);
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
@@ -182,6 +181,7 @@ void set_game_state(GameState state)
         {
             case GAME_STATE_MENU:
             {
+                net_client_disconnect();
                 set_menu_keys();
             } break;
             case GAME_STATE_PLAYING:
@@ -740,7 +740,7 @@ void draw_level(Rect* area, bool show_all, uint32_t color_bg, float opacity_bg, 
 
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
-        Player* p = &player[i];
+        Player* p = &players[i];
         if(!p->active) continue;
 
         float px = p->pos.x - rect_tlx(&room_area);
@@ -750,12 +750,7 @@ void draw_level(Rect* area, bool show_all, uint32_t color_bg, float opacity_bg, 
         Rect pr = RECT(px, py, margin, margin);
 
         // translate to minimap
-
         Vector2i roomxy = level_get_room_coords(p->curr_room);
-        // if(p->curr_room != p->transition_room)
-        // {
-        //     roomxy = level_get_room_coords(p->curr_room);
-        // }
         float draw_x = tlx + roomxy.x*rwh + rwh/2.0;
         float draw_y = tly + roomxy.y*rwh + rwh/2.0;
 
@@ -849,19 +844,23 @@ void draw()
             draw_level(&minimap_area, true, COLOR_BLACK,0.0,  COLOR_BLACK,0.4,  COLOR_RED,0.3);
         }
 
-        // draw player
-        for(int i = 0; i < MAX_PLAYERS; ++i)
+        if(player->curr_room == player->transition_room)
         {
-            Player* p = &players[i];
-            if(p->active)
+            // draw player
+            for(int i = 0; i < MAX_PLAYERS; ++i)
             {
-                if(p->curr_room == player->curr_room)
+                Player* p = &players[i];
+                if(p->active)
                 {
-                    // draw players if they are in the same room as you
-                    player_draw(p);
+                    if(p->curr_room == player->curr_room)
+                    {
+                        // draw players if they are in the same room as you
+                        player_draw(p);
+                    }
                 }
             }
         }
+
 
         for(int i = 0; i < plist->count; ++i)
         {
@@ -896,7 +895,7 @@ void draw()
         float zscale = 1.0 - camera_get_zoom();
         Rect limit = camera_limit;
         Rect cr = get_camera_rect();
-        float sc = 0.2*ascale;
+        float sc = 0.16*ascale;
         int yincr = 15*ascale;
         int y = 0;
         int x = 1;
@@ -913,9 +912,9 @@ void draw()
             Player* p = &players[i];
             if(!p->active) continue;
             y = 0;
-            x = 300 +i*100;
+            x = 275 +i*120;
             gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "player %d", i); y += yincr;
-            gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "pos: %.1f, %.1f", p->pos.x, player->pos.y); y += yincr;
+            gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "pos: %.1f, %.1f", p->pos.x, p->pos.y); y += yincr;
             gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "c room: %u", p->curr_room); y += yincr;
             gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "t room: %u", p->transition_room); y += yincr;
         }
@@ -986,6 +985,10 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
                 {
                     paused = !paused;
                 }
+            }
+            else if(key == GLFW_KEY_M)
+            {
+                show_big_map = !show_big_map;
             }
 
         }

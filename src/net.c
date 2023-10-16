@@ -1280,23 +1280,24 @@ void net_client_update()
                         uint8_t transition_room  = unpack_u8(&srvpkt, &offset);
                         p->door  = (Dir)unpack_u8(&srvpkt, &offset);
 
-                        if(p == player)
+
+                        // moving between rooms
+                        if(curr_room != p->curr_room)
                         {
-                            if(curr_room != p->curr_room)
+                            if(p == player)
                             {
                                 p->transition_room = p->curr_room;
                                 p->curr_room = curr_room;
-                                printf("net recv: %d -> %d\n", p->transition_room, p->curr_room);
-                                printf("door: %d\n", p->door);
+                                // printf("net recv: %d -> %d\n", p->transition_room, p->curr_room); printf("door: %d\n", p->door);
                                 player_start_room_transition(p);
-                                p->pos.x = pos.x;
-                                p->pos.y = pos.y;
                             }
-                        }
-                        else
-                        {
-                            p->transition_room = transition_room;
-                            p->curr_room = curr_room;
+                            else
+                            {
+                                p->transition_room = transition_room;
+                                p->curr_room = curr_room;
+                            }
+                            p->pos.x = pos.x;
+                            p->pos.y = pos.y;
                         }
 
                         //LOGN("      Pos: %f, %f. Angle: %f", pos.x, pos.y, angle);
