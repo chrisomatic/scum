@@ -2,6 +2,7 @@
 
 #include "player.h"
 #include "glist.h"
+#include "physics.h"
 #include "net.h"
 
 #define MAX_PROJECTILES 256
@@ -24,12 +25,12 @@ typedef struct
     uint16_t id;
 
     ProjectileType type;
-    Vector2f pos;
-    Vector2f vel;
+    Physics phys;
 
     Rect hit_box;
     Rect hit_box_prior;
     float angle_deg;
+    uint8_t curr_room;
 
     // Player* shooter;
     uint8_t player_id;

@@ -22,8 +22,8 @@ static void update_player_boxes(Player* p)
     int w = img->element_width;
     int h = img->element_height;
 
-    p->hitbox.x = p->pos.x;
-    p->hitbox.y = p->pos.y;
+    p->hitbox.x = p->phys.pos.x;
+    p->hitbox.y = p->phys.pos.y;
     p->hitbox.w = w;
     p->hitbox.h = h;
 
@@ -51,11 +51,11 @@ void player_init()
 
         p->active = false;
 
-        p->pos.x = CENTER_X;
-        p->pos.y = CENTER_Y;
+        p->phys.pos.x = CENTER_X;
+        p->phys.pos.y = CENTER_Y;
 
-        p->vel.x = 0.0;
-        p->vel.y = 0.0;
+        p->phys.vel.x = 0.0;
+        p->phys.vel.y = 0.0;
 
         p->sprite_index = 4;
 
@@ -108,14 +108,14 @@ void player_set_hit_box_pos(Player* p, float x, float y)
 {
     // memcpy(p->hitbox_prior, p->hitbox, sizeof(p->hitbox));
 
-    float dx = p->pos.x - p->hitbox.x;
-    float dy = p->pos.y - p->hitbox.y;
+    float dx = p->phys.pos.x - p->hitbox.x;
+    float dy = p->phys.pos.y - p->hitbox.y;
 
     p->hitbox.x = x;
     p->hitbox.y = y;
 
-    p->pos.x = x + dx;
-    p->pos.y = y + dy;
+    p->phys.pos.x = x + dx;
+    p->phys.pos.y = y + dy;
 }
 
 
@@ -142,7 +142,7 @@ void player_draw_room_transition()
         {
             printf("room transition complete\n");
             p->transition_room = p->curr_room;
-            camera_move(p->pos.x, p->pos.y, true, &camera_limit);
+            camera_move(p->phys.pos.x, p->phys.pos.y, true, &camera_limit);
             camera_update(VIEW_WIDTH, VIEW_HEIGHT);
         }
         else
@@ -284,7 +284,7 @@ static void handle_room_collision(Player* p)
 
     Room* room = &level.rooms[roomxy.x][roomxy.y];
 
-    level_sort_walls(room->walls,room->wall_count,p->pos.x, p->pos.y+p->radius,p->radius);
+    level_sort_walls(room->walls,room->wall_count,p->phys.pos.x, p->phys.pos.y+p->radius,p->radius);
 
     for(int i = 0; i < room->wall_count; ++i)
     {
@@ -294,8 +294,8 @@ static void handle_room_collision(Player* p)
         bool check = false;
         Vector2f check_point;
 
-        float px = p->pos.x;
-        float py = p->pos.y + 8;
+        float px = p->phys.pos.x;
+        float py = p->phys.pos.y + 8;
 
         switch(wall->dir)
         {
@@ -328,10 +328,10 @@ static void handle_room_collision(Player* p)
                 float delta = p->radius - d + 1.0;
                 switch(wall->dir)
                 {
-                    case DIR_UP:    p->pos.y -= delta; break;
-                    case DIR_DOWN:  p->pos.y += delta; break;
-                    case DIR_LEFT:  p->pos.x -= delta; break;
-                    case DIR_RIGHT: p->pos.x += delta; break;
+                    case DIR_UP:    p->phys.pos.y -= delta; break;
+                    case DIR_DOWN:  p->phys.pos.y += delta; break;
+                    case DIR_LEFT:  p->phys.pos.x -= delta; break;
+                    case DIR_RIGHT: p->phys.pos.x += delta; break;
                 }
             }
         }
@@ -374,7 +374,7 @@ static void handle_room_collision(Player* p)
                 break;
         }
 
-        float d = dist(p->pos.x, p->pos.y+p->radius, door_point.x, door_point.y);
+        float d = dist(p->phys.pos.x, p->phys.pos.y+p->radius, door_point.x, door_point.y);
 
         bool colliding_with_door = (d < 10.0);
         bool go_through_door = p->actions[PLAYER_ACTION_DOOR].toggled_off;
@@ -422,43 +422,43 @@ void player_update(Player* p, float dt)
 
     float v = run ? 300.0 : 128.0;
 
-    p->vel.x = 0.0;
-    p->vel.y = 0.0;
+    p->phys.vel.x = 0.0;
+    p->phys.vel.y = 0.0;
 
     if(up)
     {
-        p->vel.y = -v;
+        p->phys.vel.y = -v;
         p->sprite_index = 0;
     }
 
     if(down)
     {
-        p->vel.y = +v;
+        p->phys.vel.y = +v;
         p->sprite_index = 4;
     }
 
     if(left)
     {
-        p->vel.x = -v;
+        p->phys.vel.x = -v;
         p->sprite_index = 8;
     }
 
     if(right)
     {
-        p->vel.x = +v;
+        p->phys.vel.x = +v;
         p->sprite_index = 12;
     }
 
-    p->pos.x += p->vel.x*dt;
-    p->pos.y += p->vel.y*dt;
+    p->phys.pos.x += p->phys.vel.x*dt;
+    p->phys.pos.y += p->phys.vel.y*dt;
 
     update_player_boxes(p);
 
     Vector2f adj = limit_rect_pos(&player_area, &p->hitbox);
     if(!FEQ0(adj.x) || !FEQ0(adj.y))
     {
-        p->pos.x += adj.x;
-        p->pos.y += adj.y;
+        p->phys.pos.x += adj.x;
+        p->phys.pos.y += adj.y;
         update_player_boxes(p);
     }
 
@@ -503,7 +503,7 @@ void player_update(Player* p, float dt)
     level.rooms[roomxy.x][roomxy.y].discovered = true;
 
     // update animation
-    if(ABS(p->vel.x) > 0.0 || ABS(p->vel.y) > 0.0)
+    if(ABS(p->phys.vel.x) > 0.0 || ABS(p->phys.vel.y) > 0.0)
         gfx_anim_update(&p->anim, dt);
     else
         p->anim.curr_frame = 0;
@@ -520,15 +520,15 @@ void player_draw(Player* p)
 
     Vector2i roomxy = level_get_room_coords((int)p->curr_room);
     Room* room = &level.rooms[roomxy.x][roomxy.y];
-    gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->pos.x, p->pos.y, room->color, 1.0, 0.0, 1.0, false, true);
+    gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, p->phys.pos.y, room->color, 1.0, 0.0, 1.0, false, true);
 
 
     if(debug_enabled)
     {
         // @TEMP
-        gfx_draw_circle(p->pos.x, p->pos.y+8, p->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
+        gfx_draw_circle(p->phys.pos.x, p->phys.pos.y+8, p->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
 
-        Rect r = RECT(p->pos.x, p->pos.y, 1, 1);
+        Rect r = RECT(p->phys.pos.x, p->phys.pos.y, 1, 1);
         gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
         gfx_draw_rect(&p->hitbox, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
     }
@@ -549,8 +549,8 @@ void player_lerp(Player* p, float dt)
     if(p->transition_room == p->curr_room)
     {
         Vector2f lp = lerp2f(&p->server_state_prior.pos,&p->server_state_target.pos,t);
-        p->pos.x = lp.x;
-        p->pos.y = lp.y;
+        p->phys.pos.x = lp.x;
+        p->phys.pos.y = lp.y;
     }
     else
     {

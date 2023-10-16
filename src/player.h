@@ -1,5 +1,6 @@
 #pragma once
 
+#include "physics.h"
 #include "gfx.h"
 #include "net.h"
 
@@ -30,8 +31,7 @@ typedef struct
 {
     bool active;
 
-    Vector2f vel;
-    Vector2f pos;
+    Physics phys;
 
     PlayerInput actions[PLAYER_ACTION_MAX];
 

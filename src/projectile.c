@@ -56,8 +56,9 @@ void projectile_add(Player* p, float angle_deg)
     proj.dead = false;
     proj.damage = projdef->damage;
 
-    proj.pos.x = p->pos.x;
-    proj.pos.y = p->pos.y;
+    proj.phys.pos.x = p->phys.pos.x;
+    proj.phys.pos.y = p->phys.pos.y;
+    proj.curr_room = p->curr_room;
 
     proj.angle_deg = angle_deg;
     float angle = RAD(proj.angle_deg);
@@ -67,11 +68,11 @@ void projectile_add(Player* p, float angle_deg)
     float vx0 = (speed)*cosf(angle);
     float vy0 = (-speed)*sinf(angle);   // @minus
 
-    float vx = vx0 + p->vel.x;
-    float vy = vy0 + p->vel.y;
+    float vx = vx0 + p->phys.vel.x;
+    float vy = vy0 + p->phys.vel.y;
 
-    proj.vel.x = vx0;
-    proj.vel.y = vy0;
+    proj.phys.vel.x = vx0;
+    proj.phys.vel.y = vy0;
 
     // handle angle
     // -----------------------------------------------------------------------------------
@@ -81,65 +82,65 @@ void projectile_add(Player* p, float angle_deg)
         if(vx0 > 0 && vx < 0)
         {
             // printf("x help 1\n");
-            proj.vel.x = (min_speed)*cosf(angle);
+            proj.phys.vel.x = (min_speed)*cosf(angle);
         }
         else if(vx0 < 0 && vx > 0)
         {
             // printf("x help 2\n");
-            proj.vel.x = (min_speed)*cosf(angle);
+            proj.phys.vel.x = (min_speed)*cosf(angle);
         }
         else
         {
-            proj.vel.x = vx;
+            proj.phys.vel.x = vx;
         }
     }
-    // if(!FEQ0(p->vel.y))
+    // if(!FEQ0(p->phys.vel.y))
     {
         if(vy0 > 0 && vy < 0)
         {
             // printf("y help 1\n");
-            proj.vel.y = (-min_speed)*sinf(angle);  // @minus
+            proj.phys.vel.y = (-min_speed)*sinf(angle);  // @minus
         }
         else if(vy0 < 0 && vy > 0)
         {
             // printf("y help 2\n");
-            proj.vel.y = (-min_speed)*sinf(angle);  // @minus
+            proj.phys.vel.y = (-min_speed)*sinf(angle);  // @minus
         }
         else
         {
             // printf("help 3\n");
-            proj.vel.y = vy;
+            proj.phys.vel.y = vy;
         }
     }
 
     // handle minimum speed
     // -----------------------------------------------------------------------------------
-    float a = calc_angle_rad(0,0,proj.vel.x, proj.vel.y);
+    float a = calc_angle_rad(0,0,proj.phys.vel.x, proj.phys.vel.y);
     float xa = cosf(a);
     float ya = sinf(a);
     float _speed = 0;
 
     if(!FEQ0(xa))
     {
-        _speed = proj.vel.x / xa;
+        _speed = proj.phys.vel.x / xa;
     }
     else if(!FEQ0(ya))
     {
-        _speed = proj.vel.y / ya;
+        _speed = proj.phys.vel.y / ya;
         _speed *= -1;   // @minus
     }
     if(_speed < min_speed)
     {
         // printf("min speed\n");
-        proj.vel.x = min_speed * xa;
-        proj.vel.y = -min_speed * ya;   //@minus
+        proj.phys.vel.x = min_speed * xa;
+        proj.phys.vel.y = -min_speed * ya;   //@minus
     }
 
     proj.time = 0.0;
     proj.ttl  = 5.0;
 
-    proj.hit_box.x = proj.pos.x;
-    proj.hit_box.y = proj.pos.y;
+    proj.hit_box.x = proj.phys.pos.x;
+    proj.hit_box.y = proj.phys.pos.y;
     Rect* vr = &gfx_images[projectile_image].visible_rects[0];
     float wh = MAX(vr->w, vr->h);
     proj.hit_box.w = wh;
@@ -153,7 +154,6 @@ void projectile_add(Player* p, float angle_deg)
 
 void projectile_update(float delta_t)
 {
-
     // printf("projectile update\n");
 
     for(int i = plist->count - 1; i >= 0; --i)
@@ -174,11 +174,11 @@ void projectile_update(float delta_t)
 
         proj->time += _dt;
 
-        // proj->prior_pos.x = proj->pos.x;
-        // proj->prior_pos.y = proj->pos.y;
+        // proj->prior_pos.x = proj->phys.pos.x;
+        // proj->prior_pos.y = proj->phys.pos.y;
 
-        proj->pos.x += _dt*proj->vel.x;
-        proj->pos.y += _dt*proj->vel.y;
+        proj->phys.pos.x += _dt*proj->phys.vel.x;
+        proj->phys.pos.y += _dt*proj->phys.vel.y;
 
         projectile_update_hit_box(proj);
 
@@ -205,8 +205,8 @@ void projectile_update(float delta_t)
 void projectile_update_hit_box(Projectile* proj)
 {
     memcpy(&proj->hit_box_prior, &proj->hit_box, sizeof(Rect));
-    proj->hit_box.x = proj->pos.x;
-    proj->hit_box.y = proj->pos.y;
+    proj->hit_box.x = proj->phys.pos.x;
+    proj->hit_box.y = proj->phys.pos.y;
     // print_rect(&proj->hit_box);
 }
 
@@ -222,7 +222,10 @@ void projectile_handle_collisions(float delta_t)
 
 void projectile_draw(Projectile* proj)
 {
-    gfx_draw_image(projectile_image, 0, proj->pos.x, proj->pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+    if(proj->curr_room != player->curr_room)
+        return; // don't draw projectile if not in same room
+
+    gfx_draw_image(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
 
     if(debug_enabled)
     {
@@ -251,8 +254,8 @@ void projectile_lerp(Projectile* p, double dt)
     }
 
     Vector2f lp = lerp2f(&p->server_state_prior.pos,&p->server_state_target.pos,t);
-    p->pos.x = lp.x;
-    p->pos.y = lp.y;
+    p->phys.pos.x = lp.x;
+    p->phys.pos.y = lp.y;
 
-    //printf("prior_pos: %f %f, target_pos: %f %f, pos: %f %f, t: %f\n",p->server_state_prior.pos.x, p->server_state_prior.pos.y, p->server_state_target.pos.x, p->server_state_target.pos.y, p->pos.x, p->pos.y, t);
+    //printf("prior_pos: %f %f, target_pos: %f %f, pos: %f %f, t: %f\n",p->server_state_prior.pos.x, p->server_state_prior.pos.y, p->server_state_target.pos.x, p->server_state_target.pos.y, p->phys.pos.x, p->phys.pos.y, t);
 }

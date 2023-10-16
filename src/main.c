@@ -237,8 +237,8 @@ void camera_set()
         }
     }
 
-    float cam_pos_x = player->pos.x + aim_camera_offset.x;
-    float cam_pos_y = player->pos.y + aim_camera_offset.y;
+    float cam_pos_x = player->phys.pos.x + aim_camera_offset.x;
+    float cam_pos_y = player->phys.pos.y + aim_camera_offset.y;
 
     camera_zoom(cam_zoom,false);
 
@@ -347,6 +347,9 @@ void start_server()
 
     gfx_image_init();
     player_init();
+
+    srand(time(0));
+    seed = rand();
 
     level_init();
     level = level_generate(seed);
@@ -602,12 +605,7 @@ void update(float dt)
                 role = ROLE_SERVER;
                 deinit();
 
-                // init
-                gfx_image_init();
-                player_init();
-                projectile_init();
-
-                net_server_start();
+                start_server();
             }
             else if(STR_EQUAL(s, "Join Local Server"))
             {
@@ -743,8 +741,8 @@ void draw_level(Rect* area, bool show_all, uint32_t color_bg, float opacity_bg, 
         Player* p = &player[i];
         if(!p->active) continue;
 
-        float px = p->pos.x - rect_tlx(&room_area);
-        float py = p->pos.y - rect_tly(&room_area);
+        float px = p->phys.pos.x - rect_tlx(&room_area);
+        float py = p->phys.pos.y - rect_tly(&room_area);
         px *= (room_wh/room_area.w);
         py *= (room_wh/room_area.h);
         Rect pr = RECT(px, py, margin, margin);
@@ -915,7 +913,7 @@ void draw()
             y = 0;
             x = 300 +i*100;
             gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "player %d", i); y += yincr;
-            gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "pos: %.1f, %.1f", p->pos.x, player->pos.y); y += yincr;
+            gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "pos: %.1f, %.1f", p->phys.pos.x, player->phys.pos.y); y += yincr;
             gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "c room: %u", p->curr_room); y += yincr;
             gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "t room: %u", p->transition_room); y += yincr;
         }

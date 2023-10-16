@@ -426,7 +426,7 @@ static void server_send(PacketType type, ClientInfo* cli)
                     Player* p = &players[i];
 
                     pack_u8(&pkt,(uint8_t)i);
-                    pack_vec2(&pkt,p->pos);
+                    pack_vec2(&pkt,p->phys.pos);
                     pack_u8(&pkt, p->sprite_index+p->anim.curr_frame);
                     pack_u8(&pkt, p->curr_room);
                     // pack_u8(&pkt, p->transition_room);
@@ -447,7 +447,7 @@ static void server_send(PacketType type, ClientInfo* cli)
             for(int i = 0; i < plist->count; ++i)
             {
                 pack_u16(&pkt,projectiles[i].id);
-                pack_vec2(&pkt,projectiles[i].pos);
+                pack_vec2(&pkt,projectiles[i].phys.pos);
                 pack_u8(&pkt,projectiles[i].player_id);
             }
 
@@ -1289,8 +1289,8 @@ void net_client_update()
                                 printf("net recv: %d -> %d\n", p->transition_room, p->curr_room);
                                 printf("door: %d\n", p->door);
                                 player_start_room_transition(p);
-                                p->pos.x = pos.x;
-                                p->pos.y = pos.y;
+                                p->phys.pos.x = pos.x;
+                                p->phys.pos.y = pos.y;
                             }
                         }
                         else
@@ -1304,8 +1304,8 @@ void net_client_update()
                         // p->active = true;
                         p->lerp_t = 0.0;
 
-                        p->server_state_prior.pos.x = p->pos.x;
-                        p->server_state_prior.pos.y = p->pos.y;
+                        p->server_state_prior.pos.x = p->phys.pos.x;
+                        p->server_state_prior.pos.y = p->phys.pos.y;
 
                         p->server_state_target.pos.x = pos.x;
                         p->server_state_target.pos.y = pos.y;
@@ -1340,8 +1340,8 @@ void net_client_update()
                             //LOGN("      Pos: %f, %f. Angle: %f", pos.x, pos.y, angle);
 
                             p->server_state_prior.id = p->id;
-                            p->server_state_prior.pos.x = p->pos.x;
-                            p->server_state_prior.pos.y = p->pos.y;
+                            p->server_state_prior.pos.x = p->phys.pos.x;
+                            p->server_state_prior.pos.y = p->phys.pos.y;
 
                             p->server_state_target.id = id;
                             p->server_state_target.pos.x = pos.x;
