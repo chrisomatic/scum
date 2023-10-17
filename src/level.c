@@ -576,3 +576,39 @@ bool level_is_room_discovered_index(Level* level, int index)
     Vector2i p = level_get_room_coords(index);
     return level_is_room_discovered(level, p.x, p.y);
 }
+
+// grid x,y offsets
+Vector2i get_door_offsets(Dir door)
+{
+    Vector2i o = {0};
+    switch(door)
+    {
+        case DIR_UP:
+            o.y = -1;
+            break;
+        case DIR_DOWN:
+            o.y = 1;
+            break;
+        case DIR_LEFT:
+            o.x = -1;
+            break;
+        case DIR_RIGHT:
+            o.x = 1;
+            break;
+        default:
+            break;
+    }
+    return o;
+}
+
+const char* get_door_name(Dir door)
+{
+    switch(door)
+    {
+        case DIR_UP: return "up";
+        case DIR_DOWN: return "down";
+        case DIR_LEFT: return "left";
+        case DIR_RIGHT: return "right";
+        default: return "?";
+    }
+}

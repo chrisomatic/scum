@@ -43,6 +43,7 @@ typedef struct
     uint8_t curr_room;
     uint8_t transition_room;
     Dir door;
+    bool in_door;
 
     Vector2i curr_tile;
 

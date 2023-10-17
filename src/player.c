@@ -61,10 +61,13 @@ void player_init()
 
         p->phys.radius = 8.0;
 
-        int room_y = (MAX_ROOMS_GRID_X-1)/2;
-        int room_x = (MAX_ROOMS_GRID_Y-1)/2;
+        int room_x = (MAX_ROOMS_GRID_X-1)/2;
+        int room_y = (MAX_ROOMS_GRID_Y-1)/2;
         p->curr_room = (uint8_t)level_get_room_index(room_x, room_y);
         p->transition_room = p->curr_room;
+
+        p->door = DIR_NONE;
+        p->in_door = false;
 
         // animation
         // --------------------------------------------------------
@@ -284,6 +287,8 @@ static void handle_room_collision(Player* p)
 
     level_handle_room_collision(room,&p->phys);
 
+    int idx = -1;
+    // doors
     for(int i = 0; i < 4; ++i)
     {
         if(role == ROLE_LOCAL)
@@ -324,18 +329,40 @@ static void handle_room_collision(Player* p)
         float d = dist(p->phys.pos.x, p->phys.pos.y+p->phys.radius, door_point.x, door_point.y);
 
         bool colliding_with_door = (d < 10.0);
-        bool go_through_door = p->actions[PLAYER_ACTION_DOOR].toggled_off;
-
         if(colliding_with_door)
         {
-            if(go_through_door)
-            {
-                p->door = i;
-                player_start_room_transition(p);
-            }
+            idx = i;
             break;
         }
+        // bool go_through_door = p->actions[PLAYER_ACTION_DOOR].toggled_off && colliding_with_door;
+        // if(go_through_door)
+        // {
+        //     p->door = i;
+        //     player_start_room_transition(p);
+        // }
+        // break;
 
+    }
+
+    if(idx != -1)
+    {
+
+        bool k = false;
+        k |= idx == DIR_UP && p->actions[PLAYER_ACTION_UP].state;
+        k |= idx == DIR_DOWN && p->actions[PLAYER_ACTION_DOWN].state;
+        k |= idx == DIR_LEFT && p->actions[PLAYER_ACTION_LEFT].state;
+        k |= idx == DIR_RIGHT && p->actions[PLAYER_ACTION_RIGHT].state;
+
+        if(!p->in_door || k)
+        {
+            p->in_door = true;
+            p->door = idx;
+            player_start_room_transition(p);
+        }
+    }
+    else
+    {
+        p->in_door = false;
     }
 
 }

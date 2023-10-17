@@ -30,6 +30,8 @@
 
 #define FREE(p) do{ if(p != NULL) {free(p); p = NULL;} }while(0)
 
+#define BOOLSTR(c) ((c) ? "true" : "false")
+
 #define DEBUG()   printf("%d %s %s()\n", __LINE__, __FILE__, __func__)
 
 typedef enum
@@ -75,6 +77,9 @@ typedef struct
 
     uint32_t color_player;
     float opacity_player;
+
+    uint32_t color_border;
+    float opacity_border;
 } DrawLevelParams;
 
 void set_game_state(GameState state);
