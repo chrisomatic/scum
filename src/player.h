@@ -1,5 +1,6 @@
 #pragma once
 
+#include "main.h"
 #include "physics.h"
 #include "gfx.h"
 #include "net.h"
@@ -38,7 +39,6 @@ typedef struct
     uint8_t sprite_index;
     Rect hitbox;
     Rect hitbox_prior;
-    float radius;
 
     uint8_t curr_room;
     uint8_t transition_room;

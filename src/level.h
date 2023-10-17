@@ -1,5 +1,7 @@
 #pragma once
 
+#include "physics.h"
+
 #define MAX_ROOMS_GRID_X 7
 #define MAX_ROOMS_GRID_Y 7
 #define MAX_ROOMS_GRID (MAX_ROOMS_GRID_X*MAX_ROOMS_GRID_Y)
@@ -91,6 +93,7 @@ void level_draw_room(Room* room, float xoffset, float yoffset);
 void level_print(Level* level);
 void level_print_room(Room* room);
 void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radius);
+void level_handle_room_collision(Room* room, Physics* phys);
 
 Room* level_get_room(Level* level, int x, int y);
 uint8_t level_get_room_index(int x, int y);

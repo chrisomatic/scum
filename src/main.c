@@ -14,6 +14,7 @@
 #include "projectile.h"
 #include "player.h"
 #include "creature.h"
+#include "editor.h"
 #include "net.h"
 #include "text_list.h"
 
@@ -415,7 +416,10 @@ void init()
     LOGI(" - Projectiles.");
     projectile_init();
 
-    imgui_load_theme("retro.theme");
+    imgui_load_theme("nord_deep.theme");
+
+    LOGI(" - Editor.");
+    editor_init();
 
     if(role == ROLE_LOCAL)
         level = level_generate(seed);
@@ -1018,6 +1022,8 @@ void draw()
             gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_WHITE, NOT_SCALED, NO_ROTATION, FULL_OPACITY, true, IN_WORLD);
         }
         */
+        
+        editor_draw();
 
     }
 

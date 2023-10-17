@@ -16,7 +16,7 @@ static int creature_image;
 void creature_init()
 {
     clist = list_create((void*)creatures, MAX_CREATURES, sizeof(Creature));
-    creature_image = gfx_load_image("src/img/creature_slug.png", false, false, 16, 17);
+    creature_image = gfx_load_image("src/img/creature_slug.png", false, false, 17, 17);
 }
 
 void creature_add(Room* room, CreatureType type)
@@ -30,14 +30,72 @@ void creature_add(Room* room, CreatureType type)
     c.curr_room = room->index;
     c.phys.pos.x = x0 + TILE_SIZE*(rand() % ROOM_TILE_SIZE_X + 1) + 8;
     c.phys.pos.y = y0 + TILE_SIZE*(rand() % ROOM_TILE_SIZE_Y + 1) + 8;
+    memcpy(&c.phys.target_pos,&c.phys.pos,sizeof(Vector2f));
     c.color = room->color;
-    c.sprite_index = 0;
+    c.speed = 10.0;
+    c.phys.radius = 8.0;
+    c.action_counter = 0.0;
+    c.sprite_index = DIR_DOWN;
 
     list_add(clist, (void*)&c);
 }
 
 void creature_update(Creature* c, float dt)
 {
+    c->action_counter += dt*c->speed;
+
+    if(c->action_counter >= ACTION_COUNTER_MAX)
+    {
+        c->action_counter = 0.0;
+        int dir = rand() % 5;
+
+        int v = 0;
+        int h = 0;
+
+        switch(dir)
+        {
+            case DIR_UP:
+                c->sprite_index = DIR_UP;
+                h = 0;
+                v = -1;
+                break;
+            case DIR_RIGHT:
+                c->sprite_index = DIR_RIGHT;
+                h = +1;
+                v = 0;
+                break;
+            case DIR_DOWN:
+                c->sprite_index = DIR_DOWN;
+                h = 0;
+                v = +1;
+                break;
+            case DIR_LEFT:
+                c->sprite_index = DIR_LEFT;
+                h = -1;
+                v = 0;
+                break;
+            default:
+                // don't move
+                break;
+        }
+
+        c->phys.prior_pos.x = c->phys.pos.x;
+        c->phys.prior_pos.y = c->phys.pos.y;
+
+        c->phys.target_pos.x = (c->phys.pos.x + h*TILE_SIZE);
+        c->phys.target_pos.y = (c->phys.pos.y + v*TILE_SIZE);
+    }
+
+    if(c->phys.pos.x != c->phys.target_pos.x || c->phys.pos.y != c->phys.target_pos.y)
+    {
+        float t = c->action_counter / ACTION_COUNTER_MAX;
+
+        c->phys.pos = lerp2f(&c->phys.prior_pos, &c->phys.target_pos, t);
+
+        Vector2i roomxy = level_get_room_coords(c->curr_room);
+        Room* room = &level.rooms[roomxy.x][roomxy.y];
+        level_handle_room_collision(room,&c->phys);
+    }
 }
 
 void creature_update_all(float dt)

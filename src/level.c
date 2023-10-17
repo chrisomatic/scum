@@ -2,7 +2,7 @@
 #include "core/gfx.h"
 #include "main.h"
 #include "creature.h"
-#include "level.h"
+#include "physics.h"
 
 RoomData room_list[32] = {0};
 int room_list_count = 0;
@@ -302,6 +302,65 @@ void level_print_room(Room* room)
         printf("\n");
     }
     printf("\n");
+}
+
+void level_handle_room_collision(Room* room, Physics* phys)
+{
+    level_sort_walls(room->walls,room->wall_count,phys->pos.x, phys->pos.y+phys->radius,phys->radius);
+
+    for(int i = 0; i < room->wall_count; ++i)
+    {
+        Wall* wall = &room->walls[i];
+
+        bool collision = false;
+        bool check = false;
+        Vector2f check_point;
+
+        float px = phys->pos.x;
+        float py = phys->pos.y + 8;
+
+        switch(wall->dir)
+        {
+            case DIR_UP: case DIR_DOWN:
+                if(px+phys->radius >= wall->p0.x && px-phys->radius <= wall->p1.x)
+                {
+                    check_point.x = px;
+                    check_point.y = wall->p0.y;
+                    check = true;
+                }
+                break;
+            case DIR_LEFT: case DIR_RIGHT:
+                if(py+phys->radius >= wall->p0.y && py-phys->radius <= wall->p1.y)
+                {
+                    check_point.x = wall->p0.x;
+                    check_point.y = py;
+                    check = true;
+                }
+                break;
+        }
+
+        if(check)
+        {
+            float d = dist(px, py, check_point.x, check_point.y);
+            bool collision = (d < phys->radius);
+
+            if(collision)
+            {
+                //printf("Collision! player: %f %f. Wall point: %f %f. Dist: %f\n", px, py, check_point.x, check_point.y, d);
+                float delta = phys->radius - d + 1.0;
+                switch(wall->dir)
+                {
+                    case DIR_UP:    phys->pos.y -= delta; break;
+                    case DIR_DOWN:  phys->pos.y += delta; break;
+                    case DIR_LEFT:  phys->pos.x -= delta; break;
+                    case DIR_RIGHT: phys->pos.x += delta; break;
+                }
+
+                memcpy(&phys->target_pos, &phys->pos, sizeof(Vector2f));
+            }
+        }
+    }
+
 }
 
 void level_init()

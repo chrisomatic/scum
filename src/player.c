@@ -59,7 +59,7 @@ void player_init()
 
         p->sprite_index = 4;
 
-        p->radius = 8.0;
+        p->phys.radius = 8.0;
 
         int room_y = (MAX_ROOMS_GRID_X-1)/2;
         int room_x = (MAX_ROOMS_GRID_Y-1)/2;
@@ -282,58 +282,7 @@ static void handle_room_collision(Player* p)
 
     Room* room = &level.rooms[roomxy.x][roomxy.y];
 
-    level_sort_walls(room->walls,room->wall_count,p->phys.pos.x, p->phys.pos.y+p->radius,p->radius);
-
-    for(int i = 0; i < room->wall_count; ++i)
-    {
-        Wall* wall = &room->walls[i];
-
-        bool collision = false;
-        bool check = false;
-        Vector2f check_point;
-
-        float px = p->phys.pos.x;
-        float py = p->phys.pos.y + 8;
-
-        switch(wall->dir)
-        {
-            case DIR_UP: case DIR_DOWN:
-                if(px+p->radius >= wall->p0.x && px-p->radius <= wall->p1.x)
-                {
-                    check_point.x = px;
-                    check_point.y = wall->p0.y;
-                    check = true;
-                }
-                break;
-            case DIR_LEFT: case DIR_RIGHT:
-                if(py+p->radius >= wall->p0.y && py-p->radius <= wall->p1.y)
-                {
-                    check_point.x = wall->p0.x;
-                    check_point.y = py;
-                    check = true;
-                }
-                break;
-        }
-
-        if(check)
-        {
-            float d = dist(px, py, check_point.x, check_point.y);
-            bool collision = (d < p->radius);
-
-            if(collision)
-            {
-                //printf("Collision! player: %f %f. Wall point: %f %f. Dist: %f\n", px, py, check_point.x, check_point.y, d);
-                float delta = p->radius - d + 1.0;
-                switch(wall->dir)
-                {
-                    case DIR_UP:    p->phys.pos.y -= delta; break;
-                    case DIR_DOWN:  p->phys.pos.y += delta; break;
-                    case DIR_LEFT:  p->phys.pos.x -= delta; break;
-                    case DIR_RIGHT: p->phys.pos.x += delta; break;
-                }
-            }
-        }
-    }
+    level_handle_room_collision(room,&p->phys);
 
     for(int i = 0; i < 4; ++i)
     {
@@ -372,7 +321,7 @@ static void handle_room_collision(Player* p)
                 break;
         }
 
-        float d = dist(p->phys.pos.x, p->phys.pos.y+p->radius, door_point.x, door_point.y);
+        float d = dist(p->phys.pos.x, p->phys.pos.y+p->phys.radius, door_point.x, door_point.y);
 
         bool colliding_with_door = (d < 10.0);
         bool go_through_door = p->actions[PLAYER_ACTION_DOOR].toggled_off;
@@ -460,21 +409,25 @@ void player_update(Player* p, float dt)
 
     const float pcooldown = 0.4; //seconds
 
-    if(p->actions[PLAYER_ACTION_SHOOT].state)
+    if(p->proj_cooldown > 0.0)
     {
         p->proj_cooldown -= dt;
-        if(p->proj_cooldown <= 0.0)
-        {
-            if(p->sprite_index >= 0 && p->sprite_index <= 3)
-                projectile_add(p, 90.0);
-            else if(p->sprite_index >= 4 && p->sprite_index <= 7)
-                projectile_add(p, 270.0);
-            else if(p->sprite_index >= 8 && p->sprite_index <= 11)
-                projectile_add(p, 180.0);
-            else if(p->sprite_index >= 12)
-                projectile_add(p, 0.0);
-            p->proj_cooldown = pcooldown;
-        }
+        p->proj_cooldown = MAX(p->proj_cooldown,0.0);
+    }
+
+    if(p->actions[PLAYER_ACTION_SHOOT].state && p->proj_cooldown == 0.0)
+    {
+        // fire!
+        if(p->sprite_index >= 0 && p->sprite_index <= 3)
+            projectile_add(p, 90.0);
+        else if(p->sprite_index >= 4 && p->sprite_index <= 7)
+            projectile_add(p, 270.0);
+        else if(p->sprite_index >= 8 && p->sprite_index <= 11)
+            projectile_add(p, 180.0);
+        else if(p->sprite_index >= 12)
+            projectile_add(p, 0.0);
+
+        p->proj_cooldown = pcooldown;
     }
 
     if(role == ROLE_LOCAL)
@@ -513,7 +466,7 @@ void player_draw(Player* p)
     if(debug_enabled)
     {
         // @TEMP
-        gfx_draw_circle(p->phys.pos.x, p->phys.pos.y+8, p->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
+        gfx_draw_circle(p->phys.pos.x, p->phys.pos.y+8, p->phys.radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
 
         Rect r = RECT(p->phys.pos.x, p->phys.pos.y, 1, 1);
         gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
