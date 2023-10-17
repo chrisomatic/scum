@@ -460,8 +460,6 @@ void init()
     params->color_border = COLOR_WHITE;
     params->opacity_border = 1.0;
 
-
-
     params = &bigmap_params;
     params->show_all = true;
     params->color_bg = COLOR_BLACK;
