@@ -102,3 +102,6 @@ bool level_is_room_valid(Level* level, int x, int y);
 bool level_is_room_valid_index(Level* level, int index);
 bool level_is_room_discovered(Level* level, int x, int y);
 bool level_is_room_discovered_index(Level* level, int index);
+
+Vector2i get_door_offsets(Dir door);
+const char* get_door_name(Dir door);

@@ -103,6 +103,25 @@ void start_server();
 
 int main(int argc, char* argv[])
 {
+#if 0
+printf("x,y -> index\n");
+for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
+{
+    for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
+    {
+        printf("%2d | %d, %d\n", level_get_room_index(x,y), x, y);
+    }
+}
+
+printf("index -> x,y\n");
+for(int i = 0; i < MAX_ROOMS_GRID_X*MAX_ROOMS_GRID_Y; ++i)
+{
+    Vector2i xy = level_get_room_coords(i);
+    printf("%2d | %d, %d\n", i, xy.x, xy.y);
+}
+exit(1);
+#endif
+
     init_timer();
     log_init(0);
 
@@ -428,29 +447,31 @@ void init()
     camera_move(0,0,false,NULL);
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 
-    DrawLevelParams* p = &minimap_params;
-    // p->area = minimap_area;
-    p->show_all = false;
-    p->color_bg = COLOR_BLACK;
-    p->opacity_bg = 1.0;
-    p->color_room = COLOR(0x22,0x48,0x70);
-    p->opacity_room = 0.4;
-    p->color_uroom = gfx_blend_colors(p->color_room, COLOR_WHITE, 0.2);
-    p->opacity_uroom = p->opacity_room;
-    p->color_player = COLOR_RED;
-    p->opacity_player = 0.3;
+    DrawLevelParams* params = &minimap_params;
+    params->show_all = false;
+    params->color_bg = COLOR_BLACK;
+    params->opacity_bg = 1.0;
+    params->color_room = COLOR(0x22,0x48,0x70);
+    params->opacity_room = 0.4;
+    params->color_uroom = gfx_blend_colors(params->color_room, COLOR_WHITE, 0.5);
+    params->opacity_uroom = params->opacity_room;
+    params->color_player = COLOR_RED;
+    params->opacity_player = 0.3;
+    params->color_border = COLOR_WHITE;
+    params->opacity_border = 1.0;
 
-    p = &bigmap_params;
-    // p->area = minimap_area;
-    p->show_all = true;
-    p->color_bg = COLOR_BLACK;
-    p->opacity_bg = 0.0;
-    p->color_room = COLOR_BLACK;
-    p->opacity_room = 0.4;
-    p->color_uroom = gfx_blend_colors(p->color_room, COLOR_WHITE, 0.1);
-    p->opacity_uroom = p->opacity_room;
-    p->color_player = COLOR_RED;
-    p->opacity_player = 0.3;
+
+
+    params = &bigmap_params;
+    params->show_all = true;
+    params->color_bg = COLOR_BLACK;
+    params->opacity_bg = 0.0;
+    params->color_room = COLOR_BLACK;
+    params->opacity_room = 0.8;
+    params->color_uroom = params->color_room;
+    params->opacity_uroom = params->opacity_room/4.0;
+    params->color_player = COLOR_RED;
+    params->opacity_player = 0.3;
 
     set_menu_keys();
 
@@ -691,38 +712,31 @@ void update(float dt)
 
 void draw_level(DrawLevelParams* params)
 {
-
-    float opacity_door = params->opacity_room;
-    uint32_t color_door = params->color_room;
-
     // could also add this bool to Room struct
     bool near[MAX_ROOMS_GRID_X][MAX_ROOMS_GRID_Y] = {0};
     for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
     {
         for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
         {
-            if(near[x][y]) continue;
             Room* room = &level.rooms[x][y];
-            Room* nroom = NULL;
+            if(room->discovered) near[x][y] = false;
+            if(near[x][y]) continue;
 
             if(room->discovered)
             {
-                nroom = level_get_room(&level, x+1, y);
-                if(nroom != NULL && room->doors[DIR_RIGHT]) near[x+1][y] = true;
-
-                nroom = level_get_room(&level, x-1, y);
-                if(nroom != NULL && room->doors[DIR_LEFT]) near[x-1][y] = true;
-
-                nroom = level_get_room(&level, x, y+1);
-                if(nroom != NULL && room->doors[DIR_DOWN]) near[x][y+1] = true;
-
-                nroom = level_get_room(&level, x, y-1);
-                if(nroom != NULL && room->doors[DIR_UP]) near[x][y-1] = true;
+                for(int d = 0; d < DIR_NONE; ++d)
+                {
+                    if(!room->doors[d]) continue;
+                    Vector2i o = get_door_offsets(d);
+                    Room* nroom = level_get_room(&level, x+o.x, y+o.y);
+                    if(nroom != NULL) near[x+o.x][y+o.y] = true;
+                }
             }
         }
     }
 
     gfx_draw_rect(&params->area, params->color_bg, NOT_SCALED, NO_ROTATION, params->opacity_bg, true, NOT_IN_WORLD);
+    gfx_draw_rect(&params->area, params->color_border, NOT_SCALED, NO_ROTATION, params->opacity_border, false, NOT_IN_WORLD);
 
     float tlx = params->area.x - params->area.w/2.0;
     float tly = params->area.y - params->area.h/2.0;
@@ -730,84 +744,72 @@ void draw_level(DrawLevelParams* params)
     // room width/height
     float rw = params->area.w/MAX_ROOMS_GRID_X;
     float rh = params->area.h/MAX_ROOMS_GRID_Y;
-    float rwh = MIN(rw, rh);
-    params->area.w = rwh*MAX_ROOMS_GRID_X;
-    params->area.h = rwh*MAX_ROOMS_GRID_Y;
+    float len = MIN(rw, rh);
+    params->area.w = len*MAX_ROOMS_GRID_X;
+    params->area.h = len*MAX_ROOMS_GRID_Y;
 
-    float margin = rwh / 10.0;
-    float room_wh = rwh-margin;
-    const float door_w = rw/14.0;
+    float margin = len / 12.0;
+    float room_wh = len-margin;
+    const float door_w = rw/12.0;
     const float door_h = margin;
 
-    // const float door_offset = door_w/2.0;
-    const float door_offset = 0.0;
+    float r = len/2.0;
 
     for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
     {
         for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
         {
-            Room room = level.rooms[x][y];
-            if(room.valid)
+            Room* room = &level.rooms[x][y];
+            if(!room->valid) continue;
+            bool discovered = room->discovered;
+            bool is_near = near[x][y];
+
+            if(!params->show_all && !discovered && !is_near)
             {
+                continue;
+            }
 
-                if(!params->show_all && !level.rooms[x][y].discovered && !near[x][y])
-                {
+            float draw_x = tlx + x*len + r;
+            float draw_y = tly + y*len + r;
+            Rect room_rect = RECT(draw_x, draw_y, room_wh, room_wh);
+
+            uint32_t _color = params->color_room;
+            float _opacity = params->opacity_room;
+            if(!discovered)
+            {
+                _color = params->color_uroom;
+                _opacity = params->opacity_uroom;
+            }
+            gfx_draw_rect(&room_rect, _color, NOT_SCALED, NO_ROTATION, _opacity, true, NOT_IN_WORLD);
+
+            // draw the doors
+            for(int d = 0; d < DIR_NONE; ++d)
+            {
+                if(!room->doors[d]) continue;
+
+                Vector2i o = get_door_offsets(d);
+                int _x = x+o.x;
+                int _y = y+o.y;
+                Room* nroom = level_get_room(&level, _x, _y);
+
+                //both rooms discovered
+                if(room->discovered && nroom->discovered && (d == DIR_DOWN || d == DIR_LEFT))
                     continue;
-                }
-
-                float draw_x = tlx + x*rwh + rwh/2.0;
-                float draw_y = tly + y*rwh + rwh/2.0;
-                Rect r = RECT(draw_x, draw_y, room_wh, room_wh);
-
-                uint32_t _color = params->color_room;
-                float _opacity = params->opacity_room;
-
-                if(!level.rooms[x][y].discovered)
-                {
-                    _color = params->color_uroom;
-                    _opacity = params->opacity_uroom;
-                }
-
-                gfx_draw_rect(&r, _color, NOT_SCALED, NO_ROTATION, _opacity, true, NOT_IN_WORLD);
-
-                if(!params->show_all && !level.rooms[x][y].discovered)
+                if(!room->discovered && nroom->discovered)
+                    continue;
+                if(!params->show_all && !room->discovered && !nroom->discovered)
                     continue;
 
-                if(room.doors[DIR_UP])
+                float _w = door_w;
+                float _h = door_h;
+                if(d == DIR_LEFT || d == DIR_RIGHT)
                 {
-                    if(params->show_all || level_is_room_discovered(&level, x, y-1) || near[x][y-1])
-                    {
-                        Rect door = RECT(draw_x-door_offset, draw_y-rwh/2.0, door_w, door_h);
-                        gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
-                    }
+                    _w = door_h;
+                    _h = door_w;
                 }
 
-                if(room.doors[DIR_DOWN])
-                {
-                    if(params->show_all || level_is_room_discovered(&level, x, y+1) || near[x][y+1])
-                    {
-                        Rect door = RECT(draw_x+door_offset, draw_y+rwh/2.0, door_w, door_h);
-                        gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
-                    }
-                }
-
-                if(room.doors[DIR_RIGHT])
-                {
-                    if(params->show_all || level_is_room_discovered(&level, x+1, y) || near[x+1][y])
-                    {
-                        Rect door = RECT(draw_x+rwh/2.0, draw_y-door_offset, door_h, door_w);
-                        gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
-                    }
-                }
-
-                if(room.doors[DIR_LEFT])
-                {
-                    if(params->show_all || level_is_room_discovered(&level, x-1, y) || near[x-1][y])
-                    {
-                        Rect door = RECT(draw_x-rwh/2.0, draw_y+door_offset, door_h, door_w);
-                        gfx_draw_rect(&door, color_door, NOT_SCALED, NO_ROTATION, opacity_door, true, NOT_IN_WORLD);
-                    }
-                }
+                Rect door = RECT(draw_x+(r*o.x), draw_y+(r*o.y), _w, _h);
+                gfx_draw_rect(&door, _color, NOT_SCALED, NO_ROTATION, _opacity, true, NOT_IN_WORLD);
 
             }
         }
@@ -826,8 +828,8 @@ void draw_level(DrawLevelParams* params)
 
         // translate to minimap
         Vector2i roomxy = level_get_room_coords(p->curr_room);
-        float draw_x = tlx + roomxy.x*rwh + rwh/2.0;
-        float draw_y = tly + roomxy.y*rwh + rwh/2.0;
+        float draw_x = tlx + roomxy.x*len + r;
+        float draw_y = tly + roomxy.y*len + r;
 
         Rect r = RECT(draw_x, draw_y, room_wh, room_wh);
         gfx_get_absolute_coords(&pr, ALIGN_CENTER, &r, ALIGN_CENTER);
@@ -840,12 +842,21 @@ void draw_minimap()
 {
     float w = margin_left.w;
     // define the minimap location and size
-    Rect minimap_area = RECT(w/2.0, w/2.0, w, w);
+    Rect area = RECT(w/2.0, w/2.0, w, w);
     // translate the location
-    gfx_get_absolute_coords(&minimap_area, ALIGN_CENTER, &margin_left, ALIGN_CENTER);
-    minimap_params.area = minimap_area;
-
+    gfx_get_absolute_coords(&area, ALIGN_CENTER, &margin_left, ALIGN_CENTER);
+    minimap_params.area = area;
     draw_level(&minimap_params);
+}
+
+void draw_bigmap()
+{
+    if(!show_big_map) return;
+    float len = MIN(room_area.w, room_area.h);
+    // len /= camera_get_zoom();
+    Rect area = RECT(room_area.x, room_area.y, len, len);
+    bigmap_params.area = area;
+    draw_level(&bigmap_params);
 }
 
 void draw()
@@ -914,14 +925,7 @@ void draw()
     if(game_state == GAME_STATE_PLAYING)
     {
 
-        if(show_big_map)
-        {
-            float len = MIN(room_area.w, room_area.h);
-            // len /= camera_get_zoom();
-            Rect minimap_area = RECT(room_area.x, room_area.y, len, len);
-            bigmap_params.area = minimap_area;
-            draw_level(&bigmap_params);
-        }
+        draw_bigmap();
 
         if(player->curr_room == player->transition_room)
         {
@@ -988,15 +992,31 @@ void draw()
         gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "window: %d, %d", window_width, window_height); y += yincr;
 
 
+        Vector2i roomxy = level_get_room_coords(player->curr_room);
+        Room* room = &level.rooms[roomxy.x][roomxy.y];
+
+        y = 0;
+        x = 200;
+        for(int d = 0; d < DIR_NONE; ++d)
+        {
+            // Vector2i o = get_door_offsets(d);
+            // Room* nroom = level_get_room(&level, x+o.x, y+o.y);
+            // bool near = true;
+            gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "door %s : %s", get_door_name(d), BOOLSTR(room->doors[d])); y += yincr;
+        }
+
+
         for(int i = 0; i < MAX_PLAYERS; ++i)
         {
             Player* p = &players[i];
             if(!p->active) continue;
+            Vector2i roomxy = level_get_room_coords(p->curr_room);
+
             y = 0;
-            x = 275 +i*120;
+            x = 350 +i*120;
             gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "player %d", i); y += yincr;
             gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "pos: %.1f, %.1f", p->phys.pos.x, p->phys.pos.y); y += yincr;
-            gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "c room: %u", p->curr_room); y += yincr;
+            gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "c room: %u (%d,%d)", p->curr_room, roomxy.x, roomxy.y); y += yincr;
             gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "t room: %u", p->transition_room); y += yincr;
         }
 
@@ -1026,7 +1046,6 @@ void draw()
         editor_draw();
 
     }
-
 
     text_list_draw(text_lst);
     //gfx_draw_lines();
