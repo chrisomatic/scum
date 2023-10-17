@@ -14,11 +14,16 @@ typedef struct
 {
     CreatureType type;
     Physics phys;
+    Rect hitbox;
+
+    float hp;
+    float hp_max;
 
     uint32_t color;
     uint8_t sprite_index;
     uint8_t curr_room;
     float speed;
+    bool dead;
 
     // action
     float action_counter;
@@ -33,3 +38,7 @@ void creature_update(Creature* c, float dt);
 void creature_update_all(float dt);
 void creature_draw(Creature* c);
 void creature_draw_all();
+
+void creature_hurt(Creature* c, float damage);
+void creature_die(Creature* c);
+int creature_get_count();

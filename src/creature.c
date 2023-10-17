@@ -36,12 +36,17 @@ void creature_add(Room* room, CreatureType type)
     c.phys.radius = 8.0;
     c.action_counter = 0.0;
     c.sprite_index = DIR_DOWN;
+    c.hp_max = 3.0;
+    c.hp = c.hp_max;
 
     list_add(clist, (void*)&c);
 }
 
 void creature_update(Creature* c, float dt)
 {
+    if(c->dead)
+        return;
+
     c->action_counter += dt*c->speed;
 
     if(c->action_counter >= ACTION_COUNTER_MAX)
@@ -96,6 +101,13 @@ void creature_update(Creature* c, float dt)
         Room* room = &level.rooms[roomxy.x][roomxy.y];
         level_handle_room_collision(room,&c->phys);
     }
+
+    // update hit box
+    c->hitbox.x = c->phys.pos.x;
+    c->hitbox.y = c->phys.pos.y;
+
+    c->hitbox.w = 16;
+    c->hitbox.h = 16;
 }
 
 void creature_update_all(float dt)
@@ -112,7 +124,15 @@ void creature_draw(Creature* c)
     if(c->curr_room != player->curr_room)
         return;
 
+    if(c->dead)
+        return;
+
     gfx_draw_image(creature_image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, c->color, 1.0, 0.0, 1.0, false, true);
+
+    if(debug_enabled)
+    {
+        gfx_draw_rect(&c->hitbox, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+    }
 }
 
 void creature_draw_all()
@@ -122,4 +142,23 @@ void creature_draw_all()
         Creature* c = &creatures[i];
         creature_draw(c);
     }
+}
+
+void creature_die(Creature* c)
+{
+    c->dead = true;
+}
+
+void creature_hurt(Creature* c, float damage)
+{
+    c->hp -= damage;
+    if(c->hp <= 0.0)
+    {
+        creature_die(c);
+    }
+}
+
+int creature_get_count()
+{
+    return clist->count;
 }

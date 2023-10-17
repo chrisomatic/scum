@@ -6,6 +6,7 @@
 #include "core/text_list.h"
 #include "log.h"
 #include "player.h"
+#include "creature.h"
 #include "projectile.h"
 
 Projectile projectiles[MAX_PROJECTILES];
@@ -15,7 +16,7 @@ static int projectile_image;
 static uint16_t id_counter = 0;
 
 ProjectileDef projectile_lookup[] = {
-    {10.0, 64.0, 128.0} // laser
+    {1.0, 64.0, 128.0} // laser
 };
 
 static void projectile_remove(int index)
@@ -216,8 +217,26 @@ void projectile_handle_collisions(float delta_t)
     {
         Projectile* p = &projectiles[i];
         if(p->dead) continue;
+
+        int creature_count = creature_get_count();
+
+        for(int j = 0; j < creature_count; ++j)
+        {
+            Creature* c = &creatures[j];
+
+            if(c->dead) continue;
+            if(p->curr_room != c->curr_room) continue;
+
+            bool hit = are_rects_colliding(&p->hit_box_prior, &p->hit_box, &c->hitbox);
+
+            if(hit)
+            {
+                creature_hurt(c, p->damage);
+                p->dead = true;
+                break;
+            }
+        }
     }
-    return;
 }
 
 void projectile_draw(Projectile* proj)

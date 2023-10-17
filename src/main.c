@@ -670,6 +670,7 @@ void update(float dt)
             player_update(player, dt);
             projectile_update(dt);
             creature_update_all(dt);
+            projectile_handle_collisions(dt);
         }
     }
 
