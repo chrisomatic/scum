@@ -90,6 +90,8 @@ extern int room_list_count;
 
 void level_init();
 Level level_generate(unsigned int seed);
+Rect level_get_tile_rect(int x, int y);
+TileType level_get_tile_type(Room* room, int x, int y);
 void level_draw_room(Room* room, float xoffset, float yoffset);
 void level_print(Level* level);
 void level_print_room(Room* room);

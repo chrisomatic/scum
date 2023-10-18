@@ -1243,7 +1243,7 @@ void net_client_update()
                 case PACKET_TYPE_INIT:
                 {
                     seed = unpack_u32(&srvpkt,&offset);
-                    level = level_generate(seed);
+                    game_generate_level(seed);
 
                     client.received_init_packet = true;
                 } break;

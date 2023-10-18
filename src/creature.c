@@ -30,13 +30,22 @@ void creature_add(Room* room, CreatureType type)
 {
     Creature c = {0};
 
-    int x0 = room_area.x - room_area.w/2.0;
-    int y0 = room_area.y - room_area.h/2.0;
-
     c.type = type;
     c.curr_room = room->index;
-    c.phys.pos.x = x0 + TILE_SIZE*(rand() % ROOM_TILE_SIZE_X + 1) + 8;
-    c.phys.pos.y = y0 + TILE_SIZE*(rand() % ROOM_TILE_SIZE_Y + 1) + 8;
+
+    for(;;)
+    {
+        int x = (rand() % ROOM_TILE_SIZE_X + 1);
+        int y = (rand() % ROOM_TILE_SIZE_Y + 1);
+        if(level_get_tile_type(room, x, y) == TILE_FLOOR)
+        {
+            Rect rp = level_get_tile_rect(x, y);
+            c.phys.pos.x = rp.x;
+            c.phys.pos.y = rp.y;
+            break;
+        }
+    }
+
     memcpy(&c.phys.target_pos,&c.phys.pos,sizeof(Vector2f));
     c.color = room->color;
     c.phys.speed = 10.0;

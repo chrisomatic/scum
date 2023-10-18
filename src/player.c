@@ -9,7 +9,7 @@
 #include "player.h"
 
 #define RADIUS_OFFSET_X 0
-#define RADIUS_OFFSET_Y 8
+#define RADIUS_OFFSET_Y 7.5
 
 int player_image = -1;
 Player players[MAX_PLAYERS] = {0};

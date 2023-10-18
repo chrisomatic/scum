@@ -21,10 +21,6 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
     room->color = rand();
     room->index = level_get_room_index(x,y);
 
-    int n = rand() % 3;
-    for(int i = 0; i < n; ++i)
-        creature_add(room,CREATURE_TYPE_SLUG);
-
     if(x == (MAX_ROOMS_GRID_X / 2) && y == (MAX_ROOMS_GRID_Y / 2))
     {
         room->layout = 0;
@@ -32,6 +28,12 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
     else
     {
         room->layout = rand() % room_list_count;
+    }
+
+    int n = rand() % 3;
+    for(int i = 0; i < n; ++i)
+    {
+        creature_add(room,CREATURE_TYPE_SLUG);
     }
 
     switch(came_from)
@@ -111,6 +113,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
 
 static void generate_walls(Level* level)
 {
+    const float wall_offset = 7.0;
     for(int j = 0; j < MAX_ROOMS_GRID_Y; ++j)
     {
         for(int i = 0; i < MAX_ROOMS_GRID_X; ++i)
@@ -123,34 +126,34 @@ static void generate_walls(Level* level)
                 int y0 = room_area.y - room_area.h/2.0;
 
                 Wall* wall_top = &room->walls[room->wall_count];
-                wall_top->p0.x = x0+TILE_SIZE-6;
-                wall_top->p0.y = y0+TILE_SIZE-6;
-                wall_top->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+6;
+                wall_top->p0.x = x0+TILE_SIZE-wall_offset;
+                wall_top->p0.y = y0+TILE_SIZE-wall_offset;
+                wall_top->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+wall_offset;
                 wall_top->p1.y = wall_top->p0.y;
                 wall_top->dir = DIR_DOWN;
                 room->wall_count++;
 
                 Wall* wall_right = &room->walls[room->wall_count];
-                wall_right->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+6;
-                wall_right->p0.y = y0+TILE_SIZE-6;
+                wall_right->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+wall_offset;
+                wall_right->p0.y = y0+TILE_SIZE-wall_offset;
                 wall_right->p1.x = wall_right->p0.x;
-                wall_right->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+6;
+                wall_right->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+wall_offset;
                 wall_right->dir = DIR_LEFT;
                 room->wall_count++;
 
                 Wall* wall_bottom = &room->walls[room->wall_count];
-                wall_bottom->p0.x = x0+TILE_SIZE-6;
-                wall_bottom->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+6;
-                wall_bottom->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+6;
+                wall_bottom->p0.x = x0+TILE_SIZE-wall_offset;
+                wall_bottom->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+wall_offset;
+                wall_bottom->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+wall_offset;
                 wall_bottom->p1.y = wall_bottom->p0.y;
                 wall_bottom->dir = DIR_UP;
                 room->wall_count++;
 
                 Wall* wall_left = &room->walls[room->wall_count];
-                wall_left->p0.x = x0+TILE_SIZE-6;
-                wall_left->p0.y = y0+TILE_SIZE-6;
+                wall_left->p0.x = x0+TILE_SIZE-wall_offset;
+                wall_left->p0.y = y0+TILE_SIZE-wall_offset;
                 wall_left->p1.x = wall_left->p0.x;
-                wall_left->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+6;
+                wall_left->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+wall_offset;
                 wall_left->dir = DIR_RIGHT;
                 room->wall_count++;
 
@@ -366,7 +369,7 @@ void level_handle_room_collision(Room* room, Physics* phys)
 void level_init()
 {
     level_load_room_list();
-    dungeon_image = gfx_load_image("src/img/dungeon_set.png", false, true, 32, 32);
+    dungeon_image = gfx_load_image("src/img/dungeon_set.png", false, true, TILE_SIZE, TILE_SIZE);
 }
 
 void level_print(Level* level)
@@ -384,6 +387,28 @@ void level_print(Level* level)
     printf("\n");
 }
 
+Rect level_get_tile_rect(int x, int y)
+{
+    float _x = room_area.x - room_area.w/2.0;
+    float _y = room_area.y - room_area.h/2.0;
+
+    _x += (x+1)*TILE_SIZE;
+    _y += (y+1)*TILE_SIZE;
+
+    Rect r = RECT((_x+TILE_SIZE/2.0), (_y+TILE_SIZE/2.0), TILE_SIZE, TILE_SIZE);
+
+    return r;
+}
+
+TileType level_get_tile_type(Room* room, int x, int y)
+{
+    if(x < 0 || x >= ROOM_TILE_SIZE_X) return TILE_NONE;
+    if(y < 0 || y >= ROOM_TILE_SIZE_Y) return TILE_NONE;
+
+    RoomData* rdata = &room_list[room->layout];
+    return rdata->tiles[x][y];
+}
+
 void level_draw_room(Room* room, float xoffset, float yoffset)
 {
     if(!room->valid)
@@ -391,10 +416,10 @@ void level_draw_room(Room* room, float xoffset, float yoffset)
 
     float x = room_area.x - room_area.w/2.0 + xoffset;
     float y = room_area.y - room_area.h/2.0 + yoffset;
-    float w = 32;
-    float h = 32;
+    float w = TILE_SIZE;
+    float h = TILE_SIZE;
 
-    Rect r = {(x+w/2.0), (y+h/2.0), w,h};
+    Rect r = {(x+w/2.0), (y+h/2.0), w,h};   // top left tile of the room
     uint32_t color = room->color;
 
     // draw walls
@@ -412,28 +437,26 @@ void level_draw_room(Room* room, float xoffset, float yoffset)
     gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_CORNER_UR, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y, color, 1.0, 0.0, 1.0, false, true);
     gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_CORNER_RD, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, 1.0, 0.0, 1.0, false, true);
     gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_CORNER_DL, r.x,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, 1.0, 0.0, 1.0, false, true);
-    
+
     // draw doors
     if(room->doors[DIR_UP])
         gfx_draw_image(dungeon_image, SPRITE_TILE_DOOR_UP, r.x+w*(ROOM_TILE_SIZE_X+1)/2.0,r.y, color, 1.0, 0.0, 1.0, false, true);
     if(room->doors[DIR_RIGHT])
         gfx_draw_image(dungeon_image, SPRITE_TILE_DOOR_RIGHT, r.x+w*(ROOM_TILE_SIZE_X+1),r.y+h*(ROOM_TILE_SIZE_Y+1)/2.0, color, 1.0, 0.0, 1.0, false, true);
-
     if(room->doors[DIR_DOWN])
         gfx_draw_image(dungeon_image, SPRITE_TILE_DOOR_DOWN, r.x+w*(ROOM_TILE_SIZE_X+1)/2.0,r.y+h*(ROOM_TILE_SIZE_Y+1), color, 1.0, 0.0, 1.0, false, true);
-
     if(room->doors[DIR_LEFT])
         gfx_draw_image(dungeon_image, SPRITE_TILE_DOOR_LEFT, r.x,r.y+h*(ROOM_TILE_SIZE_Y+1)/2.0, color, 1.0, 0.0, 1.0, false, true);
 
     RoomData* rdata = &room_list[room->layout];
 
-    // draw room
-    for(int j = 1; j < ROOM_TILE_SIZE_Y+1; ++j)
-    {
-        for(int i = 1; i < ROOM_TILE_SIZE_X+1; ++i)
-        {
-            TileType tt = rdata->tiles[i-1][j-1];
 
+    // draw room
+    for(int _y = 0; _y < ROOM_TILE_SIZE_Y; ++_y)
+    {
+        for(int _x = 0; _x < ROOM_TILE_SIZE_X; ++_x)
+        {
+            TileType tt = rdata->tiles[_x][_y];
             SpriteTileType sprite = SPRITE_TILE_MAX;
 
             switch(tt)
@@ -443,10 +466,10 @@ void level_draw_room(Room* room, float xoffset, float yoffset)
                 case TILE_BOULDER: sprite = SPRITE_TILE_BLOCK; break;
                 default: break;
             }
-            gfx_draw_image(dungeon_image, sprite, r.x + i*w,r.y + j*h, color, 1.0, 0.0, 1.0, false, true);
+            // +1 for walls
+            gfx_draw_image(dungeon_image, sprite, r.x + (_x+1)*w, r.y + (_y+1)*h, color, 1.0, 0.0, 1.0, false, true);
         }
     }
-
 }
 
 Level level_generate(unsigned int seed)

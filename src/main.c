@@ -29,6 +29,7 @@ GameState game_state = GAME_STATE_MENU;
 Timer game_timer = {0};
 text_list_t* text_lst = NULL;
 bool show_big_map = false;
+bool show_walls = false;
 GameRole role = ROLE_LOCAL;
 
 // Settings
@@ -402,6 +403,39 @@ void game_generate_level(unsigned int _seed)
         p->curr_room = idx;
         p->transition_room = p->curr_room;
     }
+
+    // Room* room = level_get_room_by_index(&level, idx);
+    Room* room = &level.rooms[level.start.x][level.start.y];
+
+    bool b = false;
+    for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
+    {
+        if(b) break;
+        int _x = (ROOM_TILE_SIZE_X-1)/2;
+        _x += ((x % 2 == 0) ? -1 : 1) * x/2;
+
+        for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
+        {
+            int _y = (ROOM_TILE_SIZE_Y-1)/2;
+            _y += ((y % 2 == 0) ? -1 : 1) * y/2;
+
+            if(level_get_tile_type(room, _x, _y) == TILE_FLOOR)
+            {
+                // printf("found floor %d,%d\n", _x, _y);
+                Rect rp = level_get_tile_rect(_x, _y);
+                for(int i = 0; i < MAX_PLAYERS; ++i)
+                {
+                    Player* p = &players[i];
+                    p->phys.pos.x  = rp.x;
+                    p->phys.pos.y  = rp.y;
+                }
+                // printf("(%d,%d) setting pos to %.2f, %2f\n", _x, _y, rp.x, rp.y);
+                b = true;
+                break;
+            }
+        }
+    }
+
 }
 
 void init()
@@ -480,7 +514,7 @@ void init()
     params->color_uroom = gfx_blend_colors(params->color_room, COLOR_WHITE, 0.5);
     params->opacity_uroom = params->opacity_room;
     params->color_player = COLOR_RED;
-    params->opacity_player = 0.3;
+    params->opacity_player = 0.7;
     params->color_border = COLOR_WHITE;
     params->opacity_border = 1.0;
 
@@ -1033,11 +1067,27 @@ void draw()
             Vector2i roomxy = level_get_room_coords(p->curr_room);
 
             y = 0;
-            x = 350 +i*120;
+            x = 350 + i*120;
             gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "player %d", i); y += yincr;
             gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "pos: %.1f, %.1f", p->phys.pos.x, p->phys.pos.y); y += yincr;
             gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "c room: %u (%d,%d)", p->curr_room, roomxy.x, roomxy.y); y += yincr;
             gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "t room: %u", p->transition_room); y += yincr;
+        }
+
+        // draw walls
+        if(show_walls)
+        {
+            for(int i = 0; i < room->wall_count; ++i)
+            {
+                Wall* wall = &room->walls[i];
+
+                float x = wall->p0.x;
+                float y = wall->p0.y;
+                float w = ABS(wall->p0.x - wall->p1.x)+1;
+                float h = ABS(wall->p0.y - wall->p1.y)+1;
+
+                gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_WHITE, NOT_SCALED, NO_ROTATION, FULL_OPACITY, true, IN_WORLD);
+            }
         }
 
         // //TEST
@@ -1048,21 +1098,6 @@ void draw()
         // l.y = cr.y;
         // gfx_draw_rect(&l, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
 
-        /*
-        // draw walls
-        for(int i = 0; i < room->wall_count; ++i)
-        {
-            Wall* wall = &room->walls[i];
-
-            float x = wall->p0.x;
-            float y = wall->p0.y;
-            float w = ABS(wall->p0.x - wall->p1.x)+1;
-            float h = ABS(wall->p0.y - wall->p1.y)+1;
-
-            gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_WHITE, NOT_SCALED, NO_ROTATION, FULL_OPACITY, true, IN_WORLD);
-        }
-        */
-        
         editor_draw();
 
     }
