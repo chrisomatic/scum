@@ -67,10 +67,10 @@ void player_init()
         p->phys.coffset.x = RADIUS_OFFSET_X;
         p->phys.coffset.y = RADIUS_OFFSET_Y;
 
-        int room_x = (MAX_ROOMS_GRID_X-1)/2;
-        int room_y = (MAX_ROOMS_GRID_Y-1)/2;
-        p->curr_room = (uint8_t)level_get_room_index(room_x, room_y);
-        p->transition_room = p->curr_room;
+        // int room_x = (MAX_ROOMS_GRID_X-1)/2;
+        // int room_y = (MAX_ROOMS_GRID_Y-1)/2;
+        // p->curr_room = (uint8_t)level_get_room_index(room_x, room_y);
+        // p->transition_room = p->curr_room;
 
         p->door = DIR_NONE;
         // p->in_door = false;
@@ -459,9 +459,11 @@ void player_update(Player* p, float dt)
         if(generate)
         {
             seed = time(0)+rand()%1000;
-            creature_clear_all();
-            level = level_generate(seed);
-            level_print(&level);
+            game_generate_level(seed);
+
+            // creature_clear_all();
+            // level = level_generate(seed);
+            // level_print(&level);
         }
     }
 

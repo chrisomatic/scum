@@ -457,11 +457,17 @@ Level level_generate(unsigned int seed)
 
     srand(seed);
 
-    start_x = MAX_ROOMS_GRID_X / 2; //rand() % MAX_ROOMS_GRID_X;
-    start_y = MAX_ROOMS_GRID_Y / 2; //rand() % MAX_ROOMS_GRID_Y;
+    start_x = RAND_RANGE(1,MAX_ROOMS_GRID_X-2);
+    start_y = RAND_RANGE(1,MAX_ROOMS_GRID_Y-2);
+
+    level.start.x = start_x;
+    level.start.y = start_y;
+
+    // start_x = MAX_ROOMS_GRID_X / 2; //rand() % MAX_ROOMS_GRID_X;
+    // start_y = MAX_ROOMS_GRID_Y / 2; //rand() % MAX_ROOMS_GRID_Y;
 
     // memset(level->rooms,0, sizeof(level->rooms));
-    generate_rooms(&level, start_x, start_y, DIR_NONE, 0);
+    generate_rooms(&level, level.start.x, level.start.y, DIR_NONE, 0);
     generate_walls(&level);
 
     return level;

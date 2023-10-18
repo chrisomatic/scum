@@ -77,6 +77,7 @@ typedef struct
 typedef struct
 {
     Room rooms[MAX_ROOMS_GRID_X][MAX_ROOMS_GRID_Y];
+    Vector2i start;
 } Level;
 
 typedef struct

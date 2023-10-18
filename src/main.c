@@ -376,13 +376,32 @@ void start_server()
     seed = rand();
 
     level_init();
-    level = level_generate(seed);
-    level_print(&level);
+    // level = level_generate(seed);
+    // level_print(&level);
+    game_generate_level(seed);
 
     projectile_init();
 
     // start
     net_server_start();
+}
+
+void game_generate_level(unsigned int _seed)
+{
+    seed = _seed;
+
+    creature_clear_all();
+
+    level = level_generate(seed);
+    level_print(&level);
+
+    uint8_t idx = (uint8_t)level_get_room_index(level.start.x, level.start.y);
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        Player* p = &players[i];
+        p->curr_room = idx;
+        p->transition_room = p->curr_room;
+    }
 }
 
 void init()
@@ -441,7 +460,9 @@ void init()
     editor_init();
 
     if(role == ROLE_LOCAL)
-        level = level_generate(seed);
+    {
+        game_generate_level(seed);
+    }
 
     camera_zoom(cam_zoom, true);
     camera_move(0,0,false,NULL);
@@ -879,6 +900,7 @@ void draw()
         {
             Vector2i roomxy = level_get_room_coords((int)player->curr_room);
             Room* room = &level.rooms[roomxy.x][roomxy.y];
+            // printf("")
             level_draw_room(room, 0, 0);
         }
 
