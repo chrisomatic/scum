@@ -19,6 +19,12 @@ void creature_init()
     creature_image = gfx_load_image("src/img/creature_slug.png", false, false, 17, 17);
 }
 
+void creature_clear_all()
+{
+    list_clear(clist);
+}
+
+
 void creature_add(Room* room, CreatureType type)
 {
     Creature c = {0};
@@ -34,6 +40,8 @@ void creature_add(Room* room, CreatureType type)
     c.color = room->color;
     c.speed = 10.0;
     c.phys.radius = 8.0;
+    c.phys.coffset.x = 0;
+    c.phys.coffset.y = 0;
     c.action_counter = 0.0;
     c.sprite_index = DIR_DOWN;
     c.hp_max = 3.0;

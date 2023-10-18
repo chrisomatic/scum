@@ -4,8 +4,12 @@
 #include "gfx.h"
 #include "level.h"
 #include "projectile.h"
-#include "player.h"
+#include "creature.h"
 #include "camera.h"
+#include "player.h"
+
+#define RADIUS_OFFSET_X 0
+#define RADIUS_OFFSET_Y 8
 
 int player_image = -1;
 Player players[MAX_PLAYERS] = {0};
@@ -60,6 +64,8 @@ void player_init()
         p->sprite_index = 4;
 
         p->phys.radius = 8.0;
+        p->phys.coffset.x = RADIUS_OFFSET_X;
+        p->phys.coffset.y = RADIUS_OFFSET_Y;
 
         int room_x = (MAX_ROOMS_GRID_X-1)/2;
         int room_y = (MAX_ROOMS_GRID_Y-1)/2;
@@ -67,7 +73,7 @@ void player_init()
         p->transition_room = p->curr_room;
 
         p->door = DIR_NONE;
-        p->in_door = false;
+        // p->in_door = false;
 
         // animation
         // --------------------------------------------------------
@@ -117,6 +123,12 @@ void player_set_hit_box_pos(Player* p, float x, float y)
 
     p->phys.pos.x = x + dx;
     p->phys.pos.y = y + dy;
+}
+
+void player_set_collision_pos(Player* p, float x, float y)
+{
+    p->phys.pos.x = x - p->phys.coffset.x;
+    p->phys.pos.y = y - p->phys.coffset.y;
 }
 
 
@@ -205,25 +217,29 @@ void player_start_room_transition(Player* p)
         {
             case DIR_UP:
                 p->curr_room = (uint8_t)level_get_room_index(roomxy.x, roomxy.y-1);
-                player_set_hit_box_pos(p, p->hitbox.x, y1);
+                // player_set_hit_box_pos(p, p->hitbox.x, y1);
+                player_set_collision_pos(p, CPOSX(p->phys), y1);
                 p->sprite_index = SPRITE_UP;
                 break;
 
             case DIR_RIGHT:
                 p->curr_room = (uint8_t)level_get_room_index(roomxy.x+1, roomxy.y);
-                player_set_hit_box_pos(p, x1, p->hitbox.y);
+                // player_set_hit_box_pos(p, x1, p->hitbox.y);
+                player_set_collision_pos(p, x1, CPOSY(p->phys));
                 p->sprite_index = SPRITE_RIGHT;
                 break;
 
             case DIR_DOWN:
                 p->curr_room = (uint8_t)level_get_room_index(roomxy.x, roomxy.y+1);
-                player_set_hit_box_pos(p, p->hitbox.x, y1);
+                // player_set_hit_box_pos(p, p->hitbox.x, y1);
+                player_set_collision_pos(p, CPOSX(p->phys), y1);
                 p->sprite_index = SPRITE_DOWN;
                 break;
 
             case DIR_LEFT:
                 p->curr_room = (uint8_t)level_get_room_index(roomxy.x-1, roomxy.y);
-                player_set_hit_box_pos(p, x1, p->hitbox.y);
+                // player_set_hit_box_pos(p, x1, p->hitbox.y);
+                player_set_collision_pos(p, x1, CPOSY(p->phys));
                 p->sprite_index = SPRITE_LEFT;
                 break;
 
@@ -287,7 +303,6 @@ static void handle_room_collision(Player* p)
 
     level_handle_room_collision(room,&p->phys);
 
-    int idx = -1;
     // doors
     for(int i = 0; i < 4; ++i)
     {
@@ -326,43 +341,24 @@ static void handle_room_collision(Player* p)
                 break;
         }
 
-        float d = dist(p->phys.pos.x, p->phys.pos.y+p->phys.radius, door_point.x, door_point.y);
+        float d = dist(CPOSX(p->phys), CPOSY(p->phys), door_point.x, door_point.y);
 
-        bool colliding_with_door = (d < 10.0);
+        bool colliding_with_door = (d < p->phys.radius);
         if(colliding_with_door)
         {
-            idx = i;
+            bool k = false;
+            k |= i == DIR_UP && p->actions[PLAYER_ACTION_UP].state;
+            k |= i == DIR_DOWN && p->actions[PLAYER_ACTION_DOWN].state;
+            k |= i == DIR_LEFT && p->actions[PLAYER_ACTION_LEFT].state;
+            k |= i == DIR_RIGHT && p->actions[PLAYER_ACTION_RIGHT].state;
+            if(k)
+            {
+                p->door = i;
+                player_start_room_transition(p);
+            }
             break;
         }
-        // bool go_through_door = p->actions[PLAYER_ACTION_DOOR].toggled_off && colliding_with_door;
-        // if(go_through_door)
-        // {
-        //     p->door = i;
-        //     player_start_room_transition(p);
-        // }
-        // break;
 
-    }
-
-    if(idx != -1)
-    {
-
-        bool k = false;
-        k |= idx == DIR_UP && p->actions[PLAYER_ACTION_UP].state;
-        k |= idx == DIR_DOWN && p->actions[PLAYER_ACTION_DOWN].state;
-        k |= idx == DIR_LEFT && p->actions[PLAYER_ACTION_LEFT].state;
-        k |= idx == DIR_RIGHT && p->actions[PLAYER_ACTION_RIGHT].state;
-
-        if(!p->in_door || k)
-        {
-            p->in_door = true;
-            p->door = idx;
-            player_start_room_transition(p);
-        }
-    }
-    else
-    {
-        p->in_door = false;
     }
 
 }
@@ -463,6 +459,7 @@ void player_update(Player* p, float dt)
         if(generate)
         {
             seed = time(0)+rand()%1000;
+            creature_clear_all();
             level = level_generate(seed);
             level_print(&level);
         }
@@ -493,7 +490,7 @@ void player_draw(Player* p)
     if(debug_enabled)
     {
         // @TEMP
-        gfx_draw_circle(p->phys.pos.x, p->phys.pos.y+8, p->phys.radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
+        gfx_draw_circle(CPOSX(p->phys), CPOSY(p->phys), p->phys.radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
 
         Rect r = RECT(p->phys.pos.x, p->phys.pos.y, 1, 1);
         gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);

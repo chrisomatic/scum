@@ -33,6 +33,7 @@ typedef struct
 extern Creature creatures[MAX_CREATURES];
 
 void creature_init();
+void creature_clear_all();
 void creature_add(Room* room, CreatureType type);
 void creature_update(Creature* c, float dt);
 void creature_update_all(float dt);
