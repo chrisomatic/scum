@@ -382,34 +382,72 @@ void player_update(Player* p, float dt)
     bool left  = p->actions[PLAYER_ACTION_LEFT].state;
     bool right = p->actions[PLAYER_ACTION_RIGHT].state;
 
-    float v = p->phys.speed;
+    // update velocity
 
-    p->phys.vel.x = 0.0;
-    p->phys.vel.y = 0.0;
+    Vector2f target_vel_factor = {0.0,0.0};
 
     if(up)
     {
-        p->phys.vel.y = -v;
         p->sprite_index = 0;
+        target_vel_factor.y = -1.0;
     }
 
     if(down)
     {
-        p->phys.vel.y = +v;
         p->sprite_index = 4;
+        target_vel_factor.y = 1.0;
     }
 
     if(left)
     {
-        p->phys.vel.x = -v;
         p->sprite_index = 8;
+        target_vel_factor.x = -1.0;
     }
 
     if(right)
     {
-        p->phys.vel.x = +v;
         p->sprite_index = 12;
+        target_vel_factor.x = 1.0;
     }
+
+    if((up && (left || right)) || (down && (left || right)))
+    {
+        // moving diagonally
+        target_vel_factor.x *= 0.7071f;
+        target_vel_factor.y *= 0.7071f;
+    }
+
+    float friction = 0.004;
+    float rate = 1-pow(2, -friction/dt);
+
+    Vector2f vel_target = {p->phys.speed*target_vel_factor.x, p->phys.speed*target_vel_factor.y};
+
+    bool moving = (up || down || left || right);
+
+    if(moving)
+    {
+        // trying to move
+        p->phys.vel.x += (vel_target.x - p->phys.vel.x)*rate;
+        p->phys.vel.y += (vel_target.y - p->phys.vel.y)*rate;
+
+        if(ABS(p->phys.vel.x) > ABS(vel_target.x)-1) p->phys.vel.x = vel_target.x;
+        if(ABS(p->phys.vel.y) > ABS(vel_target.y)-1) p->phys.vel.y = vel_target.y;
+    }
+    else
+    {
+        // stopped trying to move
+        p->phys.vel.x += (0.0 - p->phys.vel.x)*rate;
+        p->phys.vel.y += (0.0 - p->phys.vel.y)*rate;
+
+        if(ABS(p->phys.vel.x) < 1.0) p->phys.vel.x = 0.0;
+        if(ABS(p->phys.vel.y) < 1.0) p->phys.vel.y = 0.0;
+    }
+
+    float m1 = magn(p->phys.vel);
+    float m2 = p->phys.speed;
+    p->vel_factor = m1/m2;
+    
+    // update position
 
     p->phys.pos.x += p->phys.vel.x*dt;
     p->phys.pos.y += p->phys.vel.y*dt;
@@ -427,8 +465,6 @@ void player_update(Player* p, float dt)
     // update player current tile
     GFXImage* img = &gfx_images[player_image];
     Rect* vr = &img->visible_rects[p->sprite_index];
-
-    const float pcooldown = p->proj_cooldown_max; //seconds
 
     if(p->proj_cooldown > 0.0)
     {
@@ -448,7 +484,7 @@ void player_update(Player* p, float dt)
         else if(p->sprite_index >= 12)
             projectile_add(p, 0.0);
 
-        p->proj_cooldown = pcooldown;
+        p->proj_cooldown = p->proj_cooldown_max;
     }
 
     if(role == ROLE_LOCAL)
@@ -472,8 +508,10 @@ void player_update(Player* p, float dt)
     level.rooms[roomxy.x][roomxy.y].discovered = true;
 
     // update animation
-    if(ABS(p->phys.vel.x) > 0.0 || ABS(p->phys.vel.y) > 0.0)
-        gfx_anim_update(&p->anim, dt);
+    if(moving)
+    {
+        gfx_anim_update(&p->anim, p->vel_factor*dt);
+    }
     else
         p->anim.curr_frame = 0;
 }

@@ -86,6 +86,9 @@ void game_generate_level(unsigned int _seed);
 void set_game_state(GameState state);
 void update_input_state(PlayerInput* input, float _dt);
 
+extern int mx, my;
+extern int wmx, wmy;
+
 extern Rect room_area;
 extern Rect player_area;
 extern Rect camera_limit;

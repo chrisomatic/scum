@@ -30,6 +30,7 @@ typedef struct
     bool active;
 
     Physics phys;
+    float vel_factor;
 
     PlayerInput actions[PLAYER_ACTION_MAX];
 

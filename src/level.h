@@ -92,6 +92,7 @@ void level_init();
 Level level_generate(unsigned int seed);
 Rect level_get_tile_rect(int x, int y);
 TileType level_get_tile_type(Room* room, int x, int y);
+TileType level_get_tile_type_by_pos(Room* room, float x, float y);
 void level_draw_room(Room* room, float xoffset, float yoffset);
 void level_print(Level* level);
 void level_print_room(Room* room);
@@ -102,10 +103,13 @@ Room* level_get_room(Level* level, int x, int y);
 Room* level_get_room_by_index(Level* level, int index);
 uint8_t level_get_room_index(int x, int y);
 Vector2i level_get_room_coords(int index);
+Vector2i level_get_room_coords_by_pos(float x, float y);
 bool level_is_room_valid(Level* level, int x, int y);
 bool level_is_room_valid_index(Level* level, int index);
 bool level_is_room_discovered(Level* level, int x, int y);
 bool level_is_room_discovered_index(Level* level, int index);
+
+char* level_tile_type_to_str(TileType tt);
 
 Vector2i get_door_offsets(Dir door);
 const char* get_door_name(Dir door);

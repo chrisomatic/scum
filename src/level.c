@@ -359,6 +359,48 @@ void level_handle_room_collision(Room* room, Physics* phys)
                     case DIR_RIGHT: phys->pos.x += delta; break;
                 }
 
+                // add convenient sliding to get around walls
+                if(wall->dir == DIR_UP || wall->dir == DIR_DOWN)
+                {
+                    bool can_slide_left   = px-3 < wall->p0.x;
+                    bool can_slide_right  = px+3 > wall->p1.x;
+
+                    if(can_slide_left || can_slide_right)
+                    {
+                        Vector2i tile_coords = level_get_room_coords_by_pos(px, py);
+
+                        tile_coords.x += wall->dir == DIR_UP ? +1 : -1;
+                        //tile_coords.y += can_slide_up ? -1 : +1;
+
+                        TileType tt = level_get_tile_type(room, tile_coords.x, tile_coords.y);
+
+                        if(tt == TILE_FLOOR)
+                        {
+                            phys->pos.x += can_slide_left ? -1 : +1;
+                        }
+                    } 
+                }
+                else
+                {
+                    bool can_slide_up   = py-3 < wall->p0.y;
+                    bool can_slide_down = py+3 > wall->p1.y;
+
+                    if(can_slide_up || can_slide_down)
+                    {
+                        Vector2i tile_coords = level_get_room_coords_by_pos(px, py);
+
+                        tile_coords.x += wall->dir == DIR_LEFT ? +1 : -1;
+                        //tile_coords.y += can_slide_up ? -1 : +1;
+
+                        TileType tt = level_get_tile_type(room, tile_coords.x, tile_coords.y);
+
+                        if(tt == TILE_FLOOR)
+                        {
+                            phys->pos.y += can_slide_up ? -1 : +1;
+                        }
+                    } 
+                }
+
                 memcpy(&phys->target_pos, &phys->pos, sizeof(Vector2f));
             }
         }
@@ -407,6 +449,12 @@ TileType level_get_tile_type(Room* room, int x, int y)
 
     RoomData* rdata = &room_list[room->layout];
     return rdata->tiles[x][y];
+}
+
+TileType level_get_tile_type_by_pos(Room* room, float x, float y)
+{
+    Vector2i tile_coords = level_get_room_coords_by_pos(x, y);
+    return level_get_tile_type(room,tile_coords.x,tile_coords.y);
 }
 
 void level_draw_room(Room* room, float xoffset, float yoffset)
@@ -562,6 +610,18 @@ void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radiu
 //     printf("%2d | %d, %d\n", i, xy.x, xy.y);
 // }
 
+char* level_tile_type_to_str(TileType tt)
+{
+    switch(tt)
+    {
+        case TILE_NONE: return "None";
+        case TILE_FLOOR: return "Floor";
+        case TILE_BOULDER: return "Block";
+        case TILE_PIT: return "Pit";
+    }
+    return "Unknown";
+}
+
 Room* level_get_room(Level* level, int x, int y)
 {
     if(!level_is_room_valid(level, x, y))
@@ -586,6 +646,18 @@ Vector2i level_get_room_coords(int index)
     p.x = index % MAX_ROOMS_GRID_X;
     p.y =  index / MAX_ROOMS_GRID_X;
     return p;
+}
+
+Vector2i level_get_room_coords_by_pos(float x, float y)
+{
+    int x0 = room_area.x - room_area.w/2.0;
+    int y0 = room_area.y - room_area.h/2.0;
+
+    int _x = (x - x0) / TILE_SIZE;
+    int _y = (y - y0) / TILE_SIZE;
+
+    Vector2i r = {_x-1,_y-1};
+    return r;
 }
 
 bool level_is_room_valid(Level* level, int x, int y)
