@@ -82,9 +82,6 @@ typedef struct
     float opacity_border;
 } DrawLevelParams;
 
-void game_generate_level(unsigned int _seed);
-void set_game_state(GameState state);
-void update_input_state(PlayerInput* input, float _dt);
 
 extern int mx, my;
 extern int wmx, wmy;
@@ -112,3 +109,9 @@ extern bool show_walls;
 extern uint32_t background_color;
 extern unsigned int seed;
 extern GameRole role;
+extern float cam_zoom;
+
+
+void game_generate_level(unsigned int _seed);
+void set_game_state(GameState state);
+void update_input_state(PlayerInput* input, float _dt);

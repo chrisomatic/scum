@@ -12,6 +12,8 @@
 #define SPRITE_LEFT  8
 #define SPRITE_RIGHT 12
 
+#define PLAYER_NAME_MAX 16
+
 enum PlayerActions
 {
     PLAYER_ACTION_UP,
@@ -28,6 +30,8 @@ enum PlayerActions
 typedef struct
 {
     bool active;
+
+    char name[PLAYER_NAME_MAX+1];
 
     Physics phys;
     float vel_factor;
@@ -59,12 +63,14 @@ typedef struct
 
 } Player;
 
+extern char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 extern Player players[MAX_PLAYERS];
 extern Player* player;
 extern int num_players;
 
 void player_init();
 void player_init_keys();
+void player_set_to_level_start(Player* p);
 void player_update(Player* p, float dt);
 void player_draw(Player* p);
 void player_reset(Player* p);
@@ -74,3 +80,5 @@ void player_set_hit_box_pos(Player* p, float x, float y);
 void player_set_collision_pos(Player* p, float x, float y);
 void player_draw_room_transition();
 void player_start_room_transition(Player* p);
+
+int player_names_build(bool include_all, bool only_active);
