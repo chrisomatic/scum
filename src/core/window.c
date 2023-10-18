@@ -121,13 +121,13 @@ bool window_init(int _view_width, int _view_height)
     return true;
 }
 
-void window_get_mouse_coords(int* x, int* y)
+void window_get_mouse_coords(float* x, float* y)
 {
     *x = (int)(window_coord_x);
     *y = (int)(window_coord_y);
 }
 
-void window_get_mouse_view_coords(int* x, int* y)
+void window_get_mouse_view_coords(float* x, float* y)
 {
     window_get_mouse_coords(x,y);
 
@@ -135,14 +135,14 @@ void window_get_mouse_view_coords(int* x, int* y)
     *y *= (view_height/(float)window_height);
 }
 
-void window_set_mouse_view_coords(int x, int y)
+void window_set_mouse_view_coords(float x, float y)
 {
     double _x = (double)x / (view_width/(float)window_width);
     double _y = (double)y / (view_height/(float)window_height);
     glfwSetCursorPos(window, _x, _y);
 }
 
-void window_get_mouse_world_coords(int* x, int* y)
+void window_get_mouse_world_coords(float* x, float* y)
 {
     window_get_mouse_view_coords(x,y);
     window_translate_view_to_world(x,y);
@@ -169,7 +169,7 @@ float window_scale_view_to_world(float distance)
     return (distance * factor);
 }
 
-void window_translate_view_to_world(int* x, int* y)
+void window_translate_view_to_world(float* x, float* y)
 {
     Rect r = get_camera_rect();
 
@@ -178,8 +178,8 @@ void window_translate_view_to_world(int* x, int* y)
 
     Vector2i top_left = {r.x - r.w/2.0, r.y - r.h/2.0};
 
-    int view_x = *x;
-    int view_y = *y;
+    float view_x = *x;
+    float view_y = *y;
 
     *x = top_left.x + (factor * view_x);
     *y = top_left.y + (factor * view_y);

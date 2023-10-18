@@ -36,8 +36,8 @@ GameRole role = ROLE_LOCAL;
 uint32_t background_color = COLOR_YELLOW;
 uint32_t margin_color = COLOR_BLACK;
 
-int mx=0, my=0;
-int wmx=0, wmy=0;
+float mx=0, my=0;
+float wmx=0, wmy=0;
 
 Rect room_area = {0};
 Rect player_area = {0};
@@ -923,13 +923,15 @@ void draw_bigmap()
 
 void draw()
 {
+    Room* room = level_get_room_by_index(&level, player->curr_room);
+
     gfx_clear_buffer(background_color);
 
-    float title_scale = 0.5;
-    Vector2f title_size = gfx_string_get_size(title_scale, "SCUM");
-    Rect title_r = RECT(margin_top.w/2.0, margin_top.h/2.0, title_size.x, title_size.y);
-    gfx_get_absolute_coords(&title_r, ALIGN_CENTER, &margin_top, ALIGN_TOP_LEFT);
-    gfx_draw_string(title_r.x, title_r.y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "SCUM");
+    // float title_scale = 0.5;
+    // Vector2f title_size = gfx_string_get_size(title_scale, "SCUM");
+    // Rect title_r = RECT(margin_top.w/2.0, margin_top.h/2.0, title_size.x, title_size.y);
+    // gfx_get_absolute_coords(&title_r, ALIGN_CENTER, &margin_top, ALIGN_TOP_LEFT);
+    // gfx_draw_string(title_r.x, title_r.y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "SCUM");
 
     // draw room
 
@@ -949,7 +951,6 @@ void draw()
     else if(game_state == GAME_STATE_MENU)
     {
         // //TODO
-        // Vector2i roomxy = level_get_room_coords((int)player->curr_room);
         // Room* room = &level.rooms[roomxy.x][roomxy.y];
         // level_draw_room(room, 0, 0);
         gfx_draw_rect(&room_area, COLOR(30,30,30), NOT_SCALED, NO_ROTATION, 1.0, true, true);
@@ -1014,6 +1015,22 @@ void draw()
         }
     }
 
+    // draw walls
+    if(debug_enabled && show_walls && game_state == GAME_STATE_PLAYING)
+    {
+        for(int i = 0; i < room->wall_count; ++i)
+        {
+            Wall* wall = &room->walls[i];
+
+            float x = wall->p0.x;
+            float y = wall->p0.y;
+            float w = ABS(wall->p0.x - wall->p1.x)+1;
+            float h = ABS(wall->p0.y - wall->p1.y)+1;
+
+            gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_WHITE, NOT_SCALED, NO_ROTATION, FULL_OPACITY, true, IN_WORLD);
+        }
+    }
+
     gfx_draw_rect(&margin_left, margin_color, NOT_SCALED, NO_ROTATION, 1.0, true, false);
     gfx_draw_rect(&margin_right, margin_color, NOT_SCALED, NO_ROTATION, 1.0, true, false);
     gfx_draw_rect(&margin_top, margin_color, NOT_SCALED, NO_ROTATION, 1.0, true, false);
@@ -1027,13 +1044,12 @@ void draw()
         float zscale = 1.0 - camera_get_zoom();
 
         Rect mr = RECT(mx, my, 10, 10);
-        gfx_draw_rect(&mr, COLOR_RED, NOT_SCALED, NO_ROTATION, 0.5, true, NOT_IN_WORLD);
-
-        mr.x = wmx;
-        mr.y = wmy;
-        mr.w *= zscale;
-        mr.h *= zscale;
-        gfx_draw_rect(&mr, COLOR_BLUE, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
+        gfx_draw_rect(&mr, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
+        // mr.x = wmx;
+        // mr.y = wmy;
+        // mr.w *= zscale;
+        // mr.h *= zscale;
+        // gfx_draw_rect(&mr, COLOR_BLUE, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
 
         // room border
         // gfx_draw_rect(&room_area, COLOR_WHITE, NOT_SCALED, NO_ROTATION, 1.0, false, true);
@@ -1048,61 +1064,6 @@ void draw()
         gfx_draw_rect(&xaxis, COLOR_PURPLE, NOT_SCALED, NO_ROTATION, 1.0, true, true);
         gfx_draw_rect(&yaxis, COLOR_PURPLE, NOT_SCALED, NO_ROTATION, 1.0, true, true);
 
-        Rect limit = camera_limit;
-        Rect cr = get_camera_rect();
-        float sc = 0.16*ascale;
-        int yincr = 15*ascale;
-        int y = 0;
-        int x = 1;
-        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "view mouse:  %d, %d", mx, my); y += yincr;
-        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "world mouse: %d, %d", wmx, wmy); y += yincr;
-        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "camera: %.1f, %.1f, %.1f, %.1f", cr.x, cr.y, cr.w, cr.h); y += yincr;
-        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "limit: %.1f, %.1f, %.1f, %.1f", limit.x, limit.y, limit.w, limit.h); y += yincr;
-        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "view:   %d, %d", view_width, view_height); y += yincr;
-        gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "window: %d, %d", window_width, window_height); y += yincr;
-
-        Room* room = level_get_room_by_index(&level, player->curr_room);
-
-        y = 0;
-        x = 200;
-        for(int d = 0; d < DIR_NONE; ++d)
-        {
-            // Vector2i o = get_door_offsets(d);
-            // Room* nroom = level_get_room(&level, x+o.x, y+o.y);
-            // bool near = true;
-            gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "door %s : %s", get_door_name(d), BOOLSTR(room->doors[d])); y += yincr;
-        }
-
-
-        for(int i = 0; i < MAX_PLAYERS; ++i)
-        {
-            Player* p = &players[i];
-            if(!p->active) continue;
-            Vector2i roomxy = level_get_room_coords(p->curr_room);
-
-            y = 0;
-            x = 350 + i*120;
-            gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "player %d", i); y += yincr;
-            gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "pos: %.1f, %.1f", p->phys.pos.x, p->phys.pos.y); y += yincr;
-            gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "c room: %u (%d,%d)", p->curr_room, roomxy.x, roomxy.y); y += yincr;
-            gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "t room: %u", p->transition_room); y += yincr;
-        }
-
-        // draw walls
-        if(show_walls)
-        {
-            for(int i = 0; i < room->wall_count; ++i)
-            {
-                Wall* wall = &room->walls[i];
-
-                float x = wall->p0.x;
-                float y = wall->p0.y;
-                float w = ABS(wall->p0.x - wall->p1.x)+1;
-                float h = ABS(wall->p0.y - wall->p1.y)+1;
-
-                gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_WHITE, NOT_SCALED, NO_ROTATION, FULL_OPACITY, true, IN_WORLD);
-            }
-        }
 
         // //TEST
         // Rect l = margin_left;

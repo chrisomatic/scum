@@ -25,7 +25,6 @@ void editor_init()
 
 }
 
-
 void editor_draw()
 {
     int name_count = player_names_build(false, true);
@@ -43,8 +42,6 @@ void editor_draw()
 
         switch(selection)
         {
-
-
             case 0: // general
             {
                 imgui_slider_float("Zoom", 0.01,.99, &cam_zoom);
@@ -65,6 +62,23 @@ void editor_draw()
 
             case 1: // level
             {
+
+                TileType tt = level_get_tile_type_by_pos(room, wmx, wmy);
+
+                Vector2i tc = level_get_room_coords_by_pos(wmx, wmy);
+                imgui_text("Mouse Tile: %d, %d", tc.x, tc.y);
+                imgui_text("  Type: %s (%d)", level_tile_type_to_str(tt), tt);
+
+                imgui_text("Doors");
+                for(int d = 0; d < DIR_NONE; ++d)
+                {
+                    if(room->doors[d])
+                        imgui_text(" - %s", get_door_name(d));
+                }
+
+            imgui_toggle_button(&show_walls, "Draw Collision Walls");
+
+
 
             } break;
 

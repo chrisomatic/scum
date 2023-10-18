@@ -83,10 +83,10 @@ typedef struct
 
     IntLookup int_lookups[MAX_INT_LOOKUPS];
 
-    int prior_mouse_x, prior_mouse_y;
-    int mouse_x, mouse_y;
+    float prior_mouse_x, prior_mouse_y;
+    float mouse_x, mouse_y;
 
-    int slider_mouse_x, slider_mouse_y; //starting coords for adjusting slider
+    float slider_mouse_x, slider_mouse_y; //starting coords for adjusting slider
 
     PanelProps panel_props;
     TextBoxProps text_box_props;

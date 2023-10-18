@@ -83,8 +83,8 @@ typedef struct
 } DrawLevelParams;
 
 
-extern int mx, my;
-extern int wmx, wmy;
+extern float mx, my;
+extern float wmx, wmy;
 
 extern Rect room_area;
 extern Rect player_area;
