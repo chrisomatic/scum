@@ -11,6 +11,7 @@
 #define RADIUS_OFFSET_X 0
 #define RADIUS_OFFSET_Y 7.5
 
+char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 int player_image = -1;
 Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
@@ -77,6 +78,9 @@ void player_init()
         p->door = DIR_NONE;
         // p->in_door = false;
 
+        memset(p->name, PLAYER_NAME_MAX, 0);
+        sprintf(p->name, "Player %d", i);
+
         // animation
         // --------------------------------------------------------
         p->anim.curr_frame = 0;
@@ -93,6 +97,66 @@ void player_init()
     }
 
 }
+
+int player_names_build(bool include_all, bool only_active)
+{
+    int count = 0;
+
+    if(include_all)
+    {
+        if(player_names[0]) free(player_names[0]);
+        player_names[0] = calloc(4, sizeof(char));
+        strncpy(player_names[0],"ALL",3);
+        count++;
+    }
+
+    // fill out useful player_names array
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        Player* p = &players[i];
+        if(only_active && !p->active) continue;
+
+        if(player_names[count]) free(player_names[count]);
+
+        int namelen  = strlen(p->name);
+        player_names[count] = calloc(namelen, sizeof(char));
+        strncpy(player_names[count], p->name, namelen);
+        count++;
+    }
+
+    return count;
+}
+
+
+void player_set_to_level_start(Player* p)
+{
+    uint8_t idx = (uint8_t)level_get_room_index(level.start.x, level.start.y);
+    p->curr_room = idx;
+    p->transition_room = p->curr_room;
+
+    Room* room = &level.rooms[level.start.x][level.start.y];
+    for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
+    {
+        int _x = (ROOM_TILE_SIZE_X-1)/2;
+        _x += ((x % 2 == 0) ? -1 : 1) * x/2;
+
+        for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
+        {
+            int _y = (ROOM_TILE_SIZE_Y-1)/2;
+            _y += ((y % 2 == 0) ? -1 : 1) * y/2;
+
+            if(level_get_tile_type(room, _x, _y) == TILE_FLOOR)
+            {
+                // printf("found floor %d,%d\n", _x, _y);
+                Rect rp = level_get_tile_rect(_x, _y);
+                p->phys.pos.x  = rp.x;
+                p->phys.pos.y  = rp.y;
+                return;
+            }
+        }
+    }
+}
+
 
 void player_init_keys()
 {

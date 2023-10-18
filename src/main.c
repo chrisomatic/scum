@@ -387,6 +387,7 @@ void start_server()
     net_server_start();
 }
 
+
 void game_generate_level(unsigned int _seed)
 {
     seed = _seed;
@@ -396,45 +397,49 @@ void game_generate_level(unsigned int _seed)
     level = level_generate(seed);
     level_print(&level);
 
-    uint8_t idx = (uint8_t)level_get_room_index(level.start.x, level.start.y);
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
-        Player* p = &players[i];
-        p->curr_room = idx;
-        p->transition_room = p->curr_room;
+        player_set_to_level_start(&players[i]);
     }
 
-    // Room* room = level_get_room_by_index(&level, idx);
-    Room* room = &level.rooms[level.start.x][level.start.y];
+    // uint8_t idx = (uint8_t)level_get_room_index(level.start.x, level.start.y);
+    // for(int i = 0; i < MAX_PLAYERS; ++i)
+    // {
+    //     Player* p = &players[i];
+    //     p->curr_room = idx;
+    //     p->transition_room = p->curr_room;
+    // }
 
-    bool b = false;
-    for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
-    {
-        if(b) break;
-        int _x = (ROOM_TILE_SIZE_X-1)/2;
-        _x += ((x % 2 == 0) ? -1 : 1) * x/2;
+    // Room* room = &level.rooms[level.start.x][level.start.y];
 
-        for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
-        {
-            int _y = (ROOM_TILE_SIZE_Y-1)/2;
-            _y += ((y % 2 == 0) ? -1 : 1) * y/2;
+    // bool b = false;
+    // for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
+    // {
+    //     if(b) break;
+    //     int _x = (ROOM_TILE_SIZE_X-1)/2;
+    //     _x += ((x % 2 == 0) ? -1 : 1) * x/2;
 
-            if(level_get_tile_type(room, _x, _y) == TILE_FLOOR)
-            {
-                // printf("found floor %d,%d\n", _x, _y);
-                Rect rp = level_get_tile_rect(_x, _y);
-                for(int i = 0; i < MAX_PLAYERS; ++i)
-                {
-                    Player* p = &players[i];
-                    p->phys.pos.x  = rp.x;
-                    p->phys.pos.y  = rp.y;
-                }
-                // printf("(%d,%d) setting pos to %.2f, %2f\n", _x, _y, rp.x, rp.y);
-                b = true;
-                break;
-            }
-        }
-    }
+    //     for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
+    //     {
+    //         int _y = (ROOM_TILE_SIZE_Y-1)/2;
+    //         _y += ((y % 2 == 0) ? -1 : 1) * y/2;
+
+    //         if(level_get_tile_type(room, _x, _y) == TILE_FLOOR)
+    //         {
+    //             // printf("found floor %d,%d\n", _x, _y);
+    //             Rect rp = level_get_tile_rect(_x, _y);
+    //             for(int i = 0; i < MAX_PLAYERS; ++i)
+    //             {
+    //                 Player* p = &players[i];
+    //                 p->phys.pos.x  = rp.x;
+    //                 p->phys.pos.y  = rp.y;
+    //             }
+    //             // printf("(%d,%d) setting pos to %.2f, %2f\n", _x, _y, rp.x, rp.y);
+    //             b = true;
+    //             break;
+    //         }
+    //     }
+    // }
 
 }
 
@@ -1019,6 +1024,16 @@ void draw()
 
     if(debug_enabled)
     {
+        float zscale = 1.0 - camera_get_zoom();
+
+        Rect mr = RECT(mx, my, 10, 10);
+        gfx_draw_rect(&mr, COLOR_RED, NOT_SCALED, NO_ROTATION, 0.5, true, NOT_IN_WORLD);
+
+        mr.x = wmx;
+        mr.y = wmy;
+        mr.w *= zscale;
+        mr.h *= zscale;
+        gfx_draw_rect(&mr, COLOR_BLUE, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
 
         // room border
         // gfx_draw_rect(&room_area, COLOR_WHITE, NOT_SCALED, NO_ROTATION, 1.0, false, true);
@@ -1033,7 +1048,6 @@ void draw()
         gfx_draw_rect(&xaxis, COLOR_PURPLE, NOT_SCALED, NO_ROTATION, 1.0, true, true);
         gfx_draw_rect(&yaxis, COLOR_PURPLE, NOT_SCALED, NO_ROTATION, 1.0, true, true);
 
-        float zscale = 1.0 - camera_get_zoom();
         Rect limit = camera_limit;
         Rect cr = get_camera_rect();
         float sc = 0.16*ascale;
