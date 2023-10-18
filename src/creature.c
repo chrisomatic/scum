@@ -6,6 +6,7 @@
 #include "log.h"
 #include "player.h"
 #include "glist.h"
+#include "particles.h"
 #include "creature.h"
 
 Creature creatures[MAX_CREATURES];
@@ -38,7 +39,7 @@ void creature_add(Room* room, CreatureType type)
     c.phys.pos.y = y0 + TILE_SIZE*(rand() % ROOM_TILE_SIZE_Y + 1) + 8;
     memcpy(&c.phys.target_pos,&c.phys.pos,sizeof(Vector2f));
     c.color = room->color;
-    c.speed = 10.0;
+    c.phys.speed = 10.0;
     c.phys.radius = 8.0;
     c.phys.coffset.x = 0;
     c.phys.coffset.y = 0;
@@ -55,7 +56,7 @@ void creature_update(Creature* c, float dt)
     if(c->dead)
         return;
 
-    c->action_counter += dt*c->speed;
+    c->action_counter += dt*c->phys.speed;
 
     if(c->action_counter >= ACTION_COUNTER_MAX)
     {
@@ -133,11 +134,11 @@ void creature_draw(Creature* c)
         return;
 
     if(c->dead)
-        return;
+        gfx_draw_image(particles_image, 0, c->phys.pos.x, c->phys.pos.y, COLOR_RED, NOT_SCALED, c->blood_angle, 0.6, false, true);
+    else
+        gfx_draw_image(creature_image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, c->color, 1.0, 0.0, 1.0, false, true);
 
-    gfx_draw_image(creature_image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, c->color, 1.0, 0.0, 1.0, false, true);
-
-    if(debug_enabled)
+    if(debug_enabled && !c->dead)
     {
         gfx_draw_rect(&c->hitbox, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
     }
@@ -155,6 +156,7 @@ void creature_draw_all()
 void creature_die(Creature* c)
 {
     c->dead = true;
+    c->blood_angle = rand() % 360;
 }
 
 void creature_hurt(Creature* c, float damage)

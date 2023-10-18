@@ -18,7 +18,6 @@ enum PlayerActions
     PLAYER_ACTION_DOWN,
     PLAYER_ACTION_LEFT,
     PLAYER_ACTION_RIGHT,
-    PLAYER_ACTION_RUN,
     PLAYER_ACTION_DOOR,
     PLAYER_ACTION_SHOOT,
     PLAYER_ACTION_GENERATE_ROOMS,
@@ -47,6 +46,7 @@ typedef struct
     Vector2i curr_tile;
 
     float proj_cooldown;
+    float proj_cooldown_max;
 
     // Networking
     NetPlayerInput input;

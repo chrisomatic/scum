@@ -58,6 +58,7 @@ void player_init()
         p->phys.pos.x = CENTER_X;
         p->phys.pos.y = CENTER_Y;
 
+        p->phys.speed = 200.0;
         p->phys.vel.x = 0.0;
         p->phys.vel.y = 0.0;
 
@@ -72,6 +73,7 @@ void player_init()
         // p->curr_room = (uint8_t)level_get_room_index(room_x, room_y);
         // p->transition_room = p->curr_room;
 
+        p->proj_cooldown_max = 0.4;
         p->door = DIR_NONE;
         // p->in_door = false;
 
@@ -101,7 +103,6 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_S);
     window_controls_add_key(&player->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_A);
     window_controls_add_key(&player->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_D);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_RUN].state, GLFW_KEY_LEFT_SHIFT);
     window_controls_add_key(&player->actions[PLAYER_ACTION_DOOR].state, GLFW_KEY_ENTER);
 
     for(int i = 0;  i < PLAYER_ACTION_MAX; ++i)
@@ -297,9 +298,7 @@ void player_start_room_transition(Player* p)
 
 static void handle_room_collision(Player* p)
 {
-    Vector2i roomxy = level_get_room_coords((int)p->curr_room);
-
-    Room* room = &level.rooms[roomxy.x][roomxy.y];
+    Room* room = level_get_room_by_index(&level, p->curr_room);
 
     level_handle_room_collision(room,&p->phys);
 
@@ -382,9 +381,8 @@ void player_update(Player* p, float dt)
     bool down  = p->actions[PLAYER_ACTION_DOWN].state;
     bool left  = p->actions[PLAYER_ACTION_LEFT].state;
     bool right = p->actions[PLAYER_ACTION_RIGHT].state;
-    bool run = p->actions[PLAYER_ACTION_RUN].state;
 
-    float v = run ? 300.0 : 128.0;
+    float v = p->phys.speed;
 
     p->phys.vel.x = 0.0;
     p->phys.vel.y = 0.0;
@@ -430,7 +428,7 @@ void player_update(Player* p, float dt)
     GFXImage* img = &gfx_images[player_image];
     Rect* vr = &img->visible_rects[p->sprite_index];
 
-    const float pcooldown = 0.4; //seconds
+    const float pcooldown = p->proj_cooldown_max; //seconds
 
     if(p->proj_cooldown > 0.0)
     {

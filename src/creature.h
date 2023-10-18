@@ -2,7 +2,7 @@
 
 #include "physics.h"
 
-#define MAX_CREATURES 256
+#define MAX_CREATURES 1024
 #define ACTION_COUNTER_MAX 10.0
 
 typedef enum
@@ -22,8 +22,8 @@ typedef struct
     uint32_t color;
     uint8_t sprite_index;
     uint8_t curr_room;
-    float speed;
     bool dead;
+    int blood_angle;
 
     // action
     float action_counter;

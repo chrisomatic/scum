@@ -466,6 +466,8 @@ Level level_generate(unsigned int seed)
     // start_x = MAX_ROOMS_GRID_X / 2; //rand() % MAX_ROOMS_GRID_X;
     // start_y = MAX_ROOMS_GRID_Y / 2; //rand() % MAX_ROOMS_GRID_Y;
 
+    creature_clear_all();
+
     // memset(level->rooms,0, sizeof(level->rooms));
     generate_rooms(&level, level.start.x, level.start.y, DIR_NONE, 0);
     generate_walls(&level);
@@ -542,6 +544,12 @@ Room* level_get_room(Level* level, int x, int y)
     if(!level_is_room_valid(level, x, y))
         return NULL;
     return &level->rooms[x][y];
+}
+
+Room* level_get_room_by_index(Level* level, int index)
+{
+    Vector2i roomxy = level_get_room_coords(index);
+    return level_get_room(level, roomxy.x, roomxy.y);
 }
 
 uint8_t level_get_room_index(int x, int y)

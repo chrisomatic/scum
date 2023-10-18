@@ -13,6 +13,7 @@ typedef struct
     Vector2f prior_pos;
 
     Vector2f vel;
+    float speed;
     float radius;
     Vector2f coffset;
 } Physics;

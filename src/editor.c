@@ -27,7 +27,7 @@ void editor_draw()
     imgui_begin_panel("Editor", view_width - 300, 1, true);
 
         imgui_newline();
-        char* buttons[] = {"Players", "Creatures", "Projectiles", "Theme"};
+        char* buttons[] = {"Players", "Creatures", "Level", "Projectiles"};
         int selection = imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "");
         imgui_horizontal_line(1);
 
@@ -37,27 +37,35 @@ void editor_draw()
         {
             case 0: // players
             {
-                imgui_text_sized(big, "Physics");
+                imgui_text_sized(big, "Info");
                 imgui_text("Pos: %f %f",player->phys.pos.x, player->phys.pos.y);
                 imgui_text("Vel: %f %f",player->phys.vel.x, player->phys.vel.y);
-            } break;
 
-            case 1: // creatures
-            {
-                imgui_slider_float("Speed",1.0,50.0,&creatures[0].speed);
-            } break;
-
-            case 2: // projectiles
-            {
+                imgui_text_sized(big, "Gun");
                 imgui_slider_float("Damage", 1.0,100.0,&projectile_lookup[0].damage);
+                imgui_slider_float("Cooldown", 0.0,1.0,&player->proj_cooldown_max);
                 imgui_slider_float("Base Speed", 100.0,1000.0,&projectile_lookup[0].base_speed);
                 imgui_slider_float("Min Speed", 50.0,200.0,&projectile_lookup[0].min_speed);
             } break;
 
-            case 3:
+            case 1: // creatures
             {
-                imgui_theme_selector();
+                imgui_slider_float("Speed",1.0,100.0,&creatures[0].phys.speed);
+                for(int i = 0; i < creature_get_count(); ++i)
+                    creatures[i].phys.speed = creatures[0].phys.speed;
+            } break;
 
+            case 2: // level
+            {
+                if(imgui_button("Add Slug"))
+                {
+                    Room* room = level_get_room_by_index(&level, player->curr_room);
+                    creature_add(room, CREATURE_TYPE_SLUG);
+                }
+            } break;
+
+            case 3: // projectiles
+            {
             } break;
         }
     imgui_end();

@@ -388,9 +388,6 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
     window_coord_y = ypos;
 }
 
-
-
-
 typedef struct
 {
     int key;
@@ -402,7 +399,6 @@ static int window_keys_count = 0;
 
 static WindowKey window_mouse_buttons[10];
 static int window_mouse_buttons_count = 0;
-
 
 bool window_controls_is_key_state(int key, int state)
 {

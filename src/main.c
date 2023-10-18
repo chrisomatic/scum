@@ -435,6 +435,9 @@ void init()
     ascale = view_width / 1200.0;
     LOGI("   ascale: %.2f", ascale);
 
+    LOGI(" - Particles.");
+    particles_init();
+
     LOGI(" - Camera.");
     camera_init();
 
@@ -898,9 +901,7 @@ void draw()
 
         if(player->curr_room == player->transition_room)
         {
-            Vector2i roomxy = level_get_room_coords((int)player->curr_room);
-            Room* room = &level.rooms[roomxy.x][roomxy.y];
-            // printf("")
+            Room* room = level_get_room_by_index(&level,player->curr_room);
             level_draw_room(room, 0, 0);
         }
 
@@ -1012,9 +1013,7 @@ void draw()
         gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "view:   %d, %d", view_width, view_height); y += yincr;
         gfx_draw_string(x, y, COLOR_WHITE, sc, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, "window: %d, %d", window_width, window_height); y += yincr;
 
-
-        Vector2i roomxy = level_get_room_coords(player->curr_room);
-        Room* room = &level.rooms[roomxy.x][roomxy.y];
+        Room* room = level_get_room_by_index(&level, player->curr_room);
 
         y = 0;
         x = 200;

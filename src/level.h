@@ -97,6 +97,7 @@ void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radiu
 void level_handle_room_collision(Room* room, Physics* phys);
 
 Room* level_get_room(Level* level, int x, int y);
+Room* level_get_room_by_index(Level* level, int index);
 uint8_t level_get_room_index(int x, int y);
 Vector2i level_get_room_coords(int index);
 bool level_is_room_valid(Level* level, int x, int y);
