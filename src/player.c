@@ -63,6 +63,9 @@ void player_init()
         p->phys.vel.x = 0.0;
         p->phys.vel.y = 0.0;
 
+        p->hp_max = 6;
+        p->hp = 3;
+
         p->sprite_index = 4;
 
         p->phys.radius = 8.0;
@@ -416,6 +419,8 @@ static void handle_room_collision(Player* p)
             k |= i == DIR_RIGHT && p->actions[PLAYER_ACTION_RIGHT].state;
             if(k)
             {
+                p->phys.vel.x = 0;
+                p->phys.vel.y = 0;
                 p->door = i;
                 player_start_room_transition(p);
             }

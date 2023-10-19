@@ -48,6 +48,9 @@ typedef struct
     uint8_t transition_room;
     Dir door;
 
+    uint8_t hp;
+    uint8_t hp_max;
+
     Vector2i curr_tile;
 
     float proj_cooldown;

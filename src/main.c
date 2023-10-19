@@ -23,7 +23,8 @@
 // =========================
 
 bool initialized = false;
-bool debug_enabled = true;
+bool debug_enabled = false;
+bool editor_enabled = false;
 bool paused = false;
 GameState game_state = GAME_STATE_MENU;
 Timer game_timer = {0};
@@ -47,7 +48,7 @@ Rect margin_top = {0};
 Rect margin_bottom = {0};
 
 
-float cam_zoom = 0.60;
+float cam_zoom = 0.53;
 Rect camera_limit = {0};    // based on margins and room_area
 Vector2f aim_camera_offset = {0};
 float ascale = 1.0;
@@ -921,17 +922,58 @@ void draw_bigmap()
     draw_level(&bigmap_params);
 }
 
+void draw_hearts()
+{
+#define TOP_MARGIN  1
+
+    int max_num = ceill((float)player->hp_max/2.0);
+    int num = player->hp / 2;
+    int rem = player->hp % 2;
+
+    float pad = 3.0*ascale;
+    float l = 20.0*ascale; // rect size
+    float x = margin_left.w;
+
+#if TOP_MARGIN
+    Rect* marg = &margin_top;
+    float y = margin_top.h - 5.0 - l;
+#else
+    Rect* marg = &margin_bortom;
+    float y = 5.0;
+#endif
+
+
+    Rect area = RECT(x, y, l, l);
+    gfx_get_absolute_coords(&area, ALIGN_TOP_LEFT, marg, ALIGN_CENTER);
+
+    x = area.x;
+    y = area.y;
+    for(int i = 0; i < max_num; ++i)
+    {
+        Rect r = RECT(x, y, l, l);
+
+        if(i < num)
+            gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, NOT_IN_WORLD);
+
+        if(rem == 1 && num == i)
+        {
+            Rect r2 = r;
+            r2.w = l/2.0;
+            r2.x -= r2.w/2.0;
+            gfx_draw_rect(&r2, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, NOT_IN_WORLD);
+        }
+
+        gfx_draw_rect(&r, COLOR_WHITE, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
+
+        x += (l+pad);
+    }
+}
+
 void draw()
 {
     Room* room = level_get_room_by_index(&level, player->curr_room);
 
     gfx_clear_buffer(background_color);
-
-    // float title_scale = 0.5;
-    // Vector2f title_size = gfx_string_get_size(title_scale, "SCUM");
-    // Rect title_r = RECT(margin_top.w/2.0, margin_top.h/2.0, title_size.x, title_size.y);
-    // gfx_get_absolute_coords(&title_r, ALIGN_CENTER, &margin_top, ALIGN_TOP_LEFT);
-    // gfx_draw_string(title_r.x, title_r.y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, IN_WORLD, NO_DROP_SHADOW, "SCUM");
 
     // draw room
 
@@ -965,7 +1007,7 @@ void draw()
 
         // get text height first
         Vector2f text_size = gfx_string_get_size(menu_item_scale, "A");
-        float margin = 1.0;
+        float margin = 1.0*ascale;
 
         int num_opts = sizeof(menu_options)/sizeof(menu_options[0]);
 
@@ -987,7 +1029,10 @@ void draw()
     if(game_state == GAME_STATE_PLAYING)
     {
 
-        draw_bigmap();
+        for(int i = 0; i < plist->count; ++i)
+        {
+            projectile_draw(&projectiles[i]);
+        }
 
         if(player->curr_room == player->transition_room)
         {
@@ -1008,11 +1053,7 @@ void draw()
             }
         }
 
-
-        for(int i = 0; i < plist->count; ++i)
-        {
-            projectile_draw(&projectiles[i]);
-        }
+        draw_bigmap();
     }
 
     // draw walls
@@ -1036,8 +1077,20 @@ void draw()
     gfx_draw_rect(&margin_top, margin_color, NOT_SCALED, NO_ROTATION, 1.0, true, false);
     gfx_draw_rect(&margin_bottom, margin_color, NOT_SCALED, NO_ROTATION, 1.0, true, false);
 
-    // draw map
-    draw_minimap();
+    if(game_state == GAME_STATE_MENU)
+    {
+        char* title = "SCUM";
+        float title_scale = 1.1*ascale;
+        Vector2f title_size = gfx_string_get_size(title_scale, title);
+        Rect title_r = RECT(margin_top.w/2.0, margin_top.h/2.0, title_size.x, title_size.y);
+        gfx_get_absolute_coords(&title_r, ALIGN_CENTER, &margin_top, ALIGN_TOP_LEFT);
+        gfx_draw_string(title_r.x, title_r.y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, title);
+    }
+    else if(game_state == GAME_STATE_PLAYING)
+    {
+        draw_minimap();
+        draw_hearts();
+    }
 
     if(debug_enabled)
     {
@@ -1064,7 +1117,6 @@ void draw()
         gfx_draw_rect(&xaxis, COLOR_PURPLE, NOT_SCALED, NO_ROTATION, 1.0, true, true);
         gfx_draw_rect(&yaxis, COLOR_PURPLE, NOT_SCALED, NO_ROTATION, 1.0, true, true);
 
-
         // //TEST
         // Rect l = margin_left;
         // l.w *= zscale;
@@ -1073,8 +1125,11 @@ void draw()
         // l.y = cr.y;
         // gfx_draw_rect(&l, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
 
-        editor_draw();
+    }
 
+    if(editor_enabled)
+    {
+        editor_draw();
     }
 
     text_list_draw(text_lst);
@@ -1110,6 +1165,10 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
             else if(key == GLFW_KEY_F2)
             {
                 debug_enabled = !debug_enabled;
+            }
+            else if(key == GLFW_KEY_F3)
+            {
+                editor_enabled = !editor_enabled;
             }
             else if(key == GLFW_KEY_P)
             {

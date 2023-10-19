@@ -46,8 +46,8 @@ void editor_draw()
             {
                 imgui_slider_float("Zoom", 0.01,.99, &cam_zoom);
 
-                imgui_text("Mouse (view): %d, %d", 1, 1);
-                imgui_text("Mouse (world): %d, %d", 1, 1);
+                imgui_text("Mouse (view): %.1f, %.1f", mx, my);
+                imgui_text("Mouse (world): %.1f, %.1f", wmx, wmy);
 
                 Rect cr = get_camera_rect();
                 imgui_text("Camera: %.1f, %.1f, %.1f, %.1f", cr.x, cr.y, cr.w, cr.h);
@@ -76,9 +76,7 @@ void editor_draw()
                         imgui_text(" - %s", get_door_name(d));
                 }
 
-            imgui_toggle_button(&show_walls, "Draw Collision Walls");
-
-
+                imgui_toggle_button(&show_walls, "Draw Collision Walls");
 
             } break;
 
@@ -86,8 +84,11 @@ void editor_draw()
             {
 
                 player_selection = imgui_dropdown(player_names, name_count, "Select Player", &player_selection);
-
                 Player* p = &players[player_selection];
+
+                int hp = p->hp;
+                imgui_number_box("HP", 0, p->hp_max, &hp);
+                p->hp = (uint8_t)hp;
 
                 imgui_text_sized(big, "Info");
                 imgui_text("Pos: %.2f, %.2f", p->phys.pos.x, p->phys.pos.y);
@@ -99,6 +100,10 @@ void editor_draw()
                 c = level_get_room_coords(p->transition_room);
                 imgui_text("T Room: %u (%d, %d)", p->transition_room, c.x, c.y);
 
+
+                Vector2i tc = level_get_room_coords_by_pos(CPOSX(p->phys), CPOSY(p->phys));
+                imgui_text("Tile: %d, %d", tc.x, tc.y);
+
                 if(imgui_button("Send To Start"))
                 {
                     player_set_to_level_start(p);
@@ -108,11 +113,17 @@ void editor_draw()
 
             case 3: // creatures
             {
+
+                static int num_slugs = 1;
+                imgui_number_box("Number", 1, 100, &num_slugs);
+
                 if(imgui_button("Add Slug"))
                 {
                     Room* room = level_get_room_by_index(&level, player->curr_room);
-                    creature_add(room, CREATURE_TYPE_SLUG);
+                    for(int i = 0; i < num_slugs; ++i)
+                        creature_add(room, CREATURE_TYPE_SLUG);
                 }
+
                 imgui_slider_float("Speed",1.0,100.0,&creatures[0].phys.speed);
                 for(int i = 0; i < creature_get_count(); ++i)
                     creatures[i].phys.speed = creatures[0].phys.speed;

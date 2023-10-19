@@ -19,6 +19,10 @@
 
 #define VIEW_WIDTH   1200
 #define VIEW_HEIGHT  800
+
+// #define VIEW_WIDTH   600
+// #define VIEW_HEIGHT  400
+
 #define ROOM_W  480
 #define ROOM_H  288
 
@@ -101,6 +105,7 @@ extern Vector2f transition_targets;
 
 extern bool initialized;
 extern bool debug_enabled;
+extern bool editor_enabled;
 extern bool paused;
 extern Timer game_timer;
 extern text_list_t* text_lst;
