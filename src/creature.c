@@ -48,11 +48,12 @@ void creature_add(Room* room, CreatureType type)
 
     memcpy(&c.phys.target_pos,&c.phys.pos,sizeof(Vector2f));
     c.color = room->color;
-    c.phys.speed = 10.0;
+    c.phys.speed = 300.0;
+    c.phys.mass = 1.0;
     c.phys.radius = 8.0;
     c.phys.coffset.x = 0;
     c.phys.coffset.y = 0;
-    c.action_counter = 0.0;
+    c.action_counter = ACTION_COUNTER_MAX;
     c.sprite_index = DIR_DOWN;
     c.hp_max = 3.0;
     c.hp = c.hp_max;
@@ -65,50 +66,81 @@ void creature_update(Creature* c, float dt)
     if(c->dead)
         return;
 
-    c->action_counter += dt*c->phys.speed;
+    c->action_counter += dt;
 
     if(c->action_counter >= ACTION_COUNTER_MAX)
     {
         c->action_counter = 0.0;
         int dir = rand() % 5;
 
-        int v = 0;
-        int h = 0;
-
         switch(dir)
         {
             case DIR_UP:
                 c->sprite_index = DIR_UP;
-                h = 0;
-                v = -1;
+                c->h = 0;
+                c->v = -1;
                 break;
             case DIR_RIGHT:
                 c->sprite_index = DIR_RIGHT;
-                h = +1;
-                v = 0;
+                c->h = +1;
+                c->v = 0;
                 break;
             case DIR_DOWN:
                 c->sprite_index = DIR_DOWN;
-                h = 0;
-                v = +1;
+                c->h = 0;
+                c->v = +1;
                 break;
             case DIR_LEFT:
                 c->sprite_index = DIR_LEFT;
-                h = -1;
-                v = 0;
+                c->h = -1;
+                c->v = 0;
                 break;
             default:
                 // don't move
                 break;
         }
 
+        /*
         c->phys.prior_pos.x = c->phys.pos.x;
         c->phys.prior_pos.y = c->phys.pos.y;
 
         c->phys.target_pos.x = (c->phys.pos.x + h*TILE_SIZE);
         c->phys.target_pos.y = (c->phys.pos.y + v*TILE_SIZE);
+        */
     }
 
+    float h_speed = c->phys.speed*c->h;
+    float v_speed = c->phys.speed*c->v;
+
+    c->phys.vel.x += dt*h_speed;
+    c->phys.vel.y += dt*v_speed;
+
+    if(ABS(c->phys.vel.x) > c->phys.speed) c->phys.vel.x = h_speed;
+    if(ABS(c->phys.vel.y) > c->phys.speed) c->phys.vel.y = v_speed;
+
+
+    float rate = phys_get_friction_rate(0.002,dt);
+    phys_apply_friction(&c->phys,rate);
+
+    /*
+    if(c->h == 0.0 || c->phys.vel.x > c->h*c->phys.speed)
+    {
+        phys_apply_friction_x(&c->phys,rate);
+    }
+
+    if(c->v == 0.0 || c->phys.vel.y > c->v*c->phys.speed)
+    {
+        phys_apply_friction_y(&c->phys,rate);
+    }
+    */
+
+    c->phys.pos.x += dt*c->phys.vel.x;
+    c->phys.pos.y += dt*c->phys.vel.y;
+
+    Room* room = level_get_room_by_index(&level, c->curr_room);
+    level_handle_room_collision(room,&c->phys);
+
+    /*
     if(c->phys.pos.x != c->phys.target_pos.x || c->phys.pos.y != c->phys.target_pos.y)
     {
         float t = c->action_counter / ACTION_COUNTER_MAX;
@@ -119,6 +151,7 @@ void creature_update(Creature* c, float dt)
         Room* room = &level.rooms[roomxy.x][roomxy.y];
         level_handle_room_collision(room,&c->phys);
     }
+    */
 
     // update hit box
     c->hitbox.x = c->phys.pos.x;
@@ -130,7 +163,7 @@ void creature_update(Creature* c, float dt)
 
 void creature_update_all(float dt)
 {
-    for(int i = clist->count; i >= 0; --i)
+    for(int i = clist->count-1; i >= 0; --i)
     {
         Creature* c = &creatures[i];
         creature_update(c, dt);

@@ -309,8 +309,10 @@ void level_print_room(Room* room)
 
 void level_handle_room_collision(Room* room, Physics* phys)
 {
-    level_sort_walls(room->walls,room->wall_count, CPOSX(*phys),CPOSY(*phys), phys->radius);
+    if(!room)
+        return;
 
+    level_sort_walls(room->walls,room->wall_count, CPOSX(*phys),CPOSY(*phys), phys->radius);
     for(int i = 0; i < room->wall_count; ++i)
     {
         Wall* wall = &room->walls[i];

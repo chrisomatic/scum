@@ -62,6 +62,7 @@ void player_init()
         p->phys.speed = 200.0;
         p->phys.vel.x = 0.0;
         p->phys.vel.y = 0.0;
+        p->phys.mass = 10.0;
 
         p->hp_max = 6;
         p->hp = 3;
@@ -487,7 +488,7 @@ void player_update(Player* p, float dt)
     }
 
     float friction = 0.004;
-    float rate = 1-pow(2, -friction/dt);
+    float rate = phys_get_friction_rate(friction,dt);
 
     Vector2f vel_target = {p->phys.speed*target_vel_factor.x, p->phys.speed*target_vel_factor.y};
 
@@ -504,12 +505,7 @@ void player_update(Player* p, float dt)
     }
     else
     {
-        // stopped trying to move
-        p->phys.vel.x += (0.0 - p->phys.vel.x)*rate;
-        p->phys.vel.y += (0.0 - p->phys.vel.y)*rate;
-
-        if(ABS(p->phys.vel.x) < 1.0) p->phys.vel.x = 0.0;
-        if(ABS(p->phys.vel.y) < 1.0) p->phys.vel.y = 0.0;
+        phys_apply_friction(&p->phys,rate);
     }
 
     float m1 = magn(p->phys.vel);

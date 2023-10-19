@@ -3,7 +3,7 @@
 #include "physics.h"
 
 #define MAX_CREATURES 1024
-#define ACTION_COUNTER_MAX 10.0
+#define ACTION_COUNTER_MAX 1.0 // seconds
 
 typedef enum
 {
@@ -24,6 +24,8 @@ typedef struct
     uint8_t curr_room;
     bool dead;
     int blood_angle;
+    float h,v;
+
 
     // action
     float action_counter;

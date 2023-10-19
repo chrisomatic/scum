@@ -32,7 +32,7 @@ void editor_draw()
     imgui_begin_panel("Editor", view_width - 300, 1, true);
 
         imgui_newline();
-        char* buttons[] = {"General", "Level", "Players", "Creatures", "Projectiles"};
+        char* buttons[] = {"General", "Level", "Players", "Creatures", "Projectiles", "Theme"};
         int selection = imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "");
         imgui_horizontal_line(1);
 
@@ -138,6 +138,10 @@ void editor_draw()
                 imgui_slider_float("Base Speed", 100.0,1000.0,&projectile_lookup[0].base_speed);
                 imgui_slider_float("Min Speed", 50.0,200.0,&projectile_lookup[0].min_speed);
             } break;
+            case 5: // theme
+            {
+                imgui_theme_editor();
+            }
         }
     imgui_end();
 }

@@ -753,6 +753,43 @@ void update(float dt)
             player_update(player, dt);
             projectile_update(dt);
             creature_update_all(dt);
+
+            Room* room = level_get_room_by_index(&level, player->curr_room);
+            // handle entity collisions
+            {
+                Physics* p[1025] = {0};
+                int num_entities = 0;
+
+                p[num_entities++] = &player->phys;
+                for(int i = 0; i < creature_get_count(); ++i)
+                {
+                    Creature* c = &creatures[i];
+
+                    if(c->dead) continue;
+                    if(c->curr_room != player->curr_room) continue;
+
+                    p[num_entities++] = &creatures[i].phys;
+                }
+
+                for(int i = 0; i < num_entities; ++i)
+                {
+                    Physics* p1 = p[i];
+                    for(int j = 0; j < num_entities; ++j)
+                    {
+                        Physics* p2 = p[j];
+                        if(p1 == p2)
+                            continue;
+
+                        phys_collision_circles(p1,p2);
+                    }
+                }
+                for(int i = 0; i < num_entities; ++i)
+                {
+                    Physics* p1 = p[i];
+                    level_handle_room_collision(room,p1);
+                }
+            }
+
             projectile_handle_collisions(dt);
         }
     }
