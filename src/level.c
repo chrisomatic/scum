@@ -30,7 +30,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
         room->layout = rand() % room_list_count;
     }
 
-    int n = rand() % 3;
+    int n = rand() % 16;
     for(int i = 0; i < n; ++i)
     {
         creature_add(room,CREATURE_TYPE_SLUG);
