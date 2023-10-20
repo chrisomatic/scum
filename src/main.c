@@ -597,6 +597,8 @@ void update(float dt)
 {
     gfx_clear_lines();
 
+    text_list_update(text_lst, dt);
+
     // Update Client
     // ------------------------------
     if(role == ROLE_CLIENT)
@@ -665,8 +667,6 @@ void update(float dt)
                 player_lerp(p, dt);
             }
         }
-
-        text_list_update(text_lst, dt);
 
         camera_set();
         camera_update(VIEW_WIDTH, VIEW_HEIGHT);
@@ -1170,7 +1170,7 @@ void draw()
     }
 
     text_list_draw(text_lst);
-    //gfx_draw_lines();
+    gfx_draw_lines();
 }
 
 

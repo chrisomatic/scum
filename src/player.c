@@ -623,6 +623,17 @@ void player_draw(Player* p)
         Rect r = RECT(p->phys.pos.x, p->phys.pos.y, 1, 1);
         gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
         gfx_draw_rect(&p->hitbox, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+
+        float x0 = p->phys.pos.x;
+        float y0 = p->phys.pos.y;
+
+        // Vector2f vn = {.x = p->vel.x, .y = p->vel.y};
+        // normalize(&vn);
+        // float x1 = x0 + vn.x*50;
+        // float y1 = y0 + vn.y*50;
+        float x1 = x0 + p->phys.vel.x;
+        float y1 = y0 + p->phys.vel.y;
+        gfx_add_line(x0, y0, x1, y1, COLOR_RED);
     }
 }
 
