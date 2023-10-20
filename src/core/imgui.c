@@ -96,7 +96,6 @@ typedef struct
     uint32_t tooltip_hash;
 
     DropdownProps dropdown_props;
-
 } ImGuiContext;
 
 #define IMGUI_THEME_VERSION 0
@@ -170,6 +169,17 @@ static void draw_text_box(uint32_t hash, char* label, Rect* r, char* text);
 static void draw_dropdown(uint32_t hash, char* str, char** options, int num_options, Rect* r);
 static void draw_panel(uint32_t hash, bool moveable);
 static void draw_tooltip();
+
+static bool _editor_test = false;
+static char _editor_text[20]= {0};
+static char _editor_file_name[40] = {0};
+static bool save_result = false;
+static bool saved = false;
+static int num_themes = 0;
+static int theme_index = -1;
+static char theme_files[32][32] = {0};
+static char* theme_file_ptrs[32] = {0};
+static void load_themes();
 
 void imgui_begin(char* name, int x, int y)
 {
@@ -293,17 +303,27 @@ void imgui_set_slider_width(int width)
 
 bool imgui_load_theme(char* file_name)
 {
-    char file_path[64]= {0};
-    snprintf(file_path,63,"src/themes/%s",file_name);
-    FILE* fp = fopen(file_path,"rb");
-    if(fp)
+    load_themes();
+    for(int i = 0; i < num_themes; ++i)
     {
-        size_t n = fread(&theme,sizeof(ImGuiTheme),1,fp);
-        fclose(fp);
-        bool success = (n > 0);
-        theme_initialized = success;
-        return success;
+        if(strcmp((char*)theme_files[i], file_name) == 0)
+        {
+            char file_path[64]= {0};
+            snprintf(file_path,63,"src/themes/%s",file_name);
+            FILE* fp = fopen(file_path,"rb");
+            if(fp)
+            {
+                size_t n = fread(&theme,sizeof(ImGuiTheme),1,fp);
+                fclose(fp);
+                bool success = (n > 0);
+                theme_initialized = success;
+                if(success)
+                    theme_index = i;
+                return success;
+            }
+        }
     }
+
     return false;
 }
 
@@ -1069,39 +1089,30 @@ Vector2f imgui_draw_demo(int x, int y)
    return imgui_end();
 }
 
-static bool _editor_test = false;
-static char _editor_text[20]= {0};
-static char _editor_file_name[40] = {0};
-static bool save_result = false;
-static bool saved = false;
-static char theme_files[32][32] = {0};
-static char* theme_file_ptrs[32] = {0};
-static int prior_selected_theme = -1;
+static void load_themes()
+{
+    num_themes = io_get_files_in_dir("src/themes/", ".theme", theme_files);
+
+    for(int i = 0; i < num_themes; ++i)
+    {
+        theme_file_ptrs[i] = (char*)theme_files[i];
+    }
+}
 
 void imgui_theme_selector()
 {
-    int num_files = io_get_files_in_dir("src/themes/", ".theme", theme_files);
+    load_themes();
 
-    static int selected_theme = -1;
-
-    for(int i = 0; i < num_files; ++i)
+    int prior_selected_theme = theme_index;
+    if(theme_index == -1)
     {
-        if(strcmp((char*)theme_files[i], "default.theme") == 0)
-        {
-            if(selected_theme == -1)
-                selected_theme = i;
-        }
-        theme_file_ptrs[i] = (char*)theme_files[i];
+        theme_index = 0;
     }
 
-    if(selected_theme == -1)
-        selected_theme = 0;
-
-    selected_theme = imgui_dropdown(theme_file_ptrs, num_files, "Theme", &selected_theme);
-    if(selected_theme != prior_selected_theme)
+    theme_index = imgui_dropdown(theme_file_ptrs, num_themes, "Theme", &theme_index);
+    if(theme_index != prior_selected_theme)
     {
-        imgui_load_theme(theme_file_ptrs[selected_theme]);
-        prior_selected_theme = selected_theme;
+        imgui_load_theme(theme_file_ptrs[theme_index]);
     }
 }
 
@@ -1329,6 +1340,13 @@ static inline void clear_active()
 
 static void set_default_theme()
 {
+    theme_index = -1;
+    load_themes();
+    imgui_load_theme("default.theme");
+
+    if(theme_initialized)
+        return;
+
     // colors
     theme.color_text             = 0xFFFFFFFF;
     theme.color_background       = 0x55555555;
@@ -1358,6 +1376,7 @@ static void set_default_theme()
     theme.panel_header_height = 20;
 
     theme_initialized = true;
+    theme_index = -1;
 }
 
 static void progress_pos()
@@ -1439,6 +1458,8 @@ static void imgui_slider_float_internal(char* label, float min, float max, float
     if(min > max)
         return;
 
+    float inp_val = *result;
+
 
     uint32_t hash = hash_str(label,strlen(label),0x0);
 
@@ -1468,8 +1489,11 @@ static void imgui_slider_float_internal(char* label, float min, float max, float
 
     int *slider_x = &lookup->val;
 
+    bool active = false;
+
     if(is_active(hash))
     {
+        active = true;
         if(window_mouse_left_went_up())
         {
             clear_active();
@@ -1498,7 +1522,10 @@ static void imgui_slider_float_internal(char* label, float min, float max, float
     ctx->curr.w = theme.slider_width + text_size.x + 2.0*theme.text_padding;
     ctx->curr.h = text_size.y + 2.0*theme.text_padding + theme.spacing;
 
-    *result = slider_val;
+    if(active)
+        *result = slider_val;
+    else
+        *result = inp_val;
 }
 
 static void handle_highlighting(uint32_t hash, Rect* r)
