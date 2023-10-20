@@ -134,9 +134,23 @@ void editor_draw()
                     creature_clear_all();
                 }
 
-                imgui_slider_float("Speed",1.0,100.0,&creatures[0].phys.speed);
+                static float creature_speed = -1;
+                static bool  creature_painful_touch = false;
+
+                if(creature_speed == -1)
+                {
+                    creature_speed = creatures[0].phys.speed;
+                    creature_painful_touch = creatures[0].painful_touch;
+                }
+
+                imgui_slider_float("Speed",100.0,500.0,&creature_speed);
+                imgui_toggle_button(&creature_painful_touch, "Painful Touch");
+
                 for(int i = 0; i < creature_get_count(); ++i)
-                    creatures[i].phys.speed = creatures[0].phys.speed;
+                {
+                    creatures[i].phys.speed = creature_speed;
+                    creatures[i].painful_touch = creature_painful_touch;
+                }
             } break;
 
 

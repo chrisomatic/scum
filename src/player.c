@@ -218,7 +218,6 @@ void player_hurt(Player* p, int damage)
     if(p->invulnerable)
         return;
 
-    printf("player hurt\n");
     int hp = (int)p->hp;
     p->hp = MAX(0, hp - damage);
     p->phys.vel.x += 100.0;
