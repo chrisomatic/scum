@@ -73,7 +73,7 @@ void editor_draw()
                 for(int d = 0; d < DIR_NONE; ++d)
                 {
                     if(room->doors[d])
-                        imgui_text(" - %s", get_door_name(d));
+                        imgui_text(" - %s", get_dir_name(d));
                 }
 
                 imgui_toggle_button(&show_walls, "Draw Collision Walls");

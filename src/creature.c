@@ -73,40 +73,12 @@ void creature_update(Creature* c, float dt)
         c->action_counter = 0.0;
         int dir = rand() % 5;
 
-        switch(dir)
-        {
-            case DIR_UP:
-                c->sprite_index = DIR_UP;
-                c->h = 0;
-                c->v = -1;
-                break;
-            case DIR_RIGHT:
-                c->sprite_index = DIR_RIGHT;
-                c->h = +1;
-                c->v = 0;
-                break;
-            case DIR_DOWN:
-                c->sprite_index = DIR_DOWN;
-                c->h = 0;
-                c->v = +1;
-                break;
-            case DIR_LEFT:
-                c->sprite_index = DIR_LEFT;
-                c->h = -1;
-                c->v = 0;
-                break;
-            default:
-                // don't move
-                break;
-        }
+        Vector2i o = get_dir_offsets(dir);
 
-        /*
-        c->phys.prior_pos.x = c->phys.pos.x;
-        c->phys.prior_pos.y = c->phys.pos.y;
-
-        c->phys.target_pos.x = (c->phys.pos.x + h*TILE_SIZE);
-        c->phys.target_pos.y = (c->phys.pos.y + v*TILE_SIZE);
-        */
+        c->h = o.x;
+        c->v = o.y;
+        if(dir != DIR_NONE)
+            c->sprite_index = dir;
     }
 
     float h_speed = c->phys.speed*c->h;

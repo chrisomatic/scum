@@ -1081,10 +1081,23 @@ static int prior_selected_theme = -1;
 void imgui_theme_selector()
 {
     int num_files = io_get_files_in_dir("src/themes/", ".theme", theme_files);
-    for(int i = 0; i < num_files; ++i)
-        theme_file_ptrs[i] = (char*)theme_files[i];
 
-    int selected_theme = imgui_dropdown(theme_file_ptrs, num_files, "Theme", NULL);
+    static int selected_theme = -1;
+
+    for(int i = 0; i < num_files; ++i)
+    {
+        if(strcmp((char*)theme_files[i], "default.theme") == 0)
+        {
+            if(selected_theme == -1)
+                selected_theme = i;
+        }
+        theme_file_ptrs[i] = (char*)theme_files[i];
+    }
+
+    if(selected_theme == -1)
+        selected_theme = 0;
+
+    selected_theme = imgui_dropdown(theme_file_ptrs, num_files, "Theme", &selected_theme);
     if(selected_theme != prior_selected_theme)
     {
         imgui_load_theme(theme_file_ptrs[selected_theme]);

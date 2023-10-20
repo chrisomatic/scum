@@ -689,7 +689,7 @@ bool level_is_room_discovered_index(Level* level, int index)
 }
 
 // grid x,y offsets
-Vector2i get_door_offsets(Dir door)
+Vector2i get_dir_offsets(Dir door)
 {
     Vector2i o = {0};
     switch(door)
@@ -712,7 +712,7 @@ Vector2i get_door_offsets(Dir door)
     return o;
 }
 
-const char* get_door_name(Dir door)
+const char* get_dir_name(Dir door)
 {
     switch(door)
     {

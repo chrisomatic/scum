@@ -111,5 +111,5 @@ bool level_is_room_discovered_index(Level* level, int index);
 
 char* level_tile_type_to_str(TileType tt);
 
-Vector2i get_door_offsets(Dir door);
-const char* get_door_name(Dir door);
+Vector2i get_dir_offsets(Dir door);
+const char* get_dir_name(Dir door);

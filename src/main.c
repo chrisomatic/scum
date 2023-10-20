@@ -827,7 +827,7 @@ void draw_map(DrawLevelParams* params)
                 for(int d = 0; d < DIR_NONE; ++d)
                 {
                     if(!room->doors[d]) continue;
-                    Vector2i o = get_door_offsets(d);
+                    Vector2i o = get_dir_offsets(d);
                     Room* nroom = level_get_room(&level, x+o.x, y+o.y);
                     if(nroom != NULL) near[x+o.x][y+o.y] = true;
                 }
@@ -887,7 +887,7 @@ void draw_map(DrawLevelParams* params)
             {
                 if(!room->doors[d]) continue;
 
-                Vector2i o = get_door_offsets(d);
+                Vector2i o = get_dir_offsets(d);
                 int _x = x+o.x;
                 int _y = y+o.y;
                 Room* nroom = level_get_room(&level, _x, _y);
