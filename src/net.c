@@ -354,7 +354,7 @@ static void remove_client(ClientInfo* cli)
     LOGN("Remove client.");
     cli->state = DISCONNECTED;
     cli->remote_latest_packet_id = 0;
-    players[cli->client_id].active = false;
+    player_set_active(&players[cli->client_id],false);
     memset(cli,0, sizeof(ClientInfo));
     update_server_num_clients();
 }
@@ -664,7 +664,7 @@ int net_server_start()
                     case PACKET_TYPE_CONNECT_CHALLENGE_RESP:
                     {
                         cli->state = SENDING_CHALLENGE_RESPONSE;
-                        players[cli->client_id].active = true;
+                        player_set_active(&players[cli->client_id],true);
 
                         server_send(PACKET_TYPE_CONNECT_ACCEPTED,cli);
                         server_send(PACKET_TYPE_INIT, cli);
@@ -1257,6 +1257,7 @@ void net_client_update()
                     {
                         prior_active[i] = players[i].active;
                         players[i].active = false;
+                        player_set_active(&players[i], false);
                     }
 
                     //LOGN("Received STATE packet. num players: %d", num_players);
@@ -1274,7 +1275,7 @@ void net_client_update()
                         }
 
                         Player* p = &players[client_id];
-                        p->active = true;
+                        player_set_active(&players[i], true); // @OPTIMIZE: This function loops through players to count them
 
                         Vector2f pos    = unpack_vec2(&srvpkt, &offset);
                         p->sprite_index = unpack_u8(&srvpkt, &offset);

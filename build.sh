@@ -23,6 +23,7 @@ gcc core/gfx.c \
     creature.c \
     level.c \
     editor.c \
+    entity.c \
     main.c \
     -Icore \
     -lglfw -lGLU -lGLEW -lGL -lm \

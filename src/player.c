@@ -16,7 +16,7 @@ int player_image = -1;
 Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
 int player_image;
-int num_players;
+int num_players = 0;
 
 static void update_player_boxes(Player* p)
 {
@@ -59,13 +59,13 @@ void player_init()
         p->phys.pos.x = CENTER_X;
         p->phys.pos.y = CENTER_Y;
 
-        p->phys.speed = 200.0;
+        p->phys.speed = 300.0;
         p->phys.vel.x = 0.0;
         p->phys.vel.y = 0.0;
-        p->phys.mass = 10.0;
+        p->phys.mass = 1.0;
 
         p->hp_max = 6;
-        p->hp = 3;
+        p->hp = p->hp_max;
 
         p->sprite_index = 4;
 
@@ -100,6 +100,19 @@ void player_init()
         p->anim.frame_sequence[3] = 3;
     }
 
+}
+
+void player_set_active(Player* p, bool active)
+{
+    p->active = active;
+
+    int num = 0;
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        if(players[i].active)
+            num++;
+    }
+    num_players = num;
 }
 
 int player_names_build(bool include_all, bool only_active)
@@ -202,12 +215,23 @@ void player_set_collision_pos(Player* p, float x, float y)
 
 void player_hurt(Player* p, int damage)
 {
+    if(p->invulnerable)
+        return;
+
+    printf("player hurt\n");
     int hp = (int)p->hp;
     p->hp = MAX(0, hp - damage);
+    p->phys.vel.x += 100.0;
     if(p->hp == 0)
     {
         text_list_add(text_lst, 3.0, "%s died", p->name);
         player_reset(p);
+    }
+    else
+    {
+        p->invulnerable = true;
+        p->invulnerable_time = 0.0;
+        p->invulnerable_max = 0.5;
     }
 }
 
@@ -382,7 +406,7 @@ static void handle_room_collision(Player* p)
 {
     Room* room = level_get_room_by_index(&level, p->curr_room);
 
-    level_handle_room_collision(room,&p->phys);
+    //level_handle_room_collision(room,&p->phys);
 
     // doors
     for(int i = 0; i < 4; ++i)
@@ -504,7 +528,7 @@ void player_update(Player* p, float dt)
         target_vel_factor.y *= 0.7071f;
     }
 
-    float friction = 0.004;
+    float friction = 0.002;
     float rate = phys_get_friction_rate(friction,dt);
 
     Vector2f vel_target = {p->phys.speed*target_vel_factor.x, p->phys.speed*target_vel_factor.y};
@@ -520,10 +544,17 @@ void player_update(Player* p, float dt)
         if(ABS(p->phys.vel.x) > ABS(vel_target.x)-1) p->phys.vel.x = vel_target.x;
         if(ABS(p->phys.vel.y) > ABS(vel_target.y)-1) p->phys.vel.y = vel_target.y;
     }
+
+    if(ABS(p->phys.vel.x) > 0.0)
+        phys_apply_friction_x(&p->phys,rate);
+    if(ABS(p->phys.vel.y) > 0.0)
+        phys_apply_friction_y(&p->phys,rate);
+    /*
     else
     {
         phys_apply_friction(&p->phys,rate);
     }
+    */
 
     float m1 = magn(p->phys.vel);
     float m2 = p->phys.speed;
@@ -604,6 +635,14 @@ void player_update(Player* p, float dt)
         update_player_boxes(p);
     }
 
+    if(p->invulnerable)
+    {
+        p->invulnerable_time += dt;
+        if(p->invulnerable_time >= p->invulnerable_max)
+        {
+            p->invulnerable = false;
+        }
+    }
 }
 
 void player_draw(Player* p)
@@ -612,8 +651,9 @@ void player_draw(Player* p)
 
     Vector2i roomxy = level_get_room_coords((int)p->curr_room);
     Room* room = &level.rooms[roomxy.x][roomxy.y];
-    gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, p->phys.pos.y, room->color, 1.0, 0.0, 1.0, false, true);
 
+    bool blink = p->invulnerable ? ((int)(p->invulnerable_time * 100)) % 2 == 0 : false;
+    gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, p->phys.pos.y, room->color, 1.0, 0.0, blink ? 0.3 : 1.0, false, true);
 
     if(debug_enabled)
     {
@@ -682,5 +722,22 @@ void player_handle_net_inputs(Player* p, double dt)
     if(p->input.keys != p->input_prior.keys)
     {
         net_client_add_player_input(&p->input);
+    }
+}
+
+void player_handle_collision(Player* p, Entity* e, Vector2f* collision_resp)
+{
+    switch(e->type)
+    {
+        case ENTITY_TYPE_CREATURE:
+        {
+            Creature* c = (Creature*)e->ptr;
+
+            if(c->painful_touch)
+            {
+                player_hurt(p,c->damage);
+            }
+
+        } break;
     }
 }

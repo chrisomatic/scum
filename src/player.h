@@ -4,6 +4,7 @@
 #include "physics.h"
 #include "gfx.h"
 #include "net.h"
+#include "entity.h"
 
 #define MAX_PLAYERS 4
 
@@ -56,6 +57,10 @@ typedef struct
     float proj_cooldown;
     float proj_cooldown_max;
 
+    bool invulnerable;
+    float invulnerable_time;
+    float invulnerable_max;
+
     // Networking
     NetPlayerInput input;
     NetPlayerInput input_prior;
@@ -84,5 +89,8 @@ void player_hurt(Player* p, int damage);
 void player_reset(Player* p);
 void player_draw_room_transition();
 void player_start_room_transition(Player* p);
+
+void player_set_active(Player* p, bool active);
+void player_handle_collision(Player* p, Entity* e, Vector2f* collision_resp);
 
 int player_names_build(bool include_all, bool only_active);

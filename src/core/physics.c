@@ -1,33 +1,33 @@
 #include "headers.h"
 #include "physics.h"
 
-void phys_collision_circles(Physics* phys1, Physics* phys2)
+bool phys_collision_circles(Physics* phys1, Physics* phys2, Vector2f* collision_resp)
 {
     Vector2f p1 = {CPOSX(*phys1), CPOSY(*phys1)};
     Vector2f p2 = {CPOSX(*phys2), CPOSY(*phys2)};
 
-    float d2 = dist_squared(p1.x,p1.y,p2.x,p2.y);
+    float d = dist(p1.x,p1.y,p2.x,p2.y);
     float r  = (phys1->radius + phys2->radius);
-    float r2 = r*r;
 
-    bool colliding = (d2 < r2);
+    bool colliding = (d < r);
 
     if(colliding)
     {
 
         // correct collision
 
-        float overlap = sqrt(r2 - d2);
+        float overlap = (r - d);
 
         Vector2f o1 = {p2.x - p1.x, p2.y - p1.y};
         normalize(&o1);
+
+        collision_resp->x = o1.x;
+        collision_resp->y = o1.y;
+
         o1.x *= overlap;
         o1.y *= overlap;
 
-        float magn1 = magn(phys1->vel);
-        float magn2 = magn(phys2->vel);
-
-        float cratio = magn2/(magn1+magn2);
+        float cratio = phys2->mass/(phys1->mass+phys2->mass);
 
         phys1->pos.x -= o1.x*cratio;
         phys1->pos.y -= o1.y*cratio;
@@ -71,6 +71,7 @@ void phys_collision_circles(Physics* phys1, Physics* phys2)
             phys2->vel.y = v2y;
         }
     }
+    return colliding;
 }
 
 float phys_get_friction_rate(float friction_factor, float dt)

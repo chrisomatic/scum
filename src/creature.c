@@ -57,6 +57,8 @@ void creature_add(Room* room, CreatureType type)
     c.sprite_index = DIR_DOWN;
     c.hp_max = 3.0;
     c.hp = c.hp_max;
+    c.damage = 1;
+    c.painful_touch = true;
 
     list_add(clist, (void*)&c);
 }
@@ -90,7 +92,6 @@ void creature_update(Creature* c, float dt)
     if(ABS(c->phys.vel.x) > c->phys.speed) c->phys.vel.x = h_speed;
     if(ABS(c->phys.vel.y) > c->phys.speed) c->phys.vel.y = v_speed;
 
-
     float rate = phys_get_friction_rate(0.002,dt);
     phys_apply_friction(&c->phys,rate);
 
@@ -109,8 +110,8 @@ void creature_update(Creature* c, float dt)
     c->phys.pos.x += dt*c->phys.vel.x;
     c->phys.pos.y += dt*c->phys.vel.y;
 
-    Room* room = level_get_room_by_index(&level, c->curr_room);
-    level_handle_room_collision(room,&c->phys);
+    //Room* room = level_get_room_by_index(&level, c->curr_room);
+    //level_handle_room_collision(room,&c->phys);
 
     /*
     if(c->phys.pos.x != c->phys.target_pos.x || c->phys.pos.y != c->phys.target_pos.y)

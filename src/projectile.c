@@ -59,6 +59,7 @@ void projectile_add(Player* p, float angle_deg)
 
     proj.phys.pos.x = p->phys.pos.x;
     proj.phys.pos.y = p->phys.pos.y;
+    proj.phys.mass = 1.0;
     proj.curr_room = p->curr_room;
 
     proj.angle_deg = angle_deg;

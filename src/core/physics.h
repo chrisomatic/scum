@@ -21,7 +21,7 @@ typedef struct
 } Physics;
 
 // collision
-void phys_collision_circles(Physics* phys1, Physics* phys2);
+bool phys_collision_circles(Physics* phys1, Physics* phys2, Vector2f* collision_resp);
 
 // friction
 float phys_get_friction_rate(float friction_factor, float dt);

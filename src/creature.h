@@ -26,6 +26,8 @@ typedef struct
     int blood_angle;
     float h,v;
 
+    bool painful_touch;
+    int damage;
 
     // action
     float action_counter;
