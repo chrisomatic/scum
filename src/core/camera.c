@@ -77,6 +77,12 @@ void camera_get_pos(Vector3f* p)
 
 void camera_move(float x, float y, bool immediate, Rect* limit)
 {
+
+    if(isnan(camera.pos.x) || isnan(camera.pos.y))
+    {
+        immediate = true;
+    }
+
     if(limit != NULL)
     {
         Rect cam_rect = {0};

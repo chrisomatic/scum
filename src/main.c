@@ -449,8 +449,6 @@ void init()
     if(initialized) return;
     initialized = true;
 
-    text_lst = text_list_init(50, 10.0, view_height - 10.0, 0.08, COLOR_WHITE, false, TEXT_ALIGN_LEFT);
-
     LOGI("Initializing...");
 
     LOGI("Resolution: %d %d",VIEW_WIDTH, VIEW_HEIGHT);
@@ -474,6 +472,8 @@ void init()
     gfx_init(VIEW_WIDTH, VIEW_HEIGHT);
     ascale = view_width / 1200.0;
     LOGI("   ascale: %.2f", ascale);
+
+    text_lst = text_list_init(50, 10.0, view_height - 10.0, 0.12*ascale, COLOR_WHITE, false, TEXT_ALIGN_LEFT);
 
     LOGI(" - Particles.");
     particles_init();
@@ -810,7 +810,7 @@ void update(float dt)
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 }
 
-void draw_level(DrawLevelParams* params)
+void draw_map(DrawLevelParams* params)
 {
     // could also add this bool to Room struct
     bool near[MAX_ROOMS_GRID_X][MAX_ROOMS_GRID_Y] = {0};
@@ -946,7 +946,7 @@ void draw_minimap()
     // translate the location
     gfx_get_absolute_coords(&area, ALIGN_CENTER, &margin_left, ALIGN_CENTER);
     minimap_params.area = area;
-    draw_level(&minimap_params);
+    draw_map(&minimap_params);
 }
 
 void draw_bigmap()
@@ -956,7 +956,7 @@ void draw_bigmap()
     // len /= camera_get_zoom();
     Rect area = RECT(room_area.x, room_area.y, len, len);
     bigmap_params.area = area;
-    draw_level(&bigmap_params);
+    draw_map(&bigmap_params);
 }
 
 void draw_hearts()

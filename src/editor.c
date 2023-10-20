@@ -109,6 +109,11 @@ void editor_draw()
                     player_set_to_level_start(p);
                 }
 
+                if(imgui_button("Hurt"))
+                {
+                    player_hurt(p, 1);
+                }
+
             } break;
 
             case 3: // creatures
@@ -122,6 +127,11 @@ void editor_draw()
                     Room* room = level_get_room_by_index(&level, player->curr_room);
                     for(int i = 0; i < num_slugs; ++i)
                         creature_add(room, CREATURE_TYPE_SLUG);
+                }
+
+                if(imgui_button("Clear"))
+                {
+                    creature_clear_all();
                 }
 
                 imgui_slider_float("Speed",1.0,100.0,&creatures[0].phys.speed);

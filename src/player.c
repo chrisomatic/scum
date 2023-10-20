@@ -200,10 +200,24 @@ void player_set_collision_pos(Player* p, float x, float y)
     p->phys.pos.y = y - p->phys.coffset.y;
 }
 
+void player_hurt(Player* p, int damage)
+{
+    int hp = (int)p->hp;
+    p->hp = MAX(0, hp - damage);
+    if(p->hp == 0)
+    {
+        text_list_add(text_lst, 3.0, "%s died", p->name);
+        player_reset(p);
+    }
+}
+
 
 void player_reset(Player* p)
 {
-    return;
+    p->hp = p->hp_max;
+    p->phys.vel.x = 0.0;
+    p->phys.vel.y = 0.0;
+    player_set_to_level_start(p);
 }
 
 // also does the drawing
@@ -441,6 +455,9 @@ void player_update(Player* p, float dt)
         if(player->curr_room != player->transition_room) return;
     }
 
+    float prior_x = p->phys.pos.x;
+    float prior_y = p->phys.pos.y;
+
     for(int i = 0; i < PLAYER_ACTION_MAX; ++i)
     {
         PlayerInput* pa = &p->actions[i];
@@ -579,6 +596,14 @@ void player_update(Player* p, float dt)
     }
     else
         p->anim.curr_frame = 0;
+
+    if(isnan(p->phys.pos.x) || isnan(p->phys.pos.y))
+    {
+        p->phys.pos.x = prior_x;
+        p->phys.pos.y = prior_y;
+        update_player_boxes(p);
+    }
+
 }
 
 void player_draw(Player* p)
