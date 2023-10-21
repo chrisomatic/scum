@@ -355,10 +355,10 @@ void level_handle_room_collision(Room* room, Physics* phys)
                 float delta = phys->radius - d + 1.0;
                 switch(wall->dir)
                 {
-                    case DIR_UP:    phys->pos.y -= delta; break;
-                    case DIR_DOWN:  phys->pos.y += delta; break;
-                    case DIR_LEFT:  phys->pos.x -= delta; break;
-                    case DIR_RIGHT: phys->pos.x += delta; break;
+                    case DIR_UP:    phys->pos.y -= delta; phys->vel.y = 0.0; break;
+                    case DIR_DOWN:  phys->pos.y += delta; phys->vel.y = 0.0; break;
+                    case DIR_LEFT:  phys->pos.x -= delta; phys->vel.x = 0.0; break;
+                    case DIR_RIGHT: phys->pos.x += delta; phys->vel.x = 0.0; break;
                 }
 
                 // add convenient sliding to get around walls

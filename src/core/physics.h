@@ -13,6 +13,8 @@ typedef struct
     Vector2f prior_pos;
 
     Vector2f vel;
+    Vector2f prior_vel;
+    float max_velocity;
     float speed;
     float radius;
     float mass;

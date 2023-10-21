@@ -59,10 +59,11 @@ void player_init()
         p->phys.pos.x = CENTER_X;
         p->phys.pos.y = CENTER_Y;
 
-        p->phys.speed = 300.0;
+        p->phys.speed = 400.0;
+        p->phys.max_velocity = 150.0;
         p->phys.vel.x = 0.0;
         p->phys.vel.y = 0.0;
-        p->phys.mass = 1.0;
+        p->phys.mass = 10.0;
 
         p->hp_max = 6;
         p->hp = p->hp_max;
@@ -90,7 +91,7 @@ void player_init()
         p->anim.curr_frame = 0;
         p->anim.max_frames = 4;
         p->anim.curr_frame_time = 0.0f;
-        p->anim.max_frame_time = 0.10f;
+        p->anim.max_frame_time = 0.05f;
         p->anim.finite = false;
         p->anim.curr_loop = 0;
         p->anim.max_loops = 0;
@@ -220,7 +221,7 @@ void player_hurt(Player* p, int damage)
 
     int hp = (int)p->hp;
     p->hp = MAX(0, hp - damage);
-    p->phys.vel.x += 100.0;
+
     if(p->hp == 0)
     {
         text_list_add(text_lst, 3.0, "%s died", p->name);
@@ -494,70 +495,77 @@ void player_update(Player* p, float dt)
 
     // update velocity
 
-    Vector2f target_vel_factor = {0.0,0.0};
+    Vector2f vel_dir = {0.0,0.0};
 
     if(up)
     {
         p->sprite_index = 0;
-        target_vel_factor.y = -1.0;
+        vel_dir.y = -1.0;
     }
 
     if(down)
     {
         p->sprite_index = 4;
-        target_vel_factor.y = 1.0;
+        vel_dir.y = 1.0;
     }
 
     if(left)
     {
         p->sprite_index = 8;
-        target_vel_factor.x = -1.0;
+        vel_dir.x = -1.0;
     }
 
     if(right)
     {
         p->sprite_index = 12;
-        target_vel_factor.x = 1.0;
+        vel_dir.x = 1.0;
     }
 
     if((up && (left || right)) || (down && (left || right)))
     {
         // moving diagonally
-        target_vel_factor.x *= 0.7071f;
-        target_vel_factor.y *= 0.7071f;
+        vel_dir.x *= 0.7071f;
+        vel_dir.y *= 0.7071f;
     }
 
-    float friction = 0.002;
-    float rate = phys_get_friction_rate(friction,dt);
-
-    Vector2f vel_target = {p->phys.speed*target_vel_factor.x, p->phys.speed*target_vel_factor.y};
+    Vector2f vel_max = {p->phys.max_velocity*vel_dir.x, p->phys.max_velocity*vel_dir.y};
 
     bool moving = (up || down || left || right);
 
     if(moving)
     {
         // trying to move
-        p->phys.vel.x += (vel_target.x - p->phys.vel.x)*rate;
-        p->phys.vel.y += (vel_target.y - p->phys.vel.y)*rate;
+        p->phys.vel.x += vel_dir.x*p->phys.speed*dt;
+        p->phys.vel.y += vel_dir.y*p->phys.speed*dt;
 
-        if(ABS(p->phys.vel.x) > ABS(vel_target.x)-1) p->phys.vel.x = vel_target.x;
-        if(ABS(p->phys.vel.y) > ABS(vel_target.y)-1) p->phys.vel.y = vel_target.y;
+        if(ABS(vel_dir.x) > 0.0)
+            if(ABS(p->phys.vel.x) > ABS(vel_max.x))
+                p->phys.vel.x = vel_max.x;
+
+        if(ABS(vel_dir.y) > 0.0)
+            if(ABS(p->phys.vel.y) > ABS(vel_max.y))
+                p->phys.vel.y = vel_max.y;
     }
+    
+    if(!left && !right)
+        p->phys.vel.x *= 0.88;
 
+    if(!up && !down)
+        p->phys.vel.y *= 0.88;
+
+    /*
     if(ABS(p->phys.vel.x) > 0.0)
         phys_apply_friction_x(&p->phys,rate);
     if(ABS(p->phys.vel.y) > 0.0)
         phys_apply_friction_y(&p->phys,rate);
-    /*
-    else
-    {
-        phys_apply_friction(&p->phys,rate);
-    }
     */
 
     float m1 = magn(p->phys.vel);
     float m2 = p->phys.speed;
     p->vel_factor = m1/m2;
+
+    p->phys.prior_vel.x = p->phys.vel.x;
+    p->phys.prior_vel.y = p->phys.vel.y;
     
     // update position
 
