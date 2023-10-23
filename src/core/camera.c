@@ -37,7 +37,7 @@ void camera_update(int default_view_width, int default_view_height)
 {
     if(!FEQ(camera_delta_target.pos.x,0.0) || !FEQ(camera_delta_target.pos.y,0.0) || !FEQ(camera_delta_target.pos.z,0.0))
     {
-        const int num_frames = 15;
+        const int num_frames = 7;
         float dx = camera_delta_target.pos.x/num_frames;
         float dy = camera_delta_target.pos.y/num_frames;
         float dz = camera_delta_target.pos.z/num_frames;
