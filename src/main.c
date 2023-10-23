@@ -271,19 +271,30 @@ void camera_set()
 
     float cam_pos_x = player->phys.pos.x + aim_camera_offset.x;
     float cam_pos_y = player->phys.pos.y + aim_camera_offset.y;
+    float cam_pos_z = cam_zoom;
+    bool immediate = false;
 
-    camera_zoom(cam_zoom,false);
+    // if(paused)
+    // {
+    //     cam_pos_x += RAND_FLOAT(-2.8,2.8);
+    //     cam_pos_y += RAND_FLOAT(-2.8,2.8);
+    //     cam_pos_z += RAND_FLOAT(-0.03,0.03);
+    //     // immediate = true;
+    // }
 
+    camera_zoom(cam_pos_z, immediate);
 
     float zscale = 1.0 - camera_get_zoom();
     camera_limit.w = (margin_left.w + margin_right.w)*zscale;
     camera_limit.w += room_area.w;
+    camera_limit.w -= 2.0;
     camera_limit.h = (margin_top.h + margin_bottom.h)*zscale;
     camera_limit.h += room_area.h;
+    camera_limit.h -= 2.0;
     camera_limit.x = room_area.x;
     camera_limit.y = room_area.y;
 
-    camera_move(cam_pos_x, cam_pos_y, false, &camera_limit);
+    camera_move(cam_pos_x, cam_pos_y, immediate, &camera_limit);
 }
 
 void run()
@@ -380,13 +391,12 @@ void start_server()
     gfx_image_init();
     player_init();
     creature_init();
+    decal_init();
 
     srand(time(0));
     seed = rand();
 
     level_init();
-    // level = level_generate(seed);
-    // level_print(&level);
     game_generate_level(seed);
 
     projectile_init();
@@ -471,7 +481,7 @@ void init()
     editor_init();
 
     LOGI(" - Decals.");
-    decal_list = list_create((void*)decals, MAX_DECALS, sizeof(Decal));
+    decal_init();
 
     if(role == ROLE_LOCAL)
     {
@@ -1131,6 +1141,11 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
     }
 }
 
+
+void decal_init()
+{
+    decal_list = list_create((void*)decals, MAX_DECALS, sizeof(Decal));
+}
 
 void decal_add(Decal d)
 {

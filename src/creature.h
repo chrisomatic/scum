@@ -34,6 +34,11 @@ typedef struct
     // action
     float action_counter;
 
+    // temp debug stuff
+    Vector2f spawn;
+    int spawn_x;    //room tile x
+    int spawn_y;    //room tile y
+
 } Creature;
 
 extern Creature creatures[MAX_CREATURES];

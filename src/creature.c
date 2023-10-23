@@ -44,18 +44,36 @@ void creature_add(Room* room, CreatureType type)
     c.type = type;
     c.curr_room = room->index;
 
+    int tile_x = 0;
+    int tile_y = 0;
     for(;;)
     {
-        int x = (rand() % ROOM_TILE_SIZE_X + 1);
-        int y = (rand() % ROOM_TILE_SIZE_Y + 1);
-        if(level_get_tile_type(room, x, y) == TILE_FLOOR)
+        tile_x = (rand() % ROOM_TILE_SIZE_X);
+        tile_y = (rand() % ROOM_TILE_SIZE_Y);
+        if(level_get_tile_type(room, tile_x, tile_y) == TILE_FLOOR)
         {
-            Rect rp = level_get_tile_rect(x, y);
+            Rect rp = level_get_tile_rect(tile_x, tile_y);
             c.phys.pos.x = rp.x;
             c.phys.pos.y = rp.y;
+
+            RectXY rxy = {0};
+            rect_to_rectxy(&room_area, &rxy);
+            if(rp.x < rxy.x[TL] || rp.x > rxy.x[TR] || rp.y < rxy.y[TL] || rp.y > rxy.y[BL])
+            {
+                printf("spawned outside of area!\n");
+                printf("pos: %.2f, %.2f\n", rp.x, rp.y);
+                printf("tile: %d, %d (%d)\n", tile_x, tile_y, level_get_tile_type(room, tile_x, tile_y));
+            }
+
             break;
         }
     }
+
+    c.spawn_x = tile_x;
+    c.spawn_y = tile_y;
+    c.spawn.x = c.phys.pos.x;
+    c.spawn.y = c.phys.pos.y;
+
 
     memcpy(&c.phys.target_pos,&c.phys.pos,sizeof(Vector2f));
     c.color = room->color;
@@ -78,6 +96,18 @@ void creature_update(Creature* c, float dt)
 {
     if(c->dead)
         return;
+
+    bool sim = false;
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        if(!players[i].active) continue;
+        if(c->curr_room == players[i].curr_room)
+        {
+            sim = true;
+            break;
+        }
+    }
+    if(!sim) return;
 
     c->action_counter += dt;
 
@@ -115,6 +145,32 @@ void creature_update(Creature* c, float dt)
 
     c->hitbox.w = 16;
     c->hitbox.h = 16;
+
+#if 1
+    static bool dbg = false;
+    if(!dbg)
+    {
+        RectXY rxy = {0};
+        rect_to_rectxy(&room_area, &rxy);
+        if(c->phys.pos.x < rxy.x[TL] || c->phys.pos.x > rxy.x[TR] || c->phys.pos.y < rxy.y[TL] || c->phys.pos.y > rxy.y[BL])
+        {
+            dbg = true;
+            text_list_add(text_lst, 10.0, "CREATURE ERROR!");
+            // player->curr_room = c->curr_room;
+            // player->transition_room = player->curr_room;
+            Room* room = level_get_room_by_index(&level, c->curr_room);
+            printf("creature is outside of area!\n");
+            // print_rect(&room_area);
+            printf("creature room: %u, player_room: %u\n", c->curr_room, player->curr_room);
+            printf("room area X: %.2f  -  %.2f\n", rxy.x[TL], rxy.x[BR]);
+            printf("room area Y: %.2f  -  %.2f\n", rxy.y[TL], rxy.y[BR]);
+            printf("pos: %.2f, %.2f\n", c->phys.pos.x, c->phys.pos.y);
+            printf("spawn pos: %.2f, %.2f\n", c->spawn.x, c->spawn.y);
+            printf("spawn tile: %d, %d (%d)\n", c->spawn_x, c->spawn_y, level_get_tile_type(room, c->spawn_x, c->spawn_y));
+        }
+    }
+#endif
+
 }
 
 void creature_update_all(float dt)
@@ -141,6 +197,11 @@ void creature_draw(Creature* c)
     if(debug_enabled)
     {
         gfx_draw_rect(&c->hitbox, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+
+        Rect r = c->hitbox;
+        r.x = c->spawn.x;
+        r.y = c->spawn.y;
+        gfx_draw_rect(&r, COLOR_ORANGE, NOT_SCALED, NO_ROTATION, 0.2, true, true);
     }
 }
 

@@ -30,9 +30,12 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
         room->layout = rand() % room_list_count;
     }
 
+
     int n = rand() % 16;
     for(int i = 0; i < n; ++i)
     {
+        // if(level->start.x == x && level->start.y == y)
+        //     printf("%d) spawning creature in start room\n", i + 1);
         creature_add(room,rand() % CREATURE_TYPE_MAX);
     }
 
@@ -516,8 +519,17 @@ void level_draw_room(Room* room, float xoffset, float yoffset)
                 case TILE_BOULDER: sprite = SPRITE_TILE_BLOCK; break;
                 default: break;
             }
+
             // +1 for walls
-            gfx_draw_image(dungeon_image, sprite, r.x + (_x+1)*w, r.y + (_y+1)*h, color, 1.0, 0.0, 1.0, false, true);
+            float draw_x = r.x + (_x+1)*w;
+            float draw_y = r.y + (_y+1)*h;
+
+            gfx_draw_image(dungeon_image, sprite, draw_x, draw_y, color, 1.0, 0.0, 1.0, false, true);
+
+            if(debug_enabled)
+            {
+                gfx_draw_rect_xywh(draw_x, draw_y, TILE_SIZE, TILE_SIZE, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+            }
         }
     }
 }
@@ -540,6 +552,8 @@ Level level_generate(unsigned int seed)
     // start_y = MAX_ROOMS_GRID_Y / 2; //rand() % MAX_ROOMS_GRID_Y;
 
     creature_clear_all();
+
+    LOGI("Generating rooms, seed: %u", seed);
 
     // memset(level->rooms,0, sizeof(level->rooms));
     generate_rooms(&level, level.start.x, level.start.y, DIR_NONE, 0);

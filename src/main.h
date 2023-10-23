@@ -103,6 +103,7 @@ typedef struct
 #define MAX_DECALS  100
 extern Decal decals[MAX_DECALS];
 extern glist* decal_list;
+void decal_init();
 void decal_add(Decal d);
 void decal_draw_all();
 void decal_update_all(float dt);

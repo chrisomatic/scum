@@ -16,7 +16,14 @@ static int projectile_image;
 static uint16_t id_counter = 0;
 
 ProjectileDef projectile_lookup[] = {
-    {100.0, 64.0, 128.0, false, 16} // laser
+    {
+        // laser
+        .damage=100.0,
+        .min_speed=200.0,
+        .base_speed=200.0,
+        .charge=false,
+        .charge_rate=16
+    }
 };
 
 static void projectile_remove(int index)
