@@ -106,36 +106,8 @@ void creature_update(Creature* c, float dt)
     float rate = phys_get_friction_rate(0.002,dt);
     phys_apply_friction(&c->phys,rate);
 
-    /*
-    if(c->h == 0.0 || c->phys.vel.x > c->h*c->phys.speed)
-    {
-        phys_apply_friction_x(&c->phys,rate);
-    }
-
-    if(c->v == 0.0 || c->phys.vel.y > c->v*c->phys.speed)
-    {
-        phys_apply_friction_y(&c->phys,rate);
-    }
-    */
-
     c->phys.pos.x += dt*c->phys.vel.x;
     c->phys.pos.y += dt*c->phys.vel.y;
-
-    //Room* room = level_get_room_by_index(&level, c->curr_room);
-    //level_handle_room_collision(room,&c->phys);
-
-    /*
-    if(c->phys.pos.x != c->phys.target_pos.x || c->phys.pos.y != c->phys.target_pos.y)
-    {
-        float t = c->action_counter / ACTION_COUNTER_MAX;
-
-        c->phys.pos = lerp2f(&c->phys.prior_pos, &c->phys.target_pos, t);
-
-        Vector2i roomxy = level_get_room_coords(c->curr_room);
-        Room* room = &level.rooms[roomxy.x][roomxy.y];
-        level_handle_room_collision(room,&c->phys);
-    }
-    */
 
     // update hit box
     c->hitbox.x = c->phys.pos.x;

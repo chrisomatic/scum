@@ -1,5 +1,8 @@
 # IDEAS
 
+Player uses ancient glove/gauntlet to shoot energy balls
+Hand can be upgraded or player can find power stones to embue projectile ability
+
 ## Creatures
 
 - Spider-like crawls on walls and shoots
@@ -16,6 +19,15 @@
 - Slow time
 - Clone/mirror yourself
 - Shrink/Grow yourself
+
+## Projectiles
+
+- Phantom - pass through walls
+- Explosive - blows up on hit
+- Homing - picks nearest target and follows
+- Cold - Slow down target
+- Poison - Does poison damage over period of time
+- Flame - ignites creature on contact
 
 ## Curses
 

@@ -91,6 +91,6 @@ void player_draw_room_transition();
 void player_start_room_transition(Player* p);
 
 void player_set_active(Player* p, bool active);
-void player_handle_collision(Player* p, Entity* e, Vector2f* collision_resp);
+void player_handle_collision(Player* p, Entity* e);
 
 int player_names_build(bool include_all, bool only_active);

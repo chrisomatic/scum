@@ -6,6 +6,13 @@
 #define CPOSX(phys) ((phys).pos.x+(phys).coffset.x)
 #define CPOSY(phys) ((phys).pos.y+(phys).coffset.y)
 
+typedef enum
+{
+    COLLISION_SHAPE_CIRCLE,
+    COLLISION_SHAPE_RECT,
+    COLLISION_SHAPE_MAX,
+} CollisionShape;
+
 typedef struct
 {
     Vector2f pos;
@@ -15,6 +22,7 @@ typedef struct
     Vector2f vel;
     Vector2f prior_vel;
     float max_velocity;
+    float base_friction;
     float speed;
     float radius;
     float mass;
@@ -22,8 +30,14 @@ typedef struct
     Vector2f coffset;
 } Physics;
 
+typedef struct
+{
+    Vector2f overlap;
+} CollisionInfo;
+
 // collision
-bool phys_collision_circles(Physics* phys1, Physics* phys2, Vector2f* collision_resp);
+bool phys_collision_circles(Physics* phys1, Physics* phys2, CollisionInfo* ci);
+void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci);
 
 // friction
 float phys_get_friction_rate(float friction_factor, float dt);

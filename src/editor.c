@@ -157,7 +157,7 @@ void editor_draw()
             case 4: // projectiles
             {
                 imgui_text_sized(big, "Gun");
-                imgui_slider_float("Damage", 1.0,100.0,&projectile_lookup[0].damage);
+                imgui_slider_float("Damage", 0.0,100.0,&projectile_lookup[0].damage);
                 imgui_slider_float("Cooldown", 0.0,1.0,&player->proj_cooldown_max);
                 imgui_slider_float("Base Speed", 100.0,1000.0,&projectile_lookup[0].base_speed);
                 imgui_slider_float("Min Speed", 50.0,200.0,&projectile_lookup[0].min_speed);

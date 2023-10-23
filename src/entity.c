@@ -98,21 +98,18 @@ void entity_handle_collisions()
 
             if(!e2->simulate) continue;
             if(e1 == e2) continue;
-            if(e1->type == ENTITY_TYPE_PLAYER && e2->type == ENTITY_TYPE_PROJECTILE) continue;
-            if(e2->type == ENTITY_TYPE_PLAYER && e1->type == ENTITY_TYPE_PROJECTILE) continue;
 
-            Physics* p2 = e2->phys;
-
-            Vector2f cr = {0.0,0.0};
-            bool collided = phys_collision_circles(p1,p2, &cr);
-
-            if(collided)
+            switch(e1->type)
             {
-                if(e1->type == ENTITY_TYPE_PLAYER)
-                {
-                    Player* p = (Player*)e1->ptr;
-                    player_handle_collision(p,e2,&cr);
-                }
+                case ENTITY_TYPE_PLAYER:
+                    player_handle_collision((Player*)e1->ptr,e2);
+                    break;
+                case ENTITY_TYPE_CREATURE:
+                    //creature_handle_collision((Creature*)e->ptr,e2);
+                    break;
+                case ENTITY_TYPE_PROJECTILE:
+                    projectile_handle_collision((Projectile*)e1->ptr,e2);
+                    break;
             }
         }
     }

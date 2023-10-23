@@ -759,20 +759,8 @@ void update(float dt)
 
             entity_build_all();
             entity_handle_collisions();
-
-            projectile_handle_collisions(dt);
         }
     }
-
-    /*
-    Room* room = &level.rooms[player->curr_room.x][player->curr_room.y];
-
-    for(int i = 0; i < room->wall_count; ++i)
-    {
-        Wall* wall = &room->walls[i];
-        gfx_add_line(wall->p0.x, wall->p0.y, wall->p1.x, wall->p1.y, COLOR_RED);
-    }
-    */
 
     text_list_update(text_lst, dt);
 

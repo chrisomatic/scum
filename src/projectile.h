@@ -6,7 +6,6 @@
 #include "net.h"
 
 #define MAX_PROJECTILES 256
-
 typedef enum
 {
     PROJECTILE_TYPE_LASER,
@@ -56,6 +55,6 @@ void projectile_clear_all();
 void projectile_add(Player* p, float angle_deg);
 void projectile_update_hit_box(Projectile* proj);
 void projectile_update(float delta_t);
-void projectile_handle_collisions(float delta_t);
+void projectile_handle_collision(Projectile* p, Entity* e);
 void projectile_draw(Projectile* proj);
 void projectile_lerp(Projectile* p, double dt);

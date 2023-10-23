@@ -520,7 +520,7 @@ static void server_update_players()
 
     }
 
-    projectile_handle_collisions(1.0/TARGET_FPS);
+    //projectile_handle_collisions(1.0/TARGET_FPS);
 
 }
 

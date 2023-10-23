@@ -59,8 +59,9 @@ void player_init()
         p->phys.pos.x = CENTER_X;
         p->phys.pos.y = CENTER_Y;
 
-        p->phys.speed = 400.0;
-        p->phys.max_velocity = 150.0;
+        p->phys.speed = 500.0;
+        p->phys.max_velocity = 180.0;
+        p->phys.base_friction = 0.80;
         p->phys.vel.x = 0.0;
         p->phys.vel.y = 0.0;
         p->phys.mass = 10.0;
@@ -548,17 +549,10 @@ void player_update(Player* p, float dt)
     }
     
     if(!left && !right)
-        p->phys.vel.x *= 0.88;
+        p->phys.vel.x *= p->phys.base_friction;
 
     if(!up && !down)
-        p->phys.vel.y *= 0.88;
-
-    /*
-    if(ABS(p->phys.vel.x) > 0.0)
-        phys_apply_friction_x(&p->phys,rate);
-    if(ABS(p->phys.vel.y) > 0.0)
-        phys_apply_friction_y(&p->phys,rate);
-    */
+        p->phys.vel.y *= p->phys.base_friction;
 
     float m1 = magn(p->phys.vel);
     float m2 = p->phys.speed;
@@ -732,7 +726,7 @@ void player_handle_net_inputs(Player* p, double dt)
     }
 }
 
-void player_handle_collision(Player* p, Entity* e, Vector2f* collision_resp)
+void player_handle_collision(Player* p, Entity* e)
 {
     switch(e->type)
     {
@@ -740,11 +734,18 @@ void player_handle_collision(Player* p, Entity* e, Vector2f* collision_resp)
         {
             Creature* c = (Creature*)e->ptr;
 
-            if(c->painful_touch)
-            {
-                player_hurt(p,c->damage);
-            }
+            CollisionInfo ci = {0};
+            bool collided = phys_collision_circles(&p->phys,&c->phys, &ci);
 
+            if(collided)
+            {
+                phys_collision_correct(&p->phys, &c->phys,&ci);
+
+                if(c->painful_touch)
+                {
+                    player_hurt(p,c->damage);
+                }
+            }
         } break;
     }
 }

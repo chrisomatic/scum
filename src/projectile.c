@@ -212,30 +212,24 @@ void projectile_update_hit_box(Projectile* proj)
     // print_rect(&proj->hit_box);
 }
 
-void projectile_handle_collisions(float delta_t)
+void projectile_handle_collision(Projectile* p, Entity* e)
 {
-    for(int i = plist->count - 1; i >= 0; --i)
+    if(p->dead) return;
+    if(e->type == ENTITY_TYPE_CREATURE)
     {
-        Projectile* p = &projectiles[i];
-        if(p->dead) continue;
+        Creature* c = (Creature*)e->ptr;
 
-        int creature_count = creature_get_count();
+        if(c->dead) return;
+        if(p->curr_room != c->curr_room) return;
 
-        for(int j = 0; j < creature_count; ++j)
+        bool hit = are_rects_colliding(&p->hit_box_prior, &p->hit_box, &c->hitbox);
+
+        if(hit)
         {
-            Creature* c = &creatures[j];
-
-            if(c->dead) continue;
-            if(p->curr_room != c->curr_room) continue;
-
-            bool hit = are_rects_colliding(&p->hit_box_prior, &p->hit_box, &c->hitbox);
-
-            if(hit)
-            {
-                creature_hurt(c, p->damage);
-                p->dead = true;
-                break;
-            }
+            CollisionInfo ci = {0.0,0.0};
+            phys_collision_correct(&p->phys,&c->phys,&ci);
+            creature_hurt(c, p->damage);
+            p->dead = true;
         }
     }
 }
