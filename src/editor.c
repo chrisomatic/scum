@@ -119,14 +119,21 @@ void editor_draw()
             case 3: // creatures
             {
 
-                static int num_slugs = 1;
-                imgui_number_box("Number", 1, 100, &num_slugs);
+                static int num_creatures = 1;
+                imgui_number_box("Number", 1, 100, &num_creatures);
 
                 if(imgui_button("Add Slug"))
                 {
                     Room* room = level_get_room_by_index(&level, player->curr_room);
-                    for(int i = 0; i < num_slugs; ++i)
+                    for(int i = 0; i < num_creatures; ++i)
                         creature_add(room, CREATURE_TYPE_SLUG);
+                }
+
+                if(imgui_button("Add Clinger"))
+                {
+                    Room* room = level_get_room_by_index(&level, player->curr_room);
+                    for(int i = 0; i < num_creatures; ++i)
+                        creature_add(room, CREATURE_TYPE_CLINGER);
                 }
 
                 if(imgui_button("Clear"))
@@ -153,7 +160,6 @@ void editor_draw()
                 }
             } break;
 
-
             case 4: // projectiles
             {
                 imgui_text_sized(big, "Gun");
@@ -161,6 +167,10 @@ void editor_draw()
                 imgui_slider_float("Cooldown", 0.0,1.0,&player->proj_cooldown_max);
                 imgui_slider_float("Base Speed", 100.0,1000.0,&projectile_lookup[0].base_speed);
                 imgui_slider_float("Min Speed", 50.0,200.0,&projectile_lookup[0].min_speed);
+                imgui_toggle_button(&projectile_lookup[0].charge, "Charge");
+                int charge_rate = projectile_lookup[0].charge_rate;
+                imgui_number_box("Charge Rate", 1, 100, &charge_rate);
+                projectile_lookup[0].charge_rate = charge_rate;
             } break;
             case 5: // theme
             {

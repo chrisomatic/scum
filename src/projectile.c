@@ -16,7 +16,7 @@ static int projectile_image;
 static uint16_t id_counter = 0;
 
 ProjectileDef projectile_lookup[] = {
-    {1.0, 64.0, 128.0} // laser
+    {1.0, 64.0, 128.0, false, 16} // laser
 };
 
 static void projectile_remove(int index)
@@ -43,7 +43,7 @@ void projectile_clear_all()
     list_clear(plist);
 }
 
-void projectile_add(Player* p, float angle_deg)
+void projectile_add(Player* p, float angle_deg, float scale, float damage_multiplier)
 {
     Projectile proj = {0};
 
@@ -55,7 +55,7 @@ void projectile_add(Player* p, float angle_deg)
     ProjectileDef* projdef = &projectile_lookup[proj.type];
 
     proj.dead = false;
-    proj.damage = projdef->damage;
+    proj.damage = projdef->damage * damage_multiplier;
 
     proj.phys.pos.x = p->phys.pos.x;
     proj.phys.pos.y = p->phys.pos.y;
@@ -138,13 +138,14 @@ void projectile_add(Player* p, float angle_deg)
         proj.phys.vel.y = -min_speed * ya;   //@minus
     }
 
+    proj.scale = scale;
     proj.time = 0.0;
     proj.ttl  = 5.0;
 
     proj.hit_box.x = proj.phys.pos.x;
     proj.hit_box.y = proj.phys.pos.y;
     Rect* vr = &gfx_images[projectile_image].visible_rects[0];
-    float wh = MAX(vr->w, vr->h);
+    float wh = MAX(vr->w, vr->h) * scale;
     proj.hit_box.w = wh;
     proj.hit_box.h = wh;
 
@@ -239,7 +240,7 @@ void projectile_draw(Projectile* proj)
     if(proj->curr_room != player->curr_room)
         return; // don't draw projectile if not in same room
 
-    gfx_draw_image(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+    gfx_draw_image(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, COLOR_TINT_NONE, proj->scale, 0.0, 1.0, false, true);
 
     if(debug_enabled)
     {

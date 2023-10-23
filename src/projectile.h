@@ -17,6 +17,10 @@ typedef struct
     float damage;
     float min_speed;
     float base_speed;
+
+    bool charge;
+    uint8_t charge_rate;
+
 } ProjectileDef;
 
 typedef struct
@@ -34,11 +38,12 @@ typedef struct
     // Player* shooter;
     uint8_t player_id;
 
+    float scale;
     float damage;
     float time;
     float ttl;
     bool dead;
-    
+
     // Networking
     float lerp_t;
     ObjectState server_state_prior;
@@ -52,7 +57,7 @@ extern glist* plist;
 
 void projectile_init();
 void projectile_clear_all();
-void projectile_add(Player* p, float angle_deg);
+void projectile_add(Player* p, float angle_deg, float scale, float damage_multiplier);
 void projectile_update_hit_box(Projectile* proj);
 void projectile_update(float delta_t);
 void projectile_handle_collision(Projectile* p, Entity* e);

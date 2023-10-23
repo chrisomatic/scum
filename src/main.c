@@ -406,45 +406,6 @@ void game_generate_level(unsigned int _seed)
         player_set_to_level_start(&players[i]);
     }
 
-    // uint8_t idx = (uint8_t)level_get_room_index(level.start.x, level.start.y);
-    // for(int i = 0; i < MAX_PLAYERS; ++i)
-    // {
-    //     Player* p = &players[i];
-    //     p->curr_room = idx;
-    //     p->transition_room = p->curr_room;
-    // }
-
-    // Room* room = &level.rooms[level.start.x][level.start.y];
-
-    // bool b = false;
-    // for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
-    // {
-    //     if(b) break;
-    //     int _x = (ROOM_TILE_SIZE_X-1)/2;
-    //     _x += ((x % 2 == 0) ? -1 : 1) * x/2;
-
-    //     for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
-    //     {
-    //         int _y = (ROOM_TILE_SIZE_Y-1)/2;
-    //         _y += ((y % 2 == 0) ? -1 : 1) * y/2;
-
-    //         if(level_get_tile_type(room, _x, _y) == TILE_FLOOR)
-    //         {
-    //             // printf("found floor %d,%d\n", _x, _y);
-    //             Rect rp = level_get_tile_rect(_x, _y);
-    //             for(int i = 0; i < MAX_PLAYERS; ++i)
-    //             {
-    //                 Player* p = &players[i];
-    //                 p->phys.pos.x  = rp.x;
-    //                 p->phys.pos.y  = rp.y;
-    //             }
-    //             // printf("(%d,%d) setting pos to %.2f, %2f\n", _x, _y, rp.x, rp.y);
-    //             b = true;
-    //             break;
-    //         }
-    //     }
-    // }
-
 }
 
 void init()

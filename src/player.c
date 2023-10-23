@@ -11,31 +11,16 @@
 #define RADIUS_OFFSET_X 0
 #define RADIUS_OFFSET_Y 7.5
 
+static float sprite_index_to_angle(Player* p);
+static void update_player_boxes(Player* p);
+static void handle_room_collision(Player* p);
+
 char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 int player_image = -1;
 Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
 int player_image;
 int num_players = 0;
-
-static void update_player_boxes(Player* p)
-{
-    GFXImage* img = &gfx_images[player_image];
-
-    Rect* vr = &img->visible_rects[p->sprite_index];
-
-    int w = img->element_width;
-    int h = img->element_height;
-
-    p->hitbox.x = p->phys.pos.x;
-    p->hitbox.y = p->phys.pos.y;
-    p->hitbox.w = w;
-    p->hitbox.h = h;
-
-    p->hitbox.y += 0.3*p->hitbox.h;
-    p->hitbox.h *= 0.4;
-    p->hitbox.w *= 0.6;
-}
 
 void player_init()
 {
@@ -403,6 +388,39 @@ void player_start_room_transition(Player* p)
     // printf("transition_targets: %.2f, %.2f  door: %d     (%.2f, %.2f)\n", transition_targets.x, transition_targets.y, p->door, vw, vh);
 }
 
+
+static void update_player_boxes(Player* p)
+{
+    GFXImage* img = &gfx_images[player_image];
+
+    Rect* vr = &img->visible_rects[p->sprite_index];
+
+    int w = img->element_width;
+    int h = img->element_height;
+
+    p->hitbox.x = p->phys.pos.x;
+    p->hitbox.y = p->phys.pos.y;
+    p->hitbox.w = w;
+    p->hitbox.h = h;
+
+    p->hitbox.y += 0.3*p->hitbox.h;
+    p->hitbox.h *= 0.4;
+    p->hitbox.w *= 0.6;
+}
+
+
+static float sprite_index_to_angle(Player* p)
+{
+    if(p->sprite_index >= 0 && p->sprite_index <= 3)
+        return 90.0;
+    else if(p->sprite_index >= 4 && p->sprite_index <= 7)
+        return 270.0;
+    else if(p->sprite_index >= 8 && p->sprite_index <= 11)
+        return 180.0;
+    return 0.0;
+}
+
+
 static void handle_room_collision(Player* p)
 {
     Room* room = level_get_room_by_index(&level, p->curr_room);
@@ -586,19 +604,60 @@ void player_update(Player* p, float dt)
         p->proj_cooldown = MAX(p->proj_cooldown,0.0);
     }
 
-    if(p->actions[PLAYER_ACTION_SHOOT].state && p->proj_cooldown == 0.0)
-    {
-        // fire!
-        if(p->sprite_index >= 0 && p->sprite_index <= 3)
-            projectile_add(p, 90.0);
-        else if(p->sprite_index >= 4 && p->sprite_index <= 7)
-            projectile_add(p, 270.0);
-        else if(p->sprite_index >= 8 && p->sprite_index <= 11)
-            projectile_add(p, 180.0);
-        else if(p->sprite_index >= 12)
-            projectile_add(p, 0.0);
+    ProjectileDef* pd = &projectile_lookup[0];
+    PlayerInput* shoot = &p->actions[PLAYER_ACTION_SHOOT];
 
-        p->proj_cooldown = p->proj_cooldown_max;
+    if(pd->charge)
+    {
+        if(shoot->toggled_on)
+        {
+            // text_list_add(text_lst, 5.0, "start charge");
+            p->proj_charge = pd->charge_rate;
+        }
+        else if(shoot->state)
+        {
+            if(p->proj_charge > 0)
+            {
+                p->proj_charge = MIN(p->proj_charge + pd->charge_rate, 100);
+                // text_list_add(text_lst, 5.0, "charging: %u", p->proj_charge);
+            }
+            // else
+            // {
+            //     text_list_add(text_lst, 5.0, "NOT charging");
+            // }
+        }
+
+        if(shoot->toggled_off)
+        {
+
+            if(p->proj_cooldown == 0.0 && p->proj_charge > 0)
+            {
+                float scale = (float)p->proj_charge / 50.0;
+                float damage = (float)p->proj_charge / 100.0;
+                float angle_deg = sprite_index_to_angle(p);
+                projectile_add(p, angle_deg, scale, damage);
+
+                // text_list_add(text_lst, 5.0, "projectile: %.2f, %.2f", scale, damage);
+                p->proj_cooldown = p->proj_cooldown_max;
+            }
+            else
+            {
+                // text_list_add(text_lst, 5.0, "[no proj] cooldown: %.2f, charge: %u", p->proj_cooldown, p->proj_charge);
+            }
+            p->proj_charge = 0;
+        }
+
+
+    }
+    else
+    {
+        if(shoot->state && p->proj_cooldown == 0.0)
+        {
+            float angle_deg = sprite_index_to_angle(p);
+            projectile_add(p, angle_deg, 1.0, 1.0);
+            // text_list_add(text_lst, 5.0, "projectile");
+            p->proj_cooldown = p->proj_cooldown_max;
+        }
     }
 
     if(role == ROLE_LOCAL)
@@ -608,10 +667,6 @@ void player_update(Player* p, float dt)
         {
             seed = time(0)+rand()%1000;
             game_generate_level(seed);
-
-            // creature_clear_all();
-            // level = level_generate(seed);
-            // level_print(&level);
         }
     }
 
@@ -668,10 +723,6 @@ void player_draw(Player* p)
         float x0 = p->phys.pos.x;
         float y0 = p->phys.pos.y;
 
-        // Vector2f vn = {.x = p->vel.x, .y = p->vel.y};
-        // normalize(&vn);
-        // float x1 = x0 + vn.x*50;
-        // float y1 = y0 + vn.y*50;
         float x1 = x0 + p->phys.vel.x;
         float y1 = y0 + p->phys.vel.y;
         gfx_add_line(x0, y0, x1, y1, COLOR_RED);

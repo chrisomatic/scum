@@ -54,6 +54,7 @@ typedef struct
 
     Vector2i curr_tile;
 
+    uint8_t proj_charge;
     float proj_cooldown;
     float proj_cooldown_max;
 
