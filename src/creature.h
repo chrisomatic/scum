@@ -31,8 +31,8 @@ typedef struct
     bool painful_touch;
     int damage;
 
-    // action
     float action_counter;
+    float action_counter_max;
 
     // temp debug stuff
     Vector2f spawn;

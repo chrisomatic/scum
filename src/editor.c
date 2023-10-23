@@ -70,7 +70,7 @@ void editor_draw()
                 imgui_text("  Type: %s (%d)", level_tile_type_to_str(tt), tt);
 
                 imgui_text("Doors");
-                for(int d = 0; d < DIR_NONE; ++d)
+                for(int d = 0; d < 4; ++d)
                 {
                     if(room->doors[d])
                         imgui_text(" - %s", get_dir_name(d));

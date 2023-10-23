@@ -761,7 +761,7 @@ void draw_map(DrawLevelParams* params)
 
             if(room->discovered)
             {
-                for(int d = 0; d < DIR_NONE; ++d)
+                for(int d = 0; d < MAX_DOORS; ++d)
                 {
                     if(!room->doors[d]) continue;
                     Vector2i o = get_dir_offsets(d);
@@ -820,7 +820,7 @@ void draw_map(DrawLevelParams* params)
             gfx_draw_rect(&room_rect, _color, NOT_SCALED, NO_ROTATION, _opacity, true, NOT_IN_WORLD);
 
             // draw the doors
-            for(int d = 0; d < DIR_NONE; ++d)
+            for(int d = 0; d < MAX_DOORS; ++d)
             {
                 if(!room->doors[d]) continue;
 

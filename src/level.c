@@ -32,6 +32,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
 
 
     int n = rand() % 16;
+
     for(int i = 0; i < n; ++i)
     {
         // if(level->start.x == x && level->start.y == y)
@@ -316,6 +317,7 @@ void level_handle_room_collision(Room* room, Physics* phys)
         return;
 
     level_sort_walls(room->walls,room->wall_count, CPOSX(*phys),CPOSY(*phys), phys->radius);
+
     for(int i = 0; i < room->wall_count; ++i)
     {
         Wall* wall = &room->walls[i];
@@ -411,6 +413,56 @@ void level_handle_room_collision(Room* room, Physics* phys)
         }
     }
 
+}
+
+bool level_is_colliding_with_wall(Room* room, Physics* phys)
+{
+    if(!room)
+        return false;
+
+    level_sort_walls(room->walls,room->wall_count, CPOSX(*phys),CPOSY(*phys), phys->radius);
+
+    for(int i = 0; i < room->wall_count; ++i)
+    {
+        Wall* wall = &room->walls[i];
+
+        bool collision = false;
+        bool check = false;
+        Vector2f check_point;
+
+        float px = CPOSX(*phys);
+        float py = CPOSY(*phys);
+
+        switch(wall->dir)
+        {
+            case DIR_UP: case DIR_DOWN:
+                if(px+phys->radius >= wall->p0.x && px-phys->radius <= wall->p1.x)
+                {
+                    check_point.x = px;
+                    check_point.y = wall->p0.y;
+                    check = true;
+                }
+                break;
+            case DIR_LEFT: case DIR_RIGHT:
+                if(py+phys->radius >= wall->p0.y && py-phys->radius <= wall->p1.y)
+                {
+                    check_point.x = wall->p0.x;
+                    check_point.y = py;
+                    check = true;
+                }
+                break;
+        }
+
+        if(check)
+        {
+            float d = dist(px, py, check_point.x, check_point.y);
+            bool collision = (d < phys->radius);
+
+            return collision;
+        }
+    }
+
+    return false;
 }
 
 void level_init()
@@ -708,20 +760,15 @@ Vector2i get_dir_offsets(Dir door)
     Vector2i o = {0};
     switch(door)
     {
-        case DIR_UP:
-            o.y = -1;
-            break;
-        case DIR_DOWN:
-            o.y = 1;
-            break;
-        case DIR_LEFT:
-            o.x = -1;
-            break;
-        case DIR_RIGHT:
-            o.x = 1;
-            break;
-        default:
-            break;
+        case DIR_UP:    o.y = -1; break;
+        case DIR_DOWN:  o.y =  1; break;
+        case DIR_LEFT:  o.x = -1; break;
+        case DIR_RIGHT: o.x =  1; break;
+        case DIR_UP_RIGHT:   o.x =  1; o.y = -1; break;
+        case DIR_DOWN_LEFT:  o.x = -1; o.y =  1; break;
+        case DIR_DOWN_RIGHT: o.x =  1; o.y =  1; break;
+        case DIR_UP_LEFT:    o.x = -1; o.y = -1; break;
+        default: break;
     }
     return o;
 }

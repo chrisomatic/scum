@@ -629,13 +629,12 @@ void player_update(Player* p, float dt)
 
         if(shoot->toggled_off)
         {
-
             if(p->proj_cooldown == 0.0 && p->proj_charge > 0)
             {
                 float scale = (float)p->proj_charge / 50.0;
                 float damage = (float)p->proj_charge / 100.0;
                 float angle_deg = sprite_index_to_angle(p);
-                projectile_add(p, angle_deg, scale, damage);
+                projectile_add(&p->phys, p->curr_room, angle_deg, scale, damage,true);
 
                 // text_list_add(text_lst, 5.0, "projectile: %.2f, %.2f", scale, damage);
                 p->proj_cooldown = p->proj_cooldown_max;
@@ -654,7 +653,7 @@ void player_update(Player* p, float dt)
         if(shoot->state && p->proj_cooldown == 0.0)
         {
             float angle_deg = sprite_index_to_angle(p);
-            projectile_add(p, angle_deg, 1.0, 1.0);
+            projectile_add(&p->phys, p->curr_room, angle_deg, 1.0, 1.0, true);
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;
         }

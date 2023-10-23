@@ -43,7 +43,8 @@ typedef struct
     float time;
     float ttl;
     bool dead;
-
+    bool from_player;
+    
     // Networking
     float lerp_t;
     ObjectState server_state_prior;
@@ -57,7 +58,7 @@ extern glist* plist;
 
 void projectile_init();
 void projectile_clear_all();
-void projectile_add(Player* p, float angle_deg, float scale, float damage_multiplier);
+void projectile_add(Physics* phys, uint8_t curr_room, float angle_deg, float scale, float damage_multiplier, bool from_player);
 void projectile_update_hit_box(Projectile* proj);
 void projectile_update(float delta_t);
 void projectile_handle_collision(Projectile* p, Entity* e);

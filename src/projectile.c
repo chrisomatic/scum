@@ -50,7 +50,7 @@ void projectile_clear_all()
     list_clear(plist);
 }
 
-void projectile_add(Player* p, float angle_deg, float scale, float damage_multiplier)
+void projectile_add(Physics* phys, uint8_t curr_room, float angle_deg, float scale, float damage_multiplier, bool from_player)
 {
     Projectile proj = {0};
 
@@ -64,12 +64,13 @@ void projectile_add(Player* p, float angle_deg, float scale, float damage_multip
     proj.dead = false;
     proj.damage = projdef->damage * damage_multiplier;
 
-    proj.phys.pos.x = p->phys.pos.x;
-    proj.phys.pos.y = p->phys.pos.y;
+    proj.phys.pos.x = phys->pos.x;
+    proj.phys.pos.y = phys->pos.y;
     proj.phys.mass = 1.0;
-    proj.curr_room = p->curr_room;
-
+    proj.curr_room = curr_room;
+    proj.from_player = from_player;
     proj.angle_deg = angle_deg;
+
     float angle = RAD(proj.angle_deg);
     float speed = projdef->base_speed;
     float min_speed = projdef->min_speed;
@@ -77,8 +78,8 @@ void projectile_add(Player* p, float angle_deg, float scale, float damage_multip
     float vx0 = (speed)*cosf(angle);
     float vy0 = (-speed)*sinf(angle);   // @minus
 
-    float vx = vx0 + p->phys.vel.x;
-    float vy = vy0 + p->phys.vel.y;
+    float vx = vx0 + phys->vel.x;
+    float vy = vy0 + phys->vel.y;
 
     proj.phys.vel.x = vx0;
     proj.phys.vel.y = vy0;
@@ -220,25 +221,50 @@ void projectile_update_hit_box(Projectile* proj)
     // print_rect(&proj->hit_box);
 }
 
-void projectile_handle_collision(Projectile* p, Entity* e)
+void projectile_handle_collision(Projectile* proj, Entity* e)
 {
-    if(p->dead) return;
-    if(e->type == ENTITY_TYPE_CREATURE)
+    if(proj->dead) return;
+
+    if(proj->from_player && e->type == ENTITY_TYPE_CREATURE)
     {
         Creature* c = (Creature*)e->ptr;
 
         if(c->dead) return;
-        if(p->curr_room != c->curr_room) return;
+        if(proj->curr_room != c->curr_room) return;
 
-        bool hit = are_rects_colliding(&p->hit_box_prior, &p->hit_box, &c->hitbox);
+        bool hit = are_rects_colliding(&proj->hit_box_prior, &proj->hit_box, &c->hitbox);
 
         if(hit)
         {
             CollisionInfo ci = {0.0,0.0};
-            phys_collision_correct(&p->phys,&c->phys,&ci);
-            creature_hurt(c, p->damage);
-            p->dead = true;
+            phys_collision_correct(&proj->phys,&c->phys,&ci);
+            creature_hurt(c, proj->damage);
+            proj->dead = true;
         }
+    }
+    else if(!proj->from_player && e->type == ENTITY_TYPE_PLAYER)
+    {
+        Player* p = (Player*)e->ptr;
+
+        if(!p->active) return;
+        if(proj->curr_room != p->curr_room) return;
+
+        bool hit = are_rects_colliding(&proj->hit_box_prior, &proj->hit_box, &p->hitbox);
+        if(hit)
+        {
+            CollisionInfo ci = {0.0,0.0};
+            phys_collision_correct(&proj->phys,&p->phys,&ci);
+            player_hurt(p, proj->damage);
+            proj->dead = true;
+        }
+    }
+
+    Room* room = level_get_room_by_index(&level, proj->curr_room);
+    bool colliding = level_is_colliding_with_wall(room, &proj->phys);
+
+    if(colliding)
+    {
+        proj->dead = true;
     }
 }
 
@@ -247,7 +273,7 @@ void projectile_draw(Projectile* proj)
     if(proj->curr_room != player->curr_room)
         return; // don't draw projectile if not in same room
 
-    gfx_draw_image(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, COLOR_TINT_NONE, proj->scale, 0.0, 1.0, false, true);
+    gfx_draw_image(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, proj->from_player ? 0x0050A0FF : 0x00FF5050, proj->scale, 0.0, 1.0, false, true);
 
     if(debug_enabled)
     {

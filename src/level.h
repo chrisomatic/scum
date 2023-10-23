@@ -16,6 +16,8 @@
 #define ROOM_TILE_SIZE_Y 7
 
 #define TILE_SIZE 32
+#define MAX_DOORS 4
+#define MAX_WALLS_PER_ROOM 100
 
 typedef enum
 {
@@ -27,10 +29,14 @@ typedef enum
 
 typedef enum
 {
-    DIR_UP = 0,
+    DIR_UP,
     DIR_RIGHT,
     DIR_DOWN,
     DIR_LEFT,
+    DIR_UP_RIGHT,
+    DIR_DOWN_LEFT,
+    DIR_DOWN_RIGHT,
+    DIR_UP_LEFT,
     DIR_NONE,
 } Dir;
 
@@ -65,9 +71,9 @@ typedef struct
 typedef struct
 {
     bool valid;
-    bool doors[4];
+    bool doors[MAX_DOORS];
     uint32_t color;
-    Wall walls[100];
+    Wall walls[MAX_WALLS_PER_ROOM];
     int wall_count;
     int layout;
     uint8_t index;
@@ -98,6 +104,7 @@ void level_print(Level* level);
 void level_print_room(Room* room);
 void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radius);
 void level_handle_room_collision(Room* room, Physics* phys);
+bool level_is_colliding_with_wall(Room* room, Physics* phys);
 
 Room* level_get_room(Level* level, int x, int y);
 Room* level_get_room_by_index(Level* level, int index);

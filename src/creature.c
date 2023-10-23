@@ -7,7 +7,9 @@
 #include "player.h"
 #include "glist.h"
 #include "particles.h"
+#include "projectile.h"
 #include "creature.h"
+#include "ai.h"
 
 Creature creatures[MAX_CREATURES];
 glist* clist = NULL;
@@ -15,9 +17,13 @@ glist* clist = NULL;
 static int creature_image_slug;
 static int creature_image_clinger;
 
+static void creature_update_slug(Creature* c, float dt);
+static void creature_update_clinger(Creature* c, float dt);
+
 void creature_init()
 {
     clist = list_create((void*)creatures, MAX_CREATURES, sizeof(Creature));
+
     creature_image_slug = gfx_load_image("src/img/creature_slug.png", false, false, 17, 17);
     creature_image_clinger = gfx_load_image("src/img/creature_clinger.png", false, false, 32, 32);
 }
@@ -26,7 +32,6 @@ void creature_clear_all()
 {
     list_clear(clist);
 }
-
 
 void creature_add(Room* room, CreatureType type)
 {
@@ -41,6 +46,7 @@ void creature_add(Room* room, CreatureType type)
             c.image = creature_image_clinger;
             break;
     }
+
     c.type = type;
     c.curr_room = room->index;
 
@@ -50,6 +56,7 @@ void creature_add(Room* room, CreatureType type)
     {
         tile_x = (rand() % ROOM_TILE_SIZE_X);
         tile_y = (rand() % ROOM_TILE_SIZE_Y);
+
         if(level_get_tile_type(room, tile_x, tile_y) == TILE_FLOOR)
         {
             Rect rp = level_get_tile_rect(tile_x, tile_y);
@@ -82,12 +89,13 @@ void creature_add(Room* room, CreatureType type)
     c.phys.radius = 8.0;
     c.phys.coffset.x = 0;
     c.phys.coffset.y = 0;
-    c.action_counter = ACTION_COUNTER_MAX;
     c.sprite_index = DIR_DOWN;
     c.hp_max = 3.0;
     c.hp = c.hp_max;
     c.damage = 1;
     c.painful_touch = true;
+
+    ai_init_action(&c);
 
     list_add(clist, (void*)&c);
 }
@@ -109,19 +117,14 @@ void creature_update(Creature* c, float dt)
     }
     if(!sim) return;
 
-    c->action_counter += dt;
-
-    if(c->action_counter >= ACTION_COUNTER_MAX)
+    switch(c->type)
     {
-        c->action_counter = 0.0;
-        int dir = rand() % 5;
-
-        Vector2i o = get_dir_offsets(dir);
-
-        c->h = o.x;
-        c->v = o.y;
-        if(dir != DIR_NONE)
-            c->sprite_index = dir;
+        case CREATURE_TYPE_SLUG:
+            creature_update_slug(c,dt);
+            break;
+        case CREATURE_TYPE_CLINGER:
+            creature_update_clinger(c,dt);
+            break;
     }
 
     float h_speed = c->phys.speed*c->h;
@@ -244,4 +247,63 @@ void creature_hurt(Creature* c, float damage)
 int creature_get_count()
 {
     return clist->count;
+}
+
+static Player* get_nearest_player(Vector2f* pt)
+{
+    float min_dist = 10000.0;
+    int min_index = 0;
+
+    for(int i = 0; i < num_players; ++i)
+    {
+        Player* p = &players[i];
+        float d = dist(pt->x,pt->y, p->phys.pos.x, p->phys.pos.y);
+        if(d < min_dist)
+        {
+            min_dist = d;
+            min_index = i;
+        }
+    }
+
+    return &players[min_index];
+}
+
+static void creature_update_slug(Creature* c, float dt)
+{
+    bool act = ai_update_action(c, dt);
+
+    if(act)
+    {
+        if(ai_flip_coin())
+        {
+            ai_random_walk(c);
+        }
+    }
+}
+
+static void creature_update_clinger(Creature* c, float dt)
+{
+    bool act = ai_update_action(c, dt);
+
+    if(act)
+    {
+        //Player* p = get_nearest_player(&c->phys.pos);
+        if(ai_flip_coin())
+        {
+            ai_random_walk(c);
+        }
+        else
+        {
+            // fire!
+            if(c->sprite_index == 0)
+                projectile_add(&c->phys, c->curr_room, 90.0, 1.0, 1.0,false);
+            else if(c->sprite_index == 1)
+                projectile_add(&c->phys, c->curr_room, 270.0, 1.0, 1.0,false);
+            else if(c->sprite_index == 2)
+                projectile_add(&c->phys, c->curr_room, 180.0, 1.0, 1.0,false);
+            else if(c->sprite_index == 3)
+                projectile_add(&c->phys, c->curr_room, 0.0, 1.0, 1.0,false);
+        }
+    }
+    return;
 }
