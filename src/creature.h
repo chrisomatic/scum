@@ -26,7 +26,6 @@ typedef struct
     uint8_t sprite_index;
     uint8_t curr_room;
     bool dead;
-    int blood_angle;
     float h,v;
 
     bool painful_touch;
