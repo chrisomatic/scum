@@ -12,12 +12,14 @@
 Creature creatures[MAX_CREATURES];
 glist* clist = NULL;
 
-static int creature_image;
+static int creature_image_slug;
+static int creature_image_clinger;
 
 void creature_init()
 {
     clist = list_create((void*)creatures, MAX_CREATURES, sizeof(Creature));
-    creature_image = gfx_load_image("src/img/creature_slug.png", false, false, 17, 17);
+    creature_image_slug = gfx_load_image("src/img/creature_slug.png", false, false, 17, 17);
+    creature_image_clinger = gfx_load_image("src/img/creature_clinger.png", false, false, 32, 32);
 }
 
 void creature_clear_all()
@@ -30,6 +32,15 @@ void creature_add(Room* room, CreatureType type)
 {
     Creature c = {0};
 
+    switch(type)
+    {
+        case CREATURE_TYPE_SLUG:
+            c.image = creature_image_slug;
+            break;
+        case CREATURE_TYPE_CLINGER:
+            c.image = creature_image_clinger;
+            break;
+    }
     c.type = type;
     c.curr_room = room->index;
 
@@ -151,7 +162,7 @@ void creature_draw(Creature* c)
     if(c->dead)
         gfx_draw_image(particles_image, 0, c->phys.pos.x, c->phys.pos.y, COLOR_RED, NOT_SCALED, c->blood_angle, 0.6, false, true);
     else
-        gfx_draw_image(creature_image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, c->color, 1.0, 0.0, 1.0, false, true);
+        gfx_draw_image(c->image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, c->color, 1.0, 0.0, 1.0, false, true);
 
     if(debug_enabled && !c->dead)
     {

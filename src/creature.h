@@ -8,6 +8,8 @@
 typedef enum
 {
     CREATURE_TYPE_SLUG,
+    CREATURE_TYPE_CLINGER,
+    CREATURE_TYPE_MAX,
 } CreatureType;
 
 typedef struct
@@ -19,6 +21,7 @@ typedef struct
     float hp;
     float hp_max;
 
+    int image;
     uint32_t color;
     uint8_t sprite_index;
     uint8_t curr_room;
