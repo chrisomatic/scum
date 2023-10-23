@@ -123,6 +123,10 @@ void creature_update_all(float dt)
     {
         Creature* c = &creatures[i];
         creature_update(c, dt);
+        if(c->dead)
+        {
+            list_remove(clist, i);
+        }
     }
 }
 
@@ -131,12 +135,10 @@ void creature_draw(Creature* c)
     if(c->curr_room != player->curr_room)
         return;
 
-    if(c->dead)
-        gfx_draw_image(particles_image, 0, c->phys.pos.x, c->phys.pos.y, COLOR_RED, NOT_SCALED, c->blood_angle, 0.6, false, true);
-    else
-        gfx_draw_image(c->image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, c->color, 1.0, 0.0, 1.0, false, true);
+    if(c->dead) return;
+    gfx_draw_image(c->image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, c->color, 1.0, 0.0, 1.0, false, true);
 
-    if(debug_enabled && !c->dead)
+    if(debug_enabled)
     {
         gfx_draw_rect(&c->hitbox, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
     }
@@ -154,7 +156,19 @@ void creature_draw_all()
 void creature_die(Creature* c)
 {
     c->dead = true;
-    c->blood_angle = rand() % 360;
+
+    Decal d = {0};
+    d.image = particles_image;
+    d.sprite_index = 0;
+    d.tint = COLOR_RED;
+    d.scale = 1.0;
+    d.rotation = rand() % 360;
+    d.opacity = 0.6;
+    d.ttl = 10.0;
+    d.pos.x = c->phys.pos.x;
+    d.pos.y = c->phys.pos.y;
+    d.room = c->curr_room;
+    decal_add(d);
 }
 
 void creature_hurt(Creature* c, float damage)

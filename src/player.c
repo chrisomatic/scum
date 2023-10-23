@@ -65,7 +65,7 @@ void player_init()
         // p->curr_room = (uint8_t)level_get_room_index(room_x, room_y);
         // p->transition_room = p->curr_room;
 
-        p->proj_cooldown_max = 0.4;
+        p->proj_cooldown_max = 0.04;
         p->door = DIR_NONE;
         // p->in_door = false;
 

@@ -16,6 +16,8 @@
 #include "level.h"
 #include "core/text_list.h"
 
+#include "glist.h"
+
 
 #define VIEW_WIDTH   1200
 #define VIEW_HEIGHT  800
@@ -85,6 +87,26 @@ typedef struct
     uint32_t color_border;
     float opacity_border;
 } DrawLevelParams;
+
+typedef struct
+{
+    int image;
+    uint8_t sprite_index;
+    uint32_t tint;
+    float scale;
+    float rotation;
+    float opacity;
+    float ttl;
+    Vector2f pos;
+    uint8_t room;
+} Decal;
+#define MAX_DECALS  100
+extern Decal decals[MAX_DECALS];
+extern glist* decal_list;
+void decal_add(Decal d);
+void decal_draw_all();
+void decal_update_all(float dt);
+
 
 
 extern float mx, my;
