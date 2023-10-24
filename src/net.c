@@ -329,6 +329,7 @@ static bool server_assign_new_client(Address* addr, ClientInfo** cli)
         {
             *cli = &server.clients[i];
             (*cli)->client_id = i;
+            // printf("%s() new client %d\n", __func__, i);
             return true;
         }
     }
@@ -1313,7 +1314,8 @@ void net_client_update()
                         }
 
                         Player* p = &players[client_id];
-                        player_set_active(&players[i], true); // @OPTIMIZE: This function loops through players to count them
+                        players[i].active = true;
+                        // player_set_active(&players[i], true); // @OPTIMIZE: This function loops through players to count them
 
                         Vector2f pos    = unpack_vec2(&srvpkt, &offset);
                         p->sprite_index = unpack_u8(&srvpkt, &offset);
