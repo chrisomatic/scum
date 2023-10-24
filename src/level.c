@@ -516,6 +516,9 @@ TileType level_get_tile_type_by_pos(Room* room, float x, float y)
 
 void level_draw_room(Room* room, float xoffset, float yoffset)
 {
+    if(!room)
+        return;
+
     if(!room->valid)
         return;
 
@@ -611,6 +614,8 @@ Level level_generate(unsigned int seed)
     generate_rooms(&level, level.start.x, level.start.y, DIR_NONE, 0);
     generate_walls(&level);
 
+    level_print(&level);
+
     return level;
 }
 
@@ -693,7 +698,10 @@ char* level_tile_type_to_str(TileType tt)
 Room* level_get_room(Level* level, int x, int y)
 {
     if(!level_is_room_valid(level, x, y))
+    {
+        //LOGE("Room not valid, %d %d",x,y);
         return NULL;
+    }
     return &level->rooms[x][y];
 }
 

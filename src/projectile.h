@@ -53,6 +53,7 @@ typedef struct
 } Projectile;
 
 extern Projectile projectiles[MAX_PROJECTILES];
+extern Projectile prior_projectiles[MAX_PROJECTILES];
 extern ProjectileDef projectile_lookup[];
 extern glist* plist;
 

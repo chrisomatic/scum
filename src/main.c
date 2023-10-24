@@ -413,7 +413,6 @@ void game_generate_level(unsigned int _seed)
     creature_clear_all();
 
     level = level_generate(seed);
-    level_print(&level);
 
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
@@ -588,7 +587,6 @@ void update(float dt)
 
         if(check_state != CONNECTED)
         {
-
             net_client_connect_update(); // progress through connection routine
 
             ConnectionState curr_state = net_client_get_state();
@@ -648,6 +646,8 @@ void update(float dt)
                 player_lerp(p, dt);
             }
         }
+
+        entity_build_all();
 
         camera_set();
         camera_update(VIEW_WIDTH, VIEW_HEIGHT);
@@ -953,7 +953,6 @@ void draw()
 
     if(game_state == GAME_STATE_PLAYING)
     {
-
         player_draw_room_transition();
 
         if(player->curr_room == player->transition_room)

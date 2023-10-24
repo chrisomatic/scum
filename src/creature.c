@@ -20,6 +20,16 @@ static int creature_image_clinger;
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
 
+static uint16_t id_counter = 0;
+
+static uint16_t get_id()
+{
+    if(id_counter >= 65535)
+        id_counter = 0;
+
+    return id_counter++;
+}
+
 void creature_init()
 {
     clist = list_create((void*)creatures, MAX_CREATURES, sizeof(Creature));
@@ -33,8 +43,16 @@ void creature_clear_all()
     list_clear(clist);
 }
 
-void creature_add(Room* room, CreatureType type)
+void creature_add_existing(Creature* c)
 {
+    list_add(clist, (void*)c);
+}
+
+Creature* creature_add(Room* room, CreatureType type)
+{
+    if(!room)
+        return NULL;
+
     Creature c = {0};
 
     switch(type)
@@ -47,6 +65,7 @@ void creature_add(Room* room, CreatureType type)
             break;
     }
 
+    c.id = get_id();
     c.type = type;
     c.curr_room = room->index;
 
@@ -98,6 +117,8 @@ void creature_add(Room* room, CreatureType type)
     ai_init_action(&c);
 
     list_add(clist, (void*)&c);
+
+    return &creatures[clist->count-1];
 }
 
 void creature_update(Creature* c, float dt)
@@ -244,9 +265,9 @@ void creature_hurt(Creature* c, float damage)
     }
 }
 
-int creature_get_count()
+uint16_t creature_get_count()
 {
-    return clist->count;
+    return (uint16_t)clist->count;
 }
 
 static Player* get_nearest_player(Vector2f* pt)

@@ -15,6 +15,7 @@
 #include "main.h"
 #include "net.h"
 #include "player.h"
+#include "creature.h"
 #include "level.h"
 #include "projectile.h"
 
@@ -429,8 +430,6 @@ static void server_send(PacketType type, ClientInfo* cli)
                     pack_vec2(&pkt,p->phys.pos);
                     pack_u8(&pkt, p->sprite_index+p->anim.curr_frame);
                     pack_u8(&pkt, p->curr_room);
-                    // pack_u8(&pkt, p->transition_room);
-                    pack_u8(&pkt, p->curr_room);    // @HACK: to get transitions working properly
                     pack_u8(&pkt, (uint8_t)p->door);
                     num_clients++;
                 }
@@ -438,11 +437,26 @@ static void server_send(PacketType type, ClientInfo* cli)
 
             pkt.data[0] = num_clients;
 
-            // projectiles
-            // if(plist->count > 0)
+            // creatures
+            uint16_t num_creatures = creature_get_count();
+
+            pack_u16(&pkt,num_creatures);
+
+            for(int i = 0; i < num_creatures; ++i)
             {
-                pack_u8(&pkt,(uint8_t)plist->count);
+                Creature* c = &creatures[i];
+
+                pack_u16(&pkt, c->id);
+                pack_u8(&pkt, (uint8_t)c->type);
+                pack_vec2(&pkt, c->phys.pos);
+                pack_u8(&pkt, c->sprite_index);
+                pack_u8(&pkt, c->curr_room);
             }
+
+            // projectiles
+            printf("num projectiles: %u, index: %d\n",(uint8_t)plist->count, pkt.data_len);
+
+            pack_u8(&pkt,(uint8_t)plist->count);
 
             for(int i = 0; i < plist->count; ++i)
             {
@@ -451,6 +465,7 @@ static void server_send(PacketType type, ClientInfo* cli)
                 pack_vec2(&pkt,p->phys.pos);
                 pack_u8(&pkt,p->player_id);
                 pack_u8(&pkt,p->curr_room);
+                pack_u8(&pkt,(uint8_t)(p->from_player ? 0x01 : 0x00));
             }
 
             //print_packet(&pkt);
@@ -483,9 +498,9 @@ static void server_send(PacketType type, ClientInfo* cli)
     }
 }
 
-static void server_update_players()
+static void server_simulate()
 {
-    projectile_update(1.0/TARGET_FPS);
+    float dt = 1.0/TARGET_FPS;
 
     for(int i = 0; i < MAX_CLIENTS; ++i)
     {
@@ -499,7 +514,7 @@ static void server_update_players()
 
         if(cli->input_count == 0)
         {
-            player_update(p,1.0/TARGET_FPS);
+            player_update(p,dt);
         }
         else
         {
@@ -517,11 +532,14 @@ static void server_update_players()
 
             cli->input_count = 0;
         }
-
     }
 
-    //projectile_handle_collisions(1.0/TARGET_FPS);
+    projectile_update(dt);
+    creature_update_all(dt);
+    decal_update_all(dt);
 
+    entity_build_all();
+    entity_handle_collisions();
 }
 
 int net_server_start()
@@ -724,7 +742,7 @@ int net_server_start()
         accum_g += elapsed_time_g;
         while(accum_g >= 1.0/TARGET_FPS)
         {
-            server_update_players();
+            server_simulate();
             accum_g -= 1.0/TARGET_FPS;
         }
 
@@ -1243,7 +1261,7 @@ void net_client_update()
                 case PACKET_TYPE_INIT:
                 {
                     seed = unpack_u32(&srvpkt,&offset);
-                    game_generate_level(seed);
+                    level = level_generate(seed);
 
                     client.received_init_packet = true;
                 } break;
@@ -1257,7 +1275,6 @@ void net_client_update()
                     {
                         prior_active[i] = players[i].active;
                         players[i].active = false;
-                        player_set_active(&players[i], false);
                     }
 
                     //LOGN("Received STATE packet. num players: %d", num_players);
@@ -1280,9 +1297,9 @@ void net_client_update()
                         Vector2f pos    = unpack_vec2(&srvpkt, &offset);
                         p->sprite_index = unpack_u8(&srvpkt, &offset);
                         uint8_t curr_room  = unpack_u8(&srvpkt, &offset);
-                        uint8_t transition_room  = unpack_u8(&srvpkt, &offset);
                         p->door  = (Dir)unpack_u8(&srvpkt, &offset);
 
+                        //LOGN("pos %f %f, sprite index %u, curr room %u, trans room: %u, door %u", pos.x,pos.y,p->sprite_index,curr_room,p->transition_room, p->door);
 
                         // moving between rooms
                         if(curr_room != p->curr_room)
@@ -1291,12 +1308,12 @@ void net_client_update()
                             {
                                 p->transition_room = p->curr_room;
                                 p->curr_room = curr_room;
-                                // printf("net recv: %d -> %d\n", p->transition_room, p->curr_room); printf("door: %d\n", p->door);
+                                //printf("net recv: %d -> %d\n", p->transition_room, p->curr_room); printf("door: %d\n", p->door);
                                 player_start_room_transition(p);
                             }
                             else
                             {
-                                p->transition_room = transition_room;
+                                p->transition_room = curr_room;
                                 p->curr_room = curr_room;
                             }
                             p->phys.pos.x = pos.x;
@@ -1323,10 +1340,43 @@ void net_client_update()
                         // printf("[target] %.2f, %.2f\n", p->server_state_target.pos.x, p->server_state_target.pos.y);
                     }
 
-                    // if(offset < srvpkt.data_len-1)
+                    // creatures
                     {
+                        uint16_t num_creatures = unpack_u16(&srvpkt, &offset);
+
+                        creature_clear_all();
+
+                        for(int i = 0; i < num_creatures; ++i)
+                        {
+                            uint16_t id = unpack_u16(&srvpkt,&offset);
+                            uint8_t  creature_type = unpack_u8(&srvpkt,&offset);
+                            Vector2f pos = unpack_vec2(&srvpkt, &offset);
+                            uint8_t sprite_index = unpack_u8(&srvpkt, &offset);
+                            uint8_t curr_room = unpack_u8(&srvpkt, &offset);
+
+                            Room* room = level_get_room_by_index(&level, curr_room);
+
+                            Creature* c = creature_add(room, (CreatureType)creature_type);
+                            if(!c) continue;
+
+                            c->id = id;
+                            memcpy(&c->phys.pos,&pos, sizeof(Vector2f));
+                            c->sprite_index = sprite_index;
+                            c->curr_room = curr_room;
+                        }
+                    }
+
+
+                    // Projectiles
+                    {
+
+                        memcpy(prior_projectiles, projectiles, sizeof(Projectile)*MAX_PROJECTILES);
+
+
                         // load projectiles
                         uint8_t num_projectiles = unpack_u8(&srvpkt, &offset);
+
+                        LOGN("Num projectiles: %u %d\n",num_projectiles, offset-1);
 
                         list_clear(plist);
                         plist->count = num_projectiles;
@@ -1340,14 +1390,30 @@ void net_client_update()
                             uint8_t player_id = unpack_u8(&srvpkt, &offset);
                             uint8_t room_id = unpack_u8(&srvpkt, &offset);
 
+                            p->server_state_prior.id = id;
+                            p->server_state_prior.pos.x = pos.x;
+                            p->server_state_prior.pos.y = pos.y;
+
+                            //find the prior
+                            for(int j = i; j < MAX_PROJECTILES; ++j)
+                            {
+                                Projectile* pj = &prior_projectiles[j];
+                                if(pj->id == id)
+                                {
+                                    p->server_state_prior.pos.x = pj->phys.pos.x;
+                                    p->server_state_prior.pos.y = pj->phys.pos.y;
+                                    break;
+                                }
+                            }
+
                             p->curr_room = room_id;
                             p->lerp_t = 0.0;
 
-                            //LOGN("      Pos: %f, %f. Angle: %f", pos.x, pos.y, angle);
+                            LOGN("      Pos: %f, %f", pos.x, pos.y);
 
-                            p->server_state_prior.id = p->id;
-                            p->server_state_prior.pos.x = p->phys.pos.x;
-                            p->server_state_prior.pos.y = p->phys.pos.y;
+                            // p->server_state_prior.id = p->id;
+                            // p->server_state_prior.pos.x = p->phys.pos.x;
+                            // p->server_state_prior.pos.y = p->phys.pos.y;
 
                             p->server_state_target.id = id;
                             p->server_state_target.pos.x = pos.x;

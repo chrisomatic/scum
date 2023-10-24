@@ -287,6 +287,7 @@ void player_draw_room_transition()
             level_draw_room(&level.rooms[roomxy.x][roomxy.y], x1, y1);
         }
     }
+
 }
 
 

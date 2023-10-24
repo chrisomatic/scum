@@ -54,14 +54,16 @@ void entity_build_all()
     num_entities = 0;
 
     // players
-    for(int i = 0; i < num_players; ++i)
+    for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         Player* p = &players[i];
+        if(!p->active) continue;
+
         add_entity(ENTITY_TYPE_PLAYER,p,p->curr_room, &p->phys, true);
     }
 
     // creatures
-    int num_creatures = creature_get_count();
+    uint16_t num_creatures = creature_get_count();
     for(int i = 0; i < num_creatures; ++i)
     {
         Creature* c = &creatures[i];
@@ -78,7 +80,6 @@ void entity_build_all()
         Projectile* p = &projectiles[i];
         add_entity(ENTITY_TYPE_PROJECTILE,p,p->curr_room, &p->phys, true);
     }
-
 }
 
 void entity_handle_collisions()
