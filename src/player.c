@@ -36,7 +36,6 @@ void player_init()
         if(p == player)
         {
             player_init_keys();
-            // p->active = true;
         }
 
         p->active = false;
@@ -67,7 +66,6 @@ void player_init()
 
         p->proj_cooldown_max = 0.04;
         p->door = DIR_NONE;
-        // p->in_door = false;
 
         memset(p->name, PLAYER_NAME_MAX, 0);
         sprintf(p->name, "Player %d", i);

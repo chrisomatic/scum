@@ -306,15 +306,15 @@ static void creature_update_clinger(Creature* c, float dt)
         }
         else
         {
-            // fire!
-            if(c->sprite_index == 0)
-                projectile_add(&c->phys, c->curr_room, 90.0, 1.0, 1.0,false);
-            else if(c->sprite_index == 1)
-                projectile_add(&c->phys, c->curr_room, 270.0, 1.0, 1.0,false);
-            else if(c->sprite_index == 2)
-                projectile_add(&c->phys, c->curr_room, 180.0, 1.0, 1.0,false);
-            else if(c->sprite_index == 3)
-                projectile_add(&c->phys, c->curr_room, 0.0, 1.0, 1.0,false);
+            // // fire!
+            // if(c->sprite_index == 0)
+            //     projectile_add(&c->phys, c->curr_room, 90.0, 1.0, 1.0,false);
+            // else if(c->sprite_index == 1)
+            //     projectile_add(&c->phys, c->curr_room, 270.0, 1.0, 1.0,false);
+            // else if(c->sprite_index == 2)
+            //     projectile_add(&c->phys, c->curr_room, 180.0, 1.0, 1.0,false);
+            // else if(c->sprite_index == 3)
+            //     projectile_add(&c->phys, c->curr_room, 0.0, 1.0, 1.0,false);
         }
     }
     return;

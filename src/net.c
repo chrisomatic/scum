@@ -1398,7 +1398,6 @@ void net_client_update()
                         // load projectiles
                         uint8_t num_projectiles = unpack_u8(&srvpkt, &offset);
 
-                        //LOGN("Num projectiles: %u %d\n",num_projectiles, offset-1);
 
                         list_clear(plist);
                         plist->count = num_projectiles;
@@ -1430,16 +1429,13 @@ void net_client_update()
                                 }
                             }
 
+                            p->id = id;
+                            p->hit_box.w = 10;
+                            p->hit_box.h = 10;
                             p->curr_room = room_id;
                             p->scale = scale;
                             p->from_player = from_player == 0x01 ? true : false;
                             p->lerp_t = 0.0;
-
-                            //LOGN("      Pos: %f, %f", pos.x, pos.y);
-
-                            // p->server_state_prior.id = p->id;
-                            // p->server_state_prior.pos.x = p->phys.pos.x;
-                            // p->server_state_prior.pos.y = p->phys.pos.y;
 
                             p->server_state_target.id = id;
                             p->server_state_target.pos.x = pos.x;

@@ -292,17 +292,6 @@ void projectile_lerp(Projectile* p, double dt)
     float tick_time = 1.0/TICK_RATE;
     float t = (p->lerp_t / tick_time);
 
-    if((p->server_state_prior.pos.x == 0.0 && p->server_state_prior.pos.y == 0.0) || p->server_state_prior.id != p->server_state_target.id)
-    {
-        // new projectile, set position and id directly
-        p->server_state_prior.id = p->server_state_target.id;
-        p->id = p->server_state_target.id;
-        memcpy(&p->server_state_prior.pos, &p->server_state_target.pos, sizeof(Vector2f));
-        //TODO:
-        p->hit_box.w = 10;
-        p->hit_box.h = 10;
-    }
-
     Vector2f lp = lerp2f(&p->server_state_prior.pos,&p->server_state_target.pos,t);
     p->phys.pos.x = lp.x;
     p->phys.pos.y = lp.y;
