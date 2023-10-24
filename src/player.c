@@ -287,7 +287,6 @@ void player_draw_room_transition()
             level_draw_room(&level.rooms[roomxy.x][roomxy.y], x1, y1);
         }
     }
-
 }
 
 
@@ -800,3 +799,18 @@ void player_handle_collision(Player* p, Entity* e)
         } break;
     }
 }
+
+bool is_any_player_room(uint8_t curr_room)
+{
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        if(!players[i].active) continue;
+        if(curr_room == players[i].curr_room)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+

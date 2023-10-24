@@ -271,7 +271,6 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 
 void projectile_draw(Projectile* proj)
 {
-    printf("projectile curr room: %u, player curr room: %u\n",proj->curr_room, player->curr_room);
 
     if(proj->curr_room != player->curr_room)
         return; // don't draw projectile if not in same room

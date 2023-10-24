@@ -3,6 +3,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define MAX_PACKET_DATA_SIZE 32768
+#define MAX_PACKET_SIZE MAX_PACKET_DATA_SIZE + 20
+
 typedef struct
 {
     uint8_t a;

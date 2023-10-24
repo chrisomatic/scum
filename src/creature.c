@@ -126,17 +126,8 @@ void creature_update(Creature* c, float dt)
     if(c->dead)
         return;
 
-    bool sim = false;
-    for(int i = 0; i < MAX_PLAYERS; ++i)
-    {
-        if(!players[i].active) continue;
-        if(c->curr_room == players[i].curr_room)
-        {
-            sim = true;
-            break;
-        }
-    }
-    if(!sim) return;
+    if(!is_any_player_room(c->curr_room))
+        return;
 
     switch(c->type)
     {

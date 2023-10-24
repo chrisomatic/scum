@@ -93,5 +93,6 @@ void player_start_room_transition(Player* p);
 
 void player_set_active(Player* p, bool active);
 void player_handle_collision(Player* p, Entity* e);
+bool is_any_player_room(uint8_t curr_room);
 
 int player_names_build(bool include_all, bool only_active);

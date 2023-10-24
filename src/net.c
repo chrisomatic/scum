@@ -6,7 +6,6 @@
 #include <sys/select.h>
 #endif
 
-#include "core/socket.h"
 #include "core/timer.h"
 #include "core/window.h"
 #include "core/log.h"
@@ -87,6 +86,7 @@ static int inputs_per_packet = 1.0; //(TARGET_FPS/TICK_RATE);
 
 static inline void pack_u8(Packet* pkt, uint8_t d);
 static inline void pack_u16(Packet* pkt, uint16_t d);
+static inline void pack_u16_at(Packet* pkt, uint16_t d, int index);
 static inline void pack_u32(Packet* pkt, uint32_t d);
 static inline void pack_u64(Packet* pkt, uint64_t d);
 static inline void pack_float(Packet* pkt, float d);
@@ -178,22 +178,22 @@ static void print_address(Address* addr)
     LOGN("[ADDR] %u.%u.%u.%u:%u",addr->a,addr->b,addr->c,addr->d,addr->port);
 }
 
-static void print_packet(Packet* pkt)
+static void print_packet(Packet* pkt, bool full)
 {
     LOGN("Game ID:      0x%08x",pkt->hdr.game_id);
     LOGN("Packet ID:    %u",pkt->hdr.id);
     LOGN("Packet Type:  %s (%02X)",packet_type_to_str(pkt->hdr.type),pkt->hdr.type);
     LOGN("Data (%u):", pkt->data_len);
 
-    char data[3*16+5] = {0};
+    char data[4*MAX_PACKET_DATA_SIZE] = {0};
     char byte[4] = {0};
-    for(int i = 0; i < MIN(16,pkt->data_len); ++i)
+    for(int i = 0; i < pkt->data_len; ++i)
     {
         sprintf(byte,"%02X ",pkt->data[i]);
         memcpy(data+(3*i), byte,3);
     }
 
-    if(pkt->data_len <= 16)
+    if(full || pkt->data_len <= 16)
     {
         LOGN("%s", data);
     }
@@ -243,7 +243,7 @@ static int net_send(NodeInfo* node_info, Address* to, Packet* pkt)
     print_packet_simple(pkt,"SEND");
 #elif SERVER_PRINT_VERBOSE==1
     LOGN("[SENT] Packet %d (%u B)",pkt->hdr.id,sent_bytes);
-    print_packet(pkt);
+    print_packet(pkt, false);
 #endif
 
     node_info->local_latest_packet_id++;
@@ -260,7 +260,7 @@ static int net_recv(NodeInfo* node_info, Address* from, Packet* pkt)
 #elif SERVER_PRINT_VERBOSE
     LOGN("[RECV] Packet %d (%u B)",pkt->hdr.id,recv_bytes);
     print_address(from);
-    print_packet(pkt);
+    print_packet(pkt, false);
 #endif
 
     return recv_bytes;
@@ -440,35 +440,54 @@ static void server_send(PacketType type, ClientInfo* cli)
             // creatures
             uint16_t num_creatures = creature_get_count();
 
-            pack_u16(&pkt,num_creatures);
+            int num_creature_index = pkt.data_len;
+            uint16_t num_visible_creatures = 0;
+            pkt.data_len+=2;
 
             for(int i = 0; i < num_creatures; ++i)
             {
                 Creature* c = &creatures[i];
+
+                if(!is_any_player_room(c->curr_room))
+                    continue;
 
                 pack_u16(&pkt, c->id);
                 pack_u8(&pkt, (uint8_t)c->type);
                 pack_vec2(&pkt, c->phys.pos);
                 pack_u8(&pkt, c->sprite_index);
                 pack_u8(&pkt, c->curr_room);
+                num_visible_creatures++;
             }
 
-            // projectiles
-            printf("num projectiles: %u, index: %d\n",(uint8_t)plist->count, pkt.data_len);
+            pack_u16_at(&pkt, num_visible_creatures,num_creature_index);
+            //memcpy(&pkt.data[num_creature_index],&num_visible_creatures,sizeof(uint16_t));
 
-            pack_u8(&pkt,(uint8_t)plist->count);
+            // projectiles
+            //printf("num projectiles: %u, index: %d\n",(uint8_t)plist->count, pkt.data_len);
+
+            int num_projectiles_index = pkt.data_len;
+            int num_visible_projectiles = 0;
+            pkt.data_len++;
 
             for(int i = 0; i < plist->count; ++i)
             {
                 Projectile* p = &projectiles[i];
+
+                if(!is_any_player_room(p->curr_room))
+                    continue;
+
                 pack_u16(&pkt,p->id);
                 pack_vec2(&pkt,p->phys.pos);
                 pack_u8(&pkt,p->player_id);
                 pack_u8(&pkt,p->curr_room);
+                pack_float(&pkt,p->scale);
                 pack_u8(&pkt,(uint8_t)(p->from_player ? 0x01 : 0x00));
+                num_visible_projectiles++;
             }
 
-            //print_packet(&pkt);
+            pkt.data[num_projectiles_index] = num_visible_projectiles;
+
+            //print_packet(&pkt, true);
 
             if(memcmp(&cli->prior_state_pkt.data, &pkt.data, pkt.data_len) == 0)
                 break;
@@ -1267,6 +1286,8 @@ void net_client_update()
                 } break;
                 case PACKET_TYPE_STATE:
                 {
+                    //print_packet(&srvpkt, true);
+
                     num_players = unpack_u8(&srvpkt, &offset);
                     client.player_count = num_players;
 
@@ -1372,11 +1393,10 @@ void net_client_update()
 
                         memcpy(prior_projectiles, projectiles, sizeof(Projectile)*MAX_PROJECTILES);
 
-
                         // load projectiles
                         uint8_t num_projectiles = unpack_u8(&srvpkt, &offset);
 
-                        LOGN("Num projectiles: %u %d\n",num_projectiles, offset-1);
+                        //LOGN("Num projectiles: %u %d\n",num_projectiles, offset-1);
 
                         list_clear(plist);
                         plist->count = num_projectiles;
@@ -1389,6 +1409,8 @@ void net_client_update()
                             Vector2f pos = unpack_vec2(&srvpkt, &offset);
                             uint8_t player_id = unpack_u8(&srvpkt, &offset);
                             uint8_t room_id = unpack_u8(&srvpkt, &offset);
+                            float scale = unpack_float(&srvpkt,&offset);
+                            uint8_t from_player = unpack_u8(&srvpkt, &offset);
 
                             p->server_state_prior.id = id;
                             p->server_state_prior.pos.x = pos.x;
@@ -1407,9 +1429,11 @@ void net_client_update()
                             }
 
                             p->curr_room = room_id;
+                            p->scale = scale;
+                            p->from_player = from_player == 0x01 ? true : false;
                             p->lerp_t = 0.0;
 
-                            LOGN("      Pos: %f, %f", pos.x, pos.y);
+                            //LOGN("      Pos: %f, %f", pos.x, pos.y);
 
                             // p->server_state_prior.id = p->id;
                             // p->server_state_prior.pos.x = p->phys.pos.x;
@@ -1584,6 +1608,11 @@ static inline void pack_u16(Packet* pkt, uint16_t d)
     pkt->data_len+=sizeof(uint16_t);
 }
 
+static inline void pack_u16_at(Packet* pkt, uint16_t d, int index)
+{
+    pkt->data[index+0] = (d>>8) & 0xFF;
+    pkt->data[index+1] = (d) & 0xFF;
+}
 static inline void pack_u32(Packet* pkt, uint32_t d)
 {
     pkt->data[pkt->data_len+0] = (d>>24) & 0xFF;
