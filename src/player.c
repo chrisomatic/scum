@@ -75,7 +75,7 @@ void player_init()
         p->anim.curr_frame = 0;
         p->anim.max_frames = 4;
         p->anim.curr_frame_time = 0.0f;
-        p->anim.max_frame_time = 0.05f;
+        p->anim.max_frame_time = 0.02f;
         p->anim.finite = false;
         p->anim.curr_loop = 0;
         p->anim.max_loops = 0;
@@ -215,7 +215,7 @@ void player_hurt(Player* p, int damage)
     {
         p->invulnerable = true;
         p->invulnerable_time = 0.0;
-        p->invulnerable_max = 0.5;
+        p->invulnerable_max = 1.0;
     }
 }
 
