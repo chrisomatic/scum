@@ -106,7 +106,7 @@ void editor_draw()
 
                 if(imgui_button("Send To Start"))
                 {
-                    player_set_to_level_start(p);
+                    player_send_to_level_start(p);
                 }
 
                 if(imgui_button("Hurt"))

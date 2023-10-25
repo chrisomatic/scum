@@ -418,7 +418,7 @@ void game_generate_level(unsigned int _seed)
 
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
-        player_set_to_level_start(&players[i]);
+        player_send_to_level_start(&players[i]);
     }
 
 }

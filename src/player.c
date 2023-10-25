@@ -139,9 +139,10 @@ int player_names_build(bool include_all, bool only_active)
 }
 
 
-void player_set_to_level_start(Player* p)
+void player_send_to_room(Player* p, uint8_t room_index)
 {
-    uint8_t idx = (uint8_t)level_get_room_index(level.start.x, level.start.y);
+    // uint8_t idx = (uint8_t)level_get_room_index(level.start.x, level.start.y);
+    uint8_t idx = room_index;
     p->curr_room = idx;
     p->transition_room = p->curr_room;
 
@@ -168,6 +169,11 @@ void player_set_to_level_start(Player* p)
     }
 }
 
+void player_send_to_level_start(Player* p)
+{
+    uint8_t idx = level_get_room_index(level.start.x, level.start.y);
+    player_send_to_room(p, idx);
+}
 
 void player_init_keys()
 {
@@ -234,7 +240,17 @@ void player_reset(Player* p)
     p->hp = p->hp_max;
     p->phys.vel.x = 0.0;
     p->phys.vel.y = 0.0;
-    player_set_to_level_start(p);
+
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        Player* p2 = &players[i];
+        if(p == p2) continue;
+        if(!p2->active) continue;
+        player_send_to_room(p, p2->curr_room);
+        return;
+    }
+
+    player_send_to_level_start(p);
 }
 
 // also does the drawing
