@@ -639,7 +639,11 @@ void update(float dt)
         for(int i = 0; i < plist->count; ++i)
         {
             projectile_lerp(&projectiles[i], dt);
-            projectile_update_hit_box(&projectiles[i]);
+        }
+
+        for(int i = 0; i < creature_get_count(); ++i)
+        {
+            creature_lerp(&creatures[i], dt);
         }
 
         for(int i = 0; i < MAX_CLIENTS; ++i)
@@ -655,7 +659,6 @@ void update(float dt)
         entity_build_all();
 
         camera_set();
-        // camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 
         return;
     }

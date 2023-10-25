@@ -122,18 +122,18 @@ void editor_draw()
                 static int num_creatures = 1;
                 imgui_number_box("Number", 1, 100, &num_creatures);
 
+                Room* room = level_get_room_by_index(&level, player->curr_room);
+
                 if(imgui_button("Add Slug"))
                 {
-                    Room* room = level_get_room_by_index(&level, player->curr_room);
                     for(int i = 0; i < num_creatures; ++i)
-                        creature_add(room, CREATURE_TYPE_SLUG);
+                        creature_add(room, CREATURE_TYPE_SLUG, NULL);
                 }
 
                 if(imgui_button("Add Clinger"))
                 {
-                    Room* room = level_get_room_by_index(&level, player->curr_room);
                     for(int i = 0; i < num_creatures; ++i)
-                        creature_add(room, CREATURE_TYPE_CLINGER);
+                        creature_add(room, CREATURE_TYPE_CLINGER, NULL);
                 }
 
                 if(imgui_button("Clear"))

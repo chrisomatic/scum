@@ -20,7 +20,7 @@ int player_image = -1;
 Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
 int player_image;
-int num_players = 0;
+// int num_players = 0;
 
 void player_init()
 {
@@ -91,13 +91,24 @@ void player_set_active(Player* p, bool active)
 {
     p->active = active;
 
+    // int num = 0;
+    // for(int i = 0; i < MAX_PLAYERS; ++i)
+    // {
+    //     if(players[i].active)
+    //         num++;
+    // }
+    // num_players = num;
+}
+
+int player_get_active_count()
+{
     int num = 0;
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         if(players[i].active)
             num++;
     }
-    num_players = num;
+    return num;
 }
 
 int player_names_build(bool include_all, bool only_active)

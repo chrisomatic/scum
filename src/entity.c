@@ -20,6 +20,7 @@ static void add_entity(EntityType type, void* ptr, uint8_t curr_room, Physics* p
 
 static bool is_player_room(uint8_t room_index)
 {
+    int num_players = player_get_active_count();
     for(int i = 0; i < num_players; ++i)
     {
         if(players[i].curr_room == room_index)

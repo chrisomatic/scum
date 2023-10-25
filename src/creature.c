@@ -11,6 +11,7 @@
 #include "creature.h"
 #include "ai.h"
 
+Creature prior_creatures[MAX_CREATURES];
 Creature creatures[MAX_CREATURES];
 glist* clist = NULL;
 
@@ -115,22 +116,41 @@ static void add_to_random_tile(Creature* c, Room* room)
     c->sprite_index = DIR_DOWN;
 }
 
-Creature* creature_add(Room* room, CreatureType type)
+Creature* creature_add(Room* room, CreatureType type, Creature* creature)
 {
-    if(!room)
-        return NULL;
-
     Creature c = {0};
 
-    c.id = get_id();
-    c.type = type;
-    c.curr_room = room->index;
+    if(creature != NULL)
+    {
+        memcpy(&c, creature, sizeof(Creature));
+        room = level_get_room_by_index(&level, c.curr_room);
+        if(!room) return NULL;
+    }
+    else
+    {
+        if(room == NULL) return NULL;
+        c.curr_room = room->index;
 
-    switch(type)
+        c.id = get_id();
+        c.type = type;
+
+        switch(c.type)
+        {
+            case CREATURE_TYPE_SLUG:
+            {
+                add_to_random_tile(&c, room);
+            } break;
+            case CREATURE_TYPE_CLINGER:
+            {
+                add_to_random_wall_tile(&c);
+            }
+        }
+    }
+
+    switch(c.type)
     {
         case CREATURE_TYPE_SLUG:
         {
-            add_to_random_tile(&c, room);
             c.phys.speed = 300.0;
             c.image = creature_image_slug;
             c.act_time_min = 0.5;
@@ -138,7 +158,6 @@ Creature* creature_add(Room* room, CreatureType type)
         } break;
         case CREATURE_TYPE_CLINGER:
         {
-            add_to_random_wall_tile(&c);
             c.phys.speed = 500.0;
             c.image = creature_image_clinger;
             c.act_time_min = 0.2;
@@ -146,7 +165,7 @@ Creature* creature_add(Room* room, CreatureType type)
         }
     }
 
-    memcpy(&c.phys.target_pos,&c.phys.pos,sizeof(Vector2f));
+    memcpy(&c.phys.target_pos, &c.phys.pos, sizeof(Vector2f));
 
     c.color = room->color;
     c.phys.mass = 1.0;
@@ -154,9 +173,13 @@ Creature* creature_add(Room* room, CreatureType type)
     c.phys.coffset.x = 0;
     c.phys.coffset.y = 0;
     c.hp_max = 3.0;
-    c.hp = c.hp_max;
     c.damage = 1;
     c.painful_touch = true;
+
+    if(creature == NULL)
+    {
+        c.hp = c.hp_max;
+    }
 
     ai_init_action(&c);
 
@@ -230,6 +253,22 @@ void creature_update(Creature* c, float dt)
     }
 #endif
 
+}
+
+void creature_lerp(Creature* c, float dt)
+{
+    if(!c->dead) return;
+
+    c->lerp_t += dt;
+
+    float tick_time = 1.0/TICK_RATE;
+    float t = (c->lerp_t / tick_time);
+
+    Vector2f lp = lerp2f(&c->server_state_prior.pos, &c->server_state_target.pos, t);
+    c->phys.pos.x = lp.x;
+    c->phys.pos.y = lp.y;
+
+    // creature_update_hit_box(c);
 }
 
 void creature_update_all(float dt)
@@ -330,6 +369,7 @@ static Player* get_nearest_player(Vector2f* pt)
     float min_dist = 10000.0;
     int min_index = 0;
 
+    int num_players = player_get_active_count();
     for(int i = 0; i < num_players; ++i)
     {
         Player* p = &players[i];

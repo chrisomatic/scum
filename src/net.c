@@ -87,6 +87,7 @@ static int inputs_per_packet = 1.0; //(TARGET_FPS/TICK_RATE);
 
 static inline void pack_bool(Packet* pkt, bool d);
 static inline void pack_u8(Packet* pkt, uint8_t d);
+static inline void pack_u8_at(Packet* pkt, uint8_t d, int index);
 static inline void pack_u16(Packet* pkt, uint16_t d);
 static inline void pack_u16_at(Packet* pkt, uint16_t d, int index);
 static inline void pack_u32(Packet* pkt, uint32_t d);
@@ -105,6 +106,14 @@ static inline float    unpack_float(Packet* pkt, int* offset);
 static inline void unpack_bytes(Packet* pkt, uint8_t* d, int len, int* offset);
 static inline uint8_t unpack_string(Packet* pkt, char* s, int maxlen, int* offset);
 static inline Vector2f unpack_vec2(Packet* pkt, int* offset);
+
+static void pack_players(Packet* pkt, ClientInfo* cli);
+static void unpack_players(Packet* pkt, int* offset);
+static void pack_creatures(Packet* pkt, ClientInfo* cli);
+static void unpack_creatures(Packet* pkt, int* offset);
+static void pack_projectiles(Packet* pkt, ClientInfo* cli);
+static void unpack_projectiles(Packet* pkt, int* offset);
+
 
 static uint64_t rand64(void)
 {
@@ -188,22 +197,34 @@ static void print_packet(Packet* pkt, bool full)
     LOGN("Packet Type:  %s (%02X)",packet_type_to_str(pkt->hdr.type),pkt->hdr.type);
     LOGN("Data (%u):", pkt->data_len);
 
-    char data[4*MAX_PACKET_DATA_SIZE] = {0};
-    char byte[4] = {0};
-    for(int i = 0; i < pkt->data_len; ++i)
+    #define PSIZE 32
+
+    int idx = 0;
+    for(;;)
     {
-        sprintf(byte,"%02X ",pkt->data[i]);
-        memcpy(data+(3*i), byte,3);
+        int size = MIN(PSIZE, (int)pkt->data_len - idx);
+        if(size <= 0) break;
+
+        char data[3*PSIZE+5] = {0};
+        char byte[4] = {0};
+
+        for(int i = 0; i < size; ++i)
+        {
+            sprintf(byte,"%02X ",pkt->data[idx+i]);
+            memcpy(data+(3*i), byte,3);
+        }
+
+        if(!full && pkt->data_len > PSIZE)
+        {
+            LOGN("%s ...", data);
+            return;
+        }
+
+        LOGN("%s", data);
+
+        idx += size;
     }
 
-    if(full || pkt->data_len <= 16)
-    {
-        LOGN("%s", data);
-    }
-    else
-    {
-        LOGN("%s ...", data);
-    }
 }
 
 static void print_packet_simple(Packet* pkt, const char* hdr)
@@ -420,80 +441,9 @@ static void server_send(PacketType type, ClientInfo* cli)
 
         case PACKET_TYPE_STATE:
         {
-            pkt.data_len++;
-            int num_clients = 0;
-
-            //players
-            for(int i = 0; i < MAX_CLIENTS; ++i)
-            {
-                if(server.clients[i].state == CONNECTED)
-                {
-                    Player* p = &players[i];
-
-                    pack_u8(&pkt,(uint8_t)i);
-                    pack_vec2(&pkt,p->phys.pos);
-                    pack_u8(&pkt, p->sprite_index+p->anim.curr_frame);
-                    pack_u8(&pkt, p->curr_room);
-                    pack_u8(&pkt, p->hp);
-                    pack_bool(&pkt, p->invulnerable);
-                    pack_float(&pkt, p->invulnerable_time);
-                    pack_u8(&pkt, (uint8_t)p->door);
-                    num_clients++;
-                }
-            }
-
-            pkt.data[0] = num_clients;
-
-            // creatures
-            uint16_t num_creatures = creature_get_count();
-
-            int num_creature_index = pkt.data_len;
-            uint16_t num_visible_creatures = 0;
-            pkt.data_len+=2;
-
-            for(int i = 0; i < num_creatures; ++i)
-            {
-                Creature* c = &creatures[i];
-
-                if(!is_any_player_room(c->curr_room))
-                    continue;
-
-                pack_u16(&pkt, c->id);
-                pack_u8(&pkt, (uint8_t)c->type);
-                pack_vec2(&pkt, c->phys.pos);
-                pack_u8(&pkt, c->sprite_index);
-                pack_u8(&pkt, c->curr_room);
-                num_visible_creatures++;
-            }
-
-            pack_u16_at(&pkt, num_visible_creatures,num_creature_index);
-            //memcpy(&pkt.data[num_creature_index],&num_visible_creatures,sizeof(uint16_t));
-
-            // projectiles
-            //printf("num projectiles: %u, index: %d\n",(uint8_t)plist->count, pkt.data_len);
-
-            int num_projectiles_index = pkt.data_len;
-            int num_visible_projectiles = 0;
-            pkt.data_len++;
-
-            for(int i = 0; i < plist->count; ++i)
-            {
-                Projectile* p = &projectiles[i];
-
-                if(!is_any_player_room(p->curr_room))
-                    continue;
-
-                pack_u16(&pkt,p->id);
-                pack_vec2(&pkt,p->phys.pos);
-                pack_u8(&pkt,p->player_id);
-                pack_u8(&pkt,p->curr_room);
-                pack_float(&pkt,p->scale);
-                pack_bool(&pkt, p->from_player);
-                num_visible_projectiles++;
-            }
-
-            pkt.data[num_projectiles_index] = num_visible_projectiles;
-
+            pack_players(&pkt, cli);
+            pack_creatures(&pkt, cli);
+            pack_projectiles(&pkt, cli);
             //print_packet(&pkt, true);
 
             if(memcmp(&cli->prior_state_pkt.data, &pkt.data, pkt.data_len) == 0)
@@ -1295,171 +1245,13 @@ void net_client_update()
                 {
                     //print_packet(&srvpkt, true);
 
-                    num_players = unpack_u8(&srvpkt, &offset);
-                    client.player_count = num_players;
+                    unpack_players(&srvpkt, &offset);
+                    unpack_creatures(&srvpkt, &offset);
+                    unpack_projectiles(&srvpkt, &offset);
 
-                    bool prior_active[MAX_CLIENTS] = {0};
-                    for(int i = 0; i < MAX_CLIENTS; ++i)
-                    {
-                        prior_active[i] = players[i].active;
-                        players[i].active = false;
-                    }
-
-                    //LOGN("Received STATE packet. num players: %d", num_players);
-
-                    for(int i = 0; i < num_players; ++i)
-                    {
-                        uint8_t client_id = unpack_u8(&srvpkt, &offset);
-
-                        //LOGN("  %d: Client ID %d", i, client_id);
-
-                        if(client_id >= MAX_CLIENTS)
-                        {
-                            LOGE("Client ID is too large: %d",client_id);
-                            break;
-                        }
-
-                        Player* p = &players[client_id];
-                        players[i].active = true;
-                        // player_set_active(&players[i], true); // @OPTIMIZE: This function loops through players to count them
-
-                        Vector2f pos    = unpack_vec2(&srvpkt, &offset);
-                        p->sprite_index = unpack_u8(&srvpkt, &offset);
-                        uint8_t curr_room  = unpack_u8(&srvpkt, &offset);
-                        p->hp  = unpack_u8(&srvpkt, &offset);
-                        p->invulnerable = unpack_bool(&srvpkt, &offset);
-                        float invulnerable_time = unpack_float(&srvpkt, &offset);
-                        p->door  = (Dir)unpack_u8(&srvpkt, &offset);
-
-                        //LOGN("pos %f %f, sprite index %u, curr room %u, trans room: %u, door %u", pos.x,pos.y,p->sprite_index,curr_room,p->transition_room, p->door);
-
-                        // moving between rooms
-                        if(curr_room != p->curr_room)
-                        {
-                            if(p == player)
-                            {
-                                p->transition_room = p->curr_room;
-                                p->curr_room = curr_room;
-                                //printf("net recv: %d -> %d\n", p->transition_room, p->curr_room); printf("door: %d\n", p->door);
-                                player_start_room_transition(p);
-                            }
-                            else
-                            {
-                                p->transition_room = curr_room;
-                                p->curr_room = curr_room;
-                            }
-                            p->phys.pos.x = pos.x;
-                            p->phys.pos.y = pos.y;
-                        }
-
-                        //LOGN("      Pos: %f, %f. Angle: %f", pos.x, pos.y, angle);
-
-                        // p->active = true;
-                        p->lerp_t = 0.0;
-
-                        p->server_state_prior.pos.x = p->phys.pos.x;
-                        p->server_state_prior.pos.y = p->phys.pos.y;
-                        p->server_state_prior.invulnerable_time = p->invulnerable_time;
-
-                        p->server_state_target.pos.x = pos.x;
-                        p->server_state_target.pos.y = pos.y;
-                        p->server_state_target.invulnerable_time = invulnerable_time;
-
-                        if(!prior_active[client_id])
-                        {
-                            printf("first state packet for %d\n", client_id);
-                            memcpy(&p->server_state_prior, &p->server_state_target, sizeof(p->server_state_target));
-                        }
-                        // printf("[prior]  %.2f, %.2f\n", p->server_state_prior.pos.x, p->server_state_prior.pos.y);
-                        // printf("[target] %.2f, %.2f\n", p->server_state_target.pos.x, p->server_state_target.pos.y);
-                    }
-
-                    // creatures
-                    {
-                        uint16_t num_creatures = unpack_u16(&srvpkt, &offset);
-
-                        creature_clear_all();
-
-                        for(int i = 0; i < num_creatures; ++i)
-                        {
-                            uint16_t id = unpack_u16(&srvpkt,&offset);
-                            uint8_t  creature_type = unpack_u8(&srvpkt,&offset);
-                            Vector2f pos = unpack_vec2(&srvpkt, &offset);
-                            uint8_t sprite_index = unpack_u8(&srvpkt, &offset);
-                            uint8_t curr_room = unpack_u8(&srvpkt, &offset);
-
-                            Room* room = level_get_room_by_index(&level, curr_room);
-
-                            Creature* c = creature_add(room, (CreatureType)creature_type);
-                            if(!c) continue;
-
-                            c->id = id;
-                            memcpy(&c->phys.pos,&pos, sizeof(Vector2f));
-                            c->sprite_index = sprite_index;
-                            c->curr_room = curr_room;
-                        }
-                    }
-
-
-                    // Projectiles
-                    {
-
-                        memcpy(prior_projectiles, projectiles, sizeof(Projectile)*MAX_PROJECTILES);
-
-                        // load projectiles
-                        uint8_t num_projectiles = unpack_u8(&srvpkt, &offset);
-
-
-                        list_clear(plist);
-                        plist->count = num_projectiles;
-
-                        for(int i = 0; i < num_projectiles; ++i)
-                        {
-                            Projectile* p = &projectiles[i];
-
-                            uint16_t id = unpack_u16(&srvpkt, &offset);
-                            Vector2f pos = unpack_vec2(&srvpkt, &offset);
-                            uint8_t player_id = unpack_u8(&srvpkt, &offset);
-                            uint8_t room_id = unpack_u8(&srvpkt, &offset);
-                            float scale = unpack_float(&srvpkt,&offset);
-                            uint8_t from_player = unpack_u8(&srvpkt, &offset);
-
-                            p->server_state_prior.id = id;
-                            p->server_state_prior.pos.x = pos.x;
-                            p->server_state_prior.pos.y = pos.y;
-
-                            //find the prior
-                            for(int j = i; j < MAX_PROJECTILES; ++j)
-                            {
-                                Projectile* pj = &prior_projectiles[j];
-                                if(pj->id == id)
-                                {
-                                    p->server_state_prior.pos.x = pj->phys.pos.x;
-                                    p->server_state_prior.pos.y = pj->phys.pos.y;
-                                    break;
-                                }
-                            }
-
-                            p->id = id;
-                            p->hit_box.w = 10;
-                            p->hit_box.h = 10;
-                            p->curr_room = room_id;
-                            p->scale = scale;
-                            p->from_player = from_player == 0x01 ? true : false;
-                            p->lerp_t = 0.0;
-
-                            p->server_state_target.id = id;
-                            p->server_state_target.pos.x = pos.x;
-                            p->server_state_target.pos.y = pos.y;
-
-                            p->player_id = player_id;
-                        }
-                    }
-
-                    client.player_count = num_players;
-
+                    client.player_count = player_get_active_count();
                 } break;
- 
+
                 case PACKET_TYPE_PING:
                 {
                     client.time_of_last_received_ping = timer_get_time();
@@ -1612,6 +1404,11 @@ static inline void pack_u8(Packet* pkt, uint8_t d)
 {
     pkt->data[pkt->data_len] = d;
     pkt->data_len += sizeof(uint8_t);
+}
+
+static inline void pack_u8_at(Packet* pkt, uint8_t d, int index)
+{
+    pkt->data[index] = d;
 }
 
 static inline void pack_u16(Packet* pkt, uint16_t d)
@@ -1819,4 +1616,257 @@ void test_packing()
     LOGI("P ID: %u  =  %u", pid0, pid1);
     LOGI("Color: %u  =  %u", color0, color1);
     LOGI("u64: %llu  =  %llu", u64_0, u64_1);
+}
+
+
+
+static void pack_players(Packet* pkt, ClientInfo* cli)
+{
+    int index = pkt->data_len;
+    pkt->data_len += 1;
+
+    uint8_t player_count = 0;
+
+    for(int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        if(server.clients[i].state == CONNECTED)
+        {
+            Player* p = &players[i];
+
+            pack_u8(pkt,(uint8_t)i);
+            pack_vec2(pkt,p->phys.pos);
+            pack_u8(pkt, p->sprite_index+p->anim.curr_frame);
+            pack_u8(pkt, p->curr_room);
+            pack_u8(pkt, p->hp);
+            pack_bool(pkt, p->invulnerable);
+            pack_float(pkt, p->invulnerable_time);
+            pack_u8(pkt, (uint8_t)p->door);
+            player_count++;
+        }
+    }
+
+    pack_u8_at(pkt, player_count, index);
+}
+
+static void unpack_players(Packet* pkt, int* offset)
+{
+    uint8_t player_count = unpack_u8(pkt, offset);
+    client.player_count = player_count;
+
+    bool prior_active[MAX_CLIENTS] = {0};
+    for(int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        prior_active[i] = players[i].active;
+        players[i].active = false;
+    }
+
+    for(int i = 0; i < player_count; ++i)
+    {
+        uint8_t client_id = unpack_u8(pkt, offset);
+
+        if(client_id >= MAX_CLIENTS)
+        {
+            LOGE("Client ID is too large: %d",client_id);
+            return; //TODO
+        }
+
+        Player* p = &players[client_id];
+        players[i].active = true;
+
+        Vector2f pos    = unpack_vec2(pkt, offset);
+        p->sprite_index = unpack_u8(pkt, offset);
+        uint8_t curr_room  = unpack_u8(pkt, offset);
+        p->hp  = unpack_u8(pkt, offset);
+        p->invulnerable = unpack_bool(pkt, offset);
+        float invulnerable_time = unpack_float(pkt, offset);
+        p->door  = (Dir)unpack_u8(pkt, offset);
+
+        // moving between rooms
+        if(curr_room != p->curr_room)
+        {
+            if(p == player)
+            {
+                p->transition_room = p->curr_room;
+                p->curr_room = curr_room;
+                //printf("net recv: %d -> %d\n", p->transition_room, p->curr_room); printf("door: %d\n", p->door);
+                player_start_room_transition(p);
+            }
+            else
+            {
+                p->transition_room = curr_room;
+                p->curr_room = curr_room;
+            }
+            p->phys.pos.x = pos.x;
+            p->phys.pos.y = pos.y;
+        }
+
+        p->lerp_t = 0.0;
+
+        p->server_state_prior.pos.x = p->phys.pos.x;
+        p->server_state_prior.pos.y = p->phys.pos.y;
+        p->server_state_prior.invulnerable_time = p->invulnerable_time;
+
+        p->server_state_target.pos.x = pos.x;
+        p->server_state_target.pos.y = pos.y;
+        p->server_state_target.invulnerable_time = invulnerable_time;
+
+        if(!prior_active[client_id])
+        {
+            printf("first state packet for %d\n", client_id);
+            memcpy(&p->server_state_prior, &p->server_state_target, sizeof(p->server_state_target));
+        }
+    }
+}
+
+static void pack_creatures(Packet* pkt, ClientInfo* cli)
+{
+    int index = pkt->data_len;
+    pkt->data_len += 2;
+
+    uint16_t num_creatures = creature_get_count();
+    uint16_t num_visible_creatures = 0;
+
+    for(int i = 0; i < num_creatures; ++i)
+    {
+        Creature* c = &creatures[i];
+
+        if(!is_any_player_room(c->curr_room))
+            continue;
+
+        pack_u16(pkt, c->id);
+        pack_u8(pkt, (uint8_t)c->type);
+        pack_vec2(pkt, c->phys.pos);
+        pack_u8(pkt, c->sprite_index);
+        pack_u8(pkt, c->curr_room);
+        pack_float(pkt, c->hp);
+        num_visible_creatures++;
+    }
+
+    pack_u16_at(pkt, num_visible_creatures, index);
+}
+
+static void unpack_creatures(Packet* pkt, int* offset)
+{
+    memcpy(prior_creatures, creatures, sizeof(Creature)*MAX_CREATURES);
+
+    uint16_t num_creatures = unpack_u16(pkt, offset);
+    creature_clear_all();
+
+    for(int i = 0; i < num_creatures; ++i)
+    {
+        uint16_t id = unpack_u16(pkt, offset);
+        uint8_t  creature_type = unpack_u8(pkt, offset);
+        Vector2f pos = unpack_vec2(pkt, offset);
+        uint8_t sprite_index = unpack_u8(pkt, offset);
+        uint8_t curr_room = unpack_u8(pkt, offset);
+        float hp = unpack_float(pkt, offset);
+
+        Creature creature = {0};
+        creature.id = id;
+        creature.type = creature_type;
+        memcpy(&creature.phys.pos, &pos, sizeof(Vector2f));
+        creature.sprite_index = sprite_index;
+        creature.curr_room = curr_room;
+        creature.hp = hp;
+        Creature* c = creature_add(NULL, 0, &creature);
+
+        c->server_state_prior.pos.x = pos.x;
+        c->server_state_prior.pos.y = pos.y;
+
+        //find the prior
+        for(int j = i; j < MAX_CREATURES; ++j)
+        {
+            Creature* cj = &prior_creatures[j];
+            if(cj->id == c->id)
+            {
+                c->server_state_prior.pos.x = cj->phys.pos.x;
+                c->server_state_prior.pos.y = cj->phys.pos.y;
+                break;
+            }
+        }
+
+        c->lerp_t = 0.0;
+        c->server_state_target.pos.x = pos.x;
+        c->server_state_target.pos.y = pos.y;
+    }
+}
+
+
+static void pack_projectiles(Packet* pkt, ClientInfo* cli)
+{
+    int index = pkt->data_len;
+    pkt->data_len += 2;
+
+    uint16_t num_projectiles = (uint16_t)plist->count;
+    uint16_t num_visible_projectiles = 0;
+
+    for(int i = 0; i < num_projectiles; ++i)
+    {
+        Projectile* p = &projectiles[i];
+
+        if(!is_any_player_room(p->curr_room))
+            continue;
+
+        pack_u16(pkt,p->id);
+        pack_vec2(pkt,p->phys.pos);
+        pack_u8(pkt,p->player_id);
+        pack_u8(pkt,p->curr_room);
+        pack_float(pkt,p->scale);
+        pack_bool(pkt, p->from_player);
+        num_visible_projectiles++;
+    }
+
+    pack_u16_at(pkt, num_visible_projectiles, index);
+}
+
+static void unpack_projectiles(Packet* pkt, int* offset)
+{
+    memcpy(prior_projectiles, projectiles, sizeof(Projectile)*MAX_PROJECTILES);
+
+    // load projectiles
+    uint16_t num_projectiles = unpack_u16(pkt, offset);
+
+    list_clear(plist);
+    plist->count = num_projectiles;
+
+    for(int i = 0; i < num_projectiles; ++i)
+    {
+        Projectile* p = &projectiles[i];
+
+        uint16_t id = unpack_u16(pkt, offset);
+        Vector2f pos = unpack_vec2(pkt, offset);
+        uint8_t player_id = unpack_u8(pkt, offset);
+        uint8_t room_id = unpack_u8(pkt, offset);
+        float scale = unpack_float(pkt, offset);
+        uint8_t from_player = unpack_u8(pkt, offset);
+
+        p->id = id;
+        p->hit_box.w = 10;
+        p->hit_box.h = 10;
+        p->curr_room = room_id;
+        p->scale = scale;
+        p->from_player = from_player == 0x01 ? true : false;
+        p->lerp_t = 0.0;
+
+        p->server_state_prior.pos.x = pos.x;
+        p->server_state_prior.pos.y = pos.y;
+
+        //find the prior
+        for(int j = i; j < MAX_PROJECTILES; ++j)
+        {
+            Projectile* pj = &prior_projectiles[j];
+            if(pj->id == p->id)
+            {
+                p->server_state_prior.pos.x = pj->phys.pos.x;
+                p->server_state_prior.pos.y = pj->phys.pos.y;
+                break;
+            }
+        }
+
+        // p->server_state_target.id = id;
+        p->server_state_target.pos.x = pos.x;
+        p->server_state_target.pos.y = pos.y;
+
+        p->player_id = player_id;
+    }
 }

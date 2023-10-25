@@ -95,19 +95,18 @@ PACK(struct NetPlayerInput
 
 typedef struct NetPlayerInput NetPlayerInput;
 
-PACK(struct PlayerNetState
-{
-    bool active;
-    uint16_t associated_packet_id;
-    Vector2f pos;
-    uint8_t sprite_index;
-});
+// PACK(struct PlayerNetState
+// {
+//     bool active;
+//     uint16_t associated_packet_id;
+//     Vector2f pos;
+//     uint8_t sprite_index;
+// });
 
-typedef struct PlayerNetState PlayerNetState;
+// typedef struct PlayerNetState PlayerNetState;
 
 typedef struct
 {
-    uint16_t id;
     Vector2f pos;
     float invulnerable_time;
 } ObjectState;

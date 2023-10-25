@@ -298,5 +298,7 @@ void projectile_lerp(Projectile* p, double dt)
     p->phys.pos.x = lp.x;
     p->phys.pos.y = lp.y;
 
+    projectile_update_hit_box(p);
+
     //printf("prior_pos: %f %f, target_pos: %f %f, pos: %f %f, t: %f\n",p->server_state_prior.pos.x, p->server_state_prior.pos.y, p->server_state_target.pos.x, p->server_state_target.pos.y, p->phys.pos.x, p->phys.pos.y, t);
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "physics.h"
+#include "net.h"
 #include "entity.h"
 
 #define MAX_CREATURES 1024
@@ -45,15 +46,20 @@ typedef struct
     int spawn_tile_x;    //room tile x
     int spawn_tile_y;    //room tile y
 
+    float lerp_t;
+    ObjectState server_state_prior;
+    ObjectState server_state_target;
 } Creature;
 
+extern Creature prior_creatures[MAX_CREATURES];
 extern Creature creatures[MAX_CREATURES];
 
 void creature_init();
 void creature_clear_all();
-Creature* creature_add(Room* room, CreatureType type);
+Creature* creature_add(Room* room, CreatureType type, Creature* creature);
 void creature_add_direct(Creature* c);
 void creature_update(Creature* c, float dt);
+void creature_lerp(Creature* c, float dt);
 void creature_update_all(float dt);
 void creature_draw(Creature* c);
 void creature_draw_all();
