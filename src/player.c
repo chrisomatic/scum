@@ -26,8 +26,7 @@ void player_init()
 {
     if(player_image == -1)
     {
-        if(role != ROLE_SERVER)
-            player_image = gfx_load_image("src/img/spaceman.png", false, true, 32, 32);
+        player_image = gfx_load_image("src/img/spaceman.png", false, true, 32, 32);
     }
 
     for(int i = 0; i < MAX_PLAYERS; ++i)
@@ -84,7 +83,6 @@ void player_init()
         p->anim.frame_sequence[2] = 2;
         p->anim.frame_sequence[3] = 3;
     }
-
 }
 
 void player_set_active(Player* p, bool active)
