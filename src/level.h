@@ -6,11 +6,11 @@
 #define MAX_ROOMS_GRID_Y 7
 #define MAX_ROOMS_GRID (MAX_ROOMS_GRID_X*MAX_ROOMS_GRID_Y)
 
-#define MIN_DEPTH 5 
-#define MAX_DEPTH 10 
+#define MIN_DEPTH 5
+#define MAX_DEPTH 10
 
-#define MIN_ROOMS 10
-#define MAX_ROOMS 15 
+#define MIN_ROOMS 1
+#define MAX_ROOMS 15
 
 #define ROOM_TILE_SIZE_X 13
 #define ROOM_TILE_SIZE_Y 7
@@ -18,6 +18,9 @@
 #define TILE_SIZE 32
 #define MAX_DOORS 4
 #define MAX_WALLS_PER_ROOM 100
+
+#define ROOM_W  TILE_SIZE*(ROOM_TILE_SIZE_X+2)
+#define ROOM_H  TILE_SIZE*(ROOM_TILE_SIZE_Y+2)
 
 typedef enum
 {

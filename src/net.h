@@ -109,6 +109,7 @@ typedef struct
 {
     uint16_t id;
     Vector2f pos;
+    float invulnerable_time;
 } ObjectState;
 
 extern char* server_ip_address;

@@ -236,8 +236,14 @@ void player_draw_room_transition()
 
     if(p->curr_room != p->transition_room)
     {
-        float dx = transition_targets.x/20.0;
-        float dy = transition_targets.y/20.0;
+        float dx = transition_targets.x/15.0;
+        float dy = transition_targets.y/15.0;
+
+        if(paused)
+        {
+            dx = 0.0;
+            dy = 0.0;
+        }
 
         transition_offsets.x += dx;
         transition_offsets.y += dy;
@@ -246,7 +252,7 @@ void player_draw_room_transition()
         {
             // printf("room transition complete\n");
             p->transition_room = p->curr_room;
-            camera_move(p->phys.pos.x, p->phys.pos.y, true, &camera_limit);
+            camera_move(p->phys.pos.x, p->phys.pos.y, cam_zoom, true, &camera_limit);
             camera_update(VIEW_WIDTH, VIEW_HEIGHT);
         }
         else
@@ -670,8 +676,11 @@ void player_update(Player* p, float dt)
     // check tiles around player
     handle_room_collision(p);
 
-    Vector2i roomxy = level_get_room_coords((int)p->curr_room);
-    level.rooms[roomxy.x][roomxy.y].discovered = true;
+    if(p == player)
+    {
+        Room* room = level_get_room_by_index(&level, (int)p->curr_room);
+        room->discovered = true;
+    }
 
     // update animation
     if(moving)
@@ -683,6 +692,7 @@ void player_update(Player* p, float dt)
 
     if(isnan(p->phys.pos.x) || isnan(p->phys.pos.y))
     {
+        text_list_add(text_lst, 5.0, "player pos was nan!");
         p->phys.pos.x = prior_x;
         p->phys.pos.y = prior_y;
         update_player_boxes(p);
@@ -702,8 +712,9 @@ void player_draw(Player* p)
 {
     if(!p->active) return;
 
-    Vector2i roomxy = level_get_room_coords((int)p->curr_room);
-    Room* room = &level.rooms[roomxy.x][roomxy.y];
+    // Vector2i roomxy = level_get_room_coords((int)p->curr_room);
+    // Room* room = &level.rooms[roomxy.x][roomxy.y];
+    Room* room = level_get_room_by_index(&level, (int)p->curr_room);
 
     bool blink = p->invulnerable ? ((int)(p->invulnerable_time * 100)) % 2 == 0 : false;
     gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, p->phys.pos.y, room->color, 1.0, 0.0, blink ? 0.3 : 1.0, false, true);
@@ -738,12 +749,18 @@ void player_lerp(Player* p, float dt)
     // printf("[lerp prior]  %.2f, %.2f\n", p->server_state_prior.pos.x, p->server_state_prior.pos.y);
     // printf("[lerp target] %.2f, %.2f\n", p->server_state_target.pos.x, p->server_state_target.pos.y);
 
-    Vector2f lp = lerp2f(&p->server_state_prior.pos,&p->server_state_target.pos,t);
+    Vector2f lp = lerp2f(&p->server_state_prior.pos, &p->server_state_target.pos, t);
     p->phys.pos.x = lp.x;
     p->phys.pos.y = lp.y;
 
-    Vector2i roomxy = level_get_room_coords((int)p->curr_room);
-    level.rooms[roomxy.x][roomxy.y].discovered = true;
+    p->invulnerable_time = lerp(p->server_state_prior.invulnerable_time, p->server_state_target.invulnerable_time, t);
+
+
+    if(p == player)
+    {
+        Room* room = level_get_room_by_index(&level, (int)p->curr_room);
+        room->discovered = true;
+    }
 }
 
 void player_handle_net_inputs(Player* p, double dt)

@@ -84,6 +84,8 @@ static int input_count = 0;
 static int inputs_per_packet = 1.0; //(TARGET_FPS/TICK_RATE);
 
 
+
+static inline void pack_bool(Packet* pkt, bool d);
 static inline void pack_u8(Packet* pkt, uint8_t d);
 static inline void pack_u16(Packet* pkt, uint16_t d);
 static inline void pack_u16_at(Packet* pkt, uint16_t d, int index);
@@ -94,6 +96,7 @@ static inline void pack_bytes(Packet* pkt, uint8_t* d, uint8_t len);
 static inline void pack_string(Packet* pkt, char* s, uint8_t max_len);
 static inline void pack_vec2(Packet* pkt, Vector2f d);
 
+static inline bool unpack_bool(Packet* pkt, int* offset);
 static inline uint8_t  unpack_u8(Packet* pkt, int* offset);
 static inline uint16_t unpack_u16(Packet* pkt, int* offset);
 static inline uint32_t unpack_u32(Packet* pkt, int* offset);
@@ -431,6 +434,9 @@ static void server_send(PacketType type, ClientInfo* cli)
                     pack_vec2(&pkt,p->phys.pos);
                     pack_u8(&pkt, p->sprite_index+p->anim.curr_frame);
                     pack_u8(&pkt, p->curr_room);
+                    pack_u8(&pkt, p->hp);
+                    pack_bool(&pkt, p->invulnerable);
+                    pack_float(&pkt, p->invulnerable_time);
                     pack_u8(&pkt, (uint8_t)p->door);
                     num_clients++;
                 }
@@ -482,7 +488,7 @@ static void server_send(PacketType type, ClientInfo* cli)
                 pack_u8(&pkt,p->player_id);
                 pack_u8(&pkt,p->curr_room);
                 pack_float(&pkt,p->scale);
-                pack_u8(&pkt,(uint8_t)(p->from_player ? 0x01 : 0x00));
+                pack_bool(&pkt, p->from_player);
                 num_visible_projectiles++;
             }
 
@@ -1320,6 +1326,9 @@ void net_client_update()
                         Vector2f pos    = unpack_vec2(&srvpkt, &offset);
                         p->sprite_index = unpack_u8(&srvpkt, &offset);
                         uint8_t curr_room  = unpack_u8(&srvpkt, &offset);
+                        p->hp  = unpack_u8(&srvpkt, &offset);
+                        p->invulnerable = unpack_bool(&srvpkt, &offset);
+                        float invulnerable_time = unpack_float(&srvpkt, &offset);
                         p->door  = (Dir)unpack_u8(&srvpkt, &offset);
 
                         //LOGN("pos %f %f, sprite index %u, curr room %u, trans room: %u, door %u", pos.x,pos.y,p->sprite_index,curr_room,p->transition_room, p->door);
@@ -1350,9 +1359,11 @@ void net_client_update()
 
                         p->server_state_prior.pos.x = p->phys.pos.x;
                         p->server_state_prior.pos.y = p->phys.pos.y;
+                        p->server_state_prior.invulnerable_time = p->invulnerable_time;
 
                         p->server_state_target.pos.x = pos.x;
                         p->server_state_target.pos.y = pos.y;
+                        p->server_state_target.invulnerable_time = invulnerable_time;
 
                         if(!prior_active[client_id])
                         {
@@ -1591,6 +1602,11 @@ void net_client_deinit()
     socket_close(client.info.socket);
 }
 
+static inline void pack_bool(Packet* pkt, bool d)
+{
+    pkt->data[pkt->data_len] = d ? 0x01 : 0x00;
+    pkt->data_len += sizeof(uint8_t);
+}
 
 static inline void pack_u8(Packet* pkt, uint8_t d)
 {
@@ -1664,6 +1680,12 @@ static inline void pack_vec2(Packet* pkt, Vector2f d)
     pkt->data_len+=sizeof(Vector2f);
 }
 
+static inline bool unpack_bool(Packet* pkt, int* offset)
+{
+    uint8_t r = pkt->data[*offset];
+    (*offset)++;
+    return (r == 0x01);
+}
 
 static inline uint8_t  unpack_u8(Packet* pkt, int* offset)
 {

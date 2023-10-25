@@ -18,15 +18,13 @@
 
 #include "glist.h"
 
-
+#if 1
 #define VIEW_WIDTH   1200
 #define VIEW_HEIGHT  800
-
-// #define VIEW_WIDTH   600
-// #define VIEW_HEIGHT  400
-
-#define ROOM_W  480
-#define ROOM_H  288
+#else
+#define VIEW_WIDTH   600
+#define VIEW_HEIGHT  400
+#endif
 
 
 // strings

@@ -75,8 +75,10 @@ void camera_get_pos(Vector3f* p)
     p->z = camera.pos.z;
 }
 
-void camera_move(float x, float y, bool immediate, Rect* limit)
+bool camera_move(float x, float y, float z, bool immediate, Rect* limit)
 {
+
+    bool ret = true;
 
     if(isnan(camera.pos.x) || isnan(camera.pos.y))
     {
@@ -93,6 +95,7 @@ void camera_move(float x, float y, bool immediate, Rect* limit)
 
         if(cam_rect.w > limit->w || cam_rect.h > limit->h)
         {
+            ret = false;
             //printf("unable to limit camera\n");
             //print_rect(&cam_rect);
             //print_rect(limit);
@@ -110,16 +113,20 @@ void camera_move(float x, float y, bool immediate, Rect* limit)
     {
         camera.pos.x = x;
         camera.pos.y = y;
+        camera.pos.z = z;
         camera_delta_target.pos.x = 0.0;
         camera_delta_target.pos.y = 0.0;
+        camera_delta_target.pos.z = 0.0;
         move_camera(camera.pos.x, camera.pos.y, camera.pos.z);
     }
     else
     {
         camera_delta_target.pos.x = x - camera.pos.x;
         camera_delta_target.pos.y = y - camera.pos.y;
+        camera_delta_target.pos.z = z - camera.pos.z;
     }
 
+    return ret;
 }
 
 static void move_camera(float x, float y, float z)
