@@ -19,7 +19,7 @@ static uint16_t id_counter = 0;
 ProjectileDef projectile_lookup[] = {
     {
         // laser
-        .damage=100.0,
+        .damage=1.0,
         .min_speed=200.0,
         .base_speed=200.0,
         .charge=false,

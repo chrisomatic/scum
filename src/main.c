@@ -708,7 +708,6 @@ void update(float dt)
             }
             else if(STR_EQUAL(s, "Host Local Server"))
             {
-                text_list_add(text_lst, 2.0, "'%s' not supported", s);
                 role = ROLE_SERVER;
                 deinit();
 

@@ -30,7 +30,6 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
         room->layout = rand() % room_list_count;
     }
 
-
     int n = rand() % 16;
 
     for(int i = 0; i < n; ++i)
@@ -129,6 +128,7 @@ static void generate_walls(Level* level)
                 int x0 = room_area.x - room_area.w/2.0;
                 int y0 = room_area.y - room_area.h/2.0;
 
+                // inner walls
                 Wall* wall_top = &room->walls[room->wall_count];
                 wall_top->p0.x = x0-wall_offset;
                 wall_top->p0.y = y0+TILE_SIZE-wall_offset;
@@ -159,6 +159,39 @@ static void generate_walls(Level* level)
                 wall_left->p1.x = wall_left->p0.x;
                 wall_left->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2)+wall_offset;
                 wall_left->dir = DIR_RIGHT;
+                room->wall_count++;
+                
+                // outer walls
+                Wall* wall_outer_top = &room->walls[room->wall_count];
+                wall_outer_top->p0.x = x0;
+                wall_outer_top->p0.y = y0;
+                wall_outer_top->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2);
+                wall_outer_top->p1.y = wall_outer_top->p0.y;
+                wall_outer_top->dir = DIR_DOWN;
+                room->wall_count++;
+
+                Wall* wall_outer_right = &room->walls[room->wall_count];
+                wall_outer_right->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2);
+                wall_outer_right->p0.y = y0;
+                wall_outer_right->p1.x = wall_outer_right->p0.x;
+                wall_outer_right->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2);
+                wall_outer_right->dir = DIR_LEFT;
+                room->wall_count++;
+
+                Wall* wall_outer_bottom = &room->walls[room->wall_count];
+                wall_outer_bottom->p0.x = x0;
+                wall_outer_bottom->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2);
+                wall_outer_bottom->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2);
+                wall_outer_bottom->p1.y = wall_outer_bottom->p0.y;
+                wall_outer_bottom->dir = DIR_UP;
+                room->wall_count++;
+
+                Wall* wall_outer_left = &room->walls[room->wall_count];
+                wall_outer_left->p0.x = x0;
+                wall_outer_left->p0.y = y0;
+                wall_outer_left->p1.x = wall_outer_left->p0.x;
+                wall_outer_left->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2);
+                wall_outer_left->dir = DIR_RIGHT;
                 room->wall_count++;
 
                 RoomData* rdata = &room_list[room->layout];
@@ -369,8 +402,8 @@ void level_handle_room_collision(Room* room, Physics* phys)
                 // add convenient sliding to get around walls
                 if(wall->dir == DIR_UP || wall->dir == DIR_DOWN)
                 {
-                    bool can_slide_left   = px-3 < wall->p0.x;
-                    bool can_slide_right  = px+3 > wall->p1.x;
+                    bool can_slide_left   = px-6 < wall->p0.x;
+                    bool can_slide_right  = px+6 > wall->p1.x;
 
                     if(can_slide_left || can_slide_right)
                     {
@@ -389,8 +422,8 @@ void level_handle_room_collision(Room* room, Physics* phys)
                 }
                 else
                 {
-                    bool can_slide_up   = py-3 < wall->p0.y;
-                    bool can_slide_down = py+3 > wall->p1.y;
+                    bool can_slide_up   = py-6 < wall->p0.y;
+                    bool can_slide_down = py+6 > wall->p1.y;
 
                     if(can_slide_up || can_slide_down)
                     {

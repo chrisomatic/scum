@@ -155,6 +155,7 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
             c.image = creature_image_slug;
             c.act_time_min = 0.5;
             c.act_time_max = 1.0;
+            c.phys.mass = 1.0;
         } break;
         case CREATURE_TYPE_CLINGER:
         {
@@ -162,13 +163,13 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
             c.image = creature_image_clinger;
             c.act_time_min = 0.2;
             c.act_time_max = 0.4;
+            c.phys.mass = 100.0; // so it doesn't slide when hit
         }
     }
 
     memcpy(&c.phys.target_pos, &c.phys.pos, sizeof(Vector2f));
 
     c.color = room->color;
-    c.phys.mass = 1.0;
     c.phys.radius = 8.0;
     c.phys.coffset.x = 0;
     c.phys.coffset.y = 0;
