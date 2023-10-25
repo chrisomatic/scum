@@ -149,7 +149,7 @@ void projectile_add(Physics* phys, uint8_t curr_room, float angle_deg, float sca
 
     proj.scale = scale;
     proj.time = 0.0;
-    proj.ttl  = 5.0;
+    proj.ttl  = 1.0;
 
     proj.hit_box.x = proj.phys.pos.x;
     proj.hit_box.y = proj.phys.pos.y;

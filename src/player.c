@@ -831,6 +831,18 @@ void player_handle_collision(Player* p, Entity* e)
                 }
             }
         } break;
+        case ENTITY_TYPE_PLAYER:
+        {
+            Player* p2 = (Player*)e->ptr;
+
+            CollisionInfo ci = {0};
+            bool collided = phys_collision_circles(&p->phys,&p2->phys, &ci);
+
+            if(collided)
+            {
+                phys_collision_correct(&p->phys, &p2->phys,&ci);
+            }
+        } break;
     }
 }
 
