@@ -323,28 +323,24 @@ void player_start_room_transition(Player* p)
         {
             case DIR_UP:
                 p->curr_room = (uint8_t)level_get_room_index(roomxy.x, roomxy.y-1);
-                // player_set_hit_box_pos(p, p->hitbox.x, y1);
                 player_set_collision_pos(p, CPOSX(p->phys), y1);
                 p->sprite_index = SPRITE_UP;
                 break;
 
             case DIR_RIGHT:
                 p->curr_room = (uint8_t)level_get_room_index(roomxy.x+1, roomxy.y);
-                // player_set_hit_box_pos(p, x1, p->hitbox.y);
                 player_set_collision_pos(p, x1, CPOSY(p->phys));
                 p->sprite_index = SPRITE_RIGHT;
                 break;
 
             case DIR_DOWN:
                 p->curr_room = (uint8_t)level_get_room_index(roomxy.x, roomxy.y+1);
-                // player_set_hit_box_pos(p, p->hitbox.x, y1);
                 player_set_collision_pos(p, CPOSX(p->phys), y1);
                 p->sprite_index = SPRITE_DOWN;
                 break;
 
             case DIR_LEFT:
                 p->curr_room = (uint8_t)level_get_room_index(roomxy.x-1, roomxy.y);
-                // player_set_hit_box_pos(p, x1, p->hitbox.y);
                 player_set_collision_pos(p, x1, CPOSY(p->phys));
                 p->sprite_index = SPRITE_LEFT;
                 break;
@@ -358,13 +354,14 @@ void player_start_room_transition(Player* p)
             Player* p2 = &players[i];
             if(p == p2) continue;
             if(!p2->active) continue;
+            if(p2->curr_room == p->curr_room) continue;
 
             p2->curr_room = p->curr_room;
             p2->phys.pos.x = p->phys.pos.x;
             p2->phys.pos.y = p->phys.pos.y;
             p2->sprite_index = p->sprite_index;
+            p2->door = p->door;
         }
-
 
         // printf("start room transition: %d -> %d\n", p->transition_room, p->curr_room);
     }
