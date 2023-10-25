@@ -6,7 +6,7 @@
 
 RoomData room_list[32] = {0};
 int room_list_count = 0;
-int dungeon_image;
+int dungeon_image = -1;
 
 static inline bool flip_coin()
 {
@@ -500,6 +500,7 @@ bool level_is_colliding_with_wall(Room* room, Physics* phys)
 
 void level_init()
 {
+    if(dungeon_image > 0) return;
     level_load_room_list();
     dungeon_image = gfx_load_image("src/img/dungeon_set.png", false, true, TILE_SIZE, TILE_SIZE);
 }

@@ -146,7 +146,6 @@ exit(1);
 
     init();
 
-    // camera_zoom(cam_zoom,true);
     camera_move(CENTER_X, CENTER_Y, cam_zoom, true, NULL);
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 

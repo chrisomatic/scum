@@ -258,17 +258,19 @@ void creature_update(Creature* c, float dt)
 
 void creature_lerp(Creature* c, float dt)
 {
-    if(!c->dead) return;
+    if(c->dead) return;
 
     c->lerp_t += dt;
 
     float tick_time = 1.0/TICK_RATE;
     float t = (c->lerp_t / tick_time);
 
+
     Vector2f lp = lerp2f(&c->server_state_prior.pos, &c->server_state_target.pos, t);
     c->phys.pos.x = lp.x;
     c->phys.pos.y = lp.y;
 
+    // printf("%.1f | %.1f -> %.1f  =  %.1f\n", t, c->server_state_prior.pos.x, c->server_state_target.pos.x, lp.x);
     // creature_update_hit_box(c);
 }
 

@@ -19,7 +19,7 @@
 #include "projectile.h"
 
 //#define SERVER_PRINT_SIMPLE 1
-//#define SERVER_PRINT_VERBOSE 1
+// #define SERVER_PRINT_VERBOSE 1
 
 
 #if SERVER_PRINT_VERBOSE
@@ -320,7 +320,7 @@ static bool authenticate_client(Packet* pkt, ClientInfo* cli)
         case PACKET_TYPE_CONNECT_CHALLENGE_RESP:
             valid &= (pkt->data_len == 1024); // must be padded out to 1024
             valid &= (memcmp(&pkt->data[0],cli->xor_salts, 8) == 0);
-            break;
+           break;
         default:
             valid &= (memcmp(&pkt->data[0],cli->xor_salts, 8) == 0);
             break;
@@ -520,6 +520,7 @@ static void server_simulate()
 
 int net_server_start()
 {
+    LOGN("%s()", __func__);
     // init
     socket_initialize();
 
@@ -610,6 +611,7 @@ int net_server_start()
                     }
                     else
                     {
+                        LOGNV("Creating temporary client");
                         // create a temporary ClientInfo so we can send a reject packet back
                         ClientInfo tmp_cli = {0};
                         memcpy(&tmp_cli.address,&from,sizeof(Address));
@@ -1207,6 +1209,7 @@ int net_client_data_waiting()
         double time_elapsed = timer_get_time() - client.time_of_latest_sent_packet;
         if(time_elapsed >= DEFAULT_TIMEOUT)
         {
+            printf("disconnecting?\n");
             net_client_disconnect();
             return 1;
         }
