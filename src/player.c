@@ -353,6 +353,19 @@ void player_start_room_transition(Player* p)
                 break;
         }
 
+        for(int i = 0; i < MAX_PLAYERS; ++i)
+        {
+            Player* p2 = &players[i];
+            if(p == p2) continue;
+            if(!p2->active) continue;
+
+            p2->curr_room = p->curr_room;
+            p2->phys.pos.x = p->phys.pos.x;
+            p2->phys.pos.y = p->phys.pos.y;
+            p2->sprite_index = p->sprite_index;
+        }
+
+
         // printf("start room transition: %d -> %d\n", p->transition_room, p->curr_room);
     }
 
