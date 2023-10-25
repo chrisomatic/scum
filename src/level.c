@@ -18,7 +18,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
     Room* room = &level->rooms[x][y];
     room->valid = true;
     room->discovered = false;
-    room->color = rand();
+    room->color = COLOR((rand() % 159) + 96,(rand() % 159) + 96,(rand() % 159) + 96);
     room->index = level_get_room_index(x,y);
 
     if(x == (MAX_ROOMS_GRID_X / 2) && y == (MAX_ROOMS_GRID_Y / 2))
@@ -130,34 +130,34 @@ static void generate_walls(Level* level)
                 int y0 = room_area.y - room_area.h/2.0;
 
                 Wall* wall_top = &room->walls[room->wall_count];
-                wall_top->p0.x = x0+TILE_SIZE-wall_offset;
+                wall_top->p0.x = x0-wall_offset;
                 wall_top->p0.y = y0+TILE_SIZE-wall_offset;
-                wall_top->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+wall_offset;
+                wall_top->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2)+wall_offset;
                 wall_top->p1.y = wall_top->p0.y;
                 wall_top->dir = DIR_DOWN;
                 room->wall_count++;
 
                 Wall* wall_right = &room->walls[room->wall_count];
                 wall_right->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+wall_offset;
-                wall_right->p0.y = y0+TILE_SIZE-wall_offset;
+                wall_right->p0.y = y0-wall_offset;
                 wall_right->p1.x = wall_right->p0.x;
-                wall_right->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+wall_offset;
+                wall_right->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2)+wall_offset;
                 wall_right->dir = DIR_LEFT;
                 room->wall_count++;
 
                 Wall* wall_bottom = &room->walls[room->wall_count];
-                wall_bottom->p0.x = x0+TILE_SIZE-wall_offset;
+                wall_bottom->p0.x = x0-wall_offset;
                 wall_bottom->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+wall_offset;
-                wall_bottom->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+wall_offset;
+                wall_bottom->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2)+wall_offset;
                 wall_bottom->p1.y = wall_bottom->p0.y;
                 wall_bottom->dir = DIR_UP;
                 room->wall_count++;
 
                 Wall* wall_left = &room->walls[room->wall_count];
                 wall_left->p0.x = x0+TILE_SIZE-wall_offset;
-                wall_left->p0.y = y0+TILE_SIZE-wall_offset;
+                wall_left->p0.y = y0-wall_offset;
                 wall_left->p1.x = wall_left->p0.x;
-                wall_left->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+wall_offset;
+                wall_left->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2)+wall_offset;
                 wall_left->dir = DIR_RIGHT;
                 room->wall_count++;
 

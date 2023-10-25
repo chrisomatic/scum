@@ -106,7 +106,7 @@ void entity_handle_collisions()
                     player_handle_collision((Player*)e1->ptr,e2);
                     break;
                 case ENTITY_TYPE_CREATURE:
-                    //creature_handle_collision((Creature*)e->ptr,e2);
+                    creature_handle_collision((Creature*)e1->ptr,e2);
                     break;
                 case ENTITY_TYPE_PROJECTILE:
                     projectile_handle_collision((Projectile*)e1->ptr,e2);

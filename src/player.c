@@ -43,7 +43,7 @@ void player_init()
         p->phys.pos.x = CENTER_X;
         p->phys.pos.y = CENTER_Y;
 
-        p->phys.speed = 500.0;
+        p->phys.speed = 1000.0;
         p->phys.max_velocity = 180.0;
         p->phys.base_friction = 0.80;
         p->phys.vel.x = 0.0;
