@@ -250,6 +250,8 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         Player* p = (Player*)e->ptr;
 
         if(!p->active) return;
+        if(p->dead) return;
+
         if(proj->curr_room != p->curr_room) return;
 
         bool hit = are_rects_colliding(&proj->hit_box_prior, &proj->hit_box, &p->hitbox);

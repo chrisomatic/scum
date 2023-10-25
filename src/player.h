@@ -51,6 +51,7 @@ typedef struct
 
     uint8_t hp;
     uint8_t hp_max;
+    bool dead;
 
     Vector2i curr_tile;
 
@@ -88,6 +89,7 @@ void player_handle_net_inputs(Player* p, double dt);
 void player_set_hit_box_pos(Player* p, float x, float y);
 void player_set_collision_pos(Player* p, float x, float y);
 void player_hurt(Player* p, int damage);
+void player_die(Player* p);
 void player_reset(Player* p);
 void player_draw_room_transition();
 void player_start_room_transition(Player* p);

@@ -1644,6 +1644,7 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             pack_bool(pkt, p->invulnerable);
             pack_float(pkt, p->invulnerable_time);
             pack_u8(pkt, (uint8_t)p->door);
+            pack_bool(pkt, p->dead);
             player_count++;
         }
     }
@@ -1683,6 +1684,7 @@ static void unpack_players(Packet* pkt, int* offset)
         p->invulnerable = unpack_bool(pkt, offset);
         float invulnerable_time = unpack_float(pkt, offset);
         p->door  = (Dir)unpack_u8(pkt, offset);
+        p->dead  = unpack_bool(pkt,offset);
 
         // moving between rooms
         if(curr_room != p->curr_room)
