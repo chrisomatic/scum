@@ -21,7 +21,6 @@ enum PlayerActions
     PLAYER_ACTION_DOWN,
     PLAYER_ACTION_LEFT,
     PLAYER_ACTION_RIGHT,
-    PLAYER_ACTION_DOOR,
     PLAYER_ACTION_SHOOT,
     PLAYER_ACTION_GENERATE_ROOMS,
 
@@ -76,10 +75,11 @@ typedef struct
 extern char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 extern Player players[MAX_PLAYERS];
 extern Player* player;
-extern int num_players;
+extern Player* player2;
 
 void player_init();
 void player_init_keys();
+void player2_init_keys();
 void player_send_to_room(Player* p, uint8_t room_index);
 void player_send_to_level_start(Player* p);
 void player_update(Player* p, float dt);
@@ -98,5 +98,6 @@ void player_set_active(Player* p, bool active);
 int player_get_active_count();
 void player_handle_collision(Player* p, Entity* e);
 bool is_any_player_room(uint8_t curr_room);
+int player_get_count_in_room(uint8_t curr_room);
 
 int player_names_build(bool include_all, bool only_active);

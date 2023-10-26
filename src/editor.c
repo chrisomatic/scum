@@ -51,6 +51,9 @@ void editor_draw()
 
                 Rect cr = get_camera_rect();
                 imgui_text("Camera: %.1f, %.1f, %.1f, %.1f", cr.x, cr.y, cr.w, cr.h);
+                imgui_text("Camera Zoom: %.2f", camera_get_zoom());
+
+                imgui_toggle_button(&dynamic_zoom, "Dynamic Zoom");
 
                 Rect limit = camera_limit;
                 imgui_text("Camera Limit: %.1f, %.1f, %.1f, %.1f", limit.x, limit.y, limit.w, limit.h);
@@ -119,8 +122,11 @@ void editor_draw()
             case 3: // creatures
             {
 
+                imgui_text("Total Count: %u", creature_get_count());
+                imgui_text("Room Count: %u", creature_get_room_count(player->curr_room));
+
                 static int num_creatures = 1;
-                imgui_number_box("Number", 1, 100, &num_creatures);
+                imgui_number_box("Spawn", 1, 100, &num_creatures);
 
                 Room* room = level_get_room_by_index(&level, player->curr_room);
 

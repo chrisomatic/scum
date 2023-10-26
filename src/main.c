@@ -55,8 +55,9 @@ Rect margin_bottom = {0};
 Decal decals[MAX_DECALS];
 glist* decal_list = NULL;
 
-// float cam_zoom = 0.53;
+bool dynamic_zoom = true;
 float cam_zoom = 0.68;
+float cam_zoom_temp = 0.68;
 Rect camera_limit = {0};    // based on margins and room_area
 Vector2f aim_camera_offset = {0};
 float ascale = 1.0;
@@ -219,7 +220,11 @@ void set_game_state(GameState state)
             {
                 if(role == ROLE_LOCAL)
                 {
+                    player = &players[0];
+                    player2 = &players[1];
                     player_set_active(player, true);
+                    player_set_active(player2, true);
+                    player2_init_keys();
                 }
                 player_init_keys();
             } break;
@@ -270,30 +275,129 @@ void camera_set()
         }
     }
 
+
     float cam_pos_x = player->phys.pos.x + aim_camera_offset.x;
     float cam_pos_y = player->phys.pos.y + aim_camera_offset.y;
-    float cam_pos_z = cam_zoom;
-    bool immediate = false;
-
-    // if(paused)
-    // {
-    //     cam_pos_x += RAND_FLOAT(-2.8,2.8);
-    //     cam_pos_y += RAND_FLOAT(-2.8,2.8);
-    //     cam_pos_z += RAND_FLOAT(-0.03,0.03);
-    //     // immediate = true;
-    // }
-
-    // float zscale = 1.0 - camera_get_zoom();
-    // camera_limit.w = (margin_left.w + margin_right.w)*zscale;
-    // camera_limit.w += room_area.w;
-    // camera_limit.w -= 2.0;
-    // camera_limit.h = (margin_top.h + margin_bottom.h)*zscale;
-    // camera_limit.h += room_area.h;
-    // camera_limit.h -= 2.0;
-    // camera_limit.x = room_area.x;
-    // camera_limit.y = room_area.y;
 
     camera_limit = room_area;
+
+    // 1.0  ->  zoomed in all the way
+    // 0.0  ->  zoomed out
+
+    if(dynamic_zoom)
+    {
+
+        Rect cr = calc_camera_rect(cam_pos_x, cam_pos_y, cam_zoom_temp, view_width, view_height, &camera_limit);
+
+        // check if all players are visible
+        bool all_visible = true;
+        for(int i = 0; i < MAX_PLAYERS; ++i)
+        {
+            Player* p = &players[i];
+            if(!p->active) continue;
+            if(p->curr_room == player->curr_room)
+            {
+                Rect r = RECT(p->phys.pos.x, p->phys.pos.y, 1, 1);
+                if(!rectangles_colliding(&cr, &r))
+                {
+                    all_visible = false;
+                    break;
+                }
+            }
+        }
+
+        float minz = 0.64;
+        if(all_visible && FEQ(cam_zoom_temp, cam_zoom))
+        {
+            // printf("satisfied\n");
+        }
+        else
+        {
+            float zdir = 1.0;
+            if(all_visible)
+            {
+                // try moving toward configured cam_zoom
+                if(cam_zoom_temp > cam_zoom)
+                    zdir = -1.0;
+                else
+                    zdir = 1.0;
+                // printf("adjusting toward cam_zoom (%.0f)\n", zdir);
+            }
+            else
+            {
+                // need to zoom out
+                zdir = -1.0;
+                // printf("adjusting zooming out\n");
+            }
+
+
+            for(;;)
+            {
+                float cam_zoom_temp_prior = cam_zoom_temp;
+
+                cam_zoom_temp += (0.01*zdir);
+
+                if(cam_zoom_temp > 1.0)
+                    break;
+                if(cam_zoom_temp < minz)
+                    break;
+                if(cam_zoom_temp < 0.0)
+                    break;
+
+                Rect cr2 = calc_camera_rect(cam_pos_x, cam_pos_y, cam_zoom_temp, view_width, view_height, &camera_limit);
+
+                bool check = true;
+                for(int i = 0; i < MAX_PLAYERS; ++i)
+                {
+                    Player* p = &players[i];
+                    if(!p->active) continue;
+                    if(p->curr_room == player->curr_room)
+                    {
+                        Rect r = RECT(p->phys.pos.x, p->phys.pos.y, 1, 1);
+                        if(!rectangles_colliding(&cr2, &r))
+                        {
+                            check = false;
+                            break;
+                        }
+                    }
+                }
+
+                if(zdir > 0 && !check)
+                {
+                    cam_zoom_temp = cam_zoom_temp_prior;
+                    break;
+                }
+
+                if(check)
+                    break;
+            }
+
+            cam_zoom_temp = RANGE(cam_zoom_temp, minz, 1.0);
+        }
+    }
+    else
+    {
+        cam_zoom_temp = cam_zoom;
+    }
+
+
+    float cam_pos_z = cam_zoom_temp;
+    bool immediate = false;
+
+    static int counter = 0;
+    if(player->hp == 1)
+    {
+        counter++;
+        if(counter >= 2)
+        {
+            counter = 0;
+            float xyrange = 2.0;
+            cam_pos_x += RAND_FLOAT(-xyrange, xyrange);
+            cam_pos_y += RAND_FLOAT(-xyrange, xyrange);
+            cam_pos_z += RAND_FLOAT(-0.03, 0.03);
+            // immediate = true;
+        }
+    }
 
     camera_move(cam_pos_x, cam_pos_y, cam_pos_z, immediate, &camera_limit);
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
@@ -614,6 +718,7 @@ void update(float dt)
                         text_list_add(text_lst, 3.0, "Connected to Server.");
                         int id = net_client_get_id();
                         player = &players[id];
+                        window_controls_clear_keys();
                         player_init_keys();
 
                     } break;
@@ -737,7 +842,10 @@ void update(float dt)
     {
         if(!paused)
         {
-            player_update(player, dt);
+            for(int i = 0; i < MAX_PLAYERS; ++i)
+            {
+                player_update(&players[i], dt);
+            }
             projectile_update(dt);
             creature_update_all(dt);
             decal_update_all(dt);

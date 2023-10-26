@@ -30,14 +30,17 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
         room->layout = rand() % room_list_count;
     }
 
-    int n = rand() % 16;
-
-    for(int i = 0; i < n; ++i)
+    if(x != level->start.x || y != level->start.y)
     {
-        // if(level->start.x == x && level->start.y == y)
-        //     printf("%d) spawning creature in start room\n", i + 1);
-        creature_add(room, rand() % CREATURE_TYPE_MAX, NULL);
+        int n = rand() % 16;
+        for(int i = 0; i < n; ++i)
+        {
+            // if(level->start.x == x && level->start.y == y)
+            //     printf("%d) spawning creature in start room\n", i + 1);
+            creature_add(room, rand() % CREATURE_TYPE_MAX, NULL);
+        }
     }
+
 
     switch(came_from)
     {

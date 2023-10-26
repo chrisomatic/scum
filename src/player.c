@@ -19,8 +19,8 @@ char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 int player_image = -1;
 Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
+Player* player2 = NULL;
 int player_image;
-// int num_players = 0;
 
 void player_init()
 {
@@ -32,10 +32,10 @@ void player_init()
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         Player* p = &players[i];
-        if(p == player)
-        {
-            player_init_keys();
-        }
+        // if(p == player)
+        // {
+        //     player_init_keys();
+        // }
 
         p->active = false;
         p->dead = false;
@@ -180,18 +180,36 @@ void player_init_keys()
 {
     if(player == NULL) return;
 
-    window_controls_clear_keys();
+    // window_controls_clear_keys();
     window_controls_add_key(&player->actions[PLAYER_ACTION_UP].state, GLFW_KEY_W);
     window_controls_add_key(&player->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_S);
     window_controls_add_key(&player->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_A);
     window_controls_add_key(&player->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_D);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_DOOR].state, GLFW_KEY_ENTER);
 
     for(int i = 0;  i < PLAYER_ACTION_MAX; ++i)
         memset(&player->actions[i], 0, sizeof(PlayerInput));
 
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
+}
+
+void player2_init_keys()
+{
+    if(player2 == NULL)
+    {
+        printf("player2 is null\n");
+        return;
+    }
+    // window_controls_clear_keys();
+    window_controls_add_key(&player2->actions[PLAYER_ACTION_UP].state, GLFW_KEY_UP);
+    window_controls_add_key(&player2->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_DOWN);
+    window_controls_add_key(&player2->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_LEFT);
+    window_controls_add_key(&player2->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_RIGHT);
+
+    for(int i = 0;  i < PLAYER_ACTION_MAX; ++i)
+        memset(&player2->actions[i], 0, sizeof(PlayerInput));
+
+    window_controls_add_key(&player2->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_RIGHT_SHIFT);
 }
 
 void player_set_hit_box_pos(Player* p, float x, float y)
@@ -353,8 +371,10 @@ void player_start_room_transition(Player* p)
     // new player positions
     RectXY rxy = {0};
     rect_to_rectxy(&room_area, &rxy);
-    float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
-    float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
+    // float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
+    // float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
+    float x1 = rxy.x[BL] - (CPOSX(p->phys) - rxy.x[TR]);
+    float y1 = rxy.y[BL] - (CPOSY(p->phys) - rxy.y[TL]);
 
     if(role == ROLE_SERVER || role == ROLE_LOCAL)
     {
@@ -396,6 +416,7 @@ void player_start_room_transition(Player* p)
             if(p == p2) continue;
             if(!p2->active) continue;
             if(p2->curr_room == p->curr_room) continue;
+            if(p->transition_room != p2->curr_room) continue;
 
             p2->curr_room = p->curr_room;
             p2->phys.pos.x = p->phys.pos.x;
@@ -908,3 +929,16 @@ bool is_any_player_room(uint8_t curr_room)
     return false;
 }
 
+int player_get_count_in_room(uint8_t curr_room)
+{
+    int count = 0;
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        if(!players[i].active) continue;
+        if(curr_room == players[i].curr_room)
+        {
+            count++;
+        }
+    }
+    return count;
+}

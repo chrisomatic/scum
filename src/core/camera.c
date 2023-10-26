@@ -14,10 +14,10 @@ static Camera camera_delta_target;   //target delta position
 static int cam_view_width;
 static int cam_view_height;
 
-static void calc_cam_view(int default_view_width, int default_view_height)
+static void calc_cam_view(int _default_view_width, int _default_view_height)
 {
-    cam_view_width = default_view_width - (camera.pos.z*default_view_width);
-    cam_view_height = default_view_height - (camera.pos.z*default_view_height);
+    cam_view_width = _default_view_width - (camera.pos.z*_default_view_width);
+    cam_view_height = _default_view_height - (camera.pos.z*_default_view_height);
 }
 
 void camera_init()
@@ -33,7 +33,7 @@ void camera_init()
     camera_delta_target.pos.z = 0.0;
 }
 
-void camera_update(int default_view_width, int default_view_height)
+void camera_update(int _default_view_width, int _default_view_height)
 {
     if(!FEQ(camera_delta_target.pos.x,0.0) || !FEQ(camera_delta_target.pos.y,0.0) || !FEQ(camera_delta_target.pos.z,0.0))
     {
@@ -45,8 +45,7 @@ void camera_update(int default_view_width, int default_view_height)
         // if(!FEQ0(dz)) printf("dz: %.6f  (%.6f)\n", dz, camera.pos.z);
     }
 
-    calc_cam_view(default_view_width, default_view_height);
-
+    calc_cam_view(_default_view_width, _default_view_height);
 }
 
 void camera_zoom(float z, bool immediate)
@@ -165,6 +164,38 @@ Rect get_camera_rect()
     rect.h = vh*2.0;
     rect.x = x+rect.w/2.0;
     rect.y = y+rect.h/2.0;
+    return rect;
+}
+
+Rect calc_camera_rect(float x, float y, float z, int _view_width, int _view_height, Rect* limit)
+{
+    float _cam_view_width = _view_width - (z*_view_width);
+    float _cam_view_height = _view_height - (z*_view_height);
+
+    float vw = _cam_view_width / 2.0;
+    float vh = _cam_view_height / 2.0;
+
+    x = x-vw;
+    y = y-vh;
+
+    Rect rect = {0};
+    rect.w = vw*2.0;
+    rect.h = vh*2.0;
+    rect.x = x+rect.w/2.0;
+    rect.y = y+rect.h/2.0;
+
+    if(limit != NULL)
+    {
+        if(rect.w > limit->w || rect.h > limit->h)
+        {
+            //printf("unable to limit camera\n");
+        }
+        else
+        {
+            limit_rect_pos(limit, &rect);
+        }
+    }
+
     return rect;
 }
 

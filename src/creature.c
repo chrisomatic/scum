@@ -229,7 +229,7 @@ void creature_update(Creature* c, float dt)
     c->hitbox.w = 16;
     c->hitbox.h = 16;
 
-#if 1
+#if 0
     static bool dbg = false;
     if(!dbg)
     {
@@ -365,6 +365,17 @@ void creature_hurt(Creature* c, float damage)
 uint16_t creature_get_count()
 {
     return (uint16_t)clist->count;
+}
+
+uint16_t creature_get_room_count(uint8_t room_index)
+{
+    uint16_t count = 0;
+    for(int i = 0; i < clist->count; ++i)
+    {
+        if(creatures[i].curr_room == room_index)
+            count++;
+    }
+    return count;
 }
 
 static Player* get_nearest_player(Vector2f* pt)
