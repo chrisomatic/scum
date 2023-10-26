@@ -55,12 +55,16 @@ Rect margin_bottom = {0};
 Decal decals[MAX_DECALS];
 glist* decal_list = NULL;
 
-bool dynamic_zoom = true;
-float cam_zoom = 0.68;
-float cam_zoom_temp = 0.68;
+bool dynamic_zoom = false;
+int cam_zoom = 70;
+int cam_zoom_temp = 70;
+int cam_min_zoom = 64;
+
 Rect camera_limit = {0};    // based on margins and room_area
 Vector2f aim_camera_offset = {0};
 float ascale = 1.0;
+
+Rect send_to_room_rect = {0};
 
 Vector2f transition_offsets = {0};
 Vector2f transition_targets = {0};
@@ -147,7 +151,7 @@ exit(1);
 
     init();
 
-    camera_move(CENTER_X, CENTER_Y, cam_zoom, true, NULL);
+    camera_move(CENTER_X, CENTER_Y, (float)cam_zoom/100.0, true, NULL);
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 
     run();
@@ -236,6 +240,8 @@ void set_game_state(GameState state)
 // also checks if the mouse is off the screen
 void camera_set()
 {
+    // if(paused) return;
+
     if(player->curr_room != player->transition_room)
     {
         // printf("not updating camera\n");
@@ -287,7 +293,7 @@ void camera_set()
     if(dynamic_zoom)
     {
 
-        Rect cr = calc_camera_rect(cam_pos_x, cam_pos_y, cam_zoom_temp, view_width, view_height, &camera_limit);
+        Rect cr = calc_camera_rect(cam_pos_x, cam_pos_y, (float)cam_zoom_temp/100.0, view_width, view_height, &camera_limit);
 
         // check if all players are visible
         bool all_visible = true;
@@ -306,45 +312,46 @@ void camera_set()
             }
         }
 
-        float minz = 0.64;
-        if(all_visible && FEQ(cam_zoom_temp, cam_zoom))
+        // float minz = 0.64;
+        // if(all_visible && FEQ(cam_zoom_temp, cam_zoom))
+        if(all_visible && cam_zoom_temp == cam_zoom)
         {
             // printf("satisfied\n");
         }
         else
         {
-            float zdir = 1.0;
+            int zdir = 1;
             if(all_visible)
             {
                 // try moving toward configured cam_zoom
                 if(cam_zoom_temp > cam_zoom)
-                    zdir = -1.0;
+                    zdir = -1;
                 else
-                    zdir = 1.0;
-                // printf("adjusting toward cam_zoom (%.0f)\n", zdir);
+                    zdir = 1;
+                // printf("adjusting toward cam_zoom (%d)\n", zdir);
             }
             else
             {
                 // need to zoom out
-                zdir = -1.0;
+                zdir = -1;
                 // printf("adjusting zooming out\n");
             }
 
-
             for(;;)
             {
-                float cam_zoom_temp_prior = cam_zoom_temp;
+                int cam_zoom_temp_prior = cam_zoom_temp;
 
-                cam_zoom_temp += (0.01*zdir);
+                // cam_zoom_temp += (0.01*zdir);
+                cam_zoom_temp += (zdir);
 
-                if(cam_zoom_temp > 1.0)
+                if(cam_zoom_temp > 100)
                     break;
-                if(cam_zoom_temp < minz)
+                if(cam_zoom_temp < cam_min_zoom)
                     break;
-                if(cam_zoom_temp < 0.0)
+                if(cam_zoom_temp < 0)
                     break;
 
-                Rect cr2 = calc_camera_rect(cam_pos_x, cam_pos_y, cam_zoom_temp, view_width, view_height, &camera_limit);
+                Rect cr2 = calc_camera_rect(cam_pos_x, cam_pos_y, (float)cam_zoom_temp/100.0, view_width, view_height, &camera_limit);
 
                 bool check = true;
                 for(int i = 0; i < MAX_PLAYERS; ++i)
@@ -372,7 +379,7 @@ void camera_set()
                     break;
             }
 
-            cam_zoom_temp = RANGE(cam_zoom_temp, minz, 1.0);
+            cam_zoom_temp = RANGE(cam_zoom_temp, cam_min_zoom, 100);
         }
     }
     else
@@ -381,7 +388,7 @@ void camera_set()
     }
 
 
-    float cam_pos_z = cam_zoom_temp;
+    float cam_pos_z = (float)cam_zoom_temp/100.0;
     bool immediate = false;
 
     static int counter = 0;
@@ -395,6 +402,7 @@ void camera_set()
             cam_pos_x += RAND_FLOAT(-xyrange, xyrange);
             cam_pos_y += RAND_FLOAT(-xyrange, xyrange);
             cam_pos_z += RAND_FLOAT(-0.03, 0.03);
+            cam_pos_z = MAX((float)cam_min_zoom/100.0, cam_pos_z);
             // immediate = true;
         }
     }
@@ -842,6 +850,22 @@ void update(float dt)
     {
         if(!paused)
         {
+
+            if(role == ROLE_LOCAL)
+            {
+                if(debug_enabled && window_mouse_left_went_up())
+                {
+                    send_to_room_rect.x = mx;
+                    send_to_room_rect.y = my;
+                    send_to_room_rect.w = 1;
+                    send_to_room_rect.h = 1;
+                }
+                else
+                {
+                    memset(&send_to_room_rect, 0, sizeof(Rect));
+                }
+            }
+
             for(int i = 0; i < MAX_PLAYERS; ++i)
             {
                 player_update(&players[i], dt);
@@ -938,6 +962,14 @@ void draw_map(DrawLevelParams* params)
             }
 
             gfx_draw_rect(&room_rect, _color, NOT_SCALED, NO_ROTATION, _opacity, true, NOT_IN_WORLD);
+
+            if(!IS_RECT_EMPTY(&send_to_room_rect))
+            {
+                if(rectangles_colliding(&room_rect, &send_to_room_rect))
+                {
+                    player_send_to_room(player, room->index);
+                }
+            }
 
             // draw the doors
             for(int d = 0; d < MAX_DOORS; ++d)

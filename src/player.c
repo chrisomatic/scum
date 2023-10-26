@@ -142,12 +142,12 @@ int player_names_build(bool include_all, bool only_active)
 
 void player_send_to_room(Player* p, uint8_t room_index)
 {
-    // uint8_t idx = (uint8_t)level_get_room_index(level.start.x, level.start.y);
     uint8_t idx = room_index;
     p->curr_room = idx;
     p->transition_room = p->curr_room;
 
-    Room* room = &level.rooms[level.start.x][level.start.y];
+    Room* room = level_get_room_by_index(&level, room_index);
+
     for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
     {
         int _x = (ROOM_TILE_SIZE_X-1)/2;
@@ -320,7 +320,7 @@ void player_draw_room_transition()
         {
             // printf("room transition complete\n");
             p->transition_room = p->curr_room;
-            camera_move(p->phys.pos.x, p->phys.pos.y, cam_zoom, true, &camera_limit);
+            camera_move(p->phys.pos.x, p->phys.pos.y, (float)cam_zoom/100.0, true, &camera_limit);
             camera_update(VIEW_WIDTH, VIEW_HEIGHT);
         }
         else
@@ -721,7 +721,10 @@ void player_update(Player* p, float dt)
                 float angle_deg = sprite_index_to_angle(p);
 
                 if(!p->dead)
-                    projectile_add(&p->phys, p->curr_room, angle_deg, scale, damage,true);
+                {
+                    projecile_add_new(&p->phys, p->curr_room, PROJECTILE_TYPE_LASER, angle_deg, scale, damage, true);
+                    // projectile_add(&p->phys, p->curr_room, angle_deg, scale, damage,true);
+                }
 
                 // text_list_add(text_lst, 5.0, "projectile: %.2f, %.2f", scale, damage);
                 p->proj_cooldown = p->proj_cooldown_max;
@@ -740,7 +743,10 @@ void player_update(Player* p, float dt)
             float angle_deg = sprite_index_to_angle(p);
 
             if(!p->dead)
-                projectile_add(&p->phys, p->curr_room, angle_deg, 1.0, 1.0, true);
+            {
+                projecile_add_new(&p->phys, p->curr_room, PROJECTILE_TYPE_LASER, angle_deg, 1.0, 1.0, true);
+                // projectile_add(&p->phys, p->curr_room, angle_deg, 1.0, 1.0, true);
+            }
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;
         }

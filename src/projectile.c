@@ -19,11 +19,14 @@ static uint16_t id_counter = 0;
 ProjectileDef projectile_lookup[] = {
     {
         // laser
-        .damage=1.0,
-        .min_speed=200.0,
-        .base_speed=200.0,
-        .charge=false,
-        .charge_rate=16
+        .damage = 1.0,
+        .min_speed = 200.0,
+        .base_speed = 200.0,
+        .angle_spread = 0.0,
+        .scale = 1.0,
+        .num = 1,
+        .charge = false,
+        .charge_rate = 16
     }
 };
 
@@ -49,6 +52,130 @@ void projectile_init()
 void projectile_clear_all()
 {
     list_clear(plist);
+}
+
+void projecile_add_new(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player)
+{
+    ProjectileDef* projdef = &projectile_lookup[proj_type];
+
+    Projectile proj = {0};
+    proj.type = proj_type;
+    proj.dead = false;
+    proj.damage = projdef->damage * damage_multiplier;
+    proj.phys.pos.x = phys->pos.x;
+    proj.phys.pos.y = phys->pos.y;
+    proj.phys.mass = 1.0;
+    proj.curr_room = curr_room;
+    proj.from_player = from_player;
+
+    proj.scale = scale * projdef->scale;
+    proj.time = 0.0;
+    proj.ttl  = 1.0;
+
+    proj.hit_box.x = proj.phys.pos.x;
+    proj.hit_box.y = proj.phys.pos.y;
+    Rect* vr = &gfx_images[projectile_image].visible_rects[0];
+    float wh = MAX(vr->w, vr->h) * proj.scale;
+    proj.hit_box.w = wh;
+    proj.hit_box.h = wh;
+
+    memcpy(&proj.hit_box_prior, &proj.hit_box, sizeof(Rect));
+
+    float min_speed = projdef->min_speed;
+    float spread = projdef->angle_spread/2.0;
+
+    for(int i = 0; i < projdef->num; ++i)
+    {
+
+
+        Projectile p = {0};
+        memcpy(&p, &proj, sizeof(Projectile));
+
+        float speed = projdef->base_speed;
+        float angle = angle_deg;
+        if(!FEQ0(spread))
+        {
+            // printf("%.2f -> ", angle);
+            angle += RAND_FLOAT(-spread, spread);
+            // printf("%.2f\n", angle);
+        }
+
+        p.angle_deg = angle;
+
+        angle = RAD(angle);
+
+        float vx0 = (speed)*cosf(angle);
+        float vy0 = (-speed)*sinf(angle);   // @minus
+
+        float vx = vx0 + phys->vel.x;
+        float vy = vy0 + phys->vel.y;
+
+        p.phys.vel.x = vx0;
+        p.phys.vel.y = vy0;
+
+        // if(!FEQ0(p->vel.x))
+        {
+            if(vx0 > 0 && vx < 0)
+            {
+                // printf("x help 1\n");
+                p.phys.vel.x = (min_speed)*cosf(angle);
+            }
+            else if(vx0 < 0 && vx > 0)
+            {
+                // printf("x help 2\n");
+                p.phys.vel.x = (min_speed)*cosf(angle);
+            }
+            else
+            {
+                p.phys.vel.x = vx;
+            }
+        }
+        // if(!FEQ0(p->phys.vel.y))
+        {
+            if(vy0 > 0 && vy < 0)
+            {
+                // printf("y help 1\n");
+                p.phys.vel.y = (-min_speed)*sinf(angle);  // @minus
+            }
+            else if(vy0 < 0 && vy > 0)
+            {
+                // printf("y help 2\n");
+                p.phys.vel.y = (-min_speed)*sinf(angle);  // @minus
+            }
+            else
+            {
+                // printf("help 3\n");
+                p.phys.vel.y = vy;
+            }
+        }
+
+        // float a = calc_angle_rad(0,0,p.phys.vel.x, p.phys.vel.y);
+        // float xa = cosf(a);
+        // float ya = sinf(a);
+        // float _speed = 0;
+
+        // if(!FEQ0(xa))
+        // {
+        //     _speed = p.phys.vel.x / xa;
+        // }
+        // else if(!FEQ0(ya))
+        // {
+        //     _speed = p.phys.vel.y / ya;
+        //     _speed *= -1;   // @minus
+        // }
+        // if(_speed < min_speed)
+        // {
+        //     // printf("min speed\n");
+        //     p.phys.vel.x = min_speed * xa;
+        //     p.phys.vel.y = -min_speed * ya;   //@minus
+        // }
+
+
+        list_add(plist, (void*)&p);
+
+    }
+
+
 }
 
 void projectile_add(Physics* phys, uint8_t curr_room, float angle_deg, float scale, float damage_multiplier, bool from_player)
@@ -124,37 +251,37 @@ void projectile_add(Physics* phys, uint8_t curr_room, float angle_deg, float sca
         }
     }
 
-    // handle minimum speed
-    // -----------------------------------------------------------------------------------
-    float a = calc_angle_rad(0,0,proj.phys.vel.x, proj.phys.vel.y);
-    float xa = cosf(a);
-    float ya = sinf(a);
-    float _speed = 0;
+    // // handle minimum speed
+    // // -----------------------------------------------------------------------------------
+    // float a = calc_angle_rad(0,0,proj.phys.vel.x, proj.phys.vel.y);
+    // float xa = cosf(a);
+    // float ya = sinf(a);
+    // float _speed = 0;
 
-    if(!FEQ0(xa))
-    {
-        _speed = proj.phys.vel.x / xa;
-    }
-    else if(!FEQ0(ya))
-    {
-        _speed = proj.phys.vel.y / ya;
-        _speed *= -1;   // @minus
-    }
-    if(_speed < min_speed)
-    {
-        // printf("min speed\n");
-        proj.phys.vel.x = min_speed * xa;
-        proj.phys.vel.y = -min_speed * ya;   //@minus
-    }
+    // if(!FEQ0(xa))
+    // {
+    //     _speed = proj.phys.vel.x / xa;
+    // }
+    // else if(!FEQ0(ya))
+    // {
+    //     _speed = proj.phys.vel.y / ya;
+    //     _speed *= -1;   // @minus
+    // }
+    // if(_speed < min_speed)
+    // {
+    //     // printf("min speed\n");
+    //     proj.phys.vel.x = min_speed * xa;
+    //     proj.phys.vel.y = -min_speed * ya;   //@minus
+    // }
 
-    proj.scale = scale;
+    proj.scale = scale * projdef->scale;
     proj.time = 0.0;
     proj.ttl  = 1.0;
 
     proj.hit_box.x = proj.phys.pos.x;
     proj.hit_box.y = proj.phys.pos.y;
     Rect* vr = &gfx_images[projectile_image].visible_rects[0];
-    float wh = MAX(vr->w, vr->h) * scale;
+    float wh = MAX(vr->w, vr->h) * proj.scale;
     proj.hit_box.w = wh;
     proj.hit_box.h = wh;
 

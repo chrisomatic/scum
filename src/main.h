@@ -135,8 +135,10 @@ extern bool show_walls;
 extern uint32_t background_color;
 extern unsigned int seed;
 extern GameRole role;
+
 extern bool dynamic_zoom;
-extern float cam_zoom;
+extern int cam_zoom;
+extern int cam_min_zoom;
 
 
 void game_generate_level(unsigned int _seed);
