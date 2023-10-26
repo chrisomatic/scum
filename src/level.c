@@ -8,51 +8,16 @@ RoomData room_list[32] = {0};
 int room_list_count = 0;
 int dungeon_image = -1;
 
+static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth);
+
 static inline bool flip_coin()
 {
     return (rand()%2==0);
 }
 
-static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
+static void branch_room(Level* level, int x, int y, int depth)
 {
     Room* room = &level->rooms[x][y];
-    room->valid = true;
-    room->discovered = false;
-    room->color = COLOR((rand() % 159) + 96,(rand() % 159) + 96,(rand() % 159) + 96);
-    room->index = level_get_room_index(x,y);
-
-    if(x == (MAX_ROOMS_GRID_X / 2) && y == (MAX_ROOMS_GRID_Y / 2))
-    {
-        room->layout = 0;
-    }
-    else
-    {
-        room->layout = rand() % room_list_count;
-    }
-
-    if(x != level->start.x || y != level->start.y)
-    {
-        int n = rand() % 16;
-        for(int i = 0; i < n; ++i)
-        {
-            // if(level->start.x == x && level->start.y == y)
-            //     printf("%d) spawning creature in start room\n", i + 1);
-            creature_add(room, rand() % CREATURE_TYPE_MAX, NULL);
-        }
-    }
-
-
-    switch(came_from)
-    {
-        case DIR_UP:    room->doors[DIR_DOWN]  = true; break;
-        case DIR_RIGHT: room->doors[DIR_LEFT]  = true; break;
-        case DIR_DOWN:  room->doors[DIR_UP]    = true; break;
-        case DIR_LEFT:  room->doors[DIR_RIGHT] = true; break;
-        default: break;
-    }
-
-    if(depth >= MAX_DEPTH)
-        return;
 
     if(y > 0 && !level->rooms[x][y-1].valid) // check up
     {
@@ -86,6 +51,114 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
             generate_rooms(level, x-1,y,DIR_LEFT,depth+1);
     }
 
+
+}
+
+static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
+{
+    Room* room = &level->rooms[x][y];
+
+    if(!room->valid)
+    {
+        level->num_rooms++;
+
+        room->valid = true;
+        room->discovered = false;
+        room->color = COLOR((rand() % 159) + 96,(rand() % 159) + 96,(rand() % 159) + 96);
+        room->index = level_get_room_index(x,y);
+
+        bool is_start_room = (x == level->start.x && y == level->start.y);
+
+        if(is_start_room)
+        {
+            room->type = ROOM_TYPE_EMPTY;
+            room->layout = 0;
+        }
+        else
+        {
+            bool is_boss_room = !level->has_boss_room && ((level->num_rooms == MAX_ROOMS) || (level->num_rooms > 4 && (rand()%4 == 0)));
+
+            if(is_boss_room)
+            {
+                room->type = ROOM_TYPE_BOSS;
+                room->layout = 0;
+                level->has_boss_room = true;
+            }
+            else
+            {
+                bool is_treasure_room = !level->has_treasure_room && ((level->num_rooms == MAX_ROOMS) || (level->num_rooms > 4 && (rand()%4 == 0)));
+
+                if(is_treasure_room)
+                {
+                    room->type = ROOM_TYPE_TREASURE;
+                    room->layout = 0;
+                    level->has_treasure_room = true;
+                }
+                else
+                {
+                    bool is_monster_room = (rand() % 100 < MONSTER_ROOM_PERCENTAGE);
+
+                    room->type = is_monster_room ? ROOM_TYPE_MONSTER : ROOM_TYPE_EMPTY;
+                    room->layout = rand() % room_list_count;
+                }
+            }
+        }
+
+        // temp
+        switch(room->type)
+        {
+            case ROOM_TYPE_EMPTY:    room->color = COLOR(200,200,200); break;
+            case ROOM_TYPE_MONSTER:  room->color = COLOR(200,100,100); break;
+            case ROOM_TYPE_TREASURE: room->color = COLOR(200,200,100); break;
+            case ROOM_TYPE_BOSS:     room->color = COLOR(100,100,200); break;
+            default: break;
+        }
+
+        if(room->type == ROOM_TYPE_MONSTER)
+        {
+            // generate monsters for room
+            int n = rand() % 16 + 2;
+            for(int i = 0; i < n; ++i)
+            {
+                // if(level->start.x == x && level->start.y == y)
+                //     printf("%d) spawning creature in start room\n", i + 1);
+                creature_add(room, rand() % CREATURE_TYPE_MAX, NULL);
+            }
+        }
+
+
+        switch(came_from)
+        {
+            case DIR_UP:    room->doors[DIR_DOWN]  = true; break;
+            case DIR_RIGHT: room->doors[DIR_LEFT]  = true; break;
+            case DIR_DOWN:  room->doors[DIR_UP]    = true; break;
+            case DIR_LEFT:  room->doors[DIR_RIGHT] = true; break;
+            default: break;
+        }
+    }
+    
+    // return conditions
+
+    if(level->num_rooms >= MAX_ROOMS)
+        return;
+
+    //if(depth >= MAX_DEPTH)
+    //    return;
+
+    if(room->type == ROOM_TYPE_BOSS)
+        return; // boss room is a leaf node
+
+    if(room->type == ROOM_TYPE_TREASURE)
+        return; // treasure room is a leaf node
+
+    branch_room(level,x,y,depth);
+
+    if(depth == 0 && level->num_rooms < MIN_ROOMS)
+    {
+        branch_room(level,x,y,depth);
+    }
+
+    /*
     if(depth < MIN_DEPTH)
     {
         if( room->doors[DIR_UP]    == false &&
@@ -115,6 +188,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
             }
         }
     }
+    */
 }
 
 static void generate_walls(Level* level)

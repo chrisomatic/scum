@@ -6,11 +6,13 @@
 #define MAX_ROOMS_GRID_Y 7
 #define MAX_ROOMS_GRID (MAX_ROOMS_GRID_X*MAX_ROOMS_GRID_Y)
 
-#define MIN_DEPTH 5
-#define MAX_DEPTH 10
+#define MONSTER_ROOM_PERCENTAGE 80
 
-#define MIN_ROOMS 1
-#define MAX_ROOMS 15
+#define MIN_DEPTH 2
+#define MAX_DEPTH 8
+
+#define MIN_ROOMS 7
+#define MAX_ROOMS 12
 
 #define ROOM_TILE_SIZE_X 13
 #define ROOM_TILE_SIZE_Y 7
@@ -71,9 +73,19 @@ typedef struct
     float distance_to_player; // used for sorting walls
 } Wall;
 
+typedef enum
+{
+    ROOM_TYPE_EMPTY,
+    ROOM_TYPE_MONSTER,
+    ROOM_TYPE_TREASURE,
+    ROOM_TYPE_BOSS,
+    ROOM_TYPE_MAX,
+} RoomType;
+
 typedef struct
 {
     bool valid;
+    RoomType type;
     bool doors[MAX_DOORS];
     uint32_t color;
     Wall walls[MAX_WALLS_PER_ROOM];
@@ -86,6 +98,9 @@ typedef struct
 typedef struct
 {
     Room rooms[MAX_ROOMS_GRID_X][MAX_ROOMS_GRID_Y];
+    int num_rooms;
+    bool has_boss_room;
+    bool has_treasure_room;
     Vector2i start;
 } Level;
 

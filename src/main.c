@@ -931,6 +931,12 @@ void draw_map(DrawLevelParams* params)
                 _color = params->color_uroom;
                 _opacity = params->opacity_uroom;
             }
+
+            if(params->show_all)
+            {
+                _color = room->color;
+            }
+
             gfx_draw_rect(&room_rect, _color, NOT_SCALED, NO_ROTATION, _opacity, true, NOT_IN_WORLD);
 
             // draw the doors
