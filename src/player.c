@@ -234,6 +234,9 @@ void player_set_collision_pos(Player* p, float x, float y)
 
 void player_hurt(Player* p, int damage)
 {
+    if(players_invincible)
+        return;
+
     if(p->invulnerable)
         return;
 

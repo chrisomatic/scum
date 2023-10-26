@@ -135,6 +135,7 @@ extern bool show_walls;
 extern uint32_t background_color;
 extern unsigned int seed;
 extern GameRole role;
+extern bool players_invincible;
 
 extern bool dynamic_zoom;
 extern int cam_zoom;

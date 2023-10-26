@@ -33,6 +33,7 @@ text_list_t* text_lst = NULL;
 bool show_big_map = false;
 bool show_walls = false;
 GameRole role = ROLE_LOCAL;
+bool players_invincible = false;
 
 // Settings
 uint32_t background_color = COLOR_BLACK;
@@ -58,7 +59,7 @@ glist* decal_list = NULL;
 bool dynamic_zoom = false;
 int cam_zoom = 70;
 int cam_zoom_temp = 70;
-int cam_min_zoom = 64;
+int cam_min_zoom = 65;
 
 Rect camera_limit = {0};    // based on margins and room_area
 Vector2f aim_camera_offset = {0};
@@ -963,7 +964,8 @@ void draw_map(DrawLevelParams* params)
 
             gfx_draw_rect(&room_rect, _color, NOT_SCALED, NO_ROTATION, _opacity, true, NOT_IN_WORLD);
 
-            if(!IS_RECT_EMPTY(&send_to_room_rect))
+            //TEMP
+            if(!IS_RECT_EMPTY(&send_to_room_rect) && debug_enabled && params->show_all && room->index != player->curr_room)
             {
                 if(rectangles_colliding(&room_rect, &send_to_room_rect))
                 {

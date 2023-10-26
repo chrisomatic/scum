@@ -91,6 +91,8 @@ void editor_draw()
                 player_selection = imgui_dropdown(player_names, name_count, "Select Player", &player_selection);
                 Player* p = &players[player_selection];
 
+                imgui_toggle_button(&players_invincible, "Invinvible Players");
+
                 int hp = p->hp;
                 imgui_number_box("HP", 0, p->hp_max, &hp);
                 p->hp = (uint8_t)hp;
