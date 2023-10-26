@@ -44,14 +44,16 @@ void editor_draw()
         {
             case 0: // general
             {
-                imgui_slider_float("Zoom", 0.01,.99, &cam_zoom);
+
+                imgui_number_box("Camera Zoom", 0, 100, &cam_zoom);
+
+                imgui_text("Current Zoom: %.2f", camera_get_zoom());
 
                 imgui_text("Mouse (view): %.1f, %.1f", mx, my);
                 imgui_text("Mouse (world): %.1f, %.1f", wmx, wmy);
 
                 Rect cr = get_camera_rect();
                 imgui_text("Camera: %.1f, %.1f, %.1f, %.1f", cr.x, cr.y, cr.w, cr.h);
-                imgui_text("Camera Zoom: %.2f", camera_get_zoom());
 
                 imgui_toggle_button(&dynamic_zoom, "Dynamic Zoom");
 
@@ -168,11 +170,17 @@ void editor_draw()
 
             case 4: // projectiles
             {
-                imgui_text_sized(big, "Gun");
                 imgui_slider_float("Damage", 0.0,100.0,&projectile_lookup[0].damage);
                 imgui_slider_float("Cooldown", 0.0,1.0,&player->proj_cooldown_max);
                 imgui_slider_float("Base Speed", 100.0,1000.0,&projectile_lookup[0].base_speed);
                 imgui_slider_float("Min Speed", 50.0,200.0,&projectile_lookup[0].min_speed);
+                imgui_slider_float("Angle Spread", 0.0, 90.0,&projectile_lookup[0].angle_spread);
+                imgui_slider_float("Scale", 0.1, 5.0,&projectile_lookup[0].scale);
+
+                int num = projectile_lookup[0].num;
+                imgui_number_box("Num", 1,10, &num);
+                projectile_lookup[0].num = num;
+
                 imgui_toggle_button(&projectile_lookup[0].charge, "Charge");
                 int charge_rate = projectile_lookup[0].charge_rate;
                 imgui_number_box("Charge Rate", 1, 100, &charge_rate);

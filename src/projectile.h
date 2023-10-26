@@ -18,6 +18,10 @@ typedef struct
     float min_speed;
     float base_speed;
 
+    float angle_spread;
+    float scale;
+    uint8_t num;
+
     bool charge;
     uint8_t charge_rate;
 
@@ -35,7 +39,6 @@ typedef struct
     float angle_deg;
     uint8_t curr_room;
 
-    // Player* shooter;
     uint8_t player_id;
 
     float scale;
@@ -60,6 +63,7 @@ extern glist* plist;
 void projectile_init();
 void projectile_clear_all();
 void projectile_add(Physics* phys, uint8_t curr_room, float angle_deg, float scale, float damage_multiplier, bool from_player);
+void projecile_add_new(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player);
 void projectile_update_hit_box(Projectile* proj);
 void projectile_update(float delta_t);
 void projectile_handle_collision(Projectile* p, Entity* e);
