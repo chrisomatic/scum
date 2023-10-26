@@ -89,6 +89,7 @@ void projecile_add_new(Physics* phys, uint8_t curr_room, ProjectileType proj_typ
 
 
         Projectile p = {0};
+        p.id = get_id();
         memcpy(&p, &proj, sizeof(Projectile));
 
         float speed = projdef->base_speed;
