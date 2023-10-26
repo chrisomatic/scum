@@ -58,6 +58,7 @@ glist* decal_list = NULL;
 bool dynamic_zoom = true;
 float cam_zoom = 0.68;
 float cam_zoom_temp = 0.68;
+float cam_min_zoom = 0.64;
 Rect camera_limit = {0};    // based on margins and room_area
 Vector2f aim_camera_offset = {0};
 float ascale = 1.0;
@@ -306,7 +307,7 @@ void camera_set()
             }
         }
 
-        float minz = 0.64;
+        // float minz = 0.64;
         if(all_visible && FEQ(cam_zoom_temp, cam_zoom))
         {
             // printf("satisfied\n");
@@ -339,7 +340,7 @@ void camera_set()
 
                 if(cam_zoom_temp > 1.0)
                     break;
-                if(cam_zoom_temp < minz)
+                if(cam_zoom_temp < cam_min_zoom)
                     break;
                 if(cam_zoom_temp < 0.0)
                     break;
@@ -372,7 +373,7 @@ void camera_set()
                     break;
             }
 
-            cam_zoom_temp = RANGE(cam_zoom_temp, minz, 1.0);
+            cam_zoom_temp = RANGE(cam_zoom_temp, cam_min_zoom, 1.0);
         }
     }
     else
@@ -395,6 +396,7 @@ void camera_set()
             cam_pos_x += RAND_FLOAT(-xyrange, xyrange);
             cam_pos_y += RAND_FLOAT(-xyrange, xyrange);
             cam_pos_z += RAND_FLOAT(-0.03, 0.03);
+            cam_pos_z = MAX(cam_min_zoom, cam_pos_z);
             // immediate = true;
         }
     }
