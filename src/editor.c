@@ -27,7 +27,7 @@ void editor_init()
 
 void editor_draw()
 {
-    int name_count = player_names_build(false, true);
+    int name_count = player_names_build(false, false);
 
     imgui_begin_panel("Editor", view_width - 300, 1, true);
 
@@ -88,10 +88,15 @@ void editor_draw()
             case 2: // players
             {
 
+                imgui_toggle_button(&players_invincible, "Invincible Players");
+
                 player_selection = imgui_dropdown(player_names, name_count, "Select Player", &player_selection);
                 Player* p = &players[player_selection];
 
-                imgui_toggle_button(&players_invincible, "Invinvible Players");
+                if(p != player)
+                {
+                    imgui_toggle_button(&p->active, "Active");
+                }
 
                 int hp = p->hp;
                 imgui_number_box("HP", 0, p->hp_max, &hp);

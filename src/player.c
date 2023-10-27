@@ -11,6 +11,8 @@
 #define RADIUS_OFFSET_X 0
 #define RADIUS_OFFSET_Y 7.5
 
+void player_ai_move_to_target(Player* p, Player* target);
+
 static float sprite_index_to_angle(Player* p);
 static void update_player_boxes(Player* p);
 static void handle_room_collision(Player* p);
@@ -64,7 +66,7 @@ void player_init()
         // p->curr_room = (uint8_t)level_get_room_index(room_x, room_y);
         // p->transition_room = p->curr_room;
 
-        p->proj_cooldown_max = 0.04;
+        p->proj_cooldown_max = 0.2;
         p->door = DIR_NONE;
 
         memset(p->name, PLAYER_NAME_MAX, 0);
@@ -567,9 +569,16 @@ void player_update(Player* p, float dt)
 {
     if(!p->active) return;
 
-    if(role == ROLE_LOCAL)
+    if(role == ROLE_LOCAL && p == player)
     {
         if(player->curr_room != player->transition_room) return;
+    }
+
+    bool ai = false;
+    if(p != player && p != player2)
+    {
+        ai = true;
+        player_ai_move_to_target(p, player);
     }
 
     float prior_x = p->phys.pos.x;
@@ -784,6 +793,66 @@ void player_update(Player* p, float dt)
             p->invulnerable = false;
         }
     }
+}
+
+void player_ai_move_to_target(Player* p, Player* target)
+{
+    if(target->curr_room != p->curr_room)
+    {
+        p->actions[PLAYER_ACTION_LEFT].state = false;
+        p->actions[PLAYER_ACTION_RIGHT].state = false;
+        p->actions[PLAYER_ACTION_UP].state = false;
+        p->actions[PLAYER_ACTION_DOWN].state = false;
+        return;
+    }
+
+    // const float threshold = 2.0;
+    float threshold = p->phys.radius*2.0 + 6.0;
+
+    float tx = target->phys.pos.x;
+    float ty = target->phys.pos.y;
+
+    float dx = p->phys.pos.x - tx;
+    float dy = p->phys.pos.y - ty;
+
+    if(ABS(dx) > threshold)
+    {
+        if(dx < 0)
+        {
+            p->actions[PLAYER_ACTION_LEFT].state = false;
+            p->actions[PLAYER_ACTION_RIGHT].state = true;
+        }
+        else
+        {
+            p->actions[PLAYER_ACTION_LEFT].state = true;
+            p->actions[PLAYER_ACTION_RIGHT].state = false;
+        }
+    }
+    else
+    {
+        p->actions[PLAYER_ACTION_LEFT].state = false;
+        p->actions[PLAYER_ACTION_RIGHT].state = false;
+    }
+
+    if(ABS(dy) > threshold)
+    {
+        if(dy < 0)
+        {
+            p->actions[PLAYER_ACTION_UP].state = false;
+            p->actions[PLAYER_ACTION_DOWN].state = true;
+        }
+        else
+        {
+            p->actions[PLAYER_ACTION_UP].state = true;
+            p->actions[PLAYER_ACTION_DOWN].state = false;
+        }
+    }
+    else
+    {
+        p->actions[PLAYER_ACTION_UP].state = false;
+        p->actions[PLAYER_ACTION_DOWN].state = false;
+    }
+
 }
 
 void player_draw(Player* p)

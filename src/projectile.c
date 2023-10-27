@@ -19,12 +19,12 @@ static uint16_t id_counter = 0;
 ProjectileDef projectile_lookup[] = {
     {
         // laser
-        .damage = 1.0,
+        .damage = 10.0,
         .min_speed = 200.0,
         .base_speed = 200.0,
-        .angle_spread = 0.0,
+        .angle_spread = 45.0,
         .scale = 1.0,
-        .num = 1,
+        .num = 10,
         .charge = false,
         .charge_rate = 16
     }
@@ -94,7 +94,7 @@ void projecile_add_new(Physics* phys, uint8_t curr_room, ProjectileType proj_typ
 
         float speed = projdef->base_speed;
         float angle = angle_deg;
-        if(!FEQ0(spread))
+        if(!FEQ0(spread) && i > 0)
         {
             // printf("%.2f -> ", angle);
             angle += RAND_FLOAT(-spread, spread);

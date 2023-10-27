@@ -228,7 +228,7 @@ void set_game_state(GameState state)
                     player = &players[0];
                     player2 = &players[1];
                     player_set_active(player, true);
-                    player_set_active(player2, true);
+                    // player_set_active(player2, true);
                     player2_init_keys();
                 }
                 player_init_keys();
