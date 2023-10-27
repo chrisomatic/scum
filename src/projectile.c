@@ -27,6 +27,17 @@ ProjectileDef projectile_lookup[] = {
         .num = 10,
         .charge = false,
         .charge_rate = 16
+    },
+    {
+        // creature
+        .damage = 1.0,
+        .min_speed = 200.0,
+        .base_speed = 200.0,
+        .angle_spread = 0.0,
+        .scale = 1.0,
+        .num = 1,
+        .charge = false,
+        .charge_rate = 16
     }
 };
 
@@ -54,7 +65,7 @@ void projectile_clear_all()
     list_clear(plist);
 }
 
-void projecile_add_new(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player)
+void projectile_add_new(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player)
 {
     ProjectileDef* projdef = &projectile_lookup[proj_type];
 
@@ -65,6 +76,7 @@ void projecile_add_new(Physics* phys, uint8_t curr_room, ProjectileType proj_typ
     proj.phys.pos.x = phys->pos.x;
     proj.phys.pos.y = phys->pos.y;
     proj.phys.mass = 1.0;
+    proj.phys.radius = 4.0;
     proj.curr_room = curr_room;
     proj.from_player = from_player;
 

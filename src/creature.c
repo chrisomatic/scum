@@ -17,9 +17,11 @@ glist* clist = NULL;
 
 static int creature_image_slug;
 static int creature_image_clinger;
+static int creature_image_geizer;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
+static void creature_update_geizer(Creature* c, float dt);
 
 static uint16_t id_counter = 0;
 
@@ -37,6 +39,7 @@ void creature_init()
 
     creature_image_slug = gfx_load_image("src/img/creature_slug.png", false, false, 17, 17);
     creature_image_clinger = gfx_load_image("src/img/creature_clinger.png", false, false, 32, 32);
+    creature_image_geizer = gfx_load_image("src/img/creature_geizer.png", false, false, 32, 64);
 }
 
 void creature_clear_all()
@@ -112,8 +115,6 @@ static void add_to_random_tile(Creature* c, Room* room)
     c->spawn_tile_y = tile_y;
     c->spawn.x = c->phys.pos.x;
     c->spawn.y = c->phys.pos.y;
-
-    c->sprite_index = DIR_DOWN;
 }
 
 Creature* creature_add(Room* room, CreatureType type, Creature* creature)
@@ -139,11 +140,17 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
             case CREATURE_TYPE_SLUG:
             {
                 add_to_random_tile(&c, room);
+                c.sprite_index = DIR_DOWN;
             } break;
             case CREATURE_TYPE_CLINGER:
             {
                 add_to_random_wall_tile(&c);
-            }
+            } break;
+            case CREATURE_TYPE_GEIZER:
+            {
+                add_to_random_tile(&c,room);
+                c.sprite_index = 0;
+            } break;
         }
     }
 
@@ -156,6 +163,8 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
             c.act_time_min = 0.5;
             c.act_time_max = 1.0;
             c.phys.mass = 1.0;
+            c.hp_max = 3.0;
+            c.painful_touch = true;
         } break;
         case CREATURE_TYPE_CLINGER:
         {
@@ -164,7 +173,19 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
             c.act_time_min = 0.2;
             c.act_time_max = 0.4;
             c.phys.mass = 100.0; // so it doesn't slide when hit
-        }
+            c.hp_max = 5.0;
+            c.painful_touch = false;
+        } break;
+        case CREATURE_TYPE_GEIZER:
+        {
+            c.phys.speed = 1.0;
+            c.image = creature_image_geizer;
+            c.act_time_min = 3.0;
+            c.act_time_max = 5.0;
+            c.phys.mass = 1000.0; // so it doesn't slide when hit
+            c.hp_max = 10.0;
+            c.painful_touch = false;
+        } break;
     }
 
     memcpy(&c.phys.target_pos, &c.phys.pos, sizeof(Vector2f));
@@ -173,9 +194,7 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
     c.phys.radius = 8.0;
     c.phys.coffset.x = 0;
     c.phys.coffset.y = 0;
-    c.hp_max = 3.0;
     c.damage = 1;
-    c.painful_touch = true;
 
     if(creature == NULL)
     {
@@ -204,6 +223,9 @@ void creature_update(Creature* c, float dt)
             break;
         case CREATURE_TYPE_CLINGER:
             creature_update_clinger(c,dt);
+            break;
+        case CREATURE_TYPE_GEIZER:
+            creature_update_geizer(c,dt);
             break;
     }
 
@@ -410,16 +432,16 @@ static void creature_update_slug(Creature* c, float dt)
         }
     }
 }
-static void creature_fire_projectile(Creature* c, Dir dir)
+static void creature_fire_projectile_dir(Creature* c, Dir dir)
 {
     if(dir == DIR_UP)
-        projectile_add(&c->phys, c->curr_room, 90.0, 1.0, 1.0,false);
+        projectile_add_new(&c->phys, c->curr_room, PROJECTILE_TYPE_CREATURE,90.0, 1.0, 1.0,false);
     else if(dir == DIR_RIGHT)
-        projectile_add(&c->phys, c->curr_room, 0.0, 1.0, 1.0,false);
+        projectile_add_new(&c->phys, c->curr_room, PROJECTILE_TYPE_CREATURE,0.0, 1.0, 1.0,false);
     else if(dir == DIR_DOWN)
-        projectile_add(&c->phys, c->curr_room, 270.0, 1.0, 1.0,false);
+        projectile_add_new(&c->phys, c->curr_room, PROJECTILE_TYPE_CREATURE,270.0, 1.0, 1.0,false);
     else if(dir == DIR_LEFT)
-        projectile_add(&c->phys, c->curr_room, 180.0, 1.0, 1.0,false);
+        projectile_add_new(&c->phys, c->curr_room, PROJECTILE_TYPE_CREATURE,180.0, 1.0, 1.0,false);
 }
 
 static void creature_update_clinger(Creature* c, float dt)
@@ -469,9 +491,9 @@ static void creature_update_clinger(Creature* c, float dt)
             // fire
             ai_stop_moving(c);
             if(horiz)
-                creature_fire_projectile(c, c->spawn_tile_y == -1 ? DIR_DOWN : DIR_UP);
+                creature_fire_projectile_dir(c, c->spawn_tile_y == -1 ? DIR_DOWN : DIR_UP);
             else
-                creature_fire_projectile(c, c->spawn_tile_x == -1 ? DIR_RIGHT : DIR_LEFT);
+                creature_fire_projectile_dir(c, c->spawn_tile_x == -1 ? DIR_RIGHT : DIR_LEFT);
         }
         else
         {
@@ -496,4 +518,21 @@ static void creature_update_clinger(Creature* c, float dt)
         }
     }
     return;
+}
+
+static void creature_update_geizer(Creature* c, float dt)
+{
+    bool act = ai_update_action(c, dt);
+
+    if(act)
+    {
+        int n_orbs = 5 + (rand() % 5);
+
+        for(int i = 0; i < n_orbs; ++i)
+        {
+            int angle = rand() % 360;
+            projectile_add_new(&c->phys, c->curr_room, PROJECTILE_TYPE_CREATURE, angle, 1.0, 1.0,false);
+        }
+
+    }
 }

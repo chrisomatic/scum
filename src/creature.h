@@ -11,6 +11,7 @@ typedef enum
 {
     CREATURE_TYPE_SLUG,
     CREATURE_TYPE_CLINGER,
+    CREATURE_TYPE_GEIZER,
     CREATURE_TYPE_MAX,
 } CreatureType;
 

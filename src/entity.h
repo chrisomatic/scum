@@ -18,7 +18,7 @@ typedef struct
     void* ptr;
     uint8_t curr_room;
     Physics* phys;
-    bool simulate;
+    bool ghost;
 } Entity;
 
 extern Entity entities[MAX_ENTITIES];

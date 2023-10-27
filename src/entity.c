@@ -7,7 +7,7 @@
 Entity entities[MAX_ENTITIES] = {0};
 int num_entities;
 
-static void add_entity(EntityType type, void* ptr, uint8_t curr_room, Physics* phys, bool simulate)
+static void add_entity(EntityType type, void* ptr, uint8_t curr_room, Physics* phys, bool ghost)
 {
     Entity* e = &entities[num_entities++];
 
@@ -15,7 +15,7 @@ static void add_entity(EntityType type, void* ptr, uint8_t curr_room, Physics* p
     e->ptr = ptr;
     e->curr_room = curr_room;
     e->phys = phys;
-    e->simulate = simulate;
+    e->ghost = ghost;
 }
 
 static bool is_player_room(uint8_t room_index)
@@ -60,7 +60,7 @@ void entity_build_all()
         Player* p = &players[i];
         if(!p->active) continue;
 
-        add_entity(ENTITY_TYPE_PLAYER,p,p->curr_room, &p->phys, true);
+        add_entity(ENTITY_TYPE_PLAYER,p,p->curr_room, &p->phys, false);
     }
 
     // creatures
@@ -71,15 +71,15 @@ void entity_build_all()
 
         if(!is_player_room(c->curr_room)) continue;
 
-        bool simulate = c->dead ? false : true;
-        add_entity(ENTITY_TYPE_CREATURE,c,c->curr_room, &c->phys,simulate);
+        bool ghost = c->dead ? true : false;
+        add_entity(ENTITY_TYPE_CREATURE,c,c->curr_room, &c->phys,ghost);
     }
 
     // projectiles
     for(int i = 0; i < plist->count; ++i)
     {
         Projectile* p = &projectiles[i];
-        add_entity(ENTITY_TYPE_PROJECTILE,p,p->curr_room, &p->phys, true);
+        add_entity(ENTITY_TYPE_PROJECTILE,p,p->curr_room, &p->phys, false);
     }
 }
 
@@ -87,10 +87,11 @@ void entity_handle_collisions()
 {
     //printf("num entities: %d\n",num_entities);
 
+    // handle entity collisions with other entities
     for(int i = 0; i < num_entities; ++i)
     {
         Entity* e1 = &entities[i];
-        if(!e1->simulate) continue;
+        if(e1->ghost) continue;
 
         Physics* p1 = e1->phys;
 
@@ -98,7 +99,7 @@ void entity_handle_collisions()
         {
             Entity* e2 = &entities[j];
 
-            if(!e2->simulate) continue;
+            if(e2->ghost) continue;
             if(e1 == e2) continue;
 
             switch(e1->type)
@@ -116,10 +117,11 @@ void entity_handle_collisions()
         }
     }
 
+    // handle entity collisions with walls
     for(int i = 0; i < num_entities; ++i)
     {
         Entity* e = &entities[i];
-        if(!e->simulate) continue;
+        if(e->ghost) continue;
 
         Room* room = level_get_room_by_index(&level, entities[i].curr_room);
         level_handle_room_collision(room,entities[i].phys);
