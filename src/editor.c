@@ -83,6 +83,8 @@ void editor_draw()
 
                 imgui_toggle_button(&show_walls, "Draw Collision Walls");
 
+                imgui_toggle_button(&show_tile_grid, "Draw Tile Grid");
+
             } break;
 
             case 2: // players

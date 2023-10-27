@@ -163,26 +163,26 @@ void projectile_add_new(Physics* phys, uint8_t curr_room, ProjectileType proj_ty
             }
         }
 
-        // float a = calc_angle_rad(0,0,p.phys.vel.x, p.phys.vel.y);
-        // float xa = cosf(a);
-        // float ya = sinf(a);
-        // float _speed = 0;
+        float a = calc_angle_rad(0,0,p.phys.vel.x, p.phys.vel.y);
+        float xa = cosf(a);
+        float ya = sinf(a);
+        float _speed = 0;
 
-        // if(!FEQ0(xa))
-        // {
-        //     _speed = p.phys.vel.x / xa;
-        // }
-        // else if(!FEQ0(ya))
-        // {
-        //     _speed = p.phys.vel.y / ya;
-        //     _speed *= -1;   // @minus
-        // }
-        // if(_speed < min_speed)
-        // {
-        //     // printf("min speed\n");
-        //     p.phys.vel.x = min_speed * xa;
-        //     p.phys.vel.y = -min_speed * ya;   //@minus
-        // }
+        if(!FEQ0(xa))
+        {
+            _speed = p.phys.vel.x / xa;
+        }
+        else if(!FEQ0(ya))
+        {
+            _speed = p.phys.vel.y / ya;
+            _speed *= -1;   // @minus
+        }
+        if(_speed < min_speed)
+        {
+            // printf("min speed\n");
+            p.phys.vel.x = min_speed * xa;
+            p.phys.vel.y = -min_speed * ya;   //@minus
+        }
 
 
         list_add(plist, (void*)&p);

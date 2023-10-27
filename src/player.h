@@ -4,6 +4,7 @@
 #include "physics.h"
 #include "gfx.h"
 #include "net.h"
+#include "gems.h"
 #include "entity.h"
 
 #define MAX_PLAYERS 4
@@ -15,6 +16,8 @@
 
 #define PLAYER_NAME_MAX 16
 
+#define PLAYER_GEMS_MAX 4
+
 enum PlayerActions
 {
     PLAYER_ACTION_UP,
@@ -23,6 +26,8 @@ enum PlayerActions
     PLAYER_ACTION_RIGHT,
     PLAYER_ACTION_SHOOT,
     PLAYER_ACTION_GENERATE_ROOMS,
+    PLAYER_ACTION_GEM_MENU,
+    PLAYER_ACTION_GEM_MENU_CYCLE,
 
     PLAYER_ACTION_MAX
 };
@@ -37,6 +42,8 @@ typedef struct
     float vel_factor;
 
     PlayerInput actions[PLAYER_ACTION_MAX];
+
+    GemType gems[PLAYER_GEMS_MAX];
 
     GFXAnimation anim;
 

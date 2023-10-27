@@ -706,7 +706,7 @@ void level_draw_room(Room* room, float xoffset, float yoffset)
 
             gfx_draw_image(dungeon_image, sprite, draw_x, draw_y, color, 1.0, 0.0, 1.0, false, true);
 
-            if(debug_enabled)
+            if(debug_enabled && show_tile_grid)
             {
                 gfx_draw_rect_xywh(draw_x, draw_y, TILE_SIZE, TILE_SIZE, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
             }

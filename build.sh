@@ -24,6 +24,7 @@ gcc core/gfx.c \
     level.c \
     editor.c \
     entity.c \
+    gems.c \
     main.c \
     -Icore \
     -lglfw -lGLU -lGLEW -lGL -lm \

@@ -85,6 +85,14 @@ void player_init()
         p->anim.frame_sequence[1] = 1;
         p->anim.frame_sequence[2] = 2;
         p->anim.frame_sequence[3] = 3;
+
+        for(int j = 0; j < PLAYER_GEMS_MAX; ++j)
+        {
+            p->gems[j] = rand() % GEM_TYPE_NONE;
+            printf("gems[%d] = %d\n", j, p->gems[j]);
+            // p->gems[j] = GEM_TYPE_NONE;
+        }
+
     }
 }
 
@@ -179,12 +187,14 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_S);
     window_controls_add_key(&player->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_A);
     window_controls_add_key(&player->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_D);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_SPACE);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
+
+    window_controls_add_key(&player->actions[PLAYER_ACTION_GEM_MENU].state, GLFW_KEY_G);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_GEM_MENU_CYCLE].state, GLFW_KEY_TAB);
 
     for(int i = 0;  i < PLAYER_ACTION_MAX; ++i)
         memset(&player->actions[i], 0, sizeof(PlayerInput));
-
-    window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_SPACE);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
 }
 
 void player2_init_keys()
@@ -199,11 +209,10 @@ void player2_init_keys()
     window_controls_add_key(&player2->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_DOWN);
     window_controls_add_key(&player2->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_LEFT);
     window_controls_add_key(&player2->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_RIGHT);
+    window_controls_add_key(&player2->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_RIGHT_SHIFT);
 
     for(int i = 0;  i < PLAYER_ACTION_MAX; ++i)
         memset(&player2->actions[i], 0, sizeof(PlayerInput));
-
-    window_controls_add_key(&player2->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_RIGHT_SHIFT);
 }
 
 void player_set_hit_box_pos(Player* p, float x, float y)
@@ -589,6 +598,22 @@ void player_update(Player* p, float dt)
         PlayerInput* pa = &p->actions[i];
         update_input_state(pa, dt);
     }
+
+    if(p->actions[PLAYER_ACTION_GEM_MENU].toggled_on)
+    {
+        show_gem_menu = !show_gem_menu;
+    }
+    if(show_gem_menu)
+    {
+        if(p->actions[PLAYER_ACTION_GEM_MENU_CYCLE].toggled_on)
+        {
+            gem_menu_selection++;
+            if(gem_menu_selection >= PLAYER_GEMS_MAX)
+                gem_menu_selection = 0;
+        }
+        
+    }
+
 
     bool up    = p->actions[PLAYER_ACTION_UP].state;
     bool down  = p->actions[PLAYER_ACTION_DOWN].state;

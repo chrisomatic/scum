@@ -17,27 +17,30 @@
 #include "editor.h"
 #include "net.h"
 #include "entity.h"
+#include "gems.h"
 #include "text_list.h"
 
 // =========================
 // Global Vars
 // =========================
 
+GameState game_state = GAME_STATE_MENU;
+Timer game_timer = {0};
+text_list_t* text_lst = NULL;
 bool initialized = false;
 bool debug_enabled = false;
 bool editor_enabled = false;
 bool paused = false;
-GameState game_state = GAME_STATE_MENU;
-Timer game_timer = {0};
-text_list_t* text_lst = NULL;
 bool show_big_map = false;
 bool show_walls = false;
-GameRole role = ROLE_LOCAL;
+bool show_tile_grid = false;
 bool players_invincible = false;
+bool show_gem_menu = false;
+int gem_menu_selection = 0;
+GameRole role = ROLE_LOCAL;
 
 // Settings
 uint32_t background_color = COLOR_BLACK;
-// uint32_t background_color = COLOR_YELLOW;
 uint32_t margin_color = COLOR_BLACK;
 
 // mouse
@@ -507,6 +510,7 @@ void start_server()
     player_init();
     creature_init();
     decal_init();
+    gems_init();
 
     srand(time(0));
     seed = rand();
@@ -597,6 +601,9 @@ void init()
     LOGI(" - Decals.");
     decal_init();
 
+    LOGI(" - Gems.");
+    gems_init();
+
     if(role == ROLE_LOCAL)
     {
         game_generate_level(seed);
@@ -628,7 +635,7 @@ void init()
     params->color_room = COLOR_BLACK;
     params->opacity_room = 0.8;
     params->color_uroom = params->color_room;
-    params->opacity_uroom = params->opacity_room/4.0;
+    params->opacity_uroom = 0.3;
     params->color_player = COLOR_RED;
     params->opacity_player = 0.3;
 
@@ -938,7 +945,24 @@ void draw_map(DrawLevelParams* params)
         for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
         {
             Room* room = &level.rooms[x][y];
-            if(!room->valid) continue;
+
+            float draw_x = tlx + x*len + r;
+            float draw_y = tly + y*len + r;
+            Rect room_rect = RECT(draw_x, draw_y, room_wh, room_wh);
+
+            if(!room->valid)
+            {
+                if(debug_enabled)
+                {
+                    gfx_draw_rect(&room_rect, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
+
+                    room_rect.w -= 1.0;
+                    room_rect.h -= 1.0;
+                    gfx_draw_rect(&room_rect, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
+                }
+                continue;
+            }
+
             bool discovered = room->discovered;
             bool is_near = near[x][y];
 
@@ -946,10 +970,6 @@ void draw_map(DrawLevelParams* params)
             {
                 continue;
             }
-
-            float draw_x = tlx + x*len + r;
-            float draw_y = tly + y*len + r;
-            Rect room_rect = RECT(draw_x, draw_y, room_wh, room_wh);
 
             uint32_t _color = params->color_room;
             float _opacity = params->opacity_room;
@@ -959,7 +979,7 @@ void draw_map(DrawLevelParams* params)
                 _opacity = params->opacity_uroom;
             }
 
-            if(params->show_all)
+            if(params->show_all && debug_enabled)
             {
                 _color = room->color;
             }
@@ -1045,9 +1065,11 @@ void draw_minimap()
 
 void draw_bigmap()
 {
+    if(show_gem_menu) return; // gem menu takes precedence
     if(!show_big_map) return;
-    float len = MIN(room_area.w, room_area.h);
-    // len /= camera_get_zoom();
+    float len = MIN(view_width, view_height) * 0.5;
+    // float len = MIN(room_area.w, room_area.h);
+    // // len /= (camera_get_zoom()/2.0);
     Rect area = RECT(room_area.x, room_area.y, len, len);
     bigmap_params.area = area;
     draw_map(&bigmap_params);
@@ -1100,6 +1122,46 @@ void draw_hearts()
         gfx_draw_rect(&r, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.8, false, NOT_IN_WORLD);
 
         x += (l+pad);
+    }
+}
+
+void draw_gem_menu()
+{
+    if(!show_gem_menu) return;
+
+    float len = 100.0;
+    float margin = 5.0;
+
+    int w = gfx_images[gems_image].element_width;
+    float scale = len / (float)w;
+
+    float total_len = (PLAYER_GEMS_MAX * len) + ((PLAYER_GEMS_MAX-1) * margin);
+
+    float x = (view_width - total_len) / 2.0;   // left side of first rect
+    x += len/2.0;   // centered
+
+    // float y = (float)view_height * 0.75;
+    float y = view_height - len/2.0 - margin;
+
+    Rect r = {0};
+    r.w = len;
+    r.h = len;
+    r.y = y;
+    r.x = x;
+
+    for(int i = 0; i < PLAYER_GEMS_MAX; ++i)
+    {
+        uint32_t color = COLOR_BLACK;
+        if(i == gem_menu_selection)
+            color = COLOR_WHITE;
+        gfx_draw_rect(&r, color, NOT_SCALED, NO_ROTATION, 0.5, true, NOT_IN_WORLD);
+
+        if(player->gems[i] != GEM_TYPE_NONE)
+        {
+            gfx_draw_image(gems_image, player->gems[i], r.x, r.y, COLOR_TINT_NONE, scale, 0.0, 0.5, false, NOT_IN_WORLD);
+        }
+        r.x += len;
+        r.x += margin;
     }
 }
 
@@ -1212,6 +1274,7 @@ void draw()
     {
         draw_minimap();
         draw_hearts();
+        draw_gem_menu();
     }
 
     if(debug_enabled)
