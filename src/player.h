@@ -50,7 +50,6 @@ typedef struct
 
     uint8_t hp;
     uint8_t hp_max;
-    bool dead;
 
     Vector2i curr_tile;
 

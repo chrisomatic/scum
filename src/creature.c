@@ -210,7 +210,7 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
 
 void creature_update(Creature* c, float dt)
 {
-    if(c->dead)
+    if(c->phys.dead)
         return;
 
     if(!is_any_player_room(c->curr_room))
@@ -280,7 +280,7 @@ void creature_update(Creature* c, float dt)
 
 void creature_lerp(Creature* c, float dt)
 {
-    if(c->dead) return;
+    if(c->phys.dead) return;
 
     c->lerp_t += dt;
 
@@ -302,7 +302,7 @@ void creature_update_all(float dt)
     {
         Creature* c = &creatures[i];
         creature_update(c, dt);
-        if(c->dead)
+        if(c->phys.dead)
         {
             list_remove(clist, i);
         }
@@ -333,7 +333,7 @@ void creature_draw(Creature* c)
     if(c->curr_room != player->curr_room)
         return;
 
-    if(c->dead) return;
+    if(c->phys.dead) return;
 
     gfx_draw_image(c->image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, c->color, 1.0, 0.0, 1.0, false, true);
 
@@ -359,7 +359,7 @@ void creature_draw_all()
 
 void creature_die(Creature* c)
 {
-    c->dead = true;
+    c->phys.dead = true;
 
     Decal d = {0};
     d.image = particles_image;

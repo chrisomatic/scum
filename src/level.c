@@ -421,6 +421,47 @@ void level_print_room(Room* room)
     printf("\n");
 }
 
+static bool is_colliding_with_wall(Physics* phys, Wall* wall)
+{
+    bool collision = false;
+    bool check = false;
+    Vector2f check_point;
+
+    float px = CPOSX(*phys);
+    float py = CPOSY(*phys);
+
+    switch(wall->dir)
+    {
+        case DIR_UP: case DIR_DOWN:
+            if(px+phys->radius >= wall->p0.x && px-phys->radius <= wall->p1.x)
+            {
+                check_point.x = px;
+                check_point.y = wall->p0.y;
+                check = true;
+            }
+            break;
+        case DIR_LEFT: case DIR_RIGHT:
+            if(py+phys->radius >= wall->p0.y && py-phys->radius <= wall->p1.y)
+            {
+                check_point.x = wall->p0.x;
+                check_point.y = py;
+                check = true;
+            }
+            break;
+    }
+
+    if(check)
+    {
+        float d = dist(px, py, check_point.x, check_point.y);
+        bool collision = (d < phys->radius);
+
+        return collision;
+    }
+
+    return false;
+}
+
+
 void level_handle_room_collision(Room* room, Physics* phys)
 {
     if(!room)
@@ -466,6 +507,12 @@ void level_handle_room_collision(Room* room, Physics* phys)
 
             if(collision)
             {
+                if(phys->amorphous)
+                {
+                    phys->dead = true;
+                    return;
+                }
+
                 //printf("Collision! player: %f %f. Wall point: %f %f. Dist: %f\n", px, py, check_point.x, check_point.y, d);
                 float delta = phys->radius - d + 1.0;
                 switch(wall->dir)
@@ -519,10 +566,10 @@ void level_handle_room_collision(Room* room, Physics* phys)
                 }
 
                 memcpy(&phys->target_pos, &phys->pos, sizeof(Vector2f));
+
             }
         }
     }
-
 }
 
 bool level_is_colliding_with_wall(Room* room, Physics* phys)
@@ -536,40 +583,7 @@ bool level_is_colliding_with_wall(Room* room, Physics* phys)
     {
         Wall* wall = &room->walls[i];
 
-        bool collision = false;
-        bool check = false;
-        Vector2f check_point;
-
-        float px = CPOSX(*phys);
-        float py = CPOSY(*phys);
-
-        switch(wall->dir)
-        {
-            case DIR_UP: case DIR_DOWN:
-                if(px+phys->radius >= wall->p0.x && px-phys->radius <= wall->p1.x)
-                {
-                    check_point.x = px;
-                    check_point.y = wall->p0.y;
-                    check = true;
-                }
-                break;
-            case DIR_LEFT: case DIR_RIGHT:
-                if(py+phys->radius >= wall->p0.y && py-phys->radius <= wall->p1.y)
-                {
-                    check_point.x = wall->p0.x;
-                    check_point.y = py;
-                    check = true;
-                }
-                break;
-        }
-
-        if(check)
-        {
-            float d = dist(px, py, check_point.x, check_point.y);
-            bool collision = (d < phys->radius);
-
-            return collision;
-        }
+        bool collide = is_colliding_with_wall(phys,wall);
     }
 
     return false;

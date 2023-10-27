@@ -71,12 +71,13 @@ void projectile_add_new(Physics* phys, uint8_t curr_room, ProjectileType proj_ty
 
     Projectile proj = {0};
     proj.type = proj_type;
-    proj.dead = false;
+    proj.phys.dead = false;
     proj.damage = projdef->damage * damage_multiplier;
     proj.phys.pos.x = phys->pos.x;
     proj.phys.pos.y = phys->pos.y;
     proj.phys.mass = 1.0;
     proj.phys.radius = 4.0;
+    proj.phys.amorphous = true;
     proj.curr_room = curr_room;
     proj.from_player = from_player;
 
@@ -202,7 +203,7 @@ void projectile_add(Physics* phys, uint8_t curr_room, float angle_deg, float sca
 
     ProjectileDef* projdef = &projectile_lookup[proj.type];
 
-    proj.dead = false;
+    proj.phys.dead = false;
     proj.damage = projdef->damage * damage_multiplier;
 
     proj.phys.pos.x = phys->pos.x;
@@ -312,12 +313,12 @@ void projectile_update(float delta_t)
     {
         Projectile* proj = &projectiles[i];
 
-        if(proj->dead)
+        if(proj->phys.dead)
             continue;
 
         if(proj->time >= proj->ttl)
         {
-            proj->dead = true;
+            proj->phys.dead = true;
             continue;
         }
 
@@ -337,7 +338,7 @@ void projectile_update(float delta_t)
         /*
         if(!rectangles_colliding(&proj->hit_box, &player_area))
         {
-            proj->dead = true;
+            proj->phys.dead = true;
             continue;
         }
         */
@@ -346,7 +347,7 @@ void projectile_update(float delta_t)
     // int count = 0;
     for(int i = plist->count - 1; i >= 0; --i)
     {
-        if(projectiles[i].dead)
+        if(projectiles[i].phys.dead)
         {
             // count++;
             projectile_remove(i);
@@ -366,13 +367,13 @@ void projectile_update_hit_box(Projectile* proj)
 
 void projectile_handle_collision(Projectile* proj, Entity* e)
 {
-    if(proj->dead) return;
+    if(proj->phys.dead) return;
 
     if(proj->from_player && e->type == ENTITY_TYPE_CREATURE)
     {
         Creature* c = (Creature*)e->ptr;
 
-        if(c->dead) return;
+        if(c->phys.dead) return;
         if(proj->curr_room != c->curr_room) return;
 
         bool hit = are_rects_colliding(&proj->hit_box_prior, &proj->hit_box, &c->hitbox);
@@ -382,7 +383,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
             CollisionInfo ci = {0.0,0.0};
             phys_collision_correct(&proj->phys,&c->phys,&ci);
             creature_hurt(c, proj->damage);
-            proj->dead = true;
+            proj->phys.dead = true;
         }
     }
     else if(!proj->from_player && e->type == ENTITY_TYPE_PLAYER)
@@ -390,7 +391,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         Player* p = (Player*)e->ptr;
 
         if(!p->active) return;
-        if(p->dead) return;
+        if(p->phys.dead) return;
 
         if(proj->curr_room != p->curr_room) return;
 
@@ -400,7 +401,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
             CollisionInfo ci = {0.0,0.0};
             phys_collision_correct(&proj->phys,&p->phys,&ci);
             player_hurt(p, proj->damage);
-            proj->dead = true;
+            proj->phys.dead = true;
         }
     }
 
@@ -409,7 +410,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 
     if(colliding)
     {
-        proj->dead = true;
+        proj->phys.dead = true;
     }
 }
 

@@ -7,7 +7,7 @@
 Entity entities[MAX_ENTITIES] = {0};
 int num_entities;
 
-static void add_entity(EntityType type, void* ptr, uint8_t curr_room, Physics* phys, bool ghost)
+static void add_entity(EntityType type, void* ptr, uint8_t curr_room, Physics* phys)
 {
     Entity* e = &entities[num_entities++];
 
@@ -15,7 +15,6 @@ static void add_entity(EntityType type, void* ptr, uint8_t curr_room, Physics* p
     e->ptr = ptr;
     e->curr_room = curr_room;
     e->phys = phys;
-    e->ghost = ghost;
 }
 
 static bool is_player_room(uint8_t room_index)
@@ -60,7 +59,7 @@ void entity_build_all()
         Player* p = &players[i];
         if(!p->active) continue;
 
-        add_entity(ENTITY_TYPE_PLAYER,p,p->curr_room, &p->phys, false);
+        add_entity(ENTITY_TYPE_PLAYER,p,p->curr_room, &p->phys);
     }
 
     // creatures
@@ -71,15 +70,15 @@ void entity_build_all()
 
         if(!is_player_room(c->curr_room)) continue;
 
-        bool ghost = c->dead ? true : false;
-        add_entity(ENTITY_TYPE_CREATURE,c,c->curr_room, &c->phys,ghost);
+        bool ghost = c->phys.dead ? true : false;
+        add_entity(ENTITY_TYPE_CREATURE,c,c->curr_room, &c->phys);
     }
 
     // projectiles
     for(int i = 0; i < plist->count; ++i)
     {
         Projectile* p = &projectiles[i];
-        add_entity(ENTITY_TYPE_PROJECTILE,p,p->curr_room, &p->phys, false);
+        add_entity(ENTITY_TYPE_PROJECTILE,p,p->curr_room, &p->phys);
     }
 }
 
@@ -91,7 +90,7 @@ void entity_handle_collisions()
     for(int i = 0; i < num_entities; ++i)
     {
         Entity* e1 = &entities[i];
-        if(e1->ghost) continue;
+        if(e1->phys->dead || e1->phys->ethereal) continue;
 
         Physics* p1 = e1->phys;
 
@@ -99,7 +98,7 @@ void entity_handle_collisions()
         {
             Entity* e2 = &entities[j];
 
-            if(e2->ghost) continue;
+            if(e2->phys->dead || e2->phys->ethereal) continue;
             if(e1 == e2) continue;
 
             switch(e1->type)
@@ -121,7 +120,7 @@ void entity_handle_collisions()
     for(int i = 0; i < num_entities; ++i)
     {
         Entity* e = &entities[i];
-        if(e->ghost) continue;
+        if(e->phys->dead || e->phys->ethereal) continue;
 
         Room* room = level_get_room_by_index(&level, entities[i].curr_room);
         level_handle_room_collision(room,entities[i].phys);

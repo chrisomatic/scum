@@ -27,6 +27,10 @@ typedef struct
     float radius;
     float mass;
 
+    bool dead;
+    bool amorphous; // splatters on collision
+    bool ethereal;  // can pass through walls
+
     Vector2f coffset;
 } Physics;
 

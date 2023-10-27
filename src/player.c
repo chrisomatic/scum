@@ -40,8 +40,8 @@ void player_init()
         // }
 
         p->active = false;
-        p->dead = false;
 
+        p->phys.dead = false;
         p->phys.pos.x = CENTER_X;
         p->phys.pos.y = CENTER_Y;
 
@@ -254,14 +254,14 @@ void player_hurt(Player* p, int damage)
 void player_die(Player* p)
 {
     // should reset all?
-    p->dead = true;
+    p->phys.dead = true;
 
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         Player* p2 = &players[i];
 
         if(!p2->active) continue;
-        if(!p2->dead) return;
+        if(!p2->phys.dead) return;
     }
 
     // all are dead
@@ -276,7 +276,7 @@ void player_die(Player* p)
 
 void player_reset(Player* p)
 {
-    p->dead = false;
+    p->phys.dead = false;
     p->hp = p->hp_max;
     p->phys.vel.x = 0.0;
     p->phys.vel.y = 0.0;
@@ -718,7 +718,7 @@ void player_update(Player* p, float dt)
                 float damage = (float)p->proj_charge / 100.0;
                 float angle_deg = sprite_index_to_angle(p);
 
-                if(!p->dead)
+                if(!p->phys.dead)
                 {
                     projectile_add_new(&p->phys, p->curr_room, PROJECTILE_TYPE_LASER, angle_deg, scale, damage, true);
                     // projectile_add(&p->phys, p->curr_room, angle_deg, scale, damage,true);
@@ -740,7 +740,7 @@ void player_update(Player* p, float dt)
         {
             float angle_deg = sprite_index_to_angle(p);
 
-            if(!p->dead)
+            if(!p->phys.dead)
             {
                 projectile_add_new(&p->phys, p->curr_room, PROJECTILE_TYPE_LASER, angle_deg, 1.0, 1.0, true);
                 // projectile_add(&p->phys, p->curr_room, angle_deg, 1.0, 1.0, true);
@@ -864,7 +864,7 @@ void player_draw(Player* p)
     Room* room = level_get_room_by_index(&level, (int)p->curr_room);
 
     bool blink = p->invulnerable ? ((int)(p->invulnerable_time * 100)) % 2 == 0 : false;
-    float opacity = p->dead ? 0.3 : 1.0;
+    float opacity = p->phys.dead ? 0.3 : 1.0;
     opacity = blink ? 0.3 : opacity;
     gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, p->phys.pos.y, room->color, 1.0, 0.0, opacity, false, IN_WORLD);
 
@@ -944,7 +944,7 @@ void player_handle_net_inputs(Player* p, double dt)
 
 void player_handle_collision(Player* p, Entity* e)
 {
-    if(p->dead)
+    if(p->phys.dead)
         return;
 
     switch(e->type)

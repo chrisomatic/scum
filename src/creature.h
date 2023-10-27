@@ -30,7 +30,6 @@ typedef struct
     uint32_t color;
     uint8_t sprite_index;
     uint8_t curr_room;
-    bool dead;
     float h,v;
 
     bool painful_touch;

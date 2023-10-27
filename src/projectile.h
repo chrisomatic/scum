@@ -47,7 +47,6 @@ typedef struct
     float damage;
     float time;
     float ttl;
-    bool dead;
     bool from_player;
     
     // Networking
