@@ -90,7 +90,7 @@ void entity_handle_collisions()
     for(int i = 0; i < num_entities; ++i)
     {
         Entity* e1 = &entities[i];
-        if(e1->phys->dead || e1->phys->ethereal) continue;
+        if(e1->phys->dead) continue;
 
         Physics* p1 = e1->phys;
 
@@ -98,7 +98,7 @@ void entity_handle_collisions()
         {
             Entity* e2 = &entities[j];
 
-            if(e2->phys->dead || e2->phys->ethereal) continue;
+            if(e2->phys->dead) continue;
             if(e1 == e2) continue;
 
             switch(e1->type)

@@ -29,6 +29,7 @@ Hand can be upgraded or player can find power stones to embue projectile ability
 - Poison - Does poison damage over period of time
 - Flame - ignites creature on contact
 - Stun - Temporarily dizzy
+- Elastic - bouncing shot
 
 ## Curses
 

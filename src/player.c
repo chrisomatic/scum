@@ -569,9 +569,7 @@ static void handle_room_collision(Player* p)
             }
             break;
         }
-
     }
-
 }
 
 void player_update(Player* p, float dt)
@@ -745,7 +743,7 @@ void player_update(Player* p, float dt)
 
                 if(!p->phys.dead)
                 {
-                    projectile_add_new(&p->phys, p->curr_room, PROJECTILE_TYPE_LASER, angle_deg, scale, damage, true);
+                    projectile_add(&p->phys, p->curr_room, PROJECTILE_TYPE_LASER, angle_deg, scale, damage, true);
                     // projectile_add(&p->phys, p->curr_room, angle_deg, scale, damage,true);
                 }
 
@@ -767,7 +765,7 @@ void player_update(Player* p, float dt)
 
             if(!p->phys.dead)
             {
-                projectile_add_new(&p->phys, p->curr_room, PROJECTILE_TYPE_LASER, angle_deg, 1.0, 1.0, true);
+                projectile_add(&p->phys, p->curr_room, PROJECTILE_TYPE_LASER, angle_deg, 1.0, 1.0, true);
                 // projectile_add(&p->phys, p->curr_room, angle_deg, 1.0, 1.0, true);
             }
             // text_list_add(text_lst, 5.0, "projectile");

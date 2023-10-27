@@ -17,7 +17,7 @@
 #include "editor.h"
 #include "net.h"
 #include "entity.h"
-#include "gems.h"
+#include "pickup.h"
 #include "text_list.h"
 
 // =========================
@@ -510,7 +510,7 @@ void start_server()
     player_init();
     creature_init();
     decal_init();
-    gems_init();
+    pickup_init();
 
     srand(time(0));
     seed = rand();
@@ -602,7 +602,7 @@ void init()
     decal_init();
 
     LOGI(" - Gems.");
-    gems_init();
+    pickup_init();
 
     if(role == ROLE_LOCAL)
     {

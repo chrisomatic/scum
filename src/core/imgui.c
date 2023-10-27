@@ -1695,7 +1695,7 @@ static void draw_checkbox(uint32_t hash, char* label, bool result)
     gfx_draw_rect_xywh(x,y,theme.checkbox_size, theme.checkbox_size, check_color, 1.0, 0.0, 1.0, false,false);
     gfx_draw_rect_xywh(x,y,0.65*theme.checkbox_size, 0.65*theme.checkbox_size, check_color, 1.0, 0.0, 1.0, result,false);
 
-    gfx_draw_string(ctx->curr.x + theme.checkbox_size + theme.text_padding, ctx->curr.y + (theme.checkbox_size - text_size.y)/2.0, theme.color_text, theme.text_scale, 1.0, 0.0, false, false, label);
+    gfx_draw_string(ctx->curr.x + theme.checkbox_size + theme.text_padding, ctx->curr.y + (theme.checkbox_size - text_size.y)/2.0, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, label);
 
     ctx->curr.w = theme.checkbox_size + 2.0*theme.text_padding + text_size.x;
     ctx->curr.h = MAX(theme.checkbox_size, text_size.y)+2.0*theme.text_padding;

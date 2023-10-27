@@ -7,7 +7,6 @@
 #include "player.h"
 #include "glist.h"
 #include "particles.h"
-#include "projectile.h"
 #include "creature.h"
 #include "ai.h"
 
@@ -53,27 +52,32 @@ static void add_to_random_wall_tile(Creature* c)
     int tile_y = 0;
 
     Dir wall = (Dir)rand() % 4;
+
     switch(wall)
     {
         case DIR_UP:
             c->sprite_index = 2;
-            tile_x = (rand() % ROOM_TILE_SIZE_X);
+            tile_x = (rand() % (ROOM_TILE_SIZE_X-1));
+            if(tile_x >= ROOM_TILE_SIZE_X/2.0)tile_x+=1;
             tile_y = -1;
             break;
         case DIR_RIGHT:
             c->sprite_index = 3;
             tile_x = ROOM_TILE_SIZE_X;
-            tile_y = (rand() % ROOM_TILE_SIZE_Y);
+            tile_y = (rand() % (ROOM_TILE_SIZE_Y-1));
+            if(tile_y >= ROOM_TILE_SIZE_Y/2.0)tile_y+=1;
             break;
         case DIR_DOWN:
             c->sprite_index = 0;
-            tile_x = (rand() % ROOM_TILE_SIZE_X);
+            tile_x = (rand() % (ROOM_TILE_SIZE_X-1));
+            if(tile_x >= ROOM_TILE_SIZE_X/2.0)tile_x+=1;
             tile_y = ROOM_TILE_SIZE_Y;
             break;
         case DIR_LEFT:
             c->sprite_index = 1;
             tile_x = -1;
-            tile_y = (rand() % ROOM_TILE_SIZE_Y);
+            tile_y = (rand() % (ROOM_TILE_SIZE_Y-1));
+            if(tile_y >= ROOM_TILE_SIZE_Y/2.0)tile_y+=1;
             break;
     }
 
@@ -174,6 +178,7 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
             c.act_time_max = 0.4;
             c.phys.mass = 100.0; // so it doesn't slide when hit
             c.hp_max = 5.0;
+            c.proj_type = PROJECTILE_TYPE_CREATURE_CLINGER;
             c.painful_touch = false;
         } break;
         case CREATURE_TYPE_GEIZER:
@@ -184,6 +189,7 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
             c.act_time_max = 5.0;
             c.phys.mass = 1000.0; // so it doesn't slide when hit
             c.hp_max = 10.0;
+            c.proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c.painful_touch = false;
         } break;
     }
@@ -435,13 +441,13 @@ static void creature_update_slug(Creature* c, float dt)
 static void creature_fire_projectile_dir(Creature* c, Dir dir)
 {
     if(dir == DIR_UP)
-        projectile_add_new(&c->phys, c->curr_room, PROJECTILE_TYPE_CREATURE,90.0, 1.0, 1.0,false);
+        projectile_add(&c->phys, c->curr_room, c->proj_type,90.0, 1.0, 1.0,false);
     else if(dir == DIR_RIGHT)
-        projectile_add_new(&c->phys, c->curr_room, PROJECTILE_TYPE_CREATURE,0.0, 1.0, 1.0,false);
+        projectile_add(&c->phys, c->curr_room, c->proj_type,0.0, 1.0, 1.0,false);
     else if(dir == DIR_DOWN)
-        projectile_add_new(&c->phys, c->curr_room, PROJECTILE_TYPE_CREATURE,270.0, 1.0, 1.0,false);
+        projectile_add(&c->phys, c->curr_room, c->proj_type,270.0, 1.0, 1.0,false);
     else if(dir == DIR_LEFT)
-        projectile_add_new(&c->phys, c->curr_room, PROJECTILE_TYPE_CREATURE,180.0, 1.0, 1.0,false);
+        projectile_add(&c->phys, c->curr_room, c->proj_type,180.0, 1.0, 1.0,false);
 }
 
 static void creature_update_clinger(Creature* c, float dt)
@@ -531,7 +537,7 @@ static void creature_update_geizer(Creature* c, float dt)
         for(int i = 0; i < n_orbs; ++i)
         {
             int angle = rand() % 360;
-            projectile_add_new(&c->phys, c->curr_room, PROJECTILE_TYPE_CREATURE, angle, 1.0, 1.0,false);
+            projectile_add(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
         }
 
     }

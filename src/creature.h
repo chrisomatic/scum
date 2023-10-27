@@ -1,6 +1,7 @@
 #pragma once
 
 #include "physics.h"
+#include "projectile.h"
 #include "net.h"
 #include "entity.h"
 
@@ -22,6 +23,8 @@ typedef struct
     CreatureType type;
     Physics phys;
     Rect hitbox;
+
+    ProjectileType proj_type;
 
     float hp;
     float hp_max;

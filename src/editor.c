@@ -32,7 +32,7 @@ void editor_draw()
     imgui_begin_panel("Editor", view_width - 300, 1, true);
 
         imgui_newline();
-        char* buttons[] = {"General", "Level", "Players", "Creatures", "Projectiles", "Theme"};
+        char* buttons[] = {"General", "Level", "Players", "Creatures", "Projectiles"};
         int selection = imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "");
         imgui_horizontal_line(1);
 
@@ -194,11 +194,11 @@ void editor_draw()
                 int charge_rate = projectile_lookup[0].charge_rate;
                 imgui_number_box("Charge Rate", 1, 100, &charge_rate);
                 projectile_lookup[0].charge_rate = charge_rate;
+
+                imgui_text_sized(20.0,"Attributes:");
+                imgui_horizontal_line(1);
+                imgui_checkbox("Ghost", &projectile_lookup[PROJECTILE_TYPE_LASER].ghost);
             } break;
-            case 5: // theme
-            {
-                imgui_theme_editor();
-            }
         }
     imgui_end();
 }

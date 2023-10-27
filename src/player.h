@@ -4,7 +4,7 @@
 #include "physics.h"
 #include "gfx.h"
 #include "net.h"
-#include "gems.h"
+#include "pickup.h"
 #include "entity.h"
 
 #define MAX_PLAYERS 4

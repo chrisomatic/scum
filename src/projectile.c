@@ -26,7 +26,8 @@ ProjectileDef projectile_lookup[] = {
         .scale = 1.0,
         .num = 10,
         .charge = false,
-        .charge_rate = 16
+        .charge_rate = 16,
+        .ghost = false
     },
     {
         // creature
@@ -37,7 +38,20 @@ ProjectileDef projectile_lookup[] = {
         .scale = 1.0,
         .num = 1,
         .charge = false,
-        .charge_rate = 16
+        .charge_rate = 16,
+        .ghost = false
+    },
+    {
+        // creature clinger
+        .damage = 1.0,
+        .min_speed = 200.0,
+        .base_speed = 200.0,
+        .angle_spread = 0.0,
+        .scale = 1.0,
+        .num = 1,
+        .charge = false,
+        .charge_rate = 16,
+        .ghost = true
     }
 };
 
@@ -65,19 +79,19 @@ void projectile_clear_all()
     list_clear(plist);
 }
 
-void projectile_add_new(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player)
+void projectile_add(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player)
 {
     ProjectileDef* projdef = &projectile_lookup[proj_type];
 
     Projectile proj = {0};
     proj.type = proj_type;
-    proj.phys.dead = false;
     proj.damage = projdef->damage * damage_multiplier;
     proj.phys.pos.x = phys->pos.x;
     proj.phys.pos.y = phys->pos.y;
     proj.phys.mass = 1.0;
     proj.phys.radius = 4.0;
     proj.phys.amorphous = true;
+    proj.phys.ethereal = projdef->ghost;
     proj.curr_room = curr_room;
     proj.from_player = from_player;
 
@@ -99,8 +113,6 @@ void projectile_add_new(Physics* phys, uint8_t curr_room, ProjectileType proj_ty
 
     for(int i = 0; i < projdef->num; ++i)
     {
-
-
         Projectile p = {0};
         memcpy(&p, &proj, sizeof(Projectile));
         p.id = get_id();
@@ -186,124 +198,8 @@ void projectile_add_new(Physics* phys, uint8_t curr_room, ProjectileType proj_ty
 
 
         list_add(plist, (void*)&p);
-
     }
-
-
 }
-
-void projectile_add(Physics* phys, uint8_t curr_room, float angle_deg, float scale, float damage_multiplier, bool from_player)
-{
-    Projectile proj = {0};
-
-    proj.id = get_id();
-    //proj.player_id = p->id;
-
-    proj.type = PROJECTILE_TYPE_LASER;
-
-    ProjectileDef* projdef = &projectile_lookup[proj.type];
-
-    proj.phys.dead = false;
-    proj.damage = projdef->damage * damage_multiplier;
-
-    proj.phys.pos.x = phys->pos.x;
-    proj.phys.pos.y = phys->pos.y;
-    proj.phys.mass = 1.0;
-    proj.curr_room = curr_room;
-    proj.from_player = from_player;
-    proj.angle_deg = angle_deg;
-
-    float angle = RAD(proj.angle_deg);
-    float speed = projdef->base_speed;
-    float min_speed = projdef->min_speed;
-
-    float vx0 = (speed)*cosf(angle);
-    float vy0 = (-speed)*sinf(angle);   // @minus
-
-    float vx = vx0 + phys->vel.x;
-    float vy = vy0 + phys->vel.y;
-
-    proj.phys.vel.x = vx0;
-    proj.phys.vel.y = vy0;
-
-    // handle angle
-    // -----------------------------------------------------------------------------------
-
-    // if(!FEQ0(p->vel.x))
-    {
-        if(vx0 > 0 && vx < 0)
-        {
-            // printf("x help 1\n");
-            proj.phys.vel.x = (min_speed)*cosf(angle);
-        }
-        else if(vx0 < 0 && vx > 0)
-        {
-            // printf("x help 2\n");
-            proj.phys.vel.x = (min_speed)*cosf(angle);
-        }
-        else
-        {
-            proj.phys.vel.x = vx;
-        }
-    }
-    // if(!FEQ0(p->phys.vel.y))
-    {
-        if(vy0 > 0 && vy < 0)
-        {
-            // printf("y help 1\n");
-            proj.phys.vel.y = (-min_speed)*sinf(angle);  // @minus
-        }
-        else if(vy0 < 0 && vy > 0)
-        {
-            // printf("y help 2\n");
-            proj.phys.vel.y = (-min_speed)*sinf(angle);  // @minus
-        }
-        else
-        {
-            // printf("help 3\n");
-            proj.phys.vel.y = vy;
-        }
-    }
-
-    // // handle minimum speed
-    // // -----------------------------------------------------------------------------------
-    // float a = calc_angle_rad(0,0,proj.phys.vel.x, proj.phys.vel.y);
-    // float xa = cosf(a);
-    // float ya = sinf(a);
-    // float _speed = 0;
-
-    // if(!FEQ0(xa))
-    // {
-    //     _speed = proj.phys.vel.x / xa;
-    // }
-    // else if(!FEQ0(ya))
-    // {
-    //     _speed = proj.phys.vel.y / ya;
-    //     _speed *= -1;   // @minus
-    // }
-    // if(_speed < min_speed)
-    // {
-    //     // printf("min speed\n");
-    //     proj.phys.vel.x = min_speed * xa;
-    //     proj.phys.vel.y = -min_speed * ya;   //@minus
-    // }
-
-    proj.scale = scale * projdef->scale;
-    proj.time = 0.0;
-    proj.ttl  = 1.0;
-
-    proj.hit_box.x = proj.phys.pos.x;
-    proj.hit_box.y = proj.phys.pos.y;
-    Rect* vr = &gfx_images[projectile_image].visible_rects[0];
-    float wh = MAX(vr->w, vr->h) * proj.scale;
-    proj.hit_box.w = wh;
-    proj.hit_box.h = wh;
-
-    memcpy(&proj.hit_box_prior, &proj.hit_box, sizeof(Rect));
-
-    list_add(plist, (void*)&proj);
-}
-
 
 void projectile_update(float delta_t)
 {
@@ -404,14 +300,6 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
             proj->phys.dead = true;
         }
     }
-
-    Room* room = level_get_room_by_index(&level, proj->curr_room);
-    bool colliding = level_is_colliding_with_wall(room, &proj->phys);
-
-    if(colliding)
-    {
-        proj->phys.dead = true;
-    }
 }
 
 void projectile_draw(Projectile* proj)
@@ -420,7 +308,9 @@ void projectile_draw(Projectile* proj)
     if(proj->curr_room != player->curr_room)
         return; // don't draw projectile if not in same room
 
-    gfx_draw_image(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, proj->from_player ? 0x0050A0FF : 0x00FF5050, proj->scale, 0.0, 1.0, false, true);
+    float opacity = proj->phys.ethereal ? 0.3 : 1.0;
+
+    gfx_draw_image(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, proj->from_player ? 0x0050A0FF : 0x00FF5050, proj->scale, 0.0, opacity, false, true);
 
     if(debug_enabled)
     {

@@ -9,7 +9,8 @@
 typedef enum
 {
     PROJECTILE_TYPE_LASER,
-    PROJECTILE_TYPE_CREATURE,
+    PROJECTILE_TYPE_CREATURE_GENERIC,
+    PROJECTILE_TYPE_CREATURE_CLINGER,
     PROJECTILE_TYPE_MAX
 } ProjectileType;
 
@@ -25,6 +26,8 @@ typedef struct
 
     bool charge;
     uint8_t charge_rate;
+
+    bool ghost;
 
 } ProjectileDef;
 
@@ -63,8 +66,7 @@ extern glist* plist;
 
 void projectile_init();
 void projectile_clear_all();
-void projectile_add(Physics* phys, uint8_t curr_room, float angle_deg, float scale, float damage_multiplier, bool from_player);
-void projectile_add_new(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player);
+void projectile_add(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player);
 void projectile_update_hit_box(Projectile* proj);
 void projectile_update(float delta_t);
 void projectile_handle_collision(Projectile* p, Entity* e);

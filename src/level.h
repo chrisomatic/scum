@@ -122,7 +122,6 @@ void level_print(Level* level);
 void level_print_room(Room* room);
 void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radius);
 void level_handle_room_collision(Room* room, Physics* phys);
-bool level_is_colliding_with_wall(Room* room, Physics* phys);
 
 Room* level_get_room(Level* level, int x, int y);
 Room* level_get_room_by_index(Level* level, int index);
