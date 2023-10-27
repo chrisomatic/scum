@@ -759,6 +759,8 @@ void update(float dt)
             creature_lerp(&creatures[i], dt);
         }
 
+        decal_update_all(dt);
+
         for(int i = 0; i < MAX_CLIENTS; ++i)
         {
             Player* p = &players[i];

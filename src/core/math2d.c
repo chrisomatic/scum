@@ -30,6 +30,7 @@ float lerp(float a, float b, float t)
 
 Vector2f lerp2f(Vector2f* a, Vector2f* b, float t)
 {
+    t = RANGE(t,0.0,1.0);
     float rx = lerp(a->x,b->x,t);
     float ry = lerp(a->y,b->y,t);
 
@@ -39,6 +40,7 @@ Vector2f lerp2f(Vector2f* a, Vector2f* b, float t)
 
 Vector3f lerp3f(Vector3f* a, Vector3f* b, float t)
 {
+    t = RANGE(t,0.0,1.0);
     float rx = lerp(a->x,b->x,t);
     float ry = lerp(a->y,b->y,t);
     float rz = lerp(a->z,b->z,t);

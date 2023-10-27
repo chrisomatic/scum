@@ -16,6 +16,7 @@
 #include "player.h"
 #include "creature.h"
 #include "level.h"
+#include "particles.h"
 #include "projectile.h"
 
 //#define SERVER_PRINT_SIMPLE 1
@@ -113,6 +114,8 @@ static void pack_creatures(Packet* pkt, ClientInfo* cli);
 static void unpack_creatures(Packet* pkt, int* offset);
 static void pack_projectiles(Packet* pkt, ClientInfo* cli);
 static void unpack_projectiles(Packet* pkt, int* offset);
+static void pack_decals(Packet* pkt, ClientInfo* cli);
+static void unpack_decals(Packet* pkt, int* offset);
 
 
 static uint64_t rand64(void)
@@ -353,6 +356,7 @@ static bool server_assign_new_client(Address* addr, ClientInfo** cli)
         {
             *cli = &server.clients[i];
             (*cli)->client_id = i;
+            LOGN("Assigning new client: %d", (*cli)->client_id);
             // printf("%s() new client %d\n", __func__, i);
             return true;
         }
@@ -377,7 +381,7 @@ static void update_server_num_clients()
 
 static void remove_client(ClientInfo* cli)
 {
-    LOGN("Remove client.");
+    LOGN("Remove client: %d", cli->client_id);
     cli->state = DISCONNECTED;
     cli->remote_latest_packet_id = 0;
     player_set_active(&players[cli->client_id],false);
@@ -444,6 +448,7 @@ static void server_send(PacketType type, ClientInfo* cli)
             pack_players(&pkt, cli);
             pack_creatures(&pkt, cli);
             pack_projectiles(&pkt, cli);
+            pack_decals(&pkt, cli);
             //print_packet(&pkt, true);
 
             if(memcmp(&cli->prior_state_pkt.data, &pkt.data, pkt.data_len) == 0)
@@ -763,6 +768,8 @@ int net_server_start()
                 }
             }
             accum = 0.0;
+
+            list_clear(decal_list);
         }
 
         // don't wait, just proceed to handling packets
@@ -1251,6 +1258,7 @@ void net_client_update()
                     unpack_players(&srvpkt, &offset);
                     unpack_creatures(&srvpkt, &offset);
                     unpack_projectiles(&srvpkt, &offset);
+                    unpack_decals(&srvpkt, &offset);
 
                     client.player_count = player_get_active_count();
                 } break;
@@ -1635,6 +1643,7 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
         if(server.clients[i].state == CONNECTED)
         {
             Player* p = &players[i];
+            // LOGN("Packing player %d (%d)", i, server.clients[i].client_id);
 
             pack_u8(pkt,(uint8_t)i);
             pack_vec2(pkt,p->phys.pos);
@@ -1868,10 +1877,48 @@ static void unpack_projectiles(Packet* pkt, int* offset)
             }
         }
 
-        // p->server_state_target.id = id;
         p->server_state_target.pos.x = pos.x;
         p->server_state_target.pos.y = pos.y;
 
         p->player_id = player_id;
+    }
+}
+
+static void pack_decals(Packet* pkt, ClientInfo* cli)
+{
+    uint8_t count = (uint8_t)decal_list->count;
+    pack_u8(pkt, count);
+    for(int i = 0; i < count; ++i)
+    {
+        Decal* d = &decals[i];
+        // pack_u8(pkt, (uint8_t)d->image);
+        pack_u8(pkt, d->sprite_index);
+        pack_u32(pkt, d->tint);
+        pack_float(pkt, d->scale);
+        pack_float(pkt, d->rotation);
+        pack_float(pkt, d->opacity);
+        pack_float(pkt, d->ttl);
+        pack_vec2(pkt, d->pos);
+        pack_u8(pkt, d->room);
+    }
+}
+
+static void unpack_decals(Packet* pkt, int* offset)
+{
+    uint8_t count = unpack_u8(pkt, offset);
+    for(int i = 0; i < count; ++i)
+    {
+        Decal d = {0};
+        // d.image = unpack_u8(pkt, offset);
+        d.image = particles_image;
+        d.sprite_index = unpack_u8(pkt, offset);
+        d.tint = unpack_u32(pkt, offset);
+        d.scale = unpack_float(pkt, offset);
+        d.rotation = unpack_float(pkt, offset);
+        d.opacity = unpack_float(pkt, offset);
+        d.ttl = unpack_float(pkt, offset);
+        d.pos = unpack_vec2(pkt, offset);
+        d.room = unpack_u8(pkt, offset);
+        decal_add(d);
     }
 }

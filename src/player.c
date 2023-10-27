@@ -89,14 +89,6 @@ void player_init()
 void player_set_active(Player* p, bool active)
 {
     p->active = active;
-
-    // int num = 0;
-    // for(int i = 0; i < MAX_PLAYERS; ++i)
-    // {
-    //     if(players[i].active)
-    //         num++;
-    // }
-    // num_players = num;
 }
 
 int player_get_active_count()
@@ -328,10 +320,6 @@ void player_draw_room_transition()
         }
         else
         {
-            // float pdx = transition_player_target.x/60.0;
-            // float pdy = transition_player_target.y/60.0;
-            // player_set_hit_box_pos(player, pdx, pdy);
-
             float x0 = transition_offsets.x;
             float y0 = transition_offsets.y;
 
@@ -374,8 +362,6 @@ void player_start_room_transition(Player* p)
     // new player positions
     RectXY rxy = {0};
     rect_to_rectxy(&room_area, &rxy);
-    // float x1 = rxy.x[BL] - (p->hitbox.x - rxy.x[TR]);
-    // float y1 = rxy.y[BL] - (p->hitbox.y - rxy.y[TL]);
     float x1 = rxy.x[BL] - (CPOSX(p->phys) - rxy.x[TR]);
     float y1 = rxy.y[BL] - (CPOSY(p->phys) - rxy.y[TL]);
 
@@ -811,7 +797,7 @@ void player_draw(Player* p)
     bool blink = p->invulnerable ? ((int)(p->invulnerable_time * 100)) % 2 == 0 : false;
     float opacity = p->dead ? 0.3 : 1.0;
     opacity = blink ? 0.3 : opacity;
-    gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, p->phys.pos.y, room->color, 1.0, 0.0, opacity, false, true);
+    gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, p->phys.pos.y, room->color, 1.0, 0.0, opacity, false, IN_WORLD);
 
     if(debug_enabled)
     {
@@ -846,6 +832,8 @@ void player_lerp(Player* p, float dt)
     Vector2f lp = lerp2f(&p->server_state_prior.pos, &p->server_state_target.pos, t);
     p->phys.pos.x = lp.x;
     p->phys.pos.y = lp.y;
+
+    // printf("[lerping player] t: %.2f, x: %.2f -> %.2f = %.2f\n", t, p->server_state_prior.pos.x, p->server_state_target.pos.x, lp.x);
 
     p->invulnerable_time = lerp(p->server_state_prior.invulnerable_time, p->server_state_target.invulnerable_time, t);
 
