@@ -128,6 +128,11 @@ void editor_draw()
                     player_hurt(p, 1);
                 }
 
+                if(imgui_button("Add Gem"))
+                {
+                    pickup_add(PICKUP_TYPE_GEM,rand() % 6,p->phys.pos.x, p->phys.pos.y, p->curr_room);
+                }
+
             } break;
 
             case 3: // creatures

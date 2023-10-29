@@ -1001,6 +1001,19 @@ void player_handle_collision(Player* p, Entity* e)
                 phys_collision_correct(&p->phys, &p2->phys,&ci);
             }
         } break;
+
+        case ENTITY_TYPE_PICKUP:
+        {
+            Pickup* p2 = (Pickup*)e->ptr;
+
+            CollisionInfo ci = {0};
+            bool collided = phys_collision_circles(&p->phys,&p2->phys, &ci);
+
+            if(collided)
+            {
+                phys_collision_correct(&p->phys, &p2->phys,&ci);
+            }
+        } break;
     }
 }
 

@@ -601,7 +601,7 @@ void init()
     LOGI(" - Decals.");
     decal_init();
 
-    LOGI(" - Gems.");
+    LOGI(" - Pickups.");
     pickup_init();
 
     if(role == ROLE_LOCAL)
@@ -882,6 +882,7 @@ void update(float dt)
             }
             projectile_update(dt);
             creature_update_all(dt);
+            pickup_update_all(dt);
             decal_update_all(dt);
 
             entity_build_all();

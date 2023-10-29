@@ -26,12 +26,11 @@ static Rect gem_get_rect(GemType type)
 
 void pickup_init()
 {
-    pickup_list = list_create((void*)pickups, MAX_PICKUPS, sizeof(Pickup));
+    if(pickup_list)
+        return;
 
-    if(gems_image > 0) return;
     pickup_list = list_create((void*)pickups, MAX_PICKUPS, sizeof(Pickup));
     gems_image = gfx_load_image("src/img/gems.png", false, false, 16, 16);
-
 }
 
 void pickup_add(PickupType type, int subtype, float x, float y, uint8_t curr_room)
@@ -44,17 +43,44 @@ void pickup_add(PickupType type, int subtype, float x, float y, uint8_t curr_roo
     pu.phys.pos.x = x;
     pu.phys.pos.y = y;
     pu.phys.mass = 1.0;
+    pu.phys.speed = 1.0;
+    pu.phys.radius = 8;
     pu.curr_room = curr_room;
 
     list_add(pickup_list,&pu);
 }
 
+void pickup_update(Pickup* pu, float dt)
+{
+    pu->phys.pos.x += dt*pu->phys.vel.x;
+    pu->phys.pos.y += dt*pu->phys.vel.y;
+
+    float rate = phys_get_friction_rate(0.005*pu->phys.mass,dt);
+    phys_apply_friction(&pu->phys,rate);
+}
+
+void pickup_update_all(float dt)
+{
+    for(int i = pickup_list->count-1; i >= 0; --i)
+    {
+        Pickup* pu = &pickups[i];
+        pickup_update(pu, dt);
+        if(pu->picked_up)
+        {
+            list_remove(pickup_list, i);
+        }
+    }
+}
+
 void pickup_draw(Pickup* pu)
 {
+    if(pu->curr_room != player->curr_room)
+        return;
+
     switch(pu->type)
     {
         case PICKUP_TYPE_GEM:
-            //gem_draw((Pickup*)pu);
+            gfx_draw_image(gems_image, pu->subtype, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, IN_WORLD);
             break;
 
     }
