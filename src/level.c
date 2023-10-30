@@ -93,6 +93,15 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
                     room->type = ROOM_TYPE_TREASURE;
                     room->layout = 0;
                     level->has_treasure_room = true;
+                    for(int i = 0; i < 100; ++i)
+                    {
+                        int tile_x = (rand() % ROOM_TILE_SIZE_X);
+                        int tile_y = (rand() % ROOM_TILE_SIZE_Y);
+                        Rect rp = level_get_tile_rect(tile_x,tile_y);
+                        pickup_add(PICKUP_TYPE_GEM,rand() % 6,rp.x, rp.y, room->index);
+                    }
+
+
                 }
                 else
                 {
@@ -157,38 +166,6 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
     {
         branch_room(level,x,y,depth);
     }
-
-    /*
-    if(depth < MIN_DEPTH)
-    {
-        if( room->doors[DIR_UP]    == false &&
-            room->doors[DIR_RIGHT] == false &&
-            room->doors[DIR_DOWN]  == false &&
-            room->doors[DIR_LEFT]  == false )
-        {
-            if(y > 0 && !level->rooms[x][y-1].valid) // check up
-            {
-                room->doors[DIR_UP] = true;
-                generate_rooms(level, x,y-1,DIR_UP,depth+1);
-            }
-            else if(x < MAX_ROOMS_GRID_X-1 && !level->rooms[x+1][y].valid) // check right
-            {
-                room->doors[DIR_RIGHT] = true;
-                generate_rooms(level, x+1,y,DIR_RIGHT,depth+1);
-            }
-            else if(y < MAX_ROOMS_GRID_Y-1 && !level->rooms[x][y+1].valid) // check down
-            {
-                room->doors[DIR_DOWN] = true;
-                generate_rooms(level, x,y+1,DIR_DOWN,depth+1);
-            }
-            else if(x > 0 && !level->rooms[x-1][y].valid) // check left
-            {
-                room->doors[DIR_LEFT] = true;
-                generate_rooms(level, x-1,y,DIR_LEFT,depth+1);
-            }
-        }
-    }
-    */
 }
 
 static void generate_walls(Level* level)
@@ -376,6 +353,11 @@ static void generate_walls(Level* level)
                                 {
                                     Wall* w = &room->walls[room->wall_count++];
 
+                                    if(tt == TILE_PIT)
+                                    {
+                                        w->is_pit = true;
+                                    }
+
                                     // start at top left
                                     w->p0.x = x0+TILE_SIZE*(ri+1);
                                     w->p0.y = y0+TILE_SIZE*(rj+1);
@@ -553,10 +535,10 @@ void level_handle_room_collision(Room* room, Physics* phys)
                 float delta = phys->radius - d + 1.0;
                 switch(wall->dir)
                 {
-                    case DIR_UP:    phys->pos.y -= delta; phys->vel.y = 0.0; break;
-                    case DIR_DOWN:  phys->pos.y += delta; phys->vel.y = 0.0; break;
-                    case DIR_LEFT:  phys->pos.x -= delta; phys->vel.x = 0.0; break;
-                    case DIR_RIGHT: phys->pos.x += delta; phys->vel.x = 0.0; break;
+                    case DIR_UP:    phys->pos.y -= delta; phys->vel.y *= -phys->elasticity; break;
+                    case DIR_DOWN:  phys->pos.y += delta; phys->vel.y *= -phys->elasticity; break;
+                    case DIR_LEFT:  phys->pos.x -= delta; phys->vel.x *= -phys->elasticity; break;
+                    case DIR_RIGHT: phys->pos.x += delta; phys->vel.x *= -phys->elasticity; break;
                 }
 
                 // add convenient sliding to get around walls

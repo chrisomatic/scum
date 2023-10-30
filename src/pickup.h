@@ -3,23 +3,30 @@
 #include "entity.h"
 
 #define MAX_PICKUPS 256
+#define NUM_GEM_TYPES 6
 
 typedef enum
 {
     PICKUP_TYPE_GEM,
+    PICKUP_TYPE_HEALTH,
 } PickupType;
 
 typedef enum
 {
-    GEM_TYPE_RED,
-    GEM_TYPE_GREEN,
-    GEM_TYPE_BLUE,
-    GEM_TYPE_WHITE,
-    GEM_TYPE_YELLOW,
-    GEM_TYPE_PURPLE,
-    GEM_TYPE_NONE,
-    GEM_TYPE_MAX
+    PICKUP_TYPE_GEM_NONE = -1,
+    PICKUP_TYPE_GEM_RED,
+    PICKUP_TYPE_GEM_GREEN,
+    PICKUP_TYPE_GEM_BLUE,
+    PICKUP_TYPE_GEM_WHITE,
+    PICKUP_TYPE_GEM_YELLOW,
+    PICKUP_TYPE_GEM_PURPLE,
 } GemType;
+
+typedef enum
+{
+    PICKUP_TYPE_HEART_FULL = 6,
+    PICKUP_TYPE_HEART_HALF,
+} HealthType;
 
 typedef struct
 {
@@ -32,7 +39,7 @@ typedef struct
     bool picked_up;
 } Pickup;
 
-extern int gems_image;
+extern int pickups_image;
 extern glist* pickup_list;
 extern Pickup pickups[MAX_PICKUPS];
 

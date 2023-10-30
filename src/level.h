@@ -71,6 +71,7 @@ typedef struct
     Vector2f p0;
     Vector2f p1;
     float distance_to_player; // used for sorting walls
+    bool is_pit;
 } Wall;
 
 typedef enum

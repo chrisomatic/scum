@@ -172,7 +172,7 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
         } break;
         case CREATURE_TYPE_CLINGER:
         {
-            c.phys.speed = 300.0;
+            c.phys.speed = 200.0;
             c.image = creature_image_clinger;
             c.act_time_min = 0.2;
             c.act_time_max = 0.4;
@@ -244,7 +244,7 @@ void creature_update(Creature* c, float dt)
     if(ABS(c->phys.vel.x) > c->phys.speed) c->phys.vel.x = h_speed;
     if(ABS(c->phys.vel.y) > c->phys.speed) c->phys.vel.y = v_speed;
 
-    float rate = 100.0; //phys_get_friction_rate(0.002,dt);
+    float rate = 10.0; //phys_get_friction_rate(0.002,dt);
     phys_apply_friction(&c->phys,rate,dt);
 
     c->phys.pos.x += dt*c->phys.vel.x;

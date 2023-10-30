@@ -19,6 +19,12 @@ bool phys_collision_circles(Physics* phys1, Physics* phys2, CollisionInfo* ci)
         Vector2f o1 = {p2.x - p1.x, p2.y - p1.y};
         normalize(&o1);
 
+        if(o1.x == 0.0 && o1.y == 0.0)
+        {
+            o1.x = RAND_FLOAT(0.0,1.0);
+            o1.y = 1.0 - o1.x;
+        }
+
         o1.x *= overlap;
         o1.y *= overlap;
 
@@ -32,6 +38,9 @@ void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci)
 {
     // collision correct
     float cratio = phys2->mass/(phys1->mass+phys2->mass);
+
+    if(phys2->mass > 100.0*phys1->mass)
+        cratio = 1.0; // mass is sufficiently large to not move at all
 
     phys1->pos.x -= ci->overlap.x*cratio;
     phys1->pos.y -= ci->overlap.y*cratio;
@@ -74,7 +83,6 @@ void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci)
         phys2->vel.x = v2x;
         phys2->vel.y = v2y;
     }
-
 }
 
 float phys_get_friction_rate(float friction_factor, float dt)
@@ -102,16 +110,14 @@ void phys_apply_friction_2(Physics* phys, float rate)
 
 void phys_apply_friction(Physics* phys, float friction, float dt)
 {
-    Vector2f f = {phys->vel.x, phys->vel.y};
+    Vector2f f = {-phys->vel.x, -phys->vel.y};
     normalize(&f);
 
     float vel_magn = magn(phys->vel);
+    float applied_friction = MIN(vel_magn,phys->mass*friction);
 
-    float applied_friction_x = -1*phys->mass*MIN(ABS(phys->vel.x),dt*friction);
-    float applied_friction_y = -1*phys->mass*MIN(ABS(phys->vel.y),dt*friction);
-
-    f.x *= applied_friction_x;
-    f.y *= applied_friction_y;
+    f.x *= applied_friction;
+    f.y *= applied_friction;
 
     phys->vel.x += f.x;
     phys->vel.y += f.y;

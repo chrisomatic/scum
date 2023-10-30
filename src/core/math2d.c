@@ -202,6 +202,8 @@ float dist_squared(float x0, float y0, float x1, float y1)
 
 float dist(float x0, float y0, float x1, float y1)
 {
+    if(x0 == x1 && y0 == y1) return 0.0;
+
     float d = sqrt(dist_squared(x0,y0,x1,y1));
     return d;
 }

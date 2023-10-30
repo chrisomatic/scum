@@ -12,11 +12,11 @@
 glist* pickup_list = NULL;
 Pickup pickups[MAX_PICKUPS];
 
-int gems_image = -1;
+int pickups_image = -1;
 
 static Rect gem_get_rect(GemType type)
 {
-    GFXImage* img = &gfx_images[gems_image];
+    GFXImage* img = &gfx_images[pickups_image];
     Rect* vr = &img->visible_rects[type];
     Rect r = {0};
     r.w = vr->w;
@@ -30,7 +30,7 @@ void pickup_init()
         return;
 
     pickup_list = list_create((void*)pickups, MAX_PICKUPS, sizeof(Pickup));
-    gems_image = gfx_load_image("src/img/gems.png", false, false, 16, 16);
+    pickups_image = gfx_load_image("src/img/pickups.png", false, false, 16, 16);
 }
 
 void pickup_add(PickupType type, int subtype, float x, float y, uint8_t curr_room)
@@ -42,9 +42,10 @@ void pickup_add(PickupType type, int subtype, float x, float y, uint8_t curr_roo
     pu.sprite_index = type;
     pu.phys.pos.x = x;
     pu.phys.pos.y = y;
-    pu.phys.mass = 4.0;
+    pu.phys.mass = 0.5;
     pu.phys.speed = 1.0;
     pu.phys.radius = 8;
+    pu.phys.elasticity = 0.5;
     pu.curr_room = curr_room;
 
     list_add(pickup_list,&pu);
@@ -55,7 +56,7 @@ void pickup_update(Pickup* pu, float dt)
     pu->phys.pos.x += dt*pu->phys.vel.x;
     pu->phys.pos.y += dt*pu->phys.vel.y;
 
-    float rate = 100.0; //phys_get_friction_rate(0.005*pu->phys.mass,dt);
+    float rate = 10.0; //phys_get_friction_rate(0.005*pu->phys.mass,dt);
     phys_apply_friction(&pu->phys,rate,dt);
 }
 
@@ -80,7 +81,7 @@ void pickup_draw(Pickup* pu)
     switch(pu->type)
     {
         case PICKUP_TYPE_GEM:
-            gfx_draw_image(gems_image, pu->subtype, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, IN_WORLD);
+            gfx_draw_image(pickups_image, pu->subtype, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, IN_WORLD);
             break;
 
     }

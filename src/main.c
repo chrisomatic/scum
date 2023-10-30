@@ -649,7 +649,7 @@ void init()
 
     // @TEMP
     for(int i = 0; i < 4; ++i)
-        pickup_add(PICKUP_TYPE_GEM,rand() % 6,player->phys.pos.x, player->phys.pos.y, player->curr_room);
+        pickup_add(PICKUP_TYPE_GEM,rand() % 6,player->phys.pos.x+32, player->phys.pos.y+32, player->curr_room);
 
 
 }
@@ -1139,7 +1139,7 @@ void draw_gem_menu()
     float len = 100.0;
     float margin = 5.0;
 
-    int w = gfx_images[gems_image].element_width;
+    int w = gfx_images[pickups_image].element_width;
     float scale = len / (float)w;
 
     float total_len = (PLAYER_GEMS_MAX * len) + ((PLAYER_GEMS_MAX-1) * margin);
@@ -1163,9 +1163,9 @@ void draw_gem_menu()
             color = COLOR_WHITE;
         gfx_draw_rect(&r, color, NOT_SCALED, NO_ROTATION, 0.5, true, NOT_IN_WORLD);
 
-        if(player->gems[i] != GEM_TYPE_NONE)
+        if(player->gems[i] != PICKUP_TYPE_GEM_NONE)
         {
-            gfx_draw_image(gems_image, player->gems[i], r.x, r.y, COLOR_TINT_NONE, scale, 0.0, 0.5, false, NOT_IN_WORLD);
+            gfx_draw_image(pickups_image, player->gems[i], r.x, r.y, COLOR_TINT_NONE, scale, 0.0, 0.5, false, NOT_IN_WORLD);
         }
         r.x += len;
         r.x += margin;

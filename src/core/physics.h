@@ -26,6 +26,7 @@ typedef struct
     float speed;
     float radius;
     float mass;
+    float elasticity;
 
     bool dead;
     bool amorphous; // splatters on collision

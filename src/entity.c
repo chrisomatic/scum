@@ -2,6 +2,7 @@
 #include "player.h"
 #include "creature.h"
 #include "projectile.h"
+#include "physics.h"
 #include "entity.h"
 
 Entity entities[MAX_ENTITIES] = {0};
@@ -107,6 +108,8 @@ void entity_handle_collisions()
 
             if(e2->phys->dead) continue;
             if(e1 == e2) continue;
+            if(e1->curr_room != e2->curr_room) continue;
+            if(!is_any_player_room(e1->curr_room)) continue;
 
             switch(e1->type)
             {
@@ -148,15 +151,11 @@ void entity_draw_all()
         {
             case ENTITY_TYPE_PLAYER:
             {
-                Player* p = (Player*)e->ptr;
-                if(p->curr_room == player->curr_room)
-                    player_draw(p);
+                player_draw((Player*)e->ptr);
             }   break;
             case ENTITY_TYPE_CREATURE:
             {
-                Creature* c = (Creature*)e->ptr;
-                if(c->curr_room == player->curr_room)
-                    creature_draw(c);
+                creature_draw((Creature*)e->ptr);
             }   break;
             case ENTITY_TYPE_PROJECTILE:
             {
@@ -169,5 +168,12 @@ void entity_draw_all()
             default:
                 break;
         }
+
+        if(debug_enabled)
+        {
+            if(e->curr_room == player->curr_room)
+                gfx_draw_circle(CPOSX(*e->phys), CPOSY(*e->phys), e->phys->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
+        }
+
     }
 }

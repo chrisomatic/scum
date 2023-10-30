@@ -30,6 +30,7 @@ Hand can be upgraded or player can find power stones to embue projectile ability
 - Flame - ignites creature on contact
 - Stun - Temporarily dizzy
 - Elastic - bouncing shot
+- Grapple - Pull yourself toward walls, cross chasms
 
 ## Curses
 

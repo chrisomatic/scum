@@ -51,6 +51,7 @@ void player_init()
         p->phys.vel.x = 0.0;
         p->phys.vel.y = 0.0;
         p->phys.mass = 10.0;
+        p->phys.elasticity = 0.0;
 
         p->hp_max = 6;
         p->hp = p->hp_max;
@@ -88,7 +89,7 @@ void player_init()
 
         for(int j = 0; j < PLAYER_GEMS_MAX; ++j)
         {
-            p->gems[j] = rand() % GEM_TYPE_NONE;
+            p->gems[j] = rand() % NUM_GEM_TYPES;
             printf("gems[%d] = %d\n", j, p->gems[j]);
             // p->gems[j] = GEM_TYPE_NONE;
         }
@@ -881,6 +882,7 @@ void player_ai_move_to_target(Player* p, Player* target)
 void player_draw(Player* p)
 {
     if(!p->active) return;
+    if(p->curr_room != player->curr_room) return;
 
     // Vector2i roomxy = level_get_room_coords((int)p->curr_room);
     // Room* room = &level.rooms[roomxy.x][roomxy.y];
@@ -893,8 +895,6 @@ void player_draw(Player* p)
 
     if(debug_enabled)
     {
-        // @TEMP
-        gfx_draw_circle(CPOSX(p->phys), CPOSY(p->phys), p->phys.radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
 
         Rect r = RECT(p->phys.pos.x, p->phys.pos.y, 1, 1);
         gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
