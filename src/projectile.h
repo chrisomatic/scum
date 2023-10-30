@@ -28,6 +28,7 @@ typedef struct
     uint8_t charge_rate;
 
     bool ghost;
+    bool explosive;
 
 } ProjectileDef;
 

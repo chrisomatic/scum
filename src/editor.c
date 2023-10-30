@@ -46,6 +46,7 @@ void editor_draw()
             {
 
                 imgui_number_box("Camera Zoom", 0, 100, &cam_zoom);
+                imgui_number_box("Camera Min Zoom", 0, 100, &cam_min_zoom);
 
                 imgui_text("Current Zoom: %.2f", camera_get_zoom());
 
@@ -203,6 +204,7 @@ void editor_draw()
                 imgui_text_sized(20.0,"Attributes:");
                 imgui_horizontal_line(1);
                 imgui_checkbox("Ghost", &projectile_lookup[PROJECTILE_TYPE_LASER].ghost);
+                imgui_checkbox("Explosive", &projectile_lookup[PROJECTILE_TYPE_LASER].explosive);
             } break;
         }
     imgui_end();

@@ -87,8 +87,22 @@ bool camera_move(float x, float y, float z, bool immediate, Rect* limit)
     if(limit != NULL)
     {
         Rect cam_rect = {0};
+
+#if 1
         cam_rect.x = x;
         cam_rect.y = y;
+#else
+        if(immediate)
+        {
+            cam_rect.x = x;
+            cam_rect.y = y;
+        }
+        else
+        {
+            cam_rect.x = camera.pos.x;
+            cam_rect.y = camera.pos.y;
+        }
+#endif
         cam_rect.w = cam_view_width;
         cam_rect.h = cam_view_height;
 
@@ -102,10 +116,9 @@ bool camera_move(float x, float y, float z, bool immediate, Rect* limit)
         else
         {
             limit_rect_pos(limit, &cam_rect);
+            x = cam_rect.x;
+            y = cam_rect.y;
         }
-
-        x = cam_rect.x;
-        y = cam_rect.y;
     }
 
     if(immediate)
