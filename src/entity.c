@@ -89,6 +89,13 @@ void entity_build_all()
         Pickup* pu = &pickups[i];
         add_entity(ENTITY_TYPE_PICKUP,pu,pu->curr_room, &pu->phys);
     }
+
+    // explosions
+    for(int i = 0; i < explosion_list->count; ++i)
+    {
+        Explosion* ex = &explosions[i];
+        add_entity(ENTITY_TYPE_EXPLOSION,ex,ex->curr_room, &ex->phys);
+    }
 }
 
 void entity_handle_collisions()
@@ -126,6 +133,9 @@ void entity_handle_collisions()
                 case ENTITY_TYPE_PICKUP:
                     pickup_handle_collision((Pickup*)e1->ptr,e2);
                     break;
+                case ENTITY_TYPE_EXPLOSION:
+                    explosion_handle_collision((Explosion*)e1->ptr,e2);
+                    break;
             }
         }
     }
@@ -136,6 +146,8 @@ void entity_handle_collisions()
         Entity* e = &entities[i];
         if(e->phys->dead || e->phys->ethereal) continue;
 
+        if(e->type == ENTITY_TYPE_EXPLOSION) continue;
+
         Room* room = level_get_room_by_index(&level, entities[i].curr_room);
         level_handle_room_collision(room,entities[i].phys);
 
@@ -144,7 +156,7 @@ void entity_handle_collisions()
             Projectile* proj = (Projectile*)e->ptr;
             if(projectile_lookup[proj->type].explosive)
             {
-                explosion_add(e->phys->pos.x, e->phys->pos.y, 15.0*proj->scale, 100.0, e->curr_room);
+                explosion_add(e->phys->pos.x, e->phys->pos.y, 15.0*proj->scale, 100.0*proj->scale, e->curr_room, proj->from_player);
             }
         }
     }

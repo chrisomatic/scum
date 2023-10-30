@@ -7,6 +7,7 @@
 #include "log.h"
 
 #include "player.h"
+#include "creature.h"
 #include "explosion.h"
 
 glist* explosion_list = NULL;
@@ -20,7 +21,7 @@ void explosion_init()
     explosion_list = list_create((void*)explosions, MAX_EXPLOSIONS, sizeof(Explosion));
 }
 
-void explosion_add(float x, float y, float max_radius, float rate, uint8_t curr_room)
+void explosion_add(float x, float y, float max_radius, float rate, uint8_t curr_room, bool from_player)
 {
     Explosion ex = {0};
 
@@ -33,6 +34,7 @@ void explosion_add(float x, float y, float max_radius, float rate, uint8_t curr_
     ex.max_radius = max_radius;
     ex.rate = rate;
     ex.curr_room = curr_room;
+    ex.from_player = from_player;
 
     list_add(explosion_list, &ex);
 }
@@ -83,19 +85,35 @@ void explosion_draw_all()
 
 void explosion_handle_collision(Explosion* ex, Entity* e)
 {
-    // switch(e->type)
-    // {
-    //     case ENTITY_TYPE_PICKUP:
-    //     {
-    //         Explosion* p2 = (Explosion*)e->ptr;
+    // TODO: apply damage
 
-    //         CollisionInfo ci = {0};
-    //         bool collided = phys_collision_circles(&p->phys,&p2->phys, &ci);
+    switch(e->type)
+    {
+        case ENTITY_TYPE_CREATURE:
+        {
+            if(!ex->from_player) return;
+            Creature* p2 = (Creature*)e->ptr;
 
-    //         if(collided)
-    //         {
-    //             phys_collision_correct(&p->phys, &p2->phys,&ci);
-    //         }
-    //     } break;
-    // }
+            CollisionInfo ci = {0};
+            bool collided = phys_collision_circles(&ex->phys, &p2->phys, &ci);
+
+            if(collided)
+            {
+                phys_collision_correct(&ex->phys, &p2->phys, &ci);
+            }
+        } break;
+        case ENTITY_TYPE_PLAYER:
+        {
+            if(ex->from_player) return;
+            Creature* p2 = (Creature*)e->ptr;
+
+            CollisionInfo ci = {0};
+            bool collided = phys_collision_circles(&ex->phys, &p2->phys, &ci);
+
+            if(collided)
+            {
+                phys_collision_correct(&ex->phys, &p2->phys, &ci);
+            }
+        } break;
+    }
 }

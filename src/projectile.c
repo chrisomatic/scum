@@ -101,7 +101,7 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileType proj_type, 
 
     proj.scale = scale * projdef->scale;
     proj.time = 0.0;
-    proj.ttl  = 1.0;
+    proj.ttl  = 1.0; //TODO: change to range
 
     proj.hit_box.x = proj.phys.pos.x;
     proj.hit_box.y = proj.phys.pos.y;
@@ -270,6 +270,8 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 {
     if(proj->phys.dead) return;
 
+    bool hit = false;
+
     if(proj->from_player && e->type == ENTITY_TYPE_CREATURE)
     {
         Creature* c = (Creature*)e->ptr;
@@ -277,8 +279,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         if(c->phys.dead) return;
         if(proj->curr_room != c->curr_room) return;
 
-        bool hit = are_rects_colliding(&proj->hit_box_prior, &proj->hit_box, &c->hitbox);
-
+        hit = are_rects_colliding(&proj->hit_box_prior, &proj->hit_box, &c->hitbox);
         if(hit)
         {
             CollisionInfo ci = {0.0,0.0};
@@ -296,7 +297,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 
         if(proj->curr_room != p->curr_room) return;
 
-        bool hit = are_rects_colliding(&proj->hit_box_prior, &proj->hit_box, &p->hitbox);
+        hit = are_rects_colliding(&proj->hit_box_prior, &proj->hit_box, &p->hitbox);
         if(hit)
         {
             CollisionInfo ci = {0.0,0.0};
@@ -305,6 +306,12 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
             proj->phys.dead = true;
         }
     }
+
+    if(hit)
+    {
+        explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->scale, 100.0*proj->scale, proj->curr_room, proj->from_player);
+    }
+
 }
 
 void projectile_draw(Projectile* proj)

@@ -189,11 +189,11 @@ void editor_draw()
                 imgui_slider_float("Cooldown", 0.0,1.0,&player->proj_cooldown_max);
                 imgui_slider_float("Base Speed", 100.0,1000.0,&projectile_lookup[0].base_speed);
                 imgui_slider_float("Min Speed", 50.0,200.0,&projectile_lookup[0].min_speed);
-                imgui_slider_float("Angle Spread", 0.0, 90.0,&projectile_lookup[0].angle_spread);
+                imgui_slider_float("Angle Spread", 0.0, 360.0,&projectile_lookup[0].angle_spread);
                 imgui_slider_float("Scale", 0.1, 5.0,&projectile_lookup[0].scale);
 
                 int num = projectile_lookup[0].num;
-                imgui_number_box("Num", 1,10, &num);
+                imgui_number_box("Num", 1,100, &num);
                 projectile_lookup[0].num = num;
 
                 imgui_toggle_button(&projectile_lookup[0].charge, "Charge");
