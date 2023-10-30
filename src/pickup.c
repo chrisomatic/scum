@@ -42,7 +42,7 @@ void pickup_add(PickupType type, int subtype, float x, float y, uint8_t curr_roo
     pu.sprite_index = type;
     pu.phys.pos.x = x;
     pu.phys.pos.y = y;
-    pu.phys.mass = 1.0;
+    pu.phys.mass = 4.0;
     pu.phys.speed = 1.0;
     pu.phys.radius = 8;
     pu.curr_room = curr_room;
@@ -55,8 +55,8 @@ void pickup_update(Pickup* pu, float dt)
     pu->phys.pos.x += dt*pu->phys.vel.x;
     pu->phys.pos.y += dt*pu->phys.vel.y;
 
-    float rate = phys_get_friction_rate(0.005*pu->phys.mass,dt);
-    phys_apply_friction(&pu->phys,rate);
+    float rate = 100.0; //phys_get_friction_rate(0.005*pu->phys.mass,dt);
+    phys_apply_friction(&pu->phys,rate,dt);
 }
 
 void pickup_update_all(float dt)
@@ -86,3 +86,21 @@ void pickup_draw(Pickup* pu)
     }
 }
 
+void pickup_handle_collision(Pickup* p, Entity* e)
+{
+    switch(e->type)
+    {
+        case ENTITY_TYPE_PICKUP:
+        {
+            Pickup* p2 = (Pickup*)e->ptr;
+
+            CollisionInfo ci = {0};
+            bool collided = phys_collision_circles(&p->phys,&p2->phys, &ci);
+
+            if(collided)
+            {
+                phys_collision_correct(&p->phys, &p2->phys,&ci);
+            }
+        } break;
+    }
+}

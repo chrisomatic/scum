@@ -94,9 +94,28 @@ void phys_apply_friction_y(Physics* phys, float rate)
     if(ABS(phys->vel.y) < 1.0) phys->vel.y = 0.0;
 }
 
-void phys_apply_friction(Physics* phys, float rate)
+void phys_apply_friction_2(Physics* phys, float rate)
 {
     phys_apply_friction_x(phys,rate);
     phys_apply_friction_y(phys,rate);
+}
 
+void phys_apply_friction(Physics* phys, float friction, float dt)
+{
+    Vector2f f = {phys->vel.x, phys->vel.y};
+    normalize(&f);
+
+    float vel_magn = magn(phys->vel);
+
+    float applied_friction_x = -1*phys->mass*MIN(ABS(phys->vel.x),dt*friction);
+    float applied_friction_y = -1*phys->mass*MIN(ABS(phys->vel.y),dt*friction);
+
+    f.x *= applied_friction_x;
+    f.y *= applied_friction_y;
+
+    phys->vel.x += f.x;
+    phys->vel.y += f.y;
+    
+    if(ABS(phys->vel.x) < 1.0) phys->vel.x = 0.0;
+    if(ABS(phys->vel.y) < 1.0) phys->vel.y = 0.0;
 }

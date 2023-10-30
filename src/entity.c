@@ -120,7 +120,7 @@ void entity_handle_collisions()
                     projectile_handle_collision((Projectile*)e1->ptr,e2);
                     break;
                 case ENTITY_TYPE_PICKUP:
-                    //pickup_handle_collision((Projectile*)e1->ptr,e2);
+                    pickup_handle_collision((Pickup*)e1->ptr,e2);
                     break;
             }
         }

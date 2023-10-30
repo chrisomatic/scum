@@ -646,6 +646,12 @@ void init()
         net_client_init();
         set_game_state(GAME_STATE_PLAYING);
     }
+
+    // @TEMP
+    for(int i = 0; i < 4; ++i)
+        pickup_add(PICKUP_TYPE_GEM,rand() % 6,player->phys.pos.x, player->phys.pos.y, player->curr_room);
+
+
 }
 
 void deinit()

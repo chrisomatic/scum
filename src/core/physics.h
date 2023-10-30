@@ -47,4 +47,4 @@ void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci);
 float phys_get_friction_rate(float friction_factor, float dt);
 void phys_apply_friction_x(Physics* phys, float rate);
 void phys_apply_friction_y(Physics* phys, float rate);
-void phys_apply_friction(Physics* phys, float rate);
+void phys_apply_friction(Physics* phys, float friction, float dt);

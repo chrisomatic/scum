@@ -1,5 +1,7 @@
 #pragma once
 
+#include "entity.h"
+
 #define MAX_PICKUPS 256
 
 typedef enum
@@ -39,3 +41,4 @@ void pickup_add(PickupType type, int subtype, float x, float y, uint8_t curr_roo
 void pickup_update(Pickup* pu, float dt);
 void pickup_update_all(float dt);
 void pickup_draw(Pickup* pu);
+void pickup_handle_collision(Pickup* p, Entity* e);

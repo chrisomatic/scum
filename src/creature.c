@@ -162,7 +162,7 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
     {
         case CREATURE_TYPE_SLUG:
         {
-            c.phys.speed = 300.0;
+            c.phys.speed = 100.0;
             c.image = creature_image_slug;
             c.act_time_min = 0.5;
             c.act_time_max = 1.0;
@@ -172,7 +172,7 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
         } break;
         case CREATURE_TYPE_CLINGER:
         {
-            c.phys.speed = 500.0;
+            c.phys.speed = 300.0;
             c.image = creature_image_clinger;
             c.act_time_min = 0.2;
             c.act_time_max = 0.4;
@@ -244,8 +244,8 @@ void creature_update(Creature* c, float dt)
     if(ABS(c->phys.vel.x) > c->phys.speed) c->phys.vel.x = h_speed;
     if(ABS(c->phys.vel.y) > c->phys.speed) c->phys.vel.y = v_speed;
 
-    float rate = phys_get_friction_rate(0.002,dt);
-    phys_apply_friction(&c->phys,rate);
+    float rate = 100.0; //phys_get_friction_rate(0.002,dt);
+    phys_apply_friction(&c->phys,rate,dt);
 
     c->phys.pos.x += dt*c->phys.vel.x;
     c->phys.pos.y += dt*c->phys.vel.y;
@@ -329,6 +329,18 @@ void creature_handle_collision(Creature* c, Entity* e)
             if(collided)
             {
                 phys_collision_correct(&c->phys, &c2->phys,&ci);
+            }
+        } break;
+        case ENTITY_TYPE_PICKUP:
+        {
+            Pickup* p2 = (Pickup*)e->ptr;
+
+            CollisionInfo ci = {0};
+            bool collided = phys_collision_circles(&c->phys,&p2->phys, &ci);
+
+            if(collided)
+            {
+                phys_collision_correct(&c->phys, &p2->phys,&ci);
             }
         } break;
     }
