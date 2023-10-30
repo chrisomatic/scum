@@ -18,6 +18,7 @@
 #include "net.h"
 #include "entity.h"
 #include "pickup.h"
+#include "explosion.h"
 #include "text_list.h"
 
 // =========================
@@ -411,7 +412,11 @@ void camera_set()
         }
     }
 
-    camera_move(cam_pos_x, cam_pos_y, cam_pos_z, immediate, &camera_limit);
+    bool ret = camera_move(cam_pos_x, cam_pos_y, cam_pos_z, immediate, &camera_limit);
+    if(!ret)
+    {
+        camera_move(CENTER_X, CENTER_Y, cam_pos_z, immediate, NULL);
+    }
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 }
 
@@ -519,6 +524,7 @@ void start_server()
     game_generate_level(seed);
 
     projectile_init();
+    explosion_init();
 
     // start
     net_server_start();
@@ -592,6 +598,9 @@ void init()
 
     LOGI(" - Projectiles.");
     projectile_init();
+
+    LOGI(" - Explosions.");
+    explosion_init();
 
     imgui_load_theme("nord_deep.theme");
 
@@ -889,6 +898,7 @@ void update(float dt)
             projectile_update(dt);
             creature_update_all(dt);
             pickup_update_all(dt);
+            explosion_update_all(dt);
             decal_update_all(dt);
 
             entity_build_all();
@@ -1241,6 +1251,7 @@ void draw()
         {
             decal_draw_all();
             entity_draw_all();
+            explosion_draw_all();
         }
 
         draw_bigmap();

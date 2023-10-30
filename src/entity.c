@@ -3,6 +3,7 @@
 #include "creature.h"
 #include "projectile.h"
 #include "physics.h"
+#include "explosion.h"
 #include "entity.h"
 
 Entity entities[MAX_ENTITIES] = {0};
@@ -137,6 +138,15 @@ void entity_handle_collisions()
 
         Room* room = level_get_room_by_index(&level, entities[i].curr_room);
         level_handle_room_collision(room,entities[i].phys);
+
+        if(e->phys->dead && e->type == ENTITY_TYPE_PROJECTILE)
+        {
+            Projectile* proj = (Projectile*)e->ptr;
+            if(projectile_lookup[proj->type].explosive)
+            {
+                explosion_add(e->phys->pos.x, e->phys->pos.y, 15.0*proj->scale, 100.0, e->curr_room);
+            }
+        }
     }
 }
 

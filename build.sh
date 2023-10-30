@@ -25,6 +25,7 @@ gcc core/gfx.c \
     editor.c \
     entity.c \
     pickup.c \
+    explosion.c \
     main.c \
     -Icore \
     -lglfw -lGLU -lGLEW -lGL -lm \

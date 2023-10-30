@@ -7,6 +7,7 @@
 #include "log.h"
 #include "player.h"
 #include "creature.h"
+#include "explosion.h"
 #include "projectile.h"
 
 Projectile projectiles[MAX_PROJECTILES];
@@ -18,7 +19,7 @@ static uint16_t id_counter = 0;
 
 ProjectileDef projectile_lookup[] = {
     {
-        // laser
+        // player/laser
         .damage = 10.0,
         .min_speed = 200.0,
         .base_speed = 200.0,
@@ -27,7 +28,8 @@ ProjectileDef projectile_lookup[] = {
         .num = 10,
         .charge = false,
         .charge_rate = 16,
-        .ghost = false
+        .ghost = false,
+        .explosive = true
     },
     {
         // creature
@@ -39,7 +41,8 @@ ProjectileDef projectile_lookup[] = {
         .num = 1,
         .charge = false,
         .charge_rate = 16,
-        .ghost = false
+        .ghost = false,
+        .explosive = true
     },
     {
         // creature clinger
@@ -51,7 +54,8 @@ ProjectileDef projectile_lookup[] = {
         .num = 1,
         .charge = false,
         .charge_rate = 16,
-        .ghost = true
+        .ghost = true,
+        .explosive = false
     }
 };
 
@@ -116,6 +120,7 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileType proj_type, 
         Projectile p = {0};
         memcpy(&p, &proj, sizeof(Projectile));
         p.id = get_id();
+        // printf("proj scale: %.2f\n", p.scale);
 
         float speed = projdef->base_speed;
         float angle = angle_deg;
