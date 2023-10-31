@@ -3,6 +3,7 @@
 #include "creature.h"
 #include "projectile.h"
 #include "physics.h"
+#include "math2d.h"
 #include "explosion.h"
 #include "entity.h"
 
@@ -198,4 +199,46 @@ void entity_draw_all()
         }
 
     }
+}
+
+static Physics* get_physics_from_type(int index, EntityType type)
+{
+    switch(type)
+    {
+        case ENTITY_TYPE_PLAYER:
+            return &players[index].phys;
+        case ENTITY_TYPE_CREATURE:
+            return &creatures[index].phys;
+    }
+    return NULL;
+}
+
+Physics* entity_get_closest_to(Physics* phys, EntityType type)
+{
+    int count = 0;
+    switch(type)
+    {
+        case ENTITY_TYPE_PLAYER:
+            count = player_get_active_count();
+            break;
+        case ENTITY_TYPE_CREATURE:
+            count = creature_get_count();
+            break;
+    }
+
+    float min_dist = 1000.0;
+    Physics* min_result = NULL;
+
+    for(int i = 0; i < count; ++i)
+    {
+        Physics* phys2 = get_physics_from_type(i, type);
+        float d = dist(phys->pos.x, phys->pos.y,phys2->pos.x,phys2->pos.y);
+        if(d < min_dist)
+        {
+            min_dist = d;
+            min_result = phys2;
+        }
+    }
+
+    return min_result;
 }

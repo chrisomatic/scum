@@ -29,6 +29,7 @@ typedef struct
 
     bool ghost;
     bool explosive;
+    bool homing;
 
 } ProjectileDef;
 
@@ -52,6 +53,8 @@ typedef struct
     float time;
     float ttl;
     bool from_player;
+
+    Physics* homing_target;
     
     // Networking
     float lerp_t;

@@ -231,6 +231,29 @@ void projectile_update(float delta_t)
         // proj->prior_pos.x = proj->phys.pos.x;
         // proj->prior_pos.y = proj->phys.pos.y;
 
+        if(projectile_lookup[proj->type].homing)
+        {
+            if(!proj->homing_target)
+            {
+                // get homing target
+                if(proj->from_player)
+                    proj->homing_target = entity_get_closest_to(&proj->phys,ENTITY_TYPE_CREATURE);
+                else
+                    proj->homing_target = entity_get_closest_to(&proj->phys,ENTITY_TYPE_PLAYER);
+            }
+
+            if(proj->homing_target)
+            {
+                float m = magn(proj->phys.vel);
+
+                Vector2f v = {proj->homing_target->pos.x - proj->phys.pos.x, proj->homing_target->pos.y - proj->phys.pos.y};
+                normalize(&v);
+
+                proj->phys.vel.x = v.x * m;
+                proj->phys.vel.x = v.y * m;
+            }
+        }
+
         proj->phys.pos.x += _dt*proj->phys.vel.x;
         proj->phys.pos.y += _dt*proj->phys.vel.y;
 
