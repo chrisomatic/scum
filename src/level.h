@@ -112,18 +112,20 @@ typedef struct
 
 extern RoomData room_list[32];
 extern int room_list_count;
+extern int dungeon_image;
 
 void level_init();
 Level level_generate(unsigned int seed);
+uint8_t level_get_tile_sprite(TileType tt);
 Rect level_get_tile_rect(int x, int y);
 TileType level_get_tile_type(Room* room, int x, int y);
 TileType level_get_tile_type_by_pos(Room* room, float x, float y);
-void level_draw_room(Room* room, float xoffset, float yoffset);
+void level_draw_room(Room* room, RoomData* room_data, float xoffset, float yoffset);
+void room_draw_walls(Room* room);
 void level_print(Level* level);
 void level_print_room(Room* room);
 void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radius);
 void level_handle_room_collision(Room* room, Physics* phys);
-
 Room* level_get_room(Level* level, int x, int y);
 Room* level_get_room_by_index(Level* level, int index);
 uint8_t level_get_room_index(int x, int y);
@@ -138,3 +140,5 @@ char* level_tile_type_to_str(TileType tt);
 
 Vector2i get_dir_offsets(Dir door);
 const char* get_dir_name(Dir door);
+
+void level_generate_room_outer_walls(Room* room);

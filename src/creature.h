@@ -58,6 +58,9 @@ extern Creature prior_creatures[MAX_CREATURES];
 extern Creature creatures[MAX_CREATURES];
 
 void creature_init();
+const char* creature_type_name(CreatureType type);
+int creature_get_image(CreatureType type);
+void creature_init_props(Creature* c);
 void creature_clear_all();
 Creature* creature_add(Room* room, CreatureType type, Creature* creature);
 void creature_add_direct(Creature* c);
