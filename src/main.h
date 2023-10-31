@@ -48,6 +48,7 @@ typedef enum
 
 typedef enum
 {
+    GAME_STATE_EDITOR,
     GAME_STATE_MENU,
     GAME_STATE_PLAYING,
 } GameState;

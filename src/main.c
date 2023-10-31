@@ -19,6 +19,7 @@
 #include "entity.h"
 #include "pickup.h"
 #include "explosion.h"
+#include "room_editor.h"
 #include "text_list.h"
 
 // =========================
@@ -94,6 +95,7 @@ const char* menu_options[] = {
     "Play Online",
     "Host Local Server",
     "Join Local Server",
+    "Room Editor",
     "Settings",
     "Help",
     "Exit"
@@ -220,6 +222,10 @@ void set_game_state(GameState state)
         LOGI("Set game state: %d", game_state);
         switch(game_state)
         {
+            case GAME_STATE_EDITOR:
+            {
+                room_editor_init();
+            } break;
             case GAME_STATE_MENU:
             {
                 net_client_disconnect();
@@ -714,6 +720,13 @@ void parse_args(int argc, char* argv[])
 
 void update(float dt)
 {
+
+    if(game_state == GAME_STATE_EDITOR)
+    {
+        room_editor_update(dt);
+        return;
+    }
+
     gfx_clear_lines();
 
     text_list_update(text_lst, dt);
@@ -857,6 +870,10 @@ void update(float dt)
                 net_client_set_server_ip(LOCAL_SERVER_IP);
                 set_game_state(GAME_STATE_PLAYING);
             }
+            else if(STR_EQUAL(s, "Room Editor"))
+            {
+                set_game_state(GAME_STATE_EDITOR);
+            }
             else if(STR_EQUAL(s, "Settings"))
             {
                 text_list_add(text_lst, 2.0, "'%s' not supported", s);
@@ -906,7 +923,6 @@ void update(float dt)
         }
     }
 
-    text_list_update(text_lst, dt);
 
     camera_set();
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
@@ -1184,6 +1200,14 @@ void draw_gem_menu()
 
 void draw()
 {
+
+    if(game_state == GAME_STATE_EDITOR)
+    {
+        room_editor_draw();
+        return;
+    }
+
+
     Room* room = level_get_room_by_index(&level, player->curr_room);
 
     if(debug_enabled)

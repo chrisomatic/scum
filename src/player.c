@@ -90,7 +90,7 @@ void player_init()
         for(int j = 0; j < PLAYER_GEMS_MAX; ++j)
         {
             p->gems[j] = rand() % NUM_GEM_TYPES;
-            printf("gems[%d] = %d\n", j, p->gems[j]);
+            // printf("gems[%d] = %d\n", j, p->gems[j]);
             // p->gems[j] = GEM_TYPE_NONE;
         }
 
