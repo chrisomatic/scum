@@ -41,6 +41,87 @@ void creature_init()
     creature_image_geizer = gfx_load_image("src/img/creature_geizer.png", false, false, 32, 64);
 }
 
+const char* creature_type_name(CreatureType type)
+{
+    switch(type)
+    {
+        case CREATURE_TYPE_SLUG:
+            return "Slug";
+        case CREATURE_TYPE_CLINGER:
+            return "Clinger";
+        case CREATURE_TYPE_GEIZER:
+            return "Geizer";
+        default:
+            return "???";
+    }
+}
+
+int creature_get_image(CreatureType type)
+{
+    switch(type)
+    {
+        case CREATURE_TYPE_SLUG:
+            return creature_image_slug;
+        case CREATURE_TYPE_CLINGER:
+            return creature_image_clinger;
+        case CREATURE_TYPE_GEIZER:
+            return creature_image_geizer;
+        default:
+            return -1;
+    }
+}
+
+void creature_init_props(Creature* c)
+{
+    switch(c->type)
+    {
+        case CREATURE_TYPE_SLUG:
+        {
+            c->phys.speed = 100.0;
+            c->image = creature_image_slug;
+            c->act_time_min = 0.5;
+            c->act_time_max = 1.0;
+            c->phys.mass = 1.0;
+            c->hp_max = 3.0;
+            c->painful_touch = true;
+        } break;
+        case CREATURE_TYPE_CLINGER:
+        {
+            c->phys.speed = 200.0;
+            c->image = creature_image_clinger;
+            c->act_time_min = 0.2;
+            c->act_time_max = 0.4;
+            c->phys.mass = 100.0; // so it doesn't slide when hit
+            c->hp_max = 5.0;
+            c->proj_type = PROJECTILE_TYPE_CREATURE_CLINGER;
+            c->painful_touch = false;
+        } break;
+        case CREATURE_TYPE_GEIZER:
+        {
+            c->phys.speed = 1.0;
+            c->image = creature_image_geizer;
+            c->act_time_min = 3.0;
+            c->act_time_max = 5.0;
+            c->phys.mass = 1000.0; // so it doesn't slide when hit
+            c->hp_max = 10.0;
+            c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
+            c->painful_touch = false;
+        } break;
+    }
+
+    memcpy(&c->phys.target_pos, &c->phys.pos, sizeof(Vector2f));
+
+    c->phys.radius = 8.0;
+    c->phys.coffset.x = 0;
+    c->phys.coffset.y = 0;
+    c->damage = 1;
+}
+
+// Vector2f creature_get_collision(CreatureType type, float posx, float posy)
+// {
+
+// }
+
 void creature_clear_all()
 {
     list_clear(clist);
@@ -158,49 +239,8 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
         }
     }
 
-    switch(c.type)
-    {
-        case CREATURE_TYPE_SLUG:
-        {
-            c.phys.speed = 100.0;
-            c.image = creature_image_slug;
-            c.act_time_min = 0.5;
-            c.act_time_max = 1.0;
-            c.phys.mass = 1.0;
-            c.hp_max = 3.0;
-            c.painful_touch = true;
-        } break;
-        case CREATURE_TYPE_CLINGER:
-        {
-            c.phys.speed = 200.0;
-            c.image = creature_image_clinger;
-            c.act_time_min = 0.2;
-            c.act_time_max = 0.4;
-            c.phys.mass = 100.0; // so it doesn't slide when hit
-            c.hp_max = 5.0;
-            c.proj_type = PROJECTILE_TYPE_CREATURE_CLINGER;
-            c.painful_touch = false;
-        } break;
-        case CREATURE_TYPE_GEIZER:
-        {
-            c.phys.speed = 1.0;
-            c.image = creature_image_geizer;
-            c.act_time_min = 3.0;
-            c.act_time_max = 5.0;
-            c.phys.mass = 1000.0; // so it doesn't slide when hit
-            c.hp_max = 10.0;
-            c.proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
-            c.painful_touch = false;
-        } break;
-    }
-
-    memcpy(&c.phys.target_pos, &c.phys.pos, sizeof(Vector2f));
-
     c.color = room->color;
-    c.phys.radius = 8.0;
-    c.phys.coffset.x = 0;
-    c.phys.coffset.y = 0;
-    c.damage = 1;
+    creature_init_props(&c);
 
     if(creature == NULL)
     {

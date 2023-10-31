@@ -361,10 +361,10 @@ void player_draw_room_transition()
             float y1 = transition_offsets.y+yoff;
 
             Vector2i t = level_get_room_coords(p->transition_room);
-            level_draw_room(&level.rooms[t.x][t.y], x0, y0);
+            level_draw_room(&level.rooms[t.x][t.y], NULL, x0, y0);
 
             Vector2i roomxy = level_get_room_coords((int)p->curr_room);
-            level_draw_room(&level.rooms[roomxy.x][roomxy.y], x1, y1);
+            level_draw_room(&level.rooms[roomxy.x][roomxy.y], NULL, x1, y1);
         }
     }
 }

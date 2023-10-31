@@ -93,10 +93,10 @@ PlayerInput menu_keys[MENU_KEY_MAX] = {0};
 int menu_selected_option = 0;
 const char* menu_options[] = {
     "Play Local",
+    "Room Editor",
     "Play Online",
     "Host Local Server",
     "Join Local Server",
-    "Room Editor",
     "Settings",
     "Help",
     "Exit"
@@ -1242,7 +1242,7 @@ void draw()
         if(player->curr_room == player->transition_room)
         {
             Room* room = level_get_room_by_index(&level,player->curr_room);
-            level_draw_room(room, 0, 0);
+            level_draw_room(room, NULL, 0, 0);
         }
 
         // gfx_draw_rect(&room_area, COLOR_WHITE, NOT_SCALED, NO_ROTATION, 1.0, false, true);
@@ -1251,7 +1251,7 @@ void draw()
     {
         // //TODO
         // Room* room = &level.rooms[roomxy.x][roomxy.y];
-        // level_draw_room(room, 0, 0);
+        // level_draw_room(room, NULL, 0, 0);
         gfx_draw_rect(&room_area, COLOR(30,30,30), NOT_SCALED, NO_ROTATION, 1.0, true, true);
     }
 
@@ -1298,17 +1298,7 @@ void draw()
     // draw walls
     if(debug_enabled && show_walls && game_state == GAME_STATE_PLAYING)
     {
-        for(int i = 0; i < room->wall_count; ++i)
-        {
-            Wall* wall = &room->walls[i];
-
-            float x = wall->p0.x;
-            float y = wall->p0.y;
-            float w = ABS(wall->p0.x - wall->p1.x)+1;
-            float h = ABS(wall->p0.y - wall->p1.y)+1;
-
-            gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_WHITE, NOT_SCALED, NO_ROTATION, FULL_OPACITY, true, IN_WORLD);
-        }
+        room_draw_walls(room);
     }
 
     // // margins
