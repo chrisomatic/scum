@@ -1356,11 +1356,11 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
             }
             if(key == GLFW_KEY_ESCAPE)
             {
-                // if(debug_enabled)
-                // {
-                //     debug_enabled = false;
-                // }
-                if(game_state != GAME_STATE_MENU)
+                if(editor_enabled)
+                {
+                    editor_enabled = false;
+                }
+                else if(game_state != GAME_STATE_MENU)
                 {
                     set_game_state(GAME_STATE_MENU);
                 }
@@ -1382,7 +1382,8 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
             }
             else if(key == GLFW_KEY_M)
             {
-                show_big_map = !show_big_map;
+                if(game_state == GAME_STATE_PLAYING)
+                    show_big_map = !show_big_map;
             }
 
         }

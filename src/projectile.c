@@ -90,18 +90,17 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileType proj_type, 
     Projectile proj = {0};
     proj.type = proj_type;
     proj.damage = projdef->damage * damage_multiplier;
+    proj.scale = scale * projdef->scale;
+    proj.time = 0.0;
+    proj.ttl  = 1.0; //TODO: change to range
     proj.phys.pos.x = phys->pos.x;
     proj.phys.pos.y = phys->pos.y;
     proj.phys.mass = 1.0;
-    proj.phys.radius = 4.0;
+    proj.phys.radius = 4.0 * proj.scale;
     proj.phys.amorphous = true;
     proj.phys.ethereal = projdef->ghost;
     proj.curr_room = curr_room;
     proj.from_player = from_player;
-
-    proj.scale = scale * projdef->scale;
-    proj.time = 0.0;
-    proj.ttl  = 1.0; //TODO: change to range
 
     proj.hit_box.x = proj.phys.pos.x;
     proj.hit_box.y = proj.phys.pos.y;
