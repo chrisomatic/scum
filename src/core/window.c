@@ -699,7 +699,7 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
     }
     else if(button == GLFW_MOUSE_BUTTON_RIGHT)
     {
-        mouse_right.action_prior = mouse_left.action;
+        mouse_right.action_prior = mouse_right.action;
         mouse_right.action = action;
     }
 

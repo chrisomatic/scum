@@ -20,6 +20,7 @@ typedef enum
     GEM_TYPE_WHITE,
     GEM_TYPE_YELLOW,
     GEM_TYPE_PURPLE,
+
 } GemType;
 
 typedef enum
@@ -27,6 +28,8 @@ typedef enum
     HEALTH_TYPE_HEART_FULL = GEM_TYPE_PURPLE+1,
     HEALTH_TYPE_HEART_HALF,
 } HealthType;
+
+#define PICKUPS_MAX (HEALTH_TYPE_HEART_HALF+1)
 
 #include "player.h"
 
@@ -51,6 +54,8 @@ extern Pickup pickups[MAX_PICKUPS];
 
 
 void pickup_init();
+int pickup_get_sprite_index(PickupType type, int subtype);
+const char* pickup_get_name(PickupType type, int subtype);
 void pickup_add(PickupType type, int subtype, float x, float y, uint8_t curr_room);
 void pickup_update(Pickup* pu, float dt);
 void pickup_update_all(float dt);

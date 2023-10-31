@@ -55,13 +55,43 @@ void pickup_init()
     pickups_image = gfx_load_image("src/img/pickups.png", false, false, 16, 16);
 }
 
+int pickup_get_sprite_index(PickupType type, int subtype)
+{
+    return subtype;
+}
+
+const char* pickup_get_name(PickupType type, int subtype)
+{
+    if(type == PICKUP_TYPE_GEM)
+    {
+        switch(subtype)
+        {
+            case GEM_TYPE_RED: return "Red Gem";
+            case GEM_TYPE_GREEN: return "Green Gem";
+            case GEM_TYPE_BLUE: return "Blue Gem";
+            case GEM_TYPE_WHITE: return "White Gem";
+            case GEM_TYPE_YELLOW: return "Yellow Gem";
+            case GEM_TYPE_PURPLE: return "Purple Gem";
+        }
+    }
+    else if(type == PICKUP_TYPE_HEALTH)
+    {
+        switch(subtype)
+        {
+            case HEALTH_TYPE_HEART_FULL: return "Full Heart";
+            case HEALTH_TYPE_HEART_HALF: return "Half Heart";
+        }
+    }
+    return "???";
+}
+
 void pickup_add(PickupType type, int subtype, float x, float y, uint8_t curr_room)
 {
     Pickup pu = {0};
 
     pu.type = type;
     pu.subtype = subtype;
-    pu.sprite_index = type;
+    pu.sprite_index = pickup_get_sprite_index(type, subtype);
     pu.phys.pos.x = x;
     pu.phys.pos.y = y;
     pu.phys.mass = 5.0;
@@ -122,10 +152,10 @@ void pickup_draw(Pickup* pu)
     switch(pu->type)
     {
         case PICKUP_TYPE_GEM:
-            gfx_draw_image(pickups_image, pu->subtype, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, IN_WORLD);
+            gfx_draw_image(pickups_image, pu->sprite_index, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, IN_WORLD);
             break;
         case PICKUP_TYPE_HEALTH:
-            gfx_draw_image(pickups_image, pu->subtype, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, IN_WORLD);
+            gfx_draw_image(pickups_image, pu->sprite_index, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, IN_WORLD);
             break;
     }
 }

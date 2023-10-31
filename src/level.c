@@ -883,11 +883,20 @@ Vector2i level_get_room_coords(int index)
 
 Vector2i level_get_room_coords_by_pos(float x, float y)
 {
-    int x0 = room_area.x - room_area.w/2.0;
-    int y0 = room_area.y - room_area.h/2.0;
+    float x0 = room_area.x - room_area.w/2.0;
+    float y0 = room_area.y - room_area.h/2.0;
 
-    int _x = (x - x0) / TILE_SIZE;
-    int _y = (y - y0) / TILE_SIZE;
+    float xd = x - x0;
+    float yd = y - y0;
+
+    int _x = xd / TILE_SIZE;
+    int _y = yd / TILE_SIZE;
+
+    // fix issue with casting float to int and rounding improperly
+    if(xd < 0)
+        _x--;
+    if(yd < 0)
+        _y--;
 
     Vector2i r = {_x-1,_y-1};
     return r;
