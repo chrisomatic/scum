@@ -114,7 +114,7 @@ void phys_apply_friction(Physics* phys, float friction, float dt)
     normalize(&f);
 
     float vel_magn = magn(phys->vel);
-    float applied_friction = MIN(vel_magn,phys->mass*friction);
+    float applied_friction = MIN(vel_magn,friction);
 
     f.x *= applied_friction;
     f.y *= applied_friction;

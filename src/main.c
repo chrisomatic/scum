@@ -666,6 +666,8 @@ void init()
     for(int i = 0; i < 4; ++i)
         pickup_add(PICKUP_TYPE_GEM,rand() % 6,player->phys.pos.x+32, player->phys.pos.y+32, player->curr_room);
 
+    pickup_add(PICKUP_TYPE_HEALTH,HEALTH_TYPE_HEART_FULL,player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
+    pickup_add(PICKUP_TYPE_HEALTH,HEALTH_TYPE_HEART_HALF,player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
 
 }
 
@@ -1189,7 +1191,7 @@ void draw_gem_menu()
             color = COLOR_WHITE;
         gfx_draw_rect(&r, color, NOT_SCALED, NO_ROTATION, 0.5, true, NOT_IN_WORLD);
 
-        if(player->gems[i] != PICKUP_TYPE_GEM_NONE)
+        if(player->gems[i] != GEM_TYPE_NONE)
         {
             gfx_draw_image(pickups_image, player->gems[i], r.x, r.y, COLOR_TINT_NONE, scale, 0.0, 0.5, false, NOT_IN_WORLD);
         }

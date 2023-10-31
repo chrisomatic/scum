@@ -24,6 +24,28 @@ static Rect gem_get_rect(GemType type)
     return r;
 }
 
+static void pickup_func_nothing(Pickup* pu, Player* p)
+{
+    return;
+}
+static void pickup_func_heart_full(Pickup* pu, Player* p)
+{
+    if(p->hp < p->hp_max)
+    {
+        player_add_hp(p,2);
+        pu->picked_up = true;
+    }
+}
+
+static void pickup_func_heart_half(Pickup* pu, Player* p)
+{
+    if(p->hp < p->hp_max)
+    {
+        player_add_hp(p,1);
+        pu->picked_up = true;
+    }
+}
+
 void pickup_init()
 {
     if(pickup_list)
@@ -42,11 +64,27 @@ void pickup_add(PickupType type, int subtype, float x, float y, uint8_t curr_roo
     pu.sprite_index = type;
     pu.phys.pos.x = x;
     pu.phys.pos.y = y;
-    pu.phys.mass = 0.5;
+    pu.phys.mass = 5.0;
     pu.phys.speed = 1.0;
     pu.phys.radius = 8;
     pu.phys.elasticity = 0.5;
     pu.curr_room = curr_room;
+    pu.touch_pickup = type == PICKUP_TYPE_HEALTH ? true : false;
+
+    if(pu.type == PICKUP_TYPE_HEALTH)
+    {
+        switch(pu.subtype)
+        {
+            case HEALTH_TYPE_HEART_FULL:
+                pu.func = (void*)pickup_func_heart_full;
+                break;
+            case HEALTH_TYPE_HEART_HALF:
+                pu.func = (void*)pickup_func_heart_half;
+                break;
+            default:
+                pu.func = (void*)pickup_func_nothing;
+        }
+    }
 
     list_add(pickup_list,&pu);
 }
@@ -65,11 +103,14 @@ void pickup_update_all(float dt)
     for(int i = pickup_list->count-1; i >= 0; --i)
     {
         Pickup* pu = &pickups[i];
-        pickup_update(pu, dt);
+
         if(pu->picked_up)
         {
             list_remove(pickup_list, i);
+            continue;
         }
+
+        pickup_update(pu, dt);
     }
 }
 
@@ -83,7 +124,9 @@ void pickup_draw(Pickup* pu)
         case PICKUP_TYPE_GEM:
             gfx_draw_image(pickups_image, pu->subtype, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, IN_WORLD);
             break;
-
+        case PICKUP_TYPE_HEALTH:
+            gfx_draw_image(pickups_image, pu->subtype, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, IN_WORLD);
+            break;
     }
 }
 

@@ -13,20 +13,24 @@ typedef enum
 
 typedef enum
 {
-    PICKUP_TYPE_GEM_NONE = -1,
-    PICKUP_TYPE_GEM_RED,
-    PICKUP_TYPE_GEM_GREEN,
-    PICKUP_TYPE_GEM_BLUE,
-    PICKUP_TYPE_GEM_WHITE,
-    PICKUP_TYPE_GEM_YELLOW,
-    PICKUP_TYPE_GEM_PURPLE,
+    GEM_TYPE_NONE = -1,
+    GEM_TYPE_RED,
+    GEM_TYPE_GREEN,
+    GEM_TYPE_BLUE,
+    GEM_TYPE_WHITE,
+    GEM_TYPE_YELLOW,
+    GEM_TYPE_PURPLE,
 } GemType;
 
 typedef enum
 {
-    PICKUP_TYPE_HEART_FULL = 6,
-    PICKUP_TYPE_HEART_HALF,
+    HEALTH_TYPE_HEART_FULL = GEM_TYPE_PURPLE+1,
+    HEALTH_TYPE_HEART_HALF,
 } HealthType;
+
+#include "player.h"
+
+typedef void (*pickup_func)(void* pickup, void* player);
 
 typedef struct
 {
@@ -36,12 +40,15 @@ typedef struct
     int image;
     int sprite_index;
     int curr_room;
+    bool touch_pickup;
     bool picked_up;
+    pickup_func func;
 } Pickup;
 
 extern int pickups_image;
 extern glist* pickup_list;
 extern Pickup pickups[MAX_PICKUPS];
+
 
 void pickup_init();
 void pickup_add(PickupType type, int subtype, float x, float y, uint8_t curr_room);

@@ -236,6 +236,12 @@ void player_set_collision_pos(Player* p, float x, float y)
     p->phys.pos.y = y - p->phys.coffset.y;
 }
 
+void player_add_hp(Player* p, int hp)
+{
+    p->hp += hp;
+    p->hp = RANGE(p->hp,0,p->hp_max);
+}
+
 void player_hurt(Player* p, int damage)
 {
     if(players_invincible)
@@ -244,8 +250,7 @@ void player_hurt(Player* p, int damage)
     if(p->invulnerable)
         return;
 
-    int hp = (int)p->hp;
-    p->hp = MAX(0, hp - damage);
+    player_add_hp(p,-damage);
 
     if(p->hp == 0)
     {
@@ -1011,6 +1016,9 @@ void player_handle_collision(Player* p, Entity* e)
 
             if(collided)
             {
+                if(p2->touch_pickup)
+                    p2->func(p2, p);
+
                 phys_collision_correct(&p->phys, &p2->phys,&ci);
             }
         } break;
