@@ -8,6 +8,7 @@
 #include "shader.h"
 #include "window.h"
 #include "camera.h"
+#include "lighting.h"
 #include "log.h"
 #include "gfx.h"
 
@@ -75,6 +76,9 @@ static GLint loc_sprite_batch_ignore_light;
 static GLint loc_sprite_batch_mask_color;
 static GLint loc_sprite_batch_view;
 static GLint loc_sprite_batch_proj;
+static GLint loc_sprite_batch_light_pos[MAX_POINT_LIGHTS];
+static GLint loc_sprite_batch_light_color[MAX_POINT_LIGHTS];
+static GLint loc_sprite_batch_light_atten[MAX_POINT_LIGHTS];
 
 static GLint loc_shape_color;
 static GLint loc_shape_opacity;
@@ -111,8 +115,6 @@ static SpriteBatch sprite_batch = {0};
 // --------------------------------------------------------
 GFXImage gfx_images[MAX_GFX_IMAGES] = {0};
 int font_image;
-
-const uint32_t ambient_light = 0xFFFFFFFF;
 
 // macros
 // --------------------------------------------------------
@@ -234,8 +236,19 @@ void gfx_init(int width, int height)
     glVertexAttribPointer(0, 2, GL_FLOAT, false, sizeof(LinePoint), (void*)0);
     glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(LinePoint), (const GLvoid*)8);
 
-    // shader locations
+    // lights
     char lookup_str[16+1] = {0};
+    for(int i = 0; i < MAX_POINT_LIGHTS; ++i)
+    {
+        snprintf(lookup_str,16,"light_pos[%d]",i);
+        loc_sprite_batch_light_pos[i] = glGetUniformLocation(program_sprite_batch, lookup_str);
+        snprintf(lookup_str,16,"light_color[%d]",i);
+        loc_sprite_batch_light_color[i] = glGetUniformLocation(program_sprite_batch, lookup_str);
+        snprintf(lookup_str,16,"light_atten[%d]",i);
+        loc_sprite_batch_light_atten[i] = glGetUniformLocation(program_sprite_batch, lookup_str);
+    }
+
+    // shader locations
     for(int i = 0; i < 16; ++i)
     {
         snprintf(lookup_str,16,"images[%d]",i);
@@ -511,6 +524,26 @@ void gfx_sprite_batch_draw()
     gfx_color2floats(ambient_light,&color.x,&color.y,&color.z);
 
     glUniform3f(loc_sprite_batch_ambient_color,color.x,color.y,color.z);
+
+    if(lighting_list)
+    {
+        for(int i = 0; i < MAX_POINT_LIGHTS; ++i)
+        {
+            if(i < lighting_list->count)
+            {
+                PointLight* pl = &point_lights[i];
+                glUniform2f(loc_sprite_batch_light_pos[i],pl->pos.x,pl->pos.y);
+                glUniform3f(loc_sprite_batch_light_color[i],pl->color.x,pl->color.y,pl->color.z);
+                glUniform3f(loc_sprite_batch_light_atten[i],pl->attenuation.x,pl->attenuation.y,pl->attenuation.z);
+            }
+            else
+            {
+                glUniform2f(loc_sprite_batch_light_pos[i],0.0,0.0);
+                glUniform3f(loc_sprite_batch_light_color[i],0.0,0.0,0.0);
+                glUniform3f(loc_sprite_batch_light_atten[i],1.0,0.0,0.0);
+            }
+        }
+    }
 
     if(sprite_batch.in_world)
         glUniformMatrix4fv(loc_sprite_batch_view,1,GL_TRUE,&view->m[0][0]);

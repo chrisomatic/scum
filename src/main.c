@@ -15,6 +15,7 @@
 #include "player.h"
 #include "creature.h"
 #include "editor.h"
+#include "lighting.h"
 #include "net.h"
 #include "entity.h"
 #include "pickup.h"
@@ -589,6 +590,9 @@ void init()
     LOGI(" - Camera.");
     camera_init();
 
+    LOGI(" - Lighting.");
+    lighting_init();
+
     LOGI(" - Player.");
     player = &players[0];
     player_init();
@@ -910,10 +914,18 @@ void update(float dt)
                 }
             }
 
+            lighting_point_light_clear_all();
             for(int i = 0; i < MAX_PLAYERS; ++i)
             {
-                player_update(&players[i], dt);
+                Player* p = &players[i];
+                player_update(p, dt);
+
+                if(p->active)
+                    p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0,1.0,0.0);
             }
+
+            // update point lights
+
             projectile_update(dt);
             creature_update_all(dt);
             pickup_update_all(dt);

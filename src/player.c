@@ -6,6 +6,7 @@
 #include "projectile.h"
 #include "creature.h"
 #include "camera.h"
+#include "lighting.h"
 #include "player.h"
 
 #define RADIUS_OFFSET_X 0
@@ -93,7 +94,6 @@ void player_init()
             // printf("gems[%d] = %d\n", j, p->gems[j]);
             // p->gems[j] = GEM_TYPE_NONE;
         }
-
     }
 }
 

@@ -55,6 +55,8 @@ typedef struct
     uint8_t transition_room;
     Dir door;
 
+    int light_index;
+
     uint8_t hp;
     uint8_t hp_max;
 

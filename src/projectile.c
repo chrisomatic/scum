@@ -8,6 +8,7 @@
 #include "player.h"
 #include "creature.h"
 #include "explosion.h"
+#include "lighting.h"
 #include "projectile.h"
 
 Projectile projectiles[MAX_PROJECTILES];

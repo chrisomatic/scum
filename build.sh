@@ -15,6 +15,7 @@ gcc core/gfx.c \
     core/socket.c \
     core/particles.c \
     core/camera.c \
+    core/lighting.c \
     core/physics.c \
     effects.c \
     projectile.c \
