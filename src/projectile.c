@@ -32,7 +32,8 @@ ProjectileDef projectile_lookup[] = {
         .ghost = false,
         .explosive = true,
         .homing = false,
-        .bouncy = false
+        .bouncy = false,
+        .penetrate = false
     },
     {
         // creature
@@ -47,7 +48,8 @@ ProjectileDef projectile_lookup[] = {
         .ghost = false,
         .explosive = true,
         .homing = false,
-        .bouncy = false
+        .bouncy = false,
+        .penetrate = false
     },
     {
         // creature clinger
@@ -62,7 +64,8 @@ ProjectileDef projectile_lookup[] = {
         .ghost = true,
         .explosive = false,
         .homing = false,
-        .bouncy = false
+        .bouncy = false,
+        .penetrate = false
     }
 };
 
@@ -261,6 +264,9 @@ void projectile_update(float delta_t)
             }
         }
 
+        proj->phys.prior_pos.x = proj->phys.pos.x;
+        proj->phys.prior_pos.y = proj->phys.pos.y;
+
         proj->phys.pos.x += _dt*proj->phys.vel.x;
         proj->phys.pos.y += _dt*proj->phys.vel.y;
 
@@ -294,6 +300,8 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 
     bool hit = false;
 
+    ProjectileDef* projdef = &projectile_lookup[proj->type];
+
     if(proj->from_player && e->type == ENTITY_TYPE_CREATURE)
     {
         Creature* c = (Creature*)e->ptr;
@@ -302,12 +310,16 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         if(proj->curr_room != c->curr_room) return;
 
         hit = are_rects_colliding(&proj->hit_box_prior, &proj->hit_box, &c->hitbox);
+
         if(hit)
         {
             CollisionInfo ci = {0.0,0.0};
-            phys_collision_correct(&proj->phys,&c->phys,&ci);
             creature_hurt(c, proj->damage);
-            proj->phys.dead = true;
+            if(!projdef->penetrate)
+            {
+                phys_collision_correct(&proj->phys,&c->phys,&ci);
+                proj->phys.dead = true;
+            }
         }
     }
     else if(!proj->from_player && e->type == ENTITY_TYPE_PLAYER)
@@ -320,16 +332,20 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         if(proj->curr_room != p->curr_room) return;
 
         hit = are_rects_colliding(&proj->hit_box_prior, &proj->hit_box, &p->hitbox);
+
         if(hit)
         {
             CollisionInfo ci = {0.0,0.0};
-            phys_collision_correct(&proj->phys,&p->phys,&ci);
             player_hurt(p, proj->damage);
-            proj->phys.dead = true;
+            if(!projdef->penetrate)
+            {
+                phys_collision_correct(&proj->phys,&p->phys,&ci);
+                proj->phys.dead = true;
+            }
         }
     }
 
-    if(hit)
+    if(hit && projdef->explosive)
     {
         explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->scale, 100.0*proj->scale, proj->curr_room, proj->from_player);
     }

@@ -31,6 +31,7 @@ typedef struct
     bool explosive;
     bool homing;
     bool bouncy;
+    bool penetrate;
 
 } ProjectileDef;
 

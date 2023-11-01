@@ -77,17 +77,17 @@ void creature_init_props(Creature* c)
     {
         case CREATURE_TYPE_SLUG:
         {
-            c->phys.speed = 100.0;
+            c->phys.speed = 20.0;
             c->image = creature_image_slug;
             c->act_time_min = 0.5;
             c->act_time_max = 1.0;
-            c->phys.mass = 1.0;
+            c->phys.mass = 10.0;
             c->hp_max = 3.0;
             c->painful_touch = true;
         } break;
         case CREATURE_TYPE_CLINGER:
         {
-            c->phys.speed = 200.0;
+            c->phys.speed = 50.0;
             c->image = creature_image_clinger;
             c->act_time_min = 0.2;
             c->act_time_max = 0.4;
@@ -98,7 +98,7 @@ void creature_init_props(Creature* c)
         } break;
         case CREATURE_TYPE_GEIZER:
         {
-            c->phys.speed = 1.0;
+            c->phys.speed = 0.0;
             c->image = creature_image_geizer;
             c->act_time_min = 3.0;
             c->act_time_max = 5.0;
@@ -108,8 +108,6 @@ void creature_init_props(Creature* c)
             c->painful_touch = false;
         } break;
     }
-
-    memcpy(&c->phys.target_pos, &c->phys.pos, sizeof(Vector2f));
 
     c->phys.radius = 8.0;
     c->phys.coffset.x = 0;
@@ -284,8 +282,8 @@ void creature_update(Creature* c, float dt)
     if(ABS(c->phys.vel.x) > c->phys.speed) c->phys.vel.x = h_speed;
     if(ABS(c->phys.vel.y) > c->phys.speed) c->phys.vel.y = v_speed;
 
-    float rate = 10.0; //phys_get_friction_rate(0.002,dt);
-    phys_apply_friction(&c->phys,rate,dt);
+    if(c->h == 0.0 && c->v == 0.0)
+        phys_apply_friction(&c->phys,10.0,dt);
 
     c->phys.pos.x += dt*c->phys.vel.x;
     c->phys.pos.y += dt*c->phys.vel.y;
@@ -519,7 +517,7 @@ static void creature_update_clinger(Creature* c, float dt)
         if(d > 160.0)
         {
             // far from player, slow movement, move randomly
-            c->phys.speed = 100.0;
+            c->phys.speed = 10.0;
             c->act_time_min = 0.5;
             c->act_time_max = 1.0;
 
@@ -535,7 +533,7 @@ static void creature_update_clinger(Creature* c, float dt)
         }
 
         // fast movement
-        c->phys.speed = 400.0;
+        c->phys.speed = 50.0;
 
 
         float delta_x = p->phys.pos.x - c->phys.pos.x;

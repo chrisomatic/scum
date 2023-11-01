@@ -540,7 +540,7 @@ void level_handle_room_collision(Room* room, Physics* phys)
                 }
 
                 //printf("Collision! player: %f %f. Wall point: %f %f. Dist: %f\n", px, py, check_point.x, check_point.y, d);
-                float delta = phys->radius - d + 1.0;
+                float delta = phys->radius - d + 0.1;
                 switch(wall->dir)
                 {
                     case DIR_UP:    phys->pos.y -= delta; phys->vel.y *= -phys->elasticity; break;
@@ -550,10 +550,13 @@ void level_handle_room_collision(Room* room, Physics* phys)
                 }
 
                 // add convenient sliding to get around walls
+
+                const int threshold = 10;
+
                 if(wall->dir == DIR_UP || wall->dir == DIR_DOWN)
                 {
-                    bool can_slide_left   = px-6 < wall->p0.x;
-                    bool can_slide_right  = px+6 > wall->p1.x;
+                    bool can_slide_left   = px-threshold < wall->p0.x;
+                    bool can_slide_right  = px+threshold > wall->p1.x;
 
                     if(can_slide_left || can_slide_right)
                     {
@@ -572,8 +575,8 @@ void level_handle_room_collision(Room* room, Physics* phys)
                 }
                 else
                 {
-                    bool can_slide_up   = py-6 < wall->p0.y;
-                    bool can_slide_down = py+6 > wall->p1.y;
+                    bool can_slide_up   = py-threshold < wall->p0.y;
+                    bool can_slide_down = py+threshold > wall->p1.y;
 
                     if(can_slide_up || can_slide_down)
                     {
@@ -586,13 +589,10 @@ void level_handle_room_collision(Room* room, Physics* phys)
 
                         if(tt == TILE_FLOOR)
                         {
-                            phys->pos.y += can_slide_up ? -1 : +1;
+                            phys->pos.y += can_slide_up ? -1.0 : +1.0;
                         }
                     } 
                 }
-
-                memcpy(&phys->target_pos, &phys->pos, sizeof(Vector2f));
-
             }
         }
     }

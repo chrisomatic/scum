@@ -173,7 +173,7 @@ void editor_draw()
                     creature_painful_touch = creatures[0].painful_touch;
                 }
 
-                imgui_slider_float("Speed",100.0,500.0,&creature_speed);
+                imgui_slider_float("Speed",10.0,100.0,&creature_speed);
                 imgui_toggle_button(&creature_painful_touch, "Painful Touch");
 
                 for(int i = 0; i < creature_get_count(); ++i)
@@ -207,6 +207,7 @@ void editor_draw()
                 imgui_checkbox("Explosive", &projectile_lookup[PROJECTILE_TYPE_LASER].explosive);
                 imgui_checkbox("Homing", &projectile_lookup[PROJECTILE_TYPE_LASER].homing);
                 imgui_checkbox("Bouncy", &projectile_lookup[PROJECTILE_TYPE_LASER].bouncy);
+                imgui_checkbox("Penetrate", &projectile_lookup[PROJECTILE_TYPE_LASER].penetrate);
             } break;
         }
     imgui_end();

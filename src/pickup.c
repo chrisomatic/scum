@@ -124,8 +124,7 @@ void pickup_update(Pickup* pu, float dt)
     pu->phys.pos.x += dt*pu->phys.vel.x;
     pu->phys.pos.y += dt*pu->phys.vel.y;
 
-    float rate = 10.0; //phys_get_friction_rate(0.005*pu->phys.mass,dt);
-    phys_apply_friction(&pu->phys,rate,dt);
+    phys_apply_friction(&pu->phys,10.0,dt);
 }
 
 void pickup_update_all(float dt)
