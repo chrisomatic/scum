@@ -20,16 +20,18 @@ static void handle_room_collision(Player* p);
 
 char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 int player_image = -1;
+int shadow_image = -1;
+
 Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
 Player* player2 = NULL;
-int player_image;
 
 void player_init()
 {
     if(player_image == -1)
     {
         player_image = gfx_load_image("src/img/spaceman.png", false, true, 32, 32);
+        shadow_image = gfx_load_image("src/img/shadow.png", false, true, 32, 32);
     }
 
     for(int i = 0; i < MAX_PLAYERS; ++i)
@@ -895,7 +897,10 @@ void player_draw(Player* p)
 
     bool blink = p->invulnerable ? ((int)(p->invulnerable_time * 100)) % 2 == 0 : false;
     float opacity = p->phys.dead ? 0.3 : 1.0;
+
     opacity = blink ? 0.3 : opacity;
+
+    gfx_draw_image(shadow_image, 0, p->phys.pos.x, p->phys.pos.y+12, room->color, 0.5, 0.0, 0.5, false, IN_WORLD);
     gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, p->phys.pos.y, room->color, 1.0, 0.0, opacity, false, IN_WORLD);
 
     if(debug_enabled)
