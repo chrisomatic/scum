@@ -30,7 +30,9 @@ ProjectileDef projectile_lookup[] = {
         .charge = false,
         .charge_rate = 16,
         .ghost = false,
-        .explosive = true
+        .explosive = true,
+        .homing = false,
+        .bouncy = false
     },
     {
         // creature
@@ -43,7 +45,9 @@ ProjectileDef projectile_lookup[] = {
         .charge = false,
         .charge_rate = 16,
         .ghost = false,
-        .explosive = true
+        .explosive = true,
+        .homing = false,
+        .bouncy = false
     },
     {
         // creature clinger
@@ -56,7 +60,9 @@ ProjectileDef projectile_lookup[] = {
         .charge = false,
         .charge_rate = 16,
         .ghost = true,
-        .explosive = false
+        .explosive = false,
+        .homing = false,
+        .bouncy = false
     }
 };
 
@@ -98,7 +104,8 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileType proj_type, 
     proj.phys.pos.y = phys->pos.y;
     proj.phys.mass = 1.0;
     proj.phys.radius = 4.0 * proj.scale;
-    proj.phys.amorphous = true;
+    proj.phys.amorphous = projdef->bouncy ? false : true;
+    proj.phys.elasticity = projdef->bouncy ? 1.0 : 0.1;
     proj.phys.ethereal = projdef->ghost;
     proj.curr_room = curr_room;
     proj.from_player = from_player;
@@ -237,9 +244,9 @@ void projectile_update(float delta_t)
             {
                 // get homing target
                 if(proj->from_player)
-                    proj->homing_target = entity_get_closest_to(&proj->phys,ENTITY_TYPE_CREATURE);
+                    proj->homing_target = entity_get_closest_to(&proj->phys,proj->curr_room, ENTITY_TYPE_CREATURE);
                 else
-                    proj->homing_target = entity_get_closest_to(&proj->phys,ENTITY_TYPE_PLAYER);
+                    proj->homing_target = entity_get_closest_to(&proj->phys,proj->curr_room, ENTITY_TYPE_PLAYER);
             }
 
             if(proj->homing_target)
@@ -250,7 +257,7 @@ void projectile_update(float delta_t)
                 normalize(&v);
 
                 proj->phys.vel.x = v.x * m;
-                proj->phys.vel.x = v.y * m;
+                proj->phys.vel.y = v.y * m;
             }
         }
 
@@ -258,14 +265,6 @@ void projectile_update(float delta_t)
         proj->phys.pos.y += _dt*proj->phys.vel.y;
 
         projectile_update_hit_box(proj);
-
-        /*
-        if(!rectangles_colliding(&proj->hit_box, &player_area))
-        {
-            proj->phys.dead = true;
-            continue;
-        }
-        */
     }
 
     // int count = 0;

@@ -201,19 +201,23 @@ void entity_draw_all()
     }
 }
 
-static Physics* get_physics_from_type(int index, EntityType type)
+static Physics* get_physics_from_type(int index, uint8_t curr_room, EntityType type)
 {
     switch(type)
     {
         case ENTITY_TYPE_PLAYER:
-            return &players[index].phys;
+            if(!players[index].phys.dead && players[index].curr_room == curr_room)
+                return &players[index].phys;
+            break;
         case ENTITY_TYPE_CREATURE:
-            return &creatures[index].phys;
+            if(!creatures[index].phys.dead && creatures[index].curr_room == curr_room)
+                return &creatures[index].phys;
+            break;
     }
     return NULL;
 }
 
-Physics* entity_get_closest_to(Physics* phys, EntityType type)
+Physics* entity_get_closest_to(Physics* phys, uint8_t curr_room, EntityType type)
 {
     int count = 0;
     switch(type)
@@ -231,7 +235,9 @@ Physics* entity_get_closest_to(Physics* phys, EntityType type)
 
     for(int i = 0; i < count; ++i)
     {
-        Physics* phys2 = get_physics_from_type(i, type);
+        Physics* phys2 = get_physics_from_type(i, curr_room, type);
+        if(!phys2) continue;
+
         float d = dist(phys->pos.x, phys->pos.y,phys2->pos.x,phys2->pos.y);
         if(d < min_dist)
         {

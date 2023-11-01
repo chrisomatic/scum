@@ -30,6 +30,7 @@ typedef struct
     bool ghost;
     bool explosive;
     bool homing;
+    bool bouncy;
 
 } ProjectileDef;
 
