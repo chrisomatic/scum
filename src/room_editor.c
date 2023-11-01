@@ -36,7 +36,7 @@ typedef enum
     TYPE_TILE,
     TYPE_PICKUP,
     TYPE_CREATURE,
-    TYPE_DOOR,
+    // TYPE_DOOR,
 } PlacedType;
 
 typedef struct
@@ -61,6 +61,10 @@ static int tab_sel = 0;
 static char* tile_names[NUM_TILE_TYPES] = {0};
 static int tile_sel;
 
+#define NUM_DOOR_TYPES 2
+static char* door_names[NUM_DOOR_TYPES] = {0};
+static int door_sel;
+
 static char* creature_names[CREATURE_TYPE_MAX+1] = {0};
 static int creature_sel = 0;
 static Creature creature = {0};
@@ -78,7 +82,11 @@ Vector2i obj_coords = {0}; // tile_coords translated to object grid
 
 Rect gui_size = {0};
 
-static void draw_room();
+static Vector2i get_door_coords(Dir door);
+static Vector2i get_in_front_of_door_coords(Dir door);
+static Dir match_door_coords(int x, int y);
+static Dir match_in_front_of_door_coords(int x, int y);
+
 static void editor_camera_set(bool immediate);
 
 
@@ -124,6 +132,10 @@ void room_editor_init()
                 tile_names[i] = "Boulder";
         }
 
+        door_sel = 0;
+        door_names[0] = "Possible Door";
+        door_names[1] = "No Door";
+
         for(int _y = 0; _y < OBJECTS_MAX_Y; ++_y)
         {
             for(int _x = 0; _x < OBJECTS_MAX_X; ++_x)
@@ -132,6 +144,10 @@ void room_editor_init()
             }
         }
 
+        for(int i = 0; i < 4; ++i)
+        {
+            room.doors[i] = true;
+        }
 
         for(int rj = 0; rj < ROOM_TILE_SIZE_Y; ++rj)
         {
@@ -160,6 +176,7 @@ void room_editor_init()
         memset(&editor_keys[i], 0, sizeof(PlayerInput));
 
     editor_camera_set(true);
+
 
     _init = true;
 }
@@ -253,6 +270,11 @@ void room_editor_draw()
     }
 
 
+    // room_draw_walls(&room);
+
+    gfx_draw_rect(&room_area, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
+
+
     tile_coords = level_get_room_coords_by_pos(wmx, wmy);
     Rect tile_rect = level_get_tile_rect(tile_coords.x, tile_coords.y);
 
@@ -294,6 +316,7 @@ void room_editor_draw()
         on_wall = true;
 
 
+
     PlacedObject obj = {0};
     obj.type = TYPE_NONE;
 
@@ -309,7 +332,13 @@ void room_editor_draw()
         TileType tt = tile_sel+1;
         if(tt == TILE_PIT || tt == TILE_BOULDER)
         {
-            error |= in_front_of_door;
+            // error |= in_front_of_door;
+            Dir door = match_in_front_of_door_coords(obj_coords.x, obj_coords.y);
+            if(door != DIR_NONE)
+            {
+                if(room.doors[door])
+                    error = true;
+            }
         }
 
         if(error)
@@ -321,7 +350,34 @@ void room_editor_draw()
         obj.type = TYPE_TILE;
         obj.subtype = tt;
     }
-    else if(tab_sel == 1) // creatures
+    else if(tab_sel == 1) // doors
+    {
+        error |= !on_door;
+
+        int sprite = SPRITE_TILE_DOOR_UP;
+
+        if(door_sel == 1)
+        {
+            sprite = SPRITE_TILE_WALL_UP;
+
+            int count = 0;
+            for(int i = 0; i < 4; ++i)
+            {
+                if(room.doors[i]) count++;
+            }
+            if(count <= 1)
+                error = true;
+        }
+
+        if(error)
+            status_color = COLOR_RED;
+
+
+        gfx_draw_image(dungeon_image, sprite, tile_rect.x, tile_rect.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+        gfx_draw_rect(&tile_rect, status_color, NOT_SCALED, NO_ROTATION, 0.2, true, true);
+
+    }
+    else if(tab_sel == 2) // creatures
     {
 
         error |= out_of_area;
@@ -337,7 +393,13 @@ void room_editor_draw()
             if(creature_sel == CREATURE_TYPE_CLINGER)
             {
                 error |= !on_wall;
-                error |= on_door;
+                // error |= on_door;
+                Dir door = match_door_coords(obj_coords.x, obj_coords.y);
+                if(door != DIR_NONE)
+                {
+                    if(room.doors[door])
+                        error = true;
+                }
             }
             else
             {
@@ -355,7 +417,7 @@ void room_editor_draw()
         }
 
     }
-    else if(tab_sel == 2)
+    else if(tab_sel == 3)
     {
 
         error |= out_of_room;
@@ -382,29 +444,10 @@ void room_editor_draw()
         gfx_draw_rect(&tile_rect, COLOR_PINK, NOT_SCALED, NO_ROTATION, 0.5, true, true);
     }
 
-    // rebuild the room data
-    for(int rj = 0; rj < ROOM_TILE_SIZE_Y; ++rj)
-    {
-        for(int ri = 0; ri < ROOM_TILE_SIZE_X; ++ri)
-        {
-            PlacedObject* o = &objects[ri+1][rj+1];
-            if(o->type == TYPE_TILE)
-                room_data.tiles[ri][rj] = o->subtype;
-            else
-                room_data.tiles[ri][rj] = TILE_FLOOR;
-        }
-    }
-
-
-
-    // room_draw_walls(&room);
-
-    gfx_draw_rect(&room_area, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
-
     imgui_begin_panel("Room Editor", view_width - 300, 1, true);
 
         imgui_newline();
-        char* buttons[] = {"Room", "Creatures", "Pickups"};
+        char* buttons[] = {"Room", "Doors", "Creatures", "Pickups"};
         tab_sel = imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "");
         imgui_horizontal_line(1);
 
@@ -433,6 +476,11 @@ void room_editor_draw()
 
             case 1:
             {
+                door_sel = imgui_dropdown(door_names, NUM_DOOR_TYPES, "Select Door", &door_sel);
+            } break;
+
+            case 2:
+            {
                 int _creature_sel = creature_sel;
                 creature_sel = imgui_dropdown(creature_names, CREATURE_TYPE_MAX+1, "Select Creature", &creature_sel);
                 if(creature_sel != _creature_sel && creature_sel != CREATURE_TYPE_MAX)
@@ -442,7 +490,7 @@ void room_editor_draw()
                 }
             } break;
 
-            case 2:
+            case 3:
             {
                 pickup_sel = imgui_dropdown(pickup_names, PICKUPS_MAX+1, "Select Pickup", &pickup_sel);
                 pickup_subtype = pickup_sel;
@@ -453,23 +501,156 @@ void room_editor_draw()
     gui_size = imgui_end();
     // gfx_draw_rect(&gui_size, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, false);
 
+
+    bool changed = false;
+
     Rect mr = RECT(mx, my, 1, 1);
     // gfx_draw_rect(&mr, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, false);
     if(!error && lmouse_state && !rectangles_colliding(&mr, &gui_size))
     {
-        PlacedObject* o = &objects[obj_coords.x][obj_coords.y];
-        if(eraser)
+        changed = true;
+
+        if(tab_sel == 1) //doors
         {
-            o->type = TYPE_NONE;
+
+            Dir door = match_door_coords(obj_coords.x, obj_coords.y);
+            if(door != DIR_NONE)
+            {
+                room.doors[door] = (door_sel == 0);
+
+                // check if anything is placed on the door or in front of the door
+                if(room.doors[door])
+                {
+                    PlacedObject* o = &objects[obj_coords.x][obj_coords.y];
+                    o->type = TYPE_NONE;
+
+                    Vector2i front = get_in_front_of_door_coords(door);
+                    PlacedObject* fronto = &objects[front.x][front.y];
+                    if(fronto->type == TYPE_TILE)
+                    {
+                        if(fronto->subtype == TILE_PIT || fronto->subtype == TILE_BOULDER)
+                        {
+                            fronto->subtype = TILE_FLOOR;
+                        }
+                    }
+
+                }
+
+            }
+
         }
         else
         {
-            o->type = obj.type;
-            o->subtype = obj.subtype;
-            o->subtype2 = obj.subtype2;
+
+            PlacedObject* o = &objects[obj_coords.x][obj_coords.y];
+            if(eraser)
+            {
+                o->type = TYPE_NONE;
+            }
+            else
+            {
+                o->type = obj.type;
+                o->subtype = obj.subtype;
+                o->subtype2 = obj.subtype2;
+            }
+
         }
+
     }
+
+    if(changed)
+    {
+        // rebuild the room data
+        for(int rj = 0; rj < ROOM_TILE_SIZE_Y; ++rj)
+        {
+            for(int ri = 0; ri < ROOM_TILE_SIZE_X; ++ri)
+            {
+                PlacedObject* o = &objects[ri+1][rj+1];
+                if(o->type == TYPE_TILE)
+                    room_data.tiles[ri][rj] = o->subtype;
+                else
+                    room_data.tiles[ri][rj] = TILE_FLOOR;
+            }
+        }
+
+    }
+
 }
+
+static Vector2i get_door_coords(Dir door)
+{
+    Vector2i ret = {.x=0,.y=0};
+
+    if(door == DIR_LEFT)
+    {
+        ret.x = 0;
+        ret.y = OBJECTS_MAX_Y/2;
+    }
+    else if(door == DIR_RIGHT)
+    {
+        ret.x = OBJECTS_MAX_X-1;
+        ret.y = OBJECTS_MAX_Y/2;
+    }
+    else if(door == DIR_UP)
+    {
+        ret.x = OBJECTS_MAX_X/2;
+        ret.y = 0;
+    }
+    else if(door == DIR_DOWN)
+    {
+        ret.x = OBJECTS_MAX_X/2;
+        ret.y = OBJECTS_MAX_Y-1;
+    }
+
+    // printf("door %s -> %d, %d\n", get_dir_name(door), ret.x, ret.y);
+
+    return ret;
+}
+
+static Vector2i get_in_front_of_door_coords(Dir door)
+{
+    Vector2i ret = get_door_coords(door);
+    if(door == DIR_LEFT)
+    {
+        ret.x++;
+    }
+    else if(door == DIR_RIGHT)
+    {
+        ret.x--;
+    }
+    else if(door == DIR_UP)
+    {
+        ret.y++;
+    }
+    else if(door == DIR_DOWN)
+    {
+        ret.y--;
+    }
+    return ret;
+}
+
+static Dir match_door_coords(int x, int y)
+{
+    for(int i = 0; i < 4; ++i)
+    {
+        Vector2i ret = get_door_coords(i);
+        if(x == ret.x && y == ret.y)
+            return (Dir)i;
+    }
+    return DIR_NONE;
+}
+
+static Dir match_in_front_of_door_coords(int x, int y)
+{
+    for(int i = 0; i < 4; ++i)
+    {
+        Vector2i ret = get_in_front_of_door_coords(i);
+        if(x == ret.x && y == ret.y)
+            return (Dir)i;
+    }
+    return DIR_NONE;
+}
+
 
 static void editor_camera_set(bool immediate)
 {
