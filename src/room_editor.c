@@ -58,16 +58,16 @@ static int ecam_pos_z = 55;
 static int tab_sel = 0;
 
 #define NUM_TILE_TYPES  3
-static const char* tile_names[NUM_TILE_TYPES] = {0};
+static char* tile_names[NUM_TILE_TYPES] = {0};
 static int tile_sel;
 
-static const char* creature_names[CREATURE_TYPE_MAX+1] = {0};
+static char* creature_names[CREATURE_TYPE_MAX+1] = {0};
 static int creature_sel = 0;
 static Creature creature = {0};
 
-static const char* pickup_names[PICKUPS_MAX+1] = {0};
+static char* pickup_names[PICKUPS_MAX+1] = {0};
 static int pickup_sel = 0;
-// static int pickup_type = 0; // subtype only matters
+// static int pickup_type = 0; // only subtype only matters for now
 static int pickup_subtype = 0;
 
 static Room room = {0};
@@ -76,64 +76,73 @@ static RoomData room_data = {0};
 Vector2i tile_coords = {0}; // mouse tile coords
 Vector2i obj_coords = {0}; // tile_coords translated to object grid
 
+Rect gui_size = {0};
+
 static void draw_room();
-static void editor_camera_set();
+static void editor_camera_set(bool immediate);
 
 
 void room_editor_init()
 {
+    static bool _init = false;
+
     show_tile_grid = true;
     debug_enabled = true;
 
     ecam_pos_x = CENTER_X;
     ecam_pos_y = CENTER_Y;
 
-    pickup_sel = 0;
-    PickupType pt = PICKUP_TYPE_GEM;
-    for(int i = 0; i < PICKUPS_MAX; ++i)
+    if(!_init)
     {
-        if(i > GEM_TYPE_PURPLE) pt = PICKUP_TYPE_HEALTH;
-        pickup_names[i] = pickup_get_name(pt, i);
-    }
-    pickup_names[PICKUPS_MAX] = "Eraser";
-
-
-    creature_sel = 0;
-    creature.type = creature_sel;
-    creature_init_props(&creature);
-
-    for(int i = 0; i < CREATURE_TYPE_MAX; ++i)
-        creature_names[i] = creature_type_name(i);
-    creature_names[CREATURE_TYPE_MAX] = "Eraser";
-
-    tile_sel = 0;
-    for(int i = 0; i < NUM_TILE_TYPES; ++i)
-    {
-        TileType tt = i+1;
-        if(tt == TILE_FLOOR)
-            tile_names[i] = "Floor";
-        else if(tt == TILE_PIT)
-            tile_names[i] = "Pit";
-        else if(tt == TILE_BOULDER)
-            tile_names[i] = "Boulder";
-    }
-
-    for(int _y = 0; _y < OBJECTS_MAX_Y; ++_y)
-    {
-        for(int _x = 0; _x < OBJECTS_MAX_X; ++_x)
+        pickup_sel = 0;
+        PickupType pt = PICKUP_TYPE_GEM;
+        for(int i = 0; i < PICKUPS_MAX; ++i)
         {
-            objects[_x][_y].type = TYPE_NONE;
+            if(i > GEM_TYPE_PURPLE) pt = PICKUP_TYPE_HEALTH;
+            pickup_names[i] = (char*)pickup_get_name(pt, i);
         }
-    }
+        pickup_names[PICKUPS_MAX] = "Eraser";
 
 
-    for(int rj = 0; rj < ROOM_TILE_SIZE_Y; ++rj)
-    {
-        for(int ri = 0; ri < ROOM_TILE_SIZE_X; ++ri)
+        creature_sel = 0;
+        creature.type = creature_sel;
+        creature_init_props(&creature);
+
+        for(int i = 0; i < CREATURE_TYPE_MAX; ++i)
+            creature_names[i] = (char*)creature_type_name(i);
+        creature_names[CREATURE_TYPE_MAX] = "Eraser";
+
+        tile_sel = 0;
+        for(int i = 0; i < NUM_TILE_TYPES; ++i)
         {
-            room_data.tiles[ri][rj] = TILE_FLOOR;
+            TileType tt = i+1;
+            if(tt == TILE_FLOOR)
+                tile_names[i] = "Floor";
+            else if(tt == TILE_PIT)
+                tile_names[i] = "Pit";
+            else if(tt == TILE_BOULDER)
+                tile_names[i] = "Boulder";
         }
+
+        for(int _y = 0; _y < OBJECTS_MAX_Y; ++_y)
+        {
+            for(int _x = 0; _x < OBJECTS_MAX_X; ++_x)
+            {
+                objects[_x][_y].type = TYPE_NONE;
+            }
+        }
+
+
+        for(int rj = 0; rj < ROOM_TILE_SIZE_Y; ++rj)
+        {
+            for(int ri = 0; ri < ROOM_TILE_SIZE_X; ++ri)
+            {
+                room_data.tiles[ri][rj] = TILE_FLOOR;
+            }
+        }
+
     }
+
 
     room.valid = true;
     room.color = COLOR_TINT_NONE;
@@ -150,6 +159,9 @@ void room_editor_init()
     for(int i = 0;  i < EDITOR_KEY_MAX; ++i)
         memset(&editor_keys[i], 0, sizeof(PlayerInput));
 
+    editor_camera_set(true);
+
+    _init = true;
 }
 
 void room_editor_update(float dt)
@@ -208,8 +220,7 @@ void room_editor_update(float dt)
     ecam_pos_y += vel_dir.y*200.0*dt;
 
 
-
-    editor_camera_set();
+    editor_camera_set(false);
 }
 
 void room_editor_draw()
@@ -242,13 +253,11 @@ void room_editor_draw()
     }
 
 
-
     tile_coords = level_get_room_coords_by_pos(wmx, wmy);
     Rect tile_rect = level_get_tile_rect(tile_coords.x, tile_coords.y);
 
     obj_coords.x = tile_coords.x +1;
     obj_coords.y = tile_coords.y +1;
-
 
     bool out_of_area = false;
     if(obj_coords.x < 0 || obj_coords.x >= OBJECTS_MAX_X)
@@ -373,36 +382,16 @@ void room_editor_draw()
         gfx_draw_rect(&tile_rect, COLOR_PINK, NOT_SCALED, NO_ROTATION, 0.5, true, true);
     }
 
-    if(!error && lmouse_state)
-    {
-        PlacedObject* o = &objects[obj_coords.x][obj_coords.y];
-        if(eraser)
-        {
-            o->type = TYPE_NONE;
-        }
-        else
-        {
-            o->type = obj.type;
-            o->subtype = obj.subtype;
-            o->subtype2 = obj.subtype2;
-        }
-    }
-
     // rebuild the room data
     for(int rj = 0; rj < ROOM_TILE_SIZE_Y; ++rj)
     {
         for(int ri = 0; ri < ROOM_TILE_SIZE_X; ++ri)
         {
             PlacedObject* o = &objects[ri+1][rj+1];
-
-            if(o->type == TYPE_NONE)
-            {
-                room_data.tiles[ri][rj] = TILE_FLOOR;
-            }
-            else if(o->type == TYPE_TILE)
-            {
+            if(o->type == TYPE_TILE)
                 room_data.tiles[ri][rj] = o->subtype;
-            }
+            else
+                room_data.tiles[ri][rj] = TILE_FLOOR;
         }
     }
 
@@ -461,12 +450,29 @@ void room_editor_draw()
 
         }
 
-    imgui_end();
+    gui_size = imgui_end();
+    // gfx_draw_rect(&gui_size, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, false);
 
+    Rect mr = RECT(mx, my, 1, 1);
+    // gfx_draw_rect(&mr, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, false);
+    if(!error && lmouse_state && !rectangles_colliding(&mr, &gui_size))
+    {
+        PlacedObject* o = &objects[obj_coords.x][obj_coords.y];
+        if(eraser)
+        {
+            o->type = TYPE_NONE;
+        }
+        else
+        {
+            o->type = obj.type;
+            o->subtype = obj.subtype;
+            o->subtype2 = obj.subtype2;
+        }
+    }
 }
 
-static void editor_camera_set()
+static void editor_camera_set(bool immediate)
 {
-    camera_move(ecam_pos_x, ecam_pos_y, (float)ecam_pos_z/100.0, false, NULL);
+    camera_move(ecam_pos_x, ecam_pos_y, (float)ecam_pos_z/100.0, immediate, NULL);
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 }

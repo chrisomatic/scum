@@ -7,7 +7,7 @@
 
 void imgui_begin(char* name, int x, int y);
 void imgui_begin_panel(char* name, int x, int y, bool moveable);
-Vector2f imgui_end(); // returns size of imgui area
+Rect imgui_end(); // returns size of imgui area
 
 // widgets
 void imgui_text(char* text, ...);
@@ -27,7 +27,7 @@ int imgui_button_select(int num_buttons, char* button_labels[], char* label);
 int imgui_dropdown(char* options[], int num_options, char* label, int* selected_index);
 void imgui_tooltip(char* tooltip, ...);
 
-Vector2f imgui_draw_demo(int x, int y); // for showcasing widgets
+Rect imgui_draw_demo(int x, int y); // for showcasing widgets
 
 // theme
 void imgui_theme_editor(); // for editing theme properties

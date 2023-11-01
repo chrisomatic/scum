@@ -1047,7 +1047,7 @@ static int ri = 10;
 static bool toggle = false;
 static bool thing1 = false, thing2 = false;
 
-Vector2f imgui_draw_demo(int x, int y)
+Rect imgui_draw_demo(int x, int y)
 {
     imgui_begin_panel("Demo", x,y,true);
 
@@ -1263,7 +1263,7 @@ void imgui_text_cursor_inc(int val)
     active_ctx->text_box_props.text_cursor_index_held_from = active_ctx->text_box_props.text_cursor_index;
 }
 
-Vector2f imgui_end()
+Rect imgui_end()
 {
     ctx->panel_props.panel_width = MAX(theme.panel_min_width,ctx->max_width+2.0*theme.spacing+theme.panel_spacing);
     ctx->panel_props.panel_height = (ctx->curr.y-ctx->start_y-ctx->panel_props.offset_y);
@@ -1294,7 +1294,13 @@ Vector2f imgui_end()
         draw_tooltip();
     }
 
-    Vector2f size = {ctx->panel_props.panel_width, ctx->panel_props.panel_height};
+    Rect size = {0};
+    size.x = ctx->start_x + ctx->panel_props.offset_x;
+    size.y = ctx->start_y + ctx->panel_props.offset_y;
+    size.w = ctx->panel_props.panel_width;
+    size.h = ctx->panel_props.panel_height;
+    size.x += size.w/2.0;
+    size.y += size.h/2.0;
     return size;
 }
 

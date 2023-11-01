@@ -225,6 +225,7 @@ void set_game_state(GameState state)
         {
             case GAME_STATE_EDITOR:
             {
+                ambient_light = 0x00FFFFFF;
                 room_editor_init();
             } break;
             case GAME_STATE_MENU:
@@ -234,6 +235,7 @@ void set_game_state(GameState state)
             } break;
             case GAME_STATE_PLAYING:
             {
+                ambient_light = ambient_light_default;
                 if(role == ROLE_LOCAL)
                 {
                     player = &players[0];
@@ -325,7 +327,6 @@ void camera_set()
         }
 
         // float minz = 0.64;
-        // if(all_visible && FEQ(cam_zoom_temp, cam_zoom))
         if(all_visible && cam_zoom_temp == cam_zoom)
         {
             // printf("satisfied\n");
@@ -353,8 +354,7 @@ void camera_set()
             {
                 int cam_zoom_temp_prior = cam_zoom_temp;
 
-                // cam_zoom_temp += (0.01*zdir);
-                cam_zoom_temp += (zdir);
+                cam_zoom_temp += zdir;
 
                 if(cam_zoom_temp > 100)
                     break;

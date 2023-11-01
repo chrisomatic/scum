@@ -18,6 +18,7 @@ extern PointLight point_lights[MAX_POINT_LIGHTS];
 extern glist* lighting_list;
 
 extern uint32_t ambient_light;
+extern uint32_t ambient_light_default;
 
 void lighting_init();
 int lighting_point_light_add(float x, float y, float r, float g, float b, float radius, float lifetime);
