@@ -1304,6 +1304,16 @@ Rect imgui_end()
     return size;
 }
 
+bool imgui_clicked()
+{
+    return (ctx->active_id != 0x0);
+}
+
+bool imgui_active()
+{
+    return (ctx->highlighted_id != 0x0);
+}
+
 // ============================
 // Static Functions
 // ============================

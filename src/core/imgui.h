@@ -8,6 +8,8 @@
 void imgui_begin(char* name, int x, int y);
 void imgui_begin_panel(char* name, int x, int y, bool moveable);
 Rect imgui_end(); // returns size of imgui area
+bool imgui_clicked();
+bool imgui_active();
 
 // widgets
 void imgui_text(char* text, ...);

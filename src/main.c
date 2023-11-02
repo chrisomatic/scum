@@ -254,6 +254,9 @@ void set_game_state(GameState state)
 // also checks if the mouse is off the screen
 void camera_set()
 {
+    if(game_state == GAME_STATE_EDITOR)
+        return;
+
     // if(paused) return;
 
     if(player->curr_room != player->transition_room)
@@ -1221,10 +1224,7 @@ void draw()
         return;
     }
 
-
-    Room* room = level_get_room_by_index(&level, player->curr_room);
-
-    if(debug_enabled)
+    if(debug_enabled && game_state == GAME_STATE_PLAYING)
     {
         gfx_clear_buffer(COLOR_YELLOW);
     }
@@ -1234,7 +1234,7 @@ void draw()
     }
 
     // draw room
-
+    Room* room = level_get_room_by_index(&level, player->curr_room);
     if(game_state == GAME_STATE_PLAYING)
     {
         player_draw_room_transition();

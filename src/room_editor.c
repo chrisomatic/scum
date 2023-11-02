@@ -36,7 +36,6 @@ typedef enum
     TYPE_TILE,
     TYPE_PICKUP,
     TYPE_CREATURE,
-    // TYPE_DOOR,
 } PlacedType;
 
 typedef struct
@@ -53,7 +52,7 @@ PlacedObject objects[OBJECTS_MAX_X][OBJECTS_MAX_Y] = {0};
 
 static float ecam_pos_x = 0;
 static float ecam_pos_y = 0;
-static int ecam_pos_z = 55;
+static int ecam_pos_z = 44;
 
 static int tab_sel = 0;
 
@@ -88,6 +87,7 @@ static Dir match_door_coords(int x, int y);
 static Dir match_in_front_of_door_coords(int x, int y);
 
 static void editor_camera_set(bool immediate);
+static void clear_all();
 
 
 void room_editor_init()
@@ -136,35 +136,13 @@ void room_editor_init()
         door_names[0] = "Possible Door";
         door_names[1] = "No Door";
 
-        for(int _y = 0; _y < OBJECTS_MAX_Y; ++_y)
-        {
-            for(int _x = 0; _x < OBJECTS_MAX_X; ++_x)
-            {
-                objects[_x][_y].type = TYPE_NONE;
-            }
-        }
-
-        for(int i = 0; i < 4; ++i)
-        {
-            room.doors[i] = true;
-        }
-
-        for(int rj = 0; rj < ROOM_TILE_SIZE_Y; ++rj)
-        {
-            for(int ri = 0; ri < ROOM_TILE_SIZE_X; ++ri)
-            {
-                room_data.tiles[ri][rj] = TILE_FLOOR;
-            }
-        }
-
+        clear_all();
     }
-
 
     room.valid = true;
     room.color = COLOR_TINT_NONE;
     room.wall_count = 0;
     level_generate_room_outer_walls(&room);
-
 
     window_controls_clear_keys();
     window_controls_add_key(&editor_keys[EDITOR_KEY_UP].state, GLFW_KEY_W);
@@ -176,7 +154,6 @@ void room_editor_init()
         memset(&editor_keys[i], 0, sizeof(PlayerInput));
 
     editor_camera_set(true);
-
 
     _init = true;
 }
@@ -385,7 +362,6 @@ void room_editor_draw()
         if(creature_sel == CREATURE_TYPE_MAX)   // eraser
         {
             eraser = true;
-            // gfx_draw_rect(&tile_rect, COLOR_PINK, NOT_SCALED, NO_ROTATION, 0.5, true, true);
         }
         else
         {
@@ -420,16 +396,17 @@ void room_editor_draw()
     else if(tab_sel == 3)
     {
 
-        error |= out_of_room;
-        if(error)
-            status_color = COLOR_RED;
-
         if(pickup_sel == PICKUPS_MAX)   // eraser
         {
             eraser = true;
+            error |= out_of_area;
         }
         else
         {
+            error |= out_of_room;
+            if(error)
+                status_color = COLOR_RED;
+
             int sprite = pickup_get_sprite_index(0, pickup_sel);
             gfx_draw_image(pickups_image, sprite, tile_rect.x, tile_rect.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
             gfx_draw_rect(&tile_rect, status_color, NOT_SCALED, NO_ROTATION, 0.2, true, true);
@@ -444,7 +421,7 @@ void room_editor_draw()
         gfx_draw_rect(&tile_rect, COLOR_PINK, NOT_SCALED, NO_ROTATION, 0.5, true, true);
     }
 
-    imgui_begin_panel("Room Editor", view_width - 300, 1, true);
+    imgui_begin_panel("Room Editor", view_width - gui_size.w, 1, true);
 
         imgui_newline();
         char* buttons[] = {"Room", "Doors", "Creatures", "Pickups"};
@@ -457,6 +434,11 @@ void room_editor_draw()
             case 0:
             {
                 imgui_number_box("Camera Zoom", 0, 99, &ecam_pos_z);
+
+                if(imgui_button("Clear All"))
+                {
+                    clear_all();
+                }
 
                 tile_sel = imgui_dropdown(tile_names, NUM_TILE_TYPES, "Select Tile", &tile_sel);
 
@@ -501,12 +483,43 @@ void room_editor_draw()
     gui_size = imgui_end();
     // gfx_draw_rect(&gui_size, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, false);
 
+    if(error || !lmouse_state)
+        return;
+
+    Rect mr = RECT(mx, my, 1, 1);
+    if(rectangles_colliding(&mr, &gui_size))
+        return;
+
+    static bool imgui_click = false;
+    if(window_mouse_left_went_down())
+    {
+        // the mouse click was on an imgui object
+        if(imgui_clicked() || imgui_active())
+        {
+            imgui_click = true;
+        }
+        else
+        {
+            imgui_click = false;
+        }
+    }
+
+
+    if(imgui_click)
+        return;
+
 
     bool changed = false;
 
-    Rect mr = RECT(mx, my, 1, 1);
+
+    // if(!error && lmouse_state)
+    // {
+    //     printf("%d, %d\n", imgui_clicked(), imgui_active());
+    // }
+
     // gfx_draw_rect(&mr, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, false);
-    if(!error && lmouse_state && !rectangles_colliding(&mr, &gui_size))
+    // if(!error && lmouse_state && !rectangles_colliding(&mr, &gui_size) && !imgui_clicked() && !imgui_active())
+    // if(window_mouse_left_went_down() && !imgui_clicked() && !imgui_active())
     {
         changed = true;
 
@@ -533,7 +546,6 @@ void room_editor_draw()
                             fronto->subtype = TILE_FLOOR;
                         }
                     }
-
                 }
 
             }
@@ -656,4 +668,26 @@ static void editor_camera_set(bool immediate)
 {
     camera_move(ecam_pos_x, ecam_pos_y, (float)ecam_pos_z/100.0, immediate, NULL);
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
+}
+
+static void clear_all()
+{
+    for(int _y = 0; _y < OBJECTS_MAX_Y; ++_y)
+    {
+        for(int _x = 0; _x < OBJECTS_MAX_X; ++_x)
+        {
+            objects[_x][_y].type = TYPE_NONE;
+        }
+    }
+    for(int i = 0; i < 4; ++i)
+    {
+        room.doors[i] = true;
+    }
+    for(int rj = 0; rj < ROOM_TILE_SIZE_Y; ++rj)
+    {
+        for(int ri = 0; ri < ROOM_TILE_SIZE_X; ++ri)
+        {
+            room_data.tiles[ri][rj] = TILE_FLOOR;
+        }
+    }
 }
