@@ -7,6 +7,8 @@
 #include "pickup.h"
 #include "entity.h"
 
+#define BOI_SHOOTING    1
+
 #define MAX_PLAYERS 4
 
 #define SPRITE_UP    0
@@ -18,19 +20,26 @@
 
 #define PLAYER_GEMS_MAX 4
 
-enum PlayerActions
+typedef enum
 {
     PLAYER_ACTION_UP,
     PLAYER_ACTION_DOWN,
     PLAYER_ACTION_LEFT,
     PLAYER_ACTION_RIGHT,
+#if BOI_SHOOTING
+    PLAYER_ACTION_SHOOT_UP,
+    PLAYER_ACTION_SHOOT_DOWN,
+    PLAYER_ACTION_SHOOT_LEFT,
+    PLAYER_ACTION_SHOOT_RIGHT,
+#else
     PLAYER_ACTION_SHOOT,
+#endif
     PLAYER_ACTION_GENERATE_ROOMS,
     PLAYER_ACTION_GEM_MENU,
     PLAYER_ACTION_GEM_MENU_CYCLE,
 
     PLAYER_ACTION_MAX
-};
+} PlayerActions;
 
 typedef struct
 {
@@ -42,6 +51,9 @@ typedef struct
     float vel_factor;
 
     PlayerInput actions[PLAYER_ACTION_MAX];
+
+    PlayerActions last_shoot_action;
+    float shoot_sprite_cooldown;
 
     GemType gems[PLAYER_GEMS_MAX];
 

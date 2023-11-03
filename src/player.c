@@ -37,10 +37,6 @@ void player_init()
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         Player* p = &players[i];
-        // if(p == player)
-        // {
-        //     player_init_keys();
-        // }
 
         p->active = false;
 
@@ -65,13 +61,15 @@ void player_init()
         p->phys.coffset.x = RADIUS_OFFSET_X;
         p->phys.coffset.y = RADIUS_OFFSET_Y;
 
-        // int room_x = (MAX_ROOMS_GRID_X-1)/2;
-        // int room_y = (MAX_ROOMS_GRID_Y-1)/2;
-        // p->curr_room = (uint8_t)level_get_room_index(room_x, room_y);
-        // p->transition_room = p->curr_room;
-
         p->proj_cooldown_max = 0.2;
         p->door = DIR_NONE;
+
+#if BOI_SHOOTING
+        p->last_shoot_action = PLAYER_ACTION_SHOOT_UP;
+#else
+        p->last_shoot_action = PLAYER_ACTION_SHOOT;
+#endif
+        p->shoot_sprite_cooldown = 0.0;
 
         memset(p->name, PLAYER_NAME_MAX, 0);
         sprintf(p->name, "Player %d", i);
@@ -190,9 +188,15 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_S);
     window_controls_add_key(&player->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_A);
     window_controls_add_key(&player->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_D);
+#if BOI_SHOOTING
+    window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_UP].state, GLFW_KEY_UP);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_DOWN].state, GLFW_KEY_DOWN);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_LEFT].state, GLFW_KEY_LEFT);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_RIGHT].state, GLFW_KEY_RIGHT);
+#else
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_SPACE);
+#endif
     window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
-
     window_controls_add_key(&player->actions[PLAYER_ACTION_GEM_MENU].state, GLFW_KEY_G);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GEM_MENU_CYCLE].state, GLFW_KEY_TAB);
 
@@ -207,12 +211,12 @@ void player2_init_keys()
         printf("player2 is null\n");
         return;
     }
-    // window_controls_clear_keys();
-    window_controls_add_key(&player2->actions[PLAYER_ACTION_UP].state, GLFW_KEY_UP);
-    window_controls_add_key(&player2->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_DOWN);
-    window_controls_add_key(&player2->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_LEFT);
-    window_controls_add_key(&player2->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_RIGHT);
-    window_controls_add_key(&player2->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_RIGHT_SHIFT);
+    // // window_controls_clear_keys();
+    // window_controls_add_key(&player2->actions[PLAYER_ACTION_UP].state, GLFW_KEY_UP);
+    // window_controls_add_key(&player2->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_DOWN);
+    // window_controls_add_key(&player2->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_LEFT);
+    // window_controls_add_key(&player2->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_RIGHT);
+    // window_controls_add_key(&player2->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_RIGHT_SHIFT);
 
     for(int i = 0;  i < PLAYER_ACTION_MAX; ++i)
         memset(&player2->actions[i], 0, sizeof(PlayerInput));
@@ -310,7 +314,6 @@ void player_reset(Player* p)
     player_send_to_level_start(p);
 }
 
-// also does the drawing
 void player_draw_room_transition()
 {
     Player* p = player;
@@ -632,25 +635,25 @@ void player_update(Player* p, float dt)
 
     if(up)
     {
-        p->sprite_index = 0;
+        p->sprite_index = SPRITE_UP;
         vel_dir.y = -1.0;
     }
 
     if(down)
     {
-        p->sprite_index = 4;
+        p->sprite_index = SPRITE_DOWN;
         vel_dir.y = 1.0;
     }
 
     if(left)
     {
-        p->sprite_index = 8;
+        p->sprite_index = SPRITE_LEFT;
         vel_dir.x = -1.0;
     }
 
     if(right)
     {
-        p->sprite_index = 12;
+        p->sprite_index = SPRITE_RIGHT;
         vel_dir.x = 1.0;
     }
 
@@ -718,7 +721,78 @@ void player_update(Player* p, float dt)
         p->proj_cooldown = MAX(p->proj_cooldown,0.0);
     }
 
+    p->shoot_sprite_cooldown = MAX(p->shoot_sprite_cooldown - dt, 0.0);
+
+
     ProjectileDef* pd = &projectile_lookup[0];
+
+#if BOI_SHOOTING
+
+    for(int i = 0; i < 4; ++i)
+    {
+        if(p->actions[PLAYER_ACTION_SHOOT_UP+i].toggled_on)
+        {
+            p->last_shoot_action = PLAYER_ACTION_SHOOT_UP+i;
+            break;
+        }
+    }
+
+    if(p->last_shoot_action >= PLAYER_ACTION_SHOOT_UP && p->last_shoot_action <= PLAYER_ACTION_SHOOT_RIGHT)
+    {
+
+        if(p->actions[p->last_shoot_action].toggled_off)
+        {
+            for(int i = 0; i < 4; ++i)
+            {
+                if(p->actions[PLAYER_ACTION_SHOOT_UP+i].state)
+                {
+                    p->last_shoot_action = PLAYER_ACTION_SHOOT_UP+i;
+                    break;
+                }
+            }
+        }
+
+
+        int sprite_index = 0;
+        if(p->last_shoot_action == PLAYER_ACTION_SHOOT_UP)
+        {
+            sprite_index = SPRITE_UP;
+        }
+        else if(p->last_shoot_action == PLAYER_ACTION_SHOOT_DOWN)
+        {
+            sprite_index = SPRITE_DOWN;
+        }
+        else if(p->last_shoot_action == PLAYER_ACTION_SHOOT_LEFT)
+        {
+            sprite_index = SPRITE_LEFT;
+        }
+        else if(p->last_shoot_action == PLAYER_ACTION_SHOOT_RIGHT)
+        {
+            sprite_index = SPRITE_RIGHT;
+        }
+
+        if(p->shoot_sprite_cooldown > 0)
+        {
+            p->sprite_index = sprite_index;
+        }
+
+        if(p->actions[p->last_shoot_action].state && p->proj_cooldown == 0.0)
+        {
+            p->sprite_index = sprite_index;
+            float angle_deg = sprite_index_to_angle(p);
+
+            if(!p->phys.dead)
+            {
+                projectile_add(&p->phys, p->curr_room, PROJECTILE_TYPE_LASER, angle_deg, 1.0, 1.0, true);
+            }
+            // text_list_add(text_lst, 5.0, "projectile");
+            p->proj_cooldown = p->proj_cooldown_max;
+            p->shoot_sprite_cooldown = 1.0;
+        }
+    }
+
+#else
+
     PlayerInput* shoot = &p->actions[PLAYER_ACTION_SHOOT];
 
     if(pd->charge)
@@ -752,7 +826,6 @@ void player_update(Player* p, float dt)
                 if(!p->phys.dead)
                 {
                     projectile_add(&p->phys, p->curr_room, PROJECTILE_TYPE_LASER, angle_deg, scale, damage, true);
-                    // projectile_add(&p->phys, p->curr_room, angle_deg, scale, damage,true);
                 }
 
                 // text_list_add(text_lst, 5.0, "projectile: %.2f, %.2f", scale, damage);
@@ -774,12 +847,13 @@ void player_update(Player* p, float dt)
             if(!p->phys.dead)
             {
                 projectile_add(&p->phys, p->curr_room, PROJECTILE_TYPE_LASER, angle_deg, 1.0, 1.0, true);
-                // projectile_add(&p->phys, p->curr_room, angle_deg, 1.0, 1.0, true);
             }
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;
         }
     }
+
+#endif
 
     if(role == ROLE_LOCAL)
     {
