@@ -7,6 +7,7 @@
 #include "creature.h"
 #include "camera.h"
 #include "lighting.h"
+#include "status_effects.h"
 #include "player.h"
 
 #define RADIUS_OFFSET_X 0
@@ -45,6 +46,7 @@ void player_init()
         p->phys.pos.y = CENTER_Y;
 
         p->phys.speed = 1000.0;
+        p->phys.se_speed_factor = 1.0;
         p->phys.max_velocity = 180.0;
         p->phys.base_friction = 0.80;
         p->phys.vel.x = 0.0;
@@ -52,8 +54,8 @@ void player_init()
         p->phys.mass = 10.0;
         p->phys.elasticity = 0.0;
 
-        p->hp_max = 6;
-        p->hp = p->hp_max;
+        p->phys.hp_max = 6;
+        p->phys.hp = p->phys.hp_max;
 
         p->sprite_index = 4;
 
@@ -244,8 +246,8 @@ void player_set_collision_pos(Player* p, float x, float y)
 
 void player_add_hp(Player* p, int hp)
 {
-    p->hp += hp;
-    p->hp = RANGE(p->hp,0,p->hp_max);
+    p->phys.hp += hp;
+    p->phys.hp = RANGE(p->phys.hp,0,p->phys.hp_max);
 }
 
 void player_hurt(Player* p, int damage)
@@ -258,7 +260,7 @@ void player_hurt(Player* p, int damage)
 
     player_add_hp(p,-damage);
 
-    if(p->hp == 0)
+    if(p->phys.hp == 0)
     {
         text_list_add(text_lst, 3.0, "%s died", p->name);
         player_die(p);
@@ -298,7 +300,7 @@ void player_die(Player* p)
 void player_reset(Player* p)
 {
     p->phys.dead = false;
-    p->hp = p->hp_max;
+    p->phys.hp = p->phys.hp_max;
     p->phys.vel.x = 0.0;
     p->phys.vel.y = 0.0;
 
@@ -668,11 +670,13 @@ void player_update(Player* p, float dt)
 
     bool moving = (up || down || left || right);
 
+    float speed = p->phys.speed*p->phys.se_speed_factor;
+
     if(moving)
     {
         // trying to move
-        p->phys.vel.x += vel_dir.x*p->phys.speed*dt;
-        p->phys.vel.y += vel_dir.y*p->phys.speed*dt;
+        p->phys.vel.x += vel_dir.x*speed*dt;
+        p->phys.vel.y += vel_dir.y*speed*dt;
 
         if(ABS(vel_dir.x) > 0.0)
             if(ABS(p->phys.vel.x) > ABS(vel_max.x))
@@ -690,7 +694,8 @@ void player_update(Player* p, float dt)
         p->phys.vel.y *= p->phys.base_friction;
 
     float m1 = magn(p->phys.vel);
-    float m2 = p->phys.speed;
+    float m2 = speed;
+
     p->vel_factor = m1/m2;
 
     p->phys.prior_vel.x = p->phys.vel.x;

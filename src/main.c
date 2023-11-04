@@ -407,7 +407,7 @@ void camera_set()
     bool immediate = false;
 
     static int counter = 0;
-    if(player->hp == 1)
+    if(player->phys.hp == 1)
     {
         counter++;
         if(counter >= 2)
@@ -928,7 +928,6 @@ void update(float dt)
             }
 
             // update point lights
-
             projectile_update(dt);
             creature_update_all(dt);
             pickup_update_all(dt);
@@ -937,6 +936,7 @@ void update(float dt)
 
             entity_build_all();
             entity_handle_collisions();
+            entity_handle_status_effects(dt);
         }
     }
 
@@ -1129,9 +1129,9 @@ void draw_hearts()
 {
 #define TOP_MARGIN  1
 
-    int max_num = ceill((float)player->hp_max/2.0);
-    int num = player->hp / 2;
-    int rem = player->hp % 2;
+    int max_num = ceill((float)player->phys.hp_max/2.0);
+    int num = player->phys.hp / 2;
+    int rem = player->phys.hp % 2;
 
     float pad = 3.0*ascale;
     float l = 20.0*ascale; // rect size

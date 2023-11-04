@@ -69,9 +69,6 @@ typedef struct
 
     int light_index;
 
-    uint8_t hp;
-    uint8_t hp_max;
-
     Vector2i curr_tile;
 
     uint8_t proj_charge;

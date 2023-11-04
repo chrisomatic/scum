@@ -27,6 +27,7 @@ extern int num_entities;
 
 void entity_build_all(); // handles sorting too
 void entity_handle_collisions();
+void entity_handle_status_effects(float dt);
 void entity_draw_all();
 
 Physics* entity_get_closest_to(Physics* phys, uint8_t curr_room, EntityType type);

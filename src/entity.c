@@ -5,6 +5,7 @@
 #include "physics.h"
 #include "math2d.h"
 #include "explosion.h"
+#include "status_effects.h"
 #include "entity.h"
 
 Entity entities[MAX_ENTITIES] = {0};
@@ -96,6 +97,63 @@ void entity_build_all()
     {
         Explosion* ex = &explosions[i];
         add_entity(ENTITY_TYPE_EXPLOSION,ex,ex->curr_room, &ex->phys);
+    }
+}
+
+static bool remove_status_effect(Physics* phys, int index)
+{
+    if(phys == NULL)
+        return false;
+
+    if(index >= MAX_STATUS_EFFECTS)
+        return false;
+
+    uint8_t* p = (uint8_t*)phys->status_effects;
+
+    int item_size = sizeof(StatusEffect);
+    memcpy(p + index*item_size, p+(phys->status_effects_count-1)*item_size, item_size);
+    phys->status_effects_count--;
+}
+
+void entity_handle_status_effects(float dt)
+{
+    for(int i = 0; i < num_entities; ++i)
+    {
+        Entity* e = &entities[i];
+        if(e->phys->dead) continue;
+
+        Physics* phys = e->phys;
+
+        for(int i = phys->status_effects_count - 1; i >= 0; --i)
+        {
+            StatusEffect* effect = &phys->status_effects[i];
+
+            effect->lifetime += dt;
+            if(effect->lifetime_max > 0.0 && effect->lifetime >= effect->lifetime_max)
+            {
+                effect->func(phys, true);
+                remove_status_effect(phys, i);
+                continue;
+            }
+
+            if(effect->periodic)
+            {
+                effect->period += dt;
+                if(effect->lifetime >= effect->period * (effect->periods_passed +1))
+                {
+                    effect->periods_passed++;
+                    effect->func(e,false);
+                }
+            }
+            else
+            {
+                if(!effect->applied)
+                {
+                    effect->func(phys, false);
+                    effect->applied = true;
+                }
+            }
+        }
     }
 }
 

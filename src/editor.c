@@ -101,9 +101,9 @@ void editor_draw()
                     imgui_toggle_button(&p->active, "Active");
                 }
 
-                int hp = p->hp;
-                imgui_number_box("HP", 0, p->hp_max, &hp);
-                p->hp = (uint8_t)hp;
+                int hp = p->phys.hp;
+                imgui_number_box("HP", 0, p->phys.hp_max, &hp);
+                p->phys.hp = (uint8_t)hp;
 
                 imgui_text_sized(big, "Info");
                 imgui_text("Pos: %.2f, %.2f", p->phys.pos.x, p->phys.pos.y);

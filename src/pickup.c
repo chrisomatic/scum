@@ -30,7 +30,7 @@ static void pickup_func_nothing(Pickup* pu, Player* p)
 }
 static void pickup_func_heart_full(Pickup* pu, Player* p)
 {
-    if(p->hp < p->hp_max)
+    if(p->phys.hp < p->phys.hp_max)
     {
         player_add_hp(p,2);
         pu->picked_up = true;
@@ -39,7 +39,7 @@ static void pickup_func_heart_full(Pickup* pu, Player* p)
 
 static void pickup_func_heart_half(Pickup* pu, Player* p)
 {
-    if(p->hp < p->hp_max)
+    if(p->phys.hp < p->phys.hp_max)
     {
         player_add_hp(p,1);
         pu->picked_up = true;

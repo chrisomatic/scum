@@ -82,7 +82,7 @@ void creature_init_props(Creature* c)
             c->act_time_min = 0.5;
             c->act_time_max = 1.0;
             c->phys.mass = 10.0;
-            c->hp_max = 3.0;
+            c->phys.hp_max = 3.0;
             c->painful_touch = true;
         } break;
         case CREATURE_TYPE_CLINGER:
@@ -92,7 +92,7 @@ void creature_init_props(Creature* c)
             c->act_time_min = 0.2;
             c->act_time_max = 0.4;
             c->phys.mass = 100.0; // so it doesn't slide when hit
-            c->hp_max = 5.0;
+            c->phys.hp_max = 5.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_CLINGER;
             c->painful_touch = false;
         } break;
@@ -103,12 +103,13 @@ void creature_init_props(Creature* c)
             c->act_time_min = 3.0;
             c->act_time_max = 5.0;
             c->phys.mass = 1000.0; // so it doesn't slide when hit
-            c->hp_max = 10.0;
+            c->phys.hp_max = 10.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = false;
         } break;
     }
 
+    c->phys.se_speed_factor = 1.0;
     c->phys.radius = 8.0;
     c->phys.coffset.x = 0;
     c->phys.coffset.y = 0;
@@ -242,7 +243,7 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
 
     if(creature == NULL)
     {
-        c.hp = c.hp_max;
+        c.phys.hp = c.phys.hp_max;
     }
 
     ai_init_action(&c);
@@ -273,14 +274,16 @@ void creature_update(Creature* c, float dt)
             break;
     }
 
-    float h_speed = c->phys.speed*c->h;
-    float v_speed = c->phys.speed*c->v;
+    float speed = c->phys.speed*c->phys.se_speed_factor;
+
+    float h_speed = speed*c->h;
+    float v_speed = speed*c->v;
 
     c->phys.vel.x += dt*h_speed;
     c->phys.vel.y += dt*v_speed;
 
-    if(ABS(c->phys.vel.x) > c->phys.speed) c->phys.vel.x = h_speed;
-    if(ABS(c->phys.vel.y) > c->phys.speed) c->phys.vel.y = v_speed;
+    if(ABS(c->phys.vel.x) > speed) c->phys.vel.x = h_speed;
+    if(ABS(c->phys.vel.y) > speed) c->phys.vel.y = v_speed;
 
     if(c->h == 0.0 && c->v == 0.0)
         phys_apply_friction(&c->phys,10.0,dt);
@@ -433,8 +436,8 @@ void creature_die(Creature* c)
 
 void creature_hurt(Creature* c, float damage)
 {
-    c->hp -= damage;
-    if(c->hp <= 0.0)
+    c->phys.hp -= damage;
+    if(c->phys.hp <= 0.0)
     {
         creature_die(c);
     }

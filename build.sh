@@ -16,7 +16,7 @@ gcc core/gfx.c \
     core/particles.c \
     core/camera.c \
     core/lighting.c \
-    core/physics.c \
+    physics.c \
     effects.c \
     projectile.c \
     player.c \
@@ -27,6 +27,7 @@ gcc core/gfx.c \
     entity.c \
     pickup.c \
     explosion.c \
+    status_effects.c \
     room_editor.c \
     main.c \
     -Icore \

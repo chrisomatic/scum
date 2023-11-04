@@ -26,9 +26,6 @@ typedef struct
 
     ProjectileType proj_type;
 
-    float hp;
-    float hp_max;
-
     int image;
     uint32_t color;
     uint8_t sprite_index;

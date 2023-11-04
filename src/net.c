@@ -1649,7 +1649,7 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             pack_vec2(pkt,p->phys.pos);
             pack_u8(pkt, p->sprite_index+p->anim.curr_frame);
             pack_u8(pkt, p->curr_room);
-            pack_u8(pkt, p->hp);
+            pack_u8(pkt, p->phys.hp);
             pack_bool(pkt, p->invulnerable);
             pack_float(pkt, p->invulnerable_time);
             pack_u8(pkt, (uint8_t)p->door);
@@ -1689,7 +1689,7 @@ static void unpack_players(Packet* pkt, int* offset)
         Vector2f pos    = unpack_vec2(pkt, offset);
         p->sprite_index = unpack_u8(pkt, offset);
         uint8_t curr_room  = unpack_u8(pkt, offset);
-        p->hp  = unpack_u8(pkt, offset);
+        p->phys.hp  = unpack_u8(pkt, offset);
         p->invulnerable = unpack_bool(pkt, offset);
         float invulnerable_time = unpack_float(pkt, offset);
         p->door  = (Dir)unpack_u8(pkt, offset);
@@ -1752,7 +1752,7 @@ static void pack_creatures(Packet* pkt, ClientInfo* cli)
         pack_vec2(pkt, c->phys.pos);
         pack_u8(pkt, c->sprite_index);
         pack_u8(pkt, c->curr_room);
-        pack_float(pkt, c->hp);
+        pack_float(pkt, c->phys.hp);
         num_visible_creatures++;
     }
 
@@ -1781,7 +1781,7 @@ static void unpack_creatures(Packet* pkt, int* offset)
         memcpy(&creature.phys.pos, &pos, sizeof(Vector2f));
         creature.sprite_index = sprite_index;
         creature.curr_room = curr_room;
-        creature.hp = hp;
+        creature.phys.hp = hp;
         Creature* c = creature_add(NULL, 0, &creature);
 
         c->server_state_prior.pos.x = pos.x;
