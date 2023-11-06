@@ -560,6 +560,7 @@ void game_generate_level(unsigned int _seed)
     seed = _seed;
 
     creature_clear_all();
+    item_clear_all();
 
     level = level_generate(seed);
 

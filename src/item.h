@@ -52,6 +52,7 @@ extern ItemProps item_props[MAX_ITEMS];
 
 
 void item_init();
+void item_clear_all();
 
 bool item_is_gem(ItemType type);
 bool item_is_heart(ItemType type);

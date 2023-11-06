@@ -61,6 +61,11 @@ void item_init()
 
 }
 
+void item_clear_all()
+{
+    list_clear(item_list);
+}
+
 bool item_is_gem(ItemType type)
 {
     if(type >= ITEM_GEM_RED && type <= ITEM_GEM_PURPLE)
