@@ -62,5 +62,5 @@ const char* item_get_name(ItemType type);
 void item_add(ItemType type, float x, float y, uint8_t curr_room);
 void item_update(Item* pu, float dt);
 void item_update_all(float dt);
-void item_draw(Item* pu);
+void item_draw(Item* pu, bool batch);
 void item_handle_collision(Item* p, Entity* e);

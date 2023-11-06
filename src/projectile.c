@@ -5,10 +5,12 @@
 #include "gfx.h"
 #include "core/text_list.h"
 #include "log.h"
+#include "entity.h"
 #include "player.h"
 #include "creature.h"
 #include "explosion.h"
 #include "lighting.h"
+#include "status_effects.h"
 #include "projectile.h"
 
 Projectile projectiles[MAX_PROJECTILES];
@@ -21,7 +23,7 @@ static uint16_t id_counter = 0;
 ProjectileDef projectile_lookup[] = {
     {
         // player/laser
-        .damage = 10.0,
+        .damage = 1.0,
         .min_speed = 200.0,
         .base_speed = 200.0,
         .angle_spread = 45.0,
@@ -33,7 +35,8 @@ ProjectileDef projectile_lookup[] = {
         .explosive = false,
         .homing = false,
         .bouncy = false,
-        .penetrate = false
+        .penetrate = false,
+        .cold = true
     },
     {
         // creature
@@ -105,6 +108,7 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileType proj_type, 
     proj.ttl  = 1.0; //TODO: change to range
     proj.phys.pos.x = phys->pos.x;
     proj.phys.pos.y = phys->pos.y;
+    proj.phys.height = gfx_images[projectile_image].element_height;
     proj.phys.mass = 1.0;
     proj.phys.radius = 4.0 * proj.scale;
     proj.phys.amorphous = projdef->bouncy ? false : true;
@@ -298,49 +302,65 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 {
     if(proj->phys.dead) return;
 
-    bool hit = false;
-
     ProjectileDef* projdef = &projectile_lookup[proj->type];
+
+    uint8_t curr_room = 0;
+    Rect* hitbox = NULL;
+    Physics* phys = NULL;
 
     if(proj->from_player && e->type == ENTITY_TYPE_CREATURE)
     {
         Creature* c = (Creature*)e->ptr;
 
-        if(c->phys.dead) return;
-        if(proj->curr_room != c->curr_room) return;
-
-        hit = are_rects_colliding(&proj->hit_box_prior, &proj->hit_box, &c->hitbox);
-
-        if(hit)
-        {
-            CollisionInfo ci = {0.0,0.0};
-            creature_hurt(c, proj->damage);
-            if(!projdef->penetrate)
-            {
-                phys_collision_correct(&proj->phys,&c->phys,&ci);
-                proj->phys.dead = true;
-            }
-        }
+        curr_room = c->curr_room;
+        hitbox = &c->hitbox;
+        phys = &c->phys;
     }
     else if(!proj->from_player && e->type == ENTITY_TYPE_PLAYER)
     {
         Player* p = (Player*)e->ptr;
 
-        if(!p->active) return;
-        if(p->phys.dead) return;
+        curr_room = p->curr_room;
+        hitbox = &p->hitbox;
+        phys = &p->phys;
+    }
 
-        if(proj->curr_room != p->curr_room) return;
+    bool hit = false;
 
-        hit = are_rects_colliding(&proj->hit_box_prior, &proj->hit_box, &p->hitbox);
+    if(phys)
+    {
+        if(phys->dead) return;
+        if(proj->curr_room != curr_room) return;
+
+        hit = are_rects_colliding(&proj->hit_box_prior, &proj->hit_box, hitbox);
 
         if(hit)
         {
-            CollisionInfo ci = {0.0,0.0};
-            player_hurt(p, proj->damage);
+            switch(e->type)
+            {
+                case ENTITY_TYPE_PLAYER:
+                    player_hurt((Player*)e->ptr, proj->damage);
+                    break;
+                case ENTITY_TYPE_CREATURE:
+                    creature_hurt((Creature*)e->ptr, proj->damage);
+                    break;
+            }
+
             if(!projdef->penetrate)
             {
-                phys_collision_correct(&proj->phys,&p->phys,&ci);
+                CollisionInfo ci = {0.0,0.0};
+                phys_collision_correct(&proj->phys,phys,&ci);
                 proj->phys.dead = true;
+            }
+            
+            if(projdef->cold)
+            {
+                status_effects_add_type(phys,STATUS_EFFECT_COLD);
+            }
+            
+            if(projdef->poison)
+            {
+                status_effects_add_type(phys,STATUS_EFFECT_POISON);
             }
         }
     }
@@ -352,7 +372,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 
 }
 
-void projectile_draw(Projectile* proj)
+void projectile_draw(Projectile* proj, bool batch)
 {
 
     if(proj->curr_room != player->curr_room)
@@ -360,7 +380,14 @@ void projectile_draw(Projectile* proj)
 
     float opacity = proj->phys.ethereal ? 0.3 : 1.0;
 
-    gfx_draw_image(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, proj->from_player ? 0x0050A0FF : 0x00FF5050, proj->scale, 0.0, opacity, false, true);
+    if(batch)
+    {
+        gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, proj->from_player ? 0x0050A0FF : 0x00FF5050, false, proj->scale, 0.0, opacity, false, false, false);
+    }
+    else
+    {
+        gfx_draw_image(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, proj->from_player ? 0x0050A0FF : 0x00FF5050, proj->scale, 0.0, opacity, false, true);
+    }
 
     if(debug_enabled)
     {

@@ -33,6 +33,9 @@ typedef struct
     bool bouncy;
     bool penetrate;
 
+    bool poison;
+    bool cold;
+
 } ProjectileDef;
 
 typedef struct
@@ -76,5 +79,5 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileType proj_type, 
 void projectile_update_hit_box(Projectile* proj);
 void projectile_update(float delta_t);
 void projectile_handle_collision(Projectile* p, Entity* e);
-void projectile_draw(Projectile* proj);
+void projectile_draw(Projectile* proj, bool batch);
 void projectile_lerp(Projectile* p, double dt);

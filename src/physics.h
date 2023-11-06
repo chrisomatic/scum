@@ -2,6 +2,7 @@
 
 #include "math2d.h"
 #include "glist.h"
+#include "status_effects.h"
 
 #define MAX_STATUS_EFFECTS 10 
 
@@ -16,28 +17,6 @@ typedef enum
     COLLISION_SHAPE_MAX,
 } CollisionShape;
 
-typedef enum
-{
-    STATUS_EFFECT_NONE   = 0,
-    STATUS_EFFECT_POISON,
-    STATUS_EFFECT_COLD,
-    STATUS_EFFECT_FEAR,
-} StatusEffectType;
-
-typedef void (*effect_func)(void* e, bool end);
-
-typedef struct
-{
-    StatusEffectType type;
-    effect_func func;
-    float lifetime;
-    float lifetime_max;
-    bool periodic;
-    float period;
-    int periods_passed;
-    bool applied;
-} StatusEffect;
-
 typedef struct
 {
     Vector2f pos;
@@ -45,18 +24,18 @@ typedef struct
 
     Vector2f vel;
     Vector2f prior_vel;
+
     float max_velocity;
     float base_friction;
     float speed;
+    float speed_factor;
     float radius;
     float mass;
+    float height;
     float elasticity;
 
     uint8_t hp;
     uint8_t hp_max;
-
-    // status-effects factors
-    float se_speed_factor;
 
     bool dead;
     bool amorphous; // splatters on collision

@@ -129,27 +129,28 @@ void entity_handle_status_effects(float dt)
             StatusEffect* effect = &phys->status_effects[i];
 
             effect->lifetime += dt;
+
             if(effect->lifetime_max > 0.0 && effect->lifetime >= effect->lifetime_max)
             {
-                effect->func(phys, true);
+                // status effect is done, remove
+                effect->func((void*)e, true);
                 remove_status_effect(phys, i);
                 continue;
             }
 
             if(effect->periodic)
             {
-                effect->period += dt;
                 if(effect->lifetime >= effect->period * (effect->periods_passed +1))
                 {
                     effect->periods_passed++;
-                    effect->func(e,false);
+                    effect->func((void*)e,false);
                 }
             }
             else
             {
                 if(!effect->applied)
                 {
-                    effect->func(phys, false);
+                    effect->func((void*)e, false);
                     effect->applied = true;
                 }
             }
@@ -225,6 +226,8 @@ void entity_draw_all()
 {
     sort_entities();
 
+    gfx_sprite_batch_begin(true);
+
     for(int i = 0; i < num_entities; ++i)
     {
         Entity* e = &entities[i];
@@ -232,23 +235,26 @@ void entity_draw_all()
         {
             case ENTITY_TYPE_PLAYER:
             {
-                player_draw((Player*)e->ptr);
+                player_draw((Player*)e->ptr, true);
             }   break;
             case ENTITY_TYPE_CREATURE:
             {
-                creature_draw((Creature*)e->ptr);
+                creature_draw((Creature*)e->ptr, true);
             }   break;
             case ENTITY_TYPE_PROJECTILE:
             {
-                projectile_draw((Projectile*)e->ptr);
+                projectile_draw((Projectile*)e->ptr, true);
             }   break;
             case ENTITY_TYPE_ITEM:
             {
-                item_draw((Item*)e->ptr);
+                item_draw((Item*)e->ptr, true);
             }   break;
             default:
                 break;
         }
+
+        // draw any status effects
+        status_effects_draw((void*)e->phys, true);
 
         if(debug_enabled)
         {
@@ -257,6 +263,9 @@ void entity_draw_all()
         }
 
     }
+
+    gfx_sprite_batch_draw();
+
 }
 
 static Physics* get_physics_from_type(int index, uint8_t curr_room, EntityType type)

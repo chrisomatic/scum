@@ -64,7 +64,7 @@ void creature_add_direct(Creature* c);
 void creature_update(Creature* c, float dt);
 void creature_lerp(Creature* c, float dt);
 void creature_update_all(float dt);
-void creature_draw(Creature* c);
+void creature_draw(Creature* c, bool batch);
 void creature_draw_all();
 void creature_handle_collision(Creature* c, Entity* e);
 

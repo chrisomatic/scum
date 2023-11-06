@@ -20,6 +20,7 @@
 #include "entity.h"
 #include "item.h"
 #include "explosion.h"
+#include "status_effects.h"
 #include "room_editor.h"
 #include "text_list.h"
 
@@ -157,6 +158,9 @@ exit(1);
     }
 
     init();
+
+    // temp
+    status_effects_add_type(&player->phys,STATUS_EFFECT_COLD);
 
     camera_move(CENTER_X, CENTER_Y, (float)cam_zoom/100.0, true, NULL);
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
@@ -605,6 +609,9 @@ void init()
 
     LOGI(" - Lighting.");
     lighting_init();
+
+    LOGI(" - Status Effects.");
+    status_effects_init();
 
     LOGI(" - Player.");
     player = &players[0];

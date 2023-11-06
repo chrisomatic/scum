@@ -209,6 +209,8 @@ void editor_draw()
                 imgui_checkbox("Homing", &projectile_lookup[PROJECTILE_TYPE_LASER].homing);
                 imgui_checkbox("Bouncy", &projectile_lookup[PROJECTILE_TYPE_LASER].bouncy);
                 imgui_checkbox("Penetrate", &projectile_lookup[PROJECTILE_TYPE_LASER].penetrate);
+                imgui_checkbox("Cold", &projectile_lookup[PROJECTILE_TYPE_LASER].cold);
+                imgui_checkbox("Poison", &projectile_lookup[PROJECTILE_TYPE_LASER].poison);
             } break;
         }
     imgui_end();

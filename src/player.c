@@ -46,11 +46,12 @@ void player_init()
         p->phys.pos.y = CENTER_Y;
 
         p->phys.speed = 1000.0;
-        p->phys.se_speed_factor = 1.0;
+        p->phys.speed_factor = 1.0;
         p->phys.max_velocity = 180.0;
         p->phys.base_friction = 0.80;
         p->phys.vel.x = 0.0;
         p->phys.vel.y = 0.0;
+        p->phys.height = gfx_images[player_image].element_height;
         p->phys.mass = 10.0;
         p->phys.elasticity = 0.0;
 
@@ -191,10 +192,6 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_A);
     window_controls_add_key(&player->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_D);
 #if BOI_SHOOTING
-    // window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_UP].state, GLFW_KEY_UP);
-    // window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_DOWN].state, GLFW_KEY_DOWN);
-    // window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_LEFT].state, GLFW_KEY_LEFT);
-    // window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_RIGHT].state, GLFW_KEY_RIGHT);
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_UP].state, GLFW_KEY_I);
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_DOWN].state, GLFW_KEY_K);
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_LEFT].state, GLFW_KEY_J);
@@ -684,11 +681,14 @@ void player_update(Player* p, float dt)
         vel_dir.y *= 0.7071f;
     }
 
-    Vector2f vel_max = {p->phys.max_velocity*vel_dir.x, p->phys.max_velocity*vel_dir.y};
+    Vector2f vel_max = {
+        p->phys.max_velocity*p->phys.speed_factor*vel_dir.x,
+        p->phys.max_velocity*p->phys.speed_factor*vel_dir.y
+    };
 
     bool moving = (up || down || left || right);
 
-    float speed = p->phys.speed*p->phys.se_speed_factor;
+    float speed      = p->phys.speed*p->phys.speed_factor;
 
     if(moving)
     {
@@ -983,7 +983,7 @@ void player_ai_move_to_target(Player* p, Player* target)
 
 }
 
-void player_draw(Player* p)
+void player_draw(Player* p, bool batch)
 {
     if(!p->active) return;
     if(p->curr_room != player->curr_room) return;
@@ -996,9 +996,18 @@ void player_draw(Player* p)
     float opacity = p->phys.dead ? 0.3 : 1.0;
 
     opacity = blink ? 0.3 : opacity;
+    uint32_t color = gfx_blend_colors(COLOR_BLUE, room->color, p->phys.speed_factor);
 
-    gfx_draw_image(shadow_image, 0, p->phys.pos.x, p->phys.pos.y+12, room->color, 0.5, 0.0, 0.5, false, IN_WORLD);
-    gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, p->phys.pos.y, room->color, 1.0, 0.0, opacity, false, IN_WORLD);
+    if(batch)
+    {
+        gfx_sprite_batch_add(shadow_image, 0, p->phys.pos.x, p->phys.pos.y+12, color, false, 0.5, 0.0, 0.5, false, false, false);
+        gfx_sprite_batch_add(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, p->phys.pos.y, color, false, 1.0, 0.0, opacity, false, false, false);
+    }
+    else
+    {
+        gfx_draw_image(shadow_image, 0, p->phys.pos.x, p->phys.pos.y+12, color, 0.5, 0.0, 0.5, false, IN_WORLD);
+        gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, p->phys.pos.y, color, 1.0, 0.0, opacity, false, IN_WORLD);
+    }
 
     if(debug_enabled)
     {

@@ -154,12 +154,19 @@ void item_update_all(float dt)
     }
 }
 
-void item_draw(Item* pu)
+void item_draw(Item* pu, bool batch)
 {
     if(pu->curr_room != player->curr_room)
         return;
 
-    gfx_draw_image(item_props[pu->type].image, item_props[pu->type].sprite_index, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, IN_WORLD);
+    if(batch)
+    {
+        gfx_sprite_batch_add(item_props[pu->type].image, item_props[pu->type].sprite_index, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, false, 1.0, 0.0, 1.0, false, false, false);
+    }
+    else
+    {
+        gfx_draw_image(item_props[pu->type].image, item_props[pu->type].sprite_index, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, IN_WORLD);
+    }
 }
 
 void item_handle_collision(Item* p, Entity* e)

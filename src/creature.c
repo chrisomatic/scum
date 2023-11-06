@@ -82,6 +82,7 @@ void creature_init_props(Creature* c)
             c->act_time_min = 0.5;
             c->act_time_max = 1.0;
             c->phys.mass = 10.0;
+            c->phys.height = gfx_images[creature_image_slug].element_height;
             c->phys.hp_max = 3.0;
             c->painful_touch = true;
         } break;
@@ -92,6 +93,7 @@ void creature_init_props(Creature* c)
             c->act_time_min = 0.2;
             c->act_time_max = 0.4;
             c->phys.mass = 100.0; // so it doesn't slide when hit
+            c->phys.height = gfx_images[creature_image_clinger].element_height;
             c->phys.hp_max = 5.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_CLINGER;
             c->painful_touch = false;
@@ -103,13 +105,14 @@ void creature_init_props(Creature* c)
             c->act_time_min = 3.0;
             c->act_time_max = 5.0;
             c->phys.mass = 1000.0; // so it doesn't slide when hit
+            c->phys.height = gfx_images[creature_image_geizer].element_height;
             c->phys.hp_max = 10.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = false;
         } break;
     }
 
-    c->phys.se_speed_factor = 1.0;
+    c->phys.speed_factor = 1.0;
     c->phys.radius = 8.0;
     c->phys.coffset.x = 0;
     c->phys.coffset.y = 0;
@@ -274,7 +277,7 @@ void creature_update(Creature* c, float dt)
             break;
     }
 
-    float speed = c->phys.speed*c->phys.se_speed_factor;
+    float speed = c->phys.speed*c->phys.speed_factor;
 
     float h_speed = speed*c->h;
     float v_speed = speed*c->v;
@@ -387,14 +390,23 @@ void creature_handle_collision(Creature* c, Entity* e)
     }
 }
 
-void creature_draw(Creature* c)
+void creature_draw(Creature* c, bool batch)
 {
     if(c->curr_room != player->curr_room)
         return;
 
     if(c->phys.dead) return;
 
-    gfx_draw_image(c->image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, c->color, 1.0, 0.0, 1.0, false, true);
+    uint32_t color = gfx_blend_colors(COLOR_BLUE, c->color, c->phys.speed_factor);
+
+    if(batch)
+    {
+        gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, color, false, 1.0, 0.0, 1.0, false, false, false);
+    }
+    else
+    {
+        gfx_draw_image(c->image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, color, 1.0, 0.0, 1.0, false, true);
+    }
 
     if(debug_enabled)
     {
@@ -412,7 +424,7 @@ void creature_draw_all()
     for(int i = clist->count; i >= 0; --i)
     {
         Creature* c = &creatures[i];
-        creature_draw(c);
+        creature_draw(c, false);
     }
 }
 
