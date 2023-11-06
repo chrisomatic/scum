@@ -5,7 +5,7 @@
 #include "physics.h"
 #include "net.h"
 
-#define MAX_PROJECTILES 256
+#define MAX_PROJECTILES 4096
 typedef enum
 {
     PROJECTILE_TYPE_LASER,
