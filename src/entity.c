@@ -84,12 +84,12 @@ void entity_build_all()
         Projectile* p = &projectiles[i];
         add_entity(ENTITY_TYPE_PROJECTILE,p,p->curr_room, &p->phys);
     }
-    
-    // pickups
-    for(int i = 0; i < pickup_list->count; ++i)
+
+    // items
+    for(int i = 0; i < item_list->count; ++i)
     {
-        Pickup* pu = &pickups[i];
-        add_entity(ENTITY_TYPE_PICKUP,pu,pu->curr_room, &pu->phys);
+        Item* pu = &items[i];
+        add_entity(ENTITY_TYPE_ITEM,pu,pu->curr_room, &pu->phys);
     }
 
     // explosions
@@ -189,8 +189,8 @@ void entity_handle_collisions()
                 case ENTITY_TYPE_PROJECTILE:
                     projectile_handle_collision((Projectile*)e1->ptr,e2);
                     break;
-                case ENTITY_TYPE_PICKUP:
-                    pickup_handle_collision((Pickup*)e1->ptr,e2);
+                case ENTITY_TYPE_ITEM:
+                    item_handle_collision((Item*)e1->ptr,e2);
                     break;
                 case ENTITY_TYPE_EXPLOSION:
                     explosion_handle_collision((Explosion*)e1->ptr,e2);
@@ -242,9 +242,9 @@ void entity_draw_all()
             {
                 projectile_draw((Projectile*)e->ptr);
             }   break;
-            case ENTITY_TYPE_PICKUP:
+            case ENTITY_TYPE_ITEM:
             {
-                pickup_draw((Pickup*)e->ptr);
+                item_draw((Item*)e->ptr);
             }   break;
             default:
                 break;

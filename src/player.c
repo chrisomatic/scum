@@ -1091,16 +1091,16 @@ void player_handle_collision(Player* p, Entity* e)
             }
         } break;
 
-        case ENTITY_TYPE_PICKUP:
+        case ENTITY_TYPE_ITEM:
         {
-            Pickup* p2 = (Pickup*)e->ptr;
+            Item* p2 = (Item*)e->ptr;
 
             CollisionInfo ci = {0};
             bool collided = phys_collision_circles(&p->phys,&p2->phys, &ci);
 
             if(collided)
             {
-                if(p2->touch_pickup)
+                if(p2->touch_item)
                     p2->func(p2, p);
 
                 phys_collision_correct(&p->phys, &p2->phys,&ci);

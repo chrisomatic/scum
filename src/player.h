@@ -4,7 +4,7 @@
 #include "physics.h"
 #include "gfx.h"
 #include "net.h"
-#include "pickup.h"
+#include "item.h"
 #include "entity.h"
 
 #define BOI_SHOOTING    1

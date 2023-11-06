@@ -98,7 +98,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
                         int tile_x = (rand() % ROOM_TILE_SIZE_X);
                         int tile_y = (rand() % ROOM_TILE_SIZE_Y);
                         Rect rp = level_get_tile_rect(tile_x,tile_y);
-                        pickup_add(PICKUP_TYPE_GEM,rand() % 6,rp.x, rp.y, room->index);
+                        item_add(ITEM_TYPE_GEM,rand() % 6,rp.x, rp.y, room->index);
                     }
 
 

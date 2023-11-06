@@ -7,16 +7,16 @@
 #include "log.h"
 
 #include "player.h"
-#include "pickup.h"
+#include "item.h"
 
-glist* pickup_list = NULL;
-Pickup pickups[MAX_PICKUPS];
+glist* item_list = NULL;
+Item items[MAX_ITEMS];
 
-int pickups_image = -1;
+int items_image = -1;
 
 static Rect gem_get_rect(GemType type)
 {
-    GFXImage* img = &gfx_images[pickups_image];
+    GFXImage* img = &gfx_images[items_image];
     Rect* vr = &img->visible_rects[type];
     Rect r = {0};
     r.w = vr->w;
@@ -24,11 +24,11 @@ static Rect gem_get_rect(GemType type)
     return r;
 }
 
-static void pickup_func_nothing(Pickup* pu, Player* p)
+static void item_func_nothing(Item* pu, Player* p)
 {
     return;
 }
-static void pickup_func_heart_full(Pickup* pu, Player* p)
+static void item_func_heart_full(Item* pu, Player* p)
 {
     if(p->phys.hp < p->phys.hp_max)
     {
@@ -37,7 +37,7 @@ static void pickup_func_heart_full(Pickup* pu, Player* p)
     }
 }
 
-static void pickup_func_heart_half(Pickup* pu, Player* p)
+static void item_func_heart_half(Item* pu, Player* p)
 {
     if(p->phys.hp < p->phys.hp_max)
     {
@@ -46,23 +46,23 @@ static void pickup_func_heart_half(Pickup* pu, Player* p)
     }
 }
 
-void pickup_init()
+void item_init()
 {
-    if(pickup_list)
+    if(item_list)
         return;
 
-    pickup_list = list_create((void*)pickups, MAX_PICKUPS, sizeof(Pickup));
-    pickups_image = gfx_load_image("src/img/pickups.png", false, false, 16, 16);
+    item_list = list_create((void*)items, MAX_ITEMS, sizeof(Item));
+    items_image = gfx_load_image("src/img/items.png", false, false, 16, 16);
 }
 
-int pickup_get_sprite_index(PickupType type, int subtype)
+int item_get_sprite_index(ItemType type, int subtype)
 {
     return subtype;
 }
 
-const char* pickup_get_name(PickupType type, int subtype)
+const char* item_get_name(ItemType type, int subtype)
 {
-    if(type == PICKUP_TYPE_GEM)
+    if(type == ITEM_TYPE_GEM)
     {
         switch(subtype)
         {
@@ -74,7 +74,7 @@ const char* pickup_get_name(PickupType type, int subtype)
             case GEM_TYPE_PURPLE: return "Purple Gem";
         }
     }
-    else if(type == PICKUP_TYPE_HEALTH)
+    else if(type == ITEM_TYPE_HEALTH)
     {
         switch(subtype)
         {
@@ -85,13 +85,13 @@ const char* pickup_get_name(PickupType type, int subtype)
     return "???";
 }
 
-void pickup_add(PickupType type, int subtype, float x, float y, uint8_t curr_room)
+void item_add(ItemType type, int subtype, float x, float y, uint8_t curr_room)
 {
-    Pickup pu = {0};
+    Item pu = {0};
 
     pu.type = type;
     pu.subtype = subtype;
-    pu.sprite_index = pickup_get_sprite_index(type, subtype);
+    pu.sprite_index = item_get_sprite_index(type, subtype);
     pu.phys.pos.x = x;
     pu.phys.pos.y = y;
     pu.phys.mass = 5.0;
@@ -99,27 +99,27 @@ void pickup_add(PickupType type, int subtype, float x, float y, uint8_t curr_roo
     pu.phys.radius = 8;
     pu.phys.elasticity = 0.5;
     pu.curr_room = curr_room;
-    pu.touch_pickup = type == PICKUP_TYPE_HEALTH ? true : false;
+    pu.touch_item = type == ITEM_TYPE_HEALTH ? true : false;
 
-    if(pu.type == PICKUP_TYPE_HEALTH)
+    if(pu.type == ITEM_TYPE_HEALTH)
     {
         switch(pu.subtype)
         {
             case HEALTH_TYPE_HEART_FULL:
-                pu.func = (void*)pickup_func_heart_full;
+                pu.func = (void*)item_func_heart_full;
                 break;
             case HEALTH_TYPE_HEART_HALF:
-                pu.func = (void*)pickup_func_heart_half;
+                pu.func = (void*)item_func_heart_half;
                 break;
             default:
-                pu.func = (void*)pickup_func_nothing;
+                pu.func = (void*)item_func_nothing;
         }
     }
 
-    list_add(pickup_list,&pu);
+    list_add(item_list,&pu);
 }
 
-void pickup_update(Pickup* pu, float dt)
+void item_update(Item* pu, float dt)
 {
     pu->phys.pos.x += dt*pu->phys.vel.x;
     pu->phys.pos.y += dt*pu->phys.vel.y;
@@ -127,45 +127,45 @@ void pickup_update(Pickup* pu, float dt)
     phys_apply_friction(&pu->phys,10.0,dt);
 }
 
-void pickup_update_all(float dt)
+void item_update_all(float dt)
 {
-    for(int i = pickup_list->count-1; i >= 0; --i)
+    for(int i = item_list->count-1; i >= 0; --i)
     {
-        Pickup* pu = &pickups[i];
+        Item* pu = &items[i];
 
         if(pu->picked_up)
         {
-            list_remove(pickup_list, i);
+            list_remove(item_list, i);
             continue;
         }
 
-        pickup_update(pu, dt);
+        item_update(pu, dt);
     }
 }
 
-void pickup_draw(Pickup* pu)
+void item_draw(Item* pu)
 {
     if(pu->curr_room != player->curr_room)
         return;
 
     switch(pu->type)
     {
-        case PICKUP_TYPE_GEM:
-            gfx_draw_image(pickups_image, pu->sprite_index, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, IN_WORLD);
+        case ITEM_TYPE_GEM:
+            gfx_draw_image(items_image, pu->sprite_index, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, IN_WORLD);
             break;
-        case PICKUP_TYPE_HEALTH:
-            gfx_draw_image(pickups_image, pu->sprite_index, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, IN_WORLD);
+        case ITEM_TYPE_HEALTH:
+            gfx_draw_image(items_image, pu->sprite_index, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, IN_WORLD);
             break;
     }
 }
 
-void pickup_handle_collision(Pickup* p, Entity* e)
+void item_handle_collision(Item* p, Entity* e)
 {
     switch(e->type)
     {
-        case ENTITY_TYPE_PICKUP:
+        case ENTITY_TYPE_ITEM:
         {
-            Pickup* p2 = (Pickup*)e->ptr;
+            Item* p2 = (Item*)e->ptr;
 
             CollisionInfo ci = {0};
             bool collided = phys_collision_circles(&p->phys,&p2->phys, &ci);

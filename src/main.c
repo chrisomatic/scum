@@ -18,7 +18,7 @@
 #include "lighting.h"
 #include "net.h"
 #include "entity.h"
-#include "pickup.h"
+#include "item.h"
 #include "explosion.h"
 #include "room_editor.h"
 #include "text_list.h"
@@ -525,7 +525,7 @@ void start_server()
     player_init();
     creature_init();
     decal_init();
-    pickup_init();
+    item_init();
 
     srand(time(0));
     seed = rand();
@@ -623,8 +623,8 @@ void init()
     LOGI(" - Decals.");
     decal_init();
 
-    LOGI(" - Pickups.");
-    pickup_init();
+    LOGI(" - Items.");
+    item_init();
 
     if(role == ROLE_LOCAL)
     {
@@ -671,10 +671,10 @@ void init()
 
     // @TEMP
     for(int i = 0; i < 4; ++i)
-        pickup_add(PICKUP_TYPE_GEM,rand() % 6,player->phys.pos.x+32, player->phys.pos.y+32, player->curr_room);
+        item_add(ITEM_TYPE_GEM,rand() % 6,player->phys.pos.x+32, player->phys.pos.y+32, player->curr_room);
 
-    pickup_add(PICKUP_TYPE_HEALTH,HEALTH_TYPE_HEART_FULL,player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
-    pickup_add(PICKUP_TYPE_HEALTH,HEALTH_TYPE_HEART_HALF,player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
+    item_add(ITEM_TYPE_HEALTH,HEALTH_TYPE_HEART_FULL,player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
+    item_add(ITEM_TYPE_HEALTH,HEALTH_TYPE_HEART_HALF,player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
 
 }
 
@@ -930,7 +930,7 @@ void update(float dt)
             // update point lights
             projectile_update(dt);
             creature_update_all(dt);
-            pickup_update_all(dt);
+            item_update_all(dt);
             explosion_update_all(dt);
             decal_update_all(dt);
 
@@ -1182,7 +1182,7 @@ void draw_gem_menu()
     float len = 100.0;
     float margin = 5.0;
 
-    int w = gfx_images[pickups_image].element_width;
+    int w = gfx_images[items_image].element_width;
     float scale = len / (float)w;
 
     float total_len = (PLAYER_GEMS_MAX * len) + ((PLAYER_GEMS_MAX-1) * margin);
@@ -1208,7 +1208,7 @@ void draw_gem_menu()
 
         if(player->gems[i] != GEM_TYPE_NONE)
         {
-            gfx_draw_image(pickups_image, player->gems[i], r.x, r.y, COLOR_TINT_NONE, scale, 0.0, 0.5, false, NOT_IN_WORLD);
+            gfx_draw_image(items_image, player->gems[i], r.x, r.y, COLOR_TINT_NONE, scale, 0.0, 0.5, false, NOT_IN_WORLD);
         }
         r.x += len;
         r.x += margin;

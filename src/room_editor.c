@@ -34,7 +34,7 @@ typedef enum
 {
     TYPE_NONE,
     TYPE_TILE,
-    TYPE_PICKUP,
+    TYPE_ITEM,
     TYPE_CREATURE,
 } PlacedType;
 
@@ -68,10 +68,10 @@ static char* creature_names[CREATURE_TYPE_MAX+1] = {0};
 static int creature_sel = 0;
 static Creature creature = {0};
 
-static char* pickup_names[PICKUPS_MAX+1] = {0};
-static int pickup_sel = 0;
-// static int pickup_type = 0; // only subtype only matters for now
-static int pickup_subtype = 0;
+static char* item_names[ITEMS_MAX+1] = {0};
+static int item_sel = 0;
+// static int item_type = 0; // only subtype only matters for now
+static int item_subtype = 0;
 
 static Room room = {0};
 static RoomData room_data = {0};
@@ -102,14 +102,14 @@ void room_editor_init()
 
     if(!_init)
     {
-        pickup_sel = 0;
-        PickupType pt = PICKUP_TYPE_GEM;
-        for(int i = 0; i < PICKUPS_MAX; ++i)
+        item_sel = 0;
+        ItemType pt = ITEM_TYPE_GEM;
+        for(int i = 0; i < ITEMS_MAX; ++i)
         {
-            if(i > GEM_TYPE_PURPLE) pt = PICKUP_TYPE_HEALTH;
-            pickup_names[i] = (char*)pickup_get_name(pt, i);
+            if(i > GEM_TYPE_PURPLE) pt = ITEM_TYPE_HEALTH;
+            item_names[i] = (char*)item_get_name(pt, i);
         }
-        pickup_names[PICKUPS_MAX] = "Eraser";
+        item_names[ITEMS_MAX] = "Eraser";
 
 
         creature_sel = 0;
@@ -238,9 +238,9 @@ void room_editor_draw()
             {
                 gfx_draw_image(o->subtype, 0, tile_rect.x, tile_rect.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
             }
-            else if(o->type == TYPE_PICKUP)
+            else if(o->type == TYPE_ITEM)
             {
-                gfx_draw_image(pickups_image, pickup_get_sprite_index(0, o->subtype), tile_rect.x, tile_rect.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+                gfx_draw_image(items_image, item_get_sprite_index(0, o->subtype), tile_rect.x, tile_rect.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
             }
 
         }
@@ -396,7 +396,7 @@ void room_editor_draw()
     else if(tab_sel == 3)
     {
 
-        if(pickup_sel == PICKUPS_MAX)   // eraser
+        if(item_sel == ITEMS_MAX)   // eraser
         {
             eraser = true;
             error |= out_of_area;
@@ -407,12 +407,12 @@ void room_editor_draw()
             if(error)
                 status_color = COLOR_RED;
 
-            int sprite = pickup_get_sprite_index(0, pickup_sel);
-            gfx_draw_image(pickups_image, sprite, tile_rect.x, tile_rect.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+            int sprite = item_get_sprite_index(0, item_sel);
+            gfx_draw_image(items_image, sprite, tile_rect.x, tile_rect.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
             gfx_draw_rect(&tile_rect, status_color, NOT_SCALED, NO_ROTATION, 0.2, true, true);
 
-            obj.type = TYPE_PICKUP;
-            obj.subtype = pickup_sel;
+            obj.type = TYPE_ITEM;
+            obj.subtype = item_sel;
         }
     }
 
@@ -424,7 +424,7 @@ void room_editor_draw()
     imgui_begin_panel("Room Editor", view_width - gui_size.w, 1, true);
 
         imgui_newline();
-        char* buttons[] = {"Room", "Doors", "Creatures", "Pickups"};
+        char* buttons[] = {"Room", "Doors", "Creatures", "Items"};
         tab_sel = imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "");
         imgui_horizontal_line(1);
 
@@ -474,8 +474,8 @@ void room_editor_draw()
 
             case 3:
             {
-                pickup_sel = imgui_dropdown(pickup_names, PICKUPS_MAX+1, "Select Pickup", &pickup_sel);
-                pickup_subtype = pickup_sel;
+                item_sel = imgui_dropdown(item_names, ITEMS_MAX+1, "Select Item", &item_sel);
+                item_subtype = item_sel;
             } break;
 
         }

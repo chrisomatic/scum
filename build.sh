@@ -25,7 +25,7 @@ gcc core/gfx.c \
     level.c \
     editor.c \
     entity.c \
-    pickup.c \
+    item.c \
     explosion.c \
     status_effects.c \
     room_editor.c \

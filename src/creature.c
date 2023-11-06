@@ -372,9 +372,9 @@ void creature_handle_collision(Creature* c, Entity* e)
                 phys_collision_correct(&c->phys, &c2->phys,&ci);
             }
         } break;
-        case ENTITY_TYPE_PICKUP:
+        case ENTITY_TYPE_ITEM:
         {
-            Pickup* p2 = (Pickup*)e->ptr;
+            Item* p2 = (Item*)e->ptr;
 
             CollisionInfo ci = {0};
             bool collided = phys_collision_circles(&c->phys,&p2->phys, &ci);
