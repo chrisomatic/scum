@@ -217,11 +217,10 @@ void player2_init_keys()
         printf("player2 is null\n");
         return;
     }
-    // // window_controls_clear_keys();
-    // window_controls_add_key(&player2->actions[PLAYER_ACTION_UP].state, GLFW_KEY_UP);
-    // window_controls_add_key(&player2->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_DOWN);
-    // window_controls_add_key(&player2->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_LEFT);
-    // window_controls_add_key(&player2->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_RIGHT);
+    window_controls_add_key(&player2->actions[PLAYER_ACTION_UP].state, GLFW_KEY_UP);
+    window_controls_add_key(&player2->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_DOWN);
+    window_controls_add_key(&player2->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_LEFT);
+    window_controls_add_key(&player2->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_RIGHT);
     // window_controls_add_key(&player2->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_RIGHT_SHIFT);
 
     for(int i = 0;  i < PLAYER_ACTION_MAX; ++i)
@@ -330,21 +329,31 @@ void player_draw_room_transition()
         float dx = transition_targets.x/15.0;
         float dy = transition_targets.y/15.0;
 
-        if(paused)
+        if(!paused)
         {
-            dx = 0.0;
-            dy = 0.0;
+            transition_offsets.x += dx;
+            transition_offsets.y += dy;
         }
-
-        transition_offsets.x += dx;
-        transition_offsets.y += dy;
 
         if(ABS(transition_offsets.x) >= ABS(transition_targets.x) && ABS(transition_offsets.y) >= ABS(transition_targets.y))
         {
             // printf("room transition complete\n");
             p->transition_room = p->curr_room;
-            camera_move(p->phys.pos.x, p->phys.pos.y, (float)cam_zoom/100.0, true, &camera_limit);
-            camera_update(VIEW_WIDTH, VIEW_HEIGHT);
+
+            bool immediate = true;
+            float cx = p->phys.pos.x;
+            float cy = p->phys.pos.y;
+            bool check = camera_can_be_limited(cx, cy, (float)cam_zoom/100.0);
+            if(!check)
+            {
+                // zoomed out too far
+                immediate = !immediate;
+                // cx = CENTER_X;
+                // cy = CENTER_Y;
+            }
+
+            camera_set(immediate);
+
         }
         else
         {
@@ -377,6 +386,7 @@ void player_draw_room_transition()
             Vector2i roomxy = level_get_room_coords((int)p->curr_room);
             level_draw_room(&level.rooms[roomxy.x][roomxy.y], NULL, x1, y1);
         }
+        // paused = true;  //uncommment to step through the transition
     }
 }
 
@@ -457,9 +467,15 @@ void player_start_room_transition(Player* p)
     transition_targets.y = 0;
 
     Rect cr = get_camera_rect();
-    float zscale = 1.0 - camera_get_zoom();
-    float vw = (cr.w - (margin_left.w + margin_right.w)*zscale);
-    float vh = (cr.h - (margin_top.h + margin_top.h)*zscale);
+    float vw = cr.w;
+    float vh = cr.h;
+
+    bool check = camera_can_be_limited(cr.x, cr.y, camera_get_zoom());
+    if(!check)
+    {
+        vw = room_area.w;
+        vh = room_area.h;
+    }
 
     switch(p->door)
     {

@@ -107,7 +107,6 @@ const char* menu_options[] = {
 // Function Prototypes
 // =========================
 int main(int argc, char* argv[]);
-void camera_set();
 void run();
 void parse_args(int argc, char* argv[]);
 void init();
@@ -251,8 +250,8 @@ void set_game_state(GameState state)
 }
 
 
-// also checks if the mouse is off the screen
-void camera_set()
+// can also checks if the mouse is off the screen
+void camera_set(bool immediate)
 {
     if(game_state == GAME_STATE_EDITOR)
         return;
@@ -309,7 +308,6 @@ void camera_set()
 
     if(dynamic_zoom)
     {
-
         Rect cr = calc_camera_rect(cam_pos_x, cam_pos_y, (float)cam_zoom_temp/100.0, view_width, view_height, &camera_limit);
 
         // check if all players are visible
@@ -404,7 +402,6 @@ void camera_set()
 
 
     float cam_pos_z = (float)cam_zoom_temp/100.0;
-    bool immediate = false;
 
     static int counter = 0;
     if(player->phys.hp == 1 && debug_enabled)
@@ -430,15 +427,28 @@ void camera_set()
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 }
 
+// can see more than the room
+bool camera_can_be_limited(float x, float y, float z)
+{
+    Rect cr = calc_camera_rect(x, y, z, view_width, view_height, NULL);
+    if(cr.w > camera_limit.w || cr.h > camera_limit.h)
+    {
+        return false;
+    }
+    return true;
+}
+
 void run()
 {
 
+    // timer_set_fps(&game_timer,5);
     timer_set_fps(&game_timer,TARGET_FPS);
     timer_begin(&game_timer);
     double curr_time = timer_get_time();
     double new_time  = 0.0;
     double accum = 0.0;
     const double dt = 1.0/TARGET_FPS;
+    // const double dt = 1.0/5.0;
 
     // loop
     for(;;)
@@ -817,7 +827,7 @@ void update(float dt)
 
         entity_build_all();
 
-        camera_set();
+        camera_set(true);
 
         return;
     }
@@ -923,8 +933,10 @@ void update(float dt)
                 Player* p = &players[i];
                 player_update(p, dt);
 
-                if(p->active)
+                if(p->active && p->curr_room == player->curr_room)
+                {
                     p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0,1.0,0.0);
+                }
             }
 
             // update point lights
@@ -941,8 +953,7 @@ void update(float dt)
     }
 
 
-    camera_set();
-    camera_update(VIEW_WIDTH, VIEW_HEIGHT);
+    camera_set(false);
 }
 
 void draw_map(DrawLevelParams* params)
@@ -1366,7 +1377,7 @@ void draw()
         Vector2f title_size = gfx_string_get_size(title_scale, title);
         Rect title_r = RECT(margin_top.w/2.0, margin_top.h/2.0, title_size.x, title_size.y);
         gfx_get_absolute_coords(&title_r, ALIGN_CENTER, &margin_top, ALIGN_TOP_LEFT);
-        gfx_draw_string(title_r.x, title_r.y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, NO_DROP_SHADOW, title);
+        gfx_draw_string(title_r.x, title_r.y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, title);
     }
     else if(game_state == GAME_STATE_PLAYING)
     {

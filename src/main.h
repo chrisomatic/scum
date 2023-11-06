@@ -145,7 +145,10 @@ extern bool dynamic_zoom;
 extern int cam_zoom;
 extern int cam_min_zoom;
 
+void camera_set(bool immediate);
+bool camera_can_be_limited(float x, float y, float z);
 
 void game_generate_level(unsigned int _seed);
 void set_game_state(GameState state);
 void update_input_state(PlayerInput* input, float _dt);
+
