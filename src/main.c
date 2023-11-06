@@ -159,9 +159,6 @@ exit(1);
 
     init();
 
-    // temp
-    status_effects_add_type(&player->phys,STATUS_EFFECT_COLD);
-
     camera_move(CENTER_X, CENTER_Y, (float)cam_zoom/100.0, true, NULL);
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 
