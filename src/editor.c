@@ -131,7 +131,8 @@ void editor_draw()
 
                 if(imgui_button("Add Gem"))
                 {
-                    item_add(ITEM_TYPE_GEM,rand() % 6,p->phys.pos.x, p->phys.pos.y, p->curr_room);
+                    ItemType it = item_get_random_gem();
+                    item_add(it, p->phys.pos.x, p->phys.pos.y, p->curr_room);
                 }
 
             } break;

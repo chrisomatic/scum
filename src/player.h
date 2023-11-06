@@ -55,7 +55,7 @@ typedef struct
     PlayerActions last_shoot_action;
     float shoot_sprite_cooldown;
 
-    GemType gems[PLAYER_GEMS_MAX];
+    ItemType gems[PLAYER_GEMS_MAX];
 
     GFXAnimation anim;
 

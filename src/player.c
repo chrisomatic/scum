@@ -92,9 +92,9 @@ void player_init()
 
         for(int j = 0; j < PLAYER_GEMS_MAX; ++j)
         {
-            p->gems[j] = rand() % NUM_GEM_TYPES;
-            // printf("gems[%d] = %d\n", j, p->gems[j]);
-            // p->gems[j] = GEM_TYPE_NONE;
+            ItemType it = item_get_random_gem();
+            p->gems[j] = it;
+            // p->gems[j] = ITEM_NONE;
         }
     }
 }
@@ -622,9 +622,7 @@ void player_update(Player* p, float dt)
             if(gem_menu_selection >= PLAYER_GEMS_MAX)
                 gem_menu_selection = 0;
         }
-        
     }
-
 
     bool up    = p->actions[PLAYER_ACTION_UP].state;
     bool down  = p->actions[PLAYER_ACTION_DOWN].state;
@@ -1100,8 +1098,8 @@ void player_handle_collision(Player* p, Entity* e)
 
             if(collided)
             {
-                if(p2->touch_item)
-                    p2->func(p2, p);
+                if(item_props[p2->type].touch_item)
+                    item_props[p2->type].func(p2, p);
 
                 phys_collision_correct(&p->phys, &p2->phys,&ci);
             }

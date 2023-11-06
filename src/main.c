@@ -671,10 +671,10 @@ void init()
 
     // @TEMP
     for(int i = 0; i < 4; ++i)
-        item_add(ITEM_TYPE_GEM,rand() % 6,player->phys.pos.x+32, player->phys.pos.y+32, player->curr_room);
+        item_add(item_get_random_gem(), player->phys.pos.x+32, player->phys.pos.y+32, player->curr_room);
 
-    item_add(ITEM_TYPE_HEALTH,HEALTH_TYPE_HEART_FULL,player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
-    item_add(ITEM_TYPE_HEALTH,HEALTH_TYPE_HEART_HALF,player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
+    item_add(ITEM_HEART_FULL, player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
+    item_add(ITEM_HEART_HALF, player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
 
 }
 
@@ -1125,7 +1125,59 @@ void draw_bigmap()
     draw_map(&bigmap_params);
 }
 
+
 void draw_hearts()
+{
+#define TOP_MARGIN  1
+
+    // int max_num = ceill((float)player->phys.hp_max/2.0);
+    int num = player->phys.hp / 2;
+    int rem = player->phys.hp % 2;
+
+    float pad = 3.0*ascale;
+    float l = 30.0*ascale; // image size
+    float x = margin_left.w;
+
+#if TOP_MARGIN
+    Rect* marg = &margin_top;
+    // float y = margin_top.h - 5.0 - l;
+    float y = 5.0;
+    x = 5.0;
+#else
+    Rect* marg = &margin_bottom;
+    float y = 5.0;
+#endif
+
+
+    uint8_t image_full = item_props[ITEM_HEART_FULL].image;
+    int si_full = item_props[ITEM_HEART_FULL].sprite_index;
+    int image_half = item_props[ITEM_HEART_FULL].image;
+    uint8_t si_half = item_props[ITEM_HEART_HALF].sprite_index;
+
+    // float w = gfx_images[image_full].visible_rects[si_full].w;
+    float w = gfx_images[image_full].element_width;
+    float scale = l / w;
+
+    Rect area = RECT(x, y, l, l);
+    gfx_get_absolute_coords(&area, ALIGN_TOP_LEFT, marg, ALIGN_CENTER);
+
+    x = area.x;
+    y = area.y;
+    for(int i = 0; i < num; ++i)
+    {
+        gfx_draw_image(image_full, si_full, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+        // Rect r = RECT(x, y, l, l);
+        // gfx_draw_rect(&r, COLOR_BLACK, NOT_SCALED, NO_ROTATION, scale, false, NOT_IN_WORLD);
+        x += (l+pad);
+    }
+
+    if(rem == 1)
+    {
+        gfx_draw_image(image_half, si_half, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+    }
+}
+
+void draw_hearts2()
 {
 #define TOP_MARGIN  1
 
@@ -1206,9 +1258,9 @@ void draw_gem_menu()
             color = COLOR_WHITE;
         gfx_draw_rect(&r, color, NOT_SCALED, NO_ROTATION, 0.5, true, NOT_IN_WORLD);
 
-        if(player->gems[i] != GEM_TYPE_NONE)
+        if(player->gems[i] != ITEM_NONE)
         {
-            gfx_draw_image(items_image, player->gems[i], r.x, r.y, COLOR_TINT_NONE, scale, 0.0, 0.5, false, NOT_IN_WORLD);
+            gfx_draw_image(item_props[player->gems[i]].image, item_props[player->gems[i]].sprite_index, r.x, r.y, COLOR_TINT_NONE, scale, 0.0, 0.5, false, NOT_IN_WORLD);
         }
         r.x += len;
         r.x += margin;

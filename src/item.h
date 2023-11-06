@@ -2,34 +2,27 @@
 
 #include "entity.h"
 
-#define MAX_ITEMS 256
-#define NUM_GEM_TYPES 6
+#define MAX_ITEMS 500
 
+// order matters, see these functions:
+//  - item_is_gem()
+//  - item_is_heart()
 typedef enum
 {
-    ITEM_TYPE_GEM,
-    ITEM_TYPE_HEALTH,
+    ITEM_NONE = -1,
+
+    ITEM_GEM_RED,
+    ITEM_GEM_GREEN,
+    ITEM_GEM_BLUE,
+    ITEM_GEM_WHITE,
+    ITEM_GEM_YELLOW,
+    ITEM_GEM_PURPLE,
+
+    ITEM_HEART_FULL,
+    ITEM_HEART_HALF,
+
+    ITEM_MAX
 } ItemType;
-
-typedef enum
-{
-    GEM_TYPE_NONE = -1,
-    GEM_TYPE_RED,
-    GEM_TYPE_GREEN,
-    GEM_TYPE_BLUE,
-    GEM_TYPE_WHITE,
-    GEM_TYPE_YELLOW,
-    GEM_TYPE_PURPLE,
-
-} GemType;
-
-typedef enum
-{
-    HEALTH_TYPE_HEART_FULL = GEM_TYPE_PURPLE+1,
-    HEALTH_TYPE_HEART_HALF,
-} HealthType;
-
-#define ITEMS_MAX (HEALTH_TYPE_HEART_HALF+1)
 
 #include "player.h"
 
@@ -37,26 +30,36 @@ typedef void (*item_func)(void* item, void* player);
 
 typedef struct
 {
-    Physics phys;
     ItemType type;
-    int subtype;
     int image;
-    int sprite_index;
-    int curr_room;
+    uint8_t sprite_index;
     bool touch_item;
-    bool picked_up;
     item_func func;
+} ItemProps;
+
+typedef struct
+{
+    ItemType type;
+    bool picked_up;
+    uint8_t curr_room;
+    Physics phys;
 } Item;
 
 extern int items_image;
 extern glist* item_list;
 extern Item items[MAX_ITEMS];
+extern ItemProps item_props[MAX_ITEMS];
 
 
 void item_init();
-int item_get_sprite_index(ItemType type, int subtype);
-const char* item_get_name(ItemType type, int subtype);
-void item_add(ItemType type, int subtype, float x, float y, uint8_t curr_room);
+
+bool item_is_gem(ItemType type);
+bool item_is_heart(ItemType type);
+ItemType item_get_random_gem();
+ItemType item_get_random_heart();
+
+const char* item_get_name(ItemType type);
+void item_add(ItemType type, float x, float y, uint8_t curr_room);
 void item_update(Item* pu, float dt);
 void item_update_all(float dt);
 void item_draw(Item* pu);
