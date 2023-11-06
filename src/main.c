@@ -407,7 +407,7 @@ void camera_set()
     bool immediate = false;
 
     static int counter = 0;
-    if(player->phys.hp == 1)
+    if(player->phys.hp == 1 && debug_enabled)
     {
         counter++;
         if(counter >= 2)
