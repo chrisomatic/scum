@@ -55,7 +55,7 @@ void player_init()
         p->phys.mass = 10.0;
         p->phys.elasticity = 0.0;
 
-        p->phys.hp_max = 6;
+        p->phys.hp_max = 24;
         p->phys.hp = p->phys.hp_max;
 
         p->sprite_index = 4;
