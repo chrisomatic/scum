@@ -83,6 +83,12 @@ unsigned int seed = 0;
 DrawLevelParams minimap_params = {0};
 DrawLevelParams bigmap_params = {0};
 
+
+#define MESSAGE_SMALL_MAX 256
+char message_small[MESSAGE_SMALL_MAX];
+float message_small_duration;
+
+
 enum
 {
     MENU_KEY_UP,
@@ -117,6 +123,9 @@ void update(float dt);
 void draw();
 void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods);
 void start_server();
+
+void message_small_update(float dt);
+void message_small_draw();
 
 
 // =========================
@@ -442,14 +451,12 @@ bool camera_can_be_limited(float x, float y, float z)
 void run()
 {
 
-    // timer_set_fps(&game_timer,5);
     timer_set_fps(&game_timer,TARGET_FPS);
     timer_begin(&game_timer);
     double curr_time = timer_get_time();
     double new_time  = 0.0;
     double accum = 0.0;
     const double dt = 1.0/TARGET_FPS;
-    // const double dt = 1.0/5.0;
 
     // loop
     for(;;)
@@ -754,6 +761,8 @@ void update(float dt)
     gfx_clear_lines();
 
     text_list_update(text_lst, dt);
+
+    message_small_update(dt);
 
     // Update Client
     // ------------------------------
@@ -1432,6 +1441,7 @@ void draw()
     }
 
     text_list_draw(text_lst);
+    message_small_draw();
     gfx_draw_lines();
 }
 
@@ -1486,6 +1496,69 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
     }
 }
 
+// ==================================================================================
+// SMALL MESSAGE
+// ==================================================================================
+
+void message_small_set(float duration, char* fmt, ...)
+{
+    static char temp[MESSAGE_SMALL_MAX] = {0};
+    memset(temp, 0, sizeof(char)*MESSAGE_SMALL_MAX);
+    va_list args;
+    va_start(args, fmt);
+    int ret = vsnprintf(temp, MESSAGE_SMALL_MAX, fmt, args);
+    va_end(args);
+
+    if(ret < 0 || ret >= MESSAGE_SMALL_MAX)
+    {
+        LOGE("Failed to format message_small (%d)", ret);
+        return;
+    }
+
+    memcpy(message_small, temp, sizeof(char)*MESSAGE_SMALL_MAX);
+    message_small_duration = duration;
+}
+
+void message_small_update(float dt)
+{
+    message_small_duration -= dt;
+}
+
+
+void message_small_draw()
+{
+    if(message_small_duration <= 0)
+        return;
+
+    if(!message_small)
+        return;
+
+    if(strlen(message_small) == 0)
+        return;
+
+    float scale = 0.20 * ascale;
+
+    Vector2f size = gfx_string_get_size(scale, message_small);
+
+    float pad = 10.0;
+
+    Rect bg = {0};
+    bg.w = size.x + pad;
+    bg.h = size.y + pad;
+    bg.x = bg.w/2.0 + 1.0;
+    bg.y = view_height - bg.h/2.0 - 1.0;
+
+    gfx_draw_rect(&bg, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.6, true, NOT_IN_WORLD);
+
+    float tx = bg.x - bg.w/2.0 + pad/2.0;
+    float ty = bg.y - bg.h/2.0 + pad/4.0;
+    gfx_draw_string(tx, ty, COLOR_WHITE, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, NO_DROP_SHADOW, message_small);
+}
+
+
+// ==================================================================================
+// DECALS
+// ==================================================================================
 
 void decal_init()
 {

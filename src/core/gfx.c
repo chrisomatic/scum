@@ -1125,7 +1125,7 @@ void gfx_anim_update(GFXAnimation* anim, double delta_t)
 
 // rel_area: relative coordinates where to draw (e.g. 0,0 translates to the top left of abs_area)
 //           w,h should be the size of the object being drawn
-// draw_orientation: alignment of the object being drawn
+// draw_orientation: desired alignment of the object being drawn
 // abs_area: the area to translate the drawing to
 // gfx_orientation: how the object is aligned when drawn with gfx
 void gfx_get_absolute_coords(Rect* rel_area, GFXAlignment draw_orientation, Rect* abs_area, GFXAlignment gfx_orientation)

@@ -9,6 +9,8 @@
 #include "player.h"
 #include "item.h"
 
+const float iscale = 0.5;
+
 glist* item_list = NULL;
 Item items[MAX_ITEMS] = {0};
 ItemProps item_props[MAX_ITEMS] = {0};
@@ -143,7 +145,7 @@ void item_add(ItemType type, float x, float y, uint8_t curr_room)
     pu.phys.pos.y = y;
     pu.phys.mass = 5.0;
     pu.phys.speed = 1.0;
-    pu.phys.radius = 8;
+    pu.phys.radius = 8*iscale; //TEMP
     pu.phys.elasticity = 0.5;
     pu.phys.base_friction = 7.0;
 
@@ -209,6 +211,7 @@ void item_update_all(float dt)
     {
         items[min_index].highlighted = true;
         player->highlighted_item = &items[min_index];
+        message_small_set(0.1, "Item: %s", item_get_name(items[min_index].type));
     }
 }
 
@@ -221,11 +224,11 @@ void item_draw(Item* pu, bool batch)
 
     if(batch)
     {
-        gfx_sprite_batch_add(item_props[pu->type].image, item_props[pu->type].sprite_index, pu->phys.pos.x, pu->phys.pos.y, color, false, 1.0, 0.0, 1.0, false, false, false);
+        gfx_sprite_batch_add(item_props[pu->type].image, item_props[pu->type].sprite_index, pu->phys.pos.x, pu->phys.pos.y, color, false, iscale, 0.0, 1.0, false, false, false);
     }
     else
     {
-        gfx_draw_image(item_props[pu->type].image, item_props[pu->type].sprite_index, pu->phys.pos.x, pu->phys.pos.y, color, 1.0, 0.0, 1.0, false, IN_WORLD);
+        gfx_draw_image(item_props[pu->type].image, item_props[pu->type].sprite_index, pu->phys.pos.x, pu->phys.pos.y, color, iscale, 0.0, 1.0, false, IN_WORLD);
     }
 }
 
