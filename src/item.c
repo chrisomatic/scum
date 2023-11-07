@@ -15,10 +15,17 @@ glist* item_list = NULL;
 Item items[MAX_ITEMS] = {0};
 ItemProps item_props[MAX_ITEMS] = {0};
 int items_image = -1;
+int chest_image = -1;
 
 static void item_func_nothing(Item* pu, Player* p)
 {
     return;
+}
+
+static void item_func_chest(Item* pu, Player* p)
+{
+    for(int i = 0; i < 4; ++i)
+        item_add(item_get_random_gem(), pu->phys.pos.x, pu->phys.pos.y, pu->curr_room);
 }
 
 static void item_func_heart(Item* pu, Player* p)
@@ -53,14 +60,16 @@ void item_init()
         return;
 
     item_list = list_create((void*)items, MAX_ITEMS, sizeof(Item));
+
     items_image = gfx_load_image("src/img/items.png", false, false, 16, 16);
+    chest_image = gfx_load_image("src/img/chest.png", false, false, 32, 32);
 
     for(int i = 0; i < ITEM_MAX; ++i)
     {
         ItemProps* p = &item_props[i];
         p->type = i;
-        p->image = items_image;
-        p->sprite_index = i;
+        p->image = p->type == ITEM_CHEST ? chest_image : items_image;
+        p->sprite_index = p->type == ITEM_CHEST ? 0 : i;
         p->func = (void*)item_func_nothing;
 
         if(item_is_gem(p->type))
@@ -73,8 +82,12 @@ void item_init()
             p->touch_item = true;
             p->func = (void*)item_func_heart;
         }
+        else if(item_is_chest(p->type))
+        {
+            p->touch_item = false;
+            p->func = (void*)item_func_chest;
+        }
     }
-
 }
 
 void item_clear_all()
@@ -82,18 +95,19 @@ void item_clear_all()
     list_clear(item_list);
 }
 
+bool item_is_chest(ItemType type)
+{
+    return (type == ITEM_CHEST);
+}
+
 bool item_is_gem(ItemType type)
 {
-    if(type >= ITEM_GEM_RED && type <= ITEM_GEM_PURPLE)
-        return true;
-    return false;
+    return (type >= ITEM_GEM_RED && type <= ITEM_GEM_PURPLE);
 }
 
 bool item_is_heart(ItemType type)
 {
-    if(type >= ITEM_HEART_FULL && type <= ITEM_HEART_HALF)
-        return true;
-    return false;
+    return (type >= ITEM_HEART_FULL && type <= ITEM_HEART_HALF);
 }
 
 ItemType item_get_random_gem()
@@ -143,11 +157,22 @@ void item_add(ItemType type, float x, float y, uint8_t curr_room)
     pu.curr_room = curr_room;
     pu.phys.pos.x = x;
     pu.phys.pos.y = y;
-    pu.phys.mass = 5.0;
     pu.phys.speed = 1.0;
-    pu.phys.radius = 8*iscale; //TEMP
-    pu.phys.elasticity = 0.5;
-    pu.phys.base_friction = 7.0;
+
+    if(type == ITEM_CHEST)
+    {
+        pu.phys.mass = 50.0;
+        pu.phys.radius = 12*iscale; //TEMP
+        pu.phys.elasticity = 0.2;
+        pu.phys.base_friction = 20.0;
+    }
+    else
+    {
+        pu.phys.mass = 5.0;
+        pu.phys.radius = 8*iscale; //TEMP
+        pu.phys.elasticity = 0.5;
+        pu.phys.base_friction = 7.0;
+    }
 
     list_add(item_list,&pu);
 }
@@ -168,7 +193,6 @@ void item_update(Item* pu, float dt)
 
 void item_update_all(float dt)
 {
-
     float min_dist = 10000.0;
     int min_index = -1;
 
@@ -222,13 +246,18 @@ void item_draw(Item* pu, bool batch)
 
     uint32_t color = pu->highlighted ? COLOR_TINT_NONE : 0x88888888;
 
+    int sprite_index = item_props[pu->type].sprite_index;
+
+    if(pu->opened)
+        sprite_index++;
+
     if(batch)
     {
-        gfx_sprite_batch_add(item_props[pu->type].image, item_props[pu->type].sprite_index, pu->phys.pos.x, pu->phys.pos.y, color, false, iscale, 0.0, 1.0, false, false, false);
+        gfx_sprite_batch_add(item_props[pu->type].image, sprite_index, pu->phys.pos.x, pu->phys.pos.y, color, false, iscale, 0.0, 1.0, true, false, false);
     }
     else
     {
-        gfx_draw_image(item_props[pu->type].image, item_props[pu->type].sprite_index, pu->phys.pos.x, pu->phys.pos.y, color, iscale, 0.0, 1.0, false, IN_WORLD);
+        gfx_draw_image(item_props[pu->type].image, sprite_index, pu->phys.pos.x, pu->phys.pos.y, color, iscale, 0.0, 1.0, true, IN_WORLD);
     }
 }
 

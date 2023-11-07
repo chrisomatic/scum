@@ -23,7 +23,7 @@ static uint16_t id_counter = 0;
 ProjectileDef projectile_lookup[] = {
     {
         // player/laser
-        .damage = 1.0,
+        .damage = 10.0,
         .min_speed = 200.0,
         .base_speed = 200.0,
         .angle_spread = 45.0,
@@ -109,11 +109,12 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileType proj_type, 
     proj.phys.pos.x = phys->pos.x;
     proj.phys.pos.y = phys->pos.y;
     proj.phys.height = gfx_images[projectile_image].element_height;
-    proj.phys.mass = 1.0;
+    proj.phys.mass = 4.0;
     proj.phys.radius = 4.0 * proj.scale;
     proj.phys.amorphous = projdef->bouncy ? false : true;
     proj.phys.elasticity = projdef->bouncy ? 1.0 : 0.1;
     proj.phys.ethereal = projdef->ghost;
+
     proj.curr_room = curr_room;
     proj.from_player = from_player;
 

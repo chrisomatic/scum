@@ -34,8 +34,8 @@ typedef struct
     float height;
     float elasticity;
 
-    uint8_t hp;
-    uint8_t hp_max;
+    int8_t hp;
+    int8_t hp_max;
 
     bool dead;
     bool amorphous; // splatters on collision

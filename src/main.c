@@ -692,8 +692,7 @@ void init()
     }
 
     // @TEMP
-    for(int i = 0; i < 4; ++i)
-        item_add(item_get_random_gem(), player->phys.pos.x+32, player->phys.pos.y+32, player->curr_room);
+    item_add(ITEM_CHEST, player->phys.pos.x + 64, player->phys.pos.y -64, player->curr_room);
 
     item_add(ITEM_HEART_FULL, player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
     item_add(ITEM_HEART_HALF, player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);

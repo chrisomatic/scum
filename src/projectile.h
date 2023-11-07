@@ -34,6 +34,7 @@ typedef struct
     bool bouncy;
     bool penetrate;
 
+    // elemental
     bool poison;
     bool cold;
 

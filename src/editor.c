@@ -32,7 +32,7 @@ void editor_draw()
     imgui_begin_panel("Editor", view_width - 300, 1, true);
 
         imgui_newline();
-        char* buttons[] = {"General", "Level", "Players", "Creatures", "Projectiles"};
+        char* buttons[] = {"General", "Level", "Players", "Creatures", "Projectiles", "Theme"};
         int selection = imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "");
         imgui_horizontal_line(1);
 
@@ -211,6 +211,11 @@ void editor_draw()
                 imgui_checkbox("Penetrate", &projectile_lookup[PROJECTILE_TYPE_LASER].penetrate);
                 imgui_checkbox("Cold", &projectile_lookup[PROJECTILE_TYPE_LASER].cold);
                 imgui_checkbox("Poison", &projectile_lookup[PROJECTILE_TYPE_LASER].poison);
+
+            } break;
+            case 5: // theme
+            {
+                imgui_theme_editor();
             } break;
         }
     imgui_end();

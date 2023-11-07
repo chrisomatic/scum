@@ -894,8 +894,21 @@ void player_update(Player* p, float dt)
     {
         if(p->highlighted_item)
         {
-            item_props[p->highlighted_item->type].func(p->highlighted_item,p);
-            item_remove(p->highlighted_item);
+            ItemType type = p->highlighted_item->type;
+
+            if(type == ITEM_CHEST)
+            {
+                if(!p->highlighted_item->opened)
+                {
+                    p->highlighted_item->opened = true;
+                    item_props[type].func(p->highlighted_item,p);
+                }
+            }
+            else
+            {
+                item_props[type].func(p->highlighted_item,p);
+                item_remove(p->highlighted_item);
+            }
         }
     }
 

@@ -10,8 +10,9 @@
 //  - item_is_heart()
 typedef enum
 {
-    ITEM_NONE = -1,
+    ITEM_NONE = -2,
 
+    ITEM_CHEST = 0,
     ITEM_GEM_RED,
     ITEM_GEM_GREEN,
     ITEM_GEM_BLUE,
@@ -43,6 +44,7 @@ typedef struct
     uint8_t curr_room;
     Physics phys;
     bool highlighted;
+    bool opened;
 } Item;
 
 extern int items_image;
@@ -55,6 +57,8 @@ void item_clear_all();
 
 bool item_is_gem(ItemType type);
 bool item_is_heart(ItemType type);
+bool item_is_chest(ItemType type);
+
 ItemType item_get_random_gem();
 ItemType item_get_random_heart();
 
