@@ -32,6 +32,19 @@ static void item_func_heart(Item* pu, Player* p)
     }
 }
 
+static void item_func_gem(Item* pu, Player* p)
+{
+    switch(pu->type)
+    {
+        case ITEM_GEM_RED:
+            p->phys.hp_max++;
+            p->phys.hp = p->phys.hp_max;
+            break;
+        default:
+            break;
+    }
+}
+
 void item_init()
 {
     if(item_list)
@@ -51,6 +64,7 @@ void item_init()
         if(item_is_gem(p->type))
         {
             p->touch_item = false;
+            p->func = (void*)item_func_gem;
         }
         else if(item_is_heart(p->type))
         {
@@ -105,11 +119,11 @@ const char* item_get_name(ItemType type)
 {
     switch(type)
     {
-        case ITEM_NONE: return "None";
-        case ITEM_GEM_RED: return "Red Gem";
-        case ITEM_GEM_GREEN: return "Green Gem";
-        case ITEM_GEM_BLUE: return "Blue Gem";
-        case ITEM_GEM_WHITE: return "White Gem";
+        case ITEM_NONE:       return "None";
+        case ITEM_GEM_RED:    return "Red Gem";
+        case ITEM_GEM_GREEN:  return "Green Gem";
+        case ITEM_GEM_BLUE:   return "Blue Gem";
+        case ITEM_GEM_WHITE:  return "White Gem";
         case ITEM_GEM_YELLOW: return "Yellow Gem";
         case ITEM_GEM_PURPLE: return "Purple Gem";
         case ITEM_HEART_FULL: return "Full Heart";
@@ -131,20 +145,33 @@ void item_add(ItemType type, float x, float y, uint8_t curr_room)
     pu.phys.speed = 1.0;
     pu.phys.radius = 8;
     pu.phys.elasticity = 0.5;
+    pu.phys.base_friction = 7.0;
 
     list_add(item_list,&pu);
 }
+
+bool item_remove(Item* pu)
+{
+    return list_remove_by_item(item_list, pu);
+}
+
 
 void item_update(Item* pu, float dt)
 {
     pu->phys.pos.x += dt*pu->phys.vel.x;
     pu->phys.pos.y += dt*pu->phys.vel.y;
 
-    phys_apply_friction(&pu->phys,10.0,dt);
+    phys_apply_friction(&pu->phys,pu->phys.base_friction,dt);
 }
 
 void item_update_all(float dt)
 {
+
+    float min_dist = 10000.0;
+    int min_index = -1;
+
+    player->highlighted_item = NULL;
+
     for(int i = item_list->count-1; i >= 0; --i)
     {
         Item* pu = &items[i];
@@ -156,6 +183,32 @@ void item_update_all(float dt)
         }
 
         item_update(pu, dt);
+
+        if(pu->curr_room != player->curr_room)
+            continue;
+
+        Vector2f c1 = {CPOSX(player->phys), CPOSY(player->phys)};
+        Vector2f c2 = {CPOSX(pu->phys), CPOSY(pu->phys)};
+
+        float distance;
+        bool in_pickup_radius = circles_colliding(&c1, player->phys.radius, &c2, ITEM_PICKUP_RADIUS, &distance);
+
+        if(in_pickup_radius)
+        {
+            if(distance < min_dist)
+            {
+                min_dist = distance;
+                min_index = i;
+            }
+        }
+
+        pu->highlighted = false;
+    }
+
+    if(min_index >= 0)
+    {
+        items[min_index].highlighted = true;
+        player->highlighted_item = &items[min_index];
     }
 }
 
@@ -164,13 +217,15 @@ void item_draw(Item* pu, bool batch)
     if(pu->curr_room != player->curr_room)
         return;
 
+    uint32_t color = pu->highlighted ? COLOR_TINT_NONE : 0x88888888;
+
     if(batch)
     {
-        gfx_sprite_batch_add(item_props[pu->type].image, item_props[pu->type].sprite_index, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, false, 1.0, 0.0, 1.0, false, false, false);
+        gfx_sprite_batch_add(item_props[pu->type].image, item_props[pu->type].sprite_index, pu->phys.pos.x, pu->phys.pos.y, color, false, 1.0, 0.0, 1.0, false, false, false);
     }
     else
     {
-        gfx_draw_image(item_props[pu->type].image, item_props[pu->type].sprite_index, pu->phys.pos.x, pu->phys.pos.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, IN_WORLD);
+        gfx_draw_image(item_props[pu->type].image, item_props[pu->type].sprite_index, pu->phys.pos.x, pu->phys.pos.y, color, 1.0, 0.0, 1.0, false, IN_WORLD);
     }
 }
 

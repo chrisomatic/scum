@@ -3,6 +3,7 @@
 #include "entity.h"
 
 #define MAX_ITEMS 500
+#define ITEM_PICKUP_RADIUS 22.0
 
 // order matters, see these functions:
 //  - item_is_gem()
@@ -24,8 +25,6 @@ typedef enum
     ITEM_MAX
 } ItemType;
 
-#include "player.h"
-
 typedef void (*item_func)(void* item, void* player);
 
 typedef struct
@@ -43,13 +42,13 @@ typedef struct
     bool picked_up;
     uint8_t curr_room;
     Physics phys;
+    bool highlighted;
 } Item;
 
 extern int items_image;
 extern glist* item_list;
 extern Item items[MAX_ITEMS];
 extern ItemProps item_props[MAX_ITEMS];
-
 
 void item_init();
 void item_clear_all();
@@ -61,7 +60,9 @@ ItemType item_get_random_heart();
 
 const char* item_get_name(ItemType type);
 void item_add(ItemType type, float x, float y, uint8_t curr_room);
+bool item_remove(Item* pu);
 void item_update(Item* pu, float dt);
 void item_update_all(float dt);
 void item_draw(Item* pu, bool batch);
 void item_handle_collision(Item* p, Entity* e);
+

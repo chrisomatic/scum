@@ -125,6 +125,7 @@ void rects_to_ling_segs(Rect* a, Rect* b, LineSeg out[5]);
 bool are_rects_colliding(Rect* prior_s, Rect* curr_s, Rect* check);
 bool rectangles_colliding(Rect* a, Rect* b);
 bool rectangles_colliding2(Rect* a, Rect* b);
+bool circles_colliding(Vector2f* p1, float r1, Vector2f* p2, float r2, float *distance);
 Vector2f limit_rect_pos(Rect* limit, Rect* rect);
 
 int angle_sector(float angle, int num_sectors);

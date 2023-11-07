@@ -200,6 +200,7 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_SPACE);
 #endif
     window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_E);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GEM_MENU].state, GLFW_KEY_G);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GEM_MENU_CYCLE].state, GLFW_KEY_TAB);
 
@@ -888,6 +889,17 @@ void player_update(Player* p, float dt)
         }
     }
 
+    bool activate = p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
+    if(activate)
+    {
+        if(p->highlighted_item)
+        {
+            item_props[p->highlighted_item->type].func(p->highlighted_item,p);
+            item_remove(p->highlighted_item);
+        }
+    }
+
+
     // check tiles around player
     handle_room_collision(p);
 
@@ -996,7 +1008,7 @@ void player_draw(Player* p, bool batch)
     float opacity = p->phys.dead ? 0.3 : 1.0;
 
     opacity = blink ? 0.3 : opacity;
-    uint32_t color = gfx_blend_colors(COLOR_BLUE, room->color, p->phys.speed_factor);
+    uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
 
     if(batch)
     {
@@ -1132,6 +1144,7 @@ void player_handle_collision(Player* p, Entity* e)
 
                 phys_collision_correct(&p->phys, &p2->phys,&ci);
             }
+
         } break;
     }
 }

@@ -382,11 +382,11 @@ void projectile_draw(Projectile* proj, bool batch)
 
     if(batch)
     {
-        gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, proj->from_player ? 0x0050A0FF : 0x00FF5050, false, proj->scale, 0.0, opacity, false, false, false);
+        gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, proj->from_player ? 0x0050A0FF : 0x00FF5050, false, proj->scale, 0.0, opacity, false, true, false);
     }
     else
     {
-        gfx_draw_image(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, proj->from_player ? 0x0050A0FF : 0x00FF5050, proj->scale, 0.0, opacity, false, true);
+        gfx_draw_image_ignore_light(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, proj->from_player ? 0x0050A0FF : 0x00FF5050, proj->scale, 0.0, opacity, false, IN_WORLD);
     }
 
     if(debug_enabled)

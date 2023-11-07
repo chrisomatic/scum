@@ -35,6 +35,7 @@ typedef enum
     PLAYER_ACTION_SHOOT,
 #endif
     PLAYER_ACTION_GENERATE_ROOMS,
+    PLAYER_ACTION_ACTIVATE,
     PLAYER_ACTION_GEM_MENU,
     PLAYER_ACTION_GEM_MENU_CYCLE,
 
@@ -78,6 +79,8 @@ typedef struct
     bool invulnerable;
     float invulnerable_time;
     float invulnerable_max;
+
+    Item* highlighted_item;
 
     // Networking
     NetPlayerInput input;

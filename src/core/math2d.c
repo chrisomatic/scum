@@ -452,6 +452,14 @@ bool rectangles_colliding2(Rect* a, Rect* b)
     return true;
 }
 
+bool circles_colliding(Vector2f* p1, float r1, Vector2f* p2, float r2, float *distance)
+{
+    *distance = dist(p1->x,p1->y,p2->x,p2->y);
+    float r  = (r1 + r2);
+
+    return (*distance < r);
+}
+
 // rect is contained inside of limit
 Vector2f limit_rect_pos(Rect* limit, Rect* rect)
 {

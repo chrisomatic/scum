@@ -241,7 +241,7 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
         }
     }
 
-    c.color = room->color;
+    c.color = COLOR_TINT_NONE; //room->color;
     creature_init_props(&c);
 
     if(creature == NULL)
