@@ -81,7 +81,8 @@ void creature_init_props(Creature* c)
             c->image = creature_image_slug;
             c->act_time_min = 0.5;
             c->act_time_max = 1.0;
-            c->phys.mass = 10.0;
+            c->phys.mass = 0.2;
+            c->phys.base_friction = 20.0;
             c->phys.height = gfx_images[creature_image_slug].element_height;
             c->phys.hp_max = 3.0;
             c->painful_touch = true;
@@ -92,7 +93,8 @@ void creature_init_props(Creature* c)
             c->image = creature_image_clinger;
             c->act_time_min = 0.2;
             c->act_time_max = 0.4;
-            c->phys.mass = 100.0; // so it doesn't slide when hit
+            c->phys.mass = 10.0;
+            c->phys.base_friction = 10.0;
             c->phys.height = gfx_images[creature_image_clinger].element_height;
             c->phys.hp_max = 5.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_CLINGER;
@@ -105,6 +107,7 @@ void creature_init_props(Creature* c)
             c->act_time_min = 3.0;
             c->act_time_max = 5.0;
             c->phys.mass = 1000.0; // so it doesn't slide when hit
+            c->phys.base_friction = 50.0;
             c->phys.height = gfx_images[creature_image_geizer].element_height;
             c->phys.hp_max = 10.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
@@ -289,7 +292,7 @@ void creature_update(Creature* c, float dt)
     if(ABS(c->phys.vel.y) > speed) c->phys.vel.y = v_speed;
 
     if(c->h == 0.0 && c->v == 0.0)
-        phys_apply_friction(&c->phys,10.0,dt);
+        phys_apply_friction(&c->phys,c->phys.base_friction,dt);
 
     c->phys.pos.x += dt*c->phys.vel.x;
     c->phys.pos.y += dt*c->phys.vel.y;

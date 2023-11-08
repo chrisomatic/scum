@@ -52,7 +52,7 @@ void player_init()
         p->phys.vel.x = 0.0;
         p->phys.vel.y = 0.0;
         p->phys.height = gfx_images[player_image].element_height;
-        p->phys.mass = 10.0;
+        p->phys.mass = 1.0;
         p->phys.elasticity = 0.0;
 
         p->phys.hp_max = 24;
@@ -540,8 +540,6 @@ static float sprite_index_to_angle(Player* p)
 static void handle_room_collision(Player* p)
 {
     Room* room = level_get_room_by_index(&level, p->curr_room);
-
-    //level_handle_room_collision(room,&p->phys);
 
     // doors
     for(int i = 0; i < 4; ++i)
@@ -1156,6 +1154,7 @@ void player_handle_collision(Player* p, Entity* e)
                     item_props[p2->type].func(p2, p);
 
                 phys_collision_correct(&p->phys, &p2->phys,&ci);
+                //phys_collision_correct_no_bounce(&p->phys, &p2->phys, &ci);
             }
 
         } break;

@@ -34,6 +34,47 @@ bool phys_collision_circles(Physics* phys1, Physics* phys2, CollisionInfo* ci)
     return colliding;
 }
 
+void phys_collision_correct_no_bounce(Physics* phys1, Physics* phys2, CollisionInfo* ci)
+{
+    // collision correct
+    float cratio = phys2->mass/(phys1->mass+phys2->mass);
+
+    if(phys2->mass > 100.0*phys1->mass)
+        cratio = 1.0; // mass is sufficiently large to not move at all
+
+    phys1->pos.x -= ci->overlap.x*cratio;
+    phys1->pos.y -= ci->overlap.y*cratio;
+
+    phys2->pos.x += ci->overlap.x*(1.0-cratio);
+    phys2->pos.y += ci->overlap.y*(1.0-cratio);
+
+    // collision response
+    // update velocities based on elastic collision
+
+    float m1 = phys1->mass;
+    float m2 = phys2->mass;
+
+    float m_total = m1+m2;
+
+    float u1x = phys1->vel.x;
+    float u2x = phys2->vel.x;
+
+    float u2y = phys2->vel.y;
+    float u1y = phys1->vel.y;
+
+    float v1x = u1x*(m1-m2)/m_total + u2x*(2*m2/m_total);
+    float v2x = u1x*(2*m1)/m_total + u2x*((m2-m1)/m_total);
+
+    float v1y = u1y*(m1-m2)/m_total + u2y*(2*m2/m_total);
+    float v2y = u1y*(2*m1)/m_total + u2y*((m2-m1)/m_total);
+
+    phys1->vel.x = v1x;
+    phys1->vel.y = v1y;
+
+    phys2->vel.x = v2x;
+    phys2->vel.y = v2y;
+}
+
 void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci)
 {
     // collision correct
@@ -54,35 +95,43 @@ void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci)
     float m1 = phys1->mass;
     float m2 = phys2->mass;
 
-    if(m1 == m2)
-    {
-        // shortcut, simply switch velocities
-        Vector2f t1 = {phys1->vel.x, phys1->vel.y};
-        memcpy(&phys1->vel,&phys2->vel,sizeof(Vector2f));
-        memcpy(&phys2->vel,&t1,sizeof(Vector2f));
-    }
-    else
-    {
-        float m_total = m1+m2;
+    Vector2f x1 = {CPOSX(*phys1), CPOSY(*phys1)};
+    Vector2f x2 = {CPOSX(*phys2), CPOSY(*phys2)};
 
-        float u1x = phys1->vel.x;
-        float u2x = phys2->vel.x;
+    Vector2f v1 = {phys1->vel.x, phys1->vel.y};
+    Vector2f v2 = {phys2->vel.x, phys2->vel.y};
 
-        float u2y = phys2->vel.y;
-        float u1y = phys1->vel.y;
+    float m_total = m1+m2;
 
-        float v1x = u1x*(m1-m2)/m_total + u2x*(2*m2/m_total);
-        float v2x = u1x*(2*m1)/m_total + u2x*((m2-m1)/m_total);
+    Vector2f v1mv2 = {v1.x - v2.x, v1.y - v2.y};
+    Vector2f x1mx2 = {x1.x - x2.x, x1.y - x2.y};
 
-        float v1y = u1y*(m1-m2)/m_total + u2y*(2*m2/m_total);
-        float v2y = u1y*(2*m1)/m_total + u2y*((m2-m1)/m_total);
+    Vector2f v2mv1 = {v2.x - v1.x, v2.y - v1.y};
+    Vector2f x2mx1 = {x2.x - x1.x, x2.y - x1.y};
 
-        phys1->vel.x = v1x;
-        phys1->vel.y = v1y;
+    float dot1 = vec_dot(v1mv2,x1mx2);
+    float dot2 = vec_dot(v2mv1,x2mx1);
 
-        phys2->vel.x = v2x;
-        phys2->vel.y = v2y;
-    }
+    float mag1   = magn(x1mx2);
+    float mag1sq = mag1*mag1;
+
+    float mag2   = magn(x2mx1);
+    float mag2sq = mag2*mag2;
+
+    float fac1 = (2*m2/m_total) * (dot1/mag1sq);
+    float fac2 = (2*m1/m_total) * (dot2/mag2sq);
+
+    float v1x = v1.x - fac1*x1mx2.x;
+    float v1y = v1.y - fac1*x1mx2.y;
+
+    float v2x = v2.x - fac2*x2mx1.x;
+    float v2y = v2.y - fac2*x2mx1.y;
+
+    phys1->vel.x = v1x;
+    phys1->vel.y = v1y;
+
+    phys2->vel.x = v2x;
+    phys2->vel.y = v2y;
 }
 
 float phys_get_friction_rate(float friction_factor, float dt)

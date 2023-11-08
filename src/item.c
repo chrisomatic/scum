@@ -9,7 +9,7 @@
 #include "player.h"
 #include "item.h"
 
-const float iscale = 0.5;
+const float iscale = 0.8;
 
 glist* item_list = NULL;
 Item items[MAX_ITEMS] = {0};
@@ -161,17 +161,17 @@ void item_add(ItemType type, float x, float y, uint8_t curr_room)
 
     if(type == ITEM_CHEST)
     {
-        pu.phys.mass = 50.0;
+        pu.phys.mass = 2.0;
+        pu.phys.base_friction = 30.0;
         pu.phys.radius = 12*iscale; //TEMP
         pu.phys.elasticity = 0.2;
-        pu.phys.base_friction = 20.0;
     }
     else
     {
-        pu.phys.mass = 5.0;
+        pu.phys.mass = 0.5;
+        pu.phys.base_friction = 15.0;
         pu.phys.radius = 8*iscale; //TEMP
         pu.phys.elasticity = 0.5;
-        pu.phys.base_friction = 7.0;
     }
 
     list_add(item_list,&pu);
