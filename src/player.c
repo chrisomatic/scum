@@ -732,13 +732,13 @@ void player_update(Player* p, float dt)
     if(p->phys.pos.z > 0.0)
     {
         // apply gravity
-        p->phys.vel.z -= 10.0;
+        p->phys.vel.z -= 15.0;
     }
 
     bool jump = p->actions[PLAYER_ACTION_JUMP].toggled_on;
     if(jump && p->phys.pos.z == 0.0)
     {
-        p->phys.vel.z = 200.0;
+        p->phys.vel.z = 220.0;
     }
     
     if(!left && !right)

@@ -122,7 +122,7 @@ void phys_apply_friction_x(Physics* phys, float friction, float dt)
     f.x *= applied_friction;
     phys->vel.x += f.x;
     
-    if(ABS(phys->vel.x) < 1.0) phys->vel.x = 0.0;
+    if(ABS(phys->vel.x) < 2.0) phys->vel.x = 0.0;
 }
 
 void phys_apply_friction_y(Physics* phys, float friction, float dt)
@@ -136,5 +136,5 @@ void phys_apply_friction_y(Physics* phys, float friction, float dt)
     f.y *= applied_friction;
     phys->vel.y += f.y;
     
-    if(ABS(phys->vel.y) < 1.0) phys->vel.y = 0.0;
+    if(ABS(phys->vel.y) < 2.0) phys->vel.y = 0.0;
 }
