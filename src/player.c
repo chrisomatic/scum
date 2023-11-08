@@ -13,6 +13,8 @@
 #define RADIUS_OFFSET_X 0
 #define RADIUS_OFFSET_Y 7.5
 
+#define ALWAYS_SHOW_GAUNTLET 1
+
 void player_ai_move_to_target(Player* p, Player* target);
 
 static float sprite_index_to_angle(Player* p);
@@ -90,7 +92,11 @@ for(int i = 0; i < MAX_PLAYERS; ++i)
         p->anim.frame_sequence[2] = 2;
         p->anim.frame_sequence[3] = 3;
 
+#if ALWAYS_SHOW_GAUNTLET
+        p->show_gauntlet = true;
+#else
         p->show_gauntlet = false;
+#endif
         p->gauntlet_selection = 0;
 
         p->gauntlet_slots = MIN(4,PLAYER_GAUNTLET_MAX);
@@ -650,13 +656,22 @@ void player_update(Player* p, float dt)
 
     if(p->actions[PLAYER_ACTION_GEM_MENU].toggled_on)
     {
+#if ALWAYS_SHOW_GAUNTLET
+        if(PLAYER_SWAPPING_GEM(p))
+        {
+            item_add(p->gauntlet_item.type, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+            p->gauntlet_item.type = ITEM_NONE;
+        }
+#else
         p->show_gauntlet = !p->show_gauntlet;
         if(!p->show_gauntlet && PLAYER_SWAPPING_GEM(p))
         {
             item_add(p->gauntlet_item.type, player->phys.pos.x, player->phys.pos.y, player->curr_room);
             p->gauntlet_item.type = ITEM_NONE;
         }
+#endif
     }
+
     if(p->show_gauntlet)
     {
         if(p->actions[PLAYER_ACTION_GEM_MENU_CYCLE].toggled_on)

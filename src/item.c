@@ -48,7 +48,7 @@ static void item_func_gem(Item* pu, Player* p)
     switch(pu->type)
     {
         case ITEM_GEM_RED:
-            p->phys.hp_max++;
+            p->phys.hp_max += 2;
             p->phys.hp = p->phys.hp_max;
             break;
         default:
