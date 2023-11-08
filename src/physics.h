@@ -55,10 +55,8 @@ typedef struct
 // collision
 bool phys_collision_circles(Physics* phys1, Physics* phys2, CollisionInfo* ci);
 void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci);
-void phys_collision_correct_no_bounce(Physics* phys1, Physics* phys2, CollisionInfo* ci);
 
 // friction
-float phys_get_friction_rate(float friction_factor, float dt);
-void phys_apply_friction_x(Physics* phys, float rate);
-void phys_apply_friction_y(Physics* phys, float rate);
+void phys_apply_friction_x(Physics* phys, float friction, float dt);
+void phys_apply_friction_y(Physics* phys, float friction, float dt);
 void phys_apply_friction(Physics* phys, float friction, float dt);

@@ -81,7 +81,7 @@ void creature_init_props(Creature* c)
             c->image = creature_image_slug;
             c->act_time_min = 0.5;
             c->act_time_max = 1.0;
-            c->phys.mass = 0.2;
+            c->phys.mass = 0.5;
             c->phys.base_friction = 20.0;
             c->phys.height = gfx_images[creature_image_slug].element_height;
             c->phys.hp_max = 3.0;
@@ -280,18 +280,35 @@ void creature_update(Creature* c, float dt)
             break;
     }
 
+
     float speed = c->phys.speed*c->phys.speed_factor;
+
+    bool moving = (c->h != 0.0 || c->v != 0.0);
 
     float h_speed = speed*c->h;
     float v_speed = speed*c->v;
 
-    c->phys.vel.x += dt*h_speed;
-    c->phys.vel.y += dt*v_speed;
+    float vel_magn = magn(c->phys.vel);
 
-    if(ABS(c->phys.vel.x) > speed) c->phys.vel.x = h_speed;
-    if(ABS(c->phys.vel.y) > speed) c->phys.vel.y = v_speed;
+    if(vel_magn < speed)
+    {
+        c->phys.vel.x += dt*h_speed;
+        c->phys.vel.y += dt*v_speed;
+    }
 
-    if(c->h == 0.0 && c->v == 0.0)
+    /*
+    if(moving && vel_magn > speed)
+    {
+        normalize(&c->phys.vel);
+        c->phys.vel.x *= speed;
+        c->phys.vel.y *= speed;
+    }
+    */
+
+    //if(ABS(c->phys.vel.x) > speed) c->phys.vel.x = h_speed;
+    //if(ABS(c->phys.vel.y) > speed) c->phys.vel.y = v_speed;
+
+    if(!moving || vel_magn > speed)
         phys_apply_friction(&c->phys,c->phys.base_friction,dt);
 
     c->phys.pos.x += dt*c->phys.vel.x;

@@ -34,47 +34,6 @@ bool phys_collision_circles(Physics* phys1, Physics* phys2, CollisionInfo* ci)
     return colliding;
 }
 
-void phys_collision_correct_no_bounce(Physics* phys1, Physics* phys2, CollisionInfo* ci)
-{
-    // collision correct
-    float cratio = phys2->mass/(phys1->mass+phys2->mass);
-
-    if(phys2->mass > 100.0*phys1->mass)
-        cratio = 1.0; // mass is sufficiently large to not move at all
-
-    phys1->pos.x -= ci->overlap.x*cratio;
-    phys1->pos.y -= ci->overlap.y*cratio;
-
-    phys2->pos.x += ci->overlap.x*(1.0-cratio);
-    phys2->pos.y += ci->overlap.y*(1.0-cratio);
-
-    // collision response
-    // update velocities based on elastic collision
-
-    float m1 = phys1->mass;
-    float m2 = phys2->mass;
-
-    float m_total = m1+m2;
-
-    float u1x = phys1->vel.x;
-    float u2x = phys2->vel.x;
-
-    float u2y = phys2->vel.y;
-    float u1y = phys1->vel.y;
-
-    float v1x = u1x*(m1-m2)/m_total + u2x*(2*m2/m_total);
-    float v2x = u1x*(2*m1)/m_total + u2x*((m2-m1)/m_total);
-
-    float v1y = u1y*(m1-m2)/m_total + u2y*(2*m2/m_total);
-    float v2y = u1y*(2*m1)/m_total + u2y*((m2-m1)/m_total);
-
-    phys1->vel.x = v1x;
-    phys1->vel.y = v1y;
-
-    phys2->vel.x = v2x;
-    phys2->vel.y = v2y;
-}
-
 void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci)
 {
     // collision correct
@@ -134,29 +93,6 @@ void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci)
     phys2->vel.y = v2y;
 }
 
-float phys_get_friction_rate(float friction_factor, float dt)
-{
-    return 1.0-pow(2.0, -friction_factor/dt);
-}
-
-void phys_apply_friction_x(Physics* phys, float rate)
-{
-    phys->vel.x += (0.0 - phys->vel.x)*rate;
-    if(ABS(phys->vel.x) < 1.0) phys->vel.x = 0.0;
-}
-
-void phys_apply_friction_y(Physics* phys, float rate)
-{
-    phys->vel.y += (0.0 - phys->vel.y)*rate;
-    if(ABS(phys->vel.y) < 1.0) phys->vel.y = 0.0;
-}
-
-void phys_apply_friction_2(Physics* phys, float rate)
-{
-    phys_apply_friction_x(phys,rate);
-    phys_apply_friction_y(phys,rate);
-}
-
 void phys_apply_friction(Physics* phys, float friction, float dt)
 {
     Vector2f f = {-phys->vel.x, -phys->vel.y};
@@ -172,5 +108,33 @@ void phys_apply_friction(Physics* phys, float friction, float dt)
     phys->vel.y += f.y;
     
     if(ABS(phys->vel.x) < 1.0) phys->vel.x = 0.0;
+    if(ABS(phys->vel.y) < 1.0) phys->vel.y = 0.0;
+}
+
+void phys_apply_friction_x(Physics* phys, float friction, float dt)
+{
+    Vector2f f = {-phys->vel.x, -phys->vel.y};
+    normalize(&f);
+
+    float vel_magn = magn(phys->vel);
+    float applied_friction = MIN(vel_magn,friction);
+
+    f.x *= applied_friction;
+    phys->vel.x += f.x;
+    
+    if(ABS(phys->vel.x) < 1.0) phys->vel.x = 0.0;
+}
+
+void phys_apply_friction_y(Physics* phys, float friction, float dt)
+{
+    Vector2f f = {-phys->vel.x, -phys->vel.y};
+    normalize(&f);
+
+    float vel_magn = magn(phys->vel);
+    float applied_friction = MIN(vel_magn,friction);
+
+    f.y *= applied_friction;
+    phys->vel.y += f.y;
+    
     if(ABS(phys->vel.y) < 1.0) phys->vel.y = 0.0;
 }

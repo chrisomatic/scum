@@ -48,7 +48,7 @@ void player_init()
         p->phys.speed = 1000.0;
         p->phys.speed_factor = 1.0;
         p->phys.max_velocity = 180.0;
-        p->phys.base_friction = 0.80;
+        p->phys.base_friction = 15.0;
         p->phys.vel.x = 0.0;
         p->phys.vel.y = 0.0;
         p->phys.height = gfx_images[player_image].element_height;
@@ -82,7 +82,7 @@ void player_init()
         p->anim.curr_frame = 0;
         p->anim.max_frames = 4;
         p->anim.curr_frame_time = 0.0f;
-        p->anim.max_frame_time = 0.02f;
+        p->anim.max_frame_time = 0.07f;
         p->anim.finite = false;
         p->anim.curr_loop = 0;
         p->anim.max_loops = 0;
@@ -714,7 +714,7 @@ void player_update(Player* p, float dt)
 
     bool moving = (up || down || left || right);
 
-    float speed      = p->phys.speed*p->phys.speed_factor;
+    float speed = p->phys.speed*p->phys.speed_factor;
 
     if(moving)
     {
@@ -730,23 +730,25 @@ void player_update(Player* p, float dt)
             if(ABS(p->phys.vel.y) > ABS(vel_max.y))
                 p->phys.vel.y = vel_max.y;
     }
+
+    //p->phys.vel.x *= p->phys.base_friction;
     
     if(!left && !right)
-        p->phys.vel.x *= p->phys.base_friction;
+        phys_apply_friction_x(&p->phys,p->phys.base_friction,dt);
 
+    //p->phys.vel.y *= p->phys.base_friction;
     if(!up && !down)
-        p->phys.vel.y *= p->phys.base_friction;
+        phys_apply_friction_y(&p->phys,p->phys.base_friction,dt);
 
     float m1 = magn(p->phys.vel);
-    float m2 = speed;
+    float m2 = magn(vel_max);
 
-    p->vel_factor = m1/m2;
+    p->vel_factor = RANGE(m1/m2,0.4,1.0);
 
     p->phys.prior_vel.x = p->phys.vel.x;
     p->phys.prior_vel.y = p->phys.vel.y;
     
     // update position
-
     p->phys.pos.x += p->phys.vel.x*dt;
     p->phys.pos.y += p->phys.vel.y*dt;
 

@@ -191,7 +191,7 @@ void item_add(ItemType type, float x, float y, uint8_t curr_room)
     else
     {
         pu.phys.mass = 0.5;
-        pu.phys.base_friction = 15.0;
+        pu.phys.base_friction = 8.0;
         pu.phys.radius = 8*iscale; //TEMP
         pu.phys.elasticity = 0.5;
     }
