@@ -28,6 +28,7 @@
 // Global Vars
 // =========================
 
+GameRole role = ROLE_LOCAL;
 GameState game_state = GAME_STATE_MENU;
 Timer game_timer = {0};
 text_list_t* text_lst = NULL;
@@ -39,9 +40,6 @@ bool show_big_map = false;
 bool show_walls = false;
 bool show_tile_grid = false;
 bool players_invincible = false;
-bool show_gem_menu = false;
-int gem_menu_selection = 0;
-GameRole role = ROLE_LOCAL;
 
 // Settings
 uint32_t background_color = COLOR_BLACK;
@@ -573,6 +571,10 @@ void game_generate_level(unsigned int _seed)
         player_send_to_level_start(&players[i]);
     }
 
+    // @TEMP
+    item_add(ITEM_CHEST, player->phys.pos.x + 64, player->phys.pos.y -64, player->curr_room);
+    item_add(ITEM_HEART_FULL, player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
+    item_add(ITEM_HEART_HALF, player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
 }
 
 void init()
@@ -690,13 +692,6 @@ void init()
         net_client_init();
         set_game_state(GAME_STATE_PLAYING);
     }
-
-    // @TEMP
-    item_add(ITEM_CHEST, player->phys.pos.x + 64, player->phys.pos.y -64, player->curr_room);
-
-    item_add(ITEM_HEART_FULL, player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
-    item_add(ITEM_HEART_HALF, player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
-
 }
 
 void deinit()
@@ -1139,7 +1134,7 @@ void draw_minimap()
 
 void draw_bigmap()
 {
-    if(show_gem_menu) return; // gem menu takes precedence
+    // if(player->show_gauntlet) return; // gem menu takes precedence
     if(!show_big_map) return;
     float len = MIN(view_width, view_height) * 0.5;
     // float len = MIN(room_area.w, room_area.h);
@@ -1251,46 +1246,6 @@ void draw_hearts2()
     }
 }
 
-void draw_gem_menu()
-{
-    if(!show_gem_menu) return;
-
-    float len = 100.0;
-    float margin = 5.0;
-
-    int w = gfx_images[items_image].element_width;
-    float scale = len / (float)w;
-
-    float total_len = (PLAYER_GEMS_MAX * len) + ((PLAYER_GEMS_MAX-1) * margin);
-
-    float x = (view_width - total_len) / 2.0;   // left side of first rect
-    x += len/2.0;   // centered
-
-    // float y = (float)view_height * 0.75;
-    float y = view_height - len/2.0 - margin;
-
-    Rect r = {0};
-    r.w = len;
-    r.h = len;
-    r.y = y;
-    r.x = x;
-
-    for(int i = 0; i < PLAYER_GEMS_MAX; ++i)
-    {
-        uint32_t color = COLOR_BLACK;
-        if(i == gem_menu_selection)
-            color = COLOR_WHITE;
-        gfx_draw_rect(&r, color, NOT_SCALED, NO_ROTATION, 0.5, true, NOT_IN_WORLD);
-
-        if(player->gems[i] != ITEM_NONE)
-        {
-            gfx_draw_image(item_props[player->gems[i]].image, item_props[player->gems[i]].sprite_index, r.x, r.y, COLOR_TINT_NONE, scale, 0.0, 0.5, false, NOT_IN_WORLD);
-        }
-        r.x += len;
-        r.x += margin;
-    }
-}
-
 void draw()
 {
 
@@ -1396,7 +1351,7 @@ void draw()
     {
         draw_minimap();
         draw_hearts();
-        draw_gem_menu();
+        draw_gauntlet();
     }
 
     if(debug_enabled)

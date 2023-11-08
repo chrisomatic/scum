@@ -125,6 +125,7 @@ extern Level level;
 extern Vector2f transition_offsets;
 extern Vector2f transition_targets;
 
+extern GameRole role;
 extern Timer game_timer;
 extern text_list_t* text_lst;
 extern bool initialized;
@@ -135,11 +136,8 @@ extern bool show_big_map;
 extern bool show_walls;
 extern bool show_tile_grid;
 extern bool players_invincible;
-extern bool show_gem_menu;
-extern int gem_menu_selection;
 extern uint32_t background_color;
 extern unsigned int seed;
-extern GameRole role;
 
 extern bool dynamic_zoom;
 extern int cam_zoom;

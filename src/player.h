@@ -18,7 +18,9 @@
 
 #define PLAYER_NAME_MAX 16
 
-#define PLAYER_GEMS_MAX 4
+#define PLAYER_SWAPPING_GEM(p) (p->gauntlet_item.type != ITEM_NONE)
+
+#define PLAYER_GAUNTLET_MAX 6
 
 typedef enum
 {
@@ -56,7 +58,11 @@ typedef struct
     PlayerActions last_shoot_action;
     float shoot_sprite_cooldown;
 
-    ItemType gems[PLAYER_GEMS_MAX];
+    Item gauntlet_item;
+    bool show_gauntlet;
+    uint8_t gauntlet_selection;
+    uint8_t gauntlet_slots;
+    Item gauntlet[PLAYER_GAUNTLET_MAX];
 
     GFXAnimation anim;
 
@@ -98,6 +104,8 @@ extern Player* player;
 extern Player* player2;
 
 void player_init();
+uint8_t player_get_gauntlet_count(Player* p);
+bool player_gauntlet_full(Player* p);
 void player_init_keys();
 void player2_init_keys();
 void player_send_to_room(Player* p, uint8_t room_index);
@@ -122,3 +130,5 @@ bool is_any_player_room(uint8_t curr_room);
 int player_get_count_in_room(uint8_t curr_room);
 
 int player_names_build(bool include_all, bool only_active);
+
+void draw_gauntlet();

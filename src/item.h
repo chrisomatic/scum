@@ -13,6 +13,7 @@ typedef enum
     ITEM_NONE = -2,
 
     ITEM_CHEST = 0,
+
     ITEM_GEM_RED,
     ITEM_GEM_GREEN,
     ITEM_GEM_BLUE,

@@ -91,14 +91,36 @@ void player_init()
         p->anim.frame_sequence[2] = 2;
         p->anim.frame_sequence[3] = 3;
 
-        for(int j = 0; j < PLAYER_GEMS_MAX; ++j)
+        p->show_gauntlet = false;
+        p->gauntlet_selection = 0;
+
+        p->gauntlet_slots = MIN(4,PLAYER_GAUNTLET_MAX);
+        for(int j = 0; j < PLAYER_GAUNTLET_MAX; ++j)
         {
-            ItemType it = item_get_random_gem();
-            p->gems[j] = it;
-            // p->gems[j] = ITEM_NONE;
+            p->gauntlet[j].type = ITEM_NONE;
+            if(j == 0)
+                p->gauntlet[j].type = item_get_random_gem();
         }
+        p->gauntlet_item.type = ITEM_NONE;
     }
 }
+
+uint8_t player_get_gauntlet_count(Player* p)
+{
+    uint8_t count = 0;
+    for(int i = 0; i < p->gauntlet_slots; ++i)
+    {
+        if(p->gauntlet[i].type != ITEM_NONE)
+            count++;
+    }
+    return count;
+}
+
+bool player_gauntlet_full(Player* p)
+{
+    return (player_get_gauntlet_count(p) == p->gauntlet_slots);
+}
+
 
 void player_set_active(Player* p, bool active)
 {
@@ -628,15 +650,20 @@ void player_update(Player* p, float dt)
 
     if(p->actions[PLAYER_ACTION_GEM_MENU].toggled_on)
     {
-        show_gem_menu = !show_gem_menu;
+        p->show_gauntlet = !p->show_gauntlet;
+        if(!p->show_gauntlet && PLAYER_SWAPPING_GEM(p))
+        {
+            item_add(p->gauntlet_item.type, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+            p->gauntlet_item.type = ITEM_NONE;
+        }
     }
-    if(show_gem_menu)
+    if(p->show_gauntlet)
     {
         if(p->actions[PLAYER_ACTION_GEM_MENU_CYCLE].toggled_on)
         {
-            gem_menu_selection++;
-            if(gem_menu_selection >= PLAYER_GEMS_MAX)
-                gem_menu_selection = 0;
+            p->gauntlet_selection++;
+            if(p->gauntlet_selection >= p->gauntlet_slots)
+                p->gauntlet_selection = 0;
         }
     }
 
@@ -887,10 +914,33 @@ void player_update(Player* p, float dt)
         }
     }
 
+
+    if(PLAYER_SWAPPING_GEM(p))
+    {
+        message_small_set(0.1, "Press e to swap [%s] for [%s] (press g to cancel)", item_get_name(p->gauntlet[p->gauntlet_selection].type), item_get_name(p->gauntlet_item.type));
+    }
+    else if(p->highlighted_item)
+    {
+        message_small_set(0.1, "Item: %s", item_get_name(p->highlighted_item->type));
+    }
+
     bool activate = p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
     if(activate)
     {
-        if(p->highlighted_item)
+
+        if(PLAYER_SWAPPING_GEM(p))
+        {
+
+            Item* it = &p->gauntlet[p->gauntlet_selection];
+
+            item_add(it->type, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+            
+            memcpy(it, &p->gauntlet_item, sizeof(Item));
+            p->gauntlet_item.type = ITEM_NONE;
+
+            // message_small_set(0.1, "Sawp Item: %s", item_get_name(p->gauntlet_item.type));
+        }
+        else if(p->highlighted_item)
         {
             ItemType type = p->highlighted_item->type;
 
@@ -1004,6 +1054,48 @@ void player_ai_move_to_target(Player* p, Player* target)
         p->actions[PLAYER_ACTION_DOWN].state = false;
     }
 
+}
+
+void draw_gauntlet()
+{
+    if(!player->show_gauntlet) return;
+
+    float len = 50.0;
+    float margin = 5.0;
+
+    int w = gfx_images[items_image].element_width;
+    float scale = len / (float)w;
+
+    float total_len = (player->gauntlet_slots * len) + ((player->gauntlet_slots-1) * margin);
+
+    float x = (view_width - total_len) / 2.0;   // left side of first rect
+    x += len/2.0;   // centered
+
+    // float y = (float)view_height * 0.75;
+    float y = view_height - len/2.0 - margin;
+
+    Rect r = {0};
+    r.w = len;
+    r.h = len;
+    r.y = y;
+    r.x = x;
+
+    for(int i = 0; i < player->gauntlet_slots; ++i)
+    {
+        uint32_t color = COLOR_BLACK;
+        if(i == player->gauntlet_selection)
+            color = COLOR_WHITE;
+        gfx_draw_rect(&r, color, NOT_SCALED, NO_ROTATION, 0.5, true, NOT_IN_WORLD);
+
+        ItemType type = player->gauntlet[i].type;
+        if(type != ITEM_NONE)
+        {
+            ItemProps* props = &item_props[type];
+            gfx_draw_image_ignore_light(props->image, props->sprite_index, r.x, r.y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+        }
+        r.x += len;
+        r.x += margin;
+    }
 }
 
 void player_draw(Player* p, bool batch)

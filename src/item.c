@@ -24,8 +24,10 @@ static void item_func_nothing(Item* pu, Player* p)
 
 static void item_func_chest(Item* pu, Player* p)
 {
-    for(int i = 0; i < 4; ++i)
+    for(int i = 0; i < 8; ++i)
         item_add(item_get_random_gem(), pu->phys.pos.x, pu->phys.pos.y, pu->curr_room);
+
+    // item_add(ITEM_CHEST, pu->phys.pos.x, pu->phys.pos.y, pu->curr_room);
 }
 
 static void item_func_heart(Item* pu, Player* p)
@@ -50,7 +52,26 @@ static void item_func_gem(Item* pu, Player* p)
             p->phys.hp = p->phys.hp_max;
             break;
         default:
-            break;
+        {
+            if(player_gauntlet_full(p))
+            {
+                memcpy(&p->gauntlet_item, pu, sizeof(Item));
+                p->show_gauntlet = true;
+            }
+            else
+            {
+                p->gauntlet_item.type = ITEM_NONE;
+                for(int i = 0; i < p->gauntlet_slots; ++i)
+                {
+                    if(p->gauntlet[i].type == ITEM_NONE)
+                    {
+                        p->gauntlet[i].type = pu->type;
+                        break;
+                    }
+                }
+            }
+
+        } break;
     }
 }
 
@@ -136,6 +157,7 @@ const char* item_get_name(ItemType type)
     switch(type)
     {
         case ITEM_NONE:       return "None";
+        case ITEM_CHEST:      return "Chest";
         case ITEM_GEM_RED:    return "Red Gem";
         case ITEM_GEM_GREEN:  return "Green Gem";
         case ITEM_GEM_BLUE:   return "Blue Gem";
@@ -235,7 +257,6 @@ void item_update_all(float dt)
     {
         items[min_index].highlighted = true;
         player->highlighted_item = &items[min_index];
-        message_small_set(0.1, "Item: %s", item_get_name(items[min_index].type));
     }
 }
 
