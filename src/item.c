@@ -11,11 +11,22 @@
 
 const float iscale = 0.8;
 
+
+
 glist* item_list = NULL;
 Item items[MAX_ITEMS] = {0};
 ItemProps item_props[MAX_ITEMS] = {0};
 int items_image = -1;
 int chest_image = -1;
+
+static uint16_t id_counter = 0;
+static uint16_t get_id()
+{
+    if(id_counter >= 65535)
+        id_counter = 0;
+
+    return id_counter++;
+}
 
 static void item_func_nothing(Item* pu, Player* p)
 {
@@ -32,6 +43,11 @@ static void item_func_chest(Item* pu, Player* p)
     int num = RAND_RANGE(4,8);
     for(int i = 0; i < num; ++i)
         item_add(item_get_random_gem(), pu->phys.pos.x, pu->phys.pos.y, pu->curr_room);
+
+    if(RAND_FLOAT(0.0,1.0) <= 0.5 && num < 6)
+    {
+        item_add(item_get_random_heart(), pu->phys.pos.x, pu->phys.pos.y, pu->curr_room);
+    }
 }
 
 static void item_func_heart(Item* pu, Player* p)
@@ -179,6 +195,7 @@ void item_add(ItemType type, float x, float y, uint8_t curr_room)
     Item pu = {0};
 
     pu.type = type;
+    pu.id = get_id();
     pu.picked_up = false;
     pu.curr_room = curr_room;
     pu.phys.pos.x = x;
@@ -217,12 +234,26 @@ void item_update(Item* pu, float dt)
     phys_apply_friction(&pu->phys,pu->phys.base_friction,dt);
 }
 
+
+typedef struct
+{
+    int index;
+    uint16_t id;
+    float dist;
+} ItemSort;
+
+ItemSort near_items_prior[32] = {0};
+int near_items_count_prior = 0;
+ItemSort near_items[32] = {0};
+int near_items_count = 0;
+
 void item_update_all(float dt)
 {
-    float min_dist = 10000.0;
-    int min_index = -1;
+    memcpy(&near_items_prior, &near_items, sizeof(ItemSort)*32);
+    near_items_count_prior = near_items_count;
 
-    player->highlighted_item = NULL;
+    memset(&near_items, 0, sizeof(ItemSort)*32);
+    near_items_count = 0;
 
     for(int i = item_list->count-1; i >= 0; --i)
     {
@@ -247,22 +278,130 @@ void item_update_all(float dt)
 
         if(in_pickup_radius)
         {
-            if(distance < min_dist)
-            {
-                min_dist = distance;
-                min_index = i;
-            }
+            near_items[near_items_count].index = i;
+            near_items[near_items_count].dist = distance;
+            near_items[near_items_count].id = pu->id;
+            near_items_count++;
         }
 
         pu->highlighted = false;
     }
 
-    if(min_index >= 0)
+    if(near_items_count > 0)
     {
-        items[min_index].highlighted = true;
-        player->highlighted_item = &items[min_index];
+        // insertion sort
+        int i, j;
+        ItemSort key;
+        for (i = 1; i < near_items_count; ++i) 
+        {
+            memcpy(&key, &near_items[i], sizeof(ItemSort));
+            j = i - 1;
+
+            while (j >= 0 && near_items[j].dist > key.dist)
+            {
+                memcpy(&near_items[j+1], &near_items[j], sizeof(ItemSort));
+                j = j - 1;
+            }
+            memcpy(&near_items[j+1], &key, sizeof(ItemSort));
+        }
+
+
+        bool same_list = true;
+        if(near_items_count != near_items_count_prior)
+        {
+            same_list = false;
+        }
+        else
+        {
+            for(int i = 0; i < near_items_count; ++i)
+            {
+                if(near_items[i].id != near_items_prior[i].id)
+                {
+                    same_list = false;
+                    break;
+                }
+            }
+        }
+
+        if(same_list)
+        {
+            // text_list_add(text_lst, 3.0, "Same list");
+            if(player->highlighted_index >= near_items_count)
+            {
+                // text_list_add(text_lst, 3.0, "same list: wrap selection");
+                player->highlighted_index = 0;
+            }
+        }
+        else
+        {
+            // text_list_add(text_lst, 3.0, "new list");
+            player->highlighted_index = 0;
+        }
+
+        player->highlighted_item = &items[near_items[player->highlighted_index].index];
+        player->highlighted_item->highlighted = true;
+
     }
+    else
+    {
+        player->highlighted_item = NULL;
+        player->highlighted_index = 0;
+    }
+
+
 }
+
+// void item_update_all(float dt)
+// {
+//     float min_dist = 10000.0;
+//     int min_index = -1;
+
+//     // player->highlighted_item = NULL;
+
+//     for(int i = item_list->count-1; i >= 0; --i)
+//     {
+//         Item* pu = &items[i];
+
+//         if(pu->picked_up)
+//         {
+//             list_remove(item_list, i);
+//             continue;
+//         }
+
+//         item_update(pu, dt);
+
+//         if(pu->curr_room != player->curr_room)
+//             continue;
+
+//         Vector2f c1 = {CPOSX(player->phys), CPOSY(player->phys)};
+//         Vector2f c2 = {CPOSX(pu->phys), CPOSY(pu->phys)};
+
+//         float distance;
+//         bool in_pickup_radius = circles_colliding(&c1, player->phys.radius, &c2, ITEM_PICKUP_RADIUS, &distance);
+
+//         if(in_pickup_radius)
+//         {
+//             if(distance < min_dist)
+//             {
+//                 min_dist = distance;
+//                 min_index = i;
+//             }
+//         }
+
+//         pu->highlighted = false;
+//     }
+
+//     if(min_index >= 0)
+//     {
+//         items[min_index].highlighted = true;
+//         player->highlighted_item = &items[min_index];
+//     }
+//     else
+//     {
+//         player->highlighted_item = NULL;
+//         player->highlighted_index = 0;
+//     }
+// }
 
 void item_draw(Item* pu, bool batch)
 {

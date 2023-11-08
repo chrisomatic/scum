@@ -616,7 +616,7 @@ void init()
     ascale = view_width / 1200.0;
     LOGI("   ascale: %.2f", ascale);
 
-    text_lst = text_list_init(50, 10.0, view_height - 10.0, 0.12*ascale, COLOR_WHITE, false, TEXT_ALIGN_LEFT);
+    text_lst = text_list_init(50, 10.0, view_height - 40.0, 0.12*ascale, COLOR_WHITE, false, TEXT_ALIGN_LEFT);
 
     LOGI(" - Particles.");
     particles_init();

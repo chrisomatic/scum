@@ -214,6 +214,7 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_JUMP].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GEM_MENU].state, GLFW_KEY_G);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GEM_MENU_CYCLE].state, GLFW_KEY_TAB);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_CYCLE].state, GLFW_KEY_C);
 
     for(int i = 0;  i < PLAYER_ACTION_MAX; ++i)
         memset(&player->actions[i], 0, sizeof(PlayerInput));
@@ -927,6 +928,12 @@ void player_update(Player* p, float dt)
         }
     }
 
+    if(p->highlighted_item)
+    {
+        if(p->actions[PLAYER_ACTION_ITEM_CYCLE].toggled_on)
+            player->highlighted_index++;
+    }
+
 
     if(PLAYER_SWAPPING_GEM(p))
     {
@@ -1145,6 +1152,8 @@ void player_draw(Player* p, bool batch)
         Rect r = RECT(p->phys.pos.x, p->phys.pos.y, 1, 1);
         gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
         gfx_draw_rect(&p->hitbox, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+
+        // gfx_draw_string(p->phys.pos.x, p->phys.pos.y, COLOR_RED, 0.4, NO_ROTATION, FULL_OPACITY, IN_WORLD, DROP_SHADOW, "%d", p->highlighted_index);
 
         float x0 = p->phys.pos.x;
         float y0 = p->phys.pos.y;

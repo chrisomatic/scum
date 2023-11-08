@@ -41,6 +41,7 @@ typedef struct
 typedef struct
 {
     ItemType type;
+    uint16_t id;
     bool picked_up;
     uint8_t curr_room;
     Physics phys;

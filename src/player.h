@@ -41,6 +41,7 @@ typedef enum
     PLAYER_ACTION_JUMP,
     PLAYER_ACTION_GEM_MENU,
     PLAYER_ACTION_GEM_MENU_CYCLE,
+    PLAYER_ACTION_ITEM_CYCLE,
 
     PLAYER_ACTION_MAX
 } PlayerActions;
@@ -88,6 +89,7 @@ typedef struct
     float invulnerable_max;
 
     Item* highlighted_item;
+    int highlighted_index;
 
     // Networking
     NetPlayerInput input;
