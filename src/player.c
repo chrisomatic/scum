@@ -957,9 +957,6 @@ void player_update(Player* p, float dt)
     bool activate = p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
     if(activate)
     {
-        // @TEMP
-        p->phys.vel.z = 100.0;
-
         if(PLAYER_SWAPPING_GEM(p))
         {
 
