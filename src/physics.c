@@ -71,10 +71,10 @@ void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci)
     float dot1 = vec_dot(v1mv2,x1mx2);
     float dot2 = vec_dot(v2mv1,x2mx1);
 
-    float mag1   = magn(x1mx2);
+    float mag1   = magn2f(x1mx2.x, x1mx2.y);
     float mag1sq = mag1*mag1;
 
-    float mag2   = magn(x2mx1);
+    float mag2   = magn2f(x2mx1.x, x2mx1.y);
     float mag2sq = mag2*mag2;
 
     float fac1 = (2*m2/m_total) * (dot1/mag1sq);

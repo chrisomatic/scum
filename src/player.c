@@ -34,8 +34,7 @@ void player_init()
         player_image = gfx_load_image("src/img/spaceman.png", false, true, 32, 32);
         shadow_image = gfx_load_image("src/img/shadow.png", false, true, 32, 32);
     }
-
-    for(int i = 0; i < MAX_PLAYERS; ++i)
+for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         Player* p = &players[i];
 
@@ -223,6 +222,7 @@ void player_init_keys()
 #endif
     window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
     window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_E);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_JUMP].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GEM_MENU].state, GLFW_KEY_G);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GEM_MENU_CYCLE].state, GLFW_KEY_TAB);
 
@@ -731,26 +731,39 @@ void player_update(Player* p, float dt)
                 p->phys.vel.y = vel_max.y;
     }
 
-    //p->phys.vel.x *= p->phys.base_friction;
+    if(p->phys.pos.z > 0.0)
+    {
+        // apply gravity
+        p->phys.vel.z -= 10.0;
+    }
+
+    bool jump = p->actions[PLAYER_ACTION_JUMP].toggled_on;
+    if(jump && p->phys.pos.z == 0.0)
+    {
+        p->phys.vel.z = 200.0;
+    }
     
     if(!left && !right)
         phys_apply_friction_x(&p->phys,p->phys.base_friction,dt);
 
-    //p->phys.vel.y *= p->phys.base_friction;
     if(!up && !down)
         phys_apply_friction_y(&p->phys,p->phys.base_friction,dt);
 
-    float m1 = magn(p->phys.vel);
-    float m2 = magn(vel_max);
+    float m1 = magn2f(p->phys.vel.x,p->phys.vel.y);
+    float m2 = magn2f(vel_max.x, vel_max.y);
 
     p->vel_factor = RANGE(m1/m2,0.4,1.0);
 
     p->phys.prior_vel.x = p->phys.vel.x;
     p->phys.prior_vel.y = p->phys.vel.y;
+    p->phys.prior_vel.z = p->phys.vel.z;
     
     // update position
     p->phys.pos.x += p->phys.vel.x*dt;
     p->phys.pos.y += p->phys.vel.y*dt;
+    p->phys.pos.z += p->phys.vel.z*dt;
+
+    p->phys.pos.z = MAX(0.0, p->phys.pos.z);
 
     update_player_boxes(p);
 
@@ -929,6 +942,8 @@ void player_update(Player* p, float dt)
     bool activate = p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
     if(activate)
     {
+        // @TEMP
+        p->phys.vel.z = 100.0;
 
         if(PLAYER_SWAPPING_GEM(p))
         {
@@ -1115,15 +1130,18 @@ void player_draw(Player* p, bool batch)
     opacity = blink ? 0.3 : opacity;
     uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
 
+    float y = p->phys.pos.y-(0.5*p->phys.pos.z);
+    float shadow_scale = RANGE(0.5*(1.0 - (p->phys.pos.z / 128.0)),0.1,0.5);
+
     if(batch)
     {
-        gfx_sprite_batch_add(shadow_image, 0, p->phys.pos.x, p->phys.pos.y+12, color, false, 0.5, 0.0, 0.5, false, false, false);
-        gfx_sprite_batch_add(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, p->phys.pos.y, color, false, 1.0, 0.0, opacity, false, false, false);
+        gfx_sprite_batch_add(shadow_image, 0, p->phys.pos.x, p->phys.pos.y+12, color, false, shadow_scale, 0.0, 0.5, false, false, false);
+        gfx_sprite_batch_add(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, color, false, 1.0, 0.0, opacity, false, false, false);
     }
     else
     {
-        gfx_draw_image(shadow_image, 0, p->phys.pos.x, p->phys.pos.y+12, color, 0.5, 0.0, 0.5, false, IN_WORLD);
-        gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, p->phys.pos.y, color, 1.0, 0.0, opacity, false, IN_WORLD);
+        gfx_draw_image(shadow_image, 0, p->phys.pos.x, p->phys.pos.y+12, color, shadow_scale, 0.0, 0.5, false, IN_WORLD);
+        gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, color, 1.0, 0.0, opacity, false, IN_WORLD);
     }
 
     if(debug_enabled)

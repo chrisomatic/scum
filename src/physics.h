@@ -19,11 +19,11 @@ typedef enum
 
 typedef struct
 {
-    Vector2f pos;
-    Vector2f prior_pos;
+    Vector3f pos;
+    Vector3f prior_pos;
 
-    Vector2f vel;
-    Vector2f prior_vel;
+    Vector3f vel;
+    Vector3f prior_vel;
 
     float max_velocity;
     float base_friction;

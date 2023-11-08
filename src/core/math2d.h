@@ -103,7 +103,8 @@ float calc_angle_deg(float x0, float y0, float x1, float y1);
 float calc_angle_rad(float x0, float y0, float x1, float y1);
 float dist_squared(float x0, float y0, float x1, float y1);
 float dist(float x0, float y0, float x1, float y1);
-float magn(Vector2f v);
+float magn(Vector3f v);
+float magn2f(float x, float y);
 float magn_fast(Vector2f v);
 void normalize(Vector2f* v);
 void get_scale_transform(Matrix* mat, Vector3f* scale);
@@ -112,6 +113,8 @@ void get_translate_transform(Matrix* mat, Vector3f* position);
 void dot_product_mat(Matrix a, Matrix b, Matrix* result);
 void mult_mat4(Matrix* m1, Matrix* m2, Matrix* result);
 void print_matrix(Matrix* mat);
+
+Vector2f vec2(float x, float y);
 
 float vec_dot(Vector2f a, Vector2f b);
 

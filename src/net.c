@@ -1646,7 +1646,7 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             // LOGN("Packing player %d (%d)", i, server.clients[i].client_id);
 
             pack_u8(pkt,(uint8_t)i);
-            pack_vec2(pkt,p->phys.pos);
+            pack_vec2(pkt,vec2(p->phys.pos.x, p->phys.pos.y));
             pack_u8(pkt, p->sprite_index+p->anim.curr_frame);
             pack_u8(pkt, p->curr_room);
             pack_u8(pkt, p->phys.hp);
@@ -1749,7 +1749,7 @@ static void pack_creatures(Packet* pkt, ClientInfo* cli)
 
         pack_u16(pkt, c->id);
         pack_u8(pkt, (uint8_t)c->type);
-        pack_vec2(pkt, c->phys.pos);
+        pack_vec2(pkt, vec2(c->phys.pos.x, c->phys.pos.y));
         pack_u8(pkt, c->sprite_index);
         pack_u8(pkt, c->curr_room);
         pack_float(pkt, c->phys.hp);
@@ -1822,7 +1822,7 @@ static void pack_projectiles(Packet* pkt, ClientInfo* cli)
             continue;
 
         pack_u16(pkt,p->id);
-        pack_vec2(pkt,p->phys.pos);
+        pack_vec2(pkt,vec2(p->phys.pos.x, p->phys.pos.y));
         pack_u8(pkt,p->player_id);
         pack_u8(pkt,p->curr_room);
         pack_float(pkt,p->scale);
@@ -1898,7 +1898,7 @@ static void pack_decals(Packet* pkt, ClientInfo* cli)
         pack_float(pkt, d->rotation);
         pack_float(pkt, d->opacity);
         pack_float(pkt, d->ttl);
-        pack_vec2(pkt, d->pos);
+        pack_vec2(pkt, vec2(d->pos.x,d->pos.y));
         pack_u8(pkt, d->room);
     }
 }

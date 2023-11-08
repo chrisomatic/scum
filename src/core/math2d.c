@@ -224,9 +224,14 @@ float magn_fast(Vector2f v)
     return (0.96*v.x + 0.40*v.y);
 }
 
-float magn(Vector2f v)
+float magn2f(float x, float y)
 {
-    return sqrt(v.x * v.x + v.y*v.y);
+    return sqrt(x * x + y*y);
+}
+
+float magn(Vector3f v)
+{
+    return sqrt(v.x * v.x + v.y*v.y + v.z*v.z);
 }
 
 void normalize(Vector2f* v)
@@ -565,11 +570,6 @@ void get_translate_transform(Matrix* mat, Vector3f* position)
     mat->m[3][3] = 1.0f;
 }
 
-float vec_magn(Vector3f v)
-{
-    return sqrt(v.x * v.x + v.y*v.y + v.z*v.z);
-}
-
 float vec_dot3(Vector3f a, Vector3f b)
 {
     return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
@@ -580,10 +580,16 @@ float vec_dot(Vector2f a, Vector2f b)
     return (a.x * b.x) + (a.y * b.y);
 }
 
+Vector2f vec2(float x, float y)
+{
+    Vector2f v = {x,y};
+    return v;
+}
+
 float get_angle_between_vectors_rad(Vector3f* a, Vector3f* b)
 {
-    float ma = vec_magn(*a);
-    float mb = vec_magn(*b);
+    float ma = magn(*a);
+    float mb = magn(*b);
 
     if(ma == 0.0 || mb == 0.0)
         return 0.0;

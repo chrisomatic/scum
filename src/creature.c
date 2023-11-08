@@ -491,7 +491,7 @@ uint16_t creature_get_room_count(uint8_t room_index)
     return count;
 }
 
-static Player* get_nearest_player(Vector2f* pt)
+static Player* get_nearest_player(float x, float y)
 {
     float min_dist = 10000.0;
     int min_index = 0;
@@ -500,7 +500,7 @@ static Player* get_nearest_player(Vector2f* pt)
     for(int i = 0; i < num_players; ++i)
     {
         Player* p = &players[i];
-        float d = dist(pt->x,pt->y, p->phys.pos.x, p->phys.pos.y);
+        float d = dist(x,y, p->phys.pos.x, p->phys.pos.y);
         if(d < min_dist)
         {
             min_dist = d;
@@ -541,7 +541,7 @@ static void creature_update_clinger(Creature* c, float dt)
 
     if(act)
     {
-        Player* p = get_nearest_player(&c->phys.pos);
+        Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
 
         int x0 = room_area.x - room_area.w/2.0;
         int y0 = room_area.y - room_area.h/2.0;
