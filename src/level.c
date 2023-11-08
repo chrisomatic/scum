@@ -93,10 +93,29 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
                     room->type = ROOM_TYPE_TREASURE;
                     room->layout = 0;
                     level->has_treasure_room = true;
-                    for(int i = 0; i < 100; ++i)
+
+                    Rect rp;
+
+                    rp = level_get_tile_rect(0,0);
+                    item_add(ITEM_CHEST, rp.x, rp.y, room->index);
+
+                    rp = level_get_tile_rect(ROOM_TILE_SIZE_X-1,0);
+                    item_add(ITEM_CHEST, rp.x, rp.y, room->index);
+
+                    rp = level_get_tile_rect(0,ROOM_TILE_SIZE_Y-1);
+                    item_add(ITEM_CHEST, rp.x, rp.y, room->index);
+
+                    rp = level_get_tile_rect(ROOM_TILE_SIZE_X-1,ROOM_TILE_SIZE_Y-1);
+                    item_add(ITEM_CHEST, rp.x, rp.y, room->index);
+
+                    for(int i = 0; i < 20; ++i)
                     {
-                        int tile_x = (rand() % ROOM_TILE_SIZE_X);
-                        int tile_y = (rand() % ROOM_TILE_SIZE_Y);
+                        // int tile_x = (rand() % ROOM_TILE_SIZE_X);
+                        // int tile_y = (rand() % ROOM_TILE_SIZE_Y);
+
+                        int tile_x = RAND_RANGE(4, ROOM_TILE_SIZE_X-5);
+                        int tile_y = RAND_RANGE(3, ROOM_TILE_SIZE_Y-3);
+
                         Rect rp = level_get_tile_rect(tile_x,tile_y);
                         item_add(item_get_random_gem(), rp.x, rp.y, room->index);
                     }
@@ -659,6 +678,64 @@ TileType level_get_tile_type_by_pos(Room* room, float x, float y)
 {
     Vector2i tile_coords = level_get_room_coords_by_pos(x, y);
     return level_get_tile_type(room, tile_coords.x, tile_coords.y);
+}
+
+
+void level_get_center_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile_pos)
+{
+    for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
+    {
+        int _x = (ROOM_TILE_SIZE_X-1)/2;
+        _x += ((x % 2 == 0) ? -1 : 1) * x/2;
+
+        for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
+        {
+            int _y = (ROOM_TILE_SIZE_Y-1)/2;
+            _y += ((y % 2 == 0) ? -1 : 1) * y/2;
+
+            if(level_get_tile_type(room, _x, _y) == TILE_FLOOR)
+            {
+                if(tile_coords)
+                {
+                    tile_coords->x = _x;
+                    tile_coords->y = _y;
+                }
+                if(tile_pos)
+                {
+                    Rect rp = level_get_tile_rect(_x, _y);
+                    tile_pos->x = rp.x;
+                    tile_pos->y = rp.y;
+                    // printf("setting tile_pos: %.2f, %.2f\n", tile_pos->x, tile_pos->y);
+                }
+                return;
+            }
+        }
+    }
+}
+
+
+void level_get_rand_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile_pos)
+{
+    for(;;)
+    {
+        int _x = rand() % ROOM_TILE_SIZE_X;
+        int _y = rand() % ROOM_TILE_SIZE_Y;
+        if(level_get_tile_type(room, _x, _y) == TILE_FLOOR)
+        {
+            if(tile_coords)
+            {
+                tile_coords->x = _x;
+                tile_coords->y = _y;
+            }
+            if(tile_pos)
+            {
+                Rect rp = level_get_tile_rect(_x, _y);
+                tile_pos->x = rp.x;
+                tile_pos->y = rp.y;
+            }
+            return;
+        }
+    }
 }
 
 void level_draw_room(Room* room, RoomData* room_data, float xoffset, float yoffset)

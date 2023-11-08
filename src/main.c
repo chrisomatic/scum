@@ -571,10 +571,20 @@ void game_generate_level(unsigned int _seed)
         player_send_to_level_start(&players[i]);
     }
 
-    // @TEMP
-    item_add(ITEM_CHEST, player->phys.pos.x + 64, player->phys.pos.y -64, player->curr_room);
-    item_add(ITEM_HEART_FULL, player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
-    item_add(ITEM_HEART_HALF, player->phys.pos.x-32, player->phys.pos.y+32, player->curr_room);
+    Room* room = level_get_room_by_index(&level, player->curr_room);
+    Vector2f pos = {0};
+
+    for(int i = 0; i < 5; ++i)
+    {
+        level_get_rand_floor_tile(room, NULL, &pos);
+        item_add(ITEM_CHEST, pos.x, pos.y, player->curr_room);
+    }
+
+    level_get_rand_floor_tile(room, NULL, &pos);
+    item_add(ITEM_HEART_FULL, pos.x, pos.y, player->curr_room);
+
+    level_get_rand_floor_tile(room, NULL, &pos);
+    item_add(ITEM_HEART_HALF, pos.x, pos.y, player->curr_room);
 }
 
 void init()

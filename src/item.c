@@ -24,10 +24,14 @@ static void item_func_nothing(Item* pu, Player* p)
 
 static void item_func_chest(Item* pu, Player* p)
 {
-    for(int i = 0; i < 8; ++i)
-        item_add(item_get_random_gem(), pu->phys.pos.x, pu->phys.pos.y, pu->curr_room);
+    if(RAND_FLOAT(0.0,1.0) <= 0.05)
+    {
+        item_add(ITEM_CHEST, pu->phys.pos.x, pu->phys.pos.y, pu->curr_room);
+    }
 
-    // item_add(ITEM_CHEST, pu->phys.pos.x, pu->phys.pos.y, pu->curr_room);
+    int num = RAND_RANGE(4,8);
+    for(int i = 0; i < num; ++i)
+        item_add(item_get_random_gem(), pu->phys.pos.x, pu->phys.pos.y, pu->curr_room);
 }
 
 static void item_func_heart(Item* pu, Player* p)

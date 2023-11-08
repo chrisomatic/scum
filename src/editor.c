@@ -69,6 +69,12 @@ void editor_draw()
             case 1: // level
             {
 
+                if(imgui_button("Generate New Level"))
+                {
+                    seed = time(0)+rand()%1000;
+                    game_generate_level(seed);
+                }
+
                 TileType tt = level_get_tile_type_by_pos(room, wmx, wmy);
 
                 Vector2i tc = level_get_room_coords_by_pos(wmx, wmy);

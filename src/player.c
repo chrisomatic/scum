@@ -175,32 +175,15 @@ int player_names_build(bool include_all, bool only_active)
 
 void player_send_to_room(Player* p, uint8_t room_index)
 {
-    uint8_t idx = room_index;
-    p->curr_room = idx;
+    p->curr_room = room_index;
     p->transition_room = p->curr_room;
 
     Room* room = level_get_room_by_index(&level, room_index);
 
-    for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
-    {
-        int _x = (ROOM_TILE_SIZE_X-1)/2;
-        _x += ((x % 2 == 0) ? -1 : 1) * x/2;
-
-        for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
-        {
-            int _y = (ROOM_TILE_SIZE_Y-1)/2;
-            _y += ((y % 2 == 0) ? -1 : 1) * y/2;
-
-            if(level_get_tile_type(room, _x, _y) == TILE_FLOOR)
-            {
-                // printf("found floor %d,%d\n", _x, _y);
-                Rect rp = level_get_tile_rect(_x, _y);
-                p->phys.pos.x  = rp.x;
-                p->phys.pos.y  = rp.y;
-                return;
-            }
-        }
-    }
+    Vector2f pos = {0};
+    level_get_center_floor_tile(room, NULL, &pos);
+    p->phys.pos.x = pos.x;
+    p->phys.pos.y = pos.y;
 }
 
 void player_send_to_level_start(Player* p)
@@ -226,7 +209,7 @@ void player_init_keys()
 #else
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_SPACE);
 #endif
-    window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R);
+    // window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R); // moved to editor
     window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_E);
     window_controls_add_key(&player->actions[PLAYER_ACTION_JUMP].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GEM_MENU].state, GLFW_KEY_G);
@@ -1113,8 +1096,8 @@ void draw_gauntlet()
     {
         uint32_t color = COLOR_BLACK;
         if(i == player->gauntlet_selection)
-            color = COLOR_WHITE;
-        gfx_draw_rect(&r, color, NOT_SCALED, NO_ROTATION, 0.5, true, NOT_IN_WORLD);
+            color = 0x00b0b0b0;
+        gfx_draw_rect(&r, color, NOT_SCALED, NO_ROTATION, 0.3, true, NOT_IN_WORLD);
 
         ItemType type = player->gauntlet[i].type;
         if(type != ITEM_NONE)
