@@ -20,7 +20,7 @@
 
 #define PLAYER_SWAPPING_GEM(p) (p->gauntlet_item.type != ITEM_NONE)
 
-#define PLAYER_GAUNTLET_MAX 6
+#define PLAYER_GAUNTLET_MAX 4
 
 typedef enum
 {

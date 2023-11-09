@@ -71,6 +71,16 @@ static void item_func_gem(Item* pu, Player* p)
             p->phys.hp_max += 2;
             p->phys.hp = p->phys.hp_max;
             break;
+        case ITEM_GEM_YELLOW:
+            if(p->gauntlet_slots < PLAYER_GAUNTLET_MAX)
+            {
+                p->gauntlet_slots++;
+            }
+            else
+            {
+                item_add(pu->type, pu->phys.pos.x, pu->phys.pos.y, pu->curr_room);
+            }
+            break;
         default:
         {
             if(player_gauntlet_full(p))
@@ -242,17 +252,18 @@ typedef struct
     float dist;
 } ItemSort;
 
-ItemSort near_items_prior[32] = {0};
+#define NUM_NEAR_ITEMS  10
+ItemSort near_items_prior[NUM_NEAR_ITEMS] = {0};
 int near_items_count_prior = 0;
-ItemSort near_items[32] = {0};
+ItemSort near_items[NUM_NEAR_ITEMS] = {0};
 int near_items_count = 0;
 
 void item_update_all(float dt)
 {
-    memcpy(&near_items_prior, &near_items, sizeof(ItemSort)*32);
+    memcpy(&near_items_prior, &near_items, sizeof(ItemSort)*NUM_NEAR_ITEMS);
     near_items_count_prior = near_items_count;
 
-    memset(&near_items, 0, sizeof(ItemSort)*32);
+    memset(&near_items, 0, sizeof(ItemSort)*NUM_NEAR_ITEMS);
     near_items_count = 0;
 
     for(int i = item_list->count-1; i >= 0; --i)
@@ -276,7 +287,7 @@ void item_update_all(float dt)
         float distance;
         bool in_pickup_radius = circles_colliding(&c1, player->phys.radius, &c2, ITEM_PICKUP_RADIUS, &distance);
 
-        if(in_pickup_radius)
+        if(in_pickup_radius && near_items_count < NUM_NEAR_ITEMS)
         {
             near_items[near_items_count].index = i;
             near_items[near_items_count].dist = distance;
@@ -304,7 +315,6 @@ void item_update_all(float dt)
             }
             memcpy(&near_items[j+1], &key, sizeof(ItemSort));
         }
-
 
         bool same_list = true;
         if(near_items_count != near_items_count_prior)
@@ -347,61 +357,8 @@ void item_update_all(float dt)
         player->highlighted_item = NULL;
         player->highlighted_index = 0;
     }
-
-
 }
 
-// void item_update_all(float dt)
-// {
-//     float min_dist = 10000.0;
-//     int min_index = -1;
-
-//     // player->highlighted_item = NULL;
-
-//     for(int i = item_list->count-1; i >= 0; --i)
-//     {
-//         Item* pu = &items[i];
-
-//         if(pu->picked_up)
-//         {
-//             list_remove(item_list, i);
-//             continue;
-//         }
-
-//         item_update(pu, dt);
-
-//         if(pu->curr_room != player->curr_room)
-//             continue;
-
-//         Vector2f c1 = {CPOSX(player->phys), CPOSY(player->phys)};
-//         Vector2f c2 = {CPOSX(pu->phys), CPOSY(pu->phys)};
-
-//         float distance;
-//         bool in_pickup_radius = circles_colliding(&c1, player->phys.radius, &c2, ITEM_PICKUP_RADIUS, &distance);
-
-//         if(in_pickup_radius)
-//         {
-//             if(distance < min_dist)
-//             {
-//                 min_dist = distance;
-//                 min_index = i;
-//             }
-//         }
-
-//         pu->highlighted = false;
-//     }
-
-//     if(min_index >= 0)
-//     {
-//         items[min_index].highlighted = true;
-//         player->highlighted_item = &items[min_index];
-//     }
-//     else
-//     {
-//         player->highlighted_item = NULL;
-//         player->highlighted_index = 0;
-//     }
-// }
 
 void item_draw(Item* pu, bool batch)
 {

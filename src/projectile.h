@@ -9,7 +9,7 @@
 
 typedef enum
 {
-    PROJECTILE_TYPE_LASER,
+    PROJECTILE_TYPE_PLAYER,
     PROJECTILE_TYPE_CREATURE_GENERIC,
     PROJECTILE_TYPE_CREATURE_CLINGER,
     PROJECTILE_TYPE_MAX
@@ -18,6 +18,7 @@ typedef enum
 typedef struct
 {
     float damage;
+    float range;
     float min_speed;
     float base_speed;
 
@@ -83,3 +84,4 @@ void projectile_update(float delta_t);
 void projectile_handle_collision(Projectile* p, Entity* e);
 void projectile_draw(Projectile* proj, bool batch);
 void projectile_lerp(Projectile* p, double dt);
+const char* projectile_def_get_name(ProjectileType proj_type);

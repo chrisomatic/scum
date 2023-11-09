@@ -99,12 +99,11 @@ for(int i = 0; i < MAX_PLAYERS; ++i)
 #endif
         p->gauntlet_selection = 0;
 
-        p->gauntlet_slots = MIN(4,PLAYER_GAUNTLET_MAX);
+        p->gauntlet_slots = MIN(2,PLAYER_GAUNTLET_MAX);
         for(int j = 0; j < PLAYER_GAUNTLET_MAX; ++j)
         {
             p->gauntlet[j].type = ITEM_NONE;
-            if(j == 0)
-                p->gauntlet[j].type = item_get_random_gem();
+            // if(j == 0) p->gauntlet[j].type = item_get_random_gem();  // TEST
         }
         p->gauntlet_item.type = ITEM_NONE;
     }
@@ -846,7 +845,7 @@ void player_update(Player* p, float dt)
 
             if(!p->phys.dead)
             {
-                projectile_add(&p->phys, p->curr_room, PROJECTILE_TYPE_LASER, angle_deg, 1.0, 1.0, true);
+                projectile_add(&p->phys, p->curr_room, PROJECTILE_TYPE_PLAYER, angle_deg, 1.0, 1.0, true);
             }
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;
@@ -888,7 +887,7 @@ void player_update(Player* p, float dt)
 
                 if(!p->phys.dead)
                 {
-                    projectile_add(&p->phys, p->curr_room, PROJECTILE_TYPE_LASER, angle_deg, scale, damage, true);
+                    projectile_add(&p->phys, p->curr_room, PROJECTILE_TYPE_PLAYER, angle_deg, scale, damage, true);
                 }
 
                 // text_list_add(text_lst, 5.0, "projectile: %.2f, %.2f", scale, damage);
@@ -909,7 +908,7 @@ void player_update(Player* p, float dt)
 
             if(!p->phys.dead)
             {
-                projectile_add(&p->phys, p->curr_room, PROJECTILE_TYPE_LASER, angle_deg, 1.0, 1.0, true);
+                projectile_add(&p->phys, p->curr_room, PROJECTILE_TYPE_PLAYER, angle_deg, 1.0, 1.0, true);
             }
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;

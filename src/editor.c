@@ -192,31 +192,43 @@ void editor_draw()
 
             case 4: // projectiles
             {
-                imgui_slider_float("Damage", 0.0,100.0,&projectile_lookup[0].damage);
-                imgui_slider_float("Cooldown", 0.0,1.0,&player->proj_cooldown_max);
-                imgui_slider_float("Base Speed", 100.0,1000.0,&projectile_lookup[0].base_speed);
-                imgui_slider_float("Min Speed", 50.0,200.0,&projectile_lookup[0].min_speed);
-                imgui_slider_float("Angle Spread", 0.0, 360.0,&projectile_lookup[0].angle_spread);
-                imgui_slider_float("Scale", 0.1, 5.0,&projectile_lookup[0].scale);
 
-                int num = projectile_lookup[0].num;
+                imgui_slider_float("Player Cooldown", 0.0,1.0,&player->proj_cooldown_max);
+
+                char* proj_def_names[PROJECTILE_TYPE_MAX] = {0};
+                for(int i = 0; i < PROJECTILE_TYPE_MAX; ++i)
+                {
+                    proj_def_names[i] = (char*)projectile_def_get_name(i);
+                }
+
+                static int proj_sel = 0;
+                proj_sel = imgui_dropdown(proj_def_names, PROJECTILE_TYPE_MAX, "Projectile Definition", &proj_sel);
+
+                imgui_slider_float("Damage", 0.0,100.0,&projectile_lookup[proj_sel].damage);
+                imgui_slider_float("Range", 0.0,1000.0,&projectile_lookup[proj_sel].range);
+                imgui_slider_float("Base Speed", 100.0,1000.0,&projectile_lookup[proj_sel].base_speed);
+                imgui_slider_float("Min Speed", 50.0,200.0,&projectile_lookup[proj_sel].min_speed);
+                imgui_slider_float("Angle Spread", 0.0, 360.0,&projectile_lookup[proj_sel].angle_spread);
+                imgui_slider_float("Scale", 0.1, 5.0,&projectile_lookup[proj_sel].scale);
+
+                int num = projectile_lookup[proj_sel].num;
                 imgui_number_box("Num", 1,100, &num);
                 projectile_lookup[0].num = num;
 
-                imgui_toggle_button(&projectile_lookup[0].charge, "Charge");
-                int charge_rate = projectile_lookup[0].charge_rate;
-                imgui_number_box("Charge Rate", 1, 100, &charge_rate);
-                projectile_lookup[0].charge_rate = charge_rate;
+                // imgui_toggle_button(&projectile_lookup[proj_sel].charge, "Charge");
+                // int charge_rate = projectile_lookup[0].charge_rate;
+                // imgui_number_box("Charge Rate", 1, 100, &charge_rate);
+                // projectile_lookup[proj_sel].charge_rate = charge_rate;
 
                 imgui_text_sized(20.0,"Attributes:");
                 imgui_horizontal_line(1);
-                imgui_checkbox("Ghost", &projectile_lookup[PROJECTILE_TYPE_LASER].ghost);
-                imgui_checkbox("Explosive", &projectile_lookup[PROJECTILE_TYPE_LASER].explosive);
-                imgui_checkbox("Homing", &projectile_lookup[PROJECTILE_TYPE_LASER].homing);
-                imgui_checkbox("Bouncy", &projectile_lookup[PROJECTILE_TYPE_LASER].bouncy);
-                imgui_checkbox("Penetrate", &projectile_lookup[PROJECTILE_TYPE_LASER].penetrate);
-                imgui_checkbox("Cold", &projectile_lookup[PROJECTILE_TYPE_LASER].cold);
-                imgui_checkbox("Poison", &projectile_lookup[PROJECTILE_TYPE_LASER].poison);
+                imgui_checkbox("Ghost", &projectile_lookup[proj_sel].ghost);
+                imgui_checkbox("Explosive", &projectile_lookup[proj_sel].explosive);
+                imgui_checkbox("Homing", &projectile_lookup[proj_sel].homing);
+                imgui_checkbox("Bouncy", &projectile_lookup[proj_sel].bouncy);
+                imgui_checkbox("Penetrate", &projectile_lookup[proj_sel].penetrate);
+                imgui_checkbox("Cold", &projectile_lookup[proj_sel].cold);
+                imgui_checkbox("Poison", &projectile_lookup[proj_sel].poison);
 
             } break;
             case 5: // theme

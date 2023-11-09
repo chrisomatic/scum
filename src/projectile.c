@@ -22,8 +22,9 @@ static uint16_t id_counter = 0;
 
 ProjectileDef projectile_lookup[] = {
     {
-        // player/laser
+        // player
         .damage = 10.0,
+        .range = 32*8,
         .min_speed = 200.0,
         .base_speed = 200.0,
         .angle_spread = 45.0,
@@ -41,6 +42,7 @@ ProjectileDef projectile_lookup[] = {
     {
         // creature
         .damage = 1.0,
+        .range = 32*6,
         .min_speed = 200.0,
         .base_speed = 200.0,
         .angle_spread = 0.0,
@@ -57,6 +59,7 @@ ProjectileDef projectile_lookup[] = {
     {
         // creature clinger
         .damage = 1.0,
+        .range = 32*6,
         .min_speed = 200.0,
         .base_speed = 200.0,
         .angle_spread = 0.0,
@@ -216,6 +219,8 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileType proj_type, 
             p.phys.vel.y = -min_speed * ya;   //@minus
         }
 
+        float d = dist(0,0, p.phys.vel.x,p.phys.vel.y); // distance travelled per second
+        p.ttl = projdef->range / d;
 
         list_add(plist, (void*)&p);
     }
@@ -414,4 +419,15 @@ void projectile_lerp(Projectile* p, double dt)
     projectile_update_hit_box(p);
 
     //printf("prior_pos: %f %f, target_pos: %f %f, pos: %f %f, t: %f\n",p->server_state_prior.pos.x, p->server_state_prior.pos.y, p->server_state_target.pos.x, p->server_state_target.pos.y, p->phys.pos.x, p->phys.pos.y, t);
+}
+
+const char* projectile_def_get_name(ProjectileType proj_type)
+{
+    switch(proj_type)
+    {
+        case PROJECTILE_TYPE_PLAYER: return "Player";
+        case PROJECTILE_TYPE_CREATURE_GENERIC: return "Creature";
+        case PROJECTILE_TYPE_CREATURE_CLINGER: return "Clinger";
+        default: return "???";
+    }
 }
