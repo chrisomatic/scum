@@ -20,6 +20,19 @@ typedef enum
     ITEM_HEART_FULL,
     ITEM_HEART_HALF,
 
+    ITEM_COSMIC_HEART_FULL,
+    ITEM_COSMIC_HEART_HALF,
+    ITEM_GLOWING_ORB,
+    ITEM_DRAGON_EGG,
+    ITEM_SHAMROCK,
+    ITEM_RUBY_RING,
+    ITEM_POTION_STRENGTH,
+    ITEM_POTION_SPEED,
+    ITEM_POTION_RANGE,
+    ITEM_POTION_PURPLE,
+    ITEM_GAUNTLET_SLOT,
+    ITEM_NEW_LEVEL,
+
     ITEM_CHEST,
 
     ITEM_MAX
@@ -46,6 +59,7 @@ typedef struct
     Physics phys;
     bool highlighted;
     bool used;
+    float angle;
 } Item;
 
 extern int items_image;

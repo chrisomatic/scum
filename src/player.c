@@ -644,14 +644,14 @@ void player_update(Player* p, float dt)
 #if ALWAYS_SHOW_GAUNTLET
         if(PLAYER_SWAPPING_GEM(p))
         {
-            item_add(p->gauntlet_item.type, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+            item_add(p->gauntlet_item.type, CPOSX(player->phys),CPOSY(player->phys)+player->phys.radius, player->curr_room);
             p->gauntlet_item.type = ITEM_NONE;
         }
 #else
         p->show_gauntlet = !p->show_gauntlet;
         if(!p->show_gauntlet && PLAYER_SWAPPING_GEM(p))
         {
-            item_add(p->gauntlet_item.type, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+            item_add(p->gauntlet_item.type, CPOSX(player->phys),CPOSY(player->phys)+player->phys.radius, player->curr_room);
             p->gauntlet_item.type = ITEM_NONE;
         }
 #endif
@@ -957,8 +957,8 @@ void player_update(Player* p, float dt)
 
             Item* it = &p->gauntlet[p->gauntlet_selection];
 
-            item_add(it->type, player->phys.pos.x, player->phys.pos.y, player->curr_room);
-            
+            item_add(it->type, CPOSX(player->phys),CPOSY(player->phys)+player->phys.radius, player->curr_room);
+
             memcpy(it, &p->gauntlet_item, sizeof(Item));
             p->gauntlet_item.type = ITEM_NONE;
 

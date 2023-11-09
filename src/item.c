@@ -33,18 +33,50 @@ static void item_func_nothing(Item* pu, Player* p)
 
 static void item_func_chest(Item* pu, Player* p)
 {
-    if(RAND_FLOAT(0.0,1.0) <= 0.05)
+    float x = pu->phys.pos.x;
+    float y = pu->phys.pos.y;
+    int croom = pu->curr_room;
+
+    if(RAND_FLOAT(0.0,1.0) <= 0.10)
     {
-        item_add(ITEM_CHEST, pu->phys.pos.x, pu->phys.pos.y, pu->curr_room);
+        item_add(ITEM_CHEST, x, y, croom);
     }
 
-    int num = RAND_RANGE(4,8);
+    int num = RAND_RANGE(2,6);
     for(int i = 0; i < num; ++i)
-        item_add(item_get_random_gem(), pu->phys.pos.x, pu->phys.pos.y, pu->curr_room);
+        item_add(item_get_random_gem(), x, y, croom);
 
-    if(RAND_FLOAT(0.0,1.0) <= 0.5 && num < 6)
+    if(RAND_FLOAT(0.0,1.0) <= 0.5 && num <= 4)
     {
-        item_add(item_get_random_heart(), pu->phys.pos.x, pu->phys.pos.y, pu->curr_room);
+        item_add(item_get_random_heart(), x, y, croom);
+    }
+
+    if(RAND_FLOAT(0.0,1.0) <= 0.30)
+    {
+        item_add(ITEM_GAUNTLET_SLOT, x, y, croom);
+    }
+
+    if(RAND_FLOAT(0.0,1.0) <= 0.30)
+    {
+        item_add(ITEM_NEW_LEVEL, x, y, croom);
+    }
+}
+
+static void item_func_new_level(Item* pu, Player* p)
+{
+    seed = time(0)+rand()%1000;
+    game_generate_level(seed);
+}
+
+static void item_gunc_gauntlet_slot(Item* pu, Player* p)
+{
+    if(p->gauntlet_slots < PLAYER_GAUNTLET_MAX)
+    {
+        p->gauntlet_slots++;
+    }
+    else
+    {
+        item_add(pu->type, pu->phys.pos.x, pu->phys.pos.y, pu->curr_room);
     }
 }
 
@@ -63,40 +95,25 @@ static void item_func_heart(Item* pu, Player* p)
 
 static void item_func_gem(Item* pu, Player* p)
 {
-    switch(pu->type)
-    {
-        case ITEM_GEM_YELLOW:
-            if(p->gauntlet_slots < PLAYER_GAUNTLET_MAX)
-            {
-                p->gauntlet_slots++;
-            }
-            else
-            {
-                item_add(pu->type, pu->phys.pos.x, pu->phys.pos.y, pu->curr_room);
-            }
-            break;
-        default:
-        {
-            if(player_gauntlet_full(p))
-            {
-                memcpy(&p->gauntlet_item, pu, sizeof(Item));
-                p->show_gauntlet = true;
-            }
-            else
-            {
-                p->gauntlet_item.type = ITEM_NONE;
-                for(int i = 0; i < p->gauntlet_slots; ++i)
-                {
-                    if(p->gauntlet[i].type == ITEM_NONE)
-                    {
-                        p->gauntlet[i].type = pu->type;
-                        break;
-                    }
-                }
-            }
 
-        } break;
+    if(player_gauntlet_full(p))
+    {
+        memcpy(&p->gauntlet_item, pu, sizeof(Item));
+        p->show_gauntlet = true;
     }
+    else
+    {
+        p->gauntlet_item.type = ITEM_NONE;
+        for(int i = 0; i < p->gauntlet_slots; ++i)
+        {
+            if(p->gauntlet[i].type == ITEM_NONE)
+            {
+                p->gauntlet[i].type = pu->type;
+                break;
+            }
+        }
+    }
+
 }
 
 void item_init()
@@ -137,6 +154,14 @@ void item_init()
             p->func = (void*)item_func_chest;
         }
     }
+
+    item_props[ITEM_NEW_LEVEL].touchable = false;
+    item_props[ITEM_NEW_LEVEL].socketable = false;
+    item_props[ITEM_NEW_LEVEL].func = (void*)item_func_new_level;
+
+    item_props[ITEM_GAUNTLET_SLOT].touchable = false;
+    item_props[ITEM_GAUNTLET_SLOT].socketable = false;
+    item_props[ITEM_GAUNTLET_SLOT].func = (void*)item_gunc_gauntlet_slot;
 }
 
 void item_clear_all()
@@ -230,6 +255,8 @@ const char* item_get_name(ItemType type)
         case ITEM_GEM_PURPLE: return "Purple Gem";
         case ITEM_HEART_FULL: return "Full Heart";
         case ITEM_HEART_HALF: return "Half Heart";
+        case ITEM_NEW_LEVEL:  return "New Level";
+        case ITEM_GAUNTLET_SLOT: return "+1 Gauntlet Slot";
     }
     return "???";
 }
@@ -406,13 +433,18 @@ void item_draw(Item* pu, bool batch)
     if(pu->used)
         sprite_index++;
 
+    if(pu->type == ITEM_NEW_LEVEL)
+    {
+        pu->angle += 5.0;
+    }
+
     if(batch)
     {
-        gfx_sprite_batch_add(item_props[pu->type].image, sprite_index, pu->phys.pos.x, pu->phys.pos.y, color, false, iscale, 0.0, 1.0, true, false, false);
+        gfx_sprite_batch_add(item_props[pu->type].image, sprite_index, pu->phys.pos.x, pu->phys.pos.y, color, false, iscale, pu->angle, 1.0, true, false, false);
     }
     else
     {
-        gfx_draw_image(item_props[pu->type].image, sprite_index, pu->phys.pos.x, pu->phys.pos.y, color, iscale, 0.0, 1.0, true, IN_WORLD);
+        gfx_draw_image(item_props[pu->type].image, sprite_index, pu->phys.pos.x, pu->phys.pos.y, color, iscale, pu->angle, 1.0, true, IN_WORLD);
     }
 }
 
