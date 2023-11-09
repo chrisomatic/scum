@@ -69,6 +69,7 @@ for(int i = 0; i < MAX_PLAYERS; ++i)
 
         p->proj_cooldown_max = 0.2;
         p->door = DIR_NONE;
+        p->light_radius = 1.0;
 
 #if BOI_SHOOTING
         p->last_shoot_action = PLAYER_ACTION_SHOOT_UP;
@@ -979,7 +980,8 @@ void player_update(Player* p, float dt)
             else
             {
                 item_props[type].func(p->highlighted_item,p);
-                item_remove(p->highlighted_item);
+                if(p->highlighted_item->picked_up)
+                    item_remove(p->highlighted_item);
             }
         }
     }

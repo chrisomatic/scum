@@ -60,42 +60,83 @@ static void item_func_chest(Item* pu, Player* p)
     {
         item_add(ITEM_NEW_LEVEL, x, y, croom);
     }
-}
 
-static void item_func_new_level(Item* pu, Player* p)
-{
-    seed = time(0)+rand()%1000;
-    game_generate_level(seed);
-}
-
-static void item_gunc_gauntlet_slot(Item* pu, Player* p)
-{
-    if(p->gauntlet_slots < PLAYER_GAUNTLET_MAX)
+    if(RAND_FLOAT(0.0,1.0) <= 0.30)
     {
-        p->gauntlet_slots++;
+        item_add(ITEM_GLOWING_ORB, x, y, croom);
     }
-    else
+
+    if(RAND_FLOAT(0.0,1.0) <= 0.30)
     {
-        item_add(pu->type, pu->phys.pos.x, pu->phys.pos.y, pu->curr_room);
+        item_add(ITEM_COSMIC_HEART_HALF, x, y, croom);
+    }
+
+    if(RAND_FLOAT(0.0,1.0) <= 0.30)
+    {
+        item_add(ITEM_COSMIC_HEART_FULL, x, y, croom);
     }
 }
 
-static void item_func_heart(Item* pu, Player* p)
+static void item_func_consumable(Item* pu, Player* p)
 {
-    int add_health = 1;
-    if(pu->type == ITEM_HEART_FULL)
-        add_health = 2;
-
-    if(p->phys.hp < p->phys.hp_max)
+    switch(pu->type)
     {
-        player_add_hp(p, add_health);
-        pu->picked_up = true;
+        case ITEM_HEART_FULL:
+        {
+            if(p->phys.hp < p->phys.hp_max)
+            {
+                player_add_hp(p, 2);
+                pu->picked_up = true;
+            }
+        }   break;
+        case ITEM_HEART_HALF:
+        {
+            if(p->phys.hp < p->phys.hp_max)
+            {
+                player_add_hp(p, 1);
+                pu->picked_up = true;
+            }
+        } break;
+        case ITEM_COSMIC_HEART_FULL:
+        {
+            p->phys.hp_max += 2;
+            player_add_hp(p,2);
+            printf("hp_max: %d\n",p->phys.hp_max);
+            pu->picked_up = true;
+        } break;
+        case ITEM_COSMIC_HEART_HALF:
+        {
+            p->phys.hp_max += 1;
+            player_add_hp(p,1);
+            printf("hp_max: %d\n",p->phys.hp_max);
+            pu->picked_up = true;
+        } break;
+        case ITEM_GLOWING_ORB:
+            p->light_radius += 1.0;
+            pu->picked_up = true;
+            break;
+        case ITEM_NEW_LEVEL:
+        {
+            seed = time(0)+rand()%1000;
+            game_generate_level(seed);
+            pu->picked_up = true;
+        } break;
+
+        case ITEM_GAUNTLET_SLOT:
+        {
+            if(p->gauntlet_slots < PLAYER_GAUNTLET_MAX)
+            {
+                p->gauntlet_slots++;
+                pu->picked_up = true;
+            }
+        } break;
+        default:
+            break;
     }
 }
 
 static void item_func_gem(Item* pu, Player* p)
 {
-
     if(player_gauntlet_full(p))
     {
         memcpy(&p->gauntlet_item, pu, sizeof(Item));
@@ -113,6 +154,8 @@ static void item_func_gem(Item* pu, Player* p)
             }
         }
     }
+
+    pu->picked_up = true;
 
 }
 
@@ -135,33 +178,48 @@ void item_init()
         p->sprite_index = p->type == ITEM_CHEST ? 0 : i;
         p->func = (void*)item_func_nothing;
 
-        if(item_is_gem(p->type))
+        switch(p->type)
         {
-            p->touchable = false;
-            p->socketable = true;
-            p->func = (void*)item_func_gem;
-        }
-        else if(item_is_heart(p->type))
-        {
-            p->touchable = true;
-            p->socketable = false;
-            p->func = (void*)item_func_heart;
-        }
-        else if(item_is_chest(p->type))
-        {
-            p->touchable = false;
-            p->socketable = false;
-            p->func = (void*)item_func_chest;
+            case ITEM_GEM_RED:
+            case ITEM_GEM_GREEN:
+            case ITEM_GEM_BLUE:
+            case ITEM_GEM_WHITE:
+            case ITEM_GEM_YELLOW:
+            case ITEM_GEM_PURPLE:
+            {
+                p->touchable = false;
+                p->socketable = true;
+                p->func = (void*)item_func_gem;
+
+            }   break;
+            case ITEM_HEART_FULL:
+            case ITEM_HEART_HALF:
+            case ITEM_COSMIC_HEART_FULL:
+            case ITEM_COSMIC_HEART_HALF:
+            case ITEM_GLOWING_ORB:
+            case ITEM_DRAGON_EGG:
+            case ITEM_SHAMROCK:
+            case ITEM_RUBY_RING:
+            case ITEM_POTION_STRENGTH:
+            case ITEM_POTION_SPEED:
+            case ITEM_POTION_RANGE:
+            case ITEM_POTION_PURPLE:
+            case ITEM_GAUNTLET_SLOT:
+            case ITEM_NEW_LEVEL:
+            {
+                p->touchable = false;
+                p->socketable = false;
+                p->func = (void*)item_func_consumable;
+            } break;
+            case ITEM_CHEST:
+            {
+                p->touchable = false;
+                p->socketable = false;
+                p->func = (void*)item_func_chest;
+            }
+            break;
         }
     }
-
-    item_props[ITEM_NEW_LEVEL].touchable = false;
-    item_props[ITEM_NEW_LEVEL].socketable = false;
-    item_props[ITEM_NEW_LEVEL].func = (void*)item_func_new_level;
-
-    item_props[ITEM_GAUNTLET_SLOT].touchable = false;
-    item_props[ITEM_GAUNTLET_SLOT].socketable = false;
-    item_props[ITEM_GAUNTLET_SLOT].func = (void*)item_gunc_gauntlet_slot;
 }
 
 void item_clear_all()

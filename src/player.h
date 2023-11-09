@@ -79,6 +79,7 @@ typedef struct
     Dir door;
 
     int light_index;
+    float light_radius;
 
     Vector2i curr_tile;
 

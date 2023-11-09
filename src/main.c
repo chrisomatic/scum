@@ -929,7 +929,6 @@ void update(float dt)
     {
         if(!paused)
         {
-
             if(role == ROLE_LOCAL)
             {
                 if(debug_enabled && window_mouse_left_went_up())
@@ -953,7 +952,7 @@ void update(float dt)
 
                 if(p->active && p->curr_room == player->curr_room)
                 {
-                    p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0,1.0,0.0);
+                    p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0,p->light_radius,0.0);
                 }
             }
 
@@ -1227,7 +1226,6 @@ void draw_hearts2()
     Rect* marg = &margin_bottom;
     float y = 5.0;
 #endif
-
 
     Rect area = RECT(x, y, l, l);
     gfx_get_absolute_coords(&area, ALIGN_TOP_LEFT, marg, ALIGN_CENTER);
