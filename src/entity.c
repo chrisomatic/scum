@@ -142,6 +142,7 @@ void entity_handle_status_effects(float dt)
             {
                 if(effect->lifetime >= effect->period * (effect->periods_passed +1))
                 {
+                    printf("effect->periods_passed: %d (%.2f)\n", effect->periods_passed, effect->lifetime);
                     effect->periods_passed++;
                     effect->func((void*)e,false);
                 }

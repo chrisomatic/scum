@@ -25,7 +25,7 @@ static void status_effect_poison(void* entity, bool end)
         switch(e->type)
         {
             case ENTITY_TYPE_PLAYER:
-                player_hurt((Player*)e->ptr,1);
+                player_hurt_no_inv((Player*)e->ptr,1);
                 break;
             case ENTITY_TYPE_CREATURE:
                 creature_hurt((Creature*)e->ptr,1);

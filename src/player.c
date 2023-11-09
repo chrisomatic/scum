@@ -265,6 +265,23 @@ void player_add_hp(Player* p, int hp)
     p->phys.hp = RANGE(p->phys.hp,0,p->phys.hp_max);
 }
 
+// ignores invulnerability
+void player_hurt_no_inv(Player* p, int damage)
+{
+    if(players_invincible)
+        return;
+
+    printf("player_hurt_no_inv\n");
+
+    player_add_hp(p,-damage);
+
+    if(p->phys.hp == 0)
+    {
+        text_list_add(text_lst, 3.0, "%s died", p->name);
+        player_die(p);
+    }
+}
+
 void player_hurt(Player* p, int damage)
 {
     if(players_invincible)

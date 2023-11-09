@@ -37,7 +37,8 @@ ProjectileDef projectile_lookup[] = {
         .homing = false,
         .bouncy = false,
         .penetrate = false,
-        .cold = false
+        .cold = false,
+        .poison = false,
     },
     {
         // creature
@@ -54,7 +55,9 @@ ProjectileDef projectile_lookup[] = {
         .explosive = true,
         .homing = false,
         .bouncy = false,
-        .penetrate = false
+        .penetrate = false,
+        .cold = false,
+        .poison = false,
     },
     {
         // creature clinger
@@ -71,7 +74,9 @@ ProjectileDef projectile_lookup[] = {
         .explosive = false,
         .homing = false,
         .bouncy = false,
-        .penetrate = false
+        .penetrate = false,
+        .cold = false,
+        .poison = true,
     }
 };
 

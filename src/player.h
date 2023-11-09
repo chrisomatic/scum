@@ -122,6 +122,7 @@ void player_lerp(Player* p, float dt);
 void player_handle_net_inputs(Player* p, double dt);
 void player_set_hit_box_pos(Player* p, float x, float y);
 void player_set_collision_pos(Player* p, float x, float y);
+void player_hurt_no_inv(Player* p, int damage);
 void player_hurt(Player* p, int damage);
 void player_add_hp(Player* p, int hp);
 void player_die(Player* p);
