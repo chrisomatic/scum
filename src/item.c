@@ -11,8 +11,6 @@
 
 const float iscale = 0.8;
 
-
-
 glist* item_list = NULL;
 Item items[MAX_ITEMS] = {0};
 ItemProps item_props[MAX_ITEMS] = {0};
@@ -67,10 +65,6 @@ static void item_func_gem(Item* pu, Player* p)
 {
     switch(pu->type)
     {
-        case ITEM_GEM_RED:
-            p->phys.hp_max += 2;
-            p->phys.hp = p->phys.hp_max;
-            break;
         case ITEM_GEM_YELLOW:
             if(p->gauntlet_slots < PLAYER_GAUNTLET_MAX)
             {
@@ -118,6 +112,7 @@ void item_init()
     for(int i = 0; i < ITEM_MAX; ++i)
     {
         ItemProps* p = &item_props[i];
+
         p->type = i;
         p->image = p->type == ITEM_CHEST ? chest_image : items_image;
         p->sprite_index = p->type == ITEM_CHEST ? 0 : i;
@@ -125,17 +120,20 @@ void item_init()
 
         if(item_is_gem(p->type))
         {
-            p->touch_item = false;
+            p->touchable = false;
+            p->socketable = true;
             p->func = (void*)item_func_gem;
         }
         else if(item_is_heart(p->type))
         {
-            p->touch_item = true;
+            p->touchable = true;
+            p->socketable = false;
             p->func = (void*)item_func_heart;
         }
         else if(item_is_chest(p->type))
         {
-            p->touch_item = false;
+            p->touchable = false;
+            p->socketable = false;
             p->func = (void*)item_func_chest;
         }
     }
@@ -159,6 +157,42 @@ bool item_is_gem(ItemType type)
 bool item_is_heart(ItemType type)
 {
     return (type >= ITEM_HEART_FULL && type <= ITEM_HEART_HALF);
+}
+
+void item_apply_gauntlet(void* _player, Item* gauntlet, uint8_t num_slots)
+{
+    Player* p = (Player*)_player;
+
+    for(int i = 0; i < num_slots; ++i)
+    {
+        Item* item = &gauntlet[i];
+        if(item->type == ITEM_NONE)
+            continue;
+
+        switch(item->type)
+        {
+            case ITEM_GEM_RED:
+                p->proj_def.damage += 1.0;
+                break;
+            case ITEM_GEM_GREEN:
+                p->proj_def.poison = true;
+                break;
+            case ITEM_GEM_BLUE:
+                p->proj_def.cold = true;
+                break;
+            case ITEM_GEM_WHITE:
+                p->proj_def.num += 1;
+                break;
+            case ITEM_GEM_YELLOW:
+                p->proj_def.bouncy = true;
+                break;
+            case ITEM_GEM_PURPLE:
+                p->proj_def.ghost = true;
+                break;
+            default:
+                break;
+        }
+    }
 }
 
 ItemType item_get_random_gem()
@@ -369,7 +403,7 @@ void item_draw(Item* pu, bool batch)
 
     int sprite_index = item_props[pu->type].sprite_index;
 
-    if(pu->opened)
+    if(pu->used)
         sprite_index++;
 
     if(batch)

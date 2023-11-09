@@ -244,7 +244,7 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
         }
     }
 
-    c.color = COLOR_TINT_NONE; //room->color;
+    c.color = COLOR_TINT_NONE;
     creature_init_props(&c);
 
     if(creature == NULL)
@@ -296,17 +296,14 @@ void creature_update(Creature* c, float dt)
         c->phys.vel.y += dt*v_speed;
     }
 
-    /*
-    if(moving && vel_magn > speed)
-    {
-        normalize(&c->phys.vel);
-        c->phys.vel.x *= speed;
-        c->phys.vel.y *= speed;
-    }
-    */
+    c->color = c->damaged ? COLOR_RED : gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, c->phys.speed_factor);
 
-    //if(ABS(c->phys.vel.x) > speed) c->phys.vel.x = h_speed;
-    //if(ABS(c->phys.vel.y) > speed) c->phys.vel.y = v_speed;
+    if(c->damaged)
+    {
+        c->damaged_time += dt;
+        if(c->damaged_time >= DAMAGED_TIME_MAX)
+            c->damaged = false;
+    }
 
     if(!moving || vel_magn > speed)
         phys_apply_friction(&c->phys,c->phys.base_friction,dt);
@@ -320,31 +317,6 @@ void creature_update(Creature* c, float dt)
 
     c->hitbox.w = 16;
     c->hitbox.h = 16;
-
-#if 0
-    static bool dbg = false;
-    if(!dbg)
-    {
-        RectXY rxy = {0};
-        rect_to_rectxy(&room_area, &rxy);
-        if(c->phys.pos.x < rxy.x[TL] || c->phys.pos.x > rxy.x[TR] || c->phys.pos.y < rxy.y[TL] || c->phys.pos.y > rxy.y[BL])
-        {
-            dbg = true;
-            text_list_add(text_lst, 10.0, "CREATURE ERROR!");
-            // player->curr_room = c->curr_room;
-            // player->transition_room = player->curr_room;
-            Room* room = level_get_room_by_index(&level, c->curr_room);
-            printf("creature is outside of area!\n");
-            // print_rect(&room_area);
-            printf("creature room: %u, player_room: %u\n", c->curr_room, player->curr_room);
-            printf("room area X: %.2f  -  %.2f\n", rxy.x[TL], rxy.x[BR]);
-            printf("room area Y: %.2f  -  %.2f\n", rxy.y[TL], rxy.y[BR]);
-            printf("pos: %.2f, %.2f\n", c->phys.pos.x, c->phys.pos.y);
-            printf("spawn pos: %.2f, %.2f\n", c->spawn.x, c->spawn.y);
-            printf("spawn tile: %d, %d (%d)\n", c->spawn_tile_x, c->spawn_tile_y, level_get_tile_type(room, c->spawn_tile_x, c->spawn_tile_y));
-        }
-    }
-#endif
 
 }
 
@@ -417,15 +389,13 @@ void creature_draw(Creature* c, bool batch)
 
     if(c->phys.dead) return;
 
-    uint32_t color = gfx_blend_colors(COLOR_BLUE, c->color, c->phys.speed_factor);
-
     if(batch)
     {
-        gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, color, false, 1.0, 0.0, 1.0, false, false, false);
+        gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, c->color, false, 1.0, 0.0, 1.0, false, false, false);
     }
     else
     {
-        gfx_draw_image(c->image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, color, 1.0, 0.0, 1.0, false, true);
+        gfx_draw_image(c->image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, c->color, 1.0, 0.0, 1.0, false, true);
     }
 
     if(debug_enabled)
@@ -469,6 +439,10 @@ void creature_die(Creature* c)
 void creature_hurt(Creature* c, float damage)
 {
     c->phys.hp -= damage;
+
+    c->damaged = true;
+    c->damaged_time = 0.0;
+
     if(c->phys.hp <= 0.0)
     {
         creature_die(c);
@@ -526,13 +500,13 @@ static void creature_update_slug(Creature* c, float dt)
 static void creature_fire_projectile_dir(Creature* c, Dir dir)
 {
     if(dir == DIR_UP)
-        projectile_add(&c->phys, c->curr_room, c->proj_type,90.0, 1.0, 1.0,false);
+        projectile_add_type(&c->phys, c->curr_room, c->proj_type,90.0, 1.0, 1.0,false);
     else if(dir == DIR_RIGHT)
-        projectile_add(&c->phys, c->curr_room, c->proj_type,0.0, 1.0, 1.0,false);
+        projectile_add_type(&c->phys, c->curr_room, c->proj_type,0.0, 1.0, 1.0,false);
     else if(dir == DIR_DOWN)
-        projectile_add(&c->phys, c->curr_room, c->proj_type,270.0, 1.0, 1.0,false);
+        projectile_add_type(&c->phys, c->curr_room, c->proj_type,270.0, 1.0, 1.0,false);
     else if(dir == DIR_LEFT)
-        projectile_add(&c->phys, c->curr_room, c->proj_type,180.0, 1.0, 1.0,false);
+        projectile_add_type(&c->phys, c->curr_room, c->proj_type,180.0, 1.0, 1.0,false);
 }
 
 static void creature_update_clinger(Creature* c, float dt)
@@ -622,7 +596,7 @@ static void creature_update_geizer(Creature* c, float dt)
         for(int i = 0; i < n_orbs; ++i)
         {
             int angle = rand() % 360;
-            projectile_add(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
+            projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
         }
 
     }

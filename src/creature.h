@@ -7,6 +7,7 @@
 
 #define MAX_CREATURES 1024
 #define ACTION_COUNTER_MAX 1.0 // seconds
+#define DAMAGED_TIME_MAX 0.2
 
 typedef enum
 {
@@ -34,6 +35,9 @@ typedef struct
 
     bool painful_touch;
     int damage;
+
+    bool damaged;
+    float damaged_time;
 
     float action_counter;
     float action_counter_max;

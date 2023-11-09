@@ -214,7 +214,7 @@ void entity_handle_collisions()
         if(e->phys->dead && e->type == ENTITY_TYPE_PROJECTILE)
         {
             Projectile* proj = (Projectile*)e->ptr;
-            if(projectile_lookup[proj->type].explosive)
+            if(proj->proj_def->explosive)
             {
                 explosion_add(e->phys->pos.x, e->phys->pos.y, 15.0*proj->scale, 100.0*proj->scale, e->curr_room, proj->from_player);
             }

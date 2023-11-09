@@ -1,7 +1,5 @@
 #pragma once
 
-#include "entity.h"
-
 #define MAX_ITEMS 500
 #define ITEM_PICKUP_RADIUS 22.0
 
@@ -10,11 +8,9 @@
 //  - item_is_heart()
 typedef enum
 {
-    ITEM_NONE = -2,
+    ITEM_NONE = -1,
 
-    ITEM_CHEST = 0,
-
-    ITEM_GEM_RED,
+    ITEM_GEM_RED = 0,
     ITEM_GEM_GREEN,
     ITEM_GEM_BLUE,
     ITEM_GEM_WHITE,
@@ -23,6 +19,8 @@ typedef enum
 
     ITEM_HEART_FULL,
     ITEM_HEART_HALF,
+
+    ITEM_CHEST,
 
     ITEM_MAX
 } ItemType;
@@ -34,7 +32,8 @@ typedef struct
     ItemType type;
     int image;
     uint8_t sprite_index;
-    bool touch_item;
+    bool touchable;
+    bool socketable;
     item_func func;
 } ItemProps;
 
@@ -46,13 +45,15 @@ typedef struct
     uint8_t curr_room;
     Physics phys;
     bool highlighted;
-    bool opened;
+    bool used;
 } Item;
 
 extern int items_image;
 extern glist* item_list;
 extern Item items[MAX_ITEMS];
 extern ItemProps item_props[MAX_ITEMS];
+
+#include "entity.h"
 
 void item_init();
 void item_clear_all();
@@ -71,4 +72,5 @@ void item_update(Item* pu, float dt);
 void item_update_all(float dt);
 void item_draw(Item* pu, bool batch);
 void item_handle_collision(Item* p, Entity* e);
+void item_apply_gauntlet(void* _player, Item* gauntlet, uint8_t num_slots);
 

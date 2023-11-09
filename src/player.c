@@ -65,6 +65,8 @@ for(int i = 0; i < MAX_PLAYERS; ++i)
         p->phys.coffset.x = RADIUS_OFFSET_X;
         p->phys.coffset.y = RADIUS_OFFSET_Y;
 
+        memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
+
         p->proj_cooldown_max = 0.2;
         p->door = DIR_NONE;
 
@@ -655,6 +657,10 @@ void player_update(Player* p, float dt)
 #endif
     }
 
+    // apply gem effects
+    memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
+    item_apply_gauntlet((void*)p, (Item*)p->gauntlet,p->gauntlet_slots);
+
     if(p->show_gauntlet)
     {
         if(p->actions[PLAYER_ACTION_GEM_MENU_CYCLE].toggled_on)
@@ -845,7 +851,7 @@ void player_update(Player* p, float dt)
 
             if(!p->phys.dead)
             {
-                projectile_add(&p->phys, p->curr_room, PROJECTILE_TYPE_PLAYER, angle_deg, 1.0, 1.0, true);
+                projectile_add(&p->phys, p->curr_room, &p->proj_def, angle_deg, 1.0, 1.0, true);
             }
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;
@@ -887,7 +893,7 @@ void player_update(Player* p, float dt)
 
                 if(!p->phys.dead)
                 {
-                    projectile_add(&p->phys, p->curr_room, PROJECTILE_TYPE_PLAYER, angle_deg, scale, damage, true);
+                    projectile_add(&p->phys, p->curr_room, &p->proj_def, angle_deg, scale, damage, true);
                 }
 
                 // text_list_add(text_lst, 5.0, "projectile: %.2f, %.2f", scale, damage);
@@ -908,7 +914,7 @@ void player_update(Player* p, float dt)
 
             if(!p->phys.dead)
             {
-                projectile_add(&p->phys, p->curr_room, PROJECTILE_TYPE_PLAYER, angle_deg, 1.0, 1.0, true);
+                projectile_add(&p->phys, p->curr_room, &p->proj_def, angle_deg, 1.0, 1.0, true);
             }
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;
@@ -964,9 +970,9 @@ void player_update(Player* p, float dt)
 
             if(type == ITEM_CHEST)
             {
-                if(!p->highlighted_item->opened)
+                if(!p->highlighted_item->used)
                 {
-                    p->highlighted_item->opened = true;
+                    p->highlighted_item->used = true;
                     item_props[type].func(p->highlighted_item,p);
                 }
             }
@@ -1265,7 +1271,7 @@ void player_handle_collision(Player* p, Entity* e)
 
             if(collided)
             {
-                if(item_props[p2->type].touch_item)
+                if(item_props[p2->type].touchable)
                     item_props[p2->type].func(p2, p);
 
                 phys_collision_correct(&p->phys, &p2->phys,&ci);

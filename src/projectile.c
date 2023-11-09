@@ -23,10 +23,10 @@ static uint16_t id_counter = 0;
 ProjectileDef projectile_lookup[] = {
     {
         // player
-        .damage = 10.0,
+        .damage = 1.0,
         .range = 32*8,
-        .min_speed = 200.0,
-        .base_speed = 200.0,
+        .min_speed = 100.0,
+        .base_speed = 100.0,
         .angle_spread = 45.0,
         .scale = 1.0,
         .num = 1,
@@ -37,7 +37,7 @@ ProjectileDef projectile_lookup[] = {
         .homing = false,
         .bouncy = false,
         .penetrate = false,
-        .cold = true
+        .cold = false
     },
     {
         // creature
@@ -99,12 +99,10 @@ void projectile_clear_all()
     list_clear(plist);
 }
 
-void projectile_add(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player)
+void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, float angle_deg, float scale, float damage_multiplier, bool from_player)
 {
-    ProjectileDef* projdef = &projectile_lookup[proj_type];
-
     Projectile proj = {0};
-    proj.type = proj_type;
+    proj.proj_def = projdef;
     proj.damage = projdef->damage * damage_multiplier;
     proj.scale = scale * projdef->scale;
     proj.time = 0.0;
@@ -224,6 +222,13 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileType proj_type, 
 
         list_add(plist, (void*)&p);
     }
+
+}
+
+void projectile_add_type(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player)
+{
+    ProjectileDef* projdef = &projectile_lookup[proj_type];
+    projectile_add(phys, curr_room, projdef, angle_deg, scale, damage_multiplier, from_player);
 }
 
 void projectile_update(float delta_t)
@@ -251,7 +256,7 @@ void projectile_update(float delta_t)
         // proj->prior_pos.x = proj->phys.pos.x;
         // proj->prior_pos.y = proj->phys.pos.y;
 
-        if(projectile_lookup[proj->type].homing)
+        if(proj->proj_def->homing)
         {
             if(!proj->homing_target)
             {
@@ -308,7 +313,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 {
     if(proj->phys.dead) return;
 
-    ProjectileDef* projdef = &projectile_lookup[proj->type];
+    ProjectileDef* projdef = proj->proj_def;
 
     uint8_t curr_room = 0;
     Rect* hitbox = NULL;

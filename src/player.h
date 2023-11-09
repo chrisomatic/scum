@@ -5,7 +5,7 @@
 #include "gfx.h"
 #include "net.h"
 #include "item.h"
-#include "entity.h"
+#include "projectile.h"
 
 #define BOI_SHOOTING    1
 
@@ -65,6 +65,8 @@ typedef struct
     uint8_t gauntlet_selection;
     uint8_t gauntlet_slots;
     Item gauntlet[PLAYER_GAUNTLET_MAX];
+
+    ProjectileDef proj_def;
 
     GFXAnimation anim;
 

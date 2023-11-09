@@ -2,6 +2,7 @@
 #include "core/gfx.h"
 #include "main.h"
 #include "creature.h"
+#include "item.h"
 #include "physics.h"
 
 RoomData room_list[32] = {0};

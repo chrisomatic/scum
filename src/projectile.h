@@ -1,9 +1,9 @@
 #pragma once
 
-#include "player.h"
 #include "glist.h"
 #include "physics.h"
 #include "net.h"
+#include "entity.h"
 
 #define MAX_PROJECTILES 4096
 
@@ -45,7 +45,7 @@ typedef struct
 {
     uint16_t id;
 
-    ProjectileType type;
+    ProjectileDef* proj_def;
     Physics phys;
 
     Rect hit_box;
@@ -78,7 +78,8 @@ extern glist* plist;
 
 void projectile_init();
 void projectile_clear_all();
-void projectile_add(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player);
+void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, float angle_deg, float scale, float damage_multiplier, bool from_player);
+void projectile_add_type(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player);
 void projectile_update_hit_box(Projectile* proj);
 void projectile_update(float delta_t);
 void projectile_handle_collision(Projectile* p, Entity* e);
