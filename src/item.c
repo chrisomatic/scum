@@ -37,44 +37,34 @@ static void item_func_chest(Item* pu, Player* p)
     float y = pu->phys.pos.y;
     int croom = pu->curr_room;
 
-    if(RAND_FLOAT(0.0,1.0) <= 0.10)
+    // always one gem
+    item_add(item_get_random_gem(), x, y, croom);
+
+    int r = rand()%100;
+
+    if(r < 50)
+    {
+        item_add(item_get_random_gem(), x, y, croom);
+    }
+    else if(r < 55)
     {
         item_add(ITEM_CHEST, x, y, croom);
     }
-
-    int num = RAND_RANGE(2,6);
-    for(int i = 0; i < num; ++i)
-        item_add(item_get_random_gem(), x, y, croom);
-
-    if(RAND_FLOAT(0.0,1.0) <= 0.5 && num <= 4)
+    else
     {
-        item_add(item_get_random_heart(), x, y, croom);
+
+        for(;;)
+        {
+            ItemType t = rand() % ITEM_MAX;
+            if(item_is_gem(t)) continue;
+            if(t == ITEM_CHEST) continue;
+            if(t == ITEM_NEW_LEVEL) continue;
+            item_add(t, x, y, croom);
+            break;
+
+        }
     }
 
-    if(RAND_FLOAT(0.0,1.0) <= 0.30)
-    {
-        item_add(ITEM_GAUNTLET_SLOT, x, y, croom);
-    }
-
-    if(RAND_FLOAT(0.0,1.0) <= 0.30)
-    {
-        item_add(ITEM_NEW_LEVEL, x, y, croom);
-    }
-
-    if(RAND_FLOAT(0.0,1.0) <= 0.30)
-    {
-        item_add(ITEM_GLOWING_ORB, x, y, croom);
-    }
-
-    if(RAND_FLOAT(0.0,1.0) <= 0.30)
-    {
-        item_add(ITEM_COSMIC_HEART_HALF, x, y, croom);
-    }
-
-    if(RAND_FLOAT(0.0,1.0) <= 0.30)
-    {
-        item_add(ITEM_COSMIC_HEART_FULL, x, y, croom);
-    }
 }
 
 static void item_func_consumable(Item* pu, Player* p)
@@ -101,15 +91,15 @@ static void item_func_consumable(Item* pu, Player* p)
         {
             p->phys.hp_max += 2;
             player_add_hp(p,2);
-            printf("hp_max: %d\n",p->phys.hp_max);
+            // printf("hp_max: %d\n",p->phys.hp_max);
             pu->picked_up = true;
         } break;
         case ITEM_COSMIC_HEART_HALF:
         {
             p->phys.hp_max += 1;
-            player_add_hp(p,1);
-            printf("hp_max: %d\n",p->phys.hp_max);
             pu->picked_up = true;
+            player_add_hp(p,1);
+            // printf("hp_max: %d\n",p->phys.hp_max);
         } break;
         case ITEM_GLOWING_ORB:
             p->light_radius += 1.0;
@@ -117,9 +107,10 @@ static void item_func_consumable(Item* pu, Player* p)
             break;
         case ITEM_NEW_LEVEL:
         {
+            pu->picked_up = true;
+
             seed = time(0)+rand()%1000;
             game_generate_level(seed);
-            pu->picked_up = true;
         } break;
 
         case ITEM_GAUNTLET_SLOT:
@@ -157,37 +148,19 @@ static void item_func_gem(Item* pu, Player* p)
     }
 #else
     Item* it = &p->gauntlet[p->gauntlet_selection];
-    if(it->type != ITEM_NONE)
-    {
-        float px = CPOSX(p->phys);
-        float py = CPOSY(p->phys);
-        float r = p->phys.radius + it->phys.radius + 2.0;
-        float nx = px;
-        float ny = py;
-
-        Dir dirs[4] = {DIR_DOWN, DIR_RIGHT, DIR_LEFT, DIR_UP};
-        for(int i = 0; i < 4; ++i)
-        {
-            Vector2i o = get_dir_offsets(dirs[i]);
-            nx = px + o.x * r;
-            ny = py + o.y * r;
-
-            Rect rect = RECT(nx, ny, it->phys.radius, it->phys.radius);
-            Vector2f l = limit_rect_pos(&player_area, &rect);
-            // print_rect(&rect);
-            if(FEQ0(l.x) && FEQ0(l.y))
-            {
-                // printf("%s is good\n", get_dir_name(dirs[i]));
-                break;
-            }
-        }
-        // printf("dropping item at %.2f, %.2f\n", nx, ny);
-        item_add(it->type, nx, ny, p->curr_room);
-    }
+    player_drop_item(p, it);
     memcpy(it, pu, sizeof(Item));
+
+    for(int i = 0; i < p->gauntlet_slots; ++i)
+    {
+        p->gauntlet_selection++;
+        if(p->gauntlet_selection >= p->gauntlet_slots)
+            p->gauntlet_selection = 0;
+        if(p->gauntlet[p->gauntlet_selection].type == ITEM_NONE)
+            break;
+    }
 #endif
     pu->picked_up = true;
-
 }
 
 void item_init()

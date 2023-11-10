@@ -36,7 +36,7 @@ void player_init()
         player_image = gfx_load_image("src/img/spaceman.png", false, true, 32, 32);
         shadow_image = gfx_load_image("src/img/shadow.png", false, true, 32, 32);
     }
-for(int i = 0; i < MAX_PLAYERS; ++i)
+    for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         Player* p = &players[i];
 
@@ -110,6 +110,38 @@ for(int i = 0; i < MAX_PLAYERS; ++i)
         }
         p->gauntlet_item.type = ITEM_NONE;
     }
+}
+
+void player_drop_item(Player* p, Item* it)
+{
+    if(it == NULL) return;
+    if(it->type == ITEM_NONE) return;
+
+    float px = CPOSX(p->phys);
+    float py = CPOSY(p->phys);
+    float r = p->phys.radius + it->phys.radius + 2.0;
+    float nx = px;
+    float ny = py;
+
+    Dir dirs[4] = {DIR_DOWN, DIR_RIGHT, DIR_LEFT, DIR_UP};
+    for(int i = 0; i < 4; ++i)
+    {
+        Vector2i o = get_dir_offsets(dirs[i]);
+        nx = px + o.x * r;
+        ny = py + o.y * r;
+
+        Rect rect = RECT(nx, ny, it->phys.radius, it->phys.radius);
+        Vector2f l = limit_rect_pos(&player_area, &rect);
+        // print_rect(&rect);
+        if(FEQ0(l.x) && FEQ0(l.y))
+        {
+            // printf("%s is good\n", get_dir_name(dirs[i]));
+            break;
+        }
+    }
+    // printf("dropping item at %.2f, %.2f\n", nx, ny);
+    item_add(it->type, nx, ny, p->curr_room);
+    it->type = ITEM_NONE;
 }
 
 uint8_t player_get_gauntlet_count(Player* p)
@@ -686,9 +718,20 @@ void player_update(Player* p, float dt)
     {
         if(p->actions[PLAYER_ACTION_GEM_MENU_CYCLE].toggled_on)
         {
-            p->gauntlet_selection++;
-            if(p->gauntlet_selection >= p->gauntlet_slots)
-                p->gauntlet_selection = 0;
+
+            if(p->actions[PLAYER_ACTION_RSHIFT].state)
+            {
+                if(player->gauntlet_selection == 0)
+                    p->gauntlet_selection = p->gauntlet_slots-1;
+                else
+                    player->gauntlet_selection--;
+            }
+            else
+            {
+                p->gauntlet_selection++;
+                if(p->gauntlet_selection >= p->gauntlet_slots)
+                   p->gauntlet_selection = 0;
+            }
         }
     }
 
@@ -1021,6 +1064,10 @@ void player_update(Player* p, float dt)
                 if(p->highlighted_item->picked_up)
                     item_remove(p->highlighted_item);
             }
+        }
+        else
+        {
+            player_drop_item(p, &p->gauntlet[p->gauntlet_selection]);
         }
     }
 

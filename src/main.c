@@ -566,6 +566,26 @@ void game_generate_level(unsigned int _seed)
 
     level = level_generate(seed);
 
+    uint16_t ccount = creature_get_count();
+    LOGI("Total creature count: %u", ccount);
+    uint16_t ccount2 = 0;
+    for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
+    {
+        for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
+        {
+            Room* room = &level.rooms[x][y];
+            uint16_t c = creature_get_room_count(room->index);
+            ccount2 += c;
+            if(c > 0)
+            {
+                if(!room->valid)
+                    LOGE("Room: %-3u (%-2d,%2d) valid: %-5s, creature count: %2u, sum: %2u", room->index, x, y, BOOLSTR(room), c, ccount2);
+                else
+                    LOGI("Room: %-3u (%-2d,%2d) valid: %-5s, creature count: %2u, sum: %2u", room->index, x, y, BOOLSTR(room), c, ccount2);
+            }
+        }
+    }
+
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         player_send_to_level_start(&players[i]);
@@ -579,12 +599,6 @@ void game_generate_level(unsigned int _seed)
         level_get_rand_floor_tile(room, NULL, &pos);
         item_add(ITEM_CHEST, pos.x, pos.y, player->curr_room);
     }
-
-    level_get_rand_floor_tile(room, NULL, &pos);
-    item_add(ITEM_HEART_FULL, pos.x, pos.y, player->curr_room);
-
-    level_get_rand_floor_tile(room, NULL, &pos);
-    item_add(ITEM_HEART_HALF, pos.x, pos.y, player->curr_room);
 }
 
 void init()

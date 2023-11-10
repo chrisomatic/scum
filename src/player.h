@@ -112,6 +112,7 @@ extern Player* player2;
 
 void player_init();
 uint8_t player_get_gauntlet_count(Player* p);
+void player_drop_item(Player* p, Item* it);
 bool player_gauntlet_full(Player* p);
 void player_init_keys();
 void player2_init_keys();

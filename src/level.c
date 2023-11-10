@@ -52,7 +52,6 @@ static void branch_room(Level* level, int x, int y, int depth)
             generate_rooms(level, x-1,y,DIR_LEFT,depth+1);
     }
 
-
 }
 
 static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
@@ -109,19 +108,9 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
                     rp = level_get_tile_rect(ROOM_TILE_SIZE_X-1,ROOM_TILE_SIZE_Y-1);
                     item_add(ITEM_CHEST, rp.x, rp.y, room->index);
 
-                    for(int i = 0; i < 20; ++i)
-                    {
-                        // int tile_x = (rand() % ROOM_TILE_SIZE_X);
-                        // int tile_y = (rand() % ROOM_TILE_SIZE_Y);
-
-                        int tile_x = RAND_RANGE(4, ROOM_TILE_SIZE_X-5);
-                        int tile_y = RAND_RANGE(3, ROOM_TILE_SIZE_Y-3);
-
-                        Rect rp = level_get_tile_rect(tile_x,tile_y);
-                        item_add(item_get_random_gem(), rp.x, rp.y, room->index);
-                    }
-
-
+                    Vector2f center = {0};
+                    level_get_center_floor_tile(room, NULL, &center);
+                    item_add(ITEM_NEW_LEVEL, center.x, center.y, room->index);
                 }
                 else
                 {
