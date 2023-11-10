@@ -17,10 +17,12 @@ glist* clist = NULL;
 static int creature_image_slug;
 static int creature_image_clinger;
 static int creature_image_geizer;
+static int creature_image_floater;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
 static void creature_update_geizer(Creature* c, float dt);
+static void creature_update_floater(Creature* c, float dt);
 
 static uint16_t id_counter = 0;
 
@@ -39,6 +41,7 @@ void creature_init()
     creature_image_slug = gfx_load_image("src/img/creature_slug.png", false, false, 17, 17);
     creature_image_clinger = gfx_load_image("src/img/creature_clinger.png", false, false, 32, 32);
     creature_image_geizer = gfx_load_image("src/img/creature_geizer.png", false, false, 32, 64);
+    creature_image_floater = gfx_load_image("src/img/creature_floater.png", false, false, 16, 16);
 }
 
 const char* creature_type_name(CreatureType type)
@@ -51,6 +54,8 @@ const char* creature_type_name(CreatureType type)
             return "Clinger";
         case CREATURE_TYPE_GEIZER:
             return "Geizer";
+        case CREATURE_TYPE_FLOATER:
+            return "Floater";
         default:
             return "???";
     }
@@ -66,6 +71,8 @@ int creature_get_image(CreatureType type)
             return creature_image_clinger;
         case CREATURE_TYPE_GEIZER:
             return creature_image_geizer;
+        case CREATURE_TYPE_FLOATER:
+            return creature_image_floater;
         default:
             return -1;
     }
@@ -112,6 +119,19 @@ void creature_init_props(Creature* c)
             c->phys.hp_max = 10.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = false;
+        } break;
+        case CREATURE_TYPE_FLOATER:
+        {
+            c->phys.speed = 20.0;
+            c->image = creature_image_floater;
+            c->act_time_min = 0.5;
+            c->act_time_max = 1.0;
+            c->phys.mass = 2.0;
+            c->phys.base_friction = 10.0;
+            c->phys.height = gfx_images[creature_image_floater].element_height;
+            c->phys.hp_max = 3.0;
+            c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
+            c->painful_touch = true;
         } break;
     }
 
@@ -241,6 +261,11 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
                 add_to_random_tile(&c,room);
                 c.sprite_index = 0;
             } break;
+            case CREATURE_TYPE_FLOATER:
+            {
+                add_to_random_tile(&c,room);
+                c.sprite_index = 0;
+            } break;
         }
     }
 
@@ -277,6 +302,9 @@ void creature_update(Creature* c, float dt)
             break;
         case CREATURE_TYPE_GEIZER:
             creature_update_geizer(c,dt);
+            break;
+        case CREATURE_TYPE_FLOATER:
+            creature_update_floater(c,dt);
             break;
     }
 
@@ -599,5 +627,20 @@ static void creature_update_geizer(Creature* c, float dt)
             projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
         }
 
+    }
+}
+
+static void creature_update_floater(Creature* c, float dt)
+{
+    bool act = ai_update_action(c, dt);
+
+    c->phys.pos.z = 10.0 + 5*sinf(PI*(c->action_counter/c->action_counter_max));
+
+    if(act)
+    {
+        if(ai_flip_coin())
+        {
+            ai_random_walk(c);
+        }
     }
 }
