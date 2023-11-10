@@ -1498,7 +1498,7 @@ void message_small_draw()
     if(strlen(message_small) == 0)
         return;
 
-    float scale = 0.20 * ascale;
+    float scale = 0.30 * ascale;
 
     Vector2f size = gfx_string_get_size(scale, message_small);
 

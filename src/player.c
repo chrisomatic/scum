@@ -218,6 +218,8 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_GEM_MENU_CYCLE].state, GLFW_KEY_TAB);
     window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_CYCLE].state, GLFW_KEY_C);
 
+    window_controls_add_key(&player->actions[PLAYER_ACTION_RSHIFT].state, GLFW_KEY_RIGHT_SHIFT);
+
     for(int i = 0;  i < PLAYER_ACTION_MAX; ++i)
         memset(&player->actions[i], 0, sizeof(PlayerInput));
 }
@@ -233,7 +235,6 @@ void player2_init_keys()
     window_controls_add_key(&player2->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_DOWN);
     window_controls_add_key(&player2->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_LEFT);
     window_controls_add_key(&player2->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_RIGHT);
-    // window_controls_add_key(&player2->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_RIGHT_SHIFT);
 
     for(int i = 0;  i < PLAYER_ACTION_MAX; ++i)
         memset(&player2->actions[i], 0, sizeof(PlayerInput));
@@ -657,6 +658,7 @@ void player_update(Player* p, float dt)
         update_input_state(pa, dt);
     }
 
+#if 0
     if(p->actions[PLAYER_ACTION_GEM_MENU].toggled_on)
     {
 #if ALWAYS_SHOW_GAUNTLET
@@ -674,6 +676,7 @@ void player_update(Player* p, float dt)
         }
 #endif
     }
+#endif
 
     // apply gem effects
     memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
@@ -954,25 +957,41 @@ void player_update(Player* p, float dt)
     if(p->highlighted_item)
     {
         if(p->actions[PLAYER_ACTION_ITEM_CYCLE].toggled_on)
-            player->highlighted_index++;
+        {
+            if(p->actions[PLAYER_ACTION_RSHIFT].state)
+                player->highlighted_index--;
+            else
+                player->highlighted_index++;
+        }
     }
 
-
+#if 0
     if(PLAYER_SWAPPING_GEM(p))
     {
         message_small_set(0.1, "Press e to swap [%s] for [%s] (press g to cancel)", item_get_name(p->gauntlet[p->gauntlet_selection].type), item_get_name(p->gauntlet_item.type));
     }
-    else if(p->highlighted_item)
+    else
+#endif
+    if(p->highlighted_item)
     {
-        message_small_set(0.1, "Item: %s", item_get_name(p->highlighted_item->type));
+        const char* desc = item_get_description(p->highlighted_item->type);
+        const char* name = item_get_name(p->highlighted_item->type);
+        if(strlen(desc) > 0)
+        {
+            message_small_set(0.1, "Item: %s (%s)", name, desc);
+        }
+        else
+        {
+            message_small_set(0.1, "Item: %s", name);
+        }
     }
 
     bool activate = p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
     if(activate)
     {
+#if 0
         if(PLAYER_SWAPPING_GEM(p))
         {
-
             Item* it = &p->gauntlet[p->gauntlet_selection];
 
             item_add(it->type, CPOSX(player->phys),CPOSY(player->phys)+player->phys.radius, player->curr_room);
@@ -982,7 +1001,9 @@ void player_update(Player* p, float dt)
 
             // message_small_set(0.1, "Sawp Item: %s", item_get_name(p->gauntlet_item.type));
         }
-        else if(p->highlighted_item)
+        else
+#endif
+        if(p->highlighted_item)
         {
             ItemType type = p->highlighted_item->type;
 

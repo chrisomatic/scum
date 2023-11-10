@@ -137,6 +137,7 @@ static void item_func_consumable(Item* pu, Player* p)
 
 static void item_func_gem(Item* pu, Player* p)
 {
+#if 0
     if(player_gauntlet_full(p))
     {
         memcpy(&p->gauntlet_item, pu, sizeof(Item));
@@ -154,7 +155,37 @@ static void item_func_gem(Item* pu, Player* p)
             }
         }
     }
+#else
+    Item* it = &p->gauntlet[p->gauntlet_selection];
+    if(it->type != ITEM_NONE)
+    {
+        float px = CPOSX(p->phys);
+        float py = CPOSY(p->phys);
+        float r = p->phys.radius + it->phys.radius + 2.0;
+        float nx = px;
+        float ny = py;
 
+        Dir dirs[4] = {DIR_DOWN, DIR_RIGHT, DIR_LEFT, DIR_UP};
+        for(int i = 0; i < 4; ++i)
+        {
+            Vector2i o = get_dir_offsets(dirs[i]);
+            nx = px + o.x * r;
+            ny = py + o.y * r;
+
+            Rect rect = RECT(nx, ny, it->phys.radius, it->phys.radius);
+            Vector2f l = limit_rect_pos(&player_area, &rect);
+            // print_rect(&rect);
+            if(FEQ0(l.x) && FEQ0(l.y))
+            {
+                // printf("%s is good\n", get_dir_name(dirs[i]));
+                break;
+            }
+        }
+        // printf("dropping item at %.2f, %.2f\n", nx, ny);
+        item_add(it->type, nx, ny, p->curr_room);
+    }
+    memcpy(it, pu, sizeof(Item));
+#endif
     pu->picked_up = true;
 
 }
@@ -313,8 +344,48 @@ const char* item_get_name(ItemType type)
         case ITEM_GEM_PURPLE: return "Purple Gem";
         case ITEM_HEART_FULL: return "Full Heart";
         case ITEM_HEART_HALF: return "Half Heart";
+        case ITEM_COSMIC_HEART_FULL: return "Cosmic Full Heart";
+        case ITEM_COSMIC_HEART_HALF: return "Cosmic Half Heart";
+        case ITEM_GLOWING_ORB: return "Glowing Orb";
+        case ITEM_DRAGON_EGG: return "Dragon Egg";
+        case ITEM_SHAMROCK: return "Shamrock";
+        case ITEM_RUBY_RING: return "Ruby Ring";
+        case ITEM_POTION_STRENGTH: return "Potion of Strength";
+        case ITEM_POTION_SPEED: return "Potion of Speed";
+        case ITEM_POTION_RANGE: return "Potion of Range";
+        case ITEM_POTION_PURPLE: return "Potion of Purple";
         case ITEM_NEW_LEVEL:  return "New Level";
         case ITEM_GAUNTLET_SLOT: return "+1 Gauntlet Slot";
+    }
+    return "???";
+}
+
+const char* item_get_description(ItemType type)
+{
+    switch(type)
+    {
+        case ITEM_NONE:       return "";
+        case ITEM_CHEST:      return "contains loot";
+        case ITEM_GEM_RED:    return "increase projectile damage";
+        case ITEM_GEM_GREEN:  return "poison projectiles";
+        case ITEM_GEM_BLUE:   return "cold projectiles";
+        case ITEM_GEM_WHITE:  return "+1 projectile";
+        case ITEM_GEM_YELLOW: return "bouncy projectiles";
+        case ITEM_GEM_PURPLE: return "ghost projectiles";
+        case ITEM_HEART_FULL: return "heal 1 heart";
+        case ITEM_HEART_HALF: return "heal 1/2 hear";
+        case ITEM_COSMIC_HEART_FULL: return "increase max health by 1 heart";
+        case ITEM_COSMIC_HEART_HALF: return "increase max health by 1/2 heart";
+        case ITEM_GLOWING_ORB: return "increase light radius";
+        case ITEM_DRAGON_EGG: return "";
+        case ITEM_SHAMROCK: return "";
+        case ITEM_RUBY_RING: return "";
+        case ITEM_POTION_STRENGTH: return "";
+        case ITEM_POTION_SPEED: return "";
+        case ITEM_POTION_RANGE: return "";
+        case ITEM_POTION_PURPLE: return "";
+        case ITEM_NEW_LEVEL:  return "enter new level";
+        case ITEM_GAUNTLET_SLOT: return "+1 gauntlet slot";
     }
     return "???";
 }
@@ -322,7 +393,6 @@ const char* item_get_name(ItemType type)
 void item_add(ItemType type, float x, float y, uint8_t curr_room)
 {
     Item pu = {0};
-
     pu.type = type;
     pu.id = get_id();
     pu.picked_up = false;
@@ -354,7 +424,6 @@ bool item_remove(Item* pu)
     return list_remove_by_item(item_list, pu);
 }
 
-
 void item_update(Item* pu, float dt)
 {
     pu->phys.pos.x += dt*pu->phys.vel.x;
@@ -363,15 +432,13 @@ void item_update(Item* pu, float dt)
     phys_apply_friction(&pu->phys,pu->phys.base_friction,dt);
 }
 
-
 typedef struct
 {
     int index;
     uint16_t id;
     float dist;
 } ItemSort;
-
-#define NUM_NEAR_ITEMS  10
+#define NUM_NEAR_ITEMS  12
 ItemSort near_items_prior[NUM_NEAR_ITEMS] = {0};
 int near_items_count_prior = 0;
 ItemSort near_items[NUM_NEAR_ITEMS] = {0};
@@ -400,7 +467,11 @@ void item_update_all(float dt)
         if(pu->curr_room != player->curr_room)
             continue;
 
-        Vector2f c1 = {CPOSX(player->phys), CPOSY(player->phys)};
+        if(pu->used)
+            continue;
+
+        // Vector2f c1 = {CPOSX(player->phys), CPOSY(player->phys)};
+        Vector2f c1 = {player->phys.pos.x, player->phys.pos.y};
         Vector2f c2 = {CPOSX(pu->phys), CPOSY(pu->phys)};
 
         float distance;
@@ -459,6 +530,10 @@ void item_update_all(float dt)
             {
                 // text_list_add(text_lst, 3.0, "same list: wrap selection");
                 player->highlighted_index = 0;
+            }
+            else if(player->highlighted_index < 0)
+            {
+                player->highlighted_index = near_items_count-1;
             }
         }
         else

@@ -1,7 +1,7 @@
 #pragma once
 
 #define MAX_ITEMS 500
-#define ITEM_PICKUP_RADIUS 22.0
+#define ITEM_PICKUP_RADIUS 28.0
 
 // order matters, see these functions:
 //  - item_is_gem()
@@ -30,6 +30,7 @@ typedef enum
     ITEM_POTION_SPEED,
     ITEM_POTION_RANGE,
     ITEM_POTION_PURPLE,
+
     ITEM_GAUNTLET_SLOT,
     ITEM_NEW_LEVEL,
 
@@ -80,6 +81,7 @@ ItemType item_get_random_gem();
 ItemType item_get_random_heart();
 
 const char* item_get_name(ItemType type);
+const char* item_get_description(ItemType type);
 void item_add(ItemType type, float x, float y, uint8_t curr_room);
 bool item_remove(Item* pu);
 void item_update(Item* pu, float dt);
