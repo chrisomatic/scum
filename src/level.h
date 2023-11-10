@@ -30,6 +30,7 @@ typedef enum
     TILE_FLOOR,
     TILE_PIT,
     TILE_BOULDER,
+    TILE_MUD,
 } TileType;
 
 typedef enum
@@ -62,6 +63,7 @@ typedef enum
     SPRITE_TILE_DOOR_DOWN,
     SPRITE_TILE_DOOR_LEFT,
     SPRITE_TILE_PIT,
+    SPRITE_TILE_MUD,
     SPRITE_TILE_MAX,
 } SpriteTileType;
 

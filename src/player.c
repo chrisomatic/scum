@@ -735,6 +735,13 @@ void player_update(Player* p, float dt)
         }
     }
 
+    // handle mud tiles
+    Room* room = level_get_room_by_index(&level, p->curr_room);
+    TileType tt = level_get_tile_type_by_pos(room, CPOSX(p->phys), CPOSY(p->phys));
+
+    float mud_factor = (tt == TILE_MUD) ? 0.2 : 1.0;
+    //p->phys.speed_factor = (tt == TILE_MUD) ? 0.2 : 1.0;
+
     bool up    = p->actions[PLAYER_ACTION_UP].state;
     bool down  = p->actions[PLAYER_ACTION_DOWN].state;
     bool left  = p->actions[PLAYER_ACTION_LEFT].state;
@@ -776,13 +783,13 @@ void player_update(Player* p, float dt)
     }
 
     Vector2f vel_max = {
-        p->phys.max_velocity*p->phys.speed_factor*vel_dir.x,
-        p->phys.max_velocity*p->phys.speed_factor*vel_dir.y
+        p->phys.max_velocity*p->phys.speed_factor*vel_dir.x*mud_factor,
+        p->phys.max_velocity*p->phys.speed_factor*vel_dir.y*mud_factor
     };
 
     bool moving = (up || down || left || right);
 
-    float speed = p->phys.speed*p->phys.speed_factor;
+    float speed = p->phys.speed*p->phys.speed_factor*mud_factor;
 
     if(moving)
     {
@@ -810,12 +817,31 @@ void player_update(Player* p, float dt)
     {
         p->phys.vel.z = 220.0;
     }
+
+    // handle friction
+    Vector2f f = {-p->phys.vel.x, -p->phys.vel.y};
+    normalize(&f);
+
+    float vel_magn_x = ABS(p->phys.vel.x);
+    float vel_magn_y = ABS(p->phys.vel.y);
+
+    float applied_friction_x = MIN(vel_magn_x,p->phys.base_friction);
+    float applied_friction_y = MIN(vel_magn_y,p->phys.base_friction);
     
     if(!left && !right)
-        phys_apply_friction_x(&p->phys,p->phys.base_friction,dt);
+    {
+        f.x *= applied_friction_x;
+        p->phys.vel.x += f.x;
+    }
 
     if(!up && !down)
-        phys_apply_friction_y(&p->phys,p->phys.base_friction,dt);
+    {
+        f.y *= applied_friction_y;
+        p->phys.vel.y += f.y;
+    }
+
+    if(ABS(p->phys.vel.x) < 1.0) p->phys.vel.x = 0.0;
+    if(ABS(p->phys.vel.y) < 1.0) p->phys.vel.y = 0.0;
 
     float m1 = magn2f(p->phys.vel.x,p->phys.vel.y);
     float m2 = magn2f(vel_max.x, vel_max.y);

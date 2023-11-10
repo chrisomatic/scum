@@ -469,6 +469,7 @@ static bool level_load_room_list()
             case '.': *tile = TILE_FLOOR; break;
             case 'p': *tile = TILE_PIT; break;
             case 'b': *tile = TILE_BOULDER; break;
+            case 'm': *tile = TILE_MUD; break;
             default: break;
         }
     }
@@ -489,6 +490,7 @@ void level_print_room(Room* room)
                 case TILE_FLOOR:   printf("."); break;
                 case TILE_PIT:     printf("p"); break;
                 case TILE_BOULDER: printf("b"); break;
+                case TILE_MUD:     printf("m"); break;
                 default: printf("%c", *tile+65);break;
             }
         }
@@ -648,8 +650,9 @@ uint8_t level_get_tile_sprite(TileType tt)
     switch(tt)
     {
         case TILE_FLOOR:   sprite = SPRITE_TILE_FLOOR; break;
-        case TILE_PIT:     sprite = SPRITE_TILE_PIT; break;
+        case TILE_PIT:     sprite = SPRITE_TILE_PIT;   break;
         case TILE_BOULDER: sprite = SPRITE_TILE_BLOCK; break;
+        case TILE_MUD:     sprite = SPRITE_TILE_MUD;   break;
         default: break;
     }
     return (uint8_t)sprite;
@@ -911,10 +914,11 @@ char* level_tile_type_to_str(TileType tt)
 {
     switch(tt)
     {
-        case TILE_NONE: return "None";
-        case TILE_FLOOR: return "Floor";
+        case TILE_NONE:    return "None";
+        case TILE_FLOOR:   return "Floor";
         case TILE_BOULDER: return "Block";
-        case TILE_PIT: return "Pit";
+        case TILE_MUD:     return "Mud";
+        case TILE_PIT:     return "Pit";
     }
     return "Unknown";
 }
