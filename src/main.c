@@ -585,6 +585,10 @@ void game_generate_level(unsigned int _seed)
             }
         }
     }
+    if(ccount != ccount2)
+    {
+        LOGE("Creature count doesn't add up");
+    }
 
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {

@@ -37,6 +37,27 @@ static void item_func_chest(Item* pu, Player* p)
     float y = pu->phys.pos.y;
     int croom = pu->curr_room;
 
+    static int dbg = 0;
+    if(dbg == 0)
+    {
+        dbg++;
+        for(int i = 0; i < PLAYER_GAUNTLET_MAX; ++i)
+        {
+            item_add(ITEM_GAUNTLET_SLOT, x, y, croom);
+        }
+        return;
+    }
+    else if(dbg == 1)
+    {
+        for(int i = 0; i < ITEM_MAX; ++i)
+        {
+            item_add(i, x, y, croom);
+        }
+        dbg++;
+    }
+
+
+
     // always one gem
     item_add(item_get_random_gem(), x, y, croom);
 
