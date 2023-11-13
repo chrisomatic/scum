@@ -1016,6 +1016,9 @@ void draw_map(DrawLevelParams* params)
         }
     }
 
+    bool dbg = params->show_all && debug_enabled;
+    float tscale = 0.0;
+
     gfx_draw_rect(&params->area, params->color_bg, NOT_SCALED, NO_ROTATION, params->opacity_bg, true, NOT_IN_WORLD);
     gfx_draw_rect(&params->area, params->color_border, NOT_SCALED, NO_ROTATION, params->opacity_border, false, NOT_IN_WORLD);
 
@@ -1035,6 +1038,19 @@ void draw_map(DrawLevelParams* params)
     const float door_h = margin;
 
     float r = len/2.0;
+
+    if(dbg)
+    {
+        for(int i = 0; i < 100; ++i)
+        {
+            tscale += 0.01;
+            Vector2f size = gfx_string_get_size(tscale, "|");
+            if(size.y >= len/5.0)
+            {
+                break;
+            }
+        }
+    }
 
     for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
     {
@@ -1075,12 +1091,19 @@ void draw_map(DrawLevelParams* params)
                 _opacity = params->opacity_uroom;
             }
 
-            if(params->show_all && debug_enabled)
+            if(dbg)
             {
                 _color = room->color;
             }
 
             gfx_draw_rect(&room_rect, _color, NOT_SCALED, NO_ROTATION, _opacity, true, NOT_IN_WORLD);
+
+            if(dbg)
+            {
+                float tlx = room_rect.x - room_rect.w/2.0 + 1.0;
+                float tly = room_rect.y - room_rect.h/2.0;
+                gfx_draw_string(tlx, tly, COLOR_WHITE, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, "%d", creature_get_room_count(room->index));
+            }
 
             //TEMP
             if(!IS_RECT_EMPTY(&send_to_room_rect) && debug_enabled && params->show_all && room->index != player->curr_room)
