@@ -26,7 +26,7 @@ Vector2f imgui_number_box_formatted(char* label, int min, int max, char* format,
 void imgui_text_box(char* label, char* buf, int bufsize);
 void imgui_text_box_sized(char* label, char* buf, int bufsize, int width, int height);
 int imgui_button_select(int num_buttons, char* button_labels[], char* label);
-int imgui_dropdown(char* options[], int num_options, char* label, int* selected_index);
+void imgui_dropdown(char* options[], int num_options, char* label, int* selected_index);
 void imgui_tooltip(char* tooltip, ...);
 
 Rect imgui_draw_demo(int x, int y); // for showcasing widgets

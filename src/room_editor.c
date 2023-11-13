@@ -434,7 +434,7 @@ void room_editor_draw()
                     clear_all();
                 }
 
-                tile_sel = imgui_dropdown(tile_names, NUM_TILE_TYPES, "Select Tile", &tile_sel);
+                imgui_dropdown(tile_names, NUM_TILE_TYPES, "Select Tile", &tile_sel);
 
                 imgui_text("Camera Zoom: %.2f", camera_get_zoom());
                 imgui_text("Mouse (view): %.1f, %.1f", mx, my);
@@ -452,13 +452,13 @@ void room_editor_draw()
 
             case 1:
             {
-                door_sel = imgui_dropdown(door_names, NUM_DOOR_TYPES, "Select Door", &door_sel);
+                imgui_dropdown(door_names, NUM_DOOR_TYPES, "Select Door", &door_sel);
             } break;
 
             case 2:
             {
                 int _creature_sel = creature_sel;
-                creature_sel = imgui_dropdown(creature_names, CREATURE_TYPE_MAX+1, "Select Creature", &creature_sel);
+                imgui_dropdown(creature_names, CREATURE_TYPE_MAX+1, "Select Creature", &creature_sel);
                 if(creature_sel != _creature_sel && creature_sel != CREATURE_TYPE_MAX)
                 {
                     creature.type = creature_sel;
@@ -468,7 +468,7 @@ void room_editor_draw()
 
             case 3:
             {
-                item_sel = imgui_dropdown(item_names, ITEM_MAX+1, "Select Item", &item_sel);
+                imgui_dropdown(item_names, ITEM_MAX+1, "Select Item", &item_sel);
             } break;
 
         }

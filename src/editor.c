@@ -99,7 +99,7 @@ void editor_draw()
 
                 imgui_toggle_button(&players_invincible, "Invincible Players");
 
-                player_selection = imgui_dropdown(player_names, name_count, "Select Player", &player_selection);
+                imgui_dropdown(player_names, name_count, "Select Player", &player_selection);
                 Player* p = &players[player_selection];
 
                 if(p != player)
@@ -208,7 +208,7 @@ void editor_draw()
                 }
 
                 static int proj_sel = 0;
-                proj_sel = imgui_dropdown(proj_def_names, PROJECTILE_TYPE_MAX, "Projectile Definition", &proj_sel);
+                imgui_dropdown(proj_def_names, PROJECTILE_TYPE_MAX, "Projectile Definition", &proj_sel);
 
                 imgui_slider_float("Damage", 0.0,100.0,&projectile_lookup[proj_sel].damage);
                 imgui_slider_float("Range", 0.0,1000.0,&projectile_lookup[proj_sel].range);
