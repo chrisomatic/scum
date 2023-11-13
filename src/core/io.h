@@ -53,6 +53,44 @@ static char* remove_extension(char* filename)
     return filename;
 }
 
+static char* io_str_is_num(char* str)
+{
+
+}
+
+static char* io_str_eat_whitespace(char* str)
+{
+    while(str && *str == ' ' || *str == '\t' || *str == '\r' || *str == '\n')
+        str++;
+
+    return str;
+}
+
+static char* io_get_string_from_file(char* filename)
+{
+    char* buffer = NULL;
+
+    FILE* fp = fopen(filename,"rb");
+    if(!fp) return NULL;
+        
+    if(fp)
+    {
+        fseek(fp, 0, SEEK_END);
+        int length = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+
+        buffer = malloc(length);
+        if(buffer)
+        {
+            fread(buffer, 1, length, fp);
+            buffer[length] = '\0';
+        }
+        fclose(fp);
+    }
+
+    return buffer;
+}
+
 static int io_get_files_in_dir(char* dir_path, char* match_str, char files[32][32])
 {
 #ifdef _WIN32

@@ -88,6 +88,7 @@ static Vector2i get_door_coords(Dir door);
 static Vector2i get_in_front_of_door_coords(Dir door);
 static Dir match_door_coords(int x, int y);
 static Dir match_in_front_of_door_coords(int x, int y);
+static bool parse_room_file(char* filename);
 
 static void editor_camera_set(bool immediate);
 static void clear_all();
@@ -148,6 +149,11 @@ void room_editor_init()
         memset(&editor_keys[i], 0, sizeof(PlayerInput));
 
     editor_camera_set(true);
+
+    if(!parse_room_file("src/rooms/test.room"))
+    {
+        LOGW("Failed to parse room");
+    }
 
     _init = true;
 }
@@ -216,7 +222,6 @@ void room_editor_draw()
     gfx_clear_buffer(background_color);
 
     level_draw_room(&room, &room_data, 0, 0);
-
 
     for(int _y = 0; _y < OBJECTS_MAX_Y; ++_y)
     {
@@ -775,4 +780,185 @@ static void save_room(char* path, ...)
     }
 
 
+}
+
+static bool get_next_section(FILE* fp, char* section)
+{
+    if(!fp)
+        return false;
+
+    char line[100] = {0};
+    char* s = section;
+
+    for(;;)
+    {
+        memset(line,0,100);
+
+        // get line
+        char* check = fgets(line,sizeof(line),fp);
+        if(!check) return false;
+
+        if(line[0] == ';')
+        {
+            char* p = &line[1];
+            p = io_str_eat_whitespace(p);
+
+            while(p && *p != '\n')
+                *s++ = *p++;
+
+            break;
+        }
+    }
+
+    return true;
+}
+
+static bool parse_room_file(char* filename)
+{
+    FILE* fp = fopen(filename,"r");
+    if(!fp) return false;
+
+    char line[100] = {0};
+
+    fgets(line,sizeof(line),fp);
+
+    // parse version
+    int version = 0;
+
+    if(line[0] == '[')
+    {
+        int matches = sscanf(line,"[%d]",&version);
+        if(matches == 0)
+        {
+            LOGW("Failed to get version");
+        }
+    }
+
+    printf("version: %d\n",version);
+
+    int room_width = 0;
+    int room_height = 0;
+
+    for(;;)
+    {
+        char section[100] = {0};
+        bool check = get_next_section(fp,section);
+
+        if(!check)
+            break;
+
+        if(STR_EQUAL(section,"Room Dimensions"))
+        {
+            fgets(line,sizeof(line),fp);
+            sscanf(line,"%d,%d",&room_width,&room_height);
+
+            printf("Room width: %d, height: %d\n",room_width,room_height);
+
+        }
+        else if(STR_EQUAL(section,"Tile Mapping"))
+        {
+
+        }
+        else if(STR_EQUAL(section,"Tile Data"))
+        {
+            for(int i = 0; i < room_height; ++i)
+            {
+                fgets(line,sizeof(line),fp);
+
+                char* p = &line[0];
+
+                char num_str[4];
+                int ni;
+
+                for(int j = 0; j < room_width; ++j)
+                {
+                    ni = 0;
+                    memset(num_str,0,4*sizeof(char));
+
+                    while(p && *p != ',' && *p != '\n')
+                        num_str[ni++] = *p++;
+
+                    p++;
+
+                    int num = atoi(num_str);
+                    if(num >= 0 && num < TILE_MAX)
+                    {
+                        if(num != TILE_FLOOR)
+                        {
+                            objects[j+1][i+1].type    = TYPE_TILE;
+                            objects[j+1][i+1].subtype = num;
+
+                            printf("Add tile %d to %d,%d\n",num,j+1,i+1);
+                        }
+                    }
+                }
+            }
+        }
+        else if(STR_EQUAL(section,"Creature Mapping"))
+        {
+
+        }
+        else if(STR_EQUAL(section,"Creatures"))
+        {
+            int index;
+            int x,y;
+
+            for(;;)
+            {
+                fgets(line,sizeof(line),fp);
+                int matches = sscanf(line,"%d,%d,%d",&index,&x,&y);
+
+                if(matches != 3)
+                    break;
+
+                printf("Add creature %d to %d,%d\n",index,x,y);
+                objects[x][y].type    = TYPE_CREATURE;
+                objects[x][y].subtype = index;
+                objects[x][y].subtype2 = creature_get_image(objects[x][y].subtype);
+            }
+        }
+        else if(STR_EQUAL(section,"Item Mapping"))
+        {
+
+        }
+        else if(STR_EQUAL(section,"Items"))
+        {
+            int index;
+            int x,y;
+
+            for(;;)
+            {
+                fgets(line,sizeof(line),fp);
+                int matches = sscanf(line,"%d,%d,%d",&index,&x,&y);
+
+                if(matches != 3)
+                    break;
+
+                printf("Add item %d to %d,%d\n",index,x,y);
+                objects[x][y].type    = TYPE_ITEM;
+                objects[x][y].subtype = index;
+            }
+        }
+        else if(STR_EQUAL(section,"Doors"))
+        {
+            fgets(line,sizeof(line),fp);
+
+            int up,right,down,left;
+            sscanf(line,"%d,%d,%d,%d",&up,&right,&down,&left);
+
+            room.doors[DIR_UP]    = (up == 1);
+            room.doors[DIR_RIGHT] = (right == 1);
+            room.doors[DIR_DOWN]  = (down == 1);
+            room.doors[DIR_LEFT]  = (left == 1);
+        }
+        else
+        {
+            LOGW("Unhandled Section: %s",section);
+        }
+
+    }
+
+    PlacedObject* obj = &objects[6][4];
+
+    return true;
 }
