@@ -1420,7 +1420,7 @@ void draw()
         editor_draw();
     }
 
-    imgui_draw_demo(10,10);
+    // imgui_draw_demo(10,10);
 
     text_list_draw(text_lst);
     message_small_draw();
