@@ -910,18 +910,6 @@ void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radiu
 //     printf("%2d | %d, %d\n", i, xy.x, xy.y);
 // }
 
-char* level_tile_type_to_str(TileType tt)
-{
-    switch(tt)
-    {
-        case TILE_NONE:    return "None";
-        case TILE_FLOOR:   return "Floor";
-        case TILE_BOULDER: return "Block";
-        case TILE_MUD:     return "Mud";
-        case TILE_PIT:     return "Pit";
-    }
-    return "Unknown";
-}
 
 Room* level_get_room(Level* level, int x, int y)
 {
@@ -1018,9 +1006,9 @@ Vector2i get_dir_offsets(Dir door)
     return o;
 }
 
-const char* get_dir_name(Dir door)
+const char* get_dir_name(Dir dir)
 {
-    switch(door)
+    switch(dir)
     {
         case DIR_UP: return "up";
         case DIR_DOWN: return "down";
@@ -1028,4 +1016,29 @@ const char* get_dir_name(Dir door)
         case DIR_RIGHT: return "right";
         default: return "?";
     }
+}
+
+const char* get_tile_name(TileType tt)
+{
+    switch(tt)
+    {
+        case TILE_NONE: return "None";
+        case TILE_FLOOR: return "Floor";
+        case TILE_PIT: return "Pit";
+        case TILE_BOULDER: return "Boulder";
+        case TILE_MUD: return "Mud";
+    }
+    return "?";
+}
+
+const char* get_room_type_name(RoomType rt)
+{
+    switch(rt)
+    {
+        case ROOM_TYPE_EMPTY: return "Empty";
+        case ROOM_TYPE_MONSTER: return "Monster";
+        case ROOM_TYPE_TREASURE: return "Treasure";
+        case ROOM_TYPE_BOSS: return "Boss";
+    }
+    return "?";
 }

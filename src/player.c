@@ -1117,7 +1117,7 @@ void player_update(Player* p, float dt)
 
     if(isnan(p->phys.pos.x) || isnan(p->phys.pos.y))
     {
-        text_list_add(text_lst, 5.0, "player pos was nan!");
+        text_list_add(text_lst, 10.0, "player pos was nan!");
         p->phys.pos.x = prior_x;
         p->phys.pos.y = prior_y;
         update_player_boxes(p);
@@ -1209,7 +1209,7 @@ void draw_gauntlet()
     x += len/2.0;   // centered
 
     // float y = (float)view_height * 0.75;
-    float y = view_height - len/2.0 - margin;
+    float y = view_height - len/2.0 - margin - 10.0;
 
     Rect r = {0};
     r.w = len;
@@ -1221,7 +1221,26 @@ void draw_gauntlet()
     {
         uint32_t color = COLOR_BLACK;
         if(i == player->gauntlet_selection)
+        {
+            Item* it = &player->gauntlet[player->gauntlet_selection];
+            if(it->type != ITEM_NONE)
+            {
+                const char* desc = item_get_description(it->type);
+                const char* name = item_get_name(it->type);
+
+                float scale = 0.16 * ascale;
+                Vector2f size = gfx_string_get_size(scale, (char*)desc);
+
+
+                float tlx = r.x - r.w/2.0;
+                // float tly = r.y - r.h/2.0 + size.y + 2.0;
+                float bly = r.y + r.h/2.0 + 2.0;
+
+                gfx_draw_string(tlx, bly, COLOR_WHITE, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, "%s", desc);
+            }
             color = 0x00b0b0b0;
+        }
+
         gfx_draw_rect(&r, color, NOT_SCALED, NO_ROTATION, 0.3, true, NOT_IN_WORLD);
 
         ItemType type = player->gauntlet[i].type;

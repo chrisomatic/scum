@@ -16,6 +16,8 @@
 #include "level.h"
 #include "camera.h"
 
+#define FORMAT_VERSION 1
+
 enum
 {
     EDITOR_KEY_UP,
@@ -57,7 +59,7 @@ static int ecam_pos_z = 44;
 static int tab_sel = 0;
 static int obj_sel = 0;
 
-#define NUM_TILE_TYPES  3
+#define NUM_TILE_TYPES  TILE_MAX
 static char* tile_names[NUM_TILE_TYPES] = {0};
 static int tile_sel;
 
@@ -67,10 +69,12 @@ static int door_sel;
 
 static char* creature_names[CREATURE_TYPE_MAX+1] = {0};
 static int creature_sel = 0;
-static Creature creature = {0};
 
 static char* item_names[ITEM_MAX+1] = {0};
 static int item_sel = 0;
+
+static char* room_type_names[ROOM_TYPE_MAX] = {0};
+static int room_type_sel = 0;
 
 static Room room = {0};
 static RoomData room_data = {0};
@@ -87,6 +91,7 @@ static Dir match_in_front_of_door_coords(int x, int y);
 
 static void editor_camera_set(bool immediate);
 static void clear_all();
+static void save_room(char* path, ...);
 
 
 void room_editor_init()
@@ -109,28 +114,21 @@ void room_editor_init()
         item_names[ITEM_MAX] = "Eraser";
 
         creature_sel = 0;
-        creature.type = creature_sel;
-        creature_init_props(&creature);
-
         for(int i = 0; i < CREATURE_TYPE_MAX; ++i)
             creature_names[i] = (char*)creature_type_name(i);
         creature_names[CREATURE_TYPE_MAX] = "Eraser";
 
         tile_sel = 0;
         for(int i = 0; i < NUM_TILE_TYPES; ++i)
-        {
-            TileType tt = i+1;
-            if(tt == TILE_FLOOR)
-                tile_names[i] = "Floor";
-            else if(tt == TILE_PIT)
-                tile_names[i] = "Pit";
-            else if(tt == TILE_BOULDER)
-                tile_names[i] = "Boulder";
-        }
+            tile_names[i] = (char*)get_tile_name(i);
 
         door_sel = 0;
         door_names[0] = "Possible Door";
         door_names[1] = "No Door";
+
+        room_type_sel = 0;
+        for(int i = 0; i < ROOM_TYPE_MAX; ++i)
+            room_type_names[i] = (char*)get_room_type_name(i);
 
         clear_all();
     }
@@ -232,7 +230,7 @@ void room_editor_draw()
 
             if(o->type == TYPE_CREATURE)
             {
-                gfx_draw_image(o->subtype, 0, tile_rect.x, tile_rect.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+                gfx_draw_image(o->subtype2, 0, tile_rect.x, tile_rect.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
             }
             else if(o->type == TYPE_ITEM)
             {
@@ -302,10 +300,9 @@ void room_editor_draw()
 
         error |= out_of_room;
 
-        TileType tt = tile_sel+1;
+        TileType tt = tile_sel;
         if(tt == TILE_PIT || tt == TILE_BOULDER)
         {
-            // error |= in_front_of_door;
             Dir door = match_in_front_of_door_coords(obj_coords.x, obj_coords.y);
             if(door != DIR_NONE)
             {
@@ -381,11 +378,13 @@ void room_editor_draw()
             if(error)
                 status_color = COLOR_RED;
 
-            gfx_draw_image(creature.image, 0, tile_rect.x, tile_rect.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
-            gfx_draw_rect(&tile_rect, status_color, NOT_SCALED, NO_ROTATION, 0.2, true, true);
 
             obj.type = TYPE_CREATURE;
-            obj.subtype = creature.image;
+            obj.subtype = creature_sel;
+            obj.subtype2 = creature_get_image(obj.subtype);
+
+            gfx_draw_image(obj.subtype2, 0, tile_rect.x, tile_rect.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+            gfx_draw_rect(&tile_rect, status_color, NOT_SCALED, NO_ROTATION, 0.2, true, true);
         }
 
     }
@@ -450,6 +449,8 @@ void room_editor_draw()
                     clear_all();
                 }
 
+                imgui_dropdown(room_type_names, ROOM_TYPE_MAX, "Room Type", &room_type_sel);
+
                 int _tile_sel = tile_sel;
                 imgui_dropdown(tile_names, NUM_TILE_TYPES, "Select Tile", &tile_sel);
                 if(tile_sel != _tile_sel)
@@ -469,11 +470,6 @@ void room_editor_draw()
                 if(creature_sel != _creature_sel)
                 {
                     obj_sel = 2;
-                    if(creature_sel != CREATURE_TYPE_MAX)
-                    {
-                        creature.type = creature_sel;
-                        creature_init_props(&creature);
-                    }
                 }
 
                 int _item_sel = item_sel;
@@ -481,6 +477,11 @@ void room_editor_draw()
                 if(item_sel != _item_sel)
                 {
                     obj_sel = 3;
+                }
+
+                if(imgui_button("Save"))
+                {
+                    save_room("test.room");
                 }
 
             }
@@ -672,4 +673,106 @@ static void clear_all()
             room_data.tiles[ri][rj] = TILE_FLOOR;
         }
     }
+}
+
+static void save_room(char* path, ...)
+{
+    va_list args;
+    va_start(args, path);
+    char fpath[256] = {0};
+    vsprintf(fpath, path, args);
+    va_end(args);
+
+    FILE* fp = fopen(fpath, "w");
+    if(fp)
+    {
+
+        fprintf(fp, "[%d] # version\n\n", FORMAT_VERSION);
+
+        fputs("; Room Dimensions\n", fp);
+        fprintf(fp, "%d,%d\n\n", ROOM_TILE_SIZE_X, ROOM_TILE_SIZE_Y);
+
+        fputs("; Room Type\n", fp);
+        fprintf(fp, "%d\n\n", room_type_sel);
+
+        fputs("; Tile Mapping\n", fp);
+        for(int i = 0; i < NUM_TILE_TYPES; ++i)
+        {
+            fprintf(fp, "%s\n", tile_names[i]);
+        }
+        fputs("\n", fp);
+
+        fputs("; Tile Data\n", fp);
+        for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
+        {
+            for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
+            {
+                PlacedObject* o = &objects[x+1][y+1];
+                int tt = TILE_FLOOR;
+                if(o->type == TYPE_TILE) tt = o->subtype;
+
+                fprintf(fp, "%d", tt);
+
+                if(x == ROOM_TILE_SIZE_X-1)
+                    fputs("\n", fp);
+                else
+                    fputs(",", fp);
+            }
+        }
+        fputs("\n", fp);
+
+        fputs("; Creature Mapping\n", fp);
+        for(int i = 0; i < CREATURE_TYPE_MAX; ++i)
+        {
+            fprintf(fp, "%s\n", creature_names[i]);
+        }
+        fputs("\n", fp);
+
+        fputs("; Creatures\n", fp);
+        for(int y = 0; y < OBJECTS_MAX_Y; ++y)
+        {
+            for(int x = 0; x < OBJECTS_MAX_X; ++x)
+            {
+                PlacedObject* o = &objects[x][y];
+                if(o->type != TYPE_CREATURE) continue;
+                fprintf(fp, "%d,%d,%d\n", o->subtype, x, y);
+            }
+        }
+        fputs("\n", fp);
+
+        fputs("; Item Mapping\n", fp);
+        for(int i = 0; i < ITEM_MAX; ++i)
+        {
+            fprintf(fp, "%s\n", item_names[i]);
+        }
+        fputs("\n", fp);
+
+        fputs("; Items\n", fp);
+        for(int y = 0; y < OBJECTS_MAX_Y; ++y)
+        {
+            for(int x = 0; x < OBJECTS_MAX_X; ++x)
+            {
+                PlacedObject* o = &objects[x][y];
+                if(o->type != TYPE_ITEM) continue;
+                fprintf(fp, "%d,%d,%d\n", o->subtype, x, y);
+            }
+        }
+        fputs("\n", fp);
+
+        fputs("; Doors\n", fp);
+        for(int i = 0; i < 4; ++i)
+        {
+            fprintf(fp, "%d", room.doors[i] ? 1 : 0);
+            if(i == 3)
+                fputs("\n", fp);
+            else
+                fputs(",", fp);
+        }
+        fputs("\n", fp);
+
+
+        fclose(fp);
+    }
+
+
 }

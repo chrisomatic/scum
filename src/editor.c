@@ -79,7 +79,7 @@ void editor_draw()
 
                 Vector2i tc = level_get_room_coords_by_pos(wmx, wmy);
                 imgui_text("Mouse Tile: %d, %d", tc.x, tc.y);
-                imgui_text("  Type: %s (%d)", level_tile_type_to_str(tt), tt);
+                imgui_text("  Type: %s (%d)", get_tile_name(tt), tt);
 
                 imgui_text("Doors");
                 for(int d = 0; d < 4; ++d)

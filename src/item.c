@@ -55,6 +55,15 @@ static void item_func_chest(Item* pu, Player* p)
         }
         dbg++;
     }
+    // else if(dbg == 2)
+    // {
+    //     for(int i = 0; i < 8; ++i)
+    //     {
+    //         item_add(ITEM_CHEST, x, y, croom);
+    //     }
+    //     dbg++;
+    // }
+
 
 
 
@@ -577,11 +586,16 @@ void item_draw(Item* pu, bool batch)
 
 void item_handle_collision(Item* p, Entity* e)
 {
+    Vector3f ppos = p->phys.pos;
+
     switch(e->type)
     {
         case ENTITY_TYPE_ITEM:
         {
             Item* p2 = (Item*)e->ptr;
+
+            if(p2->type == ITEM_CHEST && p2->used)
+                return;
 
             CollisionInfo ci = {0};
             bool collided = phys_collision_circles(&p->phys,&p2->phys, &ci);
@@ -590,6 +604,12 @@ void item_handle_collision(Item* p, Entity* e)
             {
                 phys_collision_correct(&p->phys, &p2->phys,&ci);
             }
+
+            if(p->type == ITEM_CHEST && p->used)
+            {
+                p->phys.pos = ppos;
+            }
+
         } break;
     }
 }

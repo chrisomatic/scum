@@ -78,33 +78,36 @@ int creature_get_image(CreatureType type)
     }
 }
 
+
 void creature_init_props(Creature* c)
 {
+    c->image = creature_get_image(c->type);
+    c->phys.height = gfx_images[c->image].element_height;
     switch(c->type)
     {
         case CREATURE_TYPE_SLUG:
         {
             c->phys.speed = 20.0;
-            c->image = creature_image_slug;
+            // c->image = creature_image_slug;
             c->act_time_min = 0.5;
             c->act_time_max = 1.0;
             c->phys.mass = 0.5;
             c->phys.base_friction = 20.0;
-            c->phys.height = gfx_images[creature_image_slug].element_height;
+            // c->phys.height = gfx_images[creature_image_slug].element_height;
             c->phys.hp_max = 3.0;
             c->painful_touch = true;
         } break;
         case CREATURE_TYPE_CLINGER:
         {
             c->phys.speed = 50.0;
-            c->image = creature_image_clinger;
+            // c->image = creature_image_clinger;
             c->act_time_min = 0.2;
             c->act_time_max = 0.4;
             c->phys.mass = 10.0;
             c->phys.base_friction = 10.0;
             c->phys.height = gfx_images[creature_image_clinger].element_height;
             c->phys.hp_max = 5.0;
-            c->proj_type = PROJECTILE_TYPE_CREATURE_CLINGER;
+            // c->proj_type = PROJECTILE_TYPE_CREATURE_CLINGER;
             c->painful_touch = false;
         } break;
         case CREATURE_TYPE_GEIZER:
@@ -115,7 +118,7 @@ void creature_init_props(Creature* c)
             c->act_time_max = 5.0;
             c->phys.mass = 1000.0; // so it doesn't slide when hit
             c->phys.base_friction = 50.0;
-            c->phys.height = gfx_images[creature_image_geizer].element_height;
+            // c->phys.height = gfx_images[creature_image_geizer].element_height;
             c->phys.hp_max = 10.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = false;
@@ -123,12 +126,12 @@ void creature_init_props(Creature* c)
         case CREATURE_TYPE_FLOATER:
         {
             c->phys.speed = 20.0;
-            c->image = creature_image_floater;
+            // c->image = creature_image_floater;
             c->act_time_min = 0.5;
             c->act_time_max = 1.0;
             c->phys.mass = 2.0;
             c->phys.base_friction = 10.0;
-            c->phys.height = gfx_images[creature_image_floater].element_height;
+            // c->phys.height = gfx_images[creature_image_floater].element_height;
             c->phys.hp_max = 3.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = true;

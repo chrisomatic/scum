@@ -31,6 +31,8 @@ typedef enum
     TILE_PIT,
     TILE_BOULDER,
     TILE_MUD,
+
+    TILE_MAX
 } TileType;
 
 typedef enum
@@ -141,9 +143,9 @@ bool level_is_room_valid_index(Level* level, int index);
 bool level_is_room_discovered(Level* level, int x, int y);
 bool level_is_room_discovered_index(Level* level, int index);
 
-char* level_tile_type_to_str(TileType tt);
-
 Vector2i get_dir_offsets(Dir door);
-const char* get_dir_name(Dir door);
-
 void level_generate_room_outer_walls(Room* room);
+
+const char* get_dir_name(Dir dir);
+const char* get_tile_name(TileType tt);
+const char* get_room_type_name(RoomType rt);
