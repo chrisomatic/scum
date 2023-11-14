@@ -88,7 +88,7 @@ static Vector2i get_door_coords(Dir door);
 static Vector2i get_in_front_of_door_coords(Dir door);
 static Dir match_door_coords(int x, int y);
 static Dir match_in_front_of_door_coords(int x, int y);
-static bool parse_room_file(char* filename);
+static bool load_room(char* filename);
 
 static void editor_camera_set(bool immediate);
 static void clear_all();
@@ -150,7 +150,7 @@ void room_editor_init()
 
     editor_camera_set(true);
 
-    if(!parse_room_file("src/rooms/test.room"))
+    if(!load_room("src/rooms/test.room"))
     {
         LOGW("Failed to parse room");
     }
@@ -782,6 +782,8 @@ static void save_room(char* path, ...)
 
 }
 
+static int __line_num;
+
 static bool get_next_section(FILE* fp, char* section)
 {
     if(!fp)
@@ -795,7 +797,8 @@ static bool get_next_section(FILE* fp, char* section)
         memset(line,0,100);
 
         // get line
-        char* check = fgets(line,sizeof(line),fp);
+        char* check = fgets(line,sizeof(line),fp); __line_num++;
+
         if(!check) return false;
 
         if(line[0] == ';')
@@ -805,7 +808,6 @@ static bool get_next_section(FILE* fp, char* section)
 
             while(p && *p != '\n')
                 *s++ = *p++;
-
             break;
         }
     }
@@ -813,14 +815,16 @@ static bool get_next_section(FILE* fp, char* section)
     return true;
 }
 
-static bool parse_room_file(char* filename)
+static bool load_room(char* filename)
 {
     FILE* fp = fopen(filename,"r");
     if(!fp) return false;
 
+    __line_num = 0;
+
     char line[100] = {0};
 
-    fgets(line,sizeof(line),fp);
+    fgets(line,sizeof(line),fp); __line_num++;
 
     // parse version
     int version = 0;
@@ -830,14 +834,23 @@ static bool parse_room_file(char* filename)
         int matches = sscanf(line,"[%d]",&version);
         if(matches == 0)
         {
-            LOGW("Failed to get version");
+            LOGW("Failed to room file version");
         }
     }
 
-    printf("version: %d\n",version);
-
     int room_width = 0;
     int room_height = 0;
+
+    int room_rank = 0;
+
+    int tile_mapping[TILE_MAX] = {0};
+    int tmi = 0;
+
+    int creature_mapping[CREATURE_TYPE_MAX] = {0};
+    int cmi = 0;
+
+    int item_mapping[ITEM_MAX] = {0};
+    int imi = 0;
 
     for(;;)
     {
@@ -849,21 +862,56 @@ static bool parse_room_file(char* filename)
 
         if(STR_EQUAL(section,"Room Dimensions"))
         {
-            fgets(line,sizeof(line),fp);
+            fgets(line,sizeof(line),fp); __line_num++;
             sscanf(line,"%d,%d",&room_width,&room_height);
-
-            printf("Room width: %d, height: %d\n",room_width,room_height);
-
+        }
+        else if(STR_EQUAL(section,"Room Type"))
+        {
+            fgets(line,sizeof(line),fp); __line_num++;
+            sscanf(line,"%d",&room_type_sel);
+        }
+        else if(STR_EQUAL(section,"Room Rank"))
+        {
+            fgets(line,sizeof(line),fp); __line_num++;
+            sscanf(line,"%d",&room_rank);
         }
         else if(STR_EQUAL(section,"Tile Mapping"))
         {
+            for(;;)
+            {
+                char* check = fgets(line,sizeof(line),fp); __line_num++;
+                line[strcspn(line, "\r\n")] = 0; // remove newline
 
+                if(!check || STR_EMPTY(line))
+                    break;
+
+                if(STR_EQUAL(line,"None"))
+                {
+                    tile_mapping[tmi++] = TILE_NONE;
+                }
+                else if(STR_EQUAL(line,"Floor"))
+                {
+                    tile_mapping[tmi++] = TILE_FLOOR;
+                }
+                else if(STR_EQUAL(line,"Pit"))
+                {
+                    tile_mapping[tmi++] = TILE_PIT;
+                }
+                else if(STR_EQUAL(line,"Boulder"))
+                {
+                    tile_mapping[tmi++] = TILE_BOULDER;
+                }
+                else if(STR_EQUAL(line,"Mud"))
+                {
+                    tile_mapping[tmi++] = TILE_MUD;
+                }
+            }
         }
         else if(STR_EQUAL(section,"Tile Data"))
         {
             for(int i = 0; i < room_height; ++i)
             {
-                fgets(line,sizeof(line),fp);
+                fgets(line,sizeof(line),fp); __line_num++;
 
                 char* p = &line[0];
 
@@ -881,21 +929,47 @@ static bool parse_room_file(char* filename)
                     p++;
 
                     int num = atoi(num_str);
-                    if(num >= 0 && num < TILE_MAX)
+                    if(num < 0 || num >= TILE_MAX)
                     {
-                        if(num != TILE_FLOOR)
-                        {
-                            objects[j+1][i+1].type    = TYPE_TILE;
-                            objects[j+1][i+1].subtype = num;
+                        LOGW("Failed to load tile, out of range (index: %d); line_num: %d",num,__line_num);
+                        continue;
+                    }
 
-                            printf("Add tile %d to %d,%d\n",num,j+1,i+1);
-                        }
+                    if(num != TILE_FLOOR)
+                    {
+                        objects[j+1][i+1].type    = TYPE_TILE;
+                        objects[j+1][i+1].subtype = tile_mapping[num];
                     }
                 }
             }
         }
         else if(STR_EQUAL(section,"Creature Mapping"))
         {
+            for(;;)
+            {
+                char* check = fgets(line,sizeof(line),fp); __line_num++;
+                line[strcspn(line, "\r\n")] = 0; // remove newline
+
+                if(!check || STR_EMPTY(line))
+                    break;
+
+                if(STR_EQUAL(line,"Slug"))
+                {
+                    creature_mapping[cmi++] = CREATURE_TYPE_SLUG;
+                }
+                else if(STR_EQUAL(line,"Clinger"))
+                {
+                    creature_mapping[cmi++] = CREATURE_TYPE_CLINGER;
+                }
+                else if(STR_EQUAL(line,"Geizer"))
+                {
+                    creature_mapping[cmi++] = CREATURE_TYPE_GEIZER;
+                }
+                else if(STR_EQUAL(line,"Floater"))
+                {
+                    creature_mapping[cmi++] = CREATURE_TYPE_FLOATER;
+                }
+            }
 
         }
         else if(STR_EQUAL(section,"Creatures"))
@@ -905,21 +979,118 @@ static bool parse_room_file(char* filename)
 
             for(;;)
             {
-                fgets(line,sizeof(line),fp);
+                fgets(line,sizeof(line),fp); __line_num++;
                 int matches = sscanf(line,"%d,%d,%d",&index,&x,&y);
 
                 if(matches != 3)
                     break;
 
-                printf("Add creature %d to %d,%d\n",index,x,y);
+                if(index < 0 || index >= CREATURE_TYPE_MAX)
+                {
+                    LOGW("Failed to load creature, out of range (index: %d); line_num: %d",index, __line_num);
+                    continue;
+                }
+
                 objects[x][y].type    = TYPE_CREATURE;
-                objects[x][y].subtype = index;
+                objects[x][y].subtype = creature_mapping[index];
                 objects[x][y].subtype2 = creature_get_image(objects[x][y].subtype);
             }
         }
         else if(STR_EQUAL(section,"Item Mapping"))
         {
+            for(;;)
+            {
+                char* check = fgets(line,sizeof(line),fp); __line_num++;
+                line[strcspn(line, "\r\n")] = 0; // remove newline
 
+                if(!check || STR_EMPTY(line))
+                    break;
+
+                if(STR_EQUAL(line,"Red Gem"))
+                {
+                    item_mapping[imi++] = ITEM_GEM_RED;
+                }
+                else if(STR_EQUAL(line,"Green Gem"))
+                {
+                    item_mapping[imi++] = ITEM_GEM_GREEN;
+                }
+                else if(STR_EQUAL(line,"Blue Gem"))
+                {
+                    item_mapping[imi++] = ITEM_GEM_BLUE;
+                }
+                else if(STR_EQUAL(line,"White Gem"))
+                {
+                    item_mapping[imi++] = ITEM_GEM_WHITE;
+                }
+                else if(STR_EQUAL(line,"Yellow Gem"))
+                {
+                    item_mapping[imi++] = ITEM_GEM_YELLOW;
+                }
+                else if(STR_EQUAL(line,"Purple Gem"))
+                {
+                    item_mapping[imi++] = ITEM_GEM_PURPLE;
+                }
+                else if(STR_EQUAL(line,"Full Heart"))
+                {
+                    item_mapping[imi++] = ITEM_HEART_FULL;
+                }
+                else if(STR_EQUAL(line,"Half Heart"))
+                {
+                    item_mapping[imi++] = ITEM_HEART_HALF;
+                }
+                else if(STR_EQUAL(line,"Cosmic Full Heart"))
+                {
+                    item_mapping[imi++] = ITEM_COSMIC_HEART_FULL;
+                }
+                else if(STR_EQUAL(line,"Cosmic Half Heart"))
+                {
+                    item_mapping[imi++] = ITEM_COSMIC_HEART_HALF;
+                }
+                else if(STR_EQUAL(line,"Glowing Orb"))
+                {
+                    item_mapping[imi++] = ITEM_GLOWING_ORB;
+                }
+                else if(STR_EQUAL(line,"Dragon Egg"))
+                {
+                    item_mapping[imi++] = ITEM_DRAGON_EGG;
+                }
+                else if(STR_EQUAL(line,"Shamrock"))
+                {
+                    item_mapping[imi++] = ITEM_SHAMROCK;
+                }
+                else if(STR_EQUAL(line,"Ruby Ring"))
+                {
+                    item_mapping[imi++] = ITEM_RUBY_RING;
+                }
+                else if(STR_EQUAL(line,"Potion of Strength"))
+                {
+                    item_mapping[imi++] = ITEM_POTION_STRENGTH;
+                }
+                else if(STR_EQUAL(line,"Potion of Speed"))
+                {
+                    item_mapping[imi++] = ITEM_POTION_SPEED;
+                }
+                else if(STR_EQUAL(line,"Potion of Range"))
+                {
+                    item_mapping[imi++] = ITEM_POTION_RANGE;
+                }
+                else if(STR_EQUAL(line,"Potion of Purple"))
+                {
+                    item_mapping[imi++] = ITEM_POTION_PURPLE;
+                }
+                else if(STR_EQUAL(line,"+1 Gauntlet Slot"))
+                {
+                    item_mapping[imi++] = ITEM_GAUNTLET_SLOT;
+                }
+                else if(STR_EQUAL(line,"New Level"))
+                {
+                    item_mapping[imi++] = ITEM_NEW_LEVEL;
+                }
+                else if(STR_EQUAL(line,"Chest"))
+                {
+                    item_mapping[imi++] = ITEM_CHEST;
+                }
+            }
         }
         else if(STR_EQUAL(section,"Items"))
         {
@@ -928,20 +1099,25 @@ static bool parse_room_file(char* filename)
 
             for(;;)
             {
-                fgets(line,sizeof(line),fp);
+                fgets(line,sizeof(line),fp); __line_num++;
                 int matches = sscanf(line,"%d,%d,%d",&index,&x,&y);
 
                 if(matches != 3)
                     break;
 
-                printf("Add item %d to %d,%d\n",index,x,y);
+                if(index < 0 || index >= ITEM_MAX)
+                {
+                    LOGW("Failed to load item, out of range (index: %d); line_num: %d",index, __line_num);
+                    continue;
+                }
+
                 objects[x][y].type    = TYPE_ITEM;
                 objects[x][y].subtype = index;
             }
         }
         else if(STR_EQUAL(section,"Doors"))
         {
-            fgets(line,sizeof(line),fp);
+            fgets(line,sizeof(line),fp); __line_num++;
 
             int up,right,down,left;
             sscanf(line,"%d,%d,%d,%d",&up,&right,&down,&left);
@@ -953,12 +1129,10 @@ static bool parse_room_file(char* filename)
         }
         else
         {
-            LOGW("Unhandled Section: %s",section);
+            LOGW("Unhandled Section: %s; line_num: %d",section, __line_num);
         }
 
     }
-
-    PlacedObject* obj = &objects[6][4];
 
     return true;
 }
