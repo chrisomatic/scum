@@ -99,6 +99,7 @@ char room_file_name[32] = {0};
 char room_files[100][32] = {0};
 char* p_room_files[100] = {0};
 int num_room_files = 0;
+int room_rank = 0;
 
 void room_editor_init()
 {
@@ -433,7 +434,15 @@ void room_editor_draw()
 
                 bool interacted = false;
 
+                const float big = 16.0;
+
+                imgui_text_sized(big, "Settings");
+
                 imgui_dropdown(room_type_names, ROOM_TYPE_MAX, "Room Type", &room_type_sel, NULL);
+                imgui_number_box("Room Rank", 0, 10, &room_rank);
+
+                imgui_newline();
+                imgui_text_sized(big, "Placeables");
 
                 int _tile_sel = tile_sel;
                 imgui_dropdown(tile_names, NUM_TILE_TYPES, "Select Tile", &tile_sel, &interacted);
@@ -464,16 +473,18 @@ void room_editor_draw()
                 }
 
                 imgui_newline();
-                imgui_newline();
-                imgui_newline();
+                imgui_text_sized(big, "File");
 
                 imgui_text_box("Filename##file_name_room",room_file_name,IM_ARRAYSIZE(room_file_name));
 
                 char file_path[64] = {0};
                 snprintf(file_path,63,"src/rooms/%s.room",room_file_name);
 
+                bool file_exists = io_file_exists(file_path);
+
                 if(!STR_EMPTY(room_file_name))
                 {
+                    if(file_exists) imgui_horizontal_begin();
                     if(imgui_button("Save##room"))
                     {
                         save_room(file_path);
@@ -485,9 +496,10 @@ void room_editor_draw()
                     }
                 }
 
-                if(io_file_exists(file_path))
+                if(file_exists)
                 {
                     imgui_text_colored(0x00CC8800, "File Exists!");
+                    imgui_horizontal_end();
                 }
 
                 static int room_file_sel = 0;
@@ -760,6 +772,9 @@ static void save_room(char* path, ...)
         fputs("; Room Type\n", fp);
         fprintf(fp, "%d   # %s\n\n", room_type_sel, get_room_type_name(room_type_sel));
 
+        fputs("; Room Rank\n", fp);
+        fprintf(fp, "%d\n\n", room_rank);
+
         fputs("; Tile Mapping\n", fp);
         for(int i = 0; i < NUM_TILE_TYPES; ++i)
         {
@@ -905,8 +920,6 @@ static bool load_room(char* path, ...)
 
     int room_width = 0;
     int room_height = 0;
-
-    int room_rank = 0;
 
     int tile_mapping[TILE_MAX] = {0};
     int tmi = 0;

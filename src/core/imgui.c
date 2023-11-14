@@ -286,6 +286,11 @@ void imgui_set_spacing(int spacing)
     theme.spacing = spacing;
 }
 
+void imgui_set_panel_min_width(int width)
+{
+    theme.panel_min_width = width;
+}
+
 void imgui_store_theme()
 {
     memcpy(&stored_theme, &theme, sizeof(ImGuiTheme));
