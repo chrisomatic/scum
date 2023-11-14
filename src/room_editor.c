@@ -565,7 +565,8 @@ void room_editor_draw()
 
         if(eraser)
         {
-            room_data.tiles[obj_coords.x-1][obj_coords.y-1] = TILE_FLOOR;
+            if(obj_coords.x > 0 && obj_coords.y > 0)
+                room_data.tiles[obj_coords.x-1][obj_coords.y-1] = TILE_FLOOR;
             o->type = TYPE_NONE;
         }
         else
