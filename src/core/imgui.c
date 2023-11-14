@@ -620,8 +620,10 @@ int imgui_button_select(int num_buttons, char* button_labels[], char* label)
     return selection;
 }
 
-void imgui_dropdown(char* options[], int num_options, char* label, int* selected_index)
+void imgui_dropdown(char* options[], int num_options, char* label, int* selected_index, bool* interacted)
 {
+    if(interacted != NULL) *interacted = false;
+
     if(!options)
         return;
 
@@ -670,6 +672,7 @@ void imgui_dropdown(char* options[], int num_options, char* label, int* selected
     {
         if(window_mouse_left_went_down())
         {
+            if(interacted != NULL) *interacted = true;
             if(active)
             {
                 // make new selection
@@ -691,6 +694,7 @@ void imgui_dropdown(char* options[], int num_options, char* label, int* selected
     }
     else if(is_active(hash))
     {
+        if(interacted != NULL) *interacted = true;
         if(window_mouse_left_went_down())
         {
             clear_active();
@@ -1096,8 +1100,8 @@ Rect imgui_draw_demo(int x, int y)
 
         imgui_text_colored(0x00FF00FF,buttons[selection]);
 
-        imgui_dropdown(colors, IM_ARRAYSIZE(colors), "Select Color", &color_select);
-        imgui_dropdown(shapes, IM_ARRAYSIZE(shapes), "Select Shape", &shape_select);
+        imgui_dropdown(colors, IM_ARRAYSIZE(colors), "Select Color", &color_select, NULL);
+        imgui_dropdown(shapes, IM_ARRAYSIZE(shapes), "Select Shape", &shape_select, NULL);
 
    return imgui_end();
 }
@@ -1122,7 +1126,7 @@ void imgui_theme_selector()
         theme_index = 0;
     }
 
-    imgui_dropdown(theme_file_ptrs, num_themes, "Theme", &theme_index);
+    imgui_dropdown(theme_file_ptrs, num_themes, "Theme", &theme_index, NULL);
     if(theme_index != prior_selected_theme)
     {
         imgui_load_theme(theme_file_ptrs[theme_index]);
