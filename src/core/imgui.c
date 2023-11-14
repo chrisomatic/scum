@@ -623,7 +623,6 @@ int imgui_button_select(int num_buttons, char* button_labels[], char* label)
 void imgui_dropdown(char* options[], int num_options, char* label, int* selected_index, bool* interacted)
 {
     if(interacted != NULL) *interacted = false;
-
     if(!options)
         return;
 
@@ -640,7 +639,7 @@ void imgui_dropdown(char* options[], int num_options, char* label, int* selected
     IntLookup* lookup = get_int_lookup(hash);
     if (!lookup)
         return;
- 
+
     int *val = &lookup->val;
 
     char new_label[32] = {0};
@@ -700,12 +699,6 @@ void imgui_dropdown(char* options[], int num_options, char* label, int* selected
             clear_active();
         }
     }
-    /*
-    else if(selected_index != NULL)
-    {
-        ctx->dropdown_props.selected_index = *selected_index;
-    }
-    */
 
     int display_count = active ? num_options +1 : 1;
 

@@ -88,12 +88,17 @@ static Vector2i get_door_coords(Dir door);
 static Vector2i get_in_front_of_door_coords(Dir door);
 static Dir match_door_coords(int x, int y);
 static Dir match_in_front_of_door_coords(int x, int y);
-static bool load_room(char* filename);
 
 static void editor_camera_set(bool immediate);
 static void clear_all();
 static void save_room(char* path, ...);
+static bool load_room(char* path, ...);
 
+char room_file_name[32] = {0};
+
+char room_files[100][32] = {0};
+char* p_room_files[100] = {0};
+int num_room_files = 0;
 
 void room_editor_init()
 {
@@ -148,9 +153,15 @@ void room_editor_init()
 
     editor_camera_set(true);
 
-    if(!load_room("src/rooms/test.room"))
+    num_room_files = io_get_files_in_dir("src/rooms",".room", room_files);
+    for(int i = 0; i < num_room_files; ++i)
     {
-        LOGW("Failed to parse room");
+        p_room_files[i] = room_files[i];
+    }
+    LOGI("room files count: %d", num_room_files);
+    for(int i = 0; i < num_room_files; ++i)
+    {
+        LOGI("  %d) %s", i+1, room_files[i]);
     }
 
     _init = true;
@@ -452,11 +463,44 @@ void room_editor_draw()
                     obj_sel = 3;
                 }
 
-                if(imgui_button("Save"))
+                imgui_newline();
+                imgui_newline();
+                imgui_newline();
+
+                imgui_text_box("Filename##file_name_room",room_file_name,IM_ARRAYSIZE(room_file_name));
+
+                char file_path[64] = {0};
+                snprintf(file_path,63,"src/rooms/%s.room",room_file_name);
+
+                if(!STR_EMPTY(room_file_name))
                 {
-                    save_room("test.room");
+                    if(imgui_button("Save##room"))
+                    {
+                        save_room(file_path);
+                        num_room_files = io_get_files_in_dir("src/rooms",".room", room_files);
+                        for(int i = 0; i < num_room_files; ++i)
+                        {
+                            p_room_files[i] = room_files[i];
+                        }
+                    }
                 }
 
+                if(io_file_exists(file_path))
+                {
+                    imgui_text_colored(0x00CC8800, "File Exists!");
+                }
+
+                static int room_file_sel = 0;
+                imgui_dropdown(p_room_files, num_room_files, "existing", &room_file_sel, NULL);
+
+                if(imgui_button("Load"))
+                {
+                    clear_all();
+                    load_room("src/rooms/%s", room_files[room_file_sel]);
+
+                    strcpy(room_file_name, room_files[room_file_sel]);
+                    remove_extension(room_file_name);
+                }
             }
         }
 
@@ -829,8 +873,14 @@ static bool get_next_section(FILE* fp, char* section)
     return true;
 }
 
-static bool load_room(char* filename)
+static bool load_room(char* path, ...)
 {
+    va_list args;
+    va_start(args, path);
+    char filename[256] = {0};
+    vsprintf(filename, path, args);
+    va_end(args);
+
     FILE* fp = fopen(filename,"r");
     if(!fp) return false;
 
