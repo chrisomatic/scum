@@ -49,7 +49,15 @@ typedef struct
 // +2 for walls
 #define OBJECTS_MAX_X (ROOM_TILE_SIZE_X+2)
 #define OBJECTS_MAX_Y (ROOM_TILE_SIZE_Y+2)
-PlacedObject objects[OBJECTS_MAX_X][OBJECTS_MAX_Y] = {0};
+
+static PlacedObject objects[OBJECTS_MAX_X][OBJECTS_MAX_Y] = {0};
+static RoomData room_data = {0};
+static Room room = {0};
+
+static PlacedObject objects_prior[OBJECTS_MAX_X][OBJECTS_MAX_Y] = {0};
+static RoomData room_data_prior = {0};
+static Room room_prior = {0};
+
 
 static float ecam_pos_x = 0;
 static float ecam_pos_y = 0;
@@ -74,9 +82,6 @@ static int item_sel = 0;
 
 static char* room_type_names[ROOM_TYPE_MAX] = {0};
 static int room_type_sel = 0;
-
-static Room room = {0};
-static RoomData room_data = {0};
 
 Vector2i tile_coords = {0}; // mouse tile coords
 Vector2i obj_coords = {0}; // tile_coords translated to object grid
@@ -429,6 +434,19 @@ void room_editor_draw()
             {
                 if(imgui_button("Clear All"))
                 {
+                    // PlacedObject objects_temp[OBJECTS_MAX_X][OBJECTS_MAX_Y] = {0};
+                    // RoomData room_data_temp = {0};
+                    // Room room_temp = {0};
+                    // memcpy(objects_temp, objects, sizeof(PlacedObject)*OBJECTS_MAX_X*OBJECTS_MAX_Y);
+                    // memcpy(&room_data_temp, &room_data, sizeof(RoomData));
+                    // memcpy(&room_temp, &room, sizeof(Room));
+                    // memcpy(objects, objects_prior, sizeof(PlacedObject)*OBJECTS_MAX_X*OBJECTS_MAX_Y);
+                    // memcpy(&room_data, &room_data_prior, sizeof(RoomData));
+                    // memcpy(&room, &room_prior, sizeof(Room));
+                    // memcpy(objects_prior, objects_temp, sizeof(PlacedObject)*OBJECTS_MAX_X*OBJECTS_MAX_Y);
+                    // memcpy(&room_data_prior, &room_data_temp, sizeof(RoomData));
+                    // memcpy(&room_prior, &room_temp, sizeof(Room));
+
                     clear_all();
                 }
 
@@ -552,6 +570,14 @@ void room_editor_draw()
         if(on_door)
         {
             error = check_no_door_placement();
+            if(error)
+            {
+                if(!room.doors[match_door_coords(obj_coords.x, obj_coords.y)])
+                {
+                    // 1 door remaining, but not the door we're currently modifying
+                    error = false;
+                }
+            }
             obj_sel = 1;
             door_sel = 1;
         }
@@ -569,6 +595,13 @@ void room_editor_draw()
         return;
     }
 
+    PlacedObject objects_temp[OBJECTS_MAX_X][OBJECTS_MAX_Y] = {0};
+    RoomData room_data_temp = {0};
+    Room room_temp = {0};
+    memcpy(objects_temp, objects, sizeof(PlacedObject)*OBJECTS_MAX_X*OBJECTS_MAX_Y);
+    memcpy(&room_data_temp, &room_data, sizeof(RoomData));
+    memcpy(&room_temp, &room, sizeof(Room));
+
     PlacedObject* o = &objects[obj_coords.x][obj_coords.y];
 
     if(obj_sel == 0) //tiles
@@ -577,7 +610,7 @@ void room_editor_draw()
 
         if(eraser)
         {
-            if(obj_coords.x > 0 && obj_coords.y > 0)
+            if(obj_coords.x > 0 && obj_coords.y > 0 && (obj_coords.x+1) < ROOM_TILE_SIZE_X && (obj_coords.y+1) < ROOM_TILE_SIZE_Y)
                 room_data.tiles[obj_coords.x-1][obj_coords.y-1] = TILE_FLOOR;
             o->type = TYPE_NONE;
         }
@@ -611,6 +644,10 @@ void room_editor_draw()
                     *ttf = TILE_FLOOR;
                 }
             }
+            else
+            {
+                o->type = TYPE_NONE;
+            }
         }
         door_sel = prior_door_sel;
     }
@@ -622,9 +659,12 @@ void room_editor_draw()
         }
         else
         {
-            TileType* tt = &room_data.tiles[obj_coords.x-1][obj_coords.y-1];
-            if(*tt == TILE_PIT || *tt == TILE_BOULDER)
-                *tt = TILE_FLOOR;
+            if(obj_coords.x > 0 && obj_coords.y > 0 && (obj_coords.x+1) < ROOM_TILE_SIZE_X && (obj_coords.y+1) < ROOM_TILE_SIZE_Y)
+            {
+                TileType* tt = &room_data.tiles[obj_coords.x-1][obj_coords.y-1];
+                if(*tt == TILE_PIT || *tt == TILE_BOULDER)
+                    *tt = TILE_FLOOR;
+            }
 
             o->type = obj.type;
             o->subtype = obj.subtype;
@@ -633,10 +673,24 @@ void room_editor_draw()
 
     }
 
+    // bool no_change = true;
+    // no_change &= memcmp(objects_temp, objects, sizeof(PlacedObject)*OBJECTS_MAX_X*OBJECTS_MAX_Y) == 0;
+    // no_change &= memcmp(&room_data_temp, &room_data, sizeof(RoomData)) == 0;
+    // no_change &= memcmp(&room_temp, &room, sizeof(Room)) == 0;
+    // if(!no_change)
+    // {
+    //     // printf("copying to prior\n");
+    //     // printf("%d --> %d\n", room_data_temp.tiles[0][0], room_data.tiles[0][0]);
+    //     memcpy(objects_prior, objects_temp, sizeof(PlacedObject)*OBJECTS_MAX_X*OBJECTS_MAX_Y);
+    //     memcpy(&room_data_prior, &room_data_temp, sizeof(RoomData));
+    //     memcpy(&room_prior, &room_temp, sizeof(Room));
+    // }
+
     obj_sel = prior_obj_sel;
 }
 
-static bool check_no_door_placement()
+// returns true is number of doors is 0 or 1
+static bool check_no_door_placement(int x, int y)
 {
     bool error = false;
     int count = 0;
@@ -963,26 +1017,15 @@ static bool load_room(char* path, ...)
                 if(!check || STR_EMPTY(line))
                     break;
 
-                if(STR_EQUAL(line,"None"))
+                for(int i = 0; i < NUM_TILE_TYPES; ++i)
                 {
-                    tile_mapping[tmi++] = TILE_NONE;
+                    if(STR_EQUAL(line, tile_names[i]))
+                    {
+                        tile_mapping[tmi++] = i;
+                        break;
+                    }
                 }
-                else if(STR_EQUAL(line,"Floor"))
-                {
-                    tile_mapping[tmi++] = TILE_FLOOR;
-                }
-                else if(STR_EQUAL(line,"Pit"))
-                {
-                    tile_mapping[tmi++] = TILE_PIT;
-                }
-                else if(STR_EQUAL(line,"Boulder"))
-                {
-                    tile_mapping[tmi++] = TILE_BOULDER;
-                }
-                else if(STR_EQUAL(line,"Mud"))
-                {
-                    tile_mapping[tmi++] = TILE_MUD;
-                }
+
             }
         }
         else if(STR_EQUAL(section,"Tile Data"))
@@ -1014,8 +1057,7 @@ static bool load_room(char* path, ...)
                         continue;
                     }
 
-                    // if(num != TILE_FLOOR)
-                        room_data.tiles[j][i] = tile_mapping[num];
+                    room_data.tiles[j][i] = tile_mapping[num];
                 }
             }
         }
@@ -1029,22 +1071,15 @@ static bool load_room(char* path, ...)
                 if(!check || STR_EMPTY(line))
                     break;
 
-                if(STR_EQUAL(line,"Slug"))
+                for(int i = 0; i < CREATURE_TYPE_MAX; ++i)
                 {
-                    creature_mapping[cmi++] = CREATURE_TYPE_SLUG;
+                    if(STR_EQUAL(line, creature_names[i]))
+                    {
+                        creature_mapping[cmi++] = i;
+                        break;
+                    }
                 }
-                else if(STR_EQUAL(line,"Clinger"))
-                {
-                    creature_mapping[cmi++] = CREATURE_TYPE_CLINGER;
-                }
-                else if(STR_EQUAL(line,"Geizer"))
-                {
-                    creature_mapping[cmi++] = CREATURE_TYPE_GEIZER;
-                }
-                else if(STR_EQUAL(line,"Floater"))
-                {
-                    creature_mapping[cmi++] = CREATURE_TYPE_FLOATER;
-                }
+
             }
 
         }
@@ -1082,90 +1117,15 @@ static bool load_room(char* path, ...)
                 if(!check || STR_EMPTY(line))
                     break;
 
-                if(STR_EQUAL(line,"Red Gem"))
+                for(int i = 0; i < ITEM_MAX; ++i)
                 {
-                    item_mapping[imi++] = ITEM_GEM_RED;
+                    if(STR_EQUAL(line, item_names[i]))
+                    {
+                        item_mapping[imi++] = i;
+                        break;
+                    }
                 }
-                else if(STR_EQUAL(line,"Green Gem"))
-                {
-                    item_mapping[imi++] = ITEM_GEM_GREEN;
-                }
-                else if(STR_EQUAL(line,"Blue Gem"))
-                {
-                    item_mapping[imi++] = ITEM_GEM_BLUE;
-                }
-                else if(STR_EQUAL(line,"White Gem"))
-                {
-                    item_mapping[imi++] = ITEM_GEM_WHITE;
-                }
-                else if(STR_EQUAL(line,"Yellow Gem"))
-                {
-                    item_mapping[imi++] = ITEM_GEM_YELLOW;
-                }
-                else if(STR_EQUAL(line,"Purple Gem"))
-                {
-                    item_mapping[imi++] = ITEM_GEM_PURPLE;
-                }
-                else if(STR_EQUAL(line,"Full Heart"))
-                {
-                    item_mapping[imi++] = ITEM_HEART_FULL;
-                }
-                else if(STR_EQUAL(line,"Half Heart"))
-                {
-                    item_mapping[imi++] = ITEM_HEART_HALF;
-                }
-                else if(STR_EQUAL(line,"Cosmic Full Heart"))
-                {
-                    item_mapping[imi++] = ITEM_COSMIC_HEART_FULL;
-                }
-                else if(STR_EQUAL(line,"Cosmic Half Heart"))
-                {
-                    item_mapping[imi++] = ITEM_COSMIC_HEART_HALF;
-                }
-                else if(STR_EQUAL(line,"Glowing Orb"))
-                {
-                    item_mapping[imi++] = ITEM_GLOWING_ORB;
-                }
-                else if(STR_EQUAL(line,"Dragon Egg"))
-                {
-                    item_mapping[imi++] = ITEM_DRAGON_EGG;
-                }
-                else if(STR_EQUAL(line,"Shamrock"))
-                {
-                    item_mapping[imi++] = ITEM_SHAMROCK;
-                }
-                else if(STR_EQUAL(line,"Ruby Ring"))
-                {
-                    item_mapping[imi++] = ITEM_RUBY_RING;
-                }
-                else if(STR_EQUAL(line,"Potion of Strength"))
-                {
-                    item_mapping[imi++] = ITEM_POTION_STRENGTH;
-                }
-                else if(STR_EQUAL(line,"Potion of Speed"))
-                {
-                    item_mapping[imi++] = ITEM_POTION_SPEED;
-                }
-                else if(STR_EQUAL(line,"Potion of Range"))
-                {
-                    item_mapping[imi++] = ITEM_POTION_RANGE;
-                }
-                else if(STR_EQUAL(line,"Potion of Purple"))
-                {
-                    item_mapping[imi++] = ITEM_POTION_PURPLE;
-                }
-                else if(STR_EQUAL(line,"+1 Gauntlet Slot"))
-                {
-                    item_mapping[imi++] = ITEM_GAUNTLET_SLOT;
-                }
-                else if(STR_EQUAL(line,"New Level"))
-                {
-                    item_mapping[imi++] = ITEM_NEW_LEVEL;
-                }
-                else if(STR_EQUAL(line,"Chest"))
-                {
-                    item_mapping[imi++] = ITEM_CHEST;
-                }
+
             }
         }
         else if(STR_EQUAL(section,"Items"))
