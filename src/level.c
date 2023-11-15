@@ -3,6 +3,7 @@
 #include "main.h"
 #include "creature.h"
 #include "item.h"
+#include "room_file.h"
 #include "physics.h"
 
 RoomData room_list[32] = {0};
@@ -614,6 +615,26 @@ void level_init()
     if(dungeon_image > 0) return;
     level_load_room_list();
     dungeon_image = gfx_load_image("src/img/dungeon_set.png", false, true, TILE_SIZE, TILE_SIZE);
+
+    /*
+    char* files[100] = {0};
+    int num_files = room_file_get_all(files);
+
+    for(int i = 0; i < num_files; ++i)
+    {
+        RoomFileData rfd;
+        room_file_load(&rfd, "src/rooms/%s", files[i]);
+
+        for(int x = 0; x < rfd.size.x; ++x)
+        {
+            for(int y = 0; y < rfd.size.y; ++y)
+            {
+                room_list[room_list_count].tiles[x][y] = rfd.tile_types[x][y];
+            }
+        }
+        room_list_count++;
+    }
+    */
 }
 
 void level_print(Level* level)

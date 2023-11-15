@@ -1,6 +1,7 @@
 #pragma once
 
-#include "player.h"
+#include "core/io.h"
+
 #include "creature.h"
 #include "item.h"
 
@@ -9,17 +10,11 @@
 static bool get_next_section(FILE* fp, char* section);
 static int __line_num;
 
-static char room_file_name[32] = {0};
-
 static char room_files[100][32] = {0};
-static char* p_room_files[100] = {0};
-static int num_room_files = 0;
-static int room_rank = 0;
 
-#define NUM_TILE_TYPES  TILE_MAX
-static char* tile_names[NUM_TILE_TYPES] = {0};
-static char* creature_names[CREATURE_TYPE_MAX] = {0};
-static char* item_names[ITEM_MAX] = {0};
+extern char* tile_names[TILE_MAX];
+extern char* creature_names[CREATURE_TYPE_MAX];
+extern char* item_names[ITEM_MAX];
 
 typedef struct
 {
@@ -71,7 +66,7 @@ static void room_file_save(RoomFileData* rfd, char* path, ...)
         fprintf(fp, "%d\n\n", rfd->rank);
 
         fputs("; Tile Mapping\n", fp);
-        for(int i = 0; i < NUM_TILE_TYPES; ++i)
+        for(int i = 0; i < TILE_MAX; ++i)
         {
             fprintf(fp, "%s\n", tile_names[i]);
         }
@@ -211,7 +206,7 @@ static bool room_file_load(RoomFileData* rfd, char* path, ...)
                 if(!check || STR_EMPTY(line))
                     break;
 
-                for(int i = 0; i < NUM_TILE_TYPES; ++i)
+                for(int i = 0; i < TILE_MAX; ++i)
                 {
                     if(STR_EQUAL(line, tile_names[i]))
                     {
@@ -365,10 +360,25 @@ static bool room_file_load(RoomFileData* rfd, char* path, ...)
         {
             LOGW("Unhandled Section: %s; line_num: %d",section, __line_num);
         }
-
     }
 
+    fclose(fp);
+
     return true;
+}
+
+static int room_file_get_all(char* _files[])
+{
+    int num_files = io_get_files_in_dir("src/rooms",".room", room_files);
+
+    for(int i = 0; i < num_files; ++i)
+        _files[i] = room_files[i];
+
+    LOGI("room files count: %d", num_files);
+    for(int i = 0; i < num_files; ++i)
+        LOGI("  %d) %s", i+1, room_files[i]);
+
+    return num_files;
 }
 
 static bool get_next_section(FILE* fp, char* section)

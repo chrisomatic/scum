@@ -71,8 +71,13 @@ static char* door_names[NUM_DOOR_TYPES] = {0};
 static int door_sel;
 
 static int creature_sel = 0;
-
 static int item_sel = 0;
+
+static int room_rank = 0;
+static char room_file_name[32] = {0};
+
+static int num_room_files = 0;
+static char* p_room_files[100] = {0};
 
 static char* room_type_names[ROOM_TYPE_MAX] = {0};
 static int room_type_sel = 0;
@@ -96,12 +101,6 @@ void room_editor_init()
 {
     static bool _init = false;
 
-    show_tile_grid = true;
-    debug_enabled = true;
-
-    ecam_pos_x = CENTER_X;
-    ecam_pos_y = CENTER_Y;
-
     if(!_init)
     {
         item_sel = 0;
@@ -114,9 +113,13 @@ void room_editor_init()
         for(int i = 0; i < CREATURE_TYPE_MAX; ++i)
             creature_names[i] = (char*)creature_type_name(i);
 
+        printf("Setting tile names!!\n");
         tile_sel = 1;
-        for(int i = 0; i < NUM_TILE_TYPES; ++i)
+        for(int i = 0; i < TILE_MAX; ++i)
+        {
             tile_names[i] = (char*)get_tile_name(i);
+            printf("  %s (%p)\n",tile_names[i], tile_names[i]);
+        }
 
         door_sel = 0;
         door_names[0] = "Possible Door";
@@ -127,7 +130,18 @@ void room_editor_init()
             room_type_names[i] = (char*)get_room_type_name(i);
 
         clear_all();
+
+        _init = true;
     }
+}
+
+void room_editor_start()
+{
+    show_tile_grid = true;
+    debug_enabled = true;
+
+    ecam_pos_x = CENTER_X;
+    ecam_pos_y = CENTER_Y;
 
     room.valid = true;
     room.color = COLOR_TINT_NONE;
@@ -145,18 +159,8 @@ void room_editor_init()
 
     editor_camera_set(true);
 
-    num_room_files = io_get_files_in_dir("src/rooms",".room", room_files);
-    for(int i = 0; i < num_room_files; ++i)
-    {
-        p_room_files[i] = room_files[i];
-    }
-    LOGI("room files count: %d", num_room_files);
-    for(int i = 0; i < num_room_files; ++i)
-    {
-        LOGI("  %d) %s", i+1, room_files[i]);
-    }
-
-    _init = true;
+    // load room files
+    num_room_files = room_file_get_all(p_room_files);
 }
 
 void room_editor_update(float dt)
@@ -449,7 +453,7 @@ void room_editor_draw()
                 imgui_text_sized(big, "Placeables");
 
                 int _tile_sel = tile_sel;
-                imgui_dropdown(tile_names, NUM_TILE_TYPES, "Select Tile", &tile_sel, &interacted);
+                imgui_dropdown(tile_names, TILE_MAX, "Select Tile", &tile_sel, &interacted);
                 if(tile_sel != _tile_sel || interacted)
                 {
                     obj_sel = 0;
@@ -534,11 +538,7 @@ void room_editor_draw()
 
                         room_file_save(&rfd, file_path);
 
-                        num_room_files = io_get_files_in_dir("src/rooms",".room", room_files);
-                        for(int i = 0; i < num_room_files; ++i)
-                        {
-                            p_room_files[i] = room_files[i];
-                        }
+                        num_room_files = room_file_get_all(p_room_files);
                     }
                 }
 

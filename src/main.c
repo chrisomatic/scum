@@ -81,6 +81,9 @@ unsigned int seed = 0;
 DrawLevelParams minimap_params = {0};
 DrawLevelParams bigmap_params = {0};
 
+char* tile_names[TILE_MAX] = {0};
+char* creature_names[CREATURE_TYPE_MAX] = {0};
+char* item_names[ITEM_MAX] = {0};
 
 #define MESSAGE_SMALL_MAX 256
 char message_small[MESSAGE_SMALL_MAX];
@@ -233,7 +236,7 @@ void set_game_state(GameState state)
             case GAME_STATE_EDITOR:
             {
                 ambient_light = 0x00FFFFFF;
-                room_editor_init();
+                room_editor_start();
             } break;
             case GAME_STATE_MENU:
             {
@@ -644,6 +647,8 @@ void init()
 
     LOGI(" - Lighting.");
     lighting_init();
+
+    room_editor_init();
 
     LOGI(" - Status Effects.");
     status_effects_init();
