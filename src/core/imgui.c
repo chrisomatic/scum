@@ -43,7 +43,11 @@ typedef struct
 
 typedef struct
 {
-    bool draw_on_top;
+    float pos;
+} ScrollProps;
+
+typedef struct
+{
     uint32_t hash;
     int selected_index;
     char** options;
@@ -51,6 +55,7 @@ typedef struct
     char label[32];
     float text_size_px;
     Rect size;
+    ScrollProps scroll_props;
 } DropdownProps;
 
 typedef struct
@@ -128,6 +133,9 @@ typedef struct
     int panel_min_width;
     int panel_spacing;
     int panel_header_height;
+
+    int dropdown_max_height;
+
 } ImGuiTheme;
 
 static ImGuiContext contexts[MAX_CONTEXTS] = {0};
@@ -707,13 +715,11 @@ void imgui_dropdown(char* options[], int num_options, char* label, int* selected
 
     int display_count = active ? num_options +1 : 1;
 
-    Rect interactive = {ctx->curr.x, ctx->curr.y, max_width+2*theme.text_padding, display_count*max_height};
+    Rect interactive = {ctx->curr.x, ctx->curr.y, max_width+2*theme.text_padding, MIN(display_count*max_height, theme.dropdown_max_height)};
     handle_highlighting(hash, &interactive);
 
     if(active)
     {
-        //ctx->dropdown_props.draw_on_top = true;
-
         // cache needed properties to draw later
         ctx->dropdown_props.hash = hash;
         ctx->dropdown_props.options = (char**)options;
@@ -725,7 +731,6 @@ void imgui_dropdown(char* options[], int num_options, char* label, int* selected
     else
     {
         // draw now since the drop down isn't expanded
-        //ctx->dropdown_props.draw_on_top = false;
         draw_dropdown(hash, new_label, options, num_options, *selected_index, &interactive);
     }
 
@@ -1406,6 +1411,8 @@ static void set_default_theme()
     theme.panel_spacing = 8;
     theme.panel_header_height = 20;
 
+    theme.dropdown_max_height = 1000;
+
     theme_initialized = true;
     theme_index = -1;
 }
@@ -1835,20 +1842,18 @@ static void draw_dropdown(uint32_t hash, char* str, char* options[], int num_opt
         float y_diff = ctx->mouse_y - r->y;
         int highlighted_index = floor(y_diff / box_height) - 1;
 
-        uint32_t color;
+        gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, ctx->dropdown_props.size.h, theme.color_background, 1.0, 0.0, theme.button_opacity, true,false);
 
         for(int i = 0; i < num_options; ++i)
         {
+            float max_height = (i+1.5)*box_height;
+            if(max_height > ctx->dropdown_props.size.h)
+                break;
+
             if(is_highlighted(hash) && i == highlighted_index)
             {
-                color = theme.color_highlight;
+                gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + (i+1.5)*box_height, r->w, box_height, theme.color_highlight, 1.0, 0.0, theme.button_opacity, true,false);
             }
-            else
-            {
-                color = theme.color_background;
-            }
-
-            gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + (i+1.5)*box_height, r->w, box_height, color, 1.0, 0.0, theme.button_opacity, true,false);
 
             if(options[i])
             {

@@ -14,9 +14,8 @@
 #include "editor.h"
 #include "main.h"
 #include "level.h"
+#include "room_file.h"
 #include "camera.h"
-
-#define FORMAT_VERSION 1
 
 enum
 {
@@ -58,7 +57,6 @@ static PlacedObject objects_prior[OBJECTS_MAX_X][OBJECTS_MAX_Y] = {0};
 static RoomData room_data_prior = {0};
 static Room room_prior = {0};
 
-
 static float ecam_pos_x = 0;
 static float ecam_pos_y = 0;
 static int ecam_pos_z = 44;
@@ -66,18 +64,14 @@ static int ecam_pos_z = 44;
 static int tab_sel = 0;
 static int obj_sel = 0;
 
-#define NUM_TILE_TYPES  TILE_MAX
-static char* tile_names[NUM_TILE_TYPES] = {0};
 static int tile_sel = 1;
 
 #define NUM_DOOR_TYPES 2
 static char* door_names[NUM_DOOR_TYPES] = {0};
 static int door_sel;
 
-static char* creature_names[CREATURE_TYPE_MAX] = {0};
 static int creature_sel = 0;
 
-static char* item_names[ITEM_MAX] = {0};
 static int item_sel = 0;
 
 static char* room_type_names[ROOM_TYPE_MAX] = {0};
@@ -96,15 +90,7 @@ static Dir match_in_front_of_door_coords(int x, int y);
 
 static void editor_camera_set(bool immediate);
 static void clear_all();
-static void save_room(char* path, ...);
-static bool load_room(char* path, ...);
 
-char room_file_name[32] = {0};
-
-char room_files[100][32] = {0};
-char* p_room_files[100] = {0};
-int num_room_files = 0;
-int room_rank = 0;
 
 void room_editor_init()
 {
@@ -505,7 +491,49 @@ void room_editor_draw()
                     if(file_exists) imgui_horizontal_begin();
                     if(imgui_button("Save##room"))
                     {
-                        save_room(file_path);
+
+                        // fill out room file data structure
+                        RoomFileData rfd = {
+                            .version = FORMAT_VERSION,
+                            .size.x = ROOM_TILE_SIZE_X,
+                            .size.y = ROOM_TILE_SIZE_Y,
+                            .type = room_type_sel,
+                            .rank = room_rank
+                        };
+
+                        for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
+                            for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
+                                rfd.tile_types[x][y] = room_data.tiles[x][y];
+
+                        for(int y = 0; y < OBJECTS_MAX_Y; ++y)
+                        {
+                            for(int x = 0; x < OBJECTS_MAX_X; ++x)
+                            {
+                                PlacedObject* o = &objects[x][y];
+
+                                if(o->type == TYPE_CREATURE)
+                                {
+                                    rfd.creature_types[rfd.creature_count] = o->subtype;
+                                    rfd.creature_locations[rfd.creature_count].x = x;
+                                    rfd.creature_locations[rfd.creature_count].y = y;
+                                    rfd.creature_count++;
+                                }
+                                else if(o->type == TYPE_ITEM)
+                                {
+                                    rfd.item_types[rfd.item_count] = o->subtype;
+                                    rfd.item_locations[rfd.item_count].x = x;
+                                    rfd.item_locations[rfd.item_count].y = y;
+                                    rfd.item_count++;
+                                }
+                            }
+                        }
+
+                        for(int i = 0; i < 4; ++i)
+                            rfd.doors[i] = room.doors[i];
+
+
+                        room_file_save(&rfd, file_path);
+
                         num_room_files = io_get_files_in_dir("src/rooms",".room", room_files);
                         for(int i = 0; i < num_room_files; ++i)
                         {
@@ -526,7 +554,37 @@ void room_editor_draw()
                 if(imgui_button("Load"))
                 {
                     clear_all();
-                    load_room("src/rooms/%s", room_files[room_file_sel]);
+                    RoomFileData rfd;
+                    room_file_load(&rfd, "src/rooms/%s", room_files[room_file_sel]);
+
+                    // set properties
+                    room_type_sel = rfd.type;
+                    room_rank = rfd.rank;
+
+                    // tiles
+                    for(int i = 0; i < rfd.size.x; ++i)
+                        for(int j = 0; j < rfd.size.y; ++j)
+                            room_data.tiles[i][j] = rfd.tile_types[i][j];
+
+                    for(int i = 0; i < rfd.creature_count; ++i)
+                    {
+                        int x = rfd.creature_locations[i].x;
+                        int y = rfd.creature_locations[i].y;
+
+                        objects[x][y].type     = TYPE_CREATURE;
+                        objects[x][y].subtype  = rfd.creature_types[i];
+                        objects[x][y].subtype2 = creature_get_image(rfd.creature_types[i]);
+                    }
+
+                    for(int i = 0; i < rfd.item_count; ++i)
+                    {
+                        int x = rfd.item_locations[i].x;
+                        int y = rfd.item_locations[i].y;
+
+                        objects[x][y].type     = TYPE_ITEM;
+                        objects[x][y].subtype  = rfd.item_types[i];
+                        objects[x][y].subtype2 = creature_get_image(rfd.item_types[i]);
+                    }
 
                     strcpy(room_file_name, room_files[room_file_sel]);
                     remove_extension(room_file_name);
@@ -806,369 +864,4 @@ static void clear_all()
     }
 }
 
-static void save_room(char* path, ...)
-{
-    va_list args;
-    va_start(args, path);
-    char fpath[256] = {0};
-    vsprintf(fpath, path, args);
-    va_end(args);
 
-    FILE* fp = fopen(fpath, "w");
-    if(fp)
-    {
-
-        fprintf(fp, "[%d] # version\n\n", FORMAT_VERSION);
-
-        fputs("; Room Dimensions\n", fp);
-        fprintf(fp, "%d,%d\n\n", ROOM_TILE_SIZE_X, ROOM_TILE_SIZE_Y);
-
-        fputs("; Room Type\n", fp);
-        fprintf(fp, "%d   # %s\n\n", room_type_sel, get_room_type_name(room_type_sel));
-
-        fputs("; Room Rank\n", fp);
-        fprintf(fp, "%d\n\n", room_rank);
-
-        fputs("; Tile Mapping\n", fp);
-        for(int i = 0; i < NUM_TILE_TYPES; ++i)
-        {
-            fprintf(fp, "%s\n", tile_names[i]);
-        }
-        fputs("\n", fp);
-
-        fputs("; Tile Data\n", fp);
-        for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
-        {
-            for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
-            {
-
-                int tt = room_data.tiles[x][y];
-
-                fprintf(fp, "%d", tt);
-
-                if(x == ROOM_TILE_SIZE_X-1)
-                    fputs("\n", fp);
-                else
-                    fputs(",", fp);
-            }
-        }
-        fputs("\n", fp);
-
-        fputs("; Creature Mapping\n", fp);
-        for(int i = 0; i < CREATURE_TYPE_MAX; ++i)
-        {
-            fprintf(fp, "%s\n", creature_names[i]);
-        }
-        fputs("\n", fp);
-
-        fputs("; Creatures\n", fp);
-        for(int y = 0; y < OBJECTS_MAX_Y; ++y)
-        {
-            for(int x = 0; x < OBJECTS_MAX_X; ++x)
-            {
-                PlacedObject* o = &objects[x][y];
-                if(o->type != TYPE_CREATURE) continue;
-                fprintf(fp, "%d,%d,%d\n", o->subtype, x, y);
-            }
-        }
-        fputs("\n", fp);
-
-        fputs("; Item Mapping\n", fp);
-        for(int i = 0; i < ITEM_MAX; ++i)
-        {
-            fprintf(fp, "%s\n", item_names[i]);
-        }
-        fputs("\n", fp);
-
-        fputs("; Items\n", fp);
-        for(int y = 0; y < OBJECTS_MAX_Y; ++y)
-        {
-            for(int x = 0; x < OBJECTS_MAX_X; ++x)
-            {
-                PlacedObject* o = &objects[x][y];
-                if(o->type != TYPE_ITEM) continue;
-                fprintf(fp, "%d,%d,%d\n", o->subtype, x, y);
-            }
-        }
-        fputs("\n", fp);
-
-        fputs("; Doors\n", fp);
-        for(int i = 0; i < 4; ++i)
-        {
-            fprintf(fp, "%d", room.doors[i] ? 1 : 0);
-            if(i == 3)
-                fputs("\n", fp);
-            else
-                fputs(",", fp);
-        }
-        fputs("\n", fp);
-
-
-        fclose(fp);
-    }
-
-
-}
-
-static int __line_num;
-
-static bool get_next_section(FILE* fp, char* section)
-{
-    if(!fp)
-        return false;
-
-    char line[100] = {0};
-    char* s = section;
-
-    for(;;)
-    {
-        memset(line,0,100);
-
-        // get line
-        char* check = fgets(line,sizeof(line),fp); __line_num++;
-
-        if(!check) return false;
-
-        if(line[0] == ';')
-        {
-            char* p = &line[1];
-            p = io_str_eat_whitespace(p);
-
-            while(p && *p != '\n')
-                *s++ = *p++;
-            break;
-        }
-    }
-
-    return true;
-}
-
-static bool load_room(char* path, ...)
-{
-    va_list args;
-    va_start(args, path);
-    char filename[256] = {0};
-    vsprintf(filename, path, args);
-    va_end(args);
-
-    FILE* fp = fopen(filename,"r");
-    if(!fp) return false;
-
-    __line_num = 0;
-
-    char line[100] = {0};
-
-    fgets(line,sizeof(line),fp); __line_num++;
-
-    // parse version
-    int version = 0;
-
-    if(line[0] == '[')
-    {
-        int matches = sscanf(line,"[%d]",&version);
-        if(matches == 0)
-        {
-            LOGW("Failed to room file version");
-        }
-    }
-
-    int room_width = 0;
-    int room_height = 0;
-
-    int tile_mapping[TILE_MAX] = {0};
-    int tmi = 0;
-
-    int creature_mapping[CREATURE_TYPE_MAX] = {0};
-    int cmi = 0;
-
-    int item_mapping[ITEM_MAX] = {0};
-    int imi = 0;
-
-    for(;;)
-    {
-        char section[100] = {0};
-        bool check = get_next_section(fp,section);
-
-        if(!check)
-            break;
-
-        if(STR_EQUAL(section,"Room Dimensions"))
-        {
-            fgets(line,sizeof(line),fp); __line_num++;
-            sscanf(line,"%d,%d",&room_width,&room_height);
-        }
-        else if(STR_EQUAL(section,"Room Type"))
-        {
-            fgets(line,sizeof(line),fp); __line_num++;
-            sscanf(line,"%d",&room_type_sel);
-        }
-        else if(STR_EQUAL(section,"Room Rank"))
-        {
-            fgets(line,sizeof(line),fp); __line_num++;
-            sscanf(line,"%d",&room_rank);
-        }
-        else if(STR_EQUAL(section,"Tile Mapping"))
-        {
-            for(;;)
-            {
-                char* check = fgets(line,sizeof(line),fp); __line_num++;
-                line[strcspn(line, "\r\n")] = 0; // remove newline
-
-                if(!check || STR_EMPTY(line))
-                    break;
-
-                for(int i = 0; i < NUM_TILE_TYPES; ++i)
-                {
-                    if(STR_EQUAL(line, tile_names[i]))
-                    {
-                        tile_mapping[tmi++] = i;
-                        break;
-                    }
-                }
-
-            }
-        }
-        else if(STR_EQUAL(section,"Tile Data"))
-        {
-            for(int i = 0; i < room_height; ++i)
-            {
-                fgets(line,sizeof(line),fp); __line_num++;
-
-                char* p = &line[0];
-
-                char num_str[4];
-                int ni;
-
-                for(int j = 0; j < room_width; ++j)
-                {
-                    ni = 0;
-                    memset(num_str,0,4*sizeof(char));
-
-                    while(p && *p != ',' && *p != '\n')
-                        num_str[ni++] = *p++;
-
-                    p++;
-
-                    int num = atoi(num_str);
-                    if(num < 0 || num >= TILE_MAX)
-                    {
-
-                        LOGW("Failed to load tile, out of range (index: %d); line_num: %d",num,__line_num);
-                        continue;
-                    }
-
-                    room_data.tiles[j][i] = tile_mapping[num];
-                }
-            }
-        }
-        else if(STR_EQUAL(section,"Creature Mapping"))
-        {
-            for(;;)
-            {
-                char* check = fgets(line,sizeof(line),fp); __line_num++;
-                line[strcspn(line, "\r\n")] = 0; // remove newline
-
-                if(!check || STR_EMPTY(line))
-                    break;
-
-                for(int i = 0; i < CREATURE_TYPE_MAX; ++i)
-                {
-                    if(STR_EQUAL(line, creature_names[i]))
-                    {
-                        creature_mapping[cmi++] = i;
-                        break;
-                    }
-                }
-
-            }
-
-        }
-        else if(STR_EQUAL(section,"Creatures"))
-        {
-            int index;
-            int x,y;
-
-            for(;;)
-            {
-                fgets(line,sizeof(line),fp); __line_num++;
-                int matches = sscanf(line,"%d,%d,%d",&index,&x,&y);
-
-                if(matches != 3)
-                    break;
-
-                if(index < 0 || index >= CREATURE_TYPE_MAX)
-                {
-                    LOGW("Failed to load creature, out of range (index: %d); line_num: %d",index, __line_num);
-                    continue;
-                }
-
-                objects[x][y].type    = TYPE_CREATURE;
-                objects[x][y].subtype = creature_mapping[index];
-                objects[x][y].subtype2 = creature_get_image(objects[x][y].subtype);
-            }
-        }
-        else if(STR_EQUAL(section,"Item Mapping"))
-        {
-            for(;;)
-            {
-                char* check = fgets(line,sizeof(line),fp); __line_num++;
-                line[strcspn(line, "\r\n")] = 0; // remove newline
-
-                if(!check || STR_EMPTY(line))
-                    break;
-
-                for(int i = 0; i < ITEM_MAX; ++i)
-                {
-                    if(STR_EQUAL(line, item_names[i]))
-                    {
-                        item_mapping[imi++] = i;
-                        break;
-                    }
-                }
-
-            }
-        }
-        else if(STR_EQUAL(section,"Items"))
-        {
-            int index;
-            int x,y;
-
-            for(;;)
-            {
-                fgets(line,sizeof(line),fp); __line_num++;
-                int matches = sscanf(line,"%d,%d,%d",&index,&x,&y);
-
-                if(matches != 3)
-                    break;
-
-                if(index < 0 || index >= ITEM_MAX)
-                {
-                    LOGW("Failed to load item, out of range (index: %d); line_num: %d",index, __line_num);
-                    continue;
-                }
-
-                objects[x][y].type    = TYPE_ITEM;
-                objects[x][y].subtype = index;
-            }
-        }
-        else if(STR_EQUAL(section,"Doors"))
-        {
-            fgets(line,sizeof(line),fp); __line_num++;
-
-            int up,right,down,left;
-            sscanf(line,"%d,%d,%d,%d",&up,&right,&down,&left);
-
-            room.doors[DIR_UP]    = (up == 1);
-            room.doors[DIR_RIGHT] = (right == 1);
-            room.doors[DIR_DOWN]  = (down == 1);
-            room.doors[DIR_LEFT]  = (left == 1);
-        }
-        else
-        {
-            LOGW("Unhandled Section: %s; line_num: %d",section, __line_num);
-        }
-
-    }
-
-    return true;
-}

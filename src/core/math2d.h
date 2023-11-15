@@ -92,7 +92,6 @@ typedef enum
     BL
 } RXYpoint;
 
-
 extern Matrix IDENTITY_MATRIX;
 
 void get_model_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale, Matrix* model);
