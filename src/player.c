@@ -1081,12 +1081,12 @@ void player_update(Player* p, float dt)
                 if(!p->highlighted_item->used)
                 {
                     p->highlighted_item->used = true;
-                    item_props[type].func(p->highlighted_item,p);
+                    if(item_props[type].func) item_props[type].func(p->highlighted_item,p);
                 }
             }
             else
             {
-                item_props[type].func(p->highlighted_item,p);
+                if(item_props[type].func) item_props[type].func(p->highlighted_item,p);
                 if(p->highlighted_item->picked_up)
                     item_remove(p->highlighted_item);
             }

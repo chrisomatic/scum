@@ -157,19 +157,19 @@ void editor_draw()
                 if(imgui_button("Add Slug"))
                 {
                     for(int i = 0; i < num_creatures; ++i)
-                        creature_add(room, CREATURE_TYPE_SLUG, NULL);
+                        creature_add(room, CREATURE_TYPE_SLUG, NULL, NULL);
                 }
 
                 if(imgui_button("Add Clinger"))
                 {
                     for(int i = 0; i < num_creatures; ++i)
-                        creature_add(room, CREATURE_TYPE_CLINGER, NULL);
+                        creature_add(room, CREATURE_TYPE_CLINGER, NULL, NULL);
                 }
 
                 if(imgui_button("Add Geizer"))
                 {
                     for(int i = 0; i < num_creatures; ++i)
-                        creature_add(room, CREATURE_TYPE_GEIZER, NULL);
+                        creature_add(room, CREATURE_TYPE_GEIZER, NULL, NULL);
                 }
 
                 if(imgui_button("Clear"))

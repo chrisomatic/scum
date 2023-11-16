@@ -64,7 +64,7 @@ const char* creature_type_name(CreatureType type);
 int creature_get_image(CreatureType type);
 void creature_init_props(Creature* c);
 void creature_clear_all();
-Creature* creature_add(Room* room, CreatureType type, Creature* creature);
+Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* creature);
 void creature_add_direct(Creature* c);
 void creature_update(Creature* c, float dt);
 void creature_lerp(Creature* c, float dt);

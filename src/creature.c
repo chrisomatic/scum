@@ -202,6 +202,55 @@ static void add_to_random_wall_tile(Creature* c)
     c->spawn.y = c->phys.pos.y;
 }
 
+static void add_to_wall_tile(Creature* c, int tile_x, int tile_y)
+{
+    Dir wall = DIR_NONE;
+    if(tile_x == -1)
+    {
+        wall = DIR_LEFT;
+    }
+    else if(tile_x == ROOM_TILE_SIZE_X)
+    {
+        wall = DIR_RIGHT;
+    }
+    else if(tile_y == -1)
+    {
+        wall = DIR_UP;
+    }
+    else if(tile_y == ROOM_TILE_SIZE_Y)
+    {
+        wall = DIR_DOWN;
+    }
+    // printf("wall: %d\n", wall);
+
+    switch(wall)
+    {
+        case DIR_UP:
+            c->sprite_index = 2;
+            break;
+        case DIR_RIGHT:
+            c->sprite_index = 3;
+            break;
+        case DIR_DOWN:
+            c->sprite_index = 0;
+            break;
+        case DIR_LEFT:
+            c->sprite_index = 1;
+            break;
+    }
+
+    Rect rp = level_get_tile_rect(tile_x, tile_y);
+
+    c->phys.pos.x = rp.x;
+    c->phys.pos.y = rp.y;
+
+    c->spawn_tile_x = tile_x;
+    c->spawn_tile_y = tile_y;
+
+    c->spawn.x = c->phys.pos.x;
+    c->spawn.y = c->phys.pos.y;
+}
+
 static void add_to_random_tile(Creature* c, Room* room)
 {
     int tile_x = 0;
@@ -230,7 +279,23 @@ static void add_to_random_tile(Creature* c, Room* room)
     c->spawn.y = c->phys.pos.y;
 }
 
-Creature* creature_add(Room* room, CreatureType type, Creature* creature)
+static void add_to_tile(Creature* c, int tile_x, int tile_y)
+{
+    Rect rp = level_get_tile_rect(tile_x, tile_y);
+    c->phys.pos.x = rp.x;
+    c->phys.pos.y = rp.y;
+
+    RectXY rxy = {0};
+    rect_to_rectxy(&room_area, &rxy);
+
+    c->spawn_tile_x = tile_x;
+    c->spawn_tile_y = tile_y;
+    c->spawn.x = c->phys.pos.x;
+    c->spawn.y = c->phys.pos.y;
+}
+
+// specify first 3 args, or the last
+Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* creature)
 {
     Creature c = {0};
 
@@ -248,28 +313,57 @@ Creature* creature_add(Room* room, CreatureType type, Creature* creature)
         c.id = get_id();
         c.type = type;
 
-        switch(c.type)
+        if(tile)
         {
-            case CREATURE_TYPE_SLUG:
+            switch(c.type)
             {
-                add_to_random_tile(&c, room);
-                c.sprite_index = DIR_DOWN;
-            } break;
-            case CREATURE_TYPE_CLINGER:
-            {
-                add_to_random_wall_tile(&c);
-            } break;
-            case CREATURE_TYPE_GEIZER:
-            {
-                add_to_random_tile(&c,room);
-                c.sprite_index = 0;
-            } break;
-            case CREATURE_TYPE_FLOATER:
-            {
-                add_to_random_tile(&c,room);
-                c.sprite_index = 0;
-            } break;
+                case CREATURE_TYPE_SLUG:
+                {
+                    add_to_tile(&c, tile->x, tile->y);
+                    c.sprite_index = DIR_DOWN;
+                } break;
+                case CREATURE_TYPE_CLINGER:
+                {
+                    add_to_wall_tile(&c, tile->x, tile->y);
+                } break;
+                case CREATURE_TYPE_GEIZER:
+                {
+                    add_to_tile(&c, tile->x, tile->y);
+                    c.sprite_index = 0;
+                } break;
+                case CREATURE_TYPE_FLOATER:
+                {
+                    add_to_tile(&c, tile->x, tile->y);
+                    c.sprite_index = 0;
+                } break;
+            }
         }
+        else
+        {
+            switch(c.type)
+            {
+                case CREATURE_TYPE_SLUG:
+                {
+                    add_to_random_tile(&c, room);
+                    c.sprite_index = DIR_DOWN;
+                } break;
+                case CREATURE_TYPE_CLINGER:
+                {
+                    add_to_random_wall_tile(&c);
+                } break;
+                case CREATURE_TYPE_GEIZER:
+                {
+                    add_to_random_tile(&c,room);
+                    c.sprite_index = 0;
+                } break;
+                case CREATURE_TYPE_FLOATER:
+                {
+                    add_to_random_tile(&c,room);
+                    c.sprite_index = 0;
+                } break;
+            }
+        }
+
     }
 
     c.color = COLOR_TINT_NONE;

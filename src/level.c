@@ -141,7 +141,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
             {
                 // if(level->start.x == x && level->start.y == y)
                 //     printf("%d) spawning creature in start room\n", i + 1);
-                creature_add(room, rand() % CREATURE_TYPE_MAX, NULL);
+                creature_add(room, rand() % CREATURE_TYPE_MAX, NULL, NULL);
             }
         }
 

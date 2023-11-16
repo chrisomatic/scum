@@ -26,10 +26,10 @@ static uint16_t get_id()
     return id_counter++;
 }
 
-static void item_func_nothing(Item* pu, Player* p)
-{
-    return;
-}
+// static void item_func_nothing(Item* pu, Player* p)
+// {
+//     return;
+// }
 
 static void item_func_chest(Item* pu, Player* p)
 {
@@ -210,7 +210,7 @@ void item_init()
         p->type = i;
         p->image = p->type == ITEM_CHEST ? chest_image : items_image;
         p->sprite_index = p->type == ITEM_CHEST ? 0 : i;
-        p->func = (void*)item_func_nothing;
+        p->func = NULL;
 
         switch(p->type)
         {
@@ -225,12 +225,7 @@ void item_init()
                 p->socketable = true;
                 p->func = (void*)item_func_gem;
 
-            }   break;
-            case ITEM_HEART_FULL:
-            case ITEM_HEART_HALF:
-            case ITEM_COSMIC_HEART_FULL:
-            case ITEM_COSMIC_HEART_HALF:
-            case ITEM_GLOWING_ORB:
+            } break;
             case ITEM_DRAGON_EGG:
             case ITEM_SHAMROCK:
             case ITEM_RUBY_RING:
@@ -238,6 +233,16 @@ void item_init()
             case ITEM_POTION_SPEED:
             case ITEM_POTION_RANGE:
             case ITEM_POTION_PURPLE:
+            {
+                p->touchable = false;
+                p->socketable = false;
+                p->func = NULL;
+            } break;
+            case ITEM_HEART_FULL:
+            case ITEM_HEART_HALF:
+            case ITEM_COSMIC_HEART_FULL:
+            case ITEM_COSMIC_HEART_HALF:
+            case ITEM_GLOWING_ORB:
             case ITEM_GAUNTLET_SLOT:
             case ITEM_NEW_LEVEL:
             {
@@ -471,6 +476,9 @@ void item_update_all(float dt)
             continue;
 
         if(pu->used)
+            continue;
+
+        if(item_props[pu->type].func == NULL)
             continue;
 
         // Vector2f c1 = {CPOSX(player->phys), CPOSY(player->phys)};

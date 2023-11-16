@@ -1782,7 +1782,7 @@ static void unpack_creatures(Packet* pkt, int* offset)
         creature.sprite_index = sprite_index;
         creature.curr_room = curr_room;
         creature.phys.hp = hp;
-        Creature* c = creature_add(NULL, 0, &creature);
+        Creature* c = creature_add(NULL, 0, NULL, &creature);
 
         c->server_state_prior.pos.x = pos.x;
         c->server_state_prior.pos.y = pos.y;
