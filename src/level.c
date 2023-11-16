@@ -1,4 +1,5 @@
 #include "headers.h"
+#include "core/io.h"
 #include "core/gfx.h"
 #include "main.h"
 #include "creature.h"
@@ -6,7 +7,7 @@
 #include "room_file.h"
 #include "physics.h"
 
-RoomData room_list[32] = {0};
+RoomFileData room_list[32] = {0};
 int room_list_count = 0;
 int dungeon_image = -1;
 
@@ -52,7 +53,6 @@ static void branch_room(Level* level, int x, int y, int depth)
         if(door)
             generate_rooms(level, x-1,y,DIR_LEFT,depth+1);
     }
-
 }
 
 static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
@@ -118,7 +118,45 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
                     bool is_monster_room = (rand() % 100 < MONSTER_ROOM_PERCENTAGE);
 
                     room->type = is_monster_room ? ROOM_TYPE_MONSTER : ROOM_TYPE_EMPTY;
-                    room->layout = rand() % room_list_count;
+
+                    int layout = 0;
+                    int monster_room_count = 0;
+                    int empty_room_count = 0;
+                    for(int i = 0; i < room_list_count; ++i)
+                    {
+                        RoomFileData* rfd = &room_list[i];
+                        if(rfd->type == ROOM_TYPE_EMPTY)
+                            empty_room_count++;
+                        else if(rfd->type == ROOM_TYPE_MONSTER)
+                            monster_room_count++;
+                    }
+
+                    int selected_room = is_monster_room ? rand() % monster_room_count : rand() % empty_room_count;
+
+                    int _count = 0;
+                    for(int i = 0; i < room_list_count; ++i)
+                    {
+                        RoomFileData* rfd = &room_list[i];
+                        bool is_valid_room = (is_monster_room ? rfd->type == ROOM_TYPE_MONSTER : rfd->type == ROOM_TYPE_EMPTY);
+
+                        if(is_valid_room)
+                        {
+                            if(_count == selected_room)
+                            {
+                                room->layout = i;
+                                break;
+                            }
+                            _count++;
+                        }
+                    }
+
+                    RoomFileData* rfd = &room_list[room->layout];
+                    for(int i = 0; i < rfd->creature_count; ++i)
+                    {
+                        Vector2i g = {rfd->creature_locations_x[i], rfd->creature_locations_y[i]};
+                        g.x--; g.y--;
+                        Creature* c = creature_add(room, rfd->creature_types[i], &g, NULL);
+                    }
                 }
             }
         }
@@ -133,6 +171,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
             default: break;
         }
 
+        /*
         if(room->type == ROOM_TYPE_MONSTER)
         {
             // generate monsters for room
@@ -144,7 +183,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
                 creature_add(room, rand() % CREATURE_TYPE_MAX, NULL, NULL);
             }
         }
-
+        */
 
         switch(came_from)
         {
@@ -343,7 +382,7 @@ static void generate_walls(Level* level)
             if(room->valid)
             {
                 level_generate_room_outer_walls(room);
-                RoomData* rdata = &room_list[room->layout];
+                RoomFileData* rdata = &room_list[room->layout];
 
                 for(int dir = 0; dir < 4; ++dir)
                 {
@@ -424,7 +463,7 @@ static bool level_load_room_list()
     if(!fp)
         return false;
 
-    RoomData* room_data = &room_list[0];
+    RoomFileData* room_data = &room_list[0];
 
     int tile_x = 0;
     int tile_y = 0;
@@ -432,6 +471,7 @@ static bool level_load_room_list()
     int pc1 = 0, pc2 = 0;
     int c = 0;
 
+    room_list_count = 0;
     for(;;)
     {
         pc2 = pc1;
@@ -463,7 +503,7 @@ static bool level_load_room_list()
             continue;
         }
 
-        TileType* tile = &room_data->tiles[tile_x++][tile_y];
+        TileType* tile = (TileType*)&room_data->tiles[tile_x++][tile_y];
 
         switch(c)
         {
@@ -480,12 +520,13 @@ static bool level_load_room_list()
 
 void level_print_room(Room* room)
 {
-    RoomData* room_data = &room_list[room->layout];
+    RoomFileData* room_data = &room_list[room->layout];
+
     for(int j = 0; j < ROOM_TILE_SIZE_Y; ++j)
     {
         for(int i = 0; i < ROOM_TILE_SIZE_X; ++i)
         {
-            TileType* tile = &room_data->tiles[i][j];
+            TileType* tile = (TileType*)&room_data->tiles[i][j];
             switch(*tile)
             {
                 case TILE_FLOOR:   printf("."); break;
@@ -613,28 +654,23 @@ void level_handle_room_collision(Room* room, Physics* phys)
 void level_init()
 {
     if(dungeon_image > 0) return;
-    level_load_room_list();
+
+    //level_load_room_list();
     dungeon_image = gfx_load_image("src/img/dungeon_set.png", false, true, TILE_SIZE, TILE_SIZE);
 
-    /*
-    char* files[100] = {0};
-    int num_files = room_file_get_all(files);
+    room_file_get_all();
 
-    for(int i = 0; i < num_files; ++i)
+    for(int i = 0; i < room_file_count; ++i)
     {
-        RoomFileData rfd;
-        room_file_load(&rfd, "src/rooms/%s", files[i]);
+        printf("i: %d, Loading room %s\n",i, p_room_files[i]);
 
-        for(int x = 0; x < rfd.size.x; ++x)
-        {
-            for(int y = 0; y < rfd.size.y; ++y)
-            {
-                room_list[room_list_count].tiles[x][y] = rfd.tile_types[x][y];
-            }
-        }
+        bool success = room_file_load(&room_list[room_list_count], "src/rooms/%s", p_room_files[i]);
+        if(!success)
+            continue;
+
         room_list_count++;
     }
-    */
+    printf("room list count: %d\n",room_list_count);
 }
 
 void level_print(Level* level)
@@ -684,7 +720,7 @@ TileType level_get_tile_type(Room* room, int x, int y)
     if(x < 0 || x >= ROOM_TILE_SIZE_X) return TILE_NONE;
     if(y < 0 || y >= ROOM_TILE_SIZE_Y) return TILE_NONE;
 
-    RoomData* rdata = &room_list[room->layout];
+    RoomFileData* rdata = &room_list[room->layout];
     return rdata->tiles[x][y];
 }
 
@@ -752,7 +788,7 @@ void level_get_rand_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile
     }
 }
 
-void level_draw_room(Room* room, RoomData* room_data, float xoffset, float yoffset)
+void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float yoffset)
 {
     if(!room)
         return;
@@ -794,7 +830,7 @@ void level_draw_room(Room* room, RoomData* room_data, float xoffset, float yoffs
     if(room->doors[DIR_LEFT])
         gfx_draw_image(dungeon_image, SPRITE_TILE_DOOR_LEFT, r.x,r.y+h*(ROOM_TILE_SIZE_Y+1)/2.0, color, 1.0, 0.0, 1.0, false, true);
 
-    RoomData* rdata;
+    RoomFileData* rdata;
     if(room_data != NULL)
         rdata = room_data;
     else

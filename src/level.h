@@ -1,6 +1,7 @@
 #pragma once
 
 #include "physics.h"
+#include "room_file.h"
 
 #define MAX_ROOMS_GRID_X 7
 #define MAX_ROOMS_GRID_Y 7
@@ -109,12 +110,7 @@ typedef struct
     Vector2i start;
 } Level;
 
-typedef struct
-{
-    TileType tiles[ROOM_TILE_SIZE_X][ROOM_TILE_SIZE_Y];
-} RoomData;
-
-extern RoomData room_list[32];
+extern RoomFileData room_list[32];
 extern int room_list_count;
 extern int dungeon_image;
 
@@ -127,7 +123,7 @@ TileType level_get_tile_type_by_pos(Room* room, float x, float y);
 void level_get_center_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile_pos);
 void level_get_rand_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile_pos);
 
-void level_draw_room(Room* room, RoomData* room_data, float xoffset, float yoffset);
+void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float yoffset);
 void room_draw_walls(Room* room);
 void level_print(Level* level);
 void level_print_room(Room* room);

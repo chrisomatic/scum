@@ -50,12 +50,10 @@ typedef struct
 #define OBJECTS_MAX_Y (ROOM_TILE_SIZE_Y+2)
 
 static PlacedObject objects[OBJECTS_MAX_X][OBJECTS_MAX_Y] = {0};
-static RoomData room_data = {0};
+static RoomFileData room_data = {0};
 static Room room = {0};
 
 static PlacedObject objects_prior[OBJECTS_MAX_X][OBJECTS_MAX_Y] = {0};
-static RoomData room_data_prior = {0};
-static Room room_prior = {0};
 
 static float ecam_pos_x = 0;
 static float ecam_pos_y = 0;
@@ -75,9 +73,6 @@ static int item_sel = 0;
 
 static int room_rank = 0;
 static char room_file_name[32] = {0};
-
-static int num_room_files = 0;
-static char* p_room_files[100] = {0};
 
 static char* room_type_names[ROOM_TYPE_MAX] = {0};
 static int room_type_sel = 0;
@@ -160,7 +155,7 @@ void room_editor_start()
     editor_camera_set(true);
 
     // load room files
-    num_room_files = room_file_get_all(p_room_files);
+    room_file_get_all();
 }
 
 void room_editor_update(float dt)
@@ -424,19 +419,6 @@ void room_editor_draw()
             {
                 if(imgui_button("Clear All"))
                 {
-                    // PlacedObject objects_temp[OBJECTS_MAX_X][OBJECTS_MAX_Y] = {0};
-                    // RoomData room_data_temp = {0};
-                    // Room room_temp = {0};
-                    // memcpy(objects_temp, objects, sizeof(PlacedObject)*OBJECTS_MAX_X*OBJECTS_MAX_Y);
-                    // memcpy(&room_data_temp, &room_data, sizeof(RoomData));
-                    // memcpy(&room_temp, &room, sizeof(Room));
-                    // memcpy(objects, objects_prior, sizeof(PlacedObject)*OBJECTS_MAX_X*OBJECTS_MAX_Y);
-                    // memcpy(&room_data, &room_data_prior, sizeof(RoomData));
-                    // memcpy(&room, &room_prior, sizeof(Room));
-                    // memcpy(objects_prior, objects_temp, sizeof(PlacedObject)*OBJECTS_MAX_X*OBJECTS_MAX_Y);
-                    // memcpy(&room_data_prior, &room_data_temp, sizeof(RoomData));
-                    // memcpy(&room_prior, &room_temp, sizeof(Room));
-
                     clear_all();
                 }
 
@@ -499,15 +481,15 @@ void room_editor_draw()
                         // fill out room file data structure
                         RoomFileData rfd = {
                             .version = FORMAT_VERSION,
-                            .size.x = ROOM_TILE_SIZE_X,
-                            .size.y = ROOM_TILE_SIZE_Y,
+                            .size_x = ROOM_TILE_SIZE_X,
+                            .size_y = ROOM_TILE_SIZE_Y,
                             .type = room_type_sel,
                             .rank = room_rank
                         };
 
                         for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
                             for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
-                                rfd.tile_types[x][y] = room_data.tiles[x][y];
+                                rfd.tiles[x][y] = (int)room_data.tiles[x][y];
 
                         for(int y = 0; y < OBJECTS_MAX_Y; ++y)
                         {
@@ -518,15 +500,15 @@ void room_editor_draw()
                                 if(o->type == TYPE_CREATURE)
                                 {
                                     rfd.creature_types[rfd.creature_count] = o->subtype;
-                                    rfd.creature_locations[rfd.creature_count].x = x;
-                                    rfd.creature_locations[rfd.creature_count].y = y;
+                                    rfd.creature_locations_x[rfd.creature_count] = x;
+                                    rfd.creature_locations_y[rfd.creature_count] = y;
                                     rfd.creature_count++;
                                 }
                                 else if(o->type == TYPE_ITEM)
                                 {
                                     rfd.item_types[rfd.item_count] = o->subtype;
-                                    rfd.item_locations[rfd.item_count].x = x;
-                                    rfd.item_locations[rfd.item_count].y = y;
+                                    rfd.item_locations_x[rfd.item_count] = x;
+                                    rfd.item_locations_y[rfd.item_count] = y;
                                     rfd.item_count++;
                                 }
                             }
@@ -535,10 +517,8 @@ void room_editor_draw()
                         for(int i = 0; i < 4; ++i)
                             rfd.doors[i] = room.doors[i];
 
-
                         room_file_save(&rfd, file_path);
-
-                        num_room_files = room_file_get_all(p_room_files);
+                        room_file_get_all();
                     }
                 }
 
@@ -549,7 +529,7 @@ void room_editor_draw()
                 }
 
                 static int room_file_sel = 0;
-                imgui_dropdown(p_room_files, num_room_files, "existing", &room_file_sel, NULL);
+                imgui_dropdown(p_room_files, room_file_count, "existing", &room_file_sel, NULL);
 
                 if(imgui_button("Load"))
                 {
@@ -562,14 +542,14 @@ void room_editor_draw()
                     room_rank = rfd.rank;
 
                     // tiles
-                    for(int i = 0; i < rfd.size.x; ++i)
-                        for(int j = 0; j < rfd.size.y; ++j)
-                            room_data.tiles[i][j] = rfd.tile_types[i][j];
+                    for(int i = 0; i < rfd.size_x; ++i)
+                        for(int j = 0; j < rfd.size_y; ++j)
+                            room_data.tiles[i][j] = (TileType)rfd.tiles[i][j];
 
                     for(int i = 0; i < rfd.creature_count; ++i)
                     {
-                        int x = rfd.creature_locations[i].x;
-                        int y = rfd.creature_locations[i].y;
+                        int x = rfd.creature_locations_x[i];
+                        int y = rfd.creature_locations_y[i];
 
                         objects[x][y].type     = TYPE_CREATURE;
                         objects[x][y].subtype  = rfd.creature_types[i];
@@ -578,8 +558,8 @@ void room_editor_draw()
 
                     for(int i = 0; i < rfd.item_count; ++i)
                     {
-                        int x = rfd.item_locations[i].x;
-                        int y = rfd.item_locations[i].y;
+                        int x = rfd.item_locations_x[i];
+                        int y = rfd.item_locations_y[i];
 
                         objects[x][y].type     = TYPE_ITEM;
                         objects[x][y].subtype  = rfd.item_types[i];
@@ -654,10 +634,10 @@ void room_editor_draw()
     }
 
     PlacedObject objects_temp[OBJECTS_MAX_X][OBJECTS_MAX_Y] = {0};
-    RoomData room_data_temp = {0};
+    RoomFileData room_data_temp = {0};
     Room room_temp = {0};
     memcpy(objects_temp, objects, sizeof(PlacedObject)*OBJECTS_MAX_X*OBJECTS_MAX_Y);
-    memcpy(&room_data_temp, &room_data, sizeof(RoomData));
+    memcpy(&room_data_temp, &room_data, sizeof(RoomFileData));
     memcpy(&room_temp, &room, sizeof(Room));
 
     PlacedObject* o = &objects[obj_coords.x][obj_coords.y];
@@ -696,7 +676,7 @@ void room_editor_draw()
                 o->type = TYPE_NONE;
 
                 Vector2i front = get_in_front_of_door_coords(door);
-                TileType* ttf = &room_data.tiles[front.x-1][front.y-1];
+                TileType* ttf = (TileType*)&room_data.tiles[front.x-1][front.y-1];
                 if(*ttf == TILE_PIT || *ttf == TILE_BOULDER)
                 {
                     *ttf = TILE_FLOOR;
@@ -719,7 +699,7 @@ void room_editor_draw()
         {
             if(obj_coords.x > 0 && obj_coords.y > 0 && (obj_coords.x+1) < ROOM_TILE_SIZE_X && (obj_coords.y+1) < ROOM_TILE_SIZE_Y)
             {
-                TileType* tt = &room_data.tiles[obj_coords.x-1][obj_coords.y-1];
+                TileType* tt = (TileType*)&room_data.tiles[obj_coords.x-1][obj_coords.y-1];
                 if(*tt == TILE_PIT || *tt == TILE_BOULDER)
                     *tt = TILE_FLOOR;
             }
@@ -730,19 +710,6 @@ void room_editor_draw()
         }
 
     }
-
-    // bool no_change = true;
-    // no_change &= memcmp(objects_temp, objects, sizeof(PlacedObject)*OBJECTS_MAX_X*OBJECTS_MAX_Y) == 0;
-    // no_change &= memcmp(&room_data_temp, &room_data, sizeof(RoomData)) == 0;
-    // no_change &= memcmp(&room_temp, &room, sizeof(Room)) == 0;
-    // if(!no_change)
-    // {
-    //     // printf("copying to prior\n");
-    //     // printf("%d --> %d\n", room_data_temp.tiles[0][0], room_data.tiles[0][0]);
-    //     memcpy(objects_prior, objects_temp, sizeof(PlacedObject)*OBJECTS_MAX_X*OBJECTS_MAX_Y);
-    //     memcpy(&room_data_prior, &room_data_temp, sizeof(RoomData));
-    //     memcpy(&room_prior, &room_temp, sizeof(Room));
-    // }
 
     obj_sel = prior_obj_sel;
 }
@@ -863,5 +830,4 @@ static void clear_all()
         }
     }
 }
-
 

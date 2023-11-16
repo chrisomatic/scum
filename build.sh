@@ -29,6 +29,7 @@ gcc core/gfx.c \
     explosion.c \
     status_effects.c \
     room_editor.c \
+    room_file.c \
     main.c \
     -Icore \
     -lglfw -lGLU -lGLEW -lGL -lm \

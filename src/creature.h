@@ -4,6 +4,7 @@
 #include "projectile.h"
 #include "net.h"
 #include "entity.h"
+#include "level.h"
 
 #define MAX_CREATURES 1024
 #define ACTION_COUNTER_MAX 1.0 // seconds

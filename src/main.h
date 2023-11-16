@@ -107,8 +107,6 @@ void decal_add(Decal d);
 void decal_draw_all();
 void decal_update_all(float dt);
 
-
-
 extern float mx, my;
 extern float wmx, wmy;
 
@@ -143,6 +141,10 @@ extern float ascale;
 extern bool dynamic_zoom;
 extern int cam_zoom;
 extern int cam_min_zoom;
+
+extern char* tile_names[];
+extern char* creature_names[];
+extern char* item_names[];
 
 void camera_set(bool immediate);
 bool camera_can_be_limited(float x, float y, float z);
