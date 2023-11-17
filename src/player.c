@@ -780,8 +780,13 @@ void player_update(Player* p, float dt)
     Room* room = level_get_room_by_index(&level, p->curr_room);
     TileType tt = level_get_tile_type_by_pos(room, CPOSX(p->phys), CPOSY(p->phys));
 
-    float mud_factor = (tt == TILE_MUD) ? 0.2 : 1.0;
-    //p->phys.speed_factor = (tt == TILE_MUD) ? 0.2 : 1.0;
+    float mud_factor = 1.0;
+    if(tt == TILE_MUD)
+    {
+        mud_factor = 0.4;
+        if(p->phys.pos.z > 0.0)
+            mud_factor = 0.8;
+    }
 
     bool up    = p->actions[PLAYER_ACTION_UP].state;
     bool down  = p->actions[PLAYER_ACTION_DOWN].state;
@@ -853,7 +858,7 @@ void player_update(Player* p, float dt)
         p->phys.vel.z -= 15.0;
     }
 
-    bool jump = p->actions[PLAYER_ACTION_JUMP].toggled_on;
+    bool jump = p->actions[PLAYER_ACTION_JUMP].state;
     if(jump && p->phys.pos.z == 0.0)
     {
         p->phys.vel.z = 220.0;
