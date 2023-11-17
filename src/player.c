@@ -21,6 +21,8 @@ static float sprite_index_to_angle(Player* p);
 static void update_player_boxes(Player* p);
 static void handle_room_collision(Player* p);
 
+int xp_levels[] = {100,150,200,250,300};
+
 char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 int player_image = -1;
 int shadow_image = -1;
@@ -29,13 +31,17 @@ Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
 Player* player2 = NULL;
 
+text_list_t* ptext = NULL;
+
 void player_init()
 {
     if(player_image == -1)
     {
         player_image = gfx_load_image("src/img/spaceman.png", false, true, 32, 32);
         shadow_image = gfx_load_image("src/img/shadow.png", false, true, 32, 32);
+        ptext = text_list_init(5, 0, 0, 0.05, COLOR_WHITE, false, TEXT_ALIGN_LEFT, IN_WORLD, false);
     }
+
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         Player* p = &players[i];
@@ -67,7 +73,7 @@ void player_init()
 
         memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
 
-        p->proj_cooldown_max = 0.2;
+        p->proj_cooldown_max = 0.02;
         p->door = DIR_NONE;
         p->light_radius = 1.0;
 
@@ -290,6 +296,41 @@ void player_set_collision_pos(Player* p, float x, float y)
 {
     p->phys.pos.x = x - p->phys.coffset.x;
     p->phys.pos.y = y - p->phys.coffset.y;
+}
+
+int get_xp_req(int level)
+{
+    int num = sizeof(xp_levels) / sizeof(xp_levels[0]);
+    int xp_req = 0;
+    if(level >= num)
+        xp_req = xp_levels[num-1];
+    else
+        xp_req = xp_levels[level];
+    return xp_req;
+}
+
+void player_add_xp(Player* p, int xp)
+{
+    int num = sizeof(xp_levels) / sizeof(xp_levels[0]);
+    p->xp += xp;
+
+    if(p == player)
+        text_list_add(ptext, 0.50, "+%d xp", xp);
+
+    for(;;)
+    {
+        int xp_req = get_xp_req(p->level);
+
+        if(p->xp < xp_req)
+            break;
+
+        if(p == player)
+            text_list_add(ptext, 1.0, "+1 level");
+
+        p->xp -= xp_req;
+        p->level++;
+    }
+
 }
 
 void player_add_hp(Player* p, int hp)
@@ -1123,6 +1164,10 @@ void player_update(Player* p, float dt)
         update_player_boxes(p);
     }
 
+    ptext->x = p->phys.pos.x - p->phys.radius/2.0;
+    ptext->y = p->phys.pos.y - p->phys.height/2.0 - ptext->text_height;
+    text_list_update(ptext, dt);
+
     if(p->invulnerable)
     {
         p->invulnerable_time += dt;
@@ -1298,6 +1343,11 @@ void player_draw(Player* p, bool batch)
         float x1 = x0 + p->phys.vel.x;
         float y1 = y0 + p->phys.vel.y;
         gfx_add_line(x0, y0, x1, y1, COLOR_RED);
+    }
+
+    if(p == player)
+    {
+        text_list_draw(ptext);
     }
 }
 

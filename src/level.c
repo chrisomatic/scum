@@ -230,6 +230,7 @@ void level_generate_room_outer_walls(Room* room)
     wall_top->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2)+wall_offset;
     wall_top->p1.y = wall_top->p0.y;
     wall_top->dir = DIR_DOWN;
+    wall_top->is_innner_wall = true;
     room->wall_count++;
 
     Wall* wall_right = &room->walls[room->wall_count];
@@ -238,6 +239,7 @@ void level_generate_room_outer_walls(Room* room)
     wall_right->p1.x = wall_right->p0.x;
     wall_right->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2)+wall_offset;
     wall_right->dir = DIR_LEFT;
+    wall_right->is_innner_wall = true;
     room->wall_count++;
 
     Wall* wall_bottom = &room->walls[room->wall_count];
@@ -246,6 +248,7 @@ void level_generate_room_outer_walls(Room* room)
     wall_bottom->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2)+wall_offset;
     wall_bottom->p1.y = wall_bottom->p0.y;
     wall_bottom->dir = DIR_UP;
+    wall_bottom->is_innner_wall = true;
     room->wall_count++;
 
     Wall* wall_left = &room->walls[room->wall_count];
@@ -254,8 +257,9 @@ void level_generate_room_outer_walls(Room* room)
     wall_left->p1.x = wall_left->p0.x;
     wall_left->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2)+wall_offset;
     wall_left->dir = DIR_RIGHT;
+    wall_left->is_innner_wall = true;
     room->wall_count++;
-    
+
     // outer walls
     Wall* wall_outer_top = &room->walls[room->wall_count];
     wall_outer_top->p0.x = x0;
@@ -541,7 +545,7 @@ void level_print_room(Room* room)
     printf("\n");
 }
 
-void level_handle_room_collision(Room* room, Physics* phys)
+void level_handle_room_collision(Room* room, Physics* phys, bool is_projectile)
 {
     if(!room)
         return;
@@ -551,6 +555,9 @@ void level_handle_room_collision(Room* room, Physics* phys)
     for(int i = 0; i < room->wall_count; ++i)
     {
         Wall* wall = &room->walls[i];
+
+        if(is_projectile && (wall->is_pit || wall->is_innner_wall))
+            continue;
 
         bool collision = false;
         bool check = false;

@@ -23,7 +23,7 @@ static uint16_t id_counter = 0;
 ProjectileDef projectile_lookup[] = {
     {
         // player
-        .damage = 1.0,
+        .damage = 10.0,
         .range = 32*8,
         .min_speed = 100.0,
         .base_speed = 100.0,

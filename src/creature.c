@@ -96,6 +96,7 @@ void creature_init_props(Creature* c)
             // c->phys.height = gfx_images[creature_image_slug].element_height;
             c->phys.hp_max = 3.0;
             c->painful_touch = true;
+            c->xp = 60;
         } break;
         case CREATURE_TYPE_CLINGER:
         {
@@ -109,6 +110,7 @@ void creature_init_props(Creature* c)
             c->phys.hp_max = 5.0;
             // c->proj_type = PROJECTILE_TYPE_CREATURE_CLINGER;
             c->painful_touch = false;
+            c->xp = 60;
         } break;
         case CREATURE_TYPE_GEIZER:
         {
@@ -122,6 +124,7 @@ void creature_init_props(Creature* c)
             c->phys.hp_max = 10.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = false;
+            c->xp = 60;
         } break;
         case CREATURE_TYPE_FLOATER:
         {
@@ -135,6 +138,7 @@ void creature_init_props(Creature* c)
             c->phys.hp_max = 3.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = true;
+            c->xp = 60;
         } break;
     }
 
@@ -546,6 +550,7 @@ void creature_draw_all()
 void creature_die(Creature* c)
 {
     c->phys.dead = true;
+    player_add_xp(player, c->xp);
 
     Decal d = {0};
     d.image = particles_image;

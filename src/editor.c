@@ -107,6 +107,9 @@ void editor_draw()
                     imgui_toggle_button(&p->active, "Active");
                 }
 
+                imgui_text("Level: %d", p->level);
+                imgui_text("XP: %d / %d", p->xp, get_xp_req(p->level));
+
                 int hp = p->phys.hp;
                 imgui_number_box("HP", 0, p->phys.hp_max, &hp);
                 p->phys.hp = (uint8_t)hp;

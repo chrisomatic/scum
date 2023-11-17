@@ -47,6 +47,8 @@ typedef struct
     float act_time_min;
     float act_time_max;
 
+    int xp;
+
     // temp debug stuff
     Vector2f spawn;
     int spawn_tile_x;    //room tile x

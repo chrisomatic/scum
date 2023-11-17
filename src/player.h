@@ -56,6 +56,9 @@ typedef struct
     Physics phys;
     float vel_factor;
 
+    int xp;
+    int level;
+
     PlayerInput actions[PLAYER_ACTION_MAX];
 
     PlayerActions last_shoot_action;
@@ -109,6 +112,7 @@ extern char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL 
 extern Player players[MAX_PLAYERS];
 extern Player* player;
 extern Player* player2;
+extern int xp_levels[];
 
 void player_init();
 uint8_t player_get_gauntlet_count(Player* p);
@@ -124,6 +128,7 @@ void player_lerp(Player* p, float dt);
 void player_handle_net_inputs(Player* p, double dt);
 void player_set_hit_box_pos(Player* p, float x, float y);
 void player_set_collision_pos(Player* p, float x, float y);
+void player_add_xp(Player* p, int xp);
 void player_hurt_no_inv(Player* p, int damage);
 void player_hurt(Player* p, int damage);
 void player_add_hp(Player* p, int hp);
@@ -141,3 +146,5 @@ int player_get_count_in_room(uint8_t curr_room);
 int player_names_build(bool include_all, bool only_active);
 
 void draw_gauntlet();
+
+int get_xp_req(int level);

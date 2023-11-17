@@ -5,19 +5,23 @@
 
 #define FADEOUT_DURATION 1.0
 
-text_list_t* text_list_init(int max, float x, float y, float scale, uint32_t color, bool downward, text_align_t alignment)
+text_list_t* text_list_init(int max, float x, float y, float scale, uint32_t color, bool downward, text_align_t alignment, bool in_world, bool fade_out)
 {
     text_list_t* lst = calloc(1,sizeof(text_list_t));
     lst->max = MAX(max,1);
     lst->count = 0;
     lst->downward = downward;
     lst->alignment = alignment;
+    lst->in_world = in_world;
     lst->x = x;
     lst->y = y;
     lst->scale = scale;
     lst->color = color;
+    lst->fade_out = fade_out;
     lst->text = calloc(lst->max, sizeof(char*));
     lst->durations = calloc(lst->max, sizeof(float));
+    Vector2f size = gfx_string_get_size(lst->scale, "P");
+    lst->text_height = size.y;
     return lst;
 }
 
@@ -87,7 +91,10 @@ void text_list_draw(text_list_t* lst)
     for(int i = 0; i < lst->count; ++i)
     {
         if(lst->text[i] == NULL) continue;
-        float opacity = MIN(lst->durations[i]/FADEOUT_DURATION, 1.0);
+
+        float opacity = 1.0;
+        if(lst->fade_out)
+            opacity = MIN(lst->durations[i]/FADEOUT_DURATION, 1.0);
 
         float _x = lst->x;
         if(lst->alignment == TEXT_ALIGN_RIGHT)
@@ -101,7 +108,7 @@ void text_list_draw(text_list_t* lst)
             _x -= _size.x/2.0;
         }
 
-        gfx_draw_string(_x, _y, lst->color, lst->scale, 0.0, opacity, NOT_IN_WORLD, NO_DROP_SHADOW, lst->text[i]);
+        gfx_draw_string(_x, _y, lst->color, lst->scale, 0.0, opacity, lst->in_world, NO_DROP_SHADOW, lst->text[i]);
 
         float yadj = (size.y + 1.0);
         _y += lst->downward ? yadj : -yadj;
