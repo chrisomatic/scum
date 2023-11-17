@@ -45,9 +45,6 @@ typedef struct
     int subtype2;
 } PlacedObject;
 
-// +2 for walls
-#define OBJECTS_MAX_X (ROOM_TILE_SIZE_X+2)
-#define OBJECTS_MAX_Y (ROOM_TILE_SIZE_Y+2)
 
 static PlacedObject objects[OBJECTS_MAX_X][OBJECTS_MAX_Y] = {0};
 static RoomFileData room_data = {0};
@@ -477,7 +474,6 @@ void room_editor_draw()
                     if(file_exists) imgui_horizontal_begin();
                     if(imgui_button("Save##room"))
                     {
-
                         // fill out room file data structure
                         RoomFileData rfd = {
                             .version = FORMAT_VERSION,
@@ -502,7 +498,9 @@ void room_editor_draw()
                                     rfd.creature_types[rfd.creature_count] = o->subtype;
                                     rfd.creature_locations_x[rfd.creature_count] = x;
                                     rfd.creature_locations_y[rfd.creature_count] = y;
+                                    // printf("creature (%d) %.1f,%.1f   %d,%d\n", rfd.creature_count, rfd.creature_locations_x[rfd.creature_count], rfd.creature_locations_y[rfd.creature_count],x,y);
                                     rfd.creature_count++;
+
                                 }
                                 else if(o->type == TYPE_ITEM)
                                 {
@@ -565,6 +563,9 @@ void room_editor_draw()
                         objects[x][y].subtype  = rfd.item_types[i];
                         objects[x][y].subtype2 = creature_get_image(rfd.item_types[i]);
                     }
+
+                    for(int i = 0; i < 4; ++i)
+                        room.doors[i] = rfd.doors[i];
 
                     strcpy(room_file_name, room_files[room_file_sel]);
                     remove_extension(room_file_name);

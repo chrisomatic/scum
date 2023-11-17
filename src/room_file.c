@@ -259,6 +259,17 @@ bool room_file_load(RoomFileData* rfd, char* path, ...)
                     continue;
                 }
 
+                if(x < 0 || x > OBJECTS_MAX_X)
+                {
+                    LOGW("Failed to load creature, x coordinate (%d), out of range (index: %d); line_num: %d", x, index, __line_num);
+                    continue;
+                }
+                if(y < 0 || y > OBJECTS_MAX_Y)
+                {
+                    LOGW("Failed to load creature, y coordinate (%d), out of range (index: %d); line_num: %d", y, index, __line_num);
+                    continue;
+                }
+
                 CreatureType type = creature_mapping[index];
 
                 rfd->creature_types[rfd->creature_count] = type;
@@ -304,6 +315,17 @@ bool room_file_load(RoomFileData* rfd, char* path, ...)
                 if(index < 0 || index >= ITEM_MAX)
                 {
                     LOGW("Failed to load item, out of range (index: %d); line_num: %d",index, __line_num);
+                    continue;
+                }
+
+                if(x < 0 || x > OBJECTS_MAX_X)
+                {
+                    LOGW("Failed to load item, x coordinate (%d), out of range (index: %d); line_num: %d", x, index, __line_num);
+                    continue;
+                }
+                if(y < 0 || y > OBJECTS_MAX_Y)
+                {
+                    LOGW("Failed to load item, y coordinate (%d), out of range (index: %d); line_num: %d", y, index, __line_num);
                     continue;
                 }
 

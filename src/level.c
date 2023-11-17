@@ -890,14 +890,11 @@ Level level_generate(unsigned int seed)
 
     start_x = RAND_RANGE(1,MAX_ROOMS_GRID_X-2);
     start_y = RAND_RANGE(1,MAX_ROOMS_GRID_Y-2);
+    start_x = MAX_ROOMS_GRID_X / 2;
+    start_y = MAX_ROOMS_GRID_Y / 2;
 
     level.start.x = start_x;
     level.start.y = start_y;
-
-    // start_x = MAX_ROOMS_GRID_X / 2; //rand() % MAX_ROOMS_GRID_X;
-    // start_y = MAX_ROOMS_GRID_Y / 2; //rand() % MAX_ROOMS_GRID_Y;
-
-    creature_clear_all();
 
     LOGI("Generating rooms, seed: %u", seed);
 

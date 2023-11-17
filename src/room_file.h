@@ -1,5 +1,7 @@
 #pragma once
 
+#include "room_editor.h"
+
 #define FORMAT_VERSION 1
 
 typedef struct
@@ -15,14 +17,14 @@ typedef struct
 
     // creatures
     int   creature_types[100];
-    float creature_locations_x[100];
-    float creature_locations_y[100];
+    int creature_locations_x[100];
+    int creature_locations_y[100];
     int   creature_count;
 
     // items
     int   item_types[100];
-    float item_locations_x[100];
-    float item_locations_y[100];
+    int item_locations_x[100];
+    int item_locations_y[100];
     int   item_count;
 
     // doors
