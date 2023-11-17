@@ -171,6 +171,9 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
             default: break;
         }
 
+        // creature_add(room, CREATURE_TYPE_CLINGER, NULL, NULL);
+
+
         /*
         if(room->type == ROOM_TYPE_MONSTER)
         {

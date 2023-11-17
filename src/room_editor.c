@@ -643,26 +643,20 @@ void room_editor_draw()
 
     PlacedObject* o = &objects[obj_coords.x][obj_coords.y];
 
-    if(obj_sel == 0) //tiles
+    if(eraser)
+    {
+        if(obj_coords.x > 0 && obj_coords.y > 0 && (obj_coords.x-1) < ROOM_TILE_SIZE_X && (obj_coords.y-1) < ROOM_TILE_SIZE_Y)
+            room_data.tiles[obj_coords.x-1][obj_coords.y-1] = TILE_FLOOR;
+        o->type = TYPE_NONE;
+    }
+    else if(obj_sel == 0) //tiles
     {
         TileType tt = tile_sel;
-
-        if(eraser)
+        if(tt == TILE_PIT || tt == TILE_BOULDER)
         {
-            if(obj_coords.x > 0 && obj_coords.y > 0 && (obj_coords.x+1) < ROOM_TILE_SIZE_X && (obj_coords.y+1) < ROOM_TILE_SIZE_Y)
-                room_data.tiles[obj_coords.x-1][obj_coords.y-1] = TILE_FLOOR;
             o->type = TYPE_NONE;
         }
-        else
-        {
-            if(tt == TILE_PIT || tt == TILE_BOULDER)
-            {
-                o->type = TYPE_NONE;
-            }
-
-            room_data.tiles[obj_coords.x-1][obj_coords.y-1] = tt;
-        }
-
+        room_data.tiles[obj_coords.x-1][obj_coords.y-1] = tt;
     }
     else if(obj_sel == 1) //doors
     {
@@ -692,24 +686,16 @@ void room_editor_draw()
     }
     else
     {
-        if(eraser)
+        if(obj_coords.x > 0 && obj_coords.y > 0 && (obj_coords.x+1) < ROOM_TILE_SIZE_X && (obj_coords.y+1) < ROOM_TILE_SIZE_Y)
         {
-            o->type = TYPE_NONE;
-        }
-        else
-        {
-            if(obj_coords.x > 0 && obj_coords.y > 0 && (obj_coords.x+1) < ROOM_TILE_SIZE_X && (obj_coords.y+1) < ROOM_TILE_SIZE_Y)
-            {
-                TileType* tt = (TileType*)&room_data.tiles[obj_coords.x-1][obj_coords.y-1];
-                if(*tt == TILE_PIT || *tt == TILE_BOULDER)
-                    *tt = TILE_FLOOR;
-            }
-
-            o->type = obj.type;
-            o->subtype = obj.subtype;
-            o->subtype2 = obj.subtype2;
+            TileType* tt = (TileType*)&room_data.tiles[obj_coords.x-1][obj_coords.y-1];
+            if(*tt == TILE_PIT || *tt == TILE_BOULDER)
+                *tt = TILE_FLOOR;
         }
 
+        o->type = obj.type;
+        o->subtype = obj.subtype;
+        o->subtype2 = obj.subtype2;
     }
 
     obj_sel = prior_obj_sel;
