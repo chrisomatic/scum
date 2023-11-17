@@ -567,7 +567,7 @@ void game_generate_level(unsigned int _seed)
     creature_clear_all();
     item_clear_all();
 
-    level = level_generate(seed,1);
+    level = level_generate(seed,2);
 
     uint16_t ccount = creature_get_count();
     LOGI("Total creature count: %u", ccount);

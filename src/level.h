@@ -9,7 +9,7 @@
 
 #define MONSTER_ROOM_PERCENTAGE 80
 
-#define MIN_DEPTH 2
+#define MIN_DEPTH 3
 #define MAX_DEPTH 8
 
 #define MIN_ROOMS 7

@@ -33,15 +33,17 @@ static inline bool flip_coin()
 
 static void branch_room(Level* level, int x, int y, int depth)
 {
-    printf("branching room!\n");
+    //printf("branching room!\n");
 
     Room* room = &level->rooms[x][y];
     RoomFileData* rfd = &room_list[room->layout];
 
     bool can_go_up    = rfd->doors[DIR_UP] && (y > 0 && !level->rooms[x][y-1].valid);
-    bool can_go_right = rfd->doors[DIR_UP] && (x < MAX_ROOMS_GRID_X-1 && !level->rooms[x+1][y].valid);
-    bool can_go_down  = rfd->doors[DIR_UP] && (y < MAX_ROOMS_GRID_Y-1 && !level->rooms[x][y+1].valid);
-    bool can_go_left  = rfd->doors[DIR_UP] && (x > 0 && !level->rooms[x-1][y].valid);
+    bool can_go_right = rfd->doors[DIR_RIGHT] && (x < MAX_ROOMS_GRID_X-1 && !level->rooms[x+1][y].valid);
+    bool can_go_down  = rfd->doors[DIR_DOWN] && (y < MAX_ROOMS_GRID_Y-1 && !level->rooms[x][y+1].valid);
+    bool can_go_left  = rfd->doors[DIR_LEFT] && (x > 0 && !level->rooms[x-1][y].valid);
+
+    int tries = 0;
 
 try_again:
     bool random_doors[4] = {0};
@@ -59,8 +61,12 @@ try_again:
     {
         if(depth < MIN_DEPTH)
         {
-            if(door_count == 0)
-                goto try_again;
+            if(door_count < 2)
+            {
+                tries++;
+                if(tries < 10)
+                    goto try_again;
+            }
         }
         else
         {
@@ -91,6 +97,61 @@ try_again:
         room->doors[DIR_LEFT] = true;
         generate_rooms(level, x-1,y,DIR_LEFT,depth+1);
     }
+}
+
+static int get_rand_room_index(RoomType type, Dir came_from)
+{
+    int list_count = 0;
+    int* list;
+    int index = 0;
+
+    switch(type)
+    {
+        case ROOM_TYPE_BOSS:
+            index = room_list_boss[rand() % room_count_boss];
+            list_count = room_count_boss;
+            list = room_list_boss;
+            break;
+        case ROOM_TYPE_TREASURE:
+            index = room_list_treasure[rand() % room_count_treasure];
+            list_count = room_count_treasure;
+            list = room_list_treasure;
+            break;
+        case ROOM_TYPE_MONSTER:
+            index = room_list_monster[rand() % room_count_monster];
+            list_count = room_count_monster;
+            list = room_list_monster;
+            break;
+        case ROOM_TYPE_EMPTY:
+            index = room_list_empty[rand() % room_count_empty];
+            list_count = room_count_empty;
+            list = room_list_empty;
+            break;
+    }
+
+    RoomFileData* rfd = &room_list[index];
+    
+    if(rfd->doors[came_from] == 0)
+    {
+        // can't use this room
+        // find a room that you can
+
+        int new_index = 0;
+
+        for(int i = 0; i < list_count; ++i)
+        {
+            RoomFileData* rfd_test = &room_list[list[i]];
+
+            if(rfd_test->doors[came_from])
+            {
+                new_index = list[i];
+            }
+        }
+
+        index = new_index;
+    }
+    
+    return index;
 }
 
 static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
@@ -132,7 +193,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
     if(is_boss_room)
     {
         room->type = ROOM_TYPE_BOSS;
-        room->layout = room_list_boss[rand() % room_count_boss];
+        room->layout = get_rand_room_index(ROOM_TYPE_BOSS, came_from);
         room->color = COLOR(100,100,200);
         level->has_boss_room = true;
         goto exit_conditions;
@@ -143,7 +204,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
     if(is_treasure_room)
     {
         room->type = ROOM_TYPE_TREASURE;
-        room->layout = room_list_treasure[rand() % room_count_treasure];
+        room->layout = get_rand_room_index(ROOM_TYPE_TREASURE, came_from);
         room->color = COLOR(200,200,100);
         level->has_treasure_room = true;
         goto exit_conditions;
@@ -154,7 +215,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
     if(is_monster_room)
     {
         room->type = ROOM_TYPE_MONSTER;
-        room->layout = room_list_monster[rand() % room_count_monster];
+        room->layout = get_rand_room_index(ROOM_TYPE_MONSTER, came_from);
         room->color = COLOR(200,100,100);
 
         // add monsters
@@ -170,7 +231,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
     {
         // empty room
         room->type = ROOM_TYPE_EMPTY;
-        room->layout = room_list_empty[rand() % room_count_empty];
+        room->layout = get_rand_room_index(ROOM_TYPE_EMPTY, came_from);
         room->color = COLOR(200,200,200);
     }
 
