@@ -790,9 +790,9 @@ void player_update(Player* p, float dt)
             mud_factor = 0.8;
     }
 
-    if(tt == TILE_PIT)
+    if(tt == TILE_PIT && p->phys.pos.z == 0.0)
     {
-        pscale -= 0.01;
+        pscale -= 0.07;
     }
     if(pscale < 0)
     {
