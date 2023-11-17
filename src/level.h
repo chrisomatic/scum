@@ -129,7 +129,7 @@ void room_draw_walls(Room* room);
 void level_print(Level* level);
 void level_print_room(Room* room);
 void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radius);
-void level_handle_room_collision(Room* room, Physics* phys, bool is_projectile);
+void level_handle_room_collision(Room* room, Physics* phys, int entity_type);
 Room* level_get_room(Level* level, int x, int y);
 Room* level_get_room_by_index(Level* level, int index);
 uint8_t level_get_room_index(int x, int y);

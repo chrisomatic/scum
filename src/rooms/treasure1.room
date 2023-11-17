@@ -57,7 +57,8 @@ New Level
 Chest
 
 ; Items
-20,7,4
+20,1,1
+19,7,4
 
 ; Doors
 1,1,1,1

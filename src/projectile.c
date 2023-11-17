@@ -111,9 +111,9 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
     proj.damage = projdef->damage * damage_multiplier;
     proj.scale = scale * projdef->scale;
     proj.time = 0.0;
-    proj.ttl  = 1.0; //TODO: change to range
+    proj.ttl  = 1.0;
     proj.phys.pos.x = phys->pos.x;
-    proj.phys.pos.y = phys->pos.y;
+    proj.phys.pos.y = phys->pos.y - 0.5*phys->pos.z;
     proj.phys.height = gfx_images[projectile_image].element_height;
     proj.phys.mass = 1.0;
     proj.phys.radius = 4.0 * proj.scale;

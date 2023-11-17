@@ -27,6 +27,8 @@ char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 int player_image = -1;
 int shadow_image = -1;
 
+float pscale = 1.0;
+
 Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
 Player* player2 = NULL;
@@ -788,6 +790,16 @@ void player_update(Player* p, float dt)
             mud_factor = 0.8;
     }
 
+    if(tt == TILE_PIT)
+    {
+        pscale -= 0.01;
+    }
+    if(pscale < 0)
+    {
+        player_send_to_room(p, p->curr_room);
+        pscale = 1.0;
+    }
+
     bool up    = p->actions[PLAYER_ACTION_UP].state;
     bool down  = p->actions[PLAYER_ACTION_DOWN].state;
     bool left  = p->actions[PLAYER_ACTION_LEFT].state;
@@ -859,6 +871,8 @@ void player_update(Player* p, float dt)
     }
 
     bool jump = p->actions[PLAYER_ACTION_JUMP].state;
+    if(tt == TILE_PIT) jump = false;
+
     if(jump && p->phys.pos.z == 0.0)
     {
         p->phys.vel.z = 220.0;
@@ -1304,6 +1318,7 @@ void draw_gauntlet()
     }
 }
 
+
 void player_draw(Player* p, bool batch)
 {
     if(!p->active) return;
@@ -1325,12 +1340,12 @@ void player_draw(Player* p, bool batch)
     if(batch)
     {
         gfx_sprite_batch_add(shadow_image, 0, p->phys.pos.x, p->phys.pos.y+12, color, false, shadow_scale, 0.0, 0.5, false, false, false);
-        gfx_sprite_batch_add(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, color, false, 1.0, 0.0, opacity, false, false, false);
+        gfx_sprite_batch_add(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, color, false, pscale, 0.0, opacity, false, false, false);
     }
     else
     {
         gfx_draw_image(shadow_image, 0, p->phys.pos.x, p->phys.pos.y+12, color, shadow_scale, 0.0, 0.5, false, IN_WORLD);
-        gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, color, 1.0, 0.0, opacity, false, IN_WORLD);
+        gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, color, pscale, 0.0, opacity, false, IN_WORLD);
     }
 
     if(debug_enabled)

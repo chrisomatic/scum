@@ -5,6 +5,7 @@
 #include "creature.h"
 #include "item.h"
 #include "room_file.h"
+#include "entity.h"
 #include "physics.h"
 
 RoomFileData room_list[32] = {0};
@@ -527,7 +528,7 @@ void level_print_room(Room* room)
     printf("\n");
 }
 
-void level_handle_room_collision(Room* room, Physics* phys, bool is_projectile)
+void level_handle_room_collision(Room* room, Physics* phys, int entity_type)
 {
     if(!room)
         return;
@@ -538,7 +539,10 @@ void level_handle_room_collision(Room* room, Physics* phys, bool is_projectile)
     {
         Wall* wall = &room->walls[i];
 
-        if(is_projectile && (wall->is_pit || wall->is_innner_wall))
+        if(entity_type == ENTITY_TYPE_PROJECTILE && (wall->is_pit || wall->is_innner_wall))
+            continue;
+
+        if(entity_type == ENTITY_TYPE_PLAYER && wall->is_pit && phys->pos.z > 0)
             continue;
 
         bool collision = false;
@@ -907,6 +911,16 @@ Level level_generate(unsigned int seed, int rank)
     item_clear_all();
     creature_clear_all();
     min_depth_reached = false;
+
+    for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
+    {
+        for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
+        {
+            level.rooms[x][y].index = level_get_room_index(x,y);
+        }
+    }
+
+    LOGI("Generating rooms, seed: %u", seed);
 
     generate_rooms(&level, level.start.x, level.start.y, DIR_NONE, 0);
     generate_walls(&level);
