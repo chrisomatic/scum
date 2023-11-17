@@ -116,7 +116,7 @@ extern int room_list_count;
 extern int dungeon_image;
 
 void level_init();
-Level level_generate(unsigned int seed);
+Level level_generate(unsigned int seed, int rank);
 uint8_t level_get_tile_sprite(TileType tt);
 Rect level_get_tile_rect(int x, int y);
 TileType level_get_tile_type(Room* room, int x, int y);
@@ -135,6 +135,7 @@ Room* level_get_room_by_index(Level* level, int index);
 uint8_t level_get_room_index(int x, int y);
 Vector2i level_get_room_coords(int index);
 Vector2i level_get_room_coords_by_pos(float x, float y);
+Vector2f level_get_pos_by_room_coords(int x, int y);
 bool level_is_room_valid(Level* level, int x, int y);
 bool level_is_room_valid_index(Level* level, int index);
 bool level_is_room_discovered(Level* level, int x, int y);
