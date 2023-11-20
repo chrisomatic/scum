@@ -138,6 +138,7 @@ static void item_func_consumable(Item* pu, Player* p)
         case ITEM_NEW_LEVEL:
         {
             pu->picked_up = true;
+            // item_remove(pu);
 
             seed = time(0)+rand()%1000;
             game_generate_level(seed);

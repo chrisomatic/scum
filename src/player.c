@@ -261,6 +261,7 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_SPACE);
 #endif
     // window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R); // moved to editor
+    window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_ENTER);
     window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_E);
     window_controls_add_key(&player->actions[PLAYER_ACTION_JUMP].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GEM_MENU].state, GLFW_KEY_G);
@@ -1299,12 +1300,91 @@ void player_ai_move_to_target(Player* p, Player* target)
 
 }
 
+float xp_bar_y = 0.0;
+
+void draw_hearts()
+{
+#define TOP_MARGIN  1
+
+    // int max_num = ceill((float)player->phys.hp_max/2.0);
+    int num = player->phys.hp / 2;
+    int rem = player->phys.hp % 2;
+
+    float pad = 3.0*ascale;
+    float l = 30.0*ascale; // image size
+    float x = margin_left.w;
+
+#if TOP_MARGIN
+    Rect* marg = &margin_top;
+    // float y = margin_top.h - 5.0 - l;
+    float y = 5.0;
+    x = 5.0;
+#else
+    Rect* marg = &margin_bottom;
+    float y = 5.0;
+#endif
+
+
+    uint8_t image_full = item_props[ITEM_HEART_FULL].image;
+    int si_full = item_props[ITEM_HEART_FULL].sprite_index;
+    int image_half = item_props[ITEM_HEART_FULL].image;
+    uint8_t si_half = item_props[ITEM_HEART_HALF].sprite_index;
+
+    // float w = gfx_images[image_full].visible_rects[si_full].w;
+    float w = gfx_images[image_full].element_width;
+    float scale = l / w;
+
+    Rect area = RECT(x, y, l, l);
+    gfx_get_absolute_coords(&area, ALIGN_TOP_LEFT, marg, ALIGN_CENTER);
+
+    x = area.x;
+    y = area.y;
+    xp_bar_y = area.y + area.h/2.0;
+    for(int i = 0; i < num; ++i)
+    {
+        gfx_draw_image(image_full, si_full, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+        // Rect r = RECT(x, y, l, l);
+        // gfx_draw_rect(&r, COLOR_BLACK, NOT_SCALED, NO_ROTATION, scale, false, NOT_IN_WORLD);
+        x += (l+pad);
+    }
+
+    if(rem == 1)
+    {
+        gfx_draw_image(image_half, si_half, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+    }
+}
+
+void draw_xp_bar()
+{
+    float h = 10.0;
+    float w = 33.0 * 3.0 * ascale;
+
+    float x = 5.0;
+    float y = xp_bar_y + 5.0;
+
+    Rect in_r = {0};
+    in_r.w = w * (float)player->xp / (float)get_xp_req(player->level);
+    in_r.h = h;
+    in_r.x = x + in_r.w/2.0;
+    in_r.y = y + in_r.h/2.0;
+    gfx_draw_rect(&in_r, COLOR_RED, NOT_SCALED, NO_ROTATION, 0.6, true, NOT_IN_WORLD);
+
+    Rect out_r = {0};
+    out_r.w = w + 1.0;
+    out_r.h = h + 1.0;
+    out_r.x = x + out_r.w/2.0;
+    out_r.y = y + out_r.h/2.0;
+    gfx_draw_rect(&out_r, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
+
+    gfx_draw_string(x + w + 5.0, y-1.0, COLOR_WHITE, 0.15*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%d", player->level);
+}
+
 void draw_gauntlet()
 {
     if(!player->show_gauntlet) return;
 
-    float len = 50.0;
-    float margin = 5.0;
+    float len = 50.0 * ascale;
+    float margin = 5.0 * ascale;
 
     int w = gfx_images[items_image].element_width;
     float scale = len / (float)w;
@@ -1393,7 +1473,7 @@ void draw_skill_selection()
     float scale = 0.4 * ascale;
     Vector2f size = gfx_string_get_size(scale, "|");
 
-    float pad = 5.0;
+    float pad = 5.0 * ascale;
 
     float total_h = size.y*NUM_SKILL_CHOICES + pad*(NUM_SKILL_CHOICES-1);
 

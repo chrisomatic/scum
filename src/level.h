@@ -124,7 +124,9 @@ extern int room_list_count;
 extern int dungeon_image;
 
 void level_init();
-void level_generate(Level* level, unsigned int seed, int rank);
+// void level_generate(Level* level, unsigned int seed, int rank);
+Level level_generate(unsigned int seed, int rank);
+
 uint8_t level_get_tile_sprite(TileType tt);
 Rect level_get_tile_rect(int x, int y);
 TileType level_get_tile_type(Room* room, int x, int y);

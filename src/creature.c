@@ -96,7 +96,7 @@ void creature_init_props(Creature* c)
             // c->phys.height = gfx_images[creature_image_slug].element_height;
             c->phys.hp_max = 3.0;
             c->painful_touch = true;
-            c->xp = 160;
+            c->xp = 20;
         } break;
         case CREATURE_TYPE_CLINGER:
         {

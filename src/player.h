@@ -152,6 +152,8 @@ int player_get_count_in_room(uint8_t curr_room);
 
 int player_names_build(bool include_all, bool only_active);
 
+void draw_hearts();
+void draw_xp_bar();
 void draw_gauntlet();
 void randomize_skill_choices();
 void draw_skill_selection();
