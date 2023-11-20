@@ -243,7 +243,7 @@ exit_conditions:
     {
         Vector2f pos = level_get_pos_by_room_coords(rfd->item_locations_x[i], rfd->item_locations_y[i]);
 
-        printf("Adding item of type: %s to (%f %f)\n", item_get_name(rfd->item_types[i]), pos.x, pos.y);
+        // printf("Adding item of type: %s to (%f %f)\n", item_get_name(rfd->item_types[i]), pos.x, pos.y);
         item_add(rfd->item_types[i], pos.x, pos.y, room->index);
     }
 
@@ -939,16 +939,17 @@ void room_draw_walls(Room* room)
     }
 }
 
-void level_generate(Level* level, unsigned int seed, int rank)
+Level level_generate(unsigned int seed, int rank)
 {
+    Level level = {0};
     // seed PRNG
     srand(seed);
 
     LOGI("Generating level, seed: %u", seed);
 
     // start in center of grid
-    level->start.x = floor(MAX_ROOMS_GRID_X/2); //RAND_RANGE(1,MAX_ROOMS_GRID_X-2);
-    level->start.y = floor(MAX_ROOMS_GRID_Y/2); //RAND_RANGE(1,MAX_ROOMS_GRID_Y-2);
+    level.start.x = floor(MAX_ROOMS_GRID_X/2); //RAND_RANGE(1,MAX_ROOMS_GRID_X-2);
+    level.start.y = floor(MAX_ROOMS_GRID_Y/2); //RAND_RANGE(1,MAX_ROOMS_GRID_Y-2);
 
     // fill out helpful room information
     room_count_monster = 0;
@@ -985,21 +986,23 @@ void level_generate(Level* level, unsigned int seed, int rank)
 
     LOGI("Generating rooms, seed: %u", seed);
 
-    generate_rooms(level, level->start.x, level->start.y, DIR_NONE, 0);
+    generate_rooms(&level, level.start.x, level.start.y, DIR_NONE, 0);
 
     for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
     {
         for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
         {
             uint8_t index = level_get_room_index(x,y);
-            level->rooms[x][y].index = index;
-            level->rooms[x][y].doors_locked = (creature_get_room_count(index) != 0);
-            level->rooms[x][y].xp = 0;
+            level.rooms[x][y].index = index;
+            level.rooms[x][y].doors_locked = (creature_get_room_count(index) != 0);
+            level.rooms[x][y].xp = 0;
         }
     }
 
-    generate_walls(level);
-    level_print(level);
+    generate_walls(&level);
+    level_print(&level);
+
+    return level;
 }
 
 void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radius)

@@ -567,7 +567,7 @@ void game_generate_level(unsigned int _seed)
     creature_clear_all();
     item_clear_all();
 
-    level_generate(&level, seed, 2);
+    level = level_generate(seed, 2);
 
     uint16_t ccount = creature_get_count();
     LOGI("Total creature count: %u", ccount);
@@ -685,6 +685,7 @@ void init()
 
     if(role == ROLE_LOCAL)
     {
+        // seed = 1700506349;
         game_generate_level(seed);
     }
 
@@ -1219,107 +1220,6 @@ void draw_bigmap()
     draw_map(&bigmap_params);
 }
 
-
-void draw_hearts()
-{
-#define TOP_MARGIN  1
-
-    // int max_num = ceill((float)player->phys.hp_max/2.0);
-    int num = player->phys.hp / 2;
-    int rem = player->phys.hp % 2;
-
-    float pad = 3.0*ascale;
-    float l = 30.0*ascale; // image size
-    float x = margin_left.w;
-
-#if TOP_MARGIN
-    Rect* marg = &margin_top;
-    // float y = margin_top.h - 5.0 - l;
-    float y = 5.0;
-    x = 5.0;
-#else
-    Rect* marg = &margin_bottom;
-    float y = 5.0;
-#endif
-
-
-    uint8_t image_full = item_props[ITEM_HEART_FULL].image;
-    int si_full = item_props[ITEM_HEART_FULL].sprite_index;
-    int image_half = item_props[ITEM_HEART_FULL].image;
-    uint8_t si_half = item_props[ITEM_HEART_HALF].sprite_index;
-
-    // float w = gfx_images[image_full].visible_rects[si_full].w;
-    float w = gfx_images[image_full].element_width;
-    float scale = l / w;
-
-    Rect area = RECT(x, y, l, l);
-    gfx_get_absolute_coords(&area, ALIGN_TOP_LEFT, marg, ALIGN_CENTER);
-
-    x = area.x;
-    y = area.y;
-    for(int i = 0; i < num; ++i)
-    {
-        gfx_draw_image(image_full, si_full, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
-        // Rect r = RECT(x, y, l, l);
-        // gfx_draw_rect(&r, COLOR_BLACK, NOT_SCALED, NO_ROTATION, scale, false, NOT_IN_WORLD);
-        x += (l+pad);
-    }
-
-    if(rem == 1)
-    {
-        gfx_draw_image(image_half, si_half, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
-    }
-}
-
-void draw_hearts2()
-{
-#define TOP_MARGIN  1
-
-    int max_num = ceill((float)player->phys.hp_max/2.0);
-    int num = player->phys.hp / 2;
-    int rem = player->phys.hp % 2;
-
-    float pad = 3.0*ascale;
-    float l = 20.0*ascale; // rect size
-    float x = margin_left.w;
-
-#if TOP_MARGIN
-    Rect* marg = &margin_top;
-    // float y = margin_top.h - 5.0 - l;
-    float y = 5.0;
-    x = 5.0;
-#else
-    Rect* marg = &margin_bottom;
-    float y = 5.0;
-#endif
-
-    Rect area = RECT(x, y, l, l);
-    gfx_get_absolute_coords(&area, ALIGN_TOP_LEFT, marg, ALIGN_CENTER);
-
-    x = area.x;
-    y = area.y;
-    for(int i = 0; i < max_num; ++i)
-    {
-        Rect r = RECT(x, y, l, l);
-
-        if(i < num)
-            gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 0.4, true, NOT_IN_WORLD);
-
-        // half heart
-        if(rem == 1 && num == i)
-        {
-            Rect r2 = r;
-            r2.w = l/2.0;
-            r2.x -= r2.w/2.0;
-            gfx_draw_rect(&r2, COLOR_RED, NOT_SCALED, NO_ROTATION, 0.4, true, NOT_IN_WORLD);
-        }
-
-        gfx_draw_rect(&r, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.8, false, NOT_IN_WORLD);
-
-        x += (l+pad);
-    }
-}
-
 void draw()
 {
 
@@ -1425,6 +1325,7 @@ void draw()
     {
         draw_minimap();
         draw_hearts();
+        draw_xp_bar();
         draw_gauntlet();
         draw_skill_selection();
     }
