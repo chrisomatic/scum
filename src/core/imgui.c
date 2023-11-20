@@ -136,6 +136,10 @@ typedef struct
 
     int dropdown_max_height;
 
+    int listbox_width;
+    int listbox_height;
+    int listbox_gutter_width;
+
 } ImGuiTheme;
 
 static ImGuiContext contexts[MAX_CONTEXTS] = {0};
@@ -175,6 +179,7 @@ static void draw_label(int x, int y, uint32_t color, char* label);
 static void draw_number_box(uint32_t hash, char* label, Rect* r, int val, int max, char* format);
 static void draw_text_box(uint32_t hash, char* label, Rect* r, char* text);
 static void draw_dropdown(uint32_t hash, char* str, char* options[], int num_options, int selected_index, Rect* r);
+static void draw_listbox(uint32_t hash, char* str, char* options[], int num_options, int selected_index, Rect* r);
 static void draw_panel(uint32_t hash, bool moveable);
 static void draw_tooltip();
 
@@ -324,6 +329,7 @@ bool imgui_load_theme(char* file_name)
             char file_path[64]= {0};
             snprintf(file_path,63,"src/themes/%s",file_name);
             FILE* fp = fopen(file_path,"rb");
+
             if(fp)
             {
                 size_t n = fread(&theme,sizeof(ImGuiTheme),1,fp);
@@ -635,7 +641,9 @@ int imgui_button_select(int num_buttons, char* button_labels[], char* label)
 
 void imgui_dropdown(char* options[], int num_options, char* label, int* selected_index, bool* interacted)
 {
-    if(interacted != NULL) *interacted = false;
+    if(interacted != NULL)
+        *interacted = false;
+
     if(!options)
         return;
 
@@ -740,6 +748,86 @@ void imgui_dropdown(char* options[], int num_options, char* label, int* selected
     progress_pos();
 
     //return ctx->dropdown_props.selected_index;
+}
+
+void imgui_listbox(char* options[], int num_options, char* label, int* selected_index)
+{
+    if(!options)
+        return;
+
+    if(!options[0])
+        return;
+
+    if(num_options < 0 || num_options >= 32)
+        return;
+
+    char _str[100] = {0};
+    snprintf(_str,99,"%s_%s##listbox%d",label,options[0],num_options);
+
+    uint32_t hash = hash_str(_str,strlen(_str),0x0);
+    IntLookup* lookup = get_int_lookup(hash);
+    if (!lookup)
+        return;
+
+    int *val = &lookup->val;
+
+    char new_label[32] = {0};
+    mask_off_hidden(label, new_label, 32);
+
+    bool results[32] = {false};
+    int selection = 0;
+
+    float max_height = NOMINAL_FONT_SIZE*theme.text_scale + 2*theme.text_padding;
+    float max_width = 0.0;
+
+    for(int i = 0; i < num_options; ++i)
+    {
+        if(options[i])
+        {
+            Vector2f text_size = gfx_string_get_size(theme.text_scale, options[i]);
+            if(text_size.x > max_width)
+            {
+                max_width = text_size.x;
+            }
+        }
+    }
+
+    Vector2f label_size = gfx_string_get_size(theme.text_scale, label);
+    
+    int start_index = 0;
+
+    if(is_highlighted(hash))
+    {
+        if(theme.listbox_width - (ctx->mouse_x - ctx->curr.x) < theme.listbox_gutter_width)
+        {
+            // scrollbar
+
+        }
+        else
+        {
+            if(window_mouse_left_went_down())
+            {
+                // make new selection
+                float y_diff = ctx->mouse_y - (ctx->curr.y+label_size.y+theme.text_padding);
+                int index = floor(y_diff / max_height)+start_index;
+                if(index >= 0 && index < num_options)
+                {
+                    *selected_index = index;
+                }
+            }
+        }
+    }
+
+    Rect interactive = {ctx->curr.x, ctx->curr.y + label_size.y + theme.text_padding, MAX(max_width+2*theme.text_padding, theme.listbox_width), theme.listbox_height};
+
+    handle_highlighting(hash, &interactive);
+
+    draw_listbox(hash, new_label, options, num_options, *selected_index, &interactive);
+
+    ctx->curr.w = interactive.w + 2*theme.text_padding + theme.spacing;
+    ctx->curr.h = label_size.y + theme.text_padding + interactive.h + theme.spacing;
+
+    progress_pos();
 }
 
 void imgui_tooltip(char* tooltip, ...)
@@ -1058,11 +1146,12 @@ static int ri = 10;
 static bool toggle = false;
 static bool thing1 = false, thing2 = false;
 
-static char* colors[] = {"Red","Green","Blue"};
+static char* colors[] = {"Red","Green","Blue","Orange","Purple","Cyan","Pink","Yellow","White"};
 static char* shapes[] = {"Square","Rectangle","Circle"};
 
 static int color_select = 0;
 static int shape_select = 0;
+static int color_list_select = 0;
 
 Rect imgui_draw_demo(int x, int y)
 {
@@ -1105,6 +1194,8 @@ Rect imgui_draw_demo(int x, int y)
 
         imgui_dropdown(colors, IM_ARRAYSIZE(colors), "Select Color", &color_select, NULL);
         imgui_dropdown(shapes, IM_ARRAYSIZE(shapes), "Select Shape", &shape_select, NULL);
+
+        imgui_listbox(colors, IM_ARRAYSIZE(colors), "Colors", &color_list_select);
 
    return imgui_end();
 }
@@ -1412,6 +1503,9 @@ static void set_default_theme()
     theme.panel_header_height = 20;
 
     theme.dropdown_max_height = 1000;
+    theme.listbox_width = 200;
+    theme.listbox_height = 120;
+    theme.listbox_gutter_width = 12;
 
     theme_initialized = true;
     theme_index = -1;
@@ -1804,6 +1898,61 @@ static void draw_text_box(uint32_t hash, char* label, Rect* r, char* text)
     }
 
     draw_label(r->x + r->w+theme.text_padding, r->y-(label_size.y-r->h)/2.0, theme.color_text, label);
+}
+
+static void draw_listbox(uint32_t hash, char* str, char* options[], int num_options, int selected_index, Rect* r)
+{
+    if(!options)
+        return;
+
+    float box_height = NOMINAL_FONT_SIZE*theme.text_scale + 2*theme.text_padding;
+
+    // label
+    gfx_draw_string(r->x, r->y-(NOMINAL_FONT_SIZE*theme.text_scale+theme.text_padding), theme.color_text, theme.text_scale, 0.0, 1.0, false, false, str);
+
+    // box
+    bool show_scrollbar = num_options*box_height > theme.listbox_height;
+    int scrollbar_width = show_scrollbar ? theme.listbox_gutter_width : 0;
+
+    int width = r->w - scrollbar_width;
+
+    gfx_draw_rect_xywh(r->x + width/2.0, r->y + r->h/2.0, width, r->h, theme.color_background, 1.0, 0.0, theme.button_opacity, true,false);
+
+    if(show_scrollbar)
+    {
+        // scrollbar gutter
+        gfx_draw_rect_xywh(r->w+r->x-(theme.listbox_gutter_width/2.0), r->y + r->h/2.0, theme.listbox_gutter_width, r->h, theme.color_highlight_subtle, 1.0, 0.0, theme.button_opacity, true,false);
+
+        float ratio =  theme.listbox_height / (num_options*box_height);
+
+        // scrollbar
+        int scrollbar_height = ratio*theme.listbox_height;
+        gfx_draw_rect_xywh(r->w+r->x-(theme.listbox_gutter_width/2.0), r->y + scrollbar_height/2.0, theme.listbox_gutter_width, scrollbar_height, theme.color_slider, 1.0, 0.0, theme.button_opacity, true,false);
+
+    }
+
+    float y_diff = ctx->mouse_y - r->y;
+    int highlighted_index = floor(y_diff / box_height);
+
+    int start_index = 0;
+
+    for(int i = start_index; i < num_options; ++i)
+    {
+        int index = i-start_index;
+        if(index*box_height >= theme.listbox_height)
+            break;
+
+        if(index == highlighted_index || i == selected_index)
+        {
+            uint32_t color = i == selected_index ? theme.color_active : theme.color_highlight;
+            gfx_draw_rect_xywh(r->x + width/2.0, r->y + index*box_height + box_height/2.0, width, box_height, color, 1.0, 0.0, theme.button_opacity, true,false);
+        }
+
+        if(options[i])
+        {
+            gfx_draw_string(r->x, r->y+index*box_height, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, options[i]);
+        }
+    }
 }
 
 static void draw_dropdown(uint32_t hash, char* str, char* options[], int num_options, int selected_index, Rect* r)
