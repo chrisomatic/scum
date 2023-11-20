@@ -41,7 +41,7 @@ typedef enum
     PLAYER_ACTION_ACTIVATE,
     PLAYER_ACTION_JUMP,
     PLAYER_ACTION_GEM_MENU,
-    PLAYER_ACTION_GEM_MENU_CYCLE,
+    PLAYER_ACTION_TAB_CYCLE,
     PLAYER_ACTION_ITEM_CYCLE,
 
     PLAYER_ACTION_MAX
@@ -58,6 +58,7 @@ typedef struct
 
     int xp;
     int level;
+    int new_levels;
 
     PlayerInput actions[PLAYER_ACTION_MAX];
 
@@ -114,6 +115,12 @@ extern Player* player;
 extern Player* player2;
 extern int xp_levels[];
 
+#define NUM_SKILLS  5
+#define NUM_SKILL_CHOICES  3
+extern int skill_selection;
+extern int skill_choices[NUM_SKILL_CHOICES];
+extern const char* skill_text[NUM_SKILLS];
+
 void player_init();
 uint8_t player_get_gauntlet_count(Player* p);
 void player_drop_item(Player* p, Item* it);
@@ -146,5 +153,7 @@ int player_get_count_in_room(uint8_t curr_room);
 int player_names_build(bool include_all, bool only_active);
 
 void draw_gauntlet();
+void randomize_skill_choices();
+void draw_skill_selection();
 
 int get_xp_req(int level);

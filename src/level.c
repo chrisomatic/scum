@@ -130,7 +130,7 @@ static int get_rand_room_index(RoomType type, Dir came_from)
     }
 
     RoomFileData* rfd = &room_list[index];
-    
+
     if(rfd->doors[came_from] == 0)
     {
         // can't use this room
@@ -188,7 +188,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
         goto exit_conditions;
     }
 
-    bool is_boss_room     = !level->has_boss_room && ((level->num_rooms == MAX_ROOMS) || (level->num_rooms > 4 && (rand()%4 == 0)));
+    bool is_boss_room = !level->has_boss_room && ((level->num_rooms == MAX_ROOMS) || (level->num_rooms > 4 && (rand()%4 == 0)));
 
     if(is_boss_room)
     {
@@ -874,15 +874,27 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
     gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_CORNER_RD, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, 1.0, 0.0, 1.0, false, true);
     gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_CORNER_DL, r.x,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, 1.0, 0.0, 1.0, false, true);
 
+    uint8_t sprite_door_up = SPRITE_TILE_DOOR_UP;
+    uint8_t sprite_door_right = SPRITE_TILE_DOOR_RIGHT;
+    uint8_t sprite_door_down = SPRITE_TILE_DOOR_DOWN;
+    uint8_t sprite_door_left = SPRITE_TILE_DOOR_LEFT;
+    if(room->doors_locked)
+    {
+        sprite_door_up = SPRITE_TILE_DOOR_UP_CLOSED;
+        sprite_door_right = SPRITE_TILE_DOOR_RIGHT_CLOSED;
+        sprite_door_down = SPRITE_TILE_DOOR_DOWN_CLOSED;
+        sprite_door_left = SPRITE_TILE_DOOR_LEFT_CLOSED;
+    }
+
     // draw doors
     if(room->doors[DIR_UP])
-        gfx_draw_image(dungeon_image, SPRITE_TILE_DOOR_UP, r.x+w*(ROOM_TILE_SIZE_X+1)/2.0,r.y, color, 1.0, 0.0, 1.0, false, true);
+        gfx_draw_image(dungeon_image, sprite_door_up, r.x+w*(ROOM_TILE_SIZE_X+1)/2.0,r.y, color, 1.0, 0.0, 1.0, false, true);
     if(room->doors[DIR_RIGHT])
-        gfx_draw_image(dungeon_image, SPRITE_TILE_DOOR_RIGHT, r.x+w*(ROOM_TILE_SIZE_X+1),r.y+h*(ROOM_TILE_SIZE_Y+1)/2.0, color, 1.0, 0.0, 1.0, false, true);
+        gfx_draw_image(dungeon_image, sprite_door_right, r.x+w*(ROOM_TILE_SIZE_X+1),r.y+h*(ROOM_TILE_SIZE_Y+1)/2.0, color, 1.0, 0.0, 1.0, false, true);
     if(room->doors[DIR_DOWN])
-        gfx_draw_image(dungeon_image, SPRITE_TILE_DOOR_DOWN, r.x+w*(ROOM_TILE_SIZE_X+1)/2.0,r.y+h*(ROOM_TILE_SIZE_Y+1), color, 1.0, 0.0, 1.0, false, true);
+        gfx_draw_image(dungeon_image, sprite_door_down, r.x+w*(ROOM_TILE_SIZE_X+1)/2.0,r.y+h*(ROOM_TILE_SIZE_Y+1), color, 1.0, 0.0, 1.0, false, true);
     if(room->doors[DIR_LEFT])
-        gfx_draw_image(dungeon_image, SPRITE_TILE_DOOR_LEFT, r.x,r.y+h*(ROOM_TILE_SIZE_Y+1)/2.0, color, 1.0, 0.0, 1.0, false, true);
+        gfx_draw_image(dungeon_image, sprite_door_left, r.x,r.y+h*(ROOM_TILE_SIZE_Y+1)/2.0, color, 1.0, 0.0, 1.0, false, true);
 
     RoomFileData* rdata;
     if(room_data != NULL)
@@ -927,18 +939,16 @@ void room_draw_walls(Room* room)
     }
 }
 
-Level level_generate(unsigned int seed, int rank)
+void level_generate(Level* level, unsigned int seed, int rank)
 {
     // seed PRNG
     srand(seed);
 
     LOGI("Generating level, seed: %u", seed);
 
-    Level level = {0};
-
     // start in center of grid
-    level.start.x = floor(MAX_ROOMS_GRID_X/2); //RAND_RANGE(1,MAX_ROOMS_GRID_X-2);
-    level.start.y = floor(MAX_ROOMS_GRID_Y/2); //RAND_RANGE(1,MAX_ROOMS_GRID_Y-2);
+    level->start.x = floor(MAX_ROOMS_GRID_X/2); //RAND_RANGE(1,MAX_ROOMS_GRID_X-2);
+    level->start.y = floor(MAX_ROOMS_GRID_Y/2); //RAND_RANGE(1,MAX_ROOMS_GRID_Y-2);
 
     // fill out helpful room information
     room_count_monster = 0;
@@ -973,22 +983,23 @@ Level level_generate(unsigned int seed, int rank)
     creature_clear_all();
     min_depth_reached = false;
 
+    LOGI("Generating rooms, seed: %u", seed);
+
+    generate_rooms(level, level->start.x, level->start.y, DIR_NONE, 0);
+
     for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
     {
         for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
         {
-            level.rooms[x][y].index = level_get_room_index(x,y);
+            uint8_t index = level_get_room_index(x,y);
+            level->rooms[x][y].index = index;
+            level->rooms[x][y].doors_locked = (creature_get_room_count(index) != 0);
+            level->rooms[x][y].xp = 0;
         }
     }
 
-    LOGI("Generating rooms, seed: %u", seed);
-
-    generate_rooms(&level, level.start.x, level.start.y, DIR_NONE, 0);
-    generate_walls(&level);
-
-    level_print(&level);
-
-    return level;
+    generate_walls(level);
+    level_print(level);
 }
 
 void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radius)

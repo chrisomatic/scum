@@ -96,7 +96,7 @@ void creature_init_props(Creature* c)
             // c->phys.height = gfx_images[creature_image_slug].element_height;
             c->phys.hp_max = 3.0;
             c->painful_touch = true;
-            c->xp = 60;
+            c->xp = 160;
         } break;
         case CREATURE_TYPE_CLINGER:
         {
@@ -550,7 +550,10 @@ void creature_draw_all()
 void creature_die(Creature* c)
 {
     c->phys.dead = true;
-    player_add_xp(player, c->xp);
+
+    // player_add_xp(player, c->xp);
+    Room* room = level_get_room_by_index(&level, c->curr_room);
+    room->xp += c->xp;
 
     Decal d = {0};
     d.image = particles_image;

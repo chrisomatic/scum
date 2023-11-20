@@ -22,6 +22,15 @@ static void update_player_boxes(Player* p);
 static void handle_room_collision(Player* p);
 
 int xp_levels[] = {100,150,200,250,300};
+int skill_selection = 0;
+int skill_choices[NUM_SKILL_CHOICES] = {0};
+const char* skill_text[NUM_SKILLS] = {
+    "Increase Run Speed",
+    "Increase Defence",
+    "Increase Projectile Damage",
+    "Increase Projectile Rate of Fire",
+    "+1 Slizz",
+};
 
 char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 int player_image = -1;
@@ -255,7 +264,7 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_E);
     window_controls_add_key(&player->actions[PLAYER_ACTION_JUMP].state, GLFW_KEY_SPACE);
     window_controls_add_key(&player->actions[PLAYER_ACTION_GEM_MENU].state, GLFW_KEY_G);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_GEM_MENU_CYCLE].state, GLFW_KEY_TAB);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_TAB_CYCLE].state, GLFW_KEY_TAB);
     window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_CYCLE].state, GLFW_KEY_C);
 
     window_controls_add_key(&player->actions[PLAYER_ACTION_RSHIFT].state, GLFW_KEY_RIGHT_SHIFT);
@@ -316,8 +325,7 @@ void player_add_xp(Player* p, int xp)
     int num = sizeof(xp_levels) / sizeof(xp_levels[0]);
     p->xp += xp;
 
-    if(p == player)
-        text_list_add(ptext, 0.50, "+%d xp", xp);
+    int num_new_levels = 0;
 
     for(;;)
     {
@@ -326,13 +334,18 @@ void player_add_xp(Player* p, int xp)
         if(p->xp < xp_req)
             break;
 
-        if(p == player)
-            text_list_add(ptext, 1.0, "+1 level");
-
         p->xp -= xp_req;
-        p->level++;
+        num_new_levels++;
+        // p->level++;
     }
 
+    if(p == player)
+    {
+        text_list_add(ptext, 3.0, "+%d xp", xp);
+        if(num_new_levels > 0) text_list_add(ptext, 3.0, "+%d level%s", num_new_levels, num_new_levels > 1 ? "s" : "");
+        p->level += num_new_levels;
+    }
+    p->new_levels += num_new_levels;
 }
 
 void player_add_hp(Player* p, int hp)
@@ -689,7 +702,7 @@ static void handle_room_collision(Player* p)
         float d = dist(CPOSX(p->phys), CPOSY(p->phys), door_point.x, door_point.y);
 
         bool colliding_with_door = (d < p->phys.radius);
-        if(colliding_with_door)
+        if(colliding_with_door && !room->doors_locked && p->new_levels == 0)
         {
             bool k = false;
             k |= i == DIR_UP && p->actions[PLAYER_ACTION_UP].state;
@@ -757,11 +770,10 @@ void player_update(Player* p, float dt)
     memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
     item_apply_gauntlet((void*)p, (Item*)p->gauntlet,p->gauntlet_slots);
 
-    if(p->show_gauntlet)
+    if(p->new_levels == 0)
     {
-        if(p->actions[PLAYER_ACTION_GEM_MENU_CYCLE].toggled_on)
+        if(p->actions[PLAYER_ACTION_TAB_CYCLE].toggled_on)
         {
-
             if(p->actions[PLAYER_ACTION_RSHIFT].state)
             {
                 if(player->gauntlet_selection == 0)
@@ -776,6 +788,36 @@ void player_update(Player* p, float dt)
                    p->gauntlet_selection = 0;
             }
         }
+    }
+    else
+    {
+        if(p->actions[PLAYER_ACTION_TAB_CYCLE].toggled_on)
+        {
+            if(p->actions[PLAYER_ACTION_RSHIFT].state)
+            {
+                if(skill_selection == 0)
+                    skill_selection = (NUM_SKILL_CHOICES-1);
+                else
+                    skill_selection--;
+            }
+            else
+            {
+                skill_selection++;
+                if(skill_selection >= NUM_SKILL_CHOICES)
+                   skill_selection = 0;
+            }
+
+        }
+
+        if(p->actions[PLAYER_ACTION_ACTIVATE].toggled_on)
+        {
+            p->new_levels--;
+            if(p->new_levels > 0)
+            {
+                randomize_skill_choices();
+            }
+        }
+
     }
 
     // handle mud tiles
@@ -1116,7 +1158,7 @@ void player_update(Player* p, float dt)
     }
 
     bool activate = p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
-    if(activate)
+    if(p->new_levels == 0 && activate)
     {
 #if 0
         if(PLAYER_SWAPPING_GEM(p))
@@ -1183,8 +1225,8 @@ void player_update(Player* p, float dt)
         update_player_boxes(p);
     }
 
-    ptext->x = p->phys.pos.x - p->phys.radius/2.0;
-    ptext->y = p->phys.pos.y - p->phys.height/2.0 - ptext->text_height;
+    ptext->x = p->phys.pos.x - p->phys.radius/2.0 - 3.0;
+    ptext->y = (p->phys.pos.y - p->phys.pos.z/2.0) - p->phys.height/2.0 - ptext->text_height;
     text_list_update(ptext, dt);
 
     if(p->invulnerable)
@@ -1316,6 +1358,56 @@ void draw_gauntlet()
         r.x += len;
         r.x += margin;
     }
+}
+
+void randomize_skill_choices()
+{
+    skill_selection = 0;
+    int idx = rand() % NUM_SKILLS;
+    skill_choices[0] = idx;
+    for(int i = 1; i < NUM_SKILLS; ++i)
+    {
+        for(;;)
+        {
+            idx = rand() % NUM_SKILLS;
+            bool check = false;
+            for(int j = 0; j < i; ++j)
+            {
+                if(idx == skill_choices[j])
+                {
+                    check = true;
+                    break;
+                }
+            }
+            if(!check) break;
+        }
+        skill_choices[i] = idx;
+    }
+}
+
+void draw_skill_selection()
+{
+    if(player->new_levels == 0) return;
+
+
+    float scale = 0.4 * ascale;
+    Vector2f size = gfx_string_get_size(scale, "|");
+
+    float pad = 5.0;
+
+    float total_h = size.y*NUM_SKILL_CHOICES + pad*(NUM_SKILL_CHOICES-1);
+
+    float y = view_height/3.0 - total_h/2.0;
+    float x = view_width*0.4;
+
+    for(int i = 0; i < NUM_SKILL_CHOICES; ++i)
+    {
+        uint32_t color = COLOR_WHITE;
+        if(i == skill_selection) color = COLOR_BLUE;
+        gfx_draw_string(x, y, color, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill_text[skill_choices[i]]);
+        y += pad + size.y;
+    }
+    message_small_set(0.1, "Press e to select skill (skill points: %d)", player->new_levels);
 }
 
 

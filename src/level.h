@@ -67,6 +67,12 @@ typedef enum
     SPRITE_TILE_DOOR_LEFT,
     SPRITE_TILE_PIT,
     SPRITE_TILE_MUD,
+    SPRITE_TILE_RSV_0,
+    SPRITE_TILE_RSV_1,
+    SPRITE_TILE_DOOR_UP_CLOSED,
+    SPRITE_TILE_DOOR_RIGHT_CLOSED,
+    SPRITE_TILE_DOOR_DOWN_CLOSED,
+    SPRITE_TILE_DOOR_LEFT_CLOSED,
     SPRITE_TILE_MAX,
 } SpriteTileType;
 
@@ -94,12 +100,14 @@ typedef struct
     bool valid;
     RoomType type;
     bool doors[MAX_DOORS];
+    bool doors_locked;
     uint32_t color;
     Wall walls[MAX_WALLS_PER_ROOM];
     int wall_count;
     int layout;
     uint8_t index;
     bool discovered;
+    int xp;
 } Room;
 
 typedef struct
@@ -116,7 +124,7 @@ extern int room_list_count;
 extern int dungeon_image;
 
 void level_init();
-Level level_generate(unsigned int seed, int rank);
+void level_generate(Level* level, unsigned int seed, int rank);
 uint8_t level_get_tile_sprite(TileType tt);
 Rect level_get_tile_rect(int x, int y);
 TileType level_get_tile_type(Room* room, int x, int y);

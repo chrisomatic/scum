@@ -567,7 +567,7 @@ void game_generate_level(unsigned int _seed)
     creature_clear_all();
     item_clear_all();
 
-    level = level_generate(seed,2);
+    level_generate(&level, seed, 2);
 
     uint16_t ccount = creature_get_count();
     LOGI("Total creature count: %u", ccount);
@@ -975,7 +975,7 @@ void update(float dt)
 
                 if(p->active && p->curr_room == player->curr_room)
                 {
-                    p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0,p->light_radius,0.0);
+                    p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
                 }
             }
 
@@ -986,12 +986,32 @@ void update(float dt)
             explosion_update_all(dt);
             decal_update_all(dt);
 
+            Room* room = level_get_room_by_index(&level, (int)player->curr_room);
+            bool prior_locked = room->doors_locked;
+            room->doors_locked = (creature_get_room_count(player->curr_room) != 0);
+            if(!room->doors_locked && prior_locked)
+            {
+                if(room->xp > 0)
+                {
+                    for(int i = 0; i < MAX_PLAYERS; ++i)
+                    {
+                        Player* p = &players[i];
+                        if(p->active && p->curr_room == room->index)
+                        {
+                            player_add_xp(p, room->xp);
+                        }
+                    }
+                    room->xp = 0;
+
+                    randomize_skill_choices();
+                }
+            }
+
             entity_build_all();
             entity_handle_collisions();
             entity_handle_status_effects(dt);
         }
     }
-
 
     camera_set(false);
 }
@@ -1406,6 +1426,7 @@ void draw()
         draw_minimap();
         draw_hearts();
         draw_gauntlet();
+        draw_skill_selection();
     }
 
     if(debug_enabled)
@@ -1423,10 +1444,10 @@ void draw()
         // room border
         // gfx_draw_rect(&room_area, COLOR_WHITE, NOT_SCALED, NO_ROTATION, 1.0, false, true);
 
-        gfx_draw_rect(&margin_left, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
-        gfx_draw_rect(&margin_right, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
-        gfx_draw_rect(&margin_top, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
-        gfx_draw_rect(&margin_bottom, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
+        // gfx_draw_rect(&margin_left, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
+        // gfx_draw_rect(&margin_right, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
+        // gfx_draw_rect(&margin_top, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
+        // gfx_draw_rect(&margin_bottom, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
 
         // Rect xaxis = RECT(0,0,1000,1);
         // Rect yaxis = RECT(0,0,1,1000);
@@ -1546,7 +1567,7 @@ void message_small_draw()
     if(strlen(message_small) == 0)
         return;
 
-    float scale = 0.20 * ascale;
+    float scale = 0.25 * ascale;
 
     Vector2f size = gfx_string_get_size(scale, message_small);
 
