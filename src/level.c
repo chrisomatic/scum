@@ -74,25 +74,25 @@ try_again:
         }
     }
 
-    if(random_doors[DIR_UP])
+    if(random_doors[DIR_UP] && rfd->doors[DIR_UP] && (y > 0 && !level->rooms[x][y-1].valid))
     {
         room->doors[DIR_UP] = true;
         generate_rooms(level, x,y-1,DIR_UP,depth+1);
     }
 
-    if(random_doors[DIR_RIGHT])
+    if(random_doors[DIR_RIGHT] && rfd->doors[DIR_RIGHT] && (x < MAX_ROOMS_GRID_X-1 && !level->rooms[x+1][y].valid))
     {
         room->doors[DIR_RIGHT] = true;
         generate_rooms(level, x+1,y,DIR_RIGHT,depth+1);
     }
 
-    if(random_doors[DIR_DOWN])
+    if(random_doors[DIR_DOWN] && rfd->doors[DIR_DOWN] && (y < MAX_ROOMS_GRID_Y-1 && !level->rooms[x][y+1].valid))
     {
         room->doors[DIR_DOWN] = true;
         generate_rooms(level, x,y+1,DIR_DOWN,depth+1);
     }
 
-    if(random_doors[DIR_LEFT])
+    if(random_doors[DIR_LEFT] && rfd->doors[DIR_LEFT] && (x > 0 && !level->rooms[x-1][y].valid))
     {
         room->doors[DIR_LEFT] = true;
         generate_rooms(level, x-1,y,DIR_LEFT,depth+1);
