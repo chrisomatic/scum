@@ -527,7 +527,8 @@ void room_editor_draw()
                 }
 
                 static int room_file_sel = 0;
-                imgui_dropdown(p_room_files, room_file_count, "existing", &room_file_sel, NULL);
+                //imgui_dropdown(p_room_files, room_file_count, "existing", &room_file_sel, NULL);
+                imgui_listbox(p_room_files, room_file_count, "existing", &room_file_sel);
 
                 if(imgui_button("Load"))
                 {
