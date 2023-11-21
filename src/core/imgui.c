@@ -1993,6 +1993,9 @@ static void draw_listbox(uint32_t hash, char* str, char* options[], int num_opti
     float y_diff = ctx->mouse_y + offset - r->y;
     int highlighted_index = floor(y_diff / box_height);
 
+    if(ctx->mouse_x < ctx->curr.x)
+        highlighted_index = -1;
+
     for(int i = 0; i < num_options; ++i)
     {
         if((i+1)*box_height < offset)
