@@ -56,6 +56,10 @@ typedef struct
     Physics phys;
     float vel_factor;
 
+    float scale;
+
+    bool falling; //falling in a pit
+
     int xp;
     int level;
     int new_levels;
@@ -131,6 +135,7 @@ void player_send_to_room(Player* p, uint8_t room_index);
 void player_send_to_level_start(Player* p);
 void player_update(Player* p, float dt);
 void player_draw(Player* p, bool batch);
+void player_draw_debug(Player* p);
 void player_lerp(Player* p, float dt);
 void player_handle_net_inputs(Player* p, double dt);
 void player_set_hit_box_pos(Player* p, float x, float y);

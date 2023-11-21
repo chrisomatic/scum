@@ -8,7 +8,7 @@
 
 // collision position
 #define CPOSX(phys) ((phys).pos.x+(phys).coffset.x)
-#define CPOSY(phys) ((phys).pos.y+(phys).coffset.y)
+#define CPOSY(phys) ((phys).pos.y+(phys).coffset.y-(phys).pos.z*0.5)
 
 typedef enum
 {
@@ -40,6 +40,8 @@ typedef struct
     bool dead;
     bool amorphous; // splatters on collision
     bool ethereal;  // can pass through walls
+
+    bool falling; // falling down a pit
 
     StatusEffect status_effects[MAX_STATUS_EFFECTS];
     int status_effects_count;

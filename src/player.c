@@ -36,13 +36,15 @@ char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 int player_image = -1;
 int shadow_image = -1;
 
-float pscale = 1.0;
 
 Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
 Player* player2 = NULL;
 
 text_list_t* ptext = NULL;
+
+// tile pit rect
+Rect t_rect = {0};
 
 void player_init()
 {
@@ -81,6 +83,9 @@ void player_init()
         p->phys.radius = 8.0;
         p->phys.coffset.x = RADIUS_OFFSET_X;
         p->phys.coffset.y = RADIUS_OFFSET_Y;
+
+        p->scale = 1.0;
+        p->phys.falling = false;
 
         memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
 
@@ -821,9 +826,11 @@ void player_update(Player* p, float dt)
 
     }
 
-    // handle mud tiles
+    float cx = CPOSX(p->phys);
+    float cy = CPOSY(p->phys);
     Room* room = level_get_room_by_index(&level, p->curr_room);
-    TileType tt = level_get_tile_type_by_pos(room, CPOSX(p->phys), CPOSY(p->phys));
+    Vector2i tile_coords = level_get_room_coords_by_pos(cx, cy);
+    TileType tt = level_get_tile_type(room, tile_coords.x, tile_coords.y);
 
     float mud_factor = 1.0;
     if(tt == TILE_MUD)
@@ -833,14 +840,74 @@ void player_update(Player* p, float dt)
             mud_factor = 0.8;
     }
 
-    if(tt == TILE_PIT && p->phys.pos.z == 0.0)
+    if(tt == TILE_PIT && p->phys.pos.z == 0.0 && !p->phys.falling)
     {
-        pscale -= 0.07;
+
+        Rect p_rect = RECT(cx, cy, 2, 2);
+        Rect pit_rect = level_get_tile_rect(tile_coords.x, tile_coords.y);
+
+        float shrink_fac = 0.7;
+        float adj_fac = (1.0 - shrink_fac) / 2.0;
+
+        t_rect = pit_rect;
+        t_rect.w = pit_rect.w*shrink_fac;
+        t_rect.h = pit_rect.h*shrink_fac;
+
+        for(int dir = 0; dir < 4; ++dir)
+        {
+            Vector2i o = get_dir_offsets(dir);
+            TileType _tt = level_get_tile_type(room, tile_coords.x + o.x, tile_coords.y + o.y);
+
+            float xadj = 0;
+            float yadj = 0;
+            if(_tt == TILE_PIT)
+            {
+                if(dir == DIR_LEFT)
+                {
+                    // printf(" left");
+                    xadj = -pit_rect.w*adj_fac;
+                }
+                else if(dir == DIR_RIGHT)
+                {
+                    // printf(" right");
+                    xadj = pit_rect.w*adj_fac;
+                }
+                else if(dir == DIR_UP)
+                {
+                    // printf(" up");
+                    yadj = -pit_rect.h*adj_fac;
+                }
+                else if(dir == DIR_DOWN)
+                {
+                    // printf(" down");
+                    yadj = pit_rect.h*adj_fac;
+                }
+            }
+
+            t_rect.x += xadj/2.0;
+            t_rect.w += ABS(xadj);
+            t_rect.y += yadj/2.0;
+            t_rect.h += ABS(yadj);
+        }
+        // printf("\n");
+
+        if(rectangles_colliding(&p_rect, &t_rect))
+        {
+            p->phys.falling = true;
+            player_hurt(p, 1);
+        }
     }
-    if(pscale < 0)
+
+    if(p->phys.falling)
     {
-        player_send_to_room(p, p->curr_room);
-        pscale = 1.0;
+        p->scale -= 0.04;
+        if(p->scale < 0)
+        {
+            p->scale = 1.0;
+            p->phys.falling = false;
+            // player_send_to_room(p, p->curr_room);
+            player_send_to_level_start(p);
+        }
     }
 
     bool up    = p->actions[PLAYER_ACTION_UP].state;
@@ -852,60 +919,67 @@ void player_update(Player* p, float dt)
 
     Vector2f vel_dir = {0.0,0.0};
 
-    if(up)
+    bool moving = false;
+    Vector2f vel_max = {0};
+
+    if(!p->phys.falling)
     {
-        p->sprite_index = SPRITE_UP;
-        vel_dir.y = -1.0;
+
+        if(up)
+        {
+            p->sprite_index = SPRITE_UP;
+            vel_dir.y = -1.0;
+        }
+
+        if(down)
+        {
+            p->sprite_index = SPRITE_DOWN;
+            vel_dir.y = 1.0;
+        }
+
+        if(left)
+        {
+            p->sprite_index = SPRITE_LEFT;
+            vel_dir.x = -1.0;
+        }
+
+        if(right)
+        {
+            p->sprite_index = SPRITE_RIGHT;
+            vel_dir.x = 1.0;
+        }
+
+        if((up && (left || right)) || (down && (left || right)))
+        {
+            // moving diagonally
+            vel_dir.x *= 0.7071f;
+            vel_dir.y *= 0.7071f;
+        }
+
+        vel_max.x = p->phys.max_velocity*p->phys.speed_factor*vel_dir.x*mud_factor;
+        vel_max.y = p->phys.max_velocity*p->phys.speed_factor*vel_dir.y*mud_factor;
+
+        moving = (up || down || left || right);
+
+        float speed = p->phys.speed*p->phys.speed_factor*mud_factor;
+
+        if(moving)
+        {
+            // trying to move
+            p->phys.vel.x += vel_dir.x*speed*dt;
+            p->phys.vel.y += vel_dir.y*speed*dt;
+
+            if(ABS(vel_dir.x) > 0.0)
+                if(ABS(p->phys.vel.x) > ABS(vel_max.x))
+                    p->phys.vel.x = vel_max.x;
+
+            if(ABS(vel_dir.y) > 0.0)
+                if(ABS(p->phys.vel.y) > ABS(vel_max.y))
+                    p->phys.vel.y = vel_max.y;
+        }
+
     }
 
-    if(down)
-    {
-        p->sprite_index = SPRITE_DOWN;
-        vel_dir.y = 1.0;
-    }
-
-    if(left)
-    {
-        p->sprite_index = SPRITE_LEFT;
-        vel_dir.x = -1.0;
-    }
-
-    if(right)
-    {
-        p->sprite_index = SPRITE_RIGHT;
-        vel_dir.x = 1.0;
-    }
-
-    if((up && (left || right)) || (down && (left || right)))
-    {
-        // moving diagonally
-        vel_dir.x *= 0.7071f;
-        vel_dir.y *= 0.7071f;
-    }
-
-    Vector2f vel_max = {
-        p->phys.max_velocity*p->phys.speed_factor*vel_dir.x*mud_factor,
-        p->phys.max_velocity*p->phys.speed_factor*vel_dir.y*mud_factor
-    };
-
-    bool moving = (up || down || left || right);
-
-    float speed = p->phys.speed*p->phys.speed_factor*mud_factor;
-
-    if(moving)
-    {
-        // trying to move
-        p->phys.vel.x += vel_dir.x*speed*dt;
-        p->phys.vel.y += vel_dir.y*speed*dt;
-
-        if(ABS(vel_dir.x) > 0.0)
-            if(ABS(p->phys.vel.x) > ABS(vel_max.x))
-                p->phys.vel.x = vel_max.x;
-
-        if(ABS(vel_dir.y) > 0.0)
-            if(ABS(p->phys.vel.y) > ABS(vel_max.y))
-                p->phys.vel.y = vel_max.y;
-    }
 
     if(p->phys.pos.z > 0.0)
     {
@@ -914,34 +988,38 @@ void player_update(Player* p, float dt)
     }
 
     bool jump = p->actions[PLAYER_ACTION_JUMP].state;
-    if(tt == TILE_PIT) jump = false;
-
+    if(p->phys.falling) jump = false;
     if(jump && p->phys.pos.z == 0.0)
     {
         p->phys.vel.z = 220.0;
     }
 
-    // handle friction
-    Vector2f f = {-p->phys.vel.x, -p->phys.vel.y};
-    normalize(&f);
-
-    float vel_magn_x = ABS(p->phys.vel.x);
-    float vel_magn_y = ABS(p->phys.vel.y);
-
-    float applied_friction_x = MIN(vel_magn_x,p->phys.base_friction);
-    float applied_friction_y = MIN(vel_magn_y,p->phys.base_friction);
-    
-    if(!left && !right)
+    if(!p->phys.falling)
     {
-        f.x *= applied_friction_x;
-        p->phys.vel.x += f.x;
+
+        // handle friction
+        Vector2f f = {-p->phys.vel.x, -p->phys.vel.y};
+        normalize(&f);
+
+        float vel_magn_x = ABS(p->phys.vel.x);
+        float vel_magn_y = ABS(p->phys.vel.y);
+
+        float applied_friction_x = MIN(vel_magn_x,p->phys.base_friction);
+        float applied_friction_y = MIN(vel_magn_y,p->phys.base_friction);
+
+        if(!left && !right)
+        {
+            f.x *= applied_friction_x;
+            p->phys.vel.x += f.x;
+        }
+
+        if(!up && !down)
+        {
+            f.y *= applied_friction_y;
+            p->phys.vel.y += f.y;
+        }
     }
 
-    if(!up && !down)
-    {
-        f.y *= applied_friction_y;
-        p->phys.vel.y += f.y;
-    }
 
     if(ABS(p->phys.vel.x) < 1.0) p->phys.vel.x = 0.0;
     if(ABS(p->phys.vel.y) < 1.0) p->phys.vel.y = 0.0;
@@ -951,10 +1029,16 @@ void player_update(Player* p, float dt)
 
     p->vel_factor = RANGE(m1/m2,0.4,1.0);
 
+    if(p->phys.falling)
+    {
+        p->phys.vel.x = 0;
+        p->phys.vel.y = 0;
+    }
+
     p->phys.prior_vel.x = p->phys.vel.x;
     p->phys.prior_vel.y = p->phys.vel.y;
     p->phys.prior_vel.z = p->phys.vel.z;
-    
+
     // update position
     p->phys.pos.x += p->phys.vel.x*dt;
     p->phys.pos.y += p->phys.vel.y*dt;
@@ -1300,8 +1384,8 @@ void player_ai_move_to_target(Player* p, Player* target)
 
 }
 
-float xp_bar_y = 0.0;
 
+float xp_bar_y = 0.0;
 void draw_hearts()
 {
 #define TOP_MARGIN  1
@@ -1490,14 +1574,11 @@ void draw_skill_selection()
     message_small_set(0.1, "Press e to select skill (skill points: %d)", player->new_levels);
 }
 
-
 void player_draw(Player* p, bool batch)
 {
     if(!p->active) return;
     if(p->curr_room != player->curr_room) return;
 
-    // Vector2i roomxy = level_get_room_coords((int)p->curr_room);
-    // Room* room = &level.rooms[roomxy.x][roomxy.y];
     Room* room = level_get_room_by_index(&level, (int)p->curr_room);
 
     bool blink = p->invulnerable ? ((int)(p->invulnerable_time * 100)) % 2 == 0 : false;
@@ -1507,25 +1588,50 @@ void player_draw(Player* p, bool batch)
     uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
 
     float y = p->phys.pos.y-(0.5*p->phys.pos.z);
+
     float shadow_scale = RANGE(0.5*(1.0 - (p->phys.pos.z / 128.0)),0.1,0.5);
+    float shadow_x = p->phys.pos.x;
+    float shadow_y = p->phys.pos.y+12;
+    TileType shadow_tt = level_get_tile_type_by_pos(room, shadow_x, shadow_y);
+    bool draw_shadow = !p->phys.falling && (shadow_tt != TILE_PIT && shadow_tt != TILE_BOULDER);
 
     if(batch)
     {
-        gfx_sprite_batch_add(shadow_image, 0, p->phys.pos.x, p->phys.pos.y+12, color, false, shadow_scale, 0.0, 0.5, false, false, false);
-        gfx_sprite_batch_add(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, color, false, pscale, 0.0, opacity, false, false, false);
+        if(draw_shadow) gfx_sprite_batch_add(shadow_image, 0, shadow_x, shadow_y, color, false, shadow_scale, 0.0, 0.5, false, false, false);
+        gfx_sprite_batch_add(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, color, false, p->scale, 0.0, opacity, false, false, false);
     }
     else
     {
-        gfx_draw_image(shadow_image, 0, p->phys.pos.x, p->phys.pos.y+12, color, shadow_scale, 0.0, 0.5, false, IN_WORLD);
-        gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, color, pscale, 0.0, opacity, false, IN_WORLD);
+        if(draw_shadow) gfx_draw_image(shadow_image, 0, shadow_x, shadow_y, color, shadow_scale, 0.0, 0.5, false, IN_WORLD);
+        gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, color, p->scale, 0.0, opacity, false, IN_WORLD);
     }
+
+    if(p == player)
+    {
+        text_list_draw(ptext);
+    }
+}
+
+void player_draw_debug(Player* p)
+{
+    if(!p->active) return;
+    if(p->curr_room != player->curr_room) return;
 
     if(debug_enabled)
     {
-
         Rect r = RECT(p->phys.pos.x, p->phys.pos.y, 1, 1);
         gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
-        gfx_draw_rect(&p->hitbox, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+        // gfx_draw_rect(&p->hitbox, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+
+        r.x = CPOSX(p->phys);
+        r.y = CPOSY(p->phys);
+        r.w = 1.0;
+        r.h = 1.0;
+        gfx_draw_rect(&r, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+
+        // gfx_draw_circle(pit_circle.x, pit_circle.y, pit_circle.z, COLOR_RED, 1.0, false, IN_WORLD);
+        gfx_draw_rect(&t_rect, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+
 
         // gfx_draw_string(p->phys.pos.x, p->phys.pos.y, COLOR_RED, 0.4, NO_ROTATION, FULL_OPACITY, IN_WORLD, DROP_SHADOW, "%d", p->highlighted_index);
 
@@ -1535,11 +1641,7 @@ void player_draw(Player* p, bool batch)
         float x1 = x0 + p->phys.vel.x;
         float y1 = y0 + p->phys.vel.y;
         gfx_add_line(x0, y0, x1, y1, COLOR_RED);
-    }
 
-    if(p == player)
-    {
-        text_list_draw(ptext);
     }
 }
 

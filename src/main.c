@@ -1363,6 +1363,8 @@ void draw()
         // l.y = cr.y;
         // gfx_draw_rect(&l, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
 
+        player_draw_debug(player);
+
     }
 
     if(editor_enabled)

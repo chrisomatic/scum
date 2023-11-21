@@ -262,11 +262,9 @@ void entity_draw_all()
             if(e->curr_room == player->curr_room)
                 gfx_draw_circle(CPOSX(*e->phys), CPOSY(*e->phys), e->phys->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
         }
-
     }
 
     gfx_sprite_batch_draw();
-
 }
 
 static Physics* get_physics_from_type(int index, uint8_t curr_room, EntityType type)

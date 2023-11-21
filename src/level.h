@@ -76,14 +76,22 @@ typedef enum
     SPRITE_TILE_MAX,
 } SpriteTileType;
 
+typedef enum
+{
+    WALL_TYPE_BLOCK,
+    WALL_TYPE_PIT,
+    WALL_TYPE_INNER,
+    WALL_TYPE_OUTER,
+
+} WallType;
+
 typedef struct
 {
     Dir dir;
     Vector2f p0;
     Vector2f p1;
     float distance_to_player; // used for sorting walls
-    bool is_pit;
-    bool is_innner_wall; // inner room walls 
+    WallType type;
 } Wall;
 
 typedef enum
@@ -129,6 +137,7 @@ Level level_generate(unsigned int seed, int rank);
 
 uint8_t level_get_tile_sprite(TileType tt);
 Rect level_get_tile_rect(int x, int y);
+Rect level_get_rect_by_pos(float x, float y);
 TileType level_get_tile_type(Room* room, int x, int y);
 TileType level_get_tile_type_by_pos(Room* room, float x, float y);
 void level_get_center_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile_pos);

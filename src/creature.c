@@ -96,7 +96,7 @@ void creature_init_props(Creature* c)
             // c->phys.height = gfx_images[creature_image_slug].element_height;
             c->phys.hp_max = 3.0;
             c->painful_touch = true;
-            c->xp = 20;
+            c->xp = 10;
         } break;
         case CREATURE_TYPE_CLINGER:
         {
@@ -110,7 +110,7 @@ void creature_init_props(Creature* c)
             c->phys.hp_max = 5.0;
             // c->proj_type = PROJECTILE_TYPE_CREATURE_CLINGER;
             c->painful_touch = false;
-            c->xp = 60;
+            c->xp = 10;
         } break;
         case CREATURE_TYPE_GEIZER:
         {
@@ -124,7 +124,7 @@ void creature_init_props(Creature* c)
             c->phys.hp_max = 10.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = false;
-            c->xp = 60;
+            c->xp = 10;
         } break;
         case CREATURE_TYPE_FLOATER:
         {
@@ -138,7 +138,7 @@ void creature_init_props(Creature* c)
             c->phys.hp_max = 3.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = true;
-            c->xp = 60;
+            c->xp = 10;
         } break;
     }
 
