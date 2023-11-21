@@ -1549,7 +1549,7 @@ static void set_default_theme()
 
     theme.dropdown_max_height = 1000;
     theme.listbox_width = 200;
-    theme.listbox_height = 120;
+    theme.listbox_height = 300;
     theme.listbox_gutter_width = 12;
 
     theme_initialized = true;
