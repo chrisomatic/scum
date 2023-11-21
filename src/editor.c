@@ -118,6 +118,8 @@ void editor_draw()
                 imgui_number_box("HP", 0, p->phys.hp_max, &hp);
                 p->phys.hp = (uint8_t)hp;
 
+                imgui_slider_float("Jump Velocity", 0.0, 1000.0, &jump_vel_z);
+
                 imgui_text_sized(big, "Info");
                 imgui_text("Pos: %.2f, %.2f", p->phys.pos.x, p->phys.pos.y);
                 imgui_text("Vel: %.2f, %.2f", p->phys.vel.x, p->phys.vel.y);
@@ -127,7 +129,6 @@ void editor_draw()
                 imgui_text("C Room: %u (%d, %d)", p->curr_room, c.x, c.y);
                 c = level_get_room_coords(p->transition_room);
                 imgui_text("T Room: %u (%d, %d)", p->transition_room, c.x, c.y);
-
 
                 Vector2i tc = level_get_room_coords_by_pos(CPOSX(p->phys), CPOSY(p->phys));
                 imgui_text("Tile: %d, %d", tc.x, tc.y);
@@ -140,6 +141,12 @@ void editor_draw()
                 if(imgui_button("Hurt"))
                 {
                     player_hurt(p, 1);
+                }
+
+                if(imgui_button("Add XP"))
+                {
+                    player_add_xp(p, 10);
+                    randomize_skill_choices();
                 }
 
                 if(imgui_button("Add Gem"))

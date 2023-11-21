@@ -135,25 +135,6 @@ void message_small_draw();
 
 int main(int argc, char* argv[])
 {
-#if 0
-printf("x,y -> index\n");
-for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
-{
-    for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
-    {
-        printf("%2d | %d, %d\n", level_get_room_index(x,y), x, y);
-    }
-}
-
-printf("index -> x,y\n");
-for(int i = 0; i < MAX_ROOMS_GRID_X*MAX_ROOMS_GRID_Y; ++i)
-{
-    Vector2i xy = level_get_room_coords(i);
-    printf("%2d | %d, %d\n", i, xy.x, xy.y);
-}
-exit(1);
-#endif
-
     init_timer();
     log_init(0);
 
@@ -1210,7 +1191,6 @@ void draw_minimap()
 
 void draw_bigmap()
 {
-    // if(player->show_gauntlet) return; // gem menu takes precedence
     if(!show_big_map) return;
     float len = MIN(view_width, view_height) * 0.5;
     // float len = MIN(room_area.w, room_area.h);

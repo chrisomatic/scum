@@ -8,7 +8,8 @@
 
 // collision position
 #define CPOSX(phys) ((phys).pos.x+(phys).coffset.x)
-#define CPOSY(phys) ((phys).pos.y+(phys).coffset.y-(phys).pos.z*0.5)
+#define CPOSY(phys) ((phys).pos.y+(phys).coffset.y)
+// #define CPOSY(phys) ((phys).pos.y+(phys).coffset.y-(phys).pos.z*0.5)
 
 typedef enum
 {

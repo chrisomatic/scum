@@ -159,25 +159,6 @@ static void item_func_consumable(Item* pu, Player* p)
 
 static void item_func_gem(Item* pu, Player* p)
 {
-#if 0
-    if(player_gauntlet_full(p))
-    {
-        memcpy(&p->gauntlet_item, pu, sizeof(Item));
-        p->show_gauntlet = true;
-    }
-    else
-    {
-        p->gauntlet_item.type = ITEM_NONE;
-        for(int i = 0; i < p->gauntlet_slots; ++i)
-        {
-            if(p->gauntlet[i].type == ITEM_NONE)
-            {
-                p->gauntlet[i].type = pu->type;
-                break;
-            }
-        }
-    }
-#else
     Item* it = &p->gauntlet[p->gauntlet_selection];
     player_drop_item(p, it);
     memcpy(it, pu, sizeof(Item));
@@ -190,7 +171,6 @@ static void item_func_gem(Item* pu, Player* p)
         if(p->gauntlet[p->gauntlet_selection].type == ITEM_NONE)
             break;
     }
-#endif
     pu->picked_up = true;
 }
 

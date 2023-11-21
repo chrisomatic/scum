@@ -58,8 +58,6 @@ typedef struct
 
     float scale;
 
-    bool falling; //falling in a pit
-
     int xp;
     int level;
     int new_levels;
@@ -70,7 +68,6 @@ typedef struct
     float shoot_sprite_cooldown;
 
     Item gauntlet_item;
-    bool show_gauntlet;
     uint8_t gauntlet_selection;
     uint8_t gauntlet_slots;
     Item gauntlet[PLAYER_GAUNTLET_MAX];
@@ -124,6 +121,7 @@ extern int xp_levels[];
 extern int skill_selection;
 extern int skill_choices[NUM_SKILL_CHOICES];
 extern const char* skill_text[NUM_SKILLS];
+extern float jump_vel_z;
 
 void player_init();
 uint8_t player_get_gauntlet_count(Player* p);

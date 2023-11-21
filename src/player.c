@@ -13,7 +13,6 @@
 #define RADIUS_OFFSET_X 0
 #define RADIUS_OFFSET_Y 7.5
 
-#define ALWAYS_SHOW_GAUNTLET 1
 
 void player_ai_move_to_target(Player* p, Player* target);
 
@@ -35,6 +34,8 @@ const char* skill_text[NUM_SKILLS] = {
 char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 int player_image = -1;
 int shadow_image = -1;
+
+float jump_vel_z = 150.0;
 
 
 Player players[MAX_PLAYERS] = {0};
@@ -117,13 +118,7 @@ void player_init()
         p->anim.frame_sequence[2] = 2;
         p->anim.frame_sequence[3] = 3;
 
-#if ALWAYS_SHOW_GAUNTLET
-        p->show_gauntlet = true;
-#else
-        p->show_gauntlet = false;
-#endif
         p->gauntlet_selection = 0;
-
         p->gauntlet_slots = MIN(2,PLAYER_GAUNTLET_MAX);
         for(int j = 0; j < PLAYER_GAUNTLET_MAX; ++j)
         {
@@ -265,7 +260,6 @@ void player_init_keys()
 #else
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_SPACE);
 #endif
-    // window_controls_add_key(&player->actions[PLAYER_ACTION_GENERATE_ROOMS].state, GLFW_KEY_R); // moved to editor
     window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_ENTER);
     window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_E);
     window_controls_add_key(&player->actions[PLAYER_ACTION_JUMP].state, GLFW_KEY_SPACE);
@@ -342,7 +336,6 @@ void player_add_xp(Player* p, int xp)
 
         p->xp -= xp_req;
         num_new_levels++;
-        // p->level++;
     }
 
     if(p == player)
@@ -472,8 +465,6 @@ void player_draw_room_transition()
             {
                 // zoomed out too far
                 immediate = !immediate;
-                // cx = CENTER_X;
-                // cy = CENTER_Y;
             }
 
             camera_set(immediate);
@@ -752,35 +743,19 @@ void player_update(Player* p, float dt)
         update_input_state(pa, dt);
     }
 
-#if 0
-    if(p->actions[PLAYER_ACTION_GEM_MENU].toggled_on)
-    {
-#if ALWAYS_SHOW_GAUNTLET
-        if(PLAYER_SWAPPING_GEM(p))
-        {
-            item_add(p->gauntlet_item.type, CPOSX(player->phys),CPOSY(player->phys)+player->phys.radius, player->curr_room);
-            p->gauntlet_item.type = ITEM_NONE;
-        }
-#else
-        p->show_gauntlet = !p->show_gauntlet;
-        if(!p->show_gauntlet && PLAYER_SWAPPING_GEM(p))
-        {
-            item_add(p->gauntlet_item.type, CPOSX(player->phys),CPOSY(player->phys)+player->phys.radius, player->curr_room);
-            p->gauntlet_item.type = ITEM_NONE;
-        }
-#endif
-    }
-#endif
 
-    // apply gem effects
-    memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
-    item_apply_gauntlet((void*)p, (Item*)p->gauntlet,p->gauntlet_slots);
+
+    bool activate = p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
+    bool tabbed = p->actions[PLAYER_ACTION_TAB_CYCLE].toggled_on;
+    bool rshift = p->actions[PLAYER_ACTION_RSHIFT].state;
+
 
     if(p->new_levels == 0)
     {
-        if(p->actions[PLAYER_ACTION_TAB_CYCLE].toggled_on)
+
+        if(tabbed)
         {
-            if(p->actions[PLAYER_ACTION_RSHIFT].state)
+            if(rshift)
             {
                 if(player->gauntlet_selection == 0)
                     p->gauntlet_selection = p->gauntlet_slots-1;
@@ -794,12 +769,63 @@ void player_update(Player* p, float dt)
                    p->gauntlet_selection = 0;
             }
         }
+
+
+        if(p->highlighted_item)
+        {
+            if(p->actions[PLAYER_ACTION_ITEM_CYCLE].toggled_on)
+            {
+                if(p->actions[PLAYER_ACTION_RSHIFT].state)
+                    player->highlighted_index--;
+                else
+                    player->highlighted_index++;
+            }
+
+            const char* desc = item_get_description(p->highlighted_item->type);
+            const char* name = item_get_name(p->highlighted_item->type);
+            if(strlen(desc) > 0)
+            {
+                message_small_set(0.1, "Item: %s (%s)", name, desc);
+            }
+            else
+            {
+                message_small_set(0.1, "Item: %s", name);
+            }
+        }
+
+        if(activate)
+        {
+            if(p->highlighted_item)
+            {
+                ItemType type = p->highlighted_item->type;
+
+                if(type == ITEM_CHEST)
+                {
+                    if(!p->highlighted_item->used)
+                    {
+                        p->highlighted_item->used = true;
+                        if(item_props[type].func) item_props[type].func(p->highlighted_item,p);
+                    }
+                }
+                else
+                {
+                    if(item_props[type].func) item_props[type].func(p->highlighted_item,p);
+                    if(p->highlighted_item->picked_up)
+                        item_remove(p->highlighted_item);
+                }
+            }
+            else
+            {
+                player_drop_item(p, &p->gauntlet[p->gauntlet_selection]);
+            }
+        }
+
     }
     else
     {
-        if(p->actions[PLAYER_ACTION_TAB_CYCLE].toggled_on)
+        if(tabbed)
         {
-            if(p->actions[PLAYER_ACTION_RSHIFT].state)
+            if(rshift)
             {
                 if(skill_selection == 0)
                     skill_selection = (NUM_SKILL_CHOICES-1);
@@ -825,6 +851,10 @@ void player_update(Player* p, float dt)
         }
 
     }
+
+    // apply gem effects
+    memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
+    item_apply_gauntlet((void*)p, (Item*)p->gauntlet,p->gauntlet_slots);
 
     float cx = CPOSX(p->phys);
     float cy = CPOSY(p->phys);
@@ -991,7 +1021,7 @@ void player_update(Player* p, float dt)
     if(p->phys.falling) jump = false;
     if(jump && p->phys.pos.z == 0.0)
     {
-        p->phys.vel.z = 220.0;
+        p->phys.vel.z = jump_vel_z;
     }
 
     if(!p->phys.falling)
@@ -1097,7 +1127,6 @@ void player_update(Player* p, float dt)
             }
         }
 
-
         int sprite_index = 0;
         if(p->last_shoot_action == PLAYER_ACTION_SHOOT_UP)
         {
@@ -1200,89 +1229,58 @@ void player_update(Player* p, float dt)
 
 #endif
 
-    if(role == ROLE_LOCAL)
-    {
-        bool generate = p->actions[PLAYER_ACTION_GENERATE_ROOMS].toggled_on;
-        if(generate)
-        {
-            seed = time(0)+rand()%1000;
-            game_generate_level(seed);
-        }
-    }
+    // if(p->highlighted_item)
+    // {
+    //     if(p->actions[PLAYER_ACTION_ITEM_CYCLE].toggled_on)
+    //     {
+    //         if(p->actions[PLAYER_ACTION_RSHIFT].state)
+    //             player->highlighted_index--;
+    //         else
+    //             player->highlighted_index++;
+    //     }
+    // }
 
-    if(p->highlighted_item)
-    {
-        if(p->actions[PLAYER_ACTION_ITEM_CYCLE].toggled_on)
-        {
-            if(p->actions[PLAYER_ACTION_RSHIFT].state)
-                player->highlighted_index--;
-            else
-                player->highlighted_index++;
-        }
-    }
+    // if(p->highlighted_item)
+    // {
+    //     const char* desc = item_get_description(p->highlighted_item->type);
+    //     const char* name = item_get_name(p->highlighted_item->type);
+    //     if(strlen(desc) > 0)
+    //     {
+    //         message_small_set(0.1, "Item: %s (%s)", name, desc);
+    //     }
+    //     else
+    //     {
+    //         message_small_set(0.1, "Item: %s", name);
+    //     }
+    // }
 
-#if 0
-    if(PLAYER_SWAPPING_GEM(p))
-    {
-        message_small_set(0.1, "Press e to swap [%s] for [%s] (press g to cancel)", item_get_name(p->gauntlet[p->gauntlet_selection].type), item_get_name(p->gauntlet_item.type));
-    }
-    else
-#endif
-    if(p->highlighted_item)
-    {
-        const char* desc = item_get_description(p->highlighted_item->type);
-        const char* name = item_get_name(p->highlighted_item->type);
-        if(strlen(desc) > 0)
-        {
-            message_small_set(0.1, "Item: %s (%s)", name, desc);
-        }
-        else
-        {
-            message_small_set(0.1, "Item: %s", name);
-        }
-    }
+    // bool activate = p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
+    // if(p->new_levels == 0 && activate)
+    // {
+    //     if(p->highlighted_item)
+    //     {
+    //         ItemType type = p->highlighted_item->type;
 
-    bool activate = p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
-    if(p->new_levels == 0 && activate)
-    {
-#if 0
-        if(PLAYER_SWAPPING_GEM(p))
-        {
-            Item* it = &p->gauntlet[p->gauntlet_selection];
-
-            item_add(it->type, CPOSX(player->phys),CPOSY(player->phys)+player->phys.radius, player->curr_room);
-
-            memcpy(it, &p->gauntlet_item, sizeof(Item));
-            p->gauntlet_item.type = ITEM_NONE;
-
-            // message_small_set(0.1, "Sawp Item: %s", item_get_name(p->gauntlet_item.type));
-        }
-        else
-#endif
-        if(p->highlighted_item)
-        {
-            ItemType type = p->highlighted_item->type;
-
-            if(type == ITEM_CHEST)
-            {
-                if(!p->highlighted_item->used)
-                {
-                    p->highlighted_item->used = true;
-                    if(item_props[type].func) item_props[type].func(p->highlighted_item,p);
-                }
-            }
-            else
-            {
-                if(item_props[type].func) item_props[type].func(p->highlighted_item,p);
-                if(p->highlighted_item->picked_up)
-                    item_remove(p->highlighted_item);
-            }
-        }
-        else
-        {
-            player_drop_item(p, &p->gauntlet[p->gauntlet_selection]);
-        }
-    }
+    //         if(type == ITEM_CHEST)
+    //         {
+    //             if(!p->highlighted_item->used)
+    //             {
+    //                 p->highlighted_item->used = true;
+    //                 if(item_props[type].func) item_props[type].func(p->highlighted_item,p);
+    //             }
+    //         }
+    //         else
+    //         {
+    //             if(item_props[type].func) item_props[type].func(p->highlighted_item,p);
+    //             if(p->highlighted_item->picked_up)
+    //                 item_remove(p->highlighted_item);
+    //         }
+    //     }
+    //     else
+    //     {
+    //         player_drop_item(p, &p->gauntlet[p->gauntlet_selection]);
+    //     }
+    // }
 
 
     // check tiles around player
@@ -1465,8 +1463,6 @@ void draw_xp_bar()
 
 void draw_gauntlet()
 {
-    if(!player->show_gauntlet) return;
-
     float len = 50.0 * ascale;
     float margin = 5.0 * ascale;
 
