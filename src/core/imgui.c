@@ -73,7 +73,7 @@ typedef struct
 {
     int panel_width;
     int panel_height;
-    int offset_x, offset_y;
+    float offset_x, offset_y;
 } PanelProps;
 
 typedef struct
@@ -114,6 +114,10 @@ typedef struct
     uint32_t tooltip_hash;
 
     DropdownProps dropdown_props;
+
+    float global_opacity_scale;
+
+    Rect prior_size;
 } ImGuiContext;
 
 #define IMGUI_THEME_VERSION 0
@@ -225,6 +229,9 @@ void imgui_begin(char* name, int x, int y)
     ctx->accum_width = 0;
     ctx->horiontal_max_height = 0;
 
+    if(ctx->global_opacity_scale == 0.0)
+        ctx->global_opacity_scale = 1.0;
+
     memset(ctx->horizontal_stack,false,sizeof(bool)*MAX_HORIZONTAL_STACK);
 
     ctx->text_box_props.highlighted = false;
@@ -332,6 +339,11 @@ void imgui_restore_theme()
 void imgui_set_slider_width(int width)
 {
     theme.slider_width = width;
+}
+
+void imgui_set_global_opacity_scale(float opacity_scale)
+{
+    ctx->global_opacity_scale = opacity_scale;
 }
 
 bool imgui_load_theme(char* file_name)
@@ -801,11 +813,14 @@ void imgui_listbox(char* options[], int num_options, char* label, int* selected_
 
     Vector2f label_size = gfx_string_get_size(theme.text_scale, label);
     
-    ctx->scroll_props.in_gutter = theme.listbox_width - (ctx->mouse_x - ctx->curr.x) < theme.listbox_gutter_width;
+    float mouse_dist_from_right_edge = theme.listbox_width - (ctx->mouse_x - ctx->curr.x);
+    ctx->scroll_props.in_gutter = (mouse_dist_from_right_edge > 0.0 && mouse_dist_from_right_edge < theme.listbox_gutter_width);
 
     float box_height = NOMINAL_FONT_SIZE*theme.text_scale + 2*theme.text_padding;
     int scrollbar_height = theme.listbox_height*(theme.listbox_height / (num_options*box_height));
+    int scrollbar_height_space = theme.listbox_height - scrollbar_height;
     float y_diff = ctx->mouse_y - (ctx->curr.y+label_size.y+theme.text_padding);
+    bool show_scrollbar = num_options*box_height > theme.listbox_height;
 
     if(ctx->scroll_props.scrollbar_held)
     {
@@ -815,8 +830,6 @@ void imgui_listbox(char* options[], int num_options, char* label, int* selected_
         }
         else
         {
-            int scrollbar_height_space = theme.listbox_height - scrollbar_height;
-
             float amt_moved = ctx->mouse_y - ctx->scroll_props.held_start_pos;
             ctx->scroll_props.held_start_pos = ctx->mouse_y;
 
@@ -825,8 +838,18 @@ void imgui_listbox(char* options[], int num_options, char* label, int* selected_
         }
     }
 
+    double scroll_offset_x = 0.0;
+    double scroll_offset_y = 0.0;
+    if(window_has_scrolled())
+        window_get_scroll_offsets(&scroll_offset_x, &scroll_offset_y);
+
     if(is_highlighted(hash))
     {
+        if(show_scrollbar && !ctx->scroll_props.scrollbar_held)
+        {
+            *val -= 0.5*box_height*scroll_offset_y;
+            *val = RANGE(*val,0,scrollbar_height_space);
+        }
         if(ctx->scroll_props.in_gutter)
         {
             // scrollbar
@@ -855,6 +878,7 @@ void imgui_listbox(char* options[], int num_options, char* label, int* selected_
                 }
             }
         }
+
     }
 
     Rect interactive = {ctx->curr.x, ctx->curr.y + label_size.y + theme.text_padding, MAX(max_width+2*theme.text_padding, theme.listbox_width), theme.listbox_height};
@@ -1455,8 +1479,12 @@ Rect imgui_end()
     size.y = ctx->start_y + ctx->panel_props.offset_y;
     size.w = ctx->panel_props.panel_width;
     size.h = ctx->panel_props.panel_height;
+
+    memcpy(&ctx->prior_size,&size,sizeof(Rect));
+
     size.x += size.w/2.0;
     size.y += size.h/2.0;
+
     return size;
 }
 
@@ -1468,6 +1496,11 @@ bool imgui_clicked()
 bool imgui_active()
 {
     return (ctx->highlighted_id != 0x0);
+}
+
+bool imgui_is_mouse_inside()
+{
+    return is_inside(&ctx->prior_size);
 }
 
 // ============================
@@ -1779,7 +1812,7 @@ static void draw_button(uint32_t hash, char* str, Rect* r)
         button_color = theme.color_active;
     }
 
-    gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, r->h, button_color, 1.0, 0.0, theme.button_opacity, true,false);
+    gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, r->h, button_color, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
 
     Vector2f val_size = gfx_string_get_size(theme.text_scale, str); // for centering text on button
     gfx_draw_string(r->x + (r->w - val_size.x)/2.0, r->y + (r->h - val_size.y)/2.0, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, str);
@@ -1800,7 +1833,7 @@ static void draw_image_button(uint32_t hash, char* str, Rect* r, int img_index, 
     }
 
     gfx_draw_image_ignore_light(img_index, sprite_index, r->x + r->w/2.0, r->y + r->h/2.0, COLOR_TINT_NONE, scale, 0.0, 1.0, true,false);
-    gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, r->h, button_color, 1.0, 0.0, 0.3, true,false);
+    gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, r->h, button_color, 1.0, 0.0, 0.3*ctx->global_opacity_scale, true,false);
 
     gfx_draw_string(r->x + r->w + theme.text_padding, r->y, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, str);
 }
@@ -1819,7 +1852,7 @@ static void draw_toggle_button(uint32_t hash, char* str, Rect* r, bool toggled)
         button_color = theme.color_active;
     }
 
-    gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, r->h, button_color, 1.0, 0.0, theme.button_opacity, true,false);
+    gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, r->h, button_color, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
 
     gfx_draw_string(r->x + theme.text_padding, r->y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, str);
 }
@@ -1827,7 +1860,7 @@ static void draw_toggle_button(uint32_t hash, char* str, Rect* r, bool toggled)
 static void draw_slider(uint32_t hash, char* str, int slider_x, char* val_format, float val)
 {
     // draw bar
-    gfx_draw_rect_xywh(ctx->curr.x + ctx->curr.w/2.0, ctx->curr.y + ctx->curr.h/2.0, ctx->curr.w, ctx->curr.h, theme.color_background, 1.0, 0.0, theme.slider_opacity, true,false);
+    gfx_draw_rect_xywh(ctx->curr.x + ctx->curr.w/2.0, ctx->curr.y + ctx->curr.h/2.0, ctx->curr.w, ctx->curr.h, theme.color_background, 1.0, 0.0, theme.slider_opacity*ctx->global_opacity_scale, true,false);
 
     // draw handle
     uint32_t handle_color = theme.color_slider;
@@ -1841,7 +1874,7 @@ static void draw_slider(uint32_t hash, char* str, int slider_x, char* val_format
         handle_color = theme.color_active;
     }
 
-    gfx_draw_rect_xywh(ctx->curr.x + theme.slider_handle_width/2.0 + slider_x, ctx->curr.y + ctx->curr.h/2.0, theme.slider_handle_width-4, ctx->curr.h-4, handle_color, 1.0, 0.0, theme.slider_opacity, true,false);
+    gfx_draw_rect_xywh(ctx->curr.x + theme.slider_handle_width/2.0 + slider_x, ctx->curr.y + ctx->curr.h/2.0, theme.slider_handle_width-4, ctx->curr.h-4, handle_color, 1.0, 0.0, theme.slider_opacity*ctx->global_opacity_scale, true,false);
 
     // draw value
     char val_str[16] = {0};
@@ -1855,13 +1888,13 @@ static void draw_slider(uint32_t hash, char* str, int slider_x, char* val_format
 
 static void draw_panel(uint32_t hash, bool moveable)
 {
-    gfx_draw_rect_xywh_tl(ctx->curr.x, ctx->curr.y, ctx->panel_props.panel_width, ctx->panel_props.panel_height, theme.color_panel, 1.0, 0.0, theme.panel_opacity,true,false);
+    gfx_draw_rect_xywh_tl(ctx->curr.x, ctx->curr.y, ctx->panel_props.panel_width, ctx->panel_props.panel_height, theme.color_panel, 1.0, 0.0, theme.panel_opacity*ctx->global_opacity_scale,true,false);
 
     if(moveable)
     {
         // draw header rect
         uint32_t color = is_highlighted(hash) ? theme.color_highlight : theme.color_highlight_subtle;
-        gfx_draw_rect_xywh(ctx->curr.x+ctx->panel_props.panel_width/2.0, ctx->curr.y+theme.panel_header_height/2.0, ctx->panel_props.panel_width, theme.panel_header_height, color, 1.0, 0.0, theme.panel_opacity,true,false);
+        gfx_draw_rect_xywh(ctx->curr.x+ctx->panel_props.panel_width/2.0, ctx->curr.y+theme.panel_header_height/2.0, ctx->panel_props.panel_width, theme.panel_header_height, color, 1.0, 0.0, theme.panel_opacity*ctx->global_opacity_scale,true,false);
     }
 }
 
@@ -1885,10 +1918,10 @@ static void draw_checkbox(uint32_t hash, char* label, bool result)
     float x = ctx->curr.x + theme.checkbox_size/2.0;
     float y = ctx->curr.y + theme.checkbox_size/2.0;
 
-    gfx_draw_rect_xywh(x,y,theme.checkbox_size, theme.checkbox_size, check_color, 1.0, 0.0, 1.0, false,false);
-    gfx_draw_rect_xywh(x,y,0.65*theme.checkbox_size, 0.65*theme.checkbox_size, check_color, 1.0, 0.0, 1.0, result,false);
+    gfx_draw_rect_xywh(x,y,theme.checkbox_size, theme.checkbox_size, check_color, 1.0, 0.0, 1.0*ctx->global_opacity_scale, false,false);
+    gfx_draw_rect_xywh(x,y,0.65*theme.checkbox_size, 0.65*theme.checkbox_size, check_color, 1.0, 0.0, 1.0*ctx->global_opacity_scale, result,false);
 
-    gfx_draw_string(ctx->curr.x + theme.checkbox_size + theme.text_padding, ctx->curr.y + (theme.checkbox_size - text_size.y)/2.0, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, label);
+    gfx_draw_string(ctx->curr.x + theme.checkbox_size + theme.text_padding, ctx->curr.y + (theme.checkbox_size - text_size.y)/2.0, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, label);
 
     ctx->curr.w = theme.checkbox_size + 2.0*theme.text_padding + text_size.x;
     ctx->curr.h = MAX(theme.checkbox_size, text_size.y)+2.0*theme.text_padding;
@@ -1909,8 +1942,8 @@ static void draw_number_box(uint32_t hash, char* label, Rect* r, int val, int ma
 
     float pct = val/(float)max;
 
-    gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, r->h, box_color, 1.0, 0.0, theme.button_opacity, true,false);
-    gfx_draw_rect_xywh(r->x + (r->w*pct)/2.0, r->y + r->h/2.0, r->w*pct, r->h, 0x00FFFFFF, 1.0, 0.0, 0.4,true,false);
+    gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, r->h, box_color, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
+    gfx_draw_rect_xywh(r->x + (r->w*pct)/2.0, r->y + r->h/2.0, r->w*pct, r->h, 0x00FFFFFF, 1.0, 0.0, 0.4*ctx->global_opacity_scale,true,false);
 
     char val_str[16] = {0};
     snprintf(val_str,15,format,val);
@@ -1933,7 +1966,7 @@ static void draw_text_box(uint32_t hash, char* label, Rect* r, char* text)
 
     Vector2f text_size = gfx_string_get_size(theme.text_scale, text);
 
-    gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, r->h, box_color, 1.0, 0.0, theme.button_opacity, true,false);
+    gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, r->h, box_color, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
 
     float min_x = ctx->text_box_props.text_cursor_x > ctx->text_box_props.text_cursor_x_held_from ? ctx->text_box_props.text_cursor_x_held_from : ctx->text_box_props.text_cursor_x;
     float sx = r->x + theme.text_padding + min_x;
@@ -1942,9 +1975,9 @@ static void draw_text_box(uint32_t hash, char* label, Rect* r, char* text)
     float sh = r->h;
 
     if(ctx->focused_text_id == hash)
-        gfx_draw_rect_xywh(sx + sw/2.0, sy + sh/2.0, sw, sh, 0x000055CC, 1.0, 0.0, theme.button_opacity, true,false);
+        gfx_draw_rect_xywh(sx + sw/2.0, sy + sh/2.0, sw, sh, 0x000055CC, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
 
-    gfx_draw_string(r->x+theme.text_padding, r->y-(label_size.y-r->h)/2.0, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, text);
+    gfx_draw_string(r->x+theme.text_padding, r->y-(label_size.y-r->h)/2.0, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, text);
 
     if(ctx->focused_text_id == hash)
     {
@@ -1954,7 +1987,7 @@ static void draw_text_box(uint32_t hash, char* label, Rect* r, char* text)
         // line on text box
         if(ctx->text_box_props.cursor_show)
         {
-            gfx_draw_rect_xywh(x,y+(theme.text_size_px*1.3)/2.0, 1, theme.text_size_px*1.3, theme.color_text, 1.0, 0.0, 1.0, true,false);
+            gfx_draw_rect_xywh(x,y+(theme.text_size_px*1.3)/2.0, 1, theme.text_size_px*1.3, theme.color_text, 1.0, 0.0, 1.0*ctx->global_opacity_scale, true,false);
         }
     }
 
@@ -1974,16 +2007,16 @@ static void draw_listbox(uint32_t hash, char* str, char* options[], int num_opti
 
     int width = r->w - scrollbar_width;
 
-    gfx_draw_rect_xywh(r->x + width/2.0, r->y + r->h/2.0, width, r->h, theme.color_background, 1.0, 0.0, theme.button_opacity, true,false);
+    gfx_draw_rect_xywh(r->x + width/2.0, r->y + r->h/2.0, width, r->h, theme.color_background, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
 
     if(show_scrollbar)
     {
         // scrollbar gutter
-        gfx_draw_rect_xywh(r->w+r->x-(theme.listbox_gutter_width/2.0), r->y + r->h/2.0, theme.listbox_gutter_width, r->h, theme.color_highlight_subtle, 1.0, 0.0, theme.button_opacity, true,false);
+        gfx_draw_rect_xywh(r->w+r->x-(theme.listbox_gutter_width/2.0), r->y + r->h/2.0, theme.listbox_gutter_width, r->h, theme.color_highlight_subtle, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
 
         // scrollbar
         int scrollbar_height = theme.listbox_height*(theme.listbox_height / (num_options*box_height));
-        gfx_draw_rect_xywh(r->w+r->x-(theme.listbox_gutter_width/2.0), r->y + scrollbar_offset + scrollbar_height/2.0, theme.listbox_gutter_width, scrollbar_height, ctx->scroll_props.in_gutter ? theme.color_highlight : theme.color_slider, 1.0, 0.0, theme.button_opacity, true,false);
+        gfx_draw_rect_xywh(r->w+r->x-(theme.listbox_gutter_width/2.0), r->y + scrollbar_offset + scrollbar_height/2.0, theme.listbox_gutter_width, scrollbar_height, ctx->scroll_props.in_gutter ? theme.color_highlight : theme.color_slider, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
 
     }
 
@@ -1993,7 +2026,7 @@ static void draw_listbox(uint32_t hash, char* str, char* options[], int num_opti
     float y_diff = ctx->mouse_y + offset - r->y;
     int highlighted_index = floor(y_diff / box_height);
 
-    if(ctx->mouse_x < ctx->curr.x)
+    if(ctx->mouse_x < ctx->curr.x || ctx->mouse_x > ctx->curr.x+theme.listbox_width)
         highlighted_index = -1;
 
     for(int i = 0; i < num_options; ++i)
@@ -2009,27 +2042,27 @@ static void draw_listbox(uint32_t hash, char* str, char* options[], int num_opti
 
         if(i == selected_index)
         {
-            gfx_draw_rect_xywh(r->x + width/2.0, r->y + i*box_height + box_height/2.0 - offset, width, box_height, theme.color_active, 1.0, 0.0, theme.button_opacity, true,false);
+            gfx_draw_rect_xywh(r->x + width/2.0, r->y + i*box_height + box_height/2.0 - offset, width, box_height, theme.color_active, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
         }
         else if(i == highlighted_index && !ctx->scroll_props.in_gutter)
         {
-            gfx_draw_rect_xywh(r->x + width/2.0, r->y + i*box_height + box_height/2.0 - offset, width, box_height, theme.color_highlight, 1.0, 0.0, theme.button_opacity, true,false);
+            gfx_draw_rect_xywh(r->x + width/2.0, r->y + i*box_height + box_height/2.0 - offset, width, box_height, theme.color_highlight, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
         }
 
         if(options[i])
         {
-            gfx_draw_string(r->x+theme.text_padding, r->y+i*box_height - offset, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, options[i]);
+            gfx_draw_string(r->x+theme.text_padding, r->y+i*box_height - offset, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, options[i]);
         }
     }
 
     // masking rects
 
-    gfx_draw_rect_xywh_tl(r->x, r->y-box_height, r->w, box_height, theme.color_panel, 1.0, 0.0, theme.panel_opacity,true,false);
-    gfx_draw_rect_xywh_tl(r->x, r->y+theme.listbox_height, r->w, box_height, theme.color_panel, 1.0, 0.0, theme.panel_opacity,true,false);
+    gfx_draw_rect_xywh_tl(r->x, r->y-box_height, r->w, box_height, theme.color_panel, 1.0, 0.0, theme.panel_opacity*ctx->global_opacity_scale,true,false);
+    gfx_draw_rect_xywh_tl(r->x, r->y+theme.listbox_height, r->w, box_height, theme.color_panel, 1.0, 0.0, theme.panel_opacity*ctx->global_opacity_scale,true,false);
 
     // label
     int label_height = (NOMINAL_FONT_SIZE*theme.text_scale+theme.text_padding);
-    gfx_draw_string(r->x, r->y-label_height, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, str);
+    gfx_draw_string(r->x, r->y-label_height, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, str);
 
     // selected / num options
     char stats[10] = {0};
@@ -2037,7 +2070,7 @@ static void draw_listbox(uint32_t hash, char* str, char* options[], int num_opti
 
     Vector2f stats_size = gfx_string_get_size(theme.text_scale, stats);
 
-    gfx_draw_string(r->x+theme.listbox_width-stats_size.x, r->y-(NOMINAL_FONT_SIZE*theme.text_scale+theme.text_padding), theme.color_text, theme.text_scale, 0.0, 1.0, false, false, stats);
+    gfx_draw_string(r->x+theme.listbox_width-stats_size.x, r->y-(NOMINAL_FONT_SIZE*theme.text_scale+theme.text_padding), theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, stats);
 
 
 }
@@ -2061,7 +2094,7 @@ static void draw_dropdown(uint32_t hash, char* str, char* options[], int num_opt
 
     float box_height = NOMINAL_FONT_SIZE*theme.text_scale + 2*theme.text_padding;
 
-    gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + box_height/2.0, r->w, box_height, button_color, 1.0, 0.0, theme.button_opacity, true,false);
+    gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + box_height/2.0, r->w, box_height, button_color, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
 
     int selection = 0;
     if(selected_index >= 0 && selected_index < num_options)
@@ -2070,15 +2103,15 @@ static void draw_dropdown(uint32_t hash, char* str, char* options[], int num_opt
     bool active = is_active(hash);
 
     char* selected_text = options[selection];
-    gfx_draw_string(r->x + theme.text_padding, r->y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, selected_text);
-    gfx_draw_string(r->x + theme.text_padding + r->w - 16, r->y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, active ? "-" : "+");
+    gfx_draw_string(r->x + theme.text_padding, r->y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, selected_text);
+    gfx_draw_string(r->x + theme.text_padding + r->w - 16, r->y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, active ? "-" : "+");
 
     if(active)
     {
         float y_diff = ctx->mouse_y - r->y;
         int highlighted_index = floor(y_diff / box_height) - 1;
 
-        gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, ctx->dropdown_props.size.h, theme.color_background, 1.0, 0.0, theme.button_opacity, true,false);
+        gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, ctx->dropdown_props.size.h, theme.color_background, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
 
         for(int i = 0; i < num_options; ++i)
         {
@@ -2088,28 +2121,28 @@ static void draw_dropdown(uint32_t hash, char* str, char* options[], int num_opt
 
             if(is_highlighted(hash) && i == highlighted_index)
             {
-                gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + (i+1.5)*box_height, r->w, box_height, theme.color_highlight, 1.0, 0.0, theme.button_opacity, true,false);
+                gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + (i+1.5)*box_height, r->w, box_height, theme.color_highlight, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
             }
 
             if(options[i])
             {
-                gfx_draw_string(r->x + theme.text_padding, r->y + theme.text_padding + (i+1)*box_height, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, options[i]);
+                gfx_draw_string(r->x + theme.text_padding, r->y + theme.text_padding + (i+1)*box_height, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, options[i]);
             }
         }
     }
 
     // label
-    gfx_draw_string(r->x + r->w + theme.text_padding, r->y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, str);
+    gfx_draw_string(r->x + r->w + theme.text_padding, r->y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, str);
 }
 
 static void draw_label(int x, int y, uint32_t color, char* label)
 {
-    gfx_draw_string(x, y, color, theme.text_scale, 0.0, 1.0, false, false, label);
+    gfx_draw_string(x, y, color, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, label);
 }
 
 static void draw_color_box(Rect* r, uint32_t color)
 {
-    gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, r->h, color, 1.0, 0.0, 1.0, true,false);
+    gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, r->h, color, 1.0, 0.0, 1.0*ctx->global_opacity_scale, true,false);
 }
 
 static void draw_tooltip()
@@ -2121,6 +2154,6 @@ static void draw_tooltip()
 
     r.y -= r.h;
 
-    gfx_draw_rect_xywh(r.x + r.w/2.0, r.y + r.h/2.0, r.w, r.h, 0x00323232, 1.0, 0.0, 0.75, true,false);
-    gfx_draw_string(r.x+theme.text_padding, r.y-(text_size.y-r.h)/2.0, theme.color_text, scale, 0.0, 1.0, false, false, ctx->tooltip);
+    gfx_draw_rect_xywh(r.x + r.w/2.0, r.y + r.h/2.0, r.w, r.h, 0x00323232, 1.0, 0.0, 0.75*ctx->global_opacity_scale, true,false);
+    gfx_draw_string(r.x+theme.text_padding, r.y-(text_size.y-r.h)/2.0, theme.color_text, scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, ctx->tooltip);
 }

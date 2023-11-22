@@ -10,6 +10,7 @@ void imgui_begin_panel(char* name, int x, int y, bool moveable);
 Rect imgui_end(); // returns size of imgui area
 bool imgui_clicked();
 bool imgui_active();
+bool imgui_is_mouse_inside();
 
 // widgets
 void imgui_text(char* text, ...);
@@ -46,6 +47,7 @@ void imgui_set_text_color(uint32_t color);
 void imgui_set_text_padding(int padding);
 void imgui_set_spacing(int spacing);
 void imgui_set_slider_width(int width);
+void imgui_set_global_opacity_scale(float opacity_scale);
 
 int imgui_get_text_cursor_index();
 void imgui_set_text_cursor_indices(int i0, int i1);

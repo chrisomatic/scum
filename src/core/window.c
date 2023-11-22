@@ -33,6 +33,10 @@ static int text_buf_max = 0;
 static double window_coord_x = 0;
 static double window_coord_y = 0;
 
+static bool _has_scrolled = false;
+static double _scroll_x_offset = 0.0;
+static double _scroll_y_offset = 0.0;
+
 static bool get_window_monitor(GLFWmonitor** monitor, GLFWwindow* window);
 
 static void window_size_callback(GLFWwindow* window, int _window_width, int _window_height);
@@ -42,6 +46,7 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
 static void char_callback(GLFWwindow* window, unsigned int code);
 static void key_callback(GLFWwindow* window, int key, int scan_code, int action, int mods);
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 bool window_init(int _view_width, int _view_height)
 {
@@ -84,6 +89,7 @@ bool window_init(int _view_width, int _view_height)
     glfwSetCharCallback(window, char_callback);
     glfwSetCursorPosCallback(window, cursor_position_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     glfwMaximizeWindow(window); //TEMP
     glViewport(0.0,0.0,window_width/2.0,window_height/2.0);
@@ -729,6 +735,28 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
             }
         }
     }
+}
+
+static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    _has_scrolled = true;
+    _scroll_x_offset += xoffset;
+    _scroll_y_offset += yoffset;
+}
+
+bool window_has_scrolled()
+{
+    return _has_scrolled;
+}
+
+void window_get_scroll_offsets(double* xoffset, double* yoffset)
+{
+    *xoffset = _scroll_x_offset;
+    *yoffset = _scroll_y_offset;
+
+    _scroll_x_offset = 0.0;
+    _scroll_y_offset = 0.0;
+    _has_scrolled = false;
 }
 
 void window_mouse_update_actions()

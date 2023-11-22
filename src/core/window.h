@@ -68,5 +68,8 @@ void window_mouse_update_actions();
 void window_mouse_set_cursor_ibeam();
 void window_mouse_set_cursor_normal();
 
+bool window_has_scrolled();
+void window_get_scroll_offsets(double* xoffset, double* yoffset);
+
 const char* window_get_clipboard();
 void window_set_clipboard(const char* clip);

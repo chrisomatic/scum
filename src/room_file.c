@@ -8,8 +8,8 @@
 
 static int __line_num;
 
-char room_files[100][32] = {0};
-char* p_room_files[100] = {0};
+char room_files[256][32] = {0};
+char* p_room_files[256] = {0};
 int  room_file_count = 0;
 
 static bool get_next_section(FILE* fp, char* section);
@@ -362,15 +362,30 @@ bool room_file_load(RoomFileData* rfd, char* path, ...)
 
 void room_file_get_all()
 {
-    memset(room_files,0,sizeof(char)*100*32);
+    memset(room_files,0,sizeof(char)*256*32);
 
     room_file_count = io_get_files_in_dir("src/rooms",".room", room_files);
 
-    for(int i = 0; i < room_file_count; ++i)
+    // insertion sort
+    int i, j;
+    char key[32];
+
+    for (i = 1; i < room_file_count; ++i) 
     {
-        p_room_files[i] = room_files[i];
-        printf("file: %s\n",p_room_files[i]);
+        memcpy(key, room_files[i], 32*sizeof(char));
+        j = i - 1;
+
+        while (j >= 0 && strncmp(key,room_files[j],32) < 0)
+        {
+            memcpy(room_files[j+1], room_files[j], 32*sizeof(char));
+            j = j - 1;
+        }
+        memcpy(room_files[j+1], key, 32*sizeof(char));
     }
+
+    // copy to pointer array
+    for(int i = 0; i < room_file_count; ++i)
+        p_room_files[i] = room_files[i];
 
     LOGI("room files count: %d", room_file_count);
     for(int i = 0; i < room_file_count; ++i)

@@ -129,6 +129,7 @@ bool rectangles_colliding(Rect* a, Rect* b);
 bool rectangles_colliding2(Rect* a, Rect* b);
 bool circles_colliding(Vector2f* p1, float r1, Vector2f* p2, float r2, float *distance);
 Vector2f limit_rect_pos(Rect* limit, Rect* rect);
+bool is_point_in_rect(Vector2f* p, Rect* rect);
 
 int angle_sector(float angle, int num_sectors);
 Vector2f angle_sector_range(int num_sectors, int sector);

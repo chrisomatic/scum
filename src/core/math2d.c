@@ -509,6 +509,12 @@ Vector2f limit_rect_pos(Rect* limit, Rect* rect)
     return adj;
 }
 
+bool is_point_in_rect(Vector2f* p, Rect* rect)
+{
+    return (p->x >= rect->x && p->x <= rect->x + rect->w)
+        && (p->y >= rect->y && p->y <= rect->y + rect->h);
+}
+
 void get_scale_transform(Matrix* mat, Vector3f* scale)
 {
     memset(mat,0,sizeof(Matrix));

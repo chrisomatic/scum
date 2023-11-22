@@ -54,7 +54,7 @@ static PlacedObject objects_prior[OBJECTS_MAX_X][OBJECTS_MAX_Y] = {0};
 
 static float ecam_pos_x = 0;
 static float ecam_pos_y = 0;
-static int ecam_pos_z = 44;
+static int ecam_pos_z = 40;
 
 static int tab_sel = 0;
 static int obj_sel = 0;
@@ -153,6 +153,201 @@ void room_editor_start()
 
     // load room files
     room_file_get_all();
+}
+
+static void draw_room_file_gui()
+{
+    static int prior_room_file_sel = 0;
+    static int room_file_sel = 0;
+    static char* filtered_room_files[256] = {0};
+    static int filtered_room_files_count = 0;
+    static char file_filter_str[32] = {0};
+    static char selected_room_name_str[100] = {0};
+    static int selected_rank = 0;
+    static int selected_room_type = 0;
+    static bool are_you_sure = false;
+
+    static Rect room_files_panel_rect = {0};
+
+    imgui_begin_panel("Files",1,1,true);
+        
+        const float big = 16.0;
+        imgui_text_sized(big,"Filter");
+
+        imgui_horizontal_begin();
+        char* buttons[] = {"*", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
+        selected_rank = imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "Rank");
+        imgui_horizontal_end();
+
+        imgui_horizontal_begin();
+        char* buttons2[] = {"All", "Empty", "Monster", "Treasure", "Boss"};
+        selected_room_type = imgui_button_select(IM_ARRAYSIZE(buttons2), buttons2, "Room Type");
+        imgui_horizontal_end();
+
+        float opacity_scale = imgui_is_mouse_inside() ? 1.0 : 0.4;
+        imgui_set_global_opacity_scale(opacity_scale);
+        imgui_horizontal_begin();
+        imgui_text_box("##FilterText",file_filter_str,IM_ARRAYSIZE(file_filter_str));
+        if(imgui_button("Clear")) memset(file_filter_str,0,32);
+        imgui_horizontal_end();
+        
+        // apply filter to selection list 
+        filtered_room_files_count = 0;
+        for(int i = 0; i < room_file_count; ++i)
+        {
+            RoomFileData rfd;
+            room_file_load(&rfd, "src/rooms/%s", p_room_files[i]); // @EFFICIENCY: Doing this every frame
+
+            bool match_rank        = selected_rank == 0 ? true : (rfd.rank == selected_rank);
+            bool match_room_type   = selected_room_type == 0 ? true : (rfd.type == selected_room_type-1);
+            bool match_filter_text = strstr(p_room_files[i],file_filter_str);
+
+            if(match_rank && match_room_type && match_filter_text)
+                filtered_room_files[filtered_room_files_count++] = p_room_files[i];
+        }
+
+        prior_room_file_sel = room_file_sel;
+        imgui_listbox(filtered_room_files, filtered_room_files_count, "##files_listbox", &room_file_sel);
+
+        if(filtered_room_files[room_file_sel])
+            snprintf(selected_room_name_str,100,"Selected: %s",filtered_room_files[room_file_sel]);
+
+        imgui_text(selected_room_name_str);
+
+        if(imgui_button("Delete"))
+            are_you_sure = true;
+
+        if(are_you_sure)
+        {
+            imgui_text("Are you sure?");
+
+            imgui_horizontal_begin();
+
+            if(imgui_button("No"))
+                are_you_sure = false;
+
+            if(imgui_button("Yes"))
+            {
+                // delete file
+                char file_name[100] = {0};
+                snprintf(file_name,100,"src/rooms/%s",filtered_room_files[room_file_sel]);
+                remove(file_name);
+                room_file_get_all();
+                are_you_sure = false;
+            }
+
+            imgui_horizontal_end();
+        }
+
+        if(prior_room_file_sel != room_file_sel)
+        {
+            clear_all();
+            RoomFileData rfd;
+            room_file_load(&rfd, "src/rooms/%s", filtered_room_files[room_file_sel]);
+
+            // set properties
+            room_type_sel = rfd.type;
+            room_rank = rfd.rank;
+
+            // tiles
+            for(int i = 0; i < rfd.size_x; ++i)
+                for(int j = 0; j < rfd.size_y; ++j)
+                    room_data.tiles[i][j] = (TileType)rfd.tiles[i][j];
+
+            for(int i = 0; i < rfd.creature_count; ++i)
+            {
+                int x = rfd.creature_locations_x[i];
+                int y = rfd.creature_locations_y[i];
+
+                objects[x][y].type     = TYPE_CREATURE;
+                objects[x][y].subtype  = rfd.creature_types[i];
+                objects[x][y].subtype2 = creature_get_image(rfd.creature_types[i]);
+            }
+
+            for(int i = 0; i < rfd.item_count; ++i)
+            {
+                int x = rfd.item_locations_x[i];
+                int y = rfd.item_locations_y[i];
+
+                objects[x][y].type     = TYPE_ITEM;
+                objects[x][y].subtype  = rfd.item_types[i];
+                objects[x][y].subtype2 = creature_get_image(rfd.item_types[i]);
+            }
+
+            for(int i = 0; i < 4; ++i)
+                room.doors[i] = rfd.doors[i];
+
+            strcpy(room_file_name, filtered_room_files[room_file_sel]);
+            remove_extension(room_file_name);
+        }
+
+        imgui_text_box("Filename##file_name_room",room_file_name,IM_ARRAYSIZE(room_file_name));
+
+        char file_path[64] = {0};
+        snprintf(file_path,63,"src/rooms/%s.room",room_file_name);
+
+        bool file_exists = io_file_exists(file_path);
+
+        if(!STR_EMPTY(room_file_name))
+        {
+            if(file_exists) imgui_horizontal_begin();
+            if(imgui_button("Save##room"))
+            {
+                // fill out room file data structure
+                RoomFileData rfd = {
+                    .version = FORMAT_VERSION,
+                    .size_x = ROOM_TILE_SIZE_X,
+                    .size_y = ROOM_TILE_SIZE_Y,
+                    .type = room_type_sel,
+                    .rank = room_rank
+                };
+
+                for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
+                    for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
+                        rfd.tiles[x][y] = (int)room_data.tiles[x][y];
+
+                for(int y = 0; y < OBJECTS_MAX_Y; ++y)
+                {
+                    for(int x = 0; x < OBJECTS_MAX_X; ++x)
+                    {
+                        PlacedObject* o = &objects[x][y];
+
+                        if(o->type == TYPE_CREATURE)
+                        {
+                            rfd.creature_types[rfd.creature_count] = o->subtype;
+                            rfd.creature_locations_x[rfd.creature_count] = x;
+                            rfd.creature_locations_y[rfd.creature_count] = y;
+                            // printf("creature (%d) %.1f,%.1f   %d,%d\n", rfd.creature_count, rfd.creature_locations_x[rfd.creature_count], rfd.creature_locations_y[rfd.creature_count],x,y);
+                            rfd.creature_count++;
+
+                        }
+                        else if(o->type == TYPE_ITEM)
+                        {
+                            rfd.item_types[rfd.item_count] = o->subtype;
+                            rfd.item_locations_x[rfd.item_count] = x;
+                            rfd.item_locations_y[rfd.item_count] = y;
+                            rfd.item_count++;
+                        }
+                    }
+                }
+
+                for(int i = 0; i < 4; ++i)
+                    rfd.doors[i] = room.doors[i];
+
+                room_file_save(&rfd, file_path);
+                room_file_get_all();
+            }
+        }
+
+        if(file_exists)
+        {
+            imgui_text_colored(0x00CC8800, "File Exists!");
+            imgui_horizontal_end();
+        }
+
+    room_files_panel_rect = imgui_end();
+
+
 }
 
 void room_editor_update(float dt)
@@ -385,6 +580,8 @@ void room_editor_draw()
     //     gfx_draw_rect(&tile_rect, COLOR_PINK, NOT_SCALED, NO_ROTATION, 0.5, true, true);
     // }
 
+    draw_room_file_gui();
+
     imgui_begin_panel("Room Editor", view_width - gui_size.w, 1, true);
 
         imgui_newline();
@@ -457,120 +654,6 @@ void room_editor_draw()
                 if(item_sel != _item_sel || interacted)
                 {
                     obj_sel = 3;
-                }
-
-                imgui_newline();
-                imgui_text_sized(big, "File");
-
-                imgui_text_box("Filename##file_name_room",room_file_name,IM_ARRAYSIZE(room_file_name));
-
-                char file_path[64] = {0};
-                snprintf(file_path,63,"src/rooms/%s.room",room_file_name);
-
-                bool file_exists = io_file_exists(file_path);
-
-                if(!STR_EMPTY(room_file_name))
-                {
-                    if(file_exists) imgui_horizontal_begin();
-                    if(imgui_button("Save##room"))
-                    {
-                        // fill out room file data structure
-                        RoomFileData rfd = {
-                            .version = FORMAT_VERSION,
-                            .size_x = ROOM_TILE_SIZE_X,
-                            .size_y = ROOM_TILE_SIZE_Y,
-                            .type = room_type_sel,
-                            .rank = room_rank
-                        };
-
-                        for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
-                            for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
-                                rfd.tiles[x][y] = (int)room_data.tiles[x][y];
-
-                        for(int y = 0; y < OBJECTS_MAX_Y; ++y)
-                        {
-                            for(int x = 0; x < OBJECTS_MAX_X; ++x)
-                            {
-                                PlacedObject* o = &objects[x][y];
-
-                                if(o->type == TYPE_CREATURE)
-                                {
-                                    rfd.creature_types[rfd.creature_count] = o->subtype;
-                                    rfd.creature_locations_x[rfd.creature_count] = x;
-                                    rfd.creature_locations_y[rfd.creature_count] = y;
-                                    // printf("creature (%d) %.1f,%.1f   %d,%d\n", rfd.creature_count, rfd.creature_locations_x[rfd.creature_count], rfd.creature_locations_y[rfd.creature_count],x,y);
-                                    rfd.creature_count++;
-
-                                }
-                                else if(o->type == TYPE_ITEM)
-                                {
-                                    rfd.item_types[rfd.item_count] = o->subtype;
-                                    rfd.item_locations_x[rfd.item_count] = x;
-                                    rfd.item_locations_y[rfd.item_count] = y;
-                                    rfd.item_count++;
-                                }
-                            }
-                        }
-
-                        for(int i = 0; i < 4; ++i)
-                            rfd.doors[i] = room.doors[i];
-
-                        room_file_save(&rfd, file_path);
-                        room_file_get_all();
-                    }
-                }
-
-                if(file_exists)
-                {
-                    imgui_text_colored(0x00CC8800, "File Exists!");
-                    imgui_horizontal_end();
-                }
-
-                static int room_file_sel = 0;
-
-                //imgui_dropdown(p_room_files, room_file_count, "existing", &room_file_sel, NULL);
-                imgui_listbox(p_room_files, room_file_count, "existing", &room_file_sel);
-
-                if(imgui_button("Load"))
-                {
-                    clear_all();
-                    RoomFileData rfd;
-                    room_file_load(&rfd, "src/rooms/%s", room_files[room_file_sel]);
-
-                    // set properties
-                    room_type_sel = rfd.type;
-                    room_rank = rfd.rank;
-
-                    // tiles
-                    for(int i = 0; i < rfd.size_x; ++i)
-                        for(int j = 0; j < rfd.size_y; ++j)
-                            room_data.tiles[i][j] = (TileType)rfd.tiles[i][j];
-
-                    for(int i = 0; i < rfd.creature_count; ++i)
-                    {
-                        int x = rfd.creature_locations_x[i];
-                        int y = rfd.creature_locations_y[i];
-
-                        objects[x][y].type     = TYPE_CREATURE;
-                        objects[x][y].subtype  = rfd.creature_types[i];
-                        objects[x][y].subtype2 = creature_get_image(rfd.creature_types[i]);
-                    }
-
-                    for(int i = 0; i < rfd.item_count; ++i)
-                    {
-                        int x = rfd.item_locations_x[i];
-                        int y = rfd.item_locations_y[i];
-
-                        objects[x][y].type     = TYPE_ITEM;
-                        objects[x][y].subtype  = rfd.item_types[i];
-                        objects[x][y].subtype2 = creature_get_image(rfd.item_types[i]);
-                    }
-
-                    for(int i = 0; i < 4; ++i)
-                        room.doors[i] = rfd.doors[i];
-
-                    strcpy(room_file_name, room_files[room_file_sel]);
-                    remove_extension(room_file_name);
                 }
             }
         }
