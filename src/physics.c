@@ -93,6 +93,22 @@ void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci)
     phys2->vel.y = v2y;
 }
 
+void phys_apply_gravity(Physics* phys, float gravity_factor, float dt)
+{
+    if(phys->pos.z > 0.0)
+        phys->vel.z -= (gravity_factor*600.0*dt);
+
+    phys->pos.z += dt*phys->vel.z;
+
+    if(phys->pos.z <= 0.0)
+    {
+        phys->pos.z = 0.0;
+        phys->vel.z = -phys->elasticity*phys->vel.z;
+        if(ABS(phys->vel.z) < 10.0)
+            phys->vel.z = 0.0;
+    }
+}
+
 void phys_apply_friction(Physics* phys, float friction, float dt)
 {
     Vector2f f = {-phys->vel.x, -phys->vel.y};

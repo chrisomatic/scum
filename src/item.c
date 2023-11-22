@@ -403,6 +403,7 @@ void item_add(ItemType type, float x, float y, uint8_t curr_room)
         pu.phys.base_friction = 8.0;
         pu.phys.radius = 8*iscale; //TEMP
         pu.phys.elasticity = 0.5;
+        pu.phys.vel.z = 200.0;
     }
 
     list_add(item_list,&pu);
@@ -418,6 +419,7 @@ void item_update(Item* pu, float dt)
     pu->phys.pos.x += dt*pu->phys.vel.x;
     pu->phys.pos.y += dt*pu->phys.vel.y;
 
+    phys_apply_gravity(&pu->phys,GRAVITY_EARTH,dt);
     phys_apply_friction(&pu->phys,pu->phys.base_friction,dt);
 }
 
@@ -563,13 +565,18 @@ void item_draw(Item* pu, bool batch)
         pu->angle += 5.0;
     }
 
+    float y = pu->phys.pos.y - 0.5*pu->phys.pos.z;
+    float shadow_scale = RANGE(0.5*(1.0 - (pu->phys.pos.z / 128.0)),0.08,0.4) *iscale;
+
     if(batch)
     {
-        gfx_sprite_batch_add(item_props[pu->type].image, sprite_index, pu->phys.pos.x, pu->phys.pos.y, color, false, iscale, pu->angle, 1.0, true, false, false);
+        gfx_sprite_batch_add(shadow_image, 0, pu->phys.pos.x, pu->phys.pos.y+pu->phys.height, color, false, shadow_scale, 0.0, 0.5, false, false, false);
+        gfx_sprite_batch_add(item_props[pu->type].image, sprite_index, pu->phys.pos.x, y, color, false, iscale, pu->angle, 1.0, true, false, false);
     }
     else
     {
-        gfx_draw_image(item_props[pu->type].image, sprite_index, pu->phys.pos.x, pu->phys.pos.y, color, iscale, pu->angle, 1.0, true, IN_WORLD);
+        gfx_draw_image(shadow_image, 0, pu->phys.pos.x, pu->phys.pos.y+pu->phys.height, color, shadow_scale, 0.0, 0.5, false, IN_WORLD);
+        gfx_draw_image(item_props[pu->type].image, sprite_index, pu->phys.pos.x, y, color, iscale, pu->angle, 1.0, true, IN_WORLD);
     }
 }
 

@@ -5,6 +5,7 @@
 #include "status_effects.h"
 
 #define MAX_STATUS_EFFECTS 10 
+#define GRAVITY_EARTH 1.0
 
 // collision position
 #define CPOSX(phys) ((phys).pos.x+(phys).coffset.x)
@@ -59,7 +60,11 @@ typedef struct
 bool phys_collision_circles(Physics* phys1, Physics* phys2, CollisionInfo* ci);
 void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci);
 
+// gravity
+void phys_apply_gravity(Physics* phys, float gravity_factor, float dt);
+
 // friction
 void phys_apply_friction_x(Physics* phys, float friction, float dt);
 void phys_apply_friction_y(Physics* phys, float friction, float dt);
 void phys_apply_friction(Physics* phys, float friction, float dt);
+

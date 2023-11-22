@@ -1011,11 +1011,7 @@ void player_update(Player* p, float dt)
     }
 
 
-    if(p->phys.pos.z > 0.0)
-    {
-        // apply gravity
-        p->phys.vel.z -= 15.0;
-    }
+    phys_apply_gravity(&p->phys,GRAVITY_EARTH,dt);
 
     bool jump = p->actions[PLAYER_ACTION_JUMP].state;
     if(p->phys.falling) jump = false;
@@ -1072,9 +1068,6 @@ void player_update(Player* p, float dt)
     // update position
     p->phys.pos.x += p->phys.vel.x*dt;
     p->phys.pos.y += p->phys.vel.y*dt;
-    p->phys.pos.z += p->phys.vel.z*dt;
-
-    p->phys.pos.z = MAX(0.0, p->phys.pos.z);
 
     update_player_boxes(p);
 

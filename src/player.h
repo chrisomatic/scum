@@ -123,6 +123,8 @@ extern int skill_choices[NUM_SKILL_CHOICES];
 extern const char* skill_text[NUM_SKILLS];
 extern float jump_vel_z;
 
+extern int shadow_image;
+
 void player_init();
 uint8_t player_get_gauntlet_count(Player* p);
 void player_drop_item(Player* p, Item* it);
