@@ -155,6 +155,8 @@ void room_editor_start()
     room_file_get_all();
 }
 
+static RoomFileData loaded_rfd = {0};
+
 static void draw_room_file_gui()
 {
     static int prior_room_file_sel = 0;
@@ -242,40 +244,39 @@ static void draw_room_file_gui()
         if(prior_room_file_sel != room_file_sel)
         {
             clear_all();
-            RoomFileData rfd;
-            room_file_load(&rfd, "src/rooms/%s", filtered_room_files[room_file_sel]);
+            room_file_load(&loaded_rfd, "src/rooms/%s", filtered_room_files[room_file_sel]);
 
             // set properties
-            room_type_sel = rfd.type;
-            room_rank = rfd.rank;
+            room_type_sel = loaded_rfd.type;
+            room_rank = loaded_rfd.rank;
 
             // tiles
-            for(int i = 0; i < rfd.size_x; ++i)
-                for(int j = 0; j < rfd.size_y; ++j)
-                    room_data.tiles[i][j] = (TileType)rfd.tiles[i][j];
+            for(int i = 0; i < loaded_rfd.size_x; ++i)
+                for(int j = 0; j < loaded_rfd.size_y; ++j)
+                    room_data.tiles[i][j] = (TileType)loaded_rfd.tiles[i][j];
 
-            for(int i = 0; i < rfd.creature_count; ++i)
+            for(int i = 0; i < loaded_rfd.creature_count; ++i)
             {
-                int x = rfd.creature_locations_x[i];
-                int y = rfd.creature_locations_y[i];
+                int x = loaded_rfd.creature_locations_x[i];
+                int y = loaded_rfd.creature_locations_y[i];
 
                 objects[x][y].type     = TYPE_CREATURE;
-                objects[x][y].subtype  = rfd.creature_types[i];
-                objects[x][y].subtype2 = creature_get_image(rfd.creature_types[i]);
+                objects[x][y].subtype  = loaded_rfd.creature_types[i];
+                objects[x][y].subtype2 = creature_get_image(loaded_rfd.creature_types[i]);
             }
 
-            for(int i = 0; i < rfd.item_count; ++i)
+            for(int i = 0; i < loaded_rfd.item_count; ++i)
             {
-                int x = rfd.item_locations_x[i];
-                int y = rfd.item_locations_y[i];
+                int x = loaded_rfd.item_locations_x[i];
+                int y = loaded_rfd.item_locations_y[i];
 
                 objects[x][y].type     = TYPE_ITEM;
-                objects[x][y].subtype  = rfd.item_types[i];
-                objects[x][y].subtype2 = creature_get_image(rfd.item_types[i]);
+                objects[x][y].subtype  = loaded_rfd.item_types[i];
+                objects[x][y].subtype2 = creature_get_image(loaded_rfd.item_types[i]);
             }
 
             for(int i = 0; i < 4; ++i)
-                room.doors[i] = rfd.doors[i];
+                room.doors[i] = loaded_rfd.doors[i];
 
             strcpy(room_file_name, filtered_room_files[room_file_sel]);
             remove_extension(room_file_name);
@@ -350,8 +351,45 @@ static void draw_room_file_gui()
 
 }
 
-void room_editor_update(float dt)
+static bool _play_room = false;
+
+bool room_editor_update(float dt)
 {
+    if(_play_room)
+    {
+        _play_room = false;
+
+        // set up room to play
+        memset(&level,0,sizeof(Level));
+        memcpy(&room_list[0],&loaded_rfd,sizeof(RoomFileData));
+        room_list_count = 1;
+
+        level.num_rooms = 1;
+        level.start.x = floor(MAX_ROOMS_GRID_X/2);
+        level.start.y = floor(MAX_ROOMS_GRID_Y/2);
+
+        printf("level start: %d %d\n",level.start.x, level.start.y);
+
+        Room* room = &level.rooms[level.start.x][level.start.y];
+
+        room->valid = true;
+        room->type  = room_list[0].type;
+        room->doors[0] = false;
+        room->doors[1] = false;
+        room->doors[2] = false;
+        room->doors[3] = false;
+        room->color = COLOR_TINT_NONE;
+        room->layout = 0;
+        room->index = level_get_room_index(level.start.x, level.start.y);
+        room->discovered = true;
+
+        generate_walls(&level);
+
+        role = ROLE_LOCAL;
+        set_game_state(GAME_STATE_PLAYING);
+        return true;
+    }
+
     gfx_clear_lines();
 
     text_list_update(text_lst, dt);
@@ -407,6 +445,8 @@ void room_editor_update(float dt)
 
 
     editor_camera_set(false);
+
+    return false;
 }
 
 void room_editor_draw()
@@ -489,7 +529,6 @@ void room_editor_draw()
 
     if(obj_sel == 0) // tiles
     {
-
         error |= out_of_room;
 
         TileType tt = tile_sel;
@@ -655,11 +694,19 @@ void room_editor_draw()
                 {
                     obj_sel = 3;
                 }
+
+                imgui_horizontal_line(2);
+
+                if(imgui_button("Play Room"))
+                {
+                    _play_room = true;
+                }
             }
         }
 
     gui_size = imgui_end();
     // gfx_draw_rect(&gui_size, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, false);
+
 
     if(!lmouse_state && !rmouse_state)
         return;

@@ -162,6 +162,7 @@ bool level_is_room_discovered_index(Level* level, int index);
 
 Vector2i get_dir_offsets(Dir door);
 void level_generate_room_outer_walls(Room* room);
+void generate_walls(Level* level);
 
 const char* get_dir_name(Dir dir);
 const char* get_tile_name(TileType tt);

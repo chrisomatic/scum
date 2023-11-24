@@ -18,11 +18,13 @@ static int creature_image_slug;
 static int creature_image_clinger;
 static int creature_image_geizer;
 static int creature_image_floater;
+static int creature_image_shambler;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
 static void creature_update_geizer(Creature* c, float dt);
 static void creature_update_floater(Creature* c, float dt);
+static void creature_update_shambler(Creature* c, float dt);
 
 static uint16_t id_counter = 0;
 
@@ -42,6 +44,7 @@ void creature_init()
     creature_image_clinger = gfx_load_image("src/img/creature_clinger.png", false, false, 32, 32);
     creature_image_geizer = gfx_load_image("src/img/creature_geizer.png", false, false, 32, 64);
     creature_image_floater = gfx_load_image("src/img/creature_floater.png", false, false, 16, 16);
+    creature_image_shambler = gfx_load_image("src/img/creature_shambler.png", false, false, 32, 64);
 }
 
 const char* creature_type_name(CreatureType type)
@@ -56,6 +59,8 @@ const char* creature_type_name(CreatureType type)
             return "Geizer";
         case CREATURE_TYPE_FLOATER:
             return "Floater";
+        case CREATURE_TYPE_SHAMBLER:
+            return "Shambler";
         default:
             return "???";
     }
@@ -73,6 +78,8 @@ int creature_get_image(CreatureType type)
             return creature_image_geizer;
         case CREATURE_TYPE_FLOATER:
             return creature_image_floater;
+        case CREATURE_TYPE_SHAMBLER:
+            return creature_image_shambler;
         default:
             return -1;
     }
@@ -115,7 +122,7 @@ void creature_init_props(Creature* c)
         case CREATURE_TYPE_GEIZER:
         {
             c->phys.speed = 0.0;
-            c->image = creature_image_geizer;
+            //c->image = creature_image_geizer;
             c->act_time_min = 3.0;
             c->act_time_max = 5.0;
             c->phys.mass = 1000.0; // so it doesn't slide when hit
@@ -139,6 +146,20 @@ void creature_init_props(Creature* c)
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = true;
             c->xp = 10;
+        } break;
+        case CREATURE_TYPE_SHAMBLER:
+        {
+            c->phys.speed = 50.0;
+            // c->image = creature_image_floater;
+            c->act_time_min = 0.02;
+            c->act_time_max = 0.05;
+            c->phys.mass = 4.0;
+            c->phys.base_friction = 15.0;
+            // c->phys.height = gfx_images[creature_image_floater].element_height;
+            c->phys.hp_max = 20.0;
+            c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
+            c->painful_touch = true;
+            c->xp = 25;
         } break;
     }
 
@@ -317,57 +338,39 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
         c.id = get_id();
         c.type = type;
 
-        if(tile)
+        switch(c.type)
         {
-            switch(c.type)
+            case CREATURE_TYPE_SLUG:
             {
-                case CREATURE_TYPE_SLUG:
-                {
-                    add_to_tile(&c, tile->x, tile->y);
-                    c.sprite_index = DIR_DOWN;
-                } break;
-                case CREATURE_TYPE_CLINGER:
-                {
-                    add_to_wall_tile(&c, tile->x, tile->y);
-                } break;
-                case CREATURE_TYPE_GEIZER:
-                {
-                    add_to_tile(&c, tile->x, tile->y);
-                    c.sprite_index = 0;
-                } break;
-                case CREATURE_TYPE_FLOATER:
-                {
-                    add_to_tile(&c, tile->x, tile->y);
-                    c.sprite_index = 0;
-                } break;
-            }
-        }
-        else
-        {
-            switch(c.type)
-            {
-                case CREATURE_TYPE_SLUG:
-                {
-                    add_to_random_tile(&c, room);
-                    c.sprite_index = DIR_DOWN;
-                } break;
-                case CREATURE_TYPE_CLINGER:
-                {
-                    add_to_random_wall_tile(&c);
-                } break;
-                case CREATURE_TYPE_GEIZER:
-                {
-                    add_to_random_tile(&c,room);
-                    c.sprite_index = 0;
-                } break;
-                case CREATURE_TYPE_FLOATER:
-                {
-                    add_to_random_tile(&c,room);
-                    c.sprite_index = 0;
-                } break;
-            }
-        }
+                if(tile) add_to_tile(&c, tile->x, tile->y);
+                else     add_to_random_tile(&c, room);
 
+                c.sprite_index = DIR_DOWN;
+            } break;
+            case CREATURE_TYPE_CLINGER:
+            {
+                if(tile) add_to_wall_tile(&c, tile->x, tile->y);
+                else     add_to_random_wall_tile(&c);
+            } break;
+            case CREATURE_TYPE_GEIZER:
+            {
+                if(tile) add_to_tile(&c, tile->x, tile->y);
+                else     add_to_random_tile(&c, room);
+                c.sprite_index = 0;
+            } break;
+            case CREATURE_TYPE_FLOATER:
+            {
+                if(tile) add_to_tile(&c, tile->x, tile->y);
+                else     add_to_random_tile(&c, room);
+                c.sprite_index = 0;
+            } break;
+            case CREATURE_TYPE_SHAMBLER:
+            {
+                if(tile) add_to_tile(&c, tile->x, tile->y);
+                else     add_to_random_tile(&c, room);
+                c.sprite_index = 0;
+            } break;
+        }
     }
 
     c.color = COLOR_TINT_NONE;
@@ -406,6 +409,9 @@ void creature_update(Creature* c, float dt)
             break;
         case CREATURE_TYPE_FLOATER:
             creature_update_floater(c,dt);
+            break;
+        case CREATURE_TYPE_SHAMBLER:
+            creature_update_shambler(c,dt);
             break;
     }
 
@@ -747,5 +753,35 @@ static void creature_update_floater(Creature* c, float dt)
         {
             ai_random_walk(c);
         }
+    }
+}
+
+static void creature_update_shambler(Creature* c, float dt)
+{
+    bool act = ai_update_action(c, dt);
+
+    if(act)
+    {
+        Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+
+        Vector2f t = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
+        normalize(&t);
+
+        if(c->phys.hp <= 0.15*c->phys.hp_max)
+        {
+            // move away from player
+            c->h = -t.x;
+            c->v = -t.y;
+
+            float angle = DEG(tan(t.y/t.x));
+            projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
+        }
+        else
+        {
+            // move toward player
+            c->h = t.x;
+            c->v = t.y;
+        }
+
     }
 }

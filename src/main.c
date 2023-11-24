@@ -763,8 +763,9 @@ void update(float dt)
 
     if(game_state == GAME_STATE_EDITOR)
     {
-        room_editor_update(dt);
-        return;
+        bool res = room_editor_update(dt);
+        if(!res)
+            return;
     }
 
     gfx_clear_lines();

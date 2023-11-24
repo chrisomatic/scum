@@ -859,72 +859,81 @@ void player_update(Player* p, float dt)
     float cx = CPOSX(p->phys);
     float cy = CPOSY(p->phys);
     Room* room = level_get_room_by_index(&level, p->curr_room);
-    Vector2i tile_coords = level_get_room_coords_by_pos(cx, cy);
-    TileType tt = level_get_tile_type(room, tile_coords.x, tile_coords.y);
 
     float mud_factor = 1.0;
-    if(tt == TILE_MUD)
+
+    if(!room)
     {
-        mud_factor = 0.4;
-        if(p->phys.pos.z > 0.0)
-            mud_factor = 0.8;
+        LOGW("Failed to load room, player curr room: %d (number of rooms in level: %d)",p->curr_room,level.num_rooms);
     }
-
-    if(tt == TILE_PIT && p->phys.pos.z == 0.0 && !p->phys.falling)
+    else
     {
+        Vector2i tile_coords = level_get_room_coords_by_pos(cx, cy);
+        TileType tt = level_get_tile_type(room, tile_coords.x, tile_coords.y);
 
-        Rect p_rect = RECT(cx, cy, 2, 2);
-        Rect pit_rect = level_get_tile_rect(tile_coords.x, tile_coords.y);
-
-        float shrink_fac = 0.7;
-        float adj_fac = (1.0 - shrink_fac) / 2.0;
-
-        t_rect = pit_rect;
-        t_rect.w = pit_rect.w*shrink_fac;
-        t_rect.h = pit_rect.h*shrink_fac;
-
-        for(int dir = 0; dir < 4; ++dir)
+        if(tt == TILE_MUD)
         {
-            Vector2i o = get_dir_offsets(dir);
-            TileType _tt = level_get_tile_type(room, tile_coords.x + o.x, tile_coords.y + o.y);
-
-            float xadj = 0;
-            float yadj = 0;
-            if(_tt == TILE_PIT)
-            {
-                if(dir == DIR_LEFT)
-                {
-                    // printf(" left");
-                    xadj = -pit_rect.w*adj_fac;
-                }
-                else if(dir == DIR_RIGHT)
-                {
-                    // printf(" right");
-                    xadj = pit_rect.w*adj_fac;
-                }
-                else if(dir == DIR_UP)
-                {
-                    // printf(" up");
-                    yadj = -pit_rect.h*adj_fac;
-                }
-                else if(dir == DIR_DOWN)
-                {
-                    // printf(" down");
-                    yadj = pit_rect.h*adj_fac;
-                }
-            }
-
-            t_rect.x += xadj/2.0;
-            t_rect.w += ABS(xadj);
-            t_rect.y += yadj/2.0;
-            t_rect.h += ABS(yadj);
+            mud_factor = 0.4;
+            if(p->phys.pos.z > 0.0)
+                mud_factor = 0.8;
         }
-        // printf("\n");
 
-        if(rectangles_colliding(&p_rect, &t_rect))
+        if(tt == TILE_PIT && p->phys.pos.z == 0.0 && !p->phys.falling)
         {
-            p->phys.falling = true;
-            player_hurt(p, 1);
+
+            Rect p_rect = RECT(cx, cy, 2, 2);
+            Rect pit_rect = level_get_tile_rect(tile_coords.x, tile_coords.y);
+
+            float shrink_fac = 0.7;
+            float adj_fac = (1.0 - shrink_fac) / 2.0;
+
+            t_rect = pit_rect;
+            t_rect.w = pit_rect.w*shrink_fac;
+            t_rect.h = pit_rect.h*shrink_fac;
+
+            for(int dir = 0; dir < 4; ++dir)
+            {
+                Vector2i o = get_dir_offsets(dir);
+                TileType _tt = level_get_tile_type(room, tile_coords.x + o.x, tile_coords.y + o.y);
+
+                float xadj = 0;
+                float yadj = 0;
+                if(_tt == TILE_PIT)
+                {
+                    if(dir == DIR_LEFT)
+                    {
+                        // printf(" left");
+                        xadj = -pit_rect.w*adj_fac;
+                    }
+                    else if(dir == DIR_RIGHT)
+                    {
+                        // printf(" right");
+                        xadj = pit_rect.w*adj_fac;
+                    }
+                    else if(dir == DIR_UP)
+                    {
+                        // printf(" up");
+                        yadj = -pit_rect.h*adj_fac;
+                    }
+                    else if(dir == DIR_DOWN)
+                    {
+                        // printf(" down");
+                        yadj = pit_rect.h*adj_fac;
+                    }
+                }
+
+                t_rect.x += xadj/2.0;
+                t_rect.w += ABS(xadj);
+                t_rect.y += yadj/2.0;
+                t_rect.h += ABS(yadj);
+            }
+            // printf("\n");
+
+            if(rectangles_colliding(&p_rect, &t_rect))
+            {
+                p->phys.falling = true;
+                player_hurt(p, 1);
+            }
         }
     }
 

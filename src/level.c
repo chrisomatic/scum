@@ -431,7 +431,7 @@ void level_generate_room_outer_walls(Room* room)
     }
 }
 
-static void generate_walls(Level* level)
+void generate_walls(Level* level)
 {
     const float wall_offset = 7.0;
     int x0 = room_area.x - room_area.w/2.0;
@@ -1109,7 +1109,7 @@ Room* level_get_room(Level* level, int x, int y)
 {
     if(!level_is_room_valid(level, x, y))
     {
-        //LOGE("Room not valid, %d %d",x,y);
+        //LOGE("Room not valid, %d %d",x,y); //@TODO: Look into any of these prints
         return NULL;
     }
     return &level->rooms[x][y];
