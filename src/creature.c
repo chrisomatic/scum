@@ -337,6 +337,8 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
 
         c.id = get_id();
         c.type = type;
+        c.target_tile.x = -1;
+        c.target_tile.y = -1;
 
         switch(c.type)
         {
@@ -551,7 +553,15 @@ void creature_draw(Creature* c, bool batch)
         Rect r = c->hitbox;
         r.x = c->spawn.x;
         r.y = c->spawn.y;
-        gfx_draw_rect(&r, COLOR_ORANGE, NOT_SCALED, NO_ROTATION, 0.2, true, true);
+        // gfx_draw_rect(&r, COLOR_ORANGE, NOT_SCALED, NO_ROTATION, 0.2, true, true);
+
+        if(ai_has_target(c))
+        {
+            Vector2f pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
+            r.x = pos.x;
+            r.y = pos.y;
+            gfx_draw_rect(&r, COLOR_ORANGE, NOT_SCALED, NO_ROTATION, 0.2, true, true);
+        }
     }
 }
 
@@ -652,6 +662,16 @@ static void creature_update_slug(Creature* c, float dt)
 
             Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
             c->target_tile = level_get_room_coords_by_pos(p->phys.pos.x, p->phys.pos.y);
+
+            float x0 = room_area.x - room_area.w/2.0;
+            float y0 = room_area.y - room_area.h/2.0;
+            printf("   room x0,y0: %.0f, %.0f\n", x0, y0);
+
+            printf("set target to tile: %d, %d\n", c->target_tile.x, c->target_tile.y);
+            printf("   target pos: %.0f, %.0f  (%.0f, %.0f)\n", p->phys.pos.x-x0, p->phys.pos.y-y0  , p->phys.pos.x, p->phys.pos.y);
+
+            Vector2f pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
+            printf("   tile   pos: %.0f, %.0f  (%.0f, %.0f)\n", pos.x-x0, pos.y-y0, pos.x, pos.y);
 
 #if 0
             if(ai_flip_coin())

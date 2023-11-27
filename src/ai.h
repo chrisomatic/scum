@@ -75,12 +75,13 @@ bool ai_move_to_target(Creature* c,float dt)
     Vector2f target_pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
     Vector2f v = {target_pos.x - c->phys.pos.x, target_pos.y - c->phys.pos.y};
 
+    bool at_target = (ABS(v.x) < 1.0 && ABS(v.y) < 1.0);
+
     normalize(&v);
 
     c->h = v.x;
     c->v = v.y;
 
-    bool at_target = (ABS(v.x) < 1.0 && ABS(v.y) < 1.0);
 
     return at_target;
 

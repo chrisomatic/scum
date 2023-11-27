@@ -83,6 +83,12 @@ void editor_draw()
                 Vector2f mc = level_get_pos_by_room_coords(tc.x, tc.y);
                 imgui_text("Back to Mouse coords: %f, %f",mc.x,mc.y);
 
+                // int xd = (tc.x+1) * TILE_SIZE;
+                // int yd = (tc.y+1) * TILE_SIZE;
+                // float _x = xd - (TILE_SIZE/2.0);
+                // float _y = yd - (TILE_SIZE/2.0);
+                // imgui_text("MOUSE: %.0f, %.0f",_x,_y);
+
                 imgui_text("  Type: %s (%d)", get_tile_name(tt), tt);
 
                 imgui_text("Doors");
