@@ -1163,6 +1163,28 @@ Vector2i get_dir_offsets(Dir door)
     return o;
 }
 
+// @TODO: Implement this
+Dir get_dir_from_vel(float vel_x, float vel_y)
+{
+    /*
+    Vector2i o = {0};
+
+    switch(door)
+    {
+        case DIR_UP:    o.y = -1; break;
+        case DIR_DOWN:  o.y =  1; break;
+        case DIR_LEFT:  o.x = -1; break;
+        case DIR_RIGHT: o.x =  1; break;
+        case DIR_UP_RIGHT:   o.x =  1; o.y = -1; break;
+        case DIR_DOWN_LEFT:  o.x = -1; o.y =  1; break;
+        case DIR_DOWN_RIGHT: o.x =  1; o.y =  1; break;
+        case DIR_UP_LEFT:    o.x = -1; o.y = -1; break;
+        default: break;
+    }
+    return o;
+    */
+}
+
 const char* get_dir_name(Dir dir)
 {
     switch(dir)

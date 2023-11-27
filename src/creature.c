@@ -396,6 +396,8 @@ void creature_update(Creature* c, float dt)
     if(!is_any_player_room(c->curr_room))
         return;
 
+    c->curr_tile = level_get_room_coords_by_pos(CPOSX(c->phys), CPOSY(c->phys));
+
     switch(c->type)
     {
         case CREATURE_TYPE_SLUG:
@@ -626,16 +628,34 @@ static Player* get_nearest_player(float x, float y)
 
 static void creature_update_slug(Creature* c, float dt)
 {
-    bool act = ai_update_action(c, dt);
-
-    if(act)
+    if(ai_has_target(c))
     {
-        if(ai_flip_coin())
+        bool at_target = ai_move_to_target(c,dt);
+        if(at_target)
+            ai_clear_target(c);
+    }
+    else
+    {
+        bool act = ai_update_action(c, dt);
+
+        if(act)
         {
-            ai_random_walk(c);
+            Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+            c->target_tile = level_get_room_coords_by_pos(p->phys.pos.x, p->phys.pos.y);
+            /*
+            if(ai_flip_coin())
+            {
+                ai_random_walk(c);
+            }
+            else
+            {
+                ai_set_target(c,1,2);
+            }
+            */
         }
     }
 }
+
 static void creature_fire_projectile_dir(Creature* c, Dir dir)
 {
     if(dir == DIR_UP)

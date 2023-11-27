@@ -42,11 +42,15 @@ typedef struct
     bool damaged;
     float damaged_time;
 
+    // AI
     float action_counter;
     float action_counter_max;
 
     float act_time_min;
     float act_time_max;
+
+    Vector2i curr_tile;
+    Vector2i target_tile;
 
     int xp;
 
