@@ -359,6 +359,9 @@ bool room_editor_update(float dt)
     {
         _play_room = false;
 
+        creature_clear_all();
+        item_clear_all();
+
         // set up room to play
         memset(&level,0,sizeof(Level));
         memcpy(&room_list[0],&loaded_rfd,sizeof(RoomFileData));
@@ -384,6 +387,21 @@ bool room_editor_update(float dt)
         room->discovered = true;
 
         generate_walls(&level);
+        
+        // add monsters
+        for(int i = 0; i < loaded_rfd.creature_count; ++i)
+        {
+            Vector2i g = {loaded_rfd.creature_locations_x[i], loaded_rfd.creature_locations_y[i]};
+            g.x--; g.y--;
+            Creature* c = creature_add(room, loaded_rfd.creature_types[i], &g, NULL);
+        }
+
+        // add items
+        for(int i = 0; i < loaded_rfd.item_count; ++i)
+        {
+            Vector2f pos = level_get_pos_by_room_coords(loaded_rfd.item_locations_x[i], loaded_rfd.item_locations_y[i]);
+            item_add(loaded_rfd.item_types[i], pos.x, pos.y, room->index);
+        }
 
         role = ROLE_LOCAL;
         set_game_state(GAME_STATE_PLAYING);
