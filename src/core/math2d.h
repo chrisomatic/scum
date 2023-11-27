@@ -106,6 +106,7 @@ float magn(Vector3f v);
 float magn2f(float x, float y);
 float magn_fast(Vector2f v);
 void normalize(Vector2f* v);
+void normalize3f(Vector3f* v);
 void get_scale_transform(Matrix* mat, Vector3f* scale);
 void get_rotation_transform(Matrix* mat, Vector3f* rotation);
 void get_translate_transform(Matrix* mat, Vector3f* position);

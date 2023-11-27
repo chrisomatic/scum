@@ -432,6 +432,13 @@ void creature_update(Creature* c, float dt)
         c->phys.vel.x += dt*h_speed;
         c->phys.vel.y += dt*v_speed;
     }
+    else
+    {
+        // cap at speed
+        normalize3f(&c->phys.vel);
+        c->phys.vel.x *= speed;
+        c->phys.vel.y *= speed;
+    }
 
     c->color = c->damaged ? COLOR_RED : gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, c->phys.speed_factor);
 
@@ -442,8 +449,10 @@ void creature_update(Creature* c, float dt)
             c->damaged = false;
     }
 
-    if(!moving || vel_magn > speed)
+    if(!moving)
+    {
         phys_apply_friction(&c->phys,c->phys.base_friction,dt);
+    }
 
     c->phys.pos.x += dt*c->phys.vel.x;
     c->phys.pos.y += dt*c->phys.vel.y;
@@ -640,9 +649,11 @@ static void creature_update_slug(Creature* c, float dt)
 
         if(act)
         {
+
             Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
             c->target_tile = level_get_room_coords_by_pos(p->phys.pos.x, p->phys.pos.y);
-            /*
+
+#if 0
             if(ai_flip_coin())
             {
                 ai_random_walk(c);
@@ -651,7 +662,7 @@ static void creature_update_slug(Creature* c, float dt)
             {
                 ai_set_target(c,1,2);
             }
-            */
+#endif
         }
     }
 }

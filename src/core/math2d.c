@@ -243,6 +243,16 @@ void normalize(Vector2f* v)
     v->y *= r;
 }
 
+void normalize3f(Vector3f* v)
+{
+    float magn_squared = v->x*v->x + v->y*v->y + v->z*v->z;
+    float r = Q_rsqrt(magn_squared);
+
+    v->x *= r;
+    v->y *= r;
+    v->z *= r;
+}
+
 void print_matrix(Matrix* mat)
 {
     printf("Matrix:\n");
