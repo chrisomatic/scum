@@ -132,6 +132,8 @@ extern int room_list_count;
 extern int dungeon_image;
 
 void level_init();
+void level_load_rooms();
+
 // void level_generate(Level* level, unsigned int seed, int rank);
 Level level_generate(unsigned int seed, int rank);
 

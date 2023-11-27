@@ -470,51 +470,54 @@ void generate_walls(Level* level)
                                     default: break;
                                 }
 
-                                if(check_tile != TILE_PIT && check_tile != TILE_BOULDER)
+                                if(tt == TILE_PIT && check_tile == TILE_PIT)
+                                    continue;
+
+                                if(tt == TILE_BOULDER && check_tile == TILE_BOULDER)
+                                    continue;
+
+                                Wall* w = &room->walls[room->wall_count++];
+
+                                if(tt == TILE_PIT)
                                 {
-                                    Wall* w = &room->walls[room->wall_count++];
-
-                                    if(tt == TILE_PIT)
-                                    {
-                                        w->type = WALL_TYPE_PIT;
-                                    }
-                                    else if(tt == TILE_BOULDER)
-                                    {
-                                        w->type = WALL_TYPE_BLOCK;
-                                    }
-
-                                    // start at top left
-                                    w->p0.x = x0+TILE_SIZE*(ri+1);
-                                    w->p0.y = y0+TILE_SIZE*(rj+1);
-
-                                    w->p1.x = x0+TILE_SIZE*(ri+1);
-                                    w->p1.y = y0+TILE_SIZE*(rj+1);
-
-                                    switch(dir)
-                                    {
-                                        case DIR_UP: // top
-                                            w->p1.x += TILE_SIZE;
-                                            w->dir = DIR_UP;
-                                        break;
-                                        case DIR_RIGHT: // right
-                                            w->p0.x += TILE_SIZE;
-                                            w->p1.x += TILE_SIZE;
-                                            w->p1.y += TILE_SIZE;
-                                            w->dir = DIR_RIGHT;
-                                        break;
-                                        case DIR_DOWN: // bottom
-                                            w->p0.y += TILE_SIZE;
-                                            w->p1.x += TILE_SIZE;
-                                            w->p1.y += TILE_SIZE;
-                                            w->dir = DIR_DOWN;
-                                        break;
-                                        case DIR_LEFT: // left
-                                            w->p1.y += TILE_SIZE;
-                                            w->dir = DIR_LEFT;
-                                        break;
-                                    }
-
+                                    w->type = WALL_TYPE_PIT;
                                 }
+                                else if(tt == TILE_BOULDER)
+                                {
+                                    w->type = WALL_TYPE_BLOCK;
+                                }
+
+                                // start at top left
+                                w->p0.x = x0+TILE_SIZE*(ri+1);
+                                w->p0.y = y0+TILE_SIZE*(rj+1);
+
+                                w->p1.x = x0+TILE_SIZE*(ri+1);
+                                w->p1.y = y0+TILE_SIZE*(rj+1);
+
+                                switch(dir)
+                                {
+                                    case DIR_UP: // top
+                                        w->p1.x += TILE_SIZE;
+                                        w->dir = DIR_UP;
+                                    break;
+                                    case DIR_RIGHT: // right
+                                        w->p0.x += TILE_SIZE;
+                                        w->p1.x += TILE_SIZE;
+                                        w->p1.y += TILE_SIZE;
+                                        w->dir = DIR_RIGHT;
+                                    break;
+                                    case DIR_DOWN: // bottom
+                                        w->p0.y += TILE_SIZE;
+                                        w->p1.x += TILE_SIZE;
+                                        w->p1.y += TILE_SIZE;
+                                        w->dir = DIR_DOWN;
+                                    break;
+                                    case DIR_LEFT: // left
+                                        w->p1.y += TILE_SIZE;
+                                        w->dir = DIR_LEFT;
+                                    break;
+                                }
+
                             }
                         }
                     }
@@ -522,68 +525,6 @@ void generate_walls(Level* level)
             }
         }
     }
-}
-
-static bool level_load_room_list()
-{
-    FILE* fp = fopen("src/rooms/rooms.txt", "r");
-
-    if(!fp)
-        return false;
-
-    RoomFileData* room_data = &room_list[0];
-
-    int tile_x = 0;
-    int tile_y = 0;
-
-    int pc1 = 0, pc2 = 0;
-    int c = 0;
-
-    room_list_count = 0;
-    for(;;)
-    {
-        pc2 = pc1;
-        pc1 = c;
-        c = fgetc(fp);
-
-        if(c == EOF)
-            break;
-
-        if(c == '#')
-        {
-            // ignore
-            continue;
-        }
-
-        if(c == '\n')
-        {
-            if(pc2 != '#')
-                tile_y++;
-
-            tile_x = 0;
-
-            if(tile_y >= ROOM_TILE_SIZE_Y)
-            {
-                room_data++;
-                room_list_count++;
-                tile_y = 0;
-            }
-            continue;
-        }
-
-        TileType* tile = (TileType*)&room_data->tiles[tile_x++][tile_y];
-
-        switch(c)
-        {
-            case '.': *tile = TILE_FLOOR; break;
-            case 'p': *tile = TILE_PIT; break;
-            case 'b': *tile = TILE_BOULDER; break;
-            case 'm': *tile = TILE_MUD; break;
-            default: break;
-        }
-    }
-
-    return true;
 }
 
 void level_print_room(Room* room)
@@ -738,14 +679,20 @@ void level_init()
 {
     if(dungeon_image > 0) return;
 
-    //level_load_room_list();
     dungeon_image = gfx_load_image("src/img/dungeon_set.png", false, true, TILE_SIZE, TILE_SIZE);
 
+    level_load_rooms();
+}
+
+void level_load_rooms()
+{
     room_file_get_all();
+
+    room_list_count = 0;
 
     for(int i = 0; i < room_file_count; ++i)
     {
-        printf("i: %d, Loading room %s\n",i, p_room_files[i]);
+        // printf("i: %d, Loading room %s\n",i, p_room_files[i]);
 
         bool success = room_file_load(&room_list[room_list_count], "src/rooms/%s", p_room_files[i]);
         if(!success)
@@ -753,7 +700,8 @@ void level_init()
 
         room_list_count++;
     }
-    printf("room list count: %d\n",room_list_count);
+    // printf("room list count: %d\n",room_list_count);
+
 }
 
 void level_print(Level* level)

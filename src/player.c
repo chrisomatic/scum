@@ -898,7 +898,7 @@ void player_update(Player* p, float dt)
 
                 float xadj = 0;
                 float yadj = 0;
-                if(_tt == TILE_PIT)
+                if(_tt == TILE_PIT || _tt == TILE_BOULDER || tile_coords.x == 0 || tile_coords.y == 0 || tile_coords.x == ROOM_TILE_SIZE_X-1 || tile_coords.y == ROOM_TILE_SIZE_Y-1)
                 {
                     if(dir == DIR_LEFT)
                     {

@@ -221,6 +221,7 @@ void set_game_state(GameState state)
             } break;
             case GAME_STATE_MENU:
             {
+                level_load_rooms();
                 net_client_disconnect();
                 set_menu_keys();
             } break;
