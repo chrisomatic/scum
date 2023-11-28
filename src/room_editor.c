@@ -198,7 +198,7 @@ static void draw_room_file_gui()
         for(int i = 0; i < room_file_count; ++i)
         {
             RoomFileData rfd;
-            room_file_load(&rfd, "src/rooms/%s", p_room_files[i]); // @EFFICIENCY: Doing this every frame
+            room_file_load(&rfd, false, "src/rooms/%s", p_room_files[i]); // @EFFICIENCY: Doing this every frame
 
             bool match_rank        = selected_rank == 0 ? true : (rfd.rank == selected_rank);
             bool match_room_type   = selected_room_type == 0 ? true : (rfd.type == selected_room_type-1);
@@ -244,7 +244,7 @@ static void draw_room_file_gui()
         if(prior_room_file_sel != room_file_sel)
         {
             clear_all();
-            room_file_load(&loaded_rfd, "src/rooms/%s", filtered_room_files[room_file_sel]);
+            room_file_load(&loaded_rfd, true, "src/rooms/%s", filtered_room_files[room_file_sel]);
 
             // set properties
             room_type_sel = loaded_rfd.type;
@@ -255,6 +255,7 @@ static void draw_room_file_gui()
                 for(int j = 0; j < loaded_rfd.size_y; ++j)
                     room_data.tiles[i][j] = (TileType)loaded_rfd.tiles[i][j];
 
+            const int adj = 0;
             for(int i = 0; i < loaded_rfd.creature_count; ++i)
             {
                 int x = loaded_rfd.creature_locations_x[i];
@@ -392,14 +393,14 @@ bool room_editor_update(float dt)
         for(int i = 0; i < loaded_rfd.creature_count; ++i)
         {
             Vector2i g = {loaded_rfd.creature_locations_x[i], loaded_rfd.creature_locations_y[i]};
-            g.x--; g.y--;
+            g.x--; g.y--; // @convert room objects to tile grid coordinates
             Creature* c = creature_add(room, loaded_rfd.creature_types[i], &g, NULL);
         }
 
         // add items
         for(int i = 0; i < loaded_rfd.item_count; ++i)
         {
-            Vector2f pos = level_get_pos_by_room_coords(loaded_rfd.item_locations_x[i], loaded_rfd.item_locations_y[i]);
+            Vector2f pos = level_get_pos_by_room_coords(loaded_rfd.item_locations_x[i]-1, loaded_rfd.item_locations_y[i]-1); // @convert room objects to tile grid coordinates
             item_add(loaded_rfd.item_types[i], pos.x, pos.y, room->index);
         }
 

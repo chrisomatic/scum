@@ -105,7 +105,7 @@ void room_file_save(RoomFileData* rfd, char* path, ...)
     }
 }
 
-bool room_file_load(RoomFileData* rfd, char* path, ...)
+bool room_file_load(RoomFileData* rfd, bool print_errors, char* path, ...)
 {
     va_list args;
     va_start(args, path);
@@ -131,7 +131,7 @@ bool room_file_load(RoomFileData* rfd, char* path, ...)
         int matches = sscanf(line,"[%d]",&rfd->version);
         if(matches == 0)
         {
-            LOGW("Failed to room file version");
+            if(print_errors) LOGW("Failed to room file version");
         }
     }
 
@@ -212,7 +212,7 @@ bool room_file_load(RoomFileData* rfd, char* path, ...)
                     if(num < 0 || num >= TILE_MAX)
                     {
 
-                        LOGW("Failed to load tile, out of range (index: %d); line_num: %d",num,__line_num);
+                        if(print_errors) LOGW("Failed to load tile, out of range (index: %d); line_num: %d",num,__line_num);
                         continue;
                     }
 
@@ -255,18 +255,18 @@ bool room_file_load(RoomFileData* rfd, char* path, ...)
 
                 if(index < 0 || index >= CREATURE_TYPE_MAX)
                 {
-                    LOGW("Failed to load creature, out of range (index: %d); line_num: %d",index, __line_num);
+                    if(print_errors) LOGW("Failed to load creature, out of range (index: %d); line_num: %d",index, __line_num);
                     continue;
                 }
 
                 if(x < 0 || x > OBJECTS_MAX_X)
                 {
-                    LOGW("Failed to load creature, x coordinate (%d), out of range (index: %d); line_num: %d", x, index, __line_num);
+                    if(print_errors) LOGW("Failed to load creature, x coordinate (%d), out of range (index: %d); line_num: %d", x, index, __line_num);
                     continue;
                 }
                 if(y < 0 || y > OBJECTS_MAX_Y)
                 {
-                    LOGW("Failed to load creature, y coordinate (%d), out of range (index: %d); line_num: %d", y, index, __line_num);
+                    if(print_errors) LOGW("Failed to load creature, y coordinate (%d), out of range (index: %d); line_num: %d", y, index, __line_num);
                     continue;
                 }
 
@@ -314,18 +314,18 @@ bool room_file_load(RoomFileData* rfd, char* path, ...)
 
                 if(index < 0 || index >= ITEM_MAX)
                 {
-                    LOGW("Failed to load item, out of range (index: %d); line_num: %d",index, __line_num);
+                    if(print_errors) LOGW("Failed to load item, out of range (index: %d); line_num: %d",index, __line_num);
                     continue;
                 }
 
                 if(x < 0 || x > OBJECTS_MAX_X)
                 {
-                    LOGW("Failed to load item, x coordinate (%d), out of range (index: %d); line_num: %d", x, index, __line_num);
+                    if(print_errors) LOGW("Failed to load item, x coordinate (%d), out of range (index: %d); line_num: %d", x, index, __line_num);
                     continue;
                 }
                 if(y < 0 || y > OBJECTS_MAX_Y)
                 {
-                    LOGW("Failed to load item, y coordinate (%d), out of range (index: %d); line_num: %d", y, index, __line_num);
+                    if(print_errors) LOGW("Failed to load item, y coordinate (%d), out of range (index: %d); line_num: %d", y, index, __line_num);
                     continue;
                 }
 
@@ -351,7 +351,7 @@ bool room_file_load(RoomFileData* rfd, char* path, ...)
         }
         else
         {
-            LOGW("Unhandled Section: %s; line_num: %d",section, __line_num);
+            if(print_errors) LOGW("Unhandled Section: %s; line_num: %d",section, __line_num);
         }
     }
 

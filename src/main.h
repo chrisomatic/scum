@@ -111,6 +111,7 @@ extern float mx, my;
 extern float wmx, wmy;
 
 extern Rect room_area;
+extern Rect floor_area;
 extern Rect player_area;
 extern Rect camera_limit;
 extern Rect margin_left;
