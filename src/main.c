@@ -23,6 +23,7 @@
 #include "status_effects.h"
 #include "room_editor.h"
 #include "text_list.h"
+#include "skills.h"
 
 // =========================
 // Global Vars
@@ -523,6 +524,7 @@ void start_server()
     init_areas();
 
     gfx_image_init();
+    skills_init();
     player_init();
     creature_init();
     decal_init();
@@ -634,6 +636,9 @@ void init()
 
     LOGI(" - Status Effects.");
     status_effects_init();
+
+    LOGI(" - Skills.");
+    skills_init();
 
     LOGI(" - Player.");
     player = &players[0];

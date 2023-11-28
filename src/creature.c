@@ -651,10 +651,21 @@ static void creature_update_slug(Creature* c, float dt)
     {
         bool at_target = ai_move_to_target(c,dt);
         if(at_target)
+        {
             ai_clear_target(c);
+        }
     }
     else
     {
+        Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+        c->target_tile = level_get_room_coords_by_pos(p->phys.pos.x, p->phys.pos.y);
+
+        //float x0 = room_area.x - room_area.w/2.0;
+        //float y0 = room_area.y - room_area.h/2.0;
+        //Vector2f pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
+    }
+
+#if 0
         bool act = ai_update_action(c, dt);
 
         if(act)
@@ -673,7 +684,6 @@ static void creature_update_slug(Creature* c, float dt)
             Vector2f pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
             printf("   tile   pos: %.0f, %.0f  (%.0f, %.0f)\n", pos.x-x0, pos.y-y0, pos.x, pos.y);
 
-#if 0
             if(ai_flip_coin())
             {
                 ai_random_walk(c);
@@ -682,9 +692,9 @@ static void creature_update_slug(Creature* c, float dt)
             {
                 ai_set_target(c,1,2);
             }
-#endif
         }
     }
+#endif
 }
 
 static void creature_fire_projectile_dir(Creature* c, Dir dir)

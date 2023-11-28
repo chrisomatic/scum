@@ -30,6 +30,7 @@ gcc core/gfx.c \
     status_effects.c \
     room_editor.c \
     room_file.c \
+    skills.c \
     main.c \
     -Icore \
     -lglfw -lGLU -lGLEW -lGL -lm \

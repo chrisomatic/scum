@@ -66,9 +66,9 @@ void player_init()
         p->phys.pos.x = CENTER_X;
         p->phys.pos.y = CENTER_Y;
 
-        p->phys.speed = 1000.0;
+        p->phys.speed = 700.0;
         p->phys.speed_factor = 1.0;
-        p->phys.max_velocity = 180.0;
+        p->phys.max_velocity = 120.0;
         p->phys.base_friction = 15.0;
         p->phys.vel.x = 0.0;
         p->phys.vel.y = 0.0;
@@ -126,6 +126,12 @@ void player_init()
             // if(j == 0) p->gauntlet[j].type = item_get_random_gem();  // TEST
         }
         p->gauntlet_item.type = ITEM_NONE;
+
+        p->periodic_shot_counter = 0.0;
+
+        // @TEMP
+        //p->skills[0] = &skill_list[1];
+        p->skill_count = 0;
     }
 }
 
@@ -718,6 +724,24 @@ static void handle_room_collision(Player* p)
     }
 }
 
+void player_handle_skills(Player* p, float dt)
+{
+    for(int i = 0; i < p->skill_count; ++i)
+    {
+        Skill* s = p->skills[i];
+        if(!s)
+        {
+            LOGW("Skill is null!");
+            continue;
+        }
+
+        if(s->periodic)
+        {
+            s->func(s,p,dt);
+        }
+    }
+}
+
 void player_update(Player* p, float dt)
 {
     if(!p->active) return;
@@ -752,7 +776,6 @@ void player_update(Player* p, float dt)
 
     if(p->new_levels == 0)
     {
-
         if(tabbed)
         {
             if(rshift)
@@ -843,6 +866,16 @@ void player_update(Player* p, float dt)
 
         if(p->actions[PLAYER_ACTION_ACTIVATE].toggled_on)
         {
+
+            p->skills[p->skill_count] = &skill_list[skill_choices[skill_selection]];
+
+            if(!p->skills[p->skill_count]->periodic)
+            {
+                p->skills[p->skill_count]->func(p->skills[p->skill_count],p,dt);
+            }
+
+            p->skill_count++;
+
             p->new_levels--;
             if(p->new_levels > 0)
             {
@@ -851,6 +884,8 @@ void player_update(Player* p, float dt)
         }
 
     }
+
+    player_handle_skills(p,dt);
 
     // apply gem effects
     memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
@@ -1525,13 +1560,13 @@ void draw_gauntlet()
 void randomize_skill_choices()
 {
     skill_selection = 0;
-    int idx = rand() % NUM_SKILLS;
+    int idx = rand() % skill_list_count;
     skill_choices[0] = idx;
-    for(int i = 1; i < NUM_SKILLS; ++i)
+    for(int i = 1; i < 3; ++i)
     {
         for(;;)
         {
-            idx = rand() % NUM_SKILLS;
+            idx = rand() % skill_list_count;
             bool check = false;
             for(int j = 0; j < i; ++j)
             {
@@ -1551,7 +1586,6 @@ void draw_skill_selection()
 {
     if(player->new_levels == 0) return;
 
-
     float scale = 0.4 * ascale;
     Vector2f size = gfx_string_get_size(scale, "|");
 
@@ -1566,7 +1600,7 @@ void draw_skill_selection()
     {
         uint32_t color = COLOR_WHITE;
         if(i == skill_selection) color = COLOR_BLUE;
-        gfx_draw_string(x, y, color, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill_text[skill_choices[i]]);
+        gfx_draw_string(x, y, color, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill_list[skill_choices[i]].name);
         y += pad + size.y;
     }
     message_small_set(0.1, "Press e to select skill (skill points: %d)", player->new_levels);

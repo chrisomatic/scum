@@ -5,6 +5,7 @@
 #include "gfx.h"
 #include "net.h"
 #include "item.h"
+#include "skills.h"
 #include "projectile.h"
 
 #define BOI_SHOOTING    1
@@ -17,6 +18,7 @@
 #define SPRITE_RIGHT 12
 
 #define PLAYER_NAME_MAX 16
+#define PLAYER_MAX_SKILLS 16
 
 #define PLAYER_SWAPPING_GEM(p) (p->gauntlet_item.type != ITEM_NONE)
 
@@ -72,7 +74,11 @@ typedef struct
     uint8_t gauntlet_slots;
     Item gauntlet[PLAYER_GAUNTLET_MAX];
 
+    Skill* skills[PLAYER_MAX_SKILLS];
+    int skill_count;
+
     ProjectileDef proj_def;
+    ProjectileDef proj_discharge;
 
     GFXAnimation anim;
 
@@ -99,6 +105,10 @@ typedef struct
 
     Item* highlighted_item;
     int highlighted_index;
+
+    // periodic shot
+    float periodic_shot_counter;
+    float periodic_shot_counter_max;
 
     // Networking
     NetPlayerInput input;
