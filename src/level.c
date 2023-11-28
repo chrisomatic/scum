@@ -275,7 +275,6 @@ void level_generate_room_outer_walls(Room* room)
     wall_top->p1.y = wall_top->p0.y;
     wall_top->dir = DIR_DOWN;
     wall_top->type = WALL_TYPE_INNER;
-    // wall_top->is_innner_wall = true;
     room->wall_count++;
 
     Wall* wall_right = &room->walls[room->wall_count];
@@ -285,7 +284,6 @@ void level_generate_room_outer_walls(Room* room)
     wall_right->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2)+wall_offset;
     wall_right->dir = DIR_LEFT;
     wall_right->type = WALL_TYPE_INNER;
-    // wall_right->is_innner_wall = true;
     room->wall_count++;
 
     Wall* wall_bottom = &room->walls[room->wall_count];
@@ -295,7 +293,6 @@ void level_generate_room_outer_walls(Room* room)
     wall_bottom->p1.y = wall_bottom->p0.y;
     wall_bottom->dir = DIR_UP;
     wall_bottom->type = WALL_TYPE_INNER;
-    // wall_bottom->is_innner_wall = true;
     room->wall_count++;
 
     Wall* wall_left = &room->walls[room->wall_count];
@@ -305,7 +302,6 @@ void level_generate_room_outer_walls(Room* room)
     wall_left->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2)+wall_offset;
     wall_left->dir = DIR_RIGHT;
     wall_left->type = WALL_TYPE_INNER;
-    // wall_left->is_innner_wall = true;
     room->wall_count++;
 
     // outer walls
@@ -315,7 +311,7 @@ void level_generate_room_outer_walls(Room* room)
     wall_outer_top->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2);
     wall_outer_top->p1.y = wall_outer_top->p0.y;
     wall_outer_top->type = WALL_TYPE_OUTER;
-    // wall_outer_top->dir = DIR_DOWN;
+    wall_outer_top->dir = DIR_DOWN;
     room->wall_count++;
 
     Wall* wall_outer_right = &room->walls[room->wall_count];

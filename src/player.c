@@ -705,7 +705,7 @@ static void handle_room_collision(Player* p)
         float d = dist(CPOSX(p->phys), CPOSY(p->phys), door_point.x, door_point.y);
 
         bool colliding_with_door = (d < p->phys.radius);
-        if(colliding_with_door && !room->doors_locked && p->new_levels == 0)
+        if(colliding_with_door && !room->doors_locked && p->new_levels == 0 && p->phys.pos.z == 0.0)
         {
             bool k = false;
             k |= i == DIR_UP && p->actions[PLAYER_ACTION_UP].state;

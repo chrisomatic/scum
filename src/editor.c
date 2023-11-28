@@ -151,8 +151,11 @@ void editor_draw()
 
                 if(imgui_button("Add XP"))
                 {
-                    player_add_xp(p, 10);
-                    randomize_skill_choices();
+                    if(p->new_levels == 0)
+                        randomize_skill_choices();
+
+                    player_add_xp(p, 100);
+
                 }
 
                 if(imgui_button("Add Gem"))

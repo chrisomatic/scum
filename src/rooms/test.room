@@ -4,7 +4,7 @@
 13,7
 
 ; Room Type
-1   # Monster
+0   # Empty
 
 ; Room Rank
 0
@@ -30,6 +30,7 @@ Slug
 Clinger
 Geizer
 Floater
+Shambler
 
 ; Creatures
 

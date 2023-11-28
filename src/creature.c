@@ -674,15 +674,13 @@ static void creature_update_slug(Creature* c, float dt)
             Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
             c->target_tile = level_get_room_coords_by_pos(p->phys.pos.x, p->phys.pos.y);
 
-            float x0 = room_area.x - room_area.w/2.0;
-            float y0 = room_area.y - room_area.h/2.0;
-            printf("   room x0,y0: %.0f, %.0f\n", x0, y0);
-
-            printf("set target to tile: %d, %d\n", c->target_tile.x, c->target_tile.y);
-            printf("   target pos: %.0f, %.0f  (%.0f, %.0f)\n", p->phys.pos.x-x0, p->phys.pos.y-y0  , p->phys.pos.x, p->phys.pos.y);
-
-            Vector2f pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
-            printf("   tile   pos: %.0f, %.0f  (%.0f, %.0f)\n", pos.x-x0, pos.y-y0, pos.x, pos.y);
+            // float x0 = room_area.x - room_area.w/2.0;
+            // float y0 = room_area.y - room_area.h/2.0;
+            // printf("   room x0,y0: %.0f, %.0f\n", x0, y0);
+            // printf("set target to tile: %d, %d\n", c->target_tile.x, c->target_tile.y);
+            // printf("   target pos: %.0f, %.0f  (%.0f, %.0f)\n", p->phys.pos.x-x0, p->phys.pos.y-y0  , p->phys.pos.x, p->phys.pos.y);
+            // Vector2f pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
+            // printf("   tile   pos: %.0f, %.0f  (%.0f, %.0f)\n", pos.x-x0, pos.y-y0, pos.x, pos.y);
 
             if(ai_flip_coin())
             {
