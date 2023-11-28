@@ -18,7 +18,7 @@
 #define SPRITE_RIGHT 12
 
 #define PLAYER_NAME_MAX 16
-#define PLAYER_MAX_SKILLS 16
+#define PLAYER_MAX_SKILLS 100
 
 #define PLAYER_SWAPPING_GEM(p) (p->gauntlet_item.type != ITEM_NONE)
 

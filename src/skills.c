@@ -9,14 +9,10 @@ int skill_list_count = 0;
 
 static void skills_rabbits_foot(void* skill, void* player, float dt)
 {
-                DEBUG();
     Player* p = (Player*)player;
-                DEBUG();
 
     p->phys.speed += 300.0;
-                DEBUG();
     p->phys.max_velocity += 90.0;
-                DEBUG();
 }
 
 static void skills_kinetic_discharge(void* skill, void* player, float dt)
