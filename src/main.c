@@ -50,8 +50,9 @@ uint32_t margin_color = COLOR_BLACK;
 float mx=0, my=0;
 float wmx=0, wmy=0;
 
-// margins
+// areas
 Rect room_area = {0};
+Rect floor_area = {0};
 Rect player_area = {0};
 Rect margin_left = {0};
 Rect margin_right = {0};
@@ -67,7 +68,7 @@ int cam_zoom = 70;
 int cam_zoom_temp = 70;
 int cam_min_zoom = 65;
 
-Rect camera_limit = {0};    // based on margins and room_area
+Rect camera_limit = {0};
 Vector2f aim_camera_offset = {0};
 float ascale = 1.0;
 
@@ -476,6 +477,11 @@ void init_areas()
     room_area.x = CENTER_X;
     room_area.y = CENTER_Y;
 
+    floor_area.w = ROOM_W - (TILE_SIZE*2);  //minus walls
+    floor_area.h = ROOM_H - (TILE_SIZE*2);  //minus walls
+    floor_area.x = CENTER_X;
+    floor_area.y = CENTER_Y;
+
     memcpy(&player_area, &room_area, sizeof(Rect));
     player_area.w -= 32;
     player_area.h -= 48;
@@ -553,6 +559,19 @@ void game_generate_level(unsigned int _seed)
 
     level = level_generate(seed, 5);
 
+    LOGI("  Valid Rooms");
+    for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
+    {
+        for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
+        {
+            Room* room = &level.rooms[x][y];
+            if(room->valid)
+            {
+                LOGI("    %2u) %2d, %-2d", room->index, x, y);
+            }
+        }
+    }
+
     uint16_t ccount = creature_get_count();
     LOGI("Total creature count: %u", ccount);
     uint16_t ccount2 = 0;
@@ -572,9 +591,18 @@ void game_generate_level(unsigned int _seed)
             }
         }
     }
+
     if(ccount != ccount2)
     {
         LOGE("Creature count doesn't add up");
+        for(int i = 0; i < ccount; ++i)
+        {
+            Room* room = level_get_room_by_index(&level, creatures[i].curr_room);
+            if(!room->valid)
+            {
+                LOGE("Creature index %u, room %u is invalid", i, room->index);
+            }
+        }
     }
 
     for(int i = 0; i < MAX_PLAYERS; ++i)
@@ -582,14 +610,13 @@ void game_generate_level(unsigned int _seed)
         player_send_to_level_start(&players[i]);
     }
 
-    Room* room = level_get_room_by_index(&level, player->curr_room);
-    Vector2f pos = {0};
-
-    for(int i = 0; i < 5; ++i)
-    {
-        level_get_rand_floor_tile(room, NULL, &pos);
-        item_add(ITEM_CHEST, pos.x, pos.y, player->curr_room);
-    }
+    // Room* room = level_get_room_by_index(&level, player->curr_room);
+    // Vector2f pos = {0};
+    // for(int i = 0; i < 5; ++i)
+    // {
+    //     level_get_rand_floor_tile(room, NULL, &pos);
+    //     item_add(ITEM_CHEST, pos.x, pos.y, player->curr_room);
+    // }
 }
 
 void init()
@@ -1350,7 +1377,8 @@ void draw()
         // l.y = cr.y;
         // gfx_draw_rect(&l, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
 
-        player_draw_debug(player);
+        if(game_state == GAME_STATE_PLAYING)
+            player_draw_debug(player);
 
     }
 

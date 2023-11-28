@@ -37,5 +37,5 @@ extern char* p_room_files[256];
 extern int  room_file_count;
 
 void room_file_save(RoomFileData* rfd, char* path, ...);
-bool room_file_load(RoomFileData* rfd, char* path, ...);
+bool room_file_load(RoomFileData* rfd, bool print_errors, char* path, ...);
 void room_file_get_all();

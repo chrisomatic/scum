@@ -223,7 +223,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
         for(int i = 0; i < rfd->creature_count; ++i)
         {
             Vector2i g = {rfd->creature_locations_x[i], rfd->creature_locations_y[i]};
-            g.x--; g.y--;
+            g.x--; g.y--; // @convert room objects to tile grid coordinates
             Creature* c = creature_add(room, rfd->creature_types[i], &g, NULL);
         }
     }
@@ -241,7 +241,7 @@ exit_conditions:
 
     for(int i = 0; i < rfd->item_count; ++i)
     {
-        Vector2f pos = level_get_pos_by_room_coords(rfd->item_locations_x[i], rfd->item_locations_y[i]);
+        Vector2f pos = level_get_pos_by_room_coords(rfd->item_locations_x[i]-1, rfd->item_locations_y[i]-1); // @convert room objects to tile grid coordinates
 
         // printf("Adding item of type: %s to (%f %f)\n", item_get_name(rfd->item_types[i]), pos.x, pos.y);
         item_add(rfd->item_types[i], pos.x, pos.y, room->index);
@@ -522,6 +522,9 @@ void generate_walls(Level* level)
                         }
                     }
                 }
+
+                if(room->wall_count > MAX_WALLS_PER_ROOM)
+                    LOGE("%u) room wall count: %d", room->index, room->wall_count);
             }
         }
     }
@@ -694,7 +697,7 @@ void level_load_rooms()
     {
         // printf("i: %d, Loading room %s\n",i, p_room_files[i]);
 
-        bool success = room_file_load(&room_list[room_list_count], "src/rooms/%s", p_room_files[i]);
+        bool success = room_file_load(&room_list[room_list_count], true, "src/rooms/%s", p_room_files[i]);
         if(!success)
             continue;
 
@@ -977,6 +980,7 @@ Level level_generate(unsigned int seed, int rank)
         {
             uint8_t index = level_get_room_index(x,y);
             level.rooms[x][y].index = index;
+            // printf("%2u) %2d, %-2d\n", level.rooms[x][y].index, x, y);
             level.rooms[x][y].doors_locked = (creature_get_room_count(index) != 0);
             level.rooms[x][y].xp = 0;
         }
@@ -1084,8 +1088,8 @@ Vector2i level_get_room_coords(int index)
 
 Vector2i level_get_room_coords_by_pos(float x, float y)
 {
-    float x0 = room_area.x - room_area.w/2.0;
-    float y0 = room_area.y - room_area.h/2.0;
+    float x0 = floor_area.x - floor_area.w/2.0;
+    float y0 = floor_area.y - floor_area.h/2.0;
 
     float xd = x - x0;
     float yd = y - y0;
@@ -1099,14 +1103,14 @@ Vector2i level_get_room_coords_by_pos(float x, float y)
     if(yd < 0)
         _y--;
 
-    Vector2i r = {_x-1,_y-1};
+    Vector2i r = {_x,_y};
     return r;
 }
 
 Vector2f level_get_pos_by_room_coords(int x, int y)
 {
-    float x0 = room_area.x - room_area.w/2.0;
-    float y0 = room_area.y - room_area.h/2.0;
+    float x0 = floor_area.x - floor_area.w/2.0;
+    float y0 = floor_area.y - floor_area.h/2.0;
 
     int xd = (x+1) * TILE_SIZE;
     int yd = (y+1) * TILE_SIZE;
