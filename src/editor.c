@@ -151,17 +151,19 @@ void editor_draw()
 
                 if(imgui_button("Add XP"))
                 {
-                    if(p->new_levels == 0)
-                        randomize_skill_choices();
-
                     player_add_xp(p, 100);
-
                 }
-
                 if(imgui_button("Add Gem"))
                 {
                     ItemType it = item_get_random_gem();
                     item_add(it, p->phys.pos.x, p->phys.pos.y, p->curr_room);
+                }
+
+                imgui_text("Skills: %d", p->skill_count);
+                for(int i = 0; i < p->skill_count; ++i)
+                {
+                    Skill* s = &skill_list[p->skills[i]];
+                    imgui_text(" [%d] %s (rank: %d)", i, s->name, s->rank);
                 }
 
             } break;

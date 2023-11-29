@@ -21,6 +21,7 @@ void skills_init()
 
     skill_list[i].type = SKILL_TYPE_KINETIC_DISCHARGE;
     skill_list[i].func = skills_kinetic_discharge;
+    skill_list[i].min_level = 2;
     skill_list[i].rank = 1;
     skill_list[i].periodic = true;
     skill_list[i].periodic_max_time = 2.0;
@@ -30,6 +31,7 @@ void skills_init()
 
     skill_list[i].type = SKILL_TYPE_KINETIC_DISCHARGE;
     skill_list[i].func = skills_kinetic_discharge;
+    skill_list[i].min_level = 3;
     skill_list[i].rank = 2;
     skill_list[i].periodic = true;
     skill_list[i].periodic_max_time = 1.0;
@@ -38,10 +40,20 @@ void skills_init()
     i++;
 
     skill_list[i].type = SKILL_TYPE_RABBITS_FOOT;
-    skill_list[i].rank = 0;
+    skill_list[i].min_level = 1;
+    skill_list[i].rank = 1;
     skill_list[i].func = skills_rabbits_foot;
     skill_list[i].periodic = false;
-    strcpy(skill_list[i].name,"Rabbit's Foot");
+    strcpy(skill_list[i].name,"Rabbit's Foot I");
+    strcpy(skill_list[i].desc,"Increase movement speed by 1");
+    i++;
+
+    skill_list[i].type = SKILL_TYPE_RABBITS_FOOT;
+    skill_list[i].min_level = 1;
+    skill_list[i].rank = 2;
+    skill_list[i].func = skills_rabbits_foot;
+    skill_list[i].periodic = false;
+    strcpy(skill_list[i].name,"Rabbit's Foot II");
     strcpy(skill_list[i].desc,"Increase movement speed by 1");
     i++;
 

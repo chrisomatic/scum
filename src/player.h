@@ -18,7 +18,7 @@
 #define SPRITE_RIGHT 12
 
 #define PLAYER_NAME_MAX 16
-#define PLAYER_MAX_SKILLS 100
+#define PLAYER_MAX_SKILLS 16
 
 #define PLAYER_SWAPPING_GEM(p) (p->gauntlet_item.type != ITEM_NONE)
 
@@ -74,8 +74,11 @@ typedef struct
     uint8_t gauntlet_slots;
     Item gauntlet[PLAYER_GAUNTLET_MAX];
 
-    Skill* skills[PLAYER_MAX_SKILLS];
+    int skills[PLAYER_MAX_SKILLS];
+    // int skill_counts[PLAYER_MAX_SKILLS];
     int skill_count;
+
+    // Skill* skills[PLAYER_MAX_SKILLS];
 
     ProjectileDef proj_def;
     ProjectileDef proj_discharge;
@@ -130,7 +133,8 @@ extern int xp_levels[];
 #define NUM_SKILL_CHOICES  3
 extern int skill_selection;
 extern int skill_choices[NUM_SKILL_CHOICES];
-extern const char* skill_text[NUM_SKILLS];
+extern int skill_choices_num;
+// extern const char* skill_text[NUM_SKILLS];
 extern float jump_vel_z;
 
 extern int shadow_image;
@@ -170,7 +174,7 @@ int player_names_build(bool include_all, bool only_active);
 void draw_hearts();
 void draw_xp_bar();
 void draw_gauntlet();
-void randomize_skill_choices();
+void randomize_skill_choices(Player* p);
 void draw_skill_selection();
 
 int get_xp_req(int level);

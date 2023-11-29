@@ -20,8 +20,10 @@ typedef struct
 {
     SkillType type;
     skill_func func;
+
     int rank;
     int min_level;
+
     bool periodic;
     float periodic_max_time;
     char name[32];

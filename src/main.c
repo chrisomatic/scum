@@ -1007,8 +1007,8 @@ void update(float dt)
             room->doors_locked = (creature_get_room_count(player->curr_room) != 0);
             if(!room->doors_locked && prior_locked)
             {
-                if(player->new_levels == 0)
-                        randomize_skill_choices();
+                // if(player->new_levels == 0)
+                //     randomize_skill_choices(player);
 
                 if(room->xp > 0)
                 {
