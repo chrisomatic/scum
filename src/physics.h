@@ -27,6 +27,7 @@ typedef struct
     Vector3f vel;
     Vector3f prior_vel;
 
+
     float max_velocity;
     float base_friction;
     float speed;
@@ -39,11 +40,14 @@ typedef struct
     int8_t hp;
     int8_t hp_max;
 
+    float circular_dt; // cumulative time mod 2*PI
+
     bool dead;
     bool amorphous; // splatters on collision
     bool ethereal;  // can pass through walls
 
     bool falling; // falling down a pit
+    bool floating;
 
     StatusEffect status_effects[MAX_STATUS_EFFECTS];
     int status_effects_count;

@@ -95,6 +95,9 @@ void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci)
 
 void phys_apply_gravity(Physics* phys, float gravity_factor, float dt)
 {
+    if(phys->floating)
+        return;
+
     if(phys->pos.z > 0.0)
         phys->vel.z -= (gravity_factor*600.0*dt);
 

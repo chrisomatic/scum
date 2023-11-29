@@ -17,6 +17,8 @@ typedef enum
 
 typedef struct
 {
+    uint32_t color;
+
     float damage;
     float range;
     float min_speed;
@@ -30,10 +32,13 @@ typedef struct
     uint8_t charge_rate;
 
     bool ghost;
-    bool explosive;
     bool homing;
+    bool explosive;
     bool bouncy;
     bool penetrate;
+
+    float ghost_chance;
+    float homing_chance;
 
     // elemental
     bool poison;
@@ -56,12 +61,15 @@ typedef struct
 
     uint8_t player_id;
 
+    uint32_t color;
+
     float scale;
     float damage;
     float time;
     float ttl;
     bool from_player;
 
+    bool homing;
     Physics* homing_target;
     
     // Networking

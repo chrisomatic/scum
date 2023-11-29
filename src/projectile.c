@@ -23,6 +23,7 @@ static uint16_t id_counter = 0;
 ProjectileDef projectile_lookup[] = {
     {
         // player
+        .color = 0x0050A0FF,
         .damage = 10.0,
         .range = 32*8,
         .min_speed = 100.0,
@@ -42,6 +43,7 @@ ProjectileDef projectile_lookup[] = {
     },
     {
         // creature
+        .color = 0x00FF5050,
         .damage = 1.0,
         .range = 32*6,
         .min_speed = 200.0,
@@ -61,6 +63,7 @@ ProjectileDef projectile_lookup[] = {
     },
     {
         // creature clinger
+        .color = 0x00FF5050,
         .damage = 1.0,
         .range = 32*6,
         .min_speed = 200.0,
@@ -112,6 +115,7 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
     proj.scale = scale * projdef->scale;
     proj.time = 0.0;
     proj.ttl  = 1.0;
+    proj.color = projdef->color;
     proj.phys.pos.x = phys->pos.x;
     proj.phys.pos.y = phys->pos.y - 0.5*phys->pos.z;
     proj.phys.height = gfx_images[projectile_image].element_height;
@@ -119,10 +123,11 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
     proj.phys.radius = 4.0 * proj.scale;
     proj.phys.amorphous = projdef->bouncy ? false : true;
     proj.phys.elasticity = projdef->bouncy ? 1.0 : 0.1;
-    proj.phys.ethereal = projdef->ghost;
+    proj.phys.ethereal = RAND_FLOAT(0.0,1.0) <= projdef->ghost_chance;
 
     proj.curr_room = curr_room;
     proj.from_player = from_player;
+    proj.homing = RAND_FLOAT(0.0,1.0) <= projdef->homing_chance;
 
     proj.hit_box.x = proj.phys.pos.x;
     proj.hit_box.y = proj.phys.pos.y;
@@ -261,7 +266,7 @@ void projectile_update(float delta_t)
         // proj->prior_pos.x = proj->phys.pos.x;
         // proj->prior_pos.y = proj->phys.pos.y;
 
-        if(proj->proj_def->homing)
+        if(proj->homing)
         {
             if(!proj->homing_target)
             {
@@ -400,11 +405,11 @@ void projectile_draw(Projectile* proj, bool batch)
 
     if(batch)
     {
-        gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, proj->from_player ? 0x0050A0FF : 0x00FF5050, false, proj->scale, 0.0, opacity, false, true, false);
+        gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, proj->color, false, proj->scale, 0.0, opacity, false, true, false);
     }
     else
     {
-        gfx_draw_image_ignore_light(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, proj->from_player ? 0x0050A0FF : 0x00FF5050, proj->scale, 0.0, opacity, false, IN_WORLD);
+        gfx_draw_image_ignore_light(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, proj->color, proj->scale, 0.0, opacity, false, IN_WORLD);
     }
 
     if(debug_enabled)

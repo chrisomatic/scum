@@ -23,20 +23,12 @@ static void handle_room_collision(Player* p);
 int xp_levels[] = {100,150,200,250,300};
 int skill_selection = 0;
 int skill_choices[NUM_SKILL_CHOICES] = {0};
-const char* skill_text[NUM_SKILLS] = {
-    "Increase Run Speed",
-    "Increase Defence",
-    "Increase Projectile Damage",
-    "Increase Projectile Rate of Fire",
-    "+1 Slizz",
-};
 
 char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 int player_image = -1;
 int shadow_image = -1;
 
 float jump_vel_z = 150.0;
-
 
 Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
@@ -87,6 +79,7 @@ void player_init()
 
         p->scale = 1.0;
         p->phys.falling = false;
+        p->phys.floating = false;
 
         memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
 
@@ -705,7 +698,7 @@ static void handle_room_collision(Player* p)
         float d = dist(CPOSX(p->phys), CPOSY(p->phys), door_point.x, door_point.y);
 
         bool colliding_with_door = (d < p->phys.radius);
-        if(colliding_with_door && !room->doors_locked && p->new_levels == 0 && p->phys.pos.z == 0.0)
+        if(colliding_with_door && !room->doors_locked && p->new_levels == 0 && (p->phys.pos.z == 0.0 || p->phys.floating))
         {
             bool k = false;
             k |= i == DIR_UP && p->actions[PLAYER_ACTION_UP].state;
@@ -885,10 +878,10 @@ void player_update(Player* p, float dt)
 
     }
 
-    player_handle_skills(p,dt);
-
     // apply gem effects
     memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
+
+    player_handle_skills(p,dt);
     item_apply_gauntlet((void*)p, (Item*)p->gauntlet,p->gauntlet_slots);
 
     float cx = CPOSX(p->phys);
@@ -984,6 +977,10 @@ void player_update(Player* p, float dt)
         }
     }
 
+    // update circular dt
+    p->phys.circular_dt += dt;
+    p->phys.circular_dt = fmod(p->phys.circular_dt,2*PI);
+
     bool up    = p->actions[PLAYER_ACTION_UP].state;
     bool down  = p->actions[PLAYER_ACTION_DOWN].state;
     bool left  = p->actions[PLAYER_ACTION_LEFT].state;
@@ -1053,7 +1050,6 @@ void player_update(Player* p, float dt)
         }
 
     }
-
 
     phys_apply_gravity(&p->phys,GRAVITY_EARTH,dt);
 
@@ -1126,6 +1122,8 @@ void player_update(Player* p, float dt)
     // update player current tile
     GFXImage* img = &gfx_images[player_image];
     Rect* vr = &img->visible_rects[p->sprite_index];
+
+    
 
     if(p->proj_cooldown > 0.0)
     {
@@ -1590,7 +1588,6 @@ void draw_skill_selection()
     Vector2f size = gfx_string_get_size(scale, "|");
 
     float pad = 5.0 * ascale;
-
     float total_h = size.y*NUM_SKILL_CHOICES + pad*(NUM_SKILL_CHOICES-1);
 
     float y = view_height/3.0 - total_h/2.0;
@@ -1603,6 +1600,10 @@ void draw_skill_selection()
         gfx_draw_string(x, y, color, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill_list[skill_choices[i]].name);
         y += pad + size.y;
     }
+
+    y += 2*(pad + size.y);
+    gfx_draw_string(x, y, COLOR_GRAY, 0.25*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill_list[skill_choices[skill_selection]].desc);
+
     message_small_set(0.1, "Press e to select skill (skill points: %d)", player->new_levels);
 }
 
@@ -1620,6 +1621,12 @@ void player_draw(Player* p, bool batch)
     uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
 
     float y = p->phys.pos.y-(0.5*p->phys.pos.z);
+
+    if(p->phys.floating)
+    {
+        y += sin(5*p->phys.circular_dt);
+        p->anim.curr_frame = 0;
+    }
 
     float shadow_scale = RANGE(0.5*(1.0 - (p->phys.pos.z / 128.0)),0.1,0.5);
     float shadow_x = p->phys.pos.x;

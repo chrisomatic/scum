@@ -20,6 +20,7 @@
 #define COLOR_YELLOW    COLOR(0xff,0xff,0x00)
 #define COLOR_WHITE     COLOR(0xff,0xff,0xff)
 #define COLOR_BLACK     COLOR(0,0,0)
+#define COLOR_GRAY      COLOR(0x80,0x80,0x80)
 #define COLOR_TINT_NONE (0xFFFFFFFF)
 #define COLOR_RAND      (rand() % 0xFFFFFFFF)
 #define COLOR_RAND_COMP (rand()%127)*(rand()%3)
