@@ -84,7 +84,7 @@ void player_init()
 
         memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
 
-        p->proj_cooldown_max = 0.02;
+        p->proj_cooldown_max = 0.40;
         p->door = DIR_NONE;
         p->light_radius = 1.0;
 
@@ -1713,25 +1713,32 @@ void draw_skill_selection()
 {
     if(player->new_levels == 0) return;
 
-    float scale = 0.4 * ascale;
+    float scale = 0.32 * ascale;
     Vector2f size = gfx_string_get_size(scale, "|");
 
     float pad = 5.0 * ascale;
-    float total_h = size.y*skill_choices_num + pad*(skill_choices_num-1);
 
-    float y = view_height/3.0 - total_h/2.0;
-    float x = view_width*0.4;
+    float w = 200;
+    float h = 200;
+
+    float x = view_width/2.0 - 1.5*w - pad;
+    float y = view_height/3.0;
+
+    gfx_draw_string(x, y-size.y-3*pad, COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "Level Up! (Choose a Skill)");
 
     for(int i = 0; i < skill_choices_num; ++i)
     {
-        uint32_t color = COLOR_WHITE;
-        if(i == skill_selection) color = COLOR_BLUE;
-        gfx_draw_string(x, y, color, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill_list[skill_choices[i]].name);
-        y += pad + size.y;
-    }
+        gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_GRAY, 1.0, 0.0, 0.5,true,false);
 
-    y += 2*(pad + size.y);
-    gfx_draw_string(x, y, COLOR_GRAY, 0.25*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill_list[skill_choices[skill_selection]].desc);
+        bool selected = (i == skill_selection);
+        if(selected)
+            gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_BLUE, 1.0, 0.0, 0.5,true,false); // outline
+
+        gfx_draw_string(x, y, selected ? COLOR_YELLOW : COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill_list[skill_choices[i]].name);
+        gfx_draw_string(x, y+size.y+2*pad, COLOR_GRAY, 0.20*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill_list[skill_choices[i]].desc);
+
+        x += w + pad;
+    }
 
     message_small_set(0.1, "Press e to select skill (skill points: %d)", player->new_levels);
 }

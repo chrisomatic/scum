@@ -24,10 +24,10 @@ ProjectileDef projectile_lookup[] = {
     {
         // player
         .color = 0x0050A0FF,
-        .damage = 10.0,
-        .range = 32*8,
-        .min_speed = 100.0,
-        .base_speed = 100.0,
+        .damage = 1.0,
+        .range = 128,
+        .min_speed = 128.0,
+        .base_speed = 128.0,
         .angle_spread = 45.0,
         .scale = 1.0,
         .num = 1,
@@ -148,6 +148,7 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
         p.id = get_id();
         // printf("proj scale: %.2f\n", p.scale);
 
+        // add spread
         float speed = projdef->base_speed;
         float angle = angle_deg;
         if(!FEQ0(spread) && i > 0)
@@ -156,19 +157,27 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
             angle += RAND_FLOAT(-spread, spread);
             // printf("%.2f\n", angle);
         }
-
         p.angle_deg = angle;
 
         angle = RAD(angle);
 
-        float vx0 = (speed)*cosf(angle);
-        float vy0 = (-speed)*sinf(angle);   // @minus
 
-        float vx = vx0 + phys->vel.x;
-        float vy = vy0 + phys->vel.y;
 
-        p.phys.vel.x = vx0;
-        p.phys.vel.y = vy0;
+        Vector2f v = {cosf(angle),-sinf(angle)};
+        normalize(&v);
+
+        Vector2f v2 = {phys->vel.x, phys->vel.y};
+        normalize(&v2);
+
+        v2.x *= 0.5;
+        v2.y *= 0.5;
+
+        Vector2f r = {speed*(v.x + v2.x), speed*(v.y + v2.y)};
+
+        p.phys.vel.x = r.x;
+        p.phys.vel.y = r.y;
+
+#if 0
 
         // if(!FEQ0(p->vel.x))
         {
@@ -226,6 +235,7 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
             p.phys.vel.x = min_speed * xa;
             p.phys.vel.y = -min_speed * ya;   //@minus
         }
+#endif
 
         float d = dist(0,0, p.phys.vel.x,p.phys.vel.y); // distance travelled per second
         p.ttl = projdef->range / d;
