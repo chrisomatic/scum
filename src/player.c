@@ -936,19 +936,21 @@ void player_update(Player* p, float dt)
         Vector2i tile_coords = level_get_room_coords_by_pos(cx, cy);
         TileType tt = level_get_tile_type(room, tile_coords.x, tile_coords.y);
 
-        if(tt == TILE_MUD)
+        if(p->phys.pos.z == 0.0)
         {
-            if(p->phys.pos.z == 0.0)
-                mud_factor = 0.4;
-        }
-        else if(tt == TILE_ICE)
-        {
-            mud_factor = 0.6;
-            friction_factor = 0.04;
-        }
-        else if(tt == TILE_SPIKES)
-        {
-            player_hurt(p,1);
+            switch(tt)
+            {
+                case TILE_MUD:
+                    mud_factor = 0.4;
+                    break;
+                case TILE_ICE:
+                    mud_factor = 0.4;
+                    friction_factor = 0.04;
+                    break;
+                case TILE_SPIKES:
+                    player_hurt(p,1);
+                    break;
+            }
         }
 
         if(tt == TILE_PIT && p->phys.pos.z == 0.0 && !p->phys.falling)
