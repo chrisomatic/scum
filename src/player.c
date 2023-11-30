@@ -1645,8 +1645,16 @@ void draw_skill_selection()
         if(selected)
             gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_BLUE, 1.0, 0.0, 0.5,true,false); // outline
 
-        gfx_draw_string(x+1, y, selected ? COLOR_YELLOW : COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill_list[skill_choices[i]].name);
-        gfx_draw_string(x+1, y+size.y+2*pad, COLOR_GRAY, 0.20*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill_list[skill_choices[i]].desc);
+        Skill* skill = &skill_list[skill_choices[i]];
+
+        if(skill->rarity > SKILL_RARITY_COMMON && skill->rarity != SKILL_RARITY_DEBUG)
+        {
+            // draw star
+            gfx_draw_image(items_image,20+skill->rarity,x+w-5, y+5, COLOR_TINT_NONE, 1.0, 0.0, 1.0, true, NOT_IN_WORLD);
+        }
+
+        gfx_draw_string(x+1, y, selected ? COLOR_YELLOW : COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill->name);
+        gfx_draw_string(x+1, y+size.y+2*pad, COLOR_GRAY, 0.20*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill->desc);
 
         x += w + pad;
     }

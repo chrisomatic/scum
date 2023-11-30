@@ -38,8 +38,8 @@ ProjectileDef projectile_lookup[] = {
         .homing = false,
         .bouncy = false,
         .penetrate = false,
-        .cold = false,
-        .poison = false,
+        .poison_chance = 0.0,
+        .cold_chance = 0.0,
     },
     {
         // creature
@@ -58,8 +58,8 @@ ProjectileDef projectile_lookup[] = {
         .homing = false,
         .bouncy = false,
         .penetrate = false,
-        .cold = false,
-        .poison = false,
+        .poison_chance = 0.0,
+        .cold_chance = 0.0,
     },
     {
         // creature clinger
@@ -78,8 +78,8 @@ ProjectileDef projectile_lookup[] = {
         .homing = false,
         .bouncy = false,
         .penetrate = false,
-        .cold = false,
-        .poison = true,
+        .poison_chance = 1.0,
+        .cold_chance = 0.0,
     }
 };
 
@@ -376,14 +376,16 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
                 proj->phys.dead = true;
             }
             
-            if(projdef->cold)
+            if(projdef->cold_chance > 0.0)
             {
-                status_effects_add_type(phys,STATUS_EFFECT_COLD);
+                if(RAND_FLOAT(0.0,1.0) <= projdef->cold_chance)
+                    status_effects_add_type(phys,STATUS_EFFECT_COLD);
             }
             
-            if(projdef->poison)
+            if(projdef->poison_chance > 0.0)
             {
-                status_effects_add_type(phys,STATUS_EFFECT_POISON);
+                if(RAND_FLOAT(0.0,1.0) <= projdef->poison_chance)
+                    status_effects_add_type(phys,STATUS_EFFECT_POISON);
             }
 
             switch(e->type)

@@ -41,8 +41,8 @@ typedef struct
     float homing_chance;
 
     // elemental
-    bool poison;
-    bool cold;
+    float poison_chance;
+    float cold_chance;
 
 } ProjectileDef;
 

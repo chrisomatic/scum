@@ -159,6 +159,11 @@ void editor_draw()
                     item_add(it, p->phys.pos.x, p->phys.pos.y, p->curr_room);
                 }
 
+                if(imgui_button("Clear Status Effects"))
+                {
+                    status_effects_clear(&p->phys);
+                }
+
                 imgui_text("Skills: %d", p->skill_count);
                 for(int i = 0; i < p->skill_count; ++i)
                 {
@@ -258,8 +263,8 @@ void editor_draw()
                 imgui_checkbox("Homing", &projectile_lookup[proj_sel].homing);
                 imgui_checkbox("Bouncy", &projectile_lookup[proj_sel].bouncy);
                 imgui_checkbox("Penetrate", &projectile_lookup[proj_sel].penetrate);
-                imgui_checkbox("Cold", &projectile_lookup[proj_sel].cold);
-                imgui_checkbox("Poison", &projectile_lookup[proj_sel].poison);
+                imgui_slider_float("Cold Chance", 0.0, 1.0, &projectile_lookup[proj_sel].cold_chance);
+                imgui_slider_float("Poison Chance", 0.0, 1.0,&projectile_lookup[proj_sel].poison_chance);
 
             } break;
         }

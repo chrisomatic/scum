@@ -278,10 +278,10 @@ void item_apply_gauntlet(void* _player, Item* gauntlet, uint8_t num_slots)
                 p->proj_def.damage += 1.0;
                 break;
             case ITEM_GEM_GREEN:
-                p->proj_def.poison = true;
+                p->proj_def.poison_chance = 1.0;
                 break;
             case ITEM_GEM_BLUE:
-                p->proj_def.cold = true;
+                p->proj_def.cold_chance = 1.0;
                 break;
             case ITEM_GEM_WHITE:
                 p->proj_def.num += 1;
