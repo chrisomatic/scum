@@ -105,12 +105,10 @@ void room_editor_init()
         for(int i = 0; i < CREATURE_TYPE_MAX; ++i)
             creature_names[i] = (char*)creature_type_name(i);
 
-        printf("Setting tile names!!\n");
         tile_sel = 1;
         for(int i = 0; i < TILE_MAX; ++i)
         {
             tile_names[i] = (char*)get_tile_name(i);
-            printf("  %s (%p)\n",tile_names[i], tile_names[i]);
         }
 
         door_sel = 0;

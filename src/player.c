@@ -88,11 +88,7 @@ void player_init()
         p->door = DIR_NONE;
         p->light_radius = 1.0;
 
-#if BOI_SHOOTING
         p->last_shoot_action = PLAYER_ACTION_SHOOT_UP;
-#else
-        p->last_shoot_action = PLAYER_ACTION_SHOOT;
-#endif
         p->shoot_sprite_cooldown = 0.0;
 
         memset(p->name, PLAYER_NAME_MAX, 0);
@@ -257,14 +253,10 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_S);
     window_controls_add_key(&player->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_A);
     window_controls_add_key(&player->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_D);
-#if BOI_SHOOTING
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_UP].state, GLFW_KEY_I);
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_DOWN].state, GLFW_KEY_K);
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_LEFT].state, GLFW_KEY_J);
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_RIGHT].state, GLFW_KEY_L);
-#else
-    window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT].state, GLFW_KEY_SPACE);
-#endif
     window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_ENTER);
     window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_E);
     window_controls_add_key(&player->actions[PLAYER_ACTION_JUMP].state, GLFW_KEY_SPACE);
@@ -1183,7 +1175,6 @@ void player_update(Player* p, float dt)
 
     ProjectileDef* pd = &projectile_lookup[0];
 
-#if BOI_SHOOTING
 
     for(int i = 0; i < 4; ++i)
     {
@@ -1246,123 +1237,6 @@ void player_update(Player* p, float dt)
             p->shoot_sprite_cooldown = 1.0;
         }
     }
-
-#else
-
-    PlayerInput* shoot = &p->actions[PLAYER_ACTION_SHOOT];
-
-    if(pd->charge)
-    {
-        if(shoot->toggled_on)
-        {
-            // text_list_add(text_lst, 5.0, "start charge");
-            p->proj_charge = pd->charge_rate;
-        }
-        else if(shoot->state)
-        {
-            if(p->proj_charge > 0)
-            {
-                p->proj_charge = MIN(p->proj_charge + pd->charge_rate, 100);
-                // text_list_add(text_lst, 5.0, "charging: %u", p->proj_charge);
-            }
-            // else
-            // {
-            //     text_list_add(text_lst, 5.0, "NOT charging");
-            // }
-        }
-
-        if(shoot->toggled_off)
-        {
-            if(p->proj_cooldown == 0.0 && p->proj_charge > 0)
-            {
-                float scale = (float)p->proj_charge / 50.0;
-                float damage = (float)p->proj_charge / 100.0;
-                float angle_deg = sprite_index_to_angle(p);
-
-                if(!p->phys.dead)
-                {
-                    projectile_add(&p->phys, p->curr_room, &p->proj_def, angle_deg, scale, damage, true);
-                }
-
-                // text_list_add(text_lst, 5.0, "projectile: %.2f, %.2f", scale, damage);
-                p->proj_cooldown = p->proj_cooldown_max;
-            }
-            else
-            {
-                // text_list_add(text_lst, 5.0, "[no proj] cooldown: %.2f, charge: %u", p->proj_cooldown, p->proj_charge);
-            }
-            p->proj_charge = 0;
-        }
-    }
-    else
-    {
-        if(shoot->state && p->proj_cooldown == 0.0)
-        {
-            float angle_deg = sprite_index_to_angle(p);
-
-            if(!p->phys.dead)
-            {
-                projectile_add(&p->phys, p->curr_room, &p->proj_def, angle_deg, 1.0, 1.0, true);
-            }
-            // text_list_add(text_lst, 5.0, "projectile");
-            p->proj_cooldown = p->proj_cooldown_max;
-        }
-    }
-
-#endif
-
-    // if(p->highlighted_item)
-    // {
-    //     if(p->actions[PLAYER_ACTION_ITEM_CYCLE].toggled_on)
-    //     {
-    //         if(p->actions[PLAYER_ACTION_RSHIFT].state)
-    //             player->highlighted_index--;
-    //         else
-    //             player->highlighted_index++;
-    //     }
-    // }
-
-    // if(p->highlighted_item)
-    // {
-    //     const char* desc = item_get_description(p->highlighted_item->type);
-    //     const char* name = item_get_name(p->highlighted_item->type);
-    //     if(strlen(desc) > 0)
-    //     {
-    //         message_small_set(0.1, "Item: %s (%s)", name, desc);
-    //     }
-    //     else
-    //     {
-    //         message_small_set(0.1, "Item: %s", name);
-    //     }
-    // }
-
-    // bool activate = p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
-    // if(p->new_levels == 0 && activate)
-    // {
-    //     if(p->highlighted_item)
-    //     {
-    //         ItemType type = p->highlighted_item->type;
-
-    //         if(type == ITEM_CHEST)
-    //         {
-    //             if(!p->highlighted_item->used)
-    //             {
-    //                 p->highlighted_item->used = true;
-    //                 if(item_props[type].func) item_props[type].func(p->highlighted_item,p);
-    //             }
-    //         }
-    //         else
-    //         {
-    //             if(item_props[type].func) item_props[type].func(p->highlighted_item,p);
-    //             if(p->highlighted_item->picked_up)
-    //                 item_remove(p->highlighted_item);
-    //         }
-    //     }
-    //     else
-    //     {
-    //         player_drop_item(p, &p->gauntlet[p->gauntlet_selection]);
-    //     }
-    // }
 
 
     // check tiles around player
@@ -1646,7 +1520,7 @@ int calc_skill_weights(int available_skills[], int num, int ret_weights[])
 
 int determine_available_skills(Player* p, int ret_skills[SKILL_LIST_MAX])
 {
-#if 1
+#if 0
 #define s_print(fmt,...) printf(fmt, __VA_ARGS__)
 #else
 #define s_print(fmt,...)
@@ -1708,7 +1582,7 @@ int determine_available_skills(Player* p, int ret_skills[SKILL_LIST_MAX])
         // player doesn't have the skill
         if(s->rank != 1)
         {
-            s_print("[%d] s->rank != 1    (%d)\n", i, s->rank);
+            s_print("[%d] new skill rank: %d != 1\n", i, s->rank);
             continue;
         }
 
@@ -1726,7 +1600,7 @@ void randomize_skill_choices(Player* p)
 
     if(a_num == 0)
     {
-        LOGE("No available skills!");
+        LOGW("No available skills!");
         p->new_levels = 0;
         return;
     }

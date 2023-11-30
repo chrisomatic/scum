@@ -206,9 +206,9 @@ static void skills_debug(void* skill, void* player, float dt)
     p->phys.speed += 300.0;
     p->phys.max_velocity += 90.0;
     p->proj_cooldown_max = 0.05;
-    p->proj_def.num = 5;
-    p->proj_def.ghost_chance = 1.0f;
-    p->proj_def.damage = 10.0;
+    p->proj_def.num += 4;
+    p->proj_def.ghost_chance += 1.0f;
+    p->proj_def.damage += 9.0;
     p->phys.hp_max += 10;
     p->phys.hp = p->phys.hp_max;
 }
@@ -281,11 +281,11 @@ static void skills_phase_shift(void* skill, void* player, float dt)
 
     if(s->rank == 1)
     {
-        p->proj_def.ghost_chance = 0.10f;
+        p->proj_def.ghost_chance += 0.10f;
     }
     else if(s->rank == 2)
     {
-        p->proj_def.ghost_chance = 0.25f;
+        p->proj_def.ghost_chance += 0.15f;
     }
 }
 
@@ -296,11 +296,11 @@ static void skills_sentience(void* skill, void* player, float dt)
 
     if(s->rank == 1)
     {
-        p->proj_def.homing_chance = 0.10f;
+        p->proj_def.homing_chance += 0.10f;
     }
     else if(s->rank == 2)
     {
-        p->proj_def.homing_chance = 0.25f;
+        p->proj_def.homing_chance += 0.15f;
     }
 }
 
