@@ -17,12 +17,13 @@ Boulder
 Mud
 Ice
 Spikes
+Timed Spikes
 
 ; Tile Data
 1,2,1,1,1,1,1,1,1,1,6,6,2
 2,2,1,5,5,1,1,1,1,3,3,6,6
-1,1,1,5,5,1,1,1,2,2,3,1,1
-1,2,1,5,1,1,1,1,2,2,1,1,1
+1,1,1,5,5,1,1,1,1,2,3,1,1
+1,1,1,1,1,1,1,1,1,1,1,1,1
 1,2,1,1,1,1,1,1,1,1,1,1,1
 1,2,1,1,1,1,1,1,1,1,1,1,1
 2,1,1,1,1,1,1,1,1,1,1,1,2
@@ -45,9 +46,9 @@ Yellow Gem
 Purple Gem
 Full Heart
 Half Heart
+Empty Heart
 Cosmic Full Heart
 Cosmic Half Heart
-Glowing Orb
 Dragon Egg
 Shamrock
 Ruby Ring
@@ -57,9 +58,13 @@ Potion of Range
 Potion of Purple
 +1 Gauntlet Slot
 New Level
+Glowing Orb
 Chest
 
 ; Items
+21,4,5
+21,10,6
+21,4,7
 19,6,7
 18,8,7
 

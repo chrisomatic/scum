@@ -16,6 +16,8 @@ static void skills_phase_shift(void* skill, void* player, float dt);
 static void skills_sentience(void* skill, void* player, float dt);
 static void skills_restoration(void* skill, void* player, float dt);
 static void skills_health_boost(void* skill, void* player, float dt);
+static void skills_rapid_fire(void* skill, void* player, float dt);
+static void skills_multishot(void* skill, void* player, float dt);
 
 void skills_init()
 {
@@ -173,6 +175,72 @@ void skills_init()
     strcpy(skill_list[i].desc,"Increase max health");
     i++;
 
+    skill_list[i].type = SKILL_TYPE_RAPID_FIRE;
+    skill_list[i].min_level = 1;
+    skill_list[i].rarity = SKILL_RARITY_COMMON;
+    skill_list[i].rank = 1;
+    skill_list[i].func = skills_rapid_fire;
+    skill_list[i].periodic = false;
+    strcpy(skill_list[i].name,"Rapid Fire I");
+    strcpy(skill_list[i].desc,"Increase rate of projectiles");
+    i++;
+
+    skill_list[i].type = SKILL_TYPE_RAPID_FIRE;
+    skill_list[i].min_level = 1;
+    skill_list[i].rarity = SKILL_RARITY_COMMON;
+    skill_list[i].rank = 2;
+    skill_list[i].func = skills_rapid_fire;
+    skill_list[i].periodic = false;
+    strcpy(skill_list[i].name,"Rapid Fire II");
+    strcpy(skill_list[i].desc,"Increase rate of projectiles");
+    i++;
+
+    skill_list[i].type = SKILL_TYPE_RAPID_FIRE;
+    skill_list[i].min_level = 1;
+    skill_list[i].rarity = SKILL_RARITY_COMMON;
+    skill_list[i].rank = 3;
+    skill_list[i].func = skills_rapid_fire;
+    skill_list[i].periodic = false;
+    strcpy(skill_list[i].name,"Rapid Fire III");
+    strcpy(skill_list[i].desc,"Increase rate of projectiles");
+    i++;
+
+    skill_list[i].type = SKILL_TYPE_MULTISHOT;
+    skill_list[i].min_level = 1;
+    skill_list[i].rarity = SKILL_RARITY_COMMON;
+    skill_list[i].rank = 1;
+    skill_list[i].func = skills_multishot;
+    skill_list[i].periodic = false;
+    strcpy(skill_list[i].name,"Multishot I");
+    strcpy(skill_list[i].desc,"Increase number of projectiles");
+    i++;
+
+    skill_list[i].type = SKILL_TYPE_MULTISHOT;
+    skill_list[i].min_level = 1;
+    skill_list[i].rarity = SKILL_RARITY_COMMON;
+    skill_list[i].rank = 2;
+    skill_list[i].func = skills_multishot;
+    skill_list[i].periodic = false;
+    strcpy(skill_list[i].name,"Multishot II");
+    strcpy(skill_list[i].desc,"Increase number of projectiles");
+    i++;
+
+    skill_list[i].type = SKILL_TYPE_MULTISHOT;
+    skill_list[i].min_level = 1;
+    skill_list[i].rarity = SKILL_RARITY_COMMON;
+    skill_list[i].rank = 3;
+    skill_list[i].func = skills_multishot;
+    skill_list[i].periodic = false;
+    strcpy(skill_list[i].name,"Multishot III");
+    strcpy(skill_list[i].desc,"Increase number of projectiles");
+    i++;
+
+
+
+
+
+
+
     skill_list_count = i;
 }
 
@@ -317,3 +385,36 @@ static void skills_health_boost(void* skill, void* player, float dt)
     p->phys.hp += 2;
 }
 
+static void skills_rapid_fire(void* skill, void* player, float dt)
+{
+    Player* p = (Player*)player;
+    Skill* s = (Skill*)skill;
+
+    float v = 0;
+    if(s->rank == 1)
+        v = 0.05;
+    else if(s->rank == 2)
+        v = 0.07;
+    else if(s->rank == 3)
+        v = 0.09;
+
+    p->proj_cooldown_max -= v;
+    p->proj_cooldown_max = MAX(0.02, p->proj_cooldown_max);
+}
+
+static void skills_multishot(void* skill, void* player, float dt)
+{
+    Player* p = (Player*)player;
+    Skill* s = (Skill*)skill;
+
+    int n = 0;
+    if(s->rank == 1)
+        n = 1;
+    else if(s->rank == 2)
+        n = 2;
+    else if(s->rank == 3)
+        n = 4;
+
+    p->proj_def.num += n;
+    p->proj_def.num = MIN(10, p->proj_def.num);
+}
