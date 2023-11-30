@@ -32,7 +32,9 @@ typedef enum
     TILE_PIT,
     TILE_BOULDER,
     TILE_MUD,
-
+    TILE_ICE,
+    TILE_SPIKES,
+    TILE_TIMED_SPIKES,
     TILE_MAX
 } TileType;
 
@@ -67,8 +69,8 @@ typedef enum
     SPRITE_TILE_DOOR_LEFT,
     SPRITE_TILE_PIT,
     SPRITE_TILE_MUD,
-    SPRITE_TILE_RSV_0,
-    SPRITE_TILE_RSV_1,
+    SPRITE_TILE_ICE,
+    SPRITE_TILE_SPIKES,
     SPRITE_TILE_DOOR_UP_CLOSED,
     SPRITE_TILE_DOOR_RIGHT_CLOSED,
     SPRITE_TILE_DOOR_DOWN_CLOSED,
@@ -148,7 +150,6 @@ void level_get_rand_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile
 void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float yoffset);
 void room_draw_walls(Room* room);
 void level_print(Level* level);
-void level_print_room(Room* room);
 void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radius);
 void level_handle_room_collision(Room* room, Physics* phys, int entity_type);
 Room* level_get_room(Level* level, int x, int y);

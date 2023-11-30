@@ -165,7 +165,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
 
     room->valid = true;
     room->discovered = false;
-    room->color = COLOR((rand() % 159) + 96,(rand() % 159) + 96,(rand() % 159) + 96);
+    room->color = COLOR_TINT_NONE;//COLOR((rand() % 159) + 96,(rand() % 159) + 96,(rand() % 159) + 96);
     room->index = level_get_room_index(x,y);
 
     printf("adding room, depth: %d\n",depth);
@@ -526,29 +526,6 @@ void generate_walls(Level* level)
     }
 }
 
-void level_print_room(Room* room)
-{
-    RoomFileData* room_data = &room_list[room->layout];
-
-    for(int j = 0; j < ROOM_TILE_SIZE_Y; ++j)
-    {
-        for(int i = 0; i < ROOM_TILE_SIZE_X; ++i)
-        {
-            TileType* tile = (TileType*)&room_data->tiles[i][j];
-            switch(*tile)
-            {
-                case TILE_FLOOR:   printf("."); break;
-                case TILE_PIT:     printf("p"); break;
-                case TILE_BOULDER: printf("b"); break;
-                case TILE_MUD:     printf("m"); break;
-                default: printf("%c", *tile+65);break;
-            }
-        }
-        printf("\n");
-    }
-    printf("\n");
-}
-
 void level_handle_room_collision(Room* room, Physics* phys, int entity_type)
 {
     if(!room)
@@ -742,10 +719,13 @@ uint8_t level_get_tile_sprite(TileType tt)
     SpriteTileType sprite = SPRITE_TILE_MAX;
     switch(tt)
     {
-        case TILE_FLOOR:   sprite = SPRITE_TILE_FLOOR; break;
-        case TILE_PIT:     sprite = SPRITE_TILE_PIT;   break;
-        case TILE_BOULDER: sprite = SPRITE_TILE_BLOCK; break;
-        case TILE_MUD:     sprite = SPRITE_TILE_MUD;   break;
+        case TILE_FLOOR:         sprite = SPRITE_TILE_FLOOR;  break;
+        case TILE_PIT:           sprite = SPRITE_TILE_PIT;    break;
+        case TILE_BOULDER:       sprite = SPRITE_TILE_BLOCK;  break;
+        case TILE_MUD:           sprite = SPRITE_TILE_MUD;    break;
+        case TILE_ICE:           sprite = SPRITE_TILE_ICE;    break;
+        case TILE_SPIKES:        sprite = SPRITE_TILE_SPIKES; break;
+        case TILE_TIMED_SPIKES:  sprite = SPRITE_TILE_SPIKES; break;
         default: break;
     }
     return (uint8_t)sprite;
@@ -1206,6 +1186,9 @@ const char* get_tile_name(TileType tt)
         case TILE_PIT: return "Pit";
         case TILE_BOULDER: return "Boulder";
         case TILE_MUD: return "Mud";
+        case TILE_ICE: return "Ice";
+        case TILE_SPIKES: return "Spikes";
+        case TILE_TIMED_SPIKES: return "Timed Spikes";
     }
     return "?";
 }

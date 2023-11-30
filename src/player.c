@@ -925,6 +925,7 @@ void player_update(Player* p, float dt)
     Room* room = level_get_room_by_index(&level, p->curr_room);
 
     float mud_factor = 1.0;
+    float friction_factor = 1.0;
 
     if(!room)
     {
@@ -937,9 +938,17 @@ void player_update(Player* p, float dt)
 
         if(tt == TILE_MUD)
         {
-            mud_factor = 0.4;
-            if(p->phys.pos.z > 0.0)
-                mud_factor = 0.8;
+            if(p->phys.pos.z == 0.0)
+                mud_factor = 0.4;
+        }
+        else if(tt == TILE_ICE)
+        {
+            mud_factor = 0.6;
+            friction_factor = 0.04;
+        }
+        else if(tt == TILE_SPIKES)
+        {
+            player_hurt(p,1);
         }
 
         if(tt == TILE_PIT && p->phys.pos.z == 0.0 && !p->phys.falling)
@@ -1106,8 +1115,8 @@ void player_update(Player* p, float dt)
         float vel_magn_x = ABS(p->phys.vel.x);
         float vel_magn_y = ABS(p->phys.vel.y);
 
-        float applied_friction_x = MIN(vel_magn_x,p->phys.base_friction);
-        float applied_friction_y = MIN(vel_magn_y,p->phys.base_friction);
+        float applied_friction_x = MIN(vel_magn_x,p->phys.base_friction*friction_factor);
+        float applied_friction_y = MIN(vel_magn_y,p->phys.base_friction*friction_factor);
 
         if(!left && !right)
         {
