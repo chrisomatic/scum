@@ -124,8 +124,6 @@ void entity_handle_status_effects(float dt)
 
         Physics* phys = e->phys;
 
-        // if(e->type == ENTITY_TYPE_PLAYER)
-
         for(int i = phys->status_effects_count - 1; i >= 0; --i)
         {
             StatusEffect* effect = &phys->status_effects[i];
@@ -157,7 +155,9 @@ void entity_handle_status_effects(float dt)
                     effect->applied = true;
                 }
             }
+
         }
+
     }
 }
 

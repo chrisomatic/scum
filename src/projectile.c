@@ -367,16 +367,6 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 
         if(hit)
         {
-            switch(e->type)
-            {
-                case ENTITY_TYPE_PLAYER:
-                    player_hurt((Player*)e->ptr, proj->damage);
-                    break;
-                case ENTITY_TYPE_CREATURE:
-                    creature_hurt((Creature*)e->ptr, proj->damage);
-                    break;
-            }
-
             if(!projdef->penetrate)
             {
                 CollisionInfo ci = {0.0,0.0};
@@ -394,6 +384,16 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
             if(projdef->poison)
             {
                 status_effects_add_type(phys,STATUS_EFFECT_POISON);
+            }
+
+            switch(e->type)
+            {
+                case ENTITY_TYPE_PLAYER:
+                    player_hurt((Player*)e->ptr, proj->damage);
+                    break;
+                case ENTITY_TYPE_CREATURE:
+                    creature_hurt((Creature*)e->ptr, proj->damage);
+                    break;
             }
         }
     }

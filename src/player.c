@@ -400,9 +400,7 @@ void player_die(Player* p)
 {
     // should reset all?
     p->phys.dead = true;
-    printf("dead\n");
     status_effects_clear(&p->phys);
-    printf("%d\n",p->phys.status_effects_count);
 
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
