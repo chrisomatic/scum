@@ -23,5 +23,6 @@ typedef struct
 } StatusEffect;
 
 void status_effects_init();
+void status_effects_clear(void* physics);
 void status_effects_add_type(void* physics, StatusEffectType type);
 void status_effects_draw(void* physics, bool batch);

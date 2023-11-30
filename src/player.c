@@ -361,7 +361,7 @@ void player_hurt_no_inv(Player* p, int damage)
     if(players_invincible)
         return;
 
-    printf("player_hurt_no_inv\n");
+    // printf("player_hurt_no_inv\n");
 
     player_add_hp(p,-damage);
 
@@ -400,6 +400,9 @@ void player_die(Player* p)
 {
     // should reset all?
     p->phys.dead = true;
+    printf("dead\n");
+    status_effects_clear(&p->phys);
+    printf("%d\n",p->phys.status_effects_count);
 
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
@@ -408,6 +411,7 @@ void player_die(Player* p)
         if(!p2->active) continue;
         if(!p2->phys.dead) return;
     }
+
 
     // all are dead
     for(int i = 0; i < MAX_PLAYERS; ++i)

@@ -64,6 +64,13 @@ void status_effects_draw(void* physics, bool batch)
     }
 }
 
+void status_effects_clear(void* physics)
+{
+    Physics* phys = (Physics*)physics;
+    phys->status_effects_count = 0;
+    memset(&phys->status_effects, 0, sizeof(StatusEffect)*MAX_STATUS_EFFECTS);
+}
+
 void status_effects_add_type(void* physics, StatusEffectType type)
 {
     Physics* phys = (Physics*)physics;
