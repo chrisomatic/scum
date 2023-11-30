@@ -1,6 +1,6 @@
 #pragma once
 
-#define SKILL_LIST_MAX 20
+#define SKILL_LIST_MAX 64
 
 typedef enum
 {
@@ -11,8 +11,22 @@ typedef enum
     SKILL_TYPE_PHASE_SHIFT,
     SKILL_TYPE_SENTIENCE,
     SKILL_TYPE_RESTORATION,
+    SKILL_TYPE_HEALTH_BOOST,
+
+    SKILL_TYPE_DEBUG,
     SKILL_TYPE_MAX
 } SkillType;
+
+typedef enum
+{
+    SKILL_RARITY_COMMON,
+    SKILL_RARITY_RARE,
+    SKILL_RARITY_EPIC,
+    SKILL_RARITY_LEGENDARY,
+
+    SKILL_RARITY_DEBUG,
+    SKILL_RARITY_MAX
+} SkillRarity;
 
 typedef void (*skill_func)(void* skill, void* player, float dt);
 
@@ -20,6 +34,7 @@ typedef struct
 {
     SkillType type;
     skill_func func;
+    SkillRarity rarity;
 
     int rank;
     int min_level;
@@ -34,3 +49,6 @@ extern Skill skill_list[SKILL_LIST_MAX];
 extern int skill_list_count;
 
 void skills_init();
+const char* skill_rarity_str(SkillRarity rarity);
+int skill_rarity_weight(SkillRarity rarity);
+

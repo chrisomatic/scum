@@ -115,7 +115,7 @@ void creature_init_props(Creature* c)
             c->phys.base_friction = 10.0;
             c->phys.height = gfx_images[creature_image_clinger].element_height;
             c->phys.hp_max = 5.0;
-            // c->proj_type = PROJECTILE_TYPE_CREATURE_CLINGER;
+            c->proj_type = PROJECTILE_TYPE_CREATURE_CLINGER;
             c->painful_touch = false;
             c->xp = 10;
         } break;

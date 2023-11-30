@@ -89,6 +89,7 @@ static void item_func_chest(Item* pu, Player* p)
             if(item_is_gem(t)) continue;
             if(t == ITEM_CHEST) continue;
             if(t == ITEM_NEW_LEVEL) continue;
+            if(t == ITEM_HEART_EMPTY) continue;
             item_add(t, x, y, croom);
             break;
 
@@ -221,6 +222,7 @@ void item_init()
             } break;
             case ITEM_HEART_FULL:
             case ITEM_HEART_HALF:
+            case ITEM_HEART_EMPTY:
             case ITEM_COSMIC_HEART_FULL:
             case ITEM_COSMIC_HEART_HALF:
             case ITEM_GLOWING_ORB:
@@ -333,6 +335,7 @@ const char* item_get_name(ItemType type)
         case ITEM_GEM_PURPLE: return "Purple Gem";
         case ITEM_HEART_FULL: return "Full Heart";
         case ITEM_HEART_HALF: return "Half Heart";
+        case ITEM_HEART_EMPTY: return "Empty Heart";
         case ITEM_COSMIC_HEART_FULL: return "Cosmic Full Heart";
         case ITEM_COSMIC_HEART_HALF: return "Cosmic Half Heart";
         case ITEM_GLOWING_ORB: return "Glowing Orb";
@@ -362,7 +365,8 @@ const char* item_get_description(ItemType type)
         case ITEM_GEM_YELLOW: return "bouncy projectiles";
         case ITEM_GEM_PURPLE: return "ghost projectiles";
         case ITEM_HEART_FULL: return "heal 1 heart";
-        case ITEM_HEART_HALF: return "heal 1/2 hear";
+        case ITEM_HEART_HALF: return "heal 1/2 heart";
+        case ITEM_HEART_EMPTY: return "heal 0 heart";
         case ITEM_COSMIC_HEART_FULL: return "increase max health by 1 heart";
         case ITEM_COSMIC_HEART_HALF: return "increase max health by 1/2 heart";
         case ITEM_GLOWING_ORB: return "increase light radius";

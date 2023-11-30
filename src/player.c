@@ -69,7 +69,7 @@ void player_init()
         p->phys.mass = 1.0;
         p->phys.elasticity = 0.0;
 
-        p->phys.hp_max = 24;
+        p->phys.hp_max = 6;
         p->phys.hp = p->phys.hp_max;
 
         p->sprite_index = 4;
@@ -914,11 +914,11 @@ void player_update(Player* p, float dt)
 
     }
 
-    // apply gem effects
-    memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
+    // // apply gem effects
+    // memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
+    // item_apply_gauntlet((void*)p, (Item*)p->gauntlet,p->gauntlet_slots); //TODO
 
     player_handle_skills(p,dt);
-    item_apply_gauntlet((void*)p, (Item*)p->gauntlet,p->gauntlet_slots);
 
     float cx = CPOSX(p->phys);
     float cy = CPOSY(p->phys);
@@ -1468,7 +1468,7 @@ void draw_hearts()
 {
 #define TOP_MARGIN  1
 
-    // int max_num = ceill((float)player->phys.hp_max/2.0);
+    int max_num = ceill((float)player->phys.hp_max/2.0);
     int num = player->phys.hp / 2;
     int rem = player->phys.hp % 2;
 
@@ -1491,6 +1491,8 @@ void draw_hearts()
     int si_full = item_props[ITEM_HEART_FULL].sprite_index;
     int image_half = item_props[ITEM_HEART_FULL].image;
     uint8_t si_half = item_props[ITEM_HEART_HALF].sprite_index;
+    int image_empty = item_props[ITEM_HEART_EMPTY].image;
+    uint8_t si_empty = item_props[ITEM_HEART_EMPTY].sprite_index;
 
     // float w = gfx_images[image_full].visible_rects[si_full].w;
     float w = gfx_images[image_full].element_width;
@@ -1513,7 +1515,16 @@ void draw_hearts()
     if(rem == 1)
     {
         gfx_draw_image(image_half, si_half, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+        x += (l+pad);
     }
+
+    int empties = max_num - num - rem;
+    for(int i = 0; i < empties; ++i)
+    {
+        gfx_draw_image(image_empty, si_empty, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+        x += (l+pad);
+    }
+
 }
 
 void draw_xp_bar()
@@ -1600,21 +1611,46 @@ void draw_gauntlet()
     }
 }
 
-void randomize_skill_choices(Player* p)
-{
+// skills
+// --------------------------------------------------------------------------------------------------
 
-#if 0
-#define s_print(fmt,...) printf(fmt, #__VA_ARGS__)
+int select_random_skill_choice(int weights[], int num, int max_weight)
+{
+    int r = (rand() % max_weight) + 1;
+    for(int i = 0; i < num; ++i)
+    {
+        if(r <= weights[i])
+            return i;
+    }
+    return num-1;
+}
+
+int remove_skill_choice(int available_skills[], int num, int remove_index)
+{
+    available_skills[remove_index] = available_skills[num-1];
+    return num-1;
+}
+
+int calc_skill_weights(int available_skills[], int num, int ret_weights[])
+{
+    int w = 0;
+    for(int i = 0; i < num; ++i)
+    {
+        w += skill_rarity_weight(skill_list[available_skills[i]].rarity);
+        ret_weights[i] = w;
+    }
+    return w;
+}
+
+int determine_available_skills(Player* p, int ret_skills[SKILL_LIST_MAX])
+{
+#if 1
+#define s_print(fmt,...) printf(fmt, __VA_ARGS__)
 #else
 #define s_print(fmt,...)
 #endif
 
-    skill_selection = 0;
-
-    // available
-    int a_skills[SKILL_LIST_MAX] = {0};
     int a_num = 0;
-
 
     for(int i = 0; i < skill_list_count; ++i)
     {
@@ -1623,7 +1659,7 @@ void randomize_skill_choices(Player* p)
 
         if(p->level < s->min_level)
         {
-            s_print("level %d < %d \n", p->level, s->min_level);
+            s_print("[%d] level %d < %d\n", i, p->level, s->min_level);
             continue;
         }
 
@@ -1632,10 +1668,10 @@ void randomize_skill_choices(Player* p)
         // make sure there aren't repeated types
         for(int j = 0; j < a_num; ++j)
         {
-            Skill* js = &skill_list[a_skills[j]];
+            Skill* js = &skill_list[ret_skills[j]];
             if(js->type == s->type)
             {
-                s_print("repeated skill type %d\n", js->type);
+                s_print("[%d] repeated skill type %d\n", i, js->type);
                 cont = true;
                 break;
             }
@@ -1652,18 +1688,17 @@ void randomize_skill_choices(Player* p)
             {
                 if((s->rank - js->rank) == 1)
                 {
-                    a_skills[a_num] = i;
+                    ret_skills[a_num] = i;
                     a_num++;
                 }
                 else
                 {
-                    s_print("s->rank: %d, js->rank: %d\n", s->rank, js->rank);
+                    s_print("[%d] s->rank: %d, js->rank: %d\n", i, s->rank, js->rank);
                 }
 
                 cont = true;
                 break;
             }
-
         }
 
         if(cont) continue;
@@ -1671,14 +1706,21 @@ void randomize_skill_choices(Player* p)
         // player doesn't have the skill
         if(s->rank != 1)
         {
-            s_print("s->rank != 1    (%d)\n", s->rank);
+            s_print("[%d] s->rank != 1    (%d)\n", i, s->rank);
             continue;
         }
 
-
-        a_skills[a_num] = i;
+        ret_skills[a_num] = i;
         a_num++;
     }
+
+    return a_num;
+}
+
+void randomize_skill_choices(Player* p)
+{
+    int a_skills[SKILL_LIST_MAX] = {0};
+    int a_num = determine_available_skills(p, a_skills);
 
     if(a_num == 0)
     {
@@ -1687,34 +1729,16 @@ void randomize_skill_choices(Player* p)
         return;
     }
 
+    skill_selection = 0;
     skill_choices_num = MIN(NUM_SKILL_CHOICES, a_num);
 
-    s_print("a skills: %d\n", a_num);
-    for(int i = 1; i < a_num; ++i)
+    for(int i = 0; i < skill_choices_num; ++i)
     {
-        s_print("  %d\n", a_skills[i]);
-    }
-
-    int idx = a_skills[rand() % a_num];
-    skill_choices[0] = idx;
-
-    for(int i = 1; i < skill_choices_num; ++i)
-    {
-        for(;;)
-        {
-            idx = a_skills[rand() % a_num];
-            bool check = false;
-            for(int j = 0; j < i; ++j)
-            {
-                if(idx == skill_choices[j])
-                {
-                    check = true;
-                    break;
-                }
-            }
-            if(!check) break;
-        }
-        skill_choices[i] = idx;
+        int weights[SKILL_LIST_MAX] = {0};
+        int max_weight = calc_skill_weights(a_skills, a_num, weights);
+        int idx = select_random_skill_choice(weights, a_num, max_weight);
+        skill_choices[i] = a_skills[idx];
+        a_num = remove_skill_choice(a_skills, a_num, idx);
     }
 }
 
@@ -1743,8 +1767,8 @@ void draw_skill_selection()
         if(selected)
             gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_BLUE, 1.0, 0.0, 0.5,true,false); // outline
 
-        gfx_draw_string(x, y, selected ? COLOR_YELLOW : COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill_list[skill_choices[i]].name);
-        gfx_draw_string(x, y+size.y+2*pad, COLOR_GRAY, 0.20*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill_list[skill_choices[i]].desc);
+        gfx_draw_string(x+1, y, selected ? COLOR_YELLOW : COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill_list[skill_choices[i]].name);
+        gfx_draw_string(x+1, y+size.y+2*pad, COLOR_GRAY, 0.20*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill_list[skill_choices[i]].desc);
 
         x += w + pad;
     }
