@@ -22,8 +22,10 @@ static void handle_room_collision(Player* p);
 
 int xp_levels[] = {100,150,200,250,300};
 int skill_selection = 0;
-int skill_choices[NUM_SKILL_CHOICES] = {0};
-int skill_choices_num = 0;
+int skill_choices[MAX_SKILL_CHOICES] = {0};
+int num_skill_choices = 0;
+
+bool boost_stats = false;
 
 char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 int player_image = -1;
@@ -113,20 +115,16 @@ void player_init()
         for(int j = 0; j < PLAYER_GAUNTLET_MAX; ++j)
         {
             p->gauntlet[j].type = ITEM_NONE;
-            // if(j == 0) p->gauntlet[j].type = item_get_random_gem();  // TEST
         }
         p->gauntlet_item.type = ITEM_NONE;
 
-        p->periodic_shot_counter = 0.0;
-
-        // @TEMP
-        //p->skills[0] = &skill_list[1];
         for(int j = 0; j < PLAYER_MAX_SKILLS; ++j)
         {
             p->skills[j] = -1;
-            // p->skill_counts[j] = 0;
         }
         p->skill_count = 0;
+        p->num_skill_choices = MIN(3,MAX_SKILL_CHOICES);
+        p->periodic_shot_counter = 0.0;
     }
 }
 
@@ -766,12 +764,9 @@ void player_update(Player* p, float dt)
         update_input_state(pa, dt);
     }
 
-
-
     bool activate = p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
     bool tabbed = p->actions[PLAYER_ACTION_TAB_CYCLE].toggled_on;
     bool rshift = p->actions[PLAYER_ACTION_RSHIFT].state;
-
 
     if(p->new_levels == 0)
     {
@@ -791,7 +786,6 @@ void player_update(Player* p, float dt)
                    p->gauntlet_selection = 0;
             }
         }
-
 
         if(p->highlighted_item)
         {
@@ -850,14 +844,14 @@ void player_update(Player* p, float dt)
             if(rshift)
             {
                 if(skill_selection == 0)
-                    skill_selection = (skill_choices_num-1);
+                    skill_selection = (num_skill_choices-1);
                 else
                     skill_selection--;
             }
             else
             {
                 skill_selection++;
-                if(skill_selection >= skill_choices_num)
+                if(skill_selection >= num_skill_choices)
                    skill_selection = 0;
             }
 
@@ -884,10 +878,6 @@ void player_update(Player* p, float dt)
             if(index < PLAYER_MAX_SKILLS)
             {
                 p->skills[index] = skill_choices[skill_selection];
-
-                // if(choose_skill->rank == 0)
-                //     p->skill_counts[index] += 1;
-
                 Skill* skill = &skill_list[p->skills[index]];
 
                 if(!skill->periodic)
@@ -905,12 +895,26 @@ void player_update(Player* p, float dt)
                 randomize_skill_choices(p);
             }
         }
-
     }
 
-    // // apply gem effects
-    // memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
-    // item_apply_gauntlet((void*)p, (Item*)p->gauntlet,p->gauntlet_slots); //TODO
+    float speed = p->phys.speed;
+    float maxv = p->phys.max_velocity;
+    float pcooldown = p->proj_cooldown_max;
+    int pnum = p->proj_def.num;
+    float pdamage = p->proj_def.damage;
+    int hp_max = p->phys.hp_max;
+    if(boost_stats)
+    {
+        p->phys.speed += 300.0;
+        p->phys.max_velocity += 90.0;
+        p->proj_cooldown_max = 0.05;
+        p->proj_def.num += 4;
+        p->proj_def.damage += 9.0;
+    }
+
+    // apply gem effects
+    p->proj_def_gauntlet = p->proj_def;
+    item_apply_gauntlet((void*)&p->proj_def_gauntlet, (Item*)p->gauntlet,p->gauntlet_slots);
 
     player_handle_skills(p,dt);
 
@@ -1103,7 +1107,6 @@ void player_update(Player* p, float dt)
 
     if(!p->phys.falling)
     {
-
         // handle friction
         Vector2f f = {-p->phys.vel.x, -p->phys.vel.y};
         normalize(&f);
@@ -1164,8 +1167,6 @@ void player_update(Player* p, float dt)
     GFXImage* img = &gfx_images[player_image];
     Rect* vr = &img->visible_rects[p->sprite_index];
 
-    
-
     if(p->proj_cooldown > 0.0)
     {
         p->proj_cooldown -= dt;
@@ -1173,10 +1174,6 @@ void player_update(Player* p, float dt)
     }
 
     p->shoot_sprite_cooldown = MAX(p->shoot_sprite_cooldown - dt, 0.0);
-
-
-    ProjectileDef* pd = &projectile_lookup[0];
-
 
     for(int i = 0; i < 4; ++i)
     {
@@ -1232,7 +1229,7 @@ void player_update(Player* p, float dt)
 
             if(!p->phys.dead)
             {
-                projectile_add(&p->phys, p->curr_room, &p->proj_def, angle_deg, 1.0, 1.0, true);
+                projectile_add(&p->phys, p->curr_room, &p->proj_def_gauntlet, angle_deg, 1.0, 1.0, true);
             }
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;
@@ -1278,6 +1275,17 @@ void player_update(Player* p, float dt)
             p->invulnerable = false;
         }
     }
+
+
+    if(boost_stats)
+    {
+        p->phys.speed = speed;
+        p->phys.max_velocity = maxv;
+        p->proj_cooldown_max = pcooldown;
+        p->proj_def.num = pnum;
+        p->proj_def.damage = pdamage;
+    }
+
 }
 
 void player_ai_move_to_target(Player* p, Player* target)
@@ -1498,13 +1506,23 @@ int select_random_skill_choice(int weights[], int num, int max_weight)
     for(int i = 0; i < num; ++i)
     {
         if(r <= weights[i])
+        {
             return i;
+        }
     }
     return num-1;
 }
 
 int remove_skill_choice(int available_skills[], int num, int remove_index)
 {
+    if(num == 1) return 0;
+
+    if(remove_index >= num)
+    {
+        LOGE("remove_index (%d) >= num (%d)", remove_index, num);
+        return num;
+    }
+
     available_skills[remove_index] = available_skills[num-1];
     return num-1;
 }
@@ -1607,16 +1625,49 @@ void randomize_skill_choices(Player* p)
         return;
     }
 
-    skill_selection = 0;
-    skill_choices_num = MIN(NUM_SKILL_CHOICES, a_num);
 
-    for(int i = 0; i < skill_choices_num; ++i)
+    skill_selection = 0;
+    num_skill_choices = MIN(p->num_skill_choices, a_num);
+    // printf("num_skill_choices: %d\n", num_skill_choices);
+
+    // for(int i = 0; i < a_num; ++i)
+    // {
+    //     printf("   [%d] %d\n",i, a_skills[i]);
+    // }
+
+    for(int i = 0; i < num_skill_choices; ++i)
     {
         int weights[SKILL_LIST_MAX] = {0};
         int max_weight = calc_skill_weights(a_skills, a_num, weights);
+
+
+        // printf("%d ------------------------------\n", num_skill_choices);
+        // for(int j = 0; j < a_num; ++j)
+        // {
+        //     printf("(%d)   [%d] %d\n",i, j,a_skills[j]);
+        // }
+
         int idx = select_random_skill_choice(weights, a_num, max_weight);
+
+        // printf("(%d) chose idx: %d\n", i,idx);
+        // printf("num_skill_choices: %d\n", num_skill_choices);
+
+        // // printf("skill choices")
         skill_choices[i] = a_skills[idx];
+
+
+
+
+        // printf("num_skill_choices: %d\n", num_skill_choices);
         a_num = remove_skill_choice(a_skills, a_num, idx);
+        // printf("num_skill_choices: %d\n", num_skill_choices);
+
+        if(a_num <= 0)
+        {
+            if(i != num_skill_choices-1) LOGE("Error!");
+            break;
+        }
+
     }
 }
 
@@ -1630,33 +1681,52 @@ void draw_skill_selection()
     float pad = 5.0 * ascale;
 
     float w = 200;
-    float h = 200;
+    float h = 100;
 
-    float x = view_width/2.0 - 1.5*w - pad;
-    float y = view_height/3.0;
+    int max_per_row = 4;
+    int num_rows = num_skill_choices / max_per_row;
+    if(num_skill_choices % 4 != 0) num_rows++;
 
-    gfx_draw_string(x, y-size.y-3*pad, COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "Level Up! (Choose a Skill)");
+    int total_h = num_rows*h + (num_rows-1)*pad;
 
-    for(int i = 0; i < skill_choices_num; ++i)
+    float y = view_height/2.0 - total_h/2.0;
+
+    int idx = 0;
+    for(int i = 0; i < num_rows; ++i)
     {
-        gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_GRAY, 1.0, 0.0, 0.5,true,false);
+        int num_skills_row = MIN(num_skill_choices - idx, max_per_row);
 
-        bool selected = (i == skill_selection);
-        if(selected)
-            gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_BLUE, 1.0, 0.0, 0.5,true,false); // outline
+        float total_w = w*num_skills_row + pad*(num_skills_row-1);
+        float x = view_width/2.0 - total_w/2.0;
 
-        Skill* skill = &skill_list[skill_choices[i]];
-
-        if(skill->rarity > SKILL_RARITY_COMMON && skill->rarity != SKILL_RARITY_DEBUG)
+        if(i == 0)
         {
-            // draw star
-            gfx_draw_image(items_image,20+skill->rarity,x+w-5, y+5, COLOR_TINT_NONE, 1.0, 0.0, 1.0, true, NOT_IN_WORLD);
+            gfx_draw_string(x, y-size.y-3*pad, COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "Level Up! (Choose a Skill)");
         }
 
-        gfx_draw_string(x+1, y, selected ? COLOR_YELLOW : COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill->name);
-        gfx_draw_string(x+1, y+size.y+2*pad, COLOR_GRAY, 0.20*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill->desc);
+        for(int j = 0; j < num_skills_row; ++j)
+        {
+            gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_GRAY, 1.0, 0.0, 0.5,true,false);
 
-        x += w + pad;
+            bool selected = (idx == skill_selection);
+            if(selected)
+                gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_BLUE, 1.0, 0.0, 0.5,true,false); // outline
+
+            Skill* skill = &skill_list[skill_choices[idx]];
+
+            if(skill->rarity > SKILL_RARITY_COMMON)
+            {
+                // draw star
+                gfx_draw_image(items_image,20+skill->rarity,x+w-5, y+5, COLOR_TINT_NONE, 1.0, 0.0, 1.0, true, NOT_IN_WORLD);
+            }
+
+            gfx_draw_string(x+1, y, selected ? COLOR_YELLOW : COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill->name);
+            gfx_draw_string(x+1, y+size.y+2*pad, COLOR_GRAY, 0.20*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill->desc);
+
+            x += w + pad;
+            idx++;
+        }
+        y += h + pad;
     }
 
     message_small_set(0.1, "Press e to select skill (skill points: %d)", player->new_levels);

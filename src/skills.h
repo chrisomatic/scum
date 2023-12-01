@@ -15,7 +15,6 @@ typedef enum
     SKILL_TYPE_RAPID_FIRE,
     SKILL_TYPE_MULTISHOT,
 
-    SKILL_TYPE_DEBUG,
     SKILL_TYPE_MAX
 } SkillType;
 
@@ -26,7 +25,6 @@ typedef enum
     SKILL_RARITY_EPIC,
     SKILL_RARITY_LEGENDARY,
 
-    SKILL_RARITY_DEBUG,
     SKILL_RARITY_MAX
 } SkillRarity;
 

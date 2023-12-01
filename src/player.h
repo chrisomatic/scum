@@ -11,15 +11,17 @@
 
 #define MAX_PLAYERS 4
 
+#define MAX_SKILL_CHOICES  6
+
 #define SPRITE_UP    0
 #define SPRITE_DOWN  4
 #define SPRITE_LEFT  8
 #define SPRITE_RIGHT 12
 
 #define PLAYER_NAME_MAX 16
-#define PLAYER_MAX_SKILLS 16
+#define PLAYER_MAX_SKILLS 20
 
-#define PLAYER_SWAPPING_GEM(p) (p->gauntlet_item.type != ITEM_NONE)
+// #define PLAYER_SWAPPING_GEM(p) (p->gauntlet_item.type != ITEM_NONE)
 
 #define PLAYER_GAUNTLET_MAX 8
 
@@ -70,12 +72,11 @@ typedef struct
     Item gauntlet[PLAYER_GAUNTLET_MAX];
 
     int skills[PLAYER_MAX_SKILLS];
-    // int skill_counts[PLAYER_MAX_SKILLS];
     int skill_count;
-
-    // Skill* skills[PLAYER_MAX_SKILLS];
+    int num_skill_choices;
 
     ProjectileDef proj_def;
+    ProjectileDef proj_def_gauntlet;
     ProjectileDef proj_discharge;
 
     GFXAnimation anim;
@@ -124,12 +125,12 @@ extern Player* player;
 extern Player* player2;
 extern int xp_levels[];
 
-#define NUM_SKILLS  5
-#define NUM_SKILL_CHOICES  3
+extern bool boost_stats;
+
+
 extern int skill_selection;
-extern int skill_choices[NUM_SKILL_CHOICES];
-extern int skill_choices_num;
-// extern const char* skill_text[NUM_SKILLS];
+extern int skill_choices[MAX_SKILL_CHOICES];
+extern int num_skill_choices;
 extern float jump_vel_z;
 
 extern int shadow_image;

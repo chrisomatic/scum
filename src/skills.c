@@ -7,7 +7,6 @@
 Skill skill_list[SKILL_LIST_MAX] = {0};
 int skill_list_count = 0;
 
-static void skills_debug(void* skill, void* player, float dt);
 static void skills_rabbits_foot(void* skill, void* player, float dt);
 static void skills_steel_boots(void* skill, void* player, float dt);
 static void skills_crown_of_thorns(void* skill, void* player, float dt);
@@ -22,16 +21,6 @@ static void skills_multishot(void* skill, void* player, float dt);
 void skills_init()
 {
     int i = skill_list_count;
-
-    skill_list[i].type = SKILL_TYPE_DEBUG;
-    skill_list[i].func = skills_debug;
-    skill_list[i].min_level = 1;
-    skill_list[i].rarity = SKILL_RARITY_DEBUG;
-    skill_list[i].rank = 1;
-    skill_list[i].periodic = false;
-    strcpy(skill_list[i].name,"DEBUG");
-    strcpy(skill_list[i].desc,"good stuff");
-    i++;
 
     skill_list[i].type = SKILL_TYPE_KINETIC_DISCHARGE;
     skill_list[i].func = skills_kinetic_discharge;
@@ -258,8 +247,6 @@ const char* skill_rarity_str(SkillRarity rarity)
 
 int skill_rarity_weight(SkillRarity rarity)
 {
-    if(rarity == SKILL_RARITY_DEBUG)
-        return 100;
     return SKILL_RARITY_MAX - rarity;
 }
 
@@ -271,14 +258,14 @@ int skill_rarity_weight(SkillRarity rarity)
 static void skills_debug(void* skill, void* player, float dt)
 {
     Player* p = (Player*)player;
-    p->phys.speed += 300.0;
-    p->phys.max_velocity += 90.0;
-    p->proj_cooldown_max = 0.05;
-    p->proj_def.num += 4;
-    p->proj_def.ghost_chance += 1.0f;
-    p->proj_def.damage += 9.0;
-    p->phys.hp_max += 10;
-    p->phys.hp = p->phys.hp_max;
+    // p->phys.speed += 300.0;
+    // p->phys.max_velocity += 90.0;
+    // p->proj_cooldown_max = 0.05;
+    // p->proj_def.num += 4;
+    // p->proj_def.ghost_chance += 1.0f;
+    // p->proj_def.damage += 9.0;
+    // p->phys.hp_max += 10;
+    // p->phys.hp = p->phys.hp_max;
 }
 
 
