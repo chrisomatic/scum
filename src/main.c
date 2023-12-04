@@ -1145,7 +1145,7 @@ void draw_map(DrawLevelParams* params)
             {
                 float tlx = room_rect.x - room_rect.w/2.0 + 1.0;
                 float tly = room_rect.y - room_rect.h/2.0;
-                gfx_draw_string(tlx, tly, COLOR_WHITE, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, "%d", creature_get_room_count(room->index));
+                gfx_draw_string(tlx, tly, COLOR_WHITE, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "%d", creature_get_room_count(room->index));
             }
 
             //TEMP
@@ -1298,7 +1298,7 @@ void draw()
         {
             uint32_t color = COLOR_WHITE;
             if(i == menu_selected_option) color = COLOR_BLUE;
-            gfx_draw_string(x,y, color, menu_item_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, (char*)menu_options[i]);
+            gfx_draw_string(x,y, color, menu_item_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, 0, (char*)menu_options[i]);
             y += (text_size.y+margin);
         }
 
@@ -1313,6 +1313,18 @@ void draw()
             explosion_draw_all();
             particles_draw_spawners_all();
         }
+
+        // @TEST
+        // {
+        //     float x = 200;
+        //     float y = 200;
+        //     float w = 200;
+        //     float h = 200;
+        //     gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_GRAY, 1.0, 0.0, 0.5,true,false);
+        //     float scale = 0.32 * ascale;
+        //     // gfx_draw_string2(x, y, COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, w, "A B C D E F G H I J K123 L M N O P Q R S T U V W X Y Z 1 2 3 4 5 6 7 8 9");
+        //     gfx_draw_string2(x, y, COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, w, "A B C D E F G H I J K A B C D E F end");
+        // }
 
         draw_bigmap();
     }
@@ -1336,7 +1348,7 @@ void draw()
         Vector2f title_size = gfx_string_get_size(title_scale, title);
         Rect title_r = RECT(margin_top.w/2.0, margin_top.h/2.0, title_size.x, title_size.y);
         gfx_get_absolute_coords(&title_r, ALIGN_CENTER, &margin_top, ALIGN_TOP_LEFT);
-        gfx_draw_string(title_r.x, title_r.y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, title);
+        gfx_draw_string(title_r.x, title_r.y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, 0, title);
     }
     else if(game_state == GAME_STATE_PLAYING)
     {
@@ -1504,7 +1516,7 @@ void message_small_draw()
 
     float tx = bg.x - bg.w/2.0 + pad/2.0;
     float ty = bg.y - bg.h/2.0 + pad/4.0;
-    gfx_draw_string(tx, ty, COLOR_WHITE, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, NO_DROP_SHADOW, message_small);
+    gfx_draw_string(tx, ty, COLOR_WHITE, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, NO_DROP_SHADOW, 0, message_small);
 }
 
 

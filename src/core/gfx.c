@@ -1001,15 +1001,111 @@ Vector2f gfx_draw_string_with_background(float x, float y, uint32_t color, uint3
     return gfx_draw_string_internal(x,y,color,background_color, scale, rotation, opacity, in_world, drop_shadow, str);
 }
 
-Vector2f gfx_draw_string(float x, float y, uint32_t color, float scale, float rotation, float opacity, bool in_world, bool drop_shadow, char* fmt, ...)
+// Vector2f gfx_draw_string(float x, float y, uint32_t color, float scale, float rotation, float opacity, bool in_world, bool drop_shadow, char* fmt, ...)
+// {
+//     va_list args;
+//     va_start(args, fmt);
+//     char str[256] = {0};
+//     vsprintf(str,fmt, args);
+//     va_end(args);
+
+//     return gfx_draw_string_internal(x,y,color,0x00000000, scale, rotation, opacity, in_world, drop_shadow, str);
+// }
+
+
+Vector2f gfx_draw_string(float x, float y, uint32_t color, float scale, float rotation, float opacity, bool in_world, bool drop_shadow, float max_w, char* fmt, ...)
 {
+    static int dbg = true;
+
     va_list args;
     va_start(args, fmt);
     char str[256] = {0};
     vsprintf(str,fmt, args);
     va_end(args);
 
-    return gfx_draw_string_internal(x,y,color,0x00000000, scale, rotation, opacity, in_world, drop_shadow, str);
+    Vector2f size = gfx_string_get_size(scale, str);
+    if(max_w == 0 || size.x <= max_w)
+    {
+        return gfx_draw_string_internal(x,y,color,0x00000000, scale, rotation, opacity, in_world, drop_shadow, str);
+    }
+
+    Vector2f total_size = {0};
+    total_size.y = size.y;
+    total_size.x = max_w;
+
+    int len = strlen(str);
+
+    int idx = 0;
+    int spaceidx = -1;
+
+    int subidx = 0;
+    char substr[256] = {0};
+
+    float _y = y;
+
+    for(;;)
+    {
+        char c = str[idx];
+
+        substr[subidx] = c;
+
+        Vector2f s = gfx_string_get_size(scale, substr);
+
+        if(s.x > max_w)
+        {
+            idx++;
+
+            int backidx = 1;
+            if(spaceidx > 0)
+            {
+                backidx = idx - spaceidx - 1;
+            }
+
+            // if(dbg)
+            // {
+            //     printf("idx: %d\n", idx);
+            //     printf("backidx: %d\n", backidx);
+            //     printf("spaceidx: %d\n", spaceidx);
+            // }
+
+            subidx -= backidx;
+            idx -= backidx;
+            substr[subidx+1] = 0;
+
+            // if(dbg) printf("substr: '%s'\n",substr);
+
+            gfx_draw_string_internal(x,_y,color,0x00000000, scale, rotation, opacity, in_world, drop_shadow, substr);
+
+            _y += s.y;
+            total_size.y += s.y;
+
+            spaceidx = -1;
+            memset(substr, 0, 256);
+            subidx = 0;
+            continue;
+        }
+
+        if(c == ' ')
+        {
+            spaceidx = idx;
+            // if(dbg) printf("set spaceidx: %d\n", spaceidx);
+        }
+
+        subidx++;
+        idx++;
+
+        if(idx >= len && subidx > 0)
+        {
+            // if(dbg) printf("remainder: '%s'\n", substr);
+            gfx_draw_string_internal(x,_y,color,0x00000000, scale, rotation, opacity, in_world, drop_shadow, substr);
+            break;
+        }
+
+    }
+
+    dbg = false;
+
+    return total_size;
 }
 
 // w,h

@@ -392,7 +392,7 @@ void imgui_text_sized(float pxsize, char* text, ...)
     vsprintf(str,text, args);
     va_end(args);
 
-    Vector2f size = gfx_draw_string(ctx->curr.x, ctx->curr.y, theme.color_text, (pxsize / NOMINAL_FONT_SIZE), 0.0, 1.0, false, false, str);
+    Vector2f size = gfx_draw_string(ctx->curr.x, ctx->curr.y, theme.color_text, (pxsize / NOMINAL_FONT_SIZE), 0.0, 1.0, false, false, 0, str);
     ctx->curr.w = size.x+1.0*theme.spacing;
     ctx->curr.h = 1.3*size.y;
 
@@ -407,7 +407,7 @@ void imgui_text_colored(uint32_t color, char* text, ...)
     vsprintf(str,text, args);
     va_end(args);
 
-    Vector2f size = gfx_draw_string(ctx->curr.x, ctx->curr.y, color, theme.text_scale, 0.0, 1.0, false, false, str);
+    Vector2f size = gfx_draw_string(ctx->curr.x, ctx->curr.y, color, theme.text_scale, 0.0, 1.0, false, false, 0, str);
     ctx->curr.w = size.x+1.0*theme.spacing;
     ctx->curr.h = size.y + theme.spacing;
 
@@ -1815,7 +1815,7 @@ static void draw_button(uint32_t hash, char* str, Rect* r)
     gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, r->h, button_color, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
 
     Vector2f val_size = gfx_string_get_size(theme.text_scale, str); // for centering text on button
-    gfx_draw_string(r->x + (r->w - val_size.x)/2.0, r->y + (r->h - val_size.y)/2.0, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, str);
+    gfx_draw_string(r->x + (r->w - val_size.x)/2.0, r->y + (r->h - val_size.y)/2.0, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, 0, str);
 }
 
 static void draw_image_button(uint32_t hash, char* str, Rect* r, int img_index, int sprite_index,float scale)
@@ -1835,7 +1835,7 @@ static void draw_image_button(uint32_t hash, char* str, Rect* r, int img_index, 
     gfx_draw_image_ignore_light(img_index, sprite_index, r->x + r->w/2.0, r->y + r->h/2.0, COLOR_TINT_NONE, scale, 0.0, 1.0, true,false);
     gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, r->h, button_color, 1.0, 0.0, 0.3*ctx->global_opacity_scale, true,false);
 
-    gfx_draw_string(r->x + r->w + theme.text_padding, r->y, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, str);
+    gfx_draw_string(r->x + r->w + theme.text_padding, r->y, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, 0, str);
 }
 
 static void draw_toggle_button(uint32_t hash, char* str, Rect* r, bool toggled)
@@ -1854,7 +1854,7 @@ static void draw_toggle_button(uint32_t hash, char* str, Rect* r, bool toggled)
 
     gfx_draw_rect_xywh(r->x + r->w/2.0, r->y + r->h/2.0, r->w, r->h, button_color, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
 
-    gfx_draw_string(r->x + theme.text_padding, r->y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, str);
+    gfx_draw_string(r->x + theme.text_padding, r->y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, 0, str);
 }
 
 static void draw_slider(uint32_t hash, char* str, int slider_x, char* val_format, float val)
@@ -1880,10 +1880,10 @@ static void draw_slider(uint32_t hash, char* str, int slider_x, char* val_format
     char val_str[16] = {0};
     snprintf(val_str,15,val_format,val);
     Vector2f val_size = gfx_string_get_size(theme.text_scale, val_str);
-    gfx_draw_string(ctx->curr.x + (ctx->curr.w-val_size.x)/2.0, ctx->curr.y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, val_str);
+    gfx_draw_string(ctx->curr.x + (ctx->curr.w-val_size.x)/2.0, ctx->curr.y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, 0, val_str);
 
     // draw label
-    gfx_draw_string(ctx->curr.x + ctx->curr.w + theme.text_padding, ctx->curr.y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, str);
+    gfx_draw_string(ctx->curr.x + ctx->curr.w + theme.text_padding, ctx->curr.y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0, false, false, 0, str);
 }
 
 static void draw_panel(uint32_t hash, bool moveable)
@@ -1921,7 +1921,7 @@ static void draw_checkbox(uint32_t hash, char* label, bool result)
     gfx_draw_rect_xywh(x,y,theme.checkbox_size, theme.checkbox_size, check_color, 1.0, 0.0, 1.0*ctx->global_opacity_scale, false,false);
     gfx_draw_rect_xywh(x,y,0.65*theme.checkbox_size, 0.65*theme.checkbox_size, check_color, 1.0, 0.0, 1.0*ctx->global_opacity_scale, result,false);
 
-    gfx_draw_string(ctx->curr.x + theme.checkbox_size + theme.text_padding, ctx->curr.y + (theme.checkbox_size - text_size.y)/2.0, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, label);
+    gfx_draw_string(ctx->curr.x + theme.checkbox_size + theme.text_padding, ctx->curr.y + (theme.checkbox_size - text_size.y)/2.0, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, 0, label);
 
     ctx->curr.w = theme.checkbox_size + 2.0*theme.text_padding + text_size.x;
     ctx->curr.h = MAX(theme.checkbox_size, text_size.y)+2.0*theme.text_padding;
@@ -1977,7 +1977,7 @@ static void draw_text_box(uint32_t hash, char* label, Rect* r, char* text)
     if(ctx->focused_text_id == hash)
         gfx_draw_rect_xywh(sx + sw/2.0, sy + sh/2.0, sw, sh, 0x000055CC, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
 
-    gfx_draw_string(r->x+theme.text_padding, r->y-(label_size.y-r->h)/2.0, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, text);
+    gfx_draw_string(r->x+theme.text_padding, r->y-(label_size.y-r->h)/2.0, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, 0, text);
 
     if(ctx->focused_text_id == hash)
     {
@@ -2051,7 +2051,7 @@ static void draw_listbox(uint32_t hash, char* str, char* options[], int num_opti
 
         if(options[i])
         {
-            gfx_draw_string(r->x+theme.text_padding, r->y+i*box_height - offset, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, options[i]);
+            gfx_draw_string(r->x+theme.text_padding, r->y+i*box_height - offset, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, 0, options[i]);
         }
     }
 
@@ -2062,7 +2062,7 @@ static void draw_listbox(uint32_t hash, char* str, char* options[], int num_opti
 
     // label
     int label_height = (NOMINAL_FONT_SIZE*theme.text_scale+theme.text_padding);
-    gfx_draw_string(r->x, r->y-label_height, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, str);
+    gfx_draw_string(r->x, r->y-label_height, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, 0, str);
 
     // selected / num options
     char stats[10] = {0};
@@ -2070,7 +2070,7 @@ static void draw_listbox(uint32_t hash, char* str, char* options[], int num_opti
 
     Vector2f stats_size = gfx_string_get_size(theme.text_scale, stats);
 
-    gfx_draw_string(r->x+theme.listbox_width-stats_size.x, r->y-(NOMINAL_FONT_SIZE*theme.text_scale+theme.text_padding), theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, stats);
+    gfx_draw_string(r->x+theme.listbox_width-stats_size.x, r->y-(NOMINAL_FONT_SIZE*theme.text_scale+theme.text_padding), theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, 0, stats);
 
 
 }
@@ -2103,8 +2103,8 @@ static void draw_dropdown(uint32_t hash, char* str, char* options[], int num_opt
     bool active = is_active(hash);
 
     char* selected_text = options[selection];
-    gfx_draw_string(r->x + theme.text_padding, r->y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, selected_text);
-    gfx_draw_string(r->x + theme.text_padding + r->w - 16, r->y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, active ? "-" : "+");
+    gfx_draw_string(r->x + theme.text_padding, r->y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, 0, selected_text);
+    gfx_draw_string(r->x + theme.text_padding + r->w - 16, r->y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, 0, active ? "-" : "+");
 
     if(active)
     {
@@ -2126,18 +2126,18 @@ static void draw_dropdown(uint32_t hash, char* str, char* options[], int num_opt
 
             if(options[i])
             {
-                gfx_draw_string(r->x + theme.text_padding, r->y + theme.text_padding + (i+1)*box_height, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, options[i]);
+                gfx_draw_string(r->x + theme.text_padding, r->y + theme.text_padding + (i+1)*box_height, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, 0, options[i]);
             }
         }
     }
 
     // label
-    gfx_draw_string(r->x + r->w + theme.text_padding, r->y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, str);
+    gfx_draw_string(r->x + r->w + theme.text_padding, r->y + theme.text_padding, theme.color_text, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, 0, str);
 }
 
 static void draw_label(int x, int y, uint32_t color, char* label)
 {
-    gfx_draw_string(x, y, color, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, label);
+    gfx_draw_string(x, y, color, theme.text_scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, 0, label);
 }
 
 static void draw_color_box(Rect* r, uint32_t color)
@@ -2155,5 +2155,5 @@ static void draw_tooltip()
     r.y -= r.h;
 
     gfx_draw_rect_xywh(r.x + r.w/2.0, r.y + r.h/2.0, r.w, r.h, 0x00323232, 1.0, 0.0, 0.75*ctx->global_opacity_scale, true,false);
-    gfx_draw_string(r.x+theme.text_padding, r.y-(text_size.y-r.h)/2.0, theme.color_text, scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, ctx->tooltip);
+    gfx_draw_string(r.x+theme.text_padding, r.y-(text_size.y-r.h)/2.0, theme.color_text, scale, 0.0, 1.0*ctx->global_opacity_scale, false, false, 0, ctx->tooltip);
 }

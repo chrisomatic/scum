@@ -262,9 +262,9 @@ bool item_is_heart(ItemType type)
     return (type >= ITEM_HEART_FULL && type <= ITEM_HEART_HALF);
 }
 
-void item_apply_gauntlet(void* _player, Item* gauntlet, uint8_t num_slots)
+void item_apply_gauntlet(void* _proj_def, Item* gauntlet, uint8_t num_slots)
 {
-    Player* p = (Player*)_player;
+    ProjectileDef* proj_def = (ProjectileDef*)_proj_def;
 
     for(int i = 0; i < num_slots; ++i)
     {
@@ -275,22 +275,22 @@ void item_apply_gauntlet(void* _player, Item* gauntlet, uint8_t num_slots)
         switch(item->type)
         {
             case ITEM_GEM_RED:
-                p->proj_def.damage += 1.0;
+                proj_def->damage += 1.0;
                 break;
             case ITEM_GEM_GREEN:
-                p->proj_def.poison_chance = 1.0;
+                proj_def->poison_chance = 1.0;
                 break;
             case ITEM_GEM_BLUE:
-                p->proj_def.cold_chance = 1.0;
+                proj_def->cold_chance = 1.0;
                 break;
             case ITEM_GEM_WHITE:
-                p->proj_def.num += 1;
+                proj_def->num += 1;
                 break;
             case ITEM_GEM_YELLOW:
-                p->proj_def.bouncy = true;
+                proj_def->bouncy = true;
                 break;
             case ITEM_GEM_PURPLE:
-                p->proj_def.ghost = true;
+                proj_def->ghost = true;
                 break;
             default:
                 break;
