@@ -66,7 +66,9 @@ void editor_draw()
 {
     int name_count = player_names_build(false, false);
 
-    imgui_begin_panel("Editor", view_width - 300, 1, true);
+    static Rect gui_size = {0};
+
+    imgui_begin_panel("Editor", view_width - gui_size.w, 1, true);
 
         imgui_newline();
         char* buttons[] = {"General", "Level", "Players", "Creatures", "Projectiles", "Particles"};
@@ -295,31 +297,39 @@ void editor_draw()
                 static int proj_sel = 0;
                 imgui_dropdown(proj_def_names, PROJECTILE_TYPE_MAX, "Projectile Definition", &proj_sel, NULL);
 
-                imgui_slider_float("Damage", 0.0,100.0,&projectile_lookup[proj_sel].damage);
-                imgui_slider_float("Range", 0.0,1000.0,&projectile_lookup[proj_sel].range);
-                imgui_slider_float("Base Speed", 100.0,1000.0,&projectile_lookup[proj_sel].base_speed);
-                imgui_slider_float("Min Speed", 50.0,200.0,&projectile_lookup[proj_sel].min_speed);
-                imgui_slider_float("Angle Spread", 0.0, 360.0,&projectile_lookup[proj_sel].angle_spread);
-                imgui_slider_float("Scale", 0.1, 5.0,&projectile_lookup[proj_sel].scale);
 
-                int num = projectile_lookup[proj_sel].num;
+                ProjectileDef* projd = &projectile_lookup[proj_sel];
+
+                if(proj_sel == PROJECTILE_TYPE_PLAYER)
+                {
+                    projd = &player->proj_def;
+                }
+
+                imgui_slider_float("Damage", 0.0,100.0,&projd->damage);
+                imgui_slider_float("Range", 0.0,1000.0,&projd->range);
+                imgui_slider_float("Base Speed", 100.0,1000.0,&projd->base_speed);
+                imgui_slider_float("Min Speed", 50.0,200.0,&projd->min_speed);
+                imgui_slider_float("Angle Spread", 0.0, 360.0,&projd->angle_spread);
+                imgui_slider_float("Scale", 0.1, 5.0,&projd->scale);
+
+                int num = projd->num;
                 imgui_number_box("Num", 1,100, &num);
-                projectile_lookup[proj_sel].num = num;
+                projd->num = num;
 
-                // imgui_toggle_button(&projectile_lookup[proj_sel].charge, "Charge");
+                // imgui_toggle_button(&projd->charge, "Charge");
                 // int charge_rate = projectile_lookup[0].charge_rate;
                 // imgui_number_box("Charge Rate", 1, 100, &charge_rate);
-                // projectile_lookup[proj_sel].charge_rate = charge_rate;
+                // projd->charge_rate = charge_rate;
 
                 imgui_text_sized(20.0,"Attributes:");
                 imgui_horizontal_line(1);
-                imgui_checkbox("Ghost", &projectile_lookup[proj_sel].ghost);
-                imgui_checkbox("Explosive", &projectile_lookup[proj_sel].explosive);
-                imgui_checkbox("Homing", &projectile_lookup[proj_sel].homing);
-                imgui_checkbox("Bouncy", &projectile_lookup[proj_sel].bouncy);
-                imgui_checkbox("Penetrate", &projectile_lookup[proj_sel].penetrate);
-                imgui_slider_float("Cold Chance", 0.0, 1.0, &projectile_lookup[proj_sel].cold_chance);
-                imgui_slider_float("Poison Chance", 0.0, 1.0,&projectile_lookup[proj_sel].poison_chance);
+                imgui_checkbox("Ghost", &projd->ghost);
+                imgui_checkbox("Explosive", &projd->explosive);
+                imgui_checkbox("Homing", &projd->homing);
+                imgui_checkbox("Bouncy", &projd->bouncy);
+                imgui_checkbox("Penetrate", &projd->penetrate);
+                imgui_slider_float("Cold Chance", 0.0, 1.0, &projd->cold_chance);
+                imgui_slider_float("Poison Chance", 0.0, 1.0,&projd->poison_chance);
 
             } break;
 
@@ -328,7 +338,7 @@ void editor_draw()
                 particle_editor_gui();
             } break;
         }
-    imgui_end();
+    gui_size = imgui_end();
 }
 
 static void particle_editor_gui()

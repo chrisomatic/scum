@@ -28,7 +28,7 @@ ProjectileDef projectile_lookup[] = {
         .damage = 1.0,
         .range = 128,
         .min_speed = 150.0,
-        .base_speed = 150.0,
+        .base_speed = 215.0,
         .angle_spread = 45.0,
         .scale = 1.0,
         .num = 1,
@@ -168,7 +168,7 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
         p.phys.vel.z = speed;
 
         float d = dist(0,0, p.phys.vel.x,p.phys.vel.y); // distance travelled per second
-        p.ttl = 10.0; //projdef->range / d;
+        p.ttl = 30.0; //projdef->range / d;
 
         list_add(plist, (void*)&p);
     }
