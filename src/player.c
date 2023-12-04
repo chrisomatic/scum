@@ -1435,7 +1435,7 @@ void draw_xp_bar()
     out_r.y = y + out_r.h/2.0;
     gfx_draw_rect(&out_r, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
 
-    gfx_draw_string(x + w + 5.0, y-1.0, COLOR_WHITE, 0.15*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%d", player->level);
+    gfx_draw_string(x + w + 5.0, y-1.0, COLOR_WHITE, 0.15*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "%d", player->level);
 }
 
 void draw_gauntlet()
@@ -1479,7 +1479,7 @@ void draw_gauntlet()
                 // float tly = r.y - r.h/2.0 + size.y + 2.0;
                 float bly = r.y + r.h/2.0 + 2.0;
 
-                gfx_draw_string(tlx, bly, COLOR_WHITE, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, "%s", desc);
+                gfx_draw_string(tlx, bly, COLOR_WHITE, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%s", desc);
             }
             color = 0x00b0b0b0;
         }
@@ -1701,7 +1701,7 @@ void draw_skill_selection()
 
         if(i == 0)
         {
-            gfx_draw_string(x, y-size.y-3*pad, COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "Level Up! (Choose a Skill)");
+            gfx_draw_string(x, y-size.y-3*pad, COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "Level Up! (Choose a Skill)");
         }
 
         for(int j = 0; j < num_skills_row; ++j)
@@ -1720,8 +1720,11 @@ void draw_skill_selection()
                 gfx_draw_image(items_image,20+skill->rarity,x+w-5, y+5, COLOR_TINT_NONE, 1.0, 0.0, 1.0, true, NOT_IN_WORLD);
             }
 
-            gfx_draw_string(x+1, y, selected ? COLOR_YELLOW : COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill->name);
-            gfx_draw_string(x+1, y+size.y+2*pad, COLOR_GRAY, 0.20*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill->desc);
+            // gfx_draw_string(x+1, y, selected ? COLOR_YELLOW : COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill->name);
+            // gfx_draw_string(x+1, y+size.y+2*pad, COLOR_GRAY, 0.20*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill->desc);
+
+            gfx_draw_string(x+1, y, selected ? COLOR_YELLOW : COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, w-1, "%s", skill->name);
+            gfx_draw_string(x+1, y+size.y+2*pad, COLOR_GRAY, 0.20*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, w-1, "%s", skill->desc);
 
             x += w + pad;
             idx++;
@@ -1797,7 +1800,7 @@ void player_draw_debug(Player* p)
         gfx_draw_rect(&t_rect, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true);
 
 
-        // gfx_draw_string(p->phys.pos.x, p->phys.pos.y, COLOR_RED, 0.4, NO_ROTATION, FULL_OPACITY, IN_WORLD, DROP_SHADOW, "%d", p->highlighted_index);
+        // gfx_draw_string(p->phys.pos.x, p->phys.pos.y, COLOR_RED, 0.4, NO_ROTATION, FULL_OPACITY, IN_WORLD, DROP_SHADOW, 0, "%d", p->highlighted_index);
 
         float x0 = p->phys.pos.x;
         float y0 = p->phys.pos.y;

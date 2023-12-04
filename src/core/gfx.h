@@ -134,7 +134,7 @@ void gfx_draw_rect_xywh_tl(float x, float y, float w, float h, uint32_t color, f
 void gfx_draw_circle(float x, float y, float radius, uint32_t color, float opacity, bool filled, bool in_world);
 
 // Strings
-Vector2f gfx_draw_string(float x, float y, uint32_t color, float scale, float rotation, float opacity, bool in_world, bool drop_shadow, char* fmt, ...);
+Vector2f gfx_draw_string(float x, float y, uint32_t color, float scale, float rotation, float opacity, bool in_world, bool drop_shadow, float max_w, char* fmt, ...);
 Vector2f gfx_draw_string_with_background(float x, float y, uint32_t color, uint32_t background_color, float scale, float rotation, float opacity, bool in_world, bool drop_shadow, char* fmt, ...);
 Vector2f gfx_string_get_size(float scale, char* fmt, ...);
 Vector2f gfx_string_get_size_array(float scale, float* size_arr, int len, int* ret_len, char* fmt, ...);

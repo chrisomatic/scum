@@ -17,6 +17,7 @@ static void skills_restoration(void* skill, void* player, float dt);
 static void skills_health_boost(void* skill, void* player, float dt);
 static void skills_rapid_fire(void* skill, void* player, float dt);
 static void skills_multishot(void* skill, void* player, float dt);
+static void skills_more_choices(void* skill, void* player, float dt);
 
 void skills_init()
 {
@@ -224,9 +225,35 @@ void skills_init()
     strcpy(skill_list[i].desc,"Increase number of projectiles");
     i++;
 
+    skill_list[i].type = SKILL_TYPE_MORE_CHOICES;
+    skill_list[i].min_level = 1;
+    skill_list[i].rarity = SKILL_RARITY_COMMON;
+    skill_list[i].rank = 1;
+    skill_list[i].func = skills_more_choices;
+    skill_list[i].periodic = false;
+    strcpy(skill_list[i].name,"More Skill Choices I");
+    strcpy(skill_list[i].desc,"Increase number of skills to choose from");
+    i++;
 
+    skill_list[i].type = SKILL_TYPE_MORE_CHOICES;
+    skill_list[i].min_level = 1;
+    skill_list[i].rarity = SKILL_RARITY_COMMON;
+    skill_list[i].rank = 2;
+    skill_list[i].func = skills_more_choices;
+    skill_list[i].periodic = false;
+    strcpy(skill_list[i].name,"More Skill Choices II");
+    strcpy(skill_list[i].desc,"Increase number of skills to choose from");
+    i++;
 
-
+    skill_list[i].type = SKILL_TYPE_MORE_CHOICES;
+    skill_list[i].min_level = 1;
+    skill_list[i].rarity = SKILL_RARITY_COMMON;
+    skill_list[i].rank = 3;
+    skill_list[i].func = skills_more_choices;
+    skill_list[i].periodic = false;
+    strcpy(skill_list[i].name,"More Skill Choices III");
+    strcpy(skill_list[i].desc,"Increase number of skills to choose from");
+    i++;
 
 
 
@@ -255,17 +282,10 @@ int skill_rarity_weight(SkillRarity rarity)
 // Skills
 // ==============================
 
-static void skills_debug(void* skill, void* player, float dt)
+static void skills_more_choices(void* skill, void* player, float dt)
 {
     Player* p = (Player*)player;
-    // p->phys.speed += 300.0;
-    // p->phys.max_velocity += 90.0;
-    // p->proj_cooldown_max = 0.05;
-    // p->proj_def.num += 4;
-    // p->proj_def.ghost_chance += 1.0f;
-    // p->proj_def.damage += 9.0;
-    // p->phys.hp_max += 10;
-    // p->phys.hp = p->phys.hp_max;
+    p->num_skill_choices = MIN(p->num_skill_choices+1,MAX_SKILL_CHOICES);
 }
 
 
