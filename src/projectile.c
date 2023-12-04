@@ -165,7 +165,7 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
 
         p.phys.vel.x = +speed*cosf(angle) + phys->vel.x;
         p.phys.vel.y = -speed*sinf(angle) + phys->vel.y;
-        p.phys.vel.z = 200.0;
+        p.phys.vel.z = speed;
 
         float d = dist(0,0, p.phys.vel.x,p.phys.vel.y); // distance travelled per second
         p.ttl = 10.0; //projdef->range / d;
