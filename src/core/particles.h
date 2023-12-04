@@ -89,7 +89,7 @@ void particles_respawn_effect(ParticleSpawner* spawner, float x, float y, float 
 void particles_clear(ParticleSpawner* spawner);
 void particles_update(double delta_t);
 void particles_show_spawner(int id, bool show);
-void particles_draw();
+void particles_draw_spawners_all();
 void particles_draw_layer(int z);
 void particles_draw_spawner(ParticleSpawner* spawner, bool ignore_light, bool add_to_existing_batch);
 

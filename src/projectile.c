@@ -12,6 +12,7 @@
 #include "lighting.h"
 #include "status_effects.h"
 #include "projectile.h"
+#include "effects.h"
 
 Projectile projectiles[MAX_PROJECTILES];
 Projectile prior_projectiles[MAX_PROJECTILES];
@@ -26,8 +27,8 @@ ProjectileDef projectile_lookup[] = {
         .color = 0x0050A0FF,
         .damage = 1.0,
         .range = 128,
-        .min_speed = 128.0,
-        .base_speed = 128.0,
+        .min_speed = 150.0,
+        .base_speed = 150.0,
         .angle_spread = 45.0,
         .scale = 1.0,
         .num = 1,
@@ -116,9 +117,10 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
     proj.time = 0.0;
     proj.ttl  = 1.0;
     proj.color = projdef->color;
+    proj.phys.height = gfx_images[projectile_image].visible_rects[0].h*proj.scale;
     proj.phys.pos.x = phys->pos.x;
-    proj.phys.pos.y = phys->pos.y - 0.5*phys->pos.z;
-    proj.phys.height = gfx_images[projectile_image].element_height;
+    proj.phys.pos.y = phys->pos.y - phys->pos.z + phys->height/2.0 - proj.phys.height/2.0;
+    proj.phys.pos.z = phys->height/2.0;
     proj.phys.mass = 1.0;
     proj.phys.radius = 4.0 * proj.scale;
     proj.phys.amorphous = projdef->bouncy ? false : true;
@@ -157,88 +159,16 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
             angle += RAND_FLOAT(-spread, spread);
             // printf("%.2f\n", angle);
         }
-        p.angle_deg = angle;
 
+        p.angle_deg = angle;
         angle = RAD(angle);
 
-
-
-        Vector2f v = {cosf(angle),-sinf(angle)};
-        normalize(&v);
-
-        Vector2f v2 = {phys->vel.x, phys->vel.y};
-        normalize(&v2);
-
-        v2.x *= 0.5;
-        v2.y *= 0.5;
-
-        Vector2f r = {speed*(v.x + v2.x), speed*(v.y + v2.y)};
-
-        p.phys.vel.x = r.x;
-        p.phys.vel.y = r.y;
-
-#if 0
-
-        // if(!FEQ0(p->vel.x))
-        {
-            if(vx0 > 0 && vx < 0)
-            {
-                // printf("x help 1\n");
-                p.phys.vel.x = (min_speed)*cosf(angle);
-            }
-            else if(vx0 < 0 && vx > 0)
-            {
-                // printf("x help 2\n");
-                p.phys.vel.x = (min_speed)*cosf(angle);
-            }
-            else
-            {
-                p.phys.vel.x = vx;
-            }
-        }
-        // if(!FEQ0(p->phys.vel.y))
-        {
-            if(vy0 > 0 && vy < 0)
-            {
-                // printf("y help 1\n");
-                p.phys.vel.y = (-min_speed)*sinf(angle);  // @minus
-            }
-            else if(vy0 < 0 && vy > 0)
-            {
-                // printf("y help 2\n");
-                p.phys.vel.y = (-min_speed)*sinf(angle);  // @minus
-            }
-            else
-            {
-                // printf("help 3\n");
-                p.phys.vel.y = vy;
-            }
-        }
-
-        float a = calc_angle_rad(0,0,p.phys.vel.x, p.phys.vel.y);
-        float xa = cosf(a);
-        float ya = sinf(a);
-        float _speed = 0;
-
-        if(!FEQ0(xa))
-        {
-            _speed = p.phys.vel.x / xa;
-        }
-        else if(!FEQ0(ya))
-        {
-            _speed = p.phys.vel.y / ya;
-            _speed *= -1;   // @minus
-        }
-        if(_speed < min_speed)
-        {
-            // printf("min speed\n");
-            p.phys.vel.x = min_speed * xa;
-            p.phys.vel.y = -min_speed * ya;   //@minus
-        }
-#endif
+        p.phys.vel.x = +speed*cosf(angle) + phys->vel.x;
+        p.phys.vel.y = -speed*sinf(angle) + phys->vel.y;
+        p.phys.vel.z = 200.0;
 
         float d = dist(0,0, p.phys.vel.x,p.phys.vel.y); // distance travelled per second
-        p.ttl = projdef->range / d;
+        p.ttl = 10.0; //projdef->range / d;
 
         list_add(plist, (void*)&p);
     }
@@ -304,8 +234,15 @@ void projectile_update(float delta_t)
 
         proj->phys.pos.x += _dt*proj->phys.vel.x;
         proj->phys.pos.y += _dt*proj->phys.vel.y;
+        phys_apply_gravity(&proj->phys,1.0, delta_t);
 
         projectile_update_hit_box(proj);
+
+        if(proj->phys.pos.z <= 0.0)
+        {
+            proj->phys.dead = true;
+            particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &particle_effects[EFFECT_SMOKE], 0.1, true, false);
+        }
     }
 
     // int count = 0;
@@ -415,13 +352,18 @@ void projectile_draw(Projectile* proj, bool batch)
 
     float opacity = proj->phys.ethereal ? 0.3 : 1.0;
 
+    float y = proj->phys.pos.y - 0.5*proj->phys.pos.z;
+    float shadow_scale = RANGE(0.25*(1.0 - (proj->phys.pos.z / 128.0)),0.08,0.25)*proj->scale;
+
     if(batch)
     {
-        gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, proj->color, false, proj->scale, 0.0, opacity, false, true, false);
+        gfx_sprite_batch_add(shadow_image, 0, proj->phys.pos.x, proj->phys.pos.y, COLOR_TINT_NONE, false, shadow_scale, 0.0, 0.5, false, false, false);
+        gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, y, proj->color, false, proj->scale, 0.0, opacity, false, true, false);
     }
     else
     {
-        gfx_draw_image_ignore_light(projectile_image, 0, proj->phys.pos.x, proj->phys.pos.y, proj->color, proj->scale, 0.0, opacity, false, IN_WORLD);
+        gfx_draw_image_ignore_light(shadow_image, 0, proj->phys.pos.x, proj->phys.pos.y, COLOR_TINT_NONE, shadow_scale, 0.0, 0.5, false, false);
+        gfx_draw_image_ignore_light(projectile_image, 0, proj->phys.pos.x, y, proj->color, proj->scale, 0.0, opacity, false, IN_WORLD);
     }
 
     if(debug_enabled)

@@ -331,7 +331,7 @@ bool particles_is_spawner_in_camera_view(ParticleSpawner* s)
 }
 */
 
-void particles_draw()
+void particles_draw_spawners_all()
 {
     if(spawner_list == NULL) return;
 

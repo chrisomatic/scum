@@ -130,7 +130,6 @@ void start_server();
 void message_small_update(float dt);
 void message_small_draw();
 
-
 // =========================
 // Main Loop
 // =========================
@@ -735,6 +734,7 @@ void init()
 
     set_menu_keys();
 
+
     if(role == ROLE_CLIENT)
     {
         net_client_init();
@@ -1001,6 +1001,7 @@ void update(float dt)
             item_update_all(dt);
             explosion_update_all(dt);
             decal_update_all(dt);
+            particles_update(dt);
 
             Room* room = level_get_room_by_index(&level, (int)player->curr_room);
             bool prior_locked = room->doors_locked;
@@ -1310,6 +1311,7 @@ void draw()
             decal_draw_all();
             entity_draw_all();
             explosion_draw_all();
+            particles_draw_spawners_all();
         }
 
         draw_bigmap();
