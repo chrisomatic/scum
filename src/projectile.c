@@ -125,11 +125,11 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
     proj.phys.radius = 4.0 * proj.scale;
     proj.phys.amorphous = projdef->bouncy ? false : true;
     proj.phys.elasticity = projdef->bouncy ? 1.0 : 0.1;
-    proj.phys.ethereal = RAND_FLOAT(0.0,1.0) <= projdef->ghost_chance;
+    proj.homing = projdef->homing;
+    proj.phys.ethereal = projdef->ghost;
 
     proj.curr_room = curr_room;
     proj.from_player = from_player;
-    proj.homing = RAND_FLOAT(0.0,1.0) <= projdef->homing_chance;
 
     proj.hit_box.x = proj.phys.pos.x;
     proj.hit_box.y = proj.phys.pos.y;
@@ -148,6 +148,17 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
         Projectile p = {0};
         memcpy(&p, &proj, sizeof(Projectile));
         p.id = get_id();
+
+        if(!proj.homing)
+        {
+            p.homing = RAND_FLOAT(0.0,1.0) <= projdef->homing_chance;
+        }
+
+        if(!proj.phys.ethereal)
+        {
+            p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= projdef->ghost_chance;
+        }
+
         // printf("proj scale: %.2f\n", p.scale);
 
         // add spread
@@ -242,6 +253,11 @@ void projectile_update(float delta_t)
         {
             proj->phys.dead = true;
             particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &particle_effects[EFFECT_SPLASH], 0.5, true, false);
+
+            if(proj->proj_def->explosive)
+            {
+                explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->scale, 100.0*proj->scale, proj->curr_room, proj->from_player);
+            }
         }
     }
 

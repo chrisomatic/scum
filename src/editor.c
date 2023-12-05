@@ -328,6 +328,8 @@ void editor_draw()
                 imgui_checkbox("Homing", &projd->homing);
                 imgui_checkbox("Bouncy", &projd->bouncy);
                 imgui_checkbox("Penetrate", &projd->penetrate);
+                imgui_slider_float("Homing Chance", 0.0, 1.0, &projd->homing_chance);
+                imgui_slider_float("Ghost Chance", 0.0, 1.0, &projd->ghost_chance);
                 imgui_slider_float("Cold Chance", 0.0, 1.0, &projd->cold_chance);
                 imgui_slider_float("Poison Chance", 0.0, 1.0,&projd->poison_chance);
 

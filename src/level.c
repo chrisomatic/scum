@@ -12,6 +12,7 @@ RoomFileData room_list[32] = {0};
 int room_list_count = 0;
 int dungeon_image = -1;
 
+
 static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth);
 
 static int room_list_monster[32] = {0};
@@ -26,10 +27,26 @@ static int room_count_boss     = 0;
 
 static bool min_depth_reached = false;
 
+// rand
+// ------------------------------------------------------------------------
+static unsigned long int lrand_next = 1;
+
+static int lrand()
+{
+    lrand_next = lrand_next * 1103515245 + 12345;
+    return (unsigned int)(lrand_next / 65536) % 32768;
+}
+
+static void slrand(unsigned int seed)
+{
+    lrand_next = seed;
+}
+
 static inline bool flip_coin()
 {
-    return (rand()%2==0);
+    return (lrand()%2==0);
 }
+// ------------------------------------------------------------------------
 
 static void branch_room(Level* level, int x, int y, int depth)
 {
@@ -108,22 +125,22 @@ static int get_rand_room_index(RoomType type, Dir came_from)
     switch(type)
     {
         case ROOM_TYPE_BOSS:
-            index = room_list_boss[rand() % room_count_boss];
+            index = room_list_boss[lrand() % room_count_boss];
             list_count = room_count_boss;
             list = room_list_boss;
             break;
         case ROOM_TYPE_TREASURE:
-            index = room_list_treasure[rand() % room_count_treasure];
+            index = room_list_treasure[lrand() % room_count_treasure];
             list_count = room_count_treasure;
             list = room_list_treasure;
             break;
         case ROOM_TYPE_MONSTER:
-            index = room_list_monster[rand() % room_count_monster];
+            index = room_list_monster[lrand() % room_count_monster];
             list_count = room_count_monster;
             list = room_list_monster;
             break;
         case ROOM_TYPE_EMPTY:
-            index = room_list_empty[rand() % room_count_empty];
+            index = room_list_empty[lrand() % room_count_empty];
             list_count = room_count_empty;
             list = room_list_empty;
             break;
@@ -165,7 +182,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
 
     room->valid = true;
     room->discovered = false;
-    room->color = COLOR_TINT_NONE;//COLOR((rand() % 159) + 96,(rand() % 159) + 96,(rand() % 159) + 96);
+    room->color = COLOR_TINT_NONE;//COLOR((lrand() % 159) + 96,(lrand() % 159) + 96,(lrand() % 159) + 96);
     room->index = level_get_room_index(x,y);
 
     printf("adding room, depth: %d\n",depth);
@@ -188,7 +205,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
         goto exit_conditions;
     }
 
-    bool is_boss_room = !level->has_boss_room && ((level->num_rooms == MAX_ROOMS) || (level->num_rooms > 4 && (rand()%4 == 0)));
+    bool is_boss_room = !level->has_boss_room && ((level->num_rooms == MAX_ROOMS) || (level->num_rooms > 4 && (lrand()%4 == 0)));
 
     if(is_boss_room)
     {
@@ -210,7 +227,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
         goto exit_conditions;
     }
 
-    bool is_monster_room = (rand() % 100 < MONSTER_ROOM_PERCENTAGE);
+    bool is_monster_room = (lrand() % 100 < MONSTER_ROOM_PERCENTAGE);
 
     if(is_monster_room)
     {
@@ -905,13 +922,13 @@ Level level_generate(unsigned int seed, int rank)
 {
     Level level = {0};
     // seed PRNG
-    srand(seed);
+    slrand(seed);
 
     LOGI("Generating level, seed: %u", seed);
 
     // start in center of grid
-    level.start.x = floor(MAX_ROOMS_GRID_X/2); //RAND_RANGE(1,MAX_ROOMS_GRID_X-2);
-    level.start.y = floor(MAX_ROOMS_GRID_Y/2); //RAND_RANGE(1,MAX_ROOMS_GRID_Y-2);
+    level.start.x = floor(MAX_ROOMS_GRID_X/2);
+    level.start.y = floor(MAX_ROOMS_GRID_Y/2);
 
     // fill out helpful room information
     room_count_monster = 0;
