@@ -238,10 +238,10 @@ void projectile_update(float delta_t)
 
         projectile_update_hit_box(proj);
 
-        if(proj->phys.pos.z <= 0.0)
+        if(proj->phys.amorphous && proj->phys.pos.z <= 0.0)
         {
             proj->phys.dead = true;
-            particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &particle_effects[EFFECT_SMOKE], 0.1, true, false);
+            particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &particle_effects[EFFECT_SPLASH], 0.5, true, false);
         }
     }
 
