@@ -208,6 +208,26 @@ float dist(float x0, float y0, float x1, float y1)
     return d;
 }
 
+float dist3f_squared(float x0, float y0, float z0, float x1, float y1, float z1)
+{
+    Vector3f s = {
+        x1 - x0,
+        y1 - y0,
+        z1 - z0
+    };
+
+    float d_sq = (s.x * s.x) + (s.y * s.y) + (s.z * s.z);
+    return d_sq;
+}
+
+float dist3f(float x0, float y0, float z0, float x1, float y1, float z1)
+{
+    if(x0 == x1 && y0 == y1 && z0 == z1) return 0.0;
+
+    float d = sqrt(dist3f_squared(x0,y0,z0,x1,y1,z1));
+    return d;
+}
+
 static float Q_rsqrt(float number)
 {
 	union {
@@ -473,6 +493,52 @@ bool circles_colliding(Vector2f* p1, float r1, Vector2f* p2, float r2, float *di
     float r  = (r1 + r2);
 
     return (*distance < r);
+}
+
+bool are_spheres_colliding(Vector4f* prior_s, Vector4f* curr_s, Vector4f* check)
+{
+    Vector4f p = {0};
+    memcpy(&p, prior_s, sizeof(Vector4f));
+
+    // get vector to progress by
+    Vector3f v = {curr_s->x - p.x, curr_s->y - p.y, curr_s->z - p.z};
+    normalize3f(&v);
+
+    //printf("radius proj: %f, radius check: %f\n", p.w, check->w);
+
+    for(;;)
+    {
+        //printf("p: %f, %f, %f\n", p.x, p.y, p.z);
+
+        // check
+        float d_check = dist3f(p.x, p.y, p.z, check->x, check->y, check->z);
+        float r = p.w + check->w;
+
+        //printf("p: %f %f %f, check: %f %f %f, dist: %f, total_r: %f\n",p.x,p.y,p.z,check->x, check->y, check->z, d_check, r);
+
+        bool colliding = (d_check <= r);
+        if(colliding)
+        {
+            //printf("collision!\n");
+            return true;
+        }
+
+        float d_curr = dist3f(p.x, p.y, p.z, curr_s->x, curr_s->y, curr_s->z);
+        if(d_curr < 0.01)
+            break;
+
+        float r_curr = p.w + curr_s->w;
+
+        // update p sphere
+        float factor = (d_curr >= prior_s->w ? prior_s->w : d_curr);
+        //printf("factor: %f\n",factor);
+
+        p.x += v.x * factor;
+        p.y += v.y * factor;
+        p.z += v.z * factor;
+    }
+
+    return false;
 }
 
 // rect is contained inside of limit

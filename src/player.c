@@ -1022,9 +1022,7 @@ void player_update(Player* p, float dt)
         }
     }
 
-    // update circular dt
-    p->phys.circular_dt += dt;
-    p->phys.circular_dt = fmod(p->phys.circular_dt,2*PI);
+    phys_add_circular_time(&p->phys, dt);
 
     bool up    = p->actions[PLAYER_ACTION_UP].state;
     bool down  = p->actions[PLAYER_ACTION_DOWN].state;
@@ -1254,6 +1252,13 @@ void player_update(Player* p, float dt)
     }
     else
         p->anim.curr_frame = 0;
+
+
+    if(p->phys.floating)
+    {
+        p->phys.pos.z = 15 + 2*sin(5*p->phys.circular_dt);
+        p->anim.curr_frame = 0;
+    }
 
     if(isnan(p->phys.pos.x) || isnan(p->phys.pos.y))
     {
@@ -1749,12 +1754,6 @@ void player_draw(Player* p, bool batch)
     uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
 
     float y = p->phys.pos.y-(0.5*p->phys.pos.z);
-
-    if(p->phys.floating)
-    {
-        y += sin(5*p->phys.circular_dt);
-        p->anim.curr_frame = 0;
-    }
 
     float shadow_scale = RANGE(0.5*(1.0 - (p->phys.pos.z / 128.0)),0.1,0.5);
     float shadow_x = p->phys.pos.x;

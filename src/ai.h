@@ -28,11 +28,82 @@ static void update_creature_sprite_index(Creature* c)
         */
 }
 
+static void _update_sprite_index(Creature* c, Dir dir)
+{
+    switch(dir)
+    {
+        case DIR_UP: case DIR_UP_RIGHT:
+            c->sprite_index = DIR_UP;
+            break;
+        case DIR_RIGHT: case DIR_DOWN_RIGHT:
+            c->sprite_index = DIR_RIGHT;
+            break;
+        case DIR_DOWN:  case DIR_DOWN_LEFT:
+            c->sprite_index = DIR_DOWN;
+            break;
+        case DIR_LEFT:  case DIR_UP_LEFT:
+            c->sprite_index = DIR_LEFT;
+            break;
+    }
+}
+
+void ai_stop_imm(Creature* c)
+{
+    c->h = 0.0;
+    c->v = 0.0;
+
+    c->phys.vel.x = 0.0;
+    c->phys.vel.y = 0.0;
+}
+
 void ai_stop_moving(Creature* c)
 {
     c->h = 0.0;
     c->v = 0.0;
 }
+
+void ai_move_imm(Creature* c, Dir dir, float speed)
+{
+    c->h = 0.0;
+    c->v = 0.0;
+
+    switch(dir)
+    {
+        case DIR_UP:
+            c->phys.vel.x = 0.0;
+            c->phys.vel.y = -speed;
+            break;
+        case DIR_RIGHT:
+            c->phys.vel.x = +speed;
+            c->phys.vel.y = 0.0;
+            break;
+        case DIR_DOWN:
+            c->phys.vel.x = 0.0;
+            c->phys.vel.y = +speed;
+            break;
+        case DIR_LEFT:
+            c->phys.vel.x = -speed;
+            c->phys.vel.y = 0.0;
+            break;
+        case DIR_UP_RIGHT:
+            c->phys.vel.x = +speed;
+            c->phys.vel.y = -speed; 
+            break;
+        case DIR_DOWN_LEFT:
+            c->phys.vel.x = -speed;
+            c->phys.vel.y = +speed;
+            break;
+        case DIR_DOWN_RIGHT:
+            c->phys.vel.x = +speed;
+            c->phys.vel.y = +speed;
+            break;
+        case DIR_UP_LEFT:
+            c->phys.vel.x = -speed;
+            c->phys.vel.y = -speed;
+            break;
+    }
+}
+
 void ai_walk_dir(Creature* c, Dir dir)
 {
     Vector2i o = get_dir_offsets(dir);
@@ -43,7 +114,7 @@ void ai_walk_dir(Creature* c, Dir dir)
     if(dir < DIR_NONE)
     {
         if(c->type == CREATURE_TYPE_SLUG) // do this for any standard crawler creature
-            c->sprite_index = dir % 4;
+            _update_sprite_index(c, dir);
     }
 }
 

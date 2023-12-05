@@ -176,10 +176,10 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
 
         p.phys.vel.x = +speed*cosf(angle) + phys->vel.x;
         p.phys.vel.y = -speed*sinf(angle) + phys->vel.y;
-        p.phys.vel.z = speed;
+        p.phys.vel.z = 80.0;
 
         float d = dist(0,0, p.phys.vel.x,p.phys.vel.y); // distance travelled per second
-        p.ttl = 30.0; //projdef->range / d;
+        p.ttl = 3.0; //projdef->range / d;
 
         list_add(plist, (void*)&p);
     }
@@ -190,6 +190,18 @@ void projectile_add_type(Physics* phys, uint8_t curr_room, ProjectileType proj_t
 {
     ProjectileDef* projdef = &projectile_lookup[proj_type];
     projectile_add(phys, curr_room, projdef, angle_deg, scale, damage_multiplier, from_player);
+}
+
+void projectile_kill(Projectile* proj)
+{
+    proj->phys.dead = true;
+
+    particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &particle_effects[EFFECT_SPLASH], 0.5, true, false);
+
+    if(proj->proj_def->explosive)
+    {
+        explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->scale, 100.0*proj->scale, proj->curr_room, proj->from_player);
+    }
 }
 
 void projectile_update(float delta_t)
@@ -205,7 +217,7 @@ void projectile_update(float delta_t)
 
         if(proj->time >= proj->ttl)
         {
-            proj->phys.dead = true;
+            projectile_kill(proj);
             continue;
         }
 
@@ -242,22 +254,17 @@ void projectile_update(float delta_t)
 
         proj->phys.prior_pos.x = proj->phys.pos.x;
         proj->phys.prior_pos.y = proj->phys.pos.y;
+        proj->phys.prior_pos.z = proj->phys.pos.z;
 
         proj->phys.pos.x += _dt*proj->phys.vel.x;
         proj->phys.pos.y += _dt*proj->phys.vel.y;
-        phys_apply_gravity(&proj->phys,1.0, delta_t);
+        phys_apply_gravity(&proj->phys,0.5, delta_t);
 
         projectile_update_hit_box(proj);
 
         if(proj->phys.amorphous && proj->phys.pos.z <= 0.0)
         {
-            proj->phys.dead = true;
-            particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &particle_effects[EFFECT_SPLASH], 0.5, true, false);
-
-            if(proj->proj_def->explosive)
-            {
-                explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->scale, 100.0*proj->scale, proj->curr_room, proj->from_player);
-            }
+            projectile_kill(proj);
         }
     }
 
@@ -316,7 +323,29 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         if(phys->dead) return;
         if(proj->curr_room != curr_room) return;
 
-        hit = are_rects_colliding(&proj->hit_box_prior, &proj->hit_box, hitbox);
+        //hit = are_rects_colliding(&proj->hit_box_prior, &proj->hit_box, hitbox);
+        Vector4f proj_prior = {
+            proj->phys.prior_pos.x,
+            proj->phys.prior_pos.y,
+            proj->phys.prior_pos.z + proj->phys.radius,
+            proj->phys.radius
+        };
+
+        Vector4f proj_curr = {
+            proj->phys.pos.x,
+            proj->phys.pos.y,
+            proj->phys.pos.z + proj->phys.radius,
+            proj->phys.radius
+        };
+
+        Vector4f check = {
+            phys->pos.x,
+            phys->pos.y,
+            phys->pos.z + phys->radius,
+            phys->radius
+        };
+
+        hit = are_spheres_colliding(&proj_prior, &proj_curr, &check);
 
         if(hit)
         {
@@ -326,7 +355,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
                 proj->phys.pos.x = proj->phys.prior_pos.x;
                 proj->phys.pos.y = proj->phys.prior_pos.y;
                 phys_collision_correct(&proj->phys,phys,&ci);
-                proj->phys.dead = true;
+                projectile_kill(proj);
             }
             
             if(projdef->cold_chance > 0.0)
@@ -357,7 +386,6 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
     {
         explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->scale, 100.0*proj->scale, proj->curr_room, proj->from_player);
     }
-
 }
 
 void projectile_draw(Projectile* proj, bool batch)

@@ -385,6 +385,8 @@ bool room_editor_update(float dt)
         room->index = level_get_room_index(level.start.x, level.start.y);
         room->discovered = true;
 
+        player->curr_room = room->index;
+
         generate_walls(&level);
         
         // add monsters

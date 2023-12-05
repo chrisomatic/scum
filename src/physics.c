@@ -112,6 +112,13 @@ void phys_apply_gravity(Physics* phys, float gravity_factor, float dt)
     }
 }
 
+
+void phys_add_circular_time(Physics* phys, float dt)
+{
+    phys->circular_dt += dt;
+    phys->circular_dt = fmod(phys->circular_dt,2*PI);
+}
+
 void phys_apply_friction(Physics* phys, float friction, float dt)
 {
     Vector2f f = {-phys->vel.x, -phys->vel.y};

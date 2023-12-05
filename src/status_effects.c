@@ -112,8 +112,8 @@ void status_effects_add_type(void* physics, StatusEffectType type)
             break;
         case STATUS_EFFECT_POISON:
             effect->periodic = true;
-            effect->period = 1.0;
-            effect->lifetime_max = 10.0;
+            effect->period = 3.0;
+            effect->lifetime_max = 9.0;
             effect->func = status_effect_poison;
             break;
     }

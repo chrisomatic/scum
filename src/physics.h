@@ -72,3 +72,6 @@ void phys_apply_friction_x(Physics* phys, float friction, float dt);
 void phys_apply_friction_y(Physics* phys, float friction, float dt);
 void phys_apply_friction(Physics* phys, float friction, float dt);
 
+// other
+void phys_add_circular_time(Physics* phys, float dt);
+

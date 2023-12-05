@@ -102,6 +102,8 @@ float calc_angle_deg(float x0, float y0, float x1, float y1);
 float calc_angle_rad(float x0, float y0, float x1, float y1);
 float dist_squared(float x0, float y0, float x1, float y1);
 float dist(float x0, float y0, float x1, float y1);
+float dist3f_squared(float x0, float y0, float z0, float x1, float y1, float z1);
+float dist3f(float x0, float y0, float z0, float x1, float y1, float z1);
 float magn(Vector3f v);
 float magn2f(float x, float y);
 float magn_fast(Vector2f v);
@@ -129,6 +131,7 @@ bool are_rects_colliding(Rect* prior_s, Rect* curr_s, Rect* check);
 bool rectangles_colliding(Rect* a, Rect* b);
 bool rectangles_colliding2(Rect* a, Rect* b);
 bool circles_colliding(Vector2f* p1, float r1, Vector2f* p2, float r2, float *distance);
+bool are_spheres_colliding(Vector4f* prior_s, Vector4f* curr_s, Vector4f* check);
 Vector2f limit_rect_pos(Rect* limit, Rect* rect);
 bool is_point_in_rect(Vector2f* p, Rect* rect);
 

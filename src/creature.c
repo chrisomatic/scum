@@ -90,17 +90,17 @@ void creature_init_props(Creature* c)
 {
     c->image = creature_get_image(c->type);
     c->phys.height = gfx_images[c->image].element_height;
+    c->phys.radius = c->phys.height / 2.0;
+
     switch(c->type)
     {
         case CREATURE_TYPE_SLUG:
         {
-            c->phys.speed = 20.0;
-            // c->image = creature_image_slug;
-            c->act_time_min = 0.5;
-            c->act_time_max = 1.0;
+            c->phys.speed = 30.0;
+            c->act_time_min = 1.5;
+            c->act_time_max = 3.0;
             c->phys.mass = 0.5;
             c->phys.base_friction = 20.0;
-            // c->phys.height = gfx_images[creature_image_slug].element_height;
             c->phys.hp_max = 3.0;
             c->painful_touch = true;
             c->xp = 10;
@@ -108,12 +108,10 @@ void creature_init_props(Creature* c)
         case CREATURE_TYPE_CLINGER:
         {
             c->phys.speed = 50.0;
-            // c->image = creature_image_clinger;
             c->act_time_min = 0.2;
             c->act_time_max = 0.4;
-            c->phys.mass = 10.0;
-            c->phys.base_friction = 10.0;
-            c->phys.height = gfx_images[creature_image_clinger].element_height;
+            c->phys.mass = 1000.0;
+            c->phys.base_friction = 0.0;
             c->phys.hp_max = 5.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_CLINGER;
             c->painful_touch = false;
@@ -122,27 +120,25 @@ void creature_init_props(Creature* c)
         case CREATURE_TYPE_GEIZER:
         {
             c->phys.speed = 0.0;
-            //c->image = creature_image_geizer;
             c->act_time_min = 3.0;
             c->act_time_max = 5.0;
             c->phys.mass = 1000.0; // so it doesn't slide when hit
             c->phys.base_friction = 50.0;
-            // c->phys.height = gfx_images[creature_image_geizer].element_height;
             c->phys.hp_max = 10.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = false;
+            c->phys.radius = 12.0;
             c->xp = 10;
         } break;
         case CREATURE_TYPE_FLOATER:
         {
             c->phys.speed = 20.0;
-            // c->image = creature_image_floater;
-            c->act_time_min = 0.5;
-            c->act_time_max = 1.0;
+            c->act_time_min = 0.2;
+            c->act_time_max = 0.5;
             c->phys.mass = 2.0;
-            c->phys.base_friction = 10.0;
-            // c->phys.height = gfx_images[creature_image_floater].element_height;
+            c->phys.base_friction = 1.0;
             c->phys.hp_max = 3.0;
+            c->phys.radius = 8.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = true;
             c->xp = 10;
@@ -150,12 +146,10 @@ void creature_init_props(Creature* c)
         case CREATURE_TYPE_SHAMBLER:
         {
             c->phys.speed = 50.0;
-            // c->image = creature_image_floater;
             c->act_time_min = 0.02;
             c->act_time_max = 0.05;
             c->phys.mass = 4.0;
             c->phys.base_friction = 15.0;
-            // c->phys.height = gfx_images[creature_image_floater].element_height;
             c->phys.hp_max = 20.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = true;
@@ -164,7 +158,6 @@ void creature_init_props(Creature* c)
     }
 
     c->phys.speed_factor = 1.0;
-    c->phys.radius = 8.0;
     c->phys.coffset.x = 0;
     c->phys.coffset.y = 0;
     c->damage = 1;
@@ -537,13 +530,18 @@ void creature_draw(Creature* c, bool batch)
 
     if(c->phys.dead) return;
 
+    float y = c->phys.pos.y - 0.5*c->phys.pos.z;
+    float shadow_scale = RANGE(0.5*(1.0 - (c->phys.pos.z / 128.0)),0.08,0.4);
+
     if(batch)
     {
-        gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, c->color, false, 1.0, 0.0, 1.0, false, false, false);
+        gfx_sprite_batch_add(shadow_image, 0, c->phys.pos.x, c->phys.pos.y, COLOR_TINT_NONE, false, shadow_scale, 0.0, 0.5, false, false, false);
+        gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, c->color, false, 1.0, 0.0, 1.0, false, false, false);
     }
     else
     {
-        gfx_draw_image(c->image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, c->color, 1.0, 0.0, 1.0, false, true);
+        gfx_draw_image(c->image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, COLOR_TINT_NONE, shadow_scale, 0.0, 0.5, false, false);
+        gfx_draw_image(c->image, c->sprite_index, c->phys.pos.x, y, c->color, 1.0, 0.0, 1.0, false, true);
     }
 
     if(debug_enabled)
@@ -647,6 +645,7 @@ static Player* get_nearest_player(float x, float y)
 
 static void creature_update_slug(Creature* c, float dt)
 {
+    /*
     if(ai_has_target(c))
     {
         bool at_target = ai_move_to_target(c,dt);
@@ -664,34 +663,23 @@ static void creature_update_slug(Creature* c, float dt)
         //float y0 = room_area.y - room_area.h/2.0;
         //Vector2f pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
     }
+    */
 
-#if 0
+#if 1
         bool act = ai_update_action(c, dt);
 
         if(act)
         {
+            //Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+            //c->target_tile = level_get_room_coords_by_pos(p->phys.pos.x, p->phys.pos.y);
 
-            Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
-            c->target_tile = level_get_room_coords_by_pos(p->phys.pos.x, p->phys.pos.y);
-
-            // float x0 = room_area.x - room_area.w/2.0;
-            // float y0 = room_area.y - room_area.h/2.0;
-            // printf("   room x0,y0: %.0f, %.0f\n", x0, y0);
-            // printf("set target to tile: %d, %d\n", c->target_tile.x, c->target_tile.y);
-            // printf("   target pos: %.0f, %.0f  (%.0f, %.0f)\n", p->phys.pos.x-x0, p->phys.pos.y-y0  , p->phys.pos.x, p->phys.pos.y);
-            // Vector2f pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
-            // printf("   tile   pos: %.0f, %.0f  (%.0f, %.0f)\n", pos.x-x0, pos.y-y0, pos.x, pos.y);
+            ai_stop_imm(c);
 
             if(ai_flip_coin())
             {
                 ai_random_walk(c);
             }
-            else
-            {
-                ai_set_target(c,1,2);
-            }
         }
-    }
 #endif
 }
 
@@ -711,17 +699,14 @@ static void creature_update_clinger(Creature* c, float dt)
 {
     bool act = ai_update_action(c, dt);
 
-    if(act)
+    Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+
+    float d = dist(p->phys.pos.x, p->phys.pos.y, c->phys.pos.x, c->phys.pos.y);
+    bool horiz = (c->spawn_tile_y == -1 || c->spawn_tile_y == ROOM_TILE_SIZE_Y);
+
+    if(d > 160.0)
     {
-        Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
-
-        int x0 = room_area.x - room_area.w/2.0;
-        int y0 = room_area.y - room_area.h/2.0;
-
-        float d = dist(p->phys.pos.x, p->phys.pos.y, c->phys.pos.x, c->phys.pos.y);
-        bool horiz = (c->spawn_tile_y == -1 || c->spawn_tile_y == ROOM_TILE_SIZE_Y);
-
-        if(d > 160.0)
+        if(act)
         {
             // far from player, slow movement, move randomly
             c->phys.speed = 10.0;
@@ -730,56 +715,61 @@ static void creature_update_clinger(Creature* c, float dt)
 
             if(ai_flip_coin())
             {
-                ai_walk_dir(c,horiz ? DIR_LEFT : DIR_UP);
+                //ai_walk_dir(c,horiz ? DIR_LEFT : DIR_UP);
+                ai_move_imm(c, horiz ? DIR_LEFT : DIR_UP, c->phys.speed);
             }
             else
             {
-                ai_walk_dir(c,horiz ? DIR_RIGHT : DIR_DOWN);
+                ai_move_imm(c, horiz ? DIR_RIGHT : DIR_DOWN, c->phys.speed);
             }
-            return;
         }
+        return;
+    }
 
-        // fast movement
-        c->phys.speed = 50.0;
+    // player is close
 
+    // fast movement
+    c->phys.speed = 100.0;
 
-        float delta_x = p->phys.pos.x - c->phys.pos.x;
-        float delta_y = p->phys.pos.y - c->phys.pos.y;
+    float delta_x = p->phys.pos.x - c->phys.pos.x;
+    float delta_y = p->phys.pos.y - c->phys.pos.y;
 
-        if((horiz && ABS(delta_x) < 16.0) || (!horiz && ABS(delta_y) < 16.0))
+    if((horiz && ABS(delta_x) < 16.0) || (!horiz && ABS(delta_y) < 16.0))
+    {
+        c->act_time_min = 1.00;
+        c->act_time_max = 1.00;
+
+        c->phys.vel.x = 0.0;
+        c->phys.vel.y = 0.0;
+
+        if(act)
         {
-            c->act_time_min = 1.00;
-            c->act_time_max = 2.00;
-
             // fire
-            ai_stop_moving(c);
             if(horiz)
                 creature_fire_projectile_dir(c, c->spawn_tile_y == -1 ? DIR_DOWN : DIR_UP);
             else
                 creature_fire_projectile_dir(c, c->spawn_tile_x == -1 ? DIR_RIGHT : DIR_LEFT);
         }
-        else
-        {
-            c->act_time_min = 0.05;
-            c->act_time_max = 0.10;
+    }
+    else
+    {
+        c->act_time_min = 0.05;
+        c->act_time_max = 0.10;
 
+        if(act)
+        {
             // move
             if(horiz)
             {
-                if(delta_x < 0.0)
-                    ai_walk_dir(c,DIR_LEFT);
-                else
-                    ai_walk_dir(c,DIR_RIGHT);
+                ai_move_imm(c, delta_x < 0.0 ? DIR_LEFT : DIR_RIGHT, c->phys.speed);
             }
             else
             {
-                if(delta_y < 0.0)
-                    ai_walk_dir(c,DIR_UP);
-                else
-                    ai_walk_dir(c,DIR_DOWN);
+                ai_move_imm(c, delta_y < 0.0 ? DIR_UP : DIR_DOWN, c->phys.speed);
             }
         }
     }
+
     return;
 }
 
@@ -802,9 +792,11 @@ static void creature_update_geizer(Creature* c, float dt)
 
 static void creature_update_floater(Creature* c, float dt)
 {
+    phys_add_circular_time(&c->phys, dt);
+
     bool act = ai_update_action(c, dt);
 
-    c->phys.pos.z = 10.0 + 5*sinf(PI*(c->action_counter/c->action_counter_max));
+    c->phys.pos.z = c->phys.height/2.0 + 10.0 + 3*sinf(5*c->phys.circular_dt);
 
     if(act)
     {

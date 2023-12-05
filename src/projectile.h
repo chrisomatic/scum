@@ -90,6 +90,7 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
 void projectile_add_type(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player);
 void projectile_update_hit_box(Projectile* proj);
 void projectile_update(float delta_t);
+void projectile_kill(Projectile* proj);
 void projectile_handle_collision(Projectile* p, Entity* e);
 void projectile_draw(Projectile* proj, bool batch);
 void projectile_lerp(Projectile* p, double dt);
