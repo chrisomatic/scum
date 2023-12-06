@@ -49,6 +49,12 @@ typedef struct
     float act_time_min;
     float act_time_max;
 
+    // general purpose
+    float ai_counter;
+    float ai_counter_max;
+    int ai_state;
+    int ai_value;
+
     Vector2i curr_tile;
     Vector2i target_tile;
 

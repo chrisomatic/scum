@@ -4,7 +4,7 @@
 13,7
 
 ; Room Type
-1   # Monster
+3   # Boss
 
 ; Room Rank
 3
@@ -15,6 +15,9 @@ Floor
 Pit
 Boulder
 Mud
+Ice
+Spikes
+Timed Spikes
 
 ; Tile Data
 2,2,2,2,2,1,1,1,2,2,2,2,2
@@ -44,9 +47,9 @@ Yellow Gem
 Purple Gem
 Full Heart
 Half Heart
+Empty Heart
 Cosmic Full Heart
 Cosmic Half Heart
-Glowing Orb
 Dragon Egg
 Shamrock
 Ruby Ring
@@ -56,6 +59,7 @@ Potion of Range
 Potion of Purple
 +1 Gauntlet Slot
 New Level
+Glowing Orb
 Chest
 
 ; Items

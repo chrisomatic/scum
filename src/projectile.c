@@ -196,7 +196,17 @@ void projectile_kill(Projectile* proj)
 {
     proj->phys.dead = true;
 
-    particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &particle_effects[EFFECT_SPLASH], 0.5, true, false);
+    ParticleEffect splash = {0};
+    memcpy(&splash, &particle_effects[EFFECT_SPLASH], sizeof(ParticleEffect));
+
+    if(!proj->from_player)
+    {
+        splash.color1 = 0x00CC5050;
+        splash.color2 = 0x00FF8080;
+        splash.color3 = 0x00550000;
+    }
+
+    particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &splash, 0.5, true, false);
 
     if(proj->proj_def->explosive)
     {

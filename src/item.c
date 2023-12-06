@@ -64,7 +64,6 @@ static void item_func_chest(Item* pu, Player* p)
     //     dbg++;
     // }
 
-
     // always one gem
     item_add(item_get_random_gem(), x, y, croom);
 

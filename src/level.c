@@ -213,6 +213,16 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
         room->layout = get_rand_room_index(ROOM_TYPE_BOSS, came_from);
         room->color = COLOR(100,100,200);
         level->has_boss_room = true;
+
+        // add monsters
+        RoomFileData* rfd = &room_list[room->layout];
+        for(int i = 0; i < rfd->creature_count; ++i)
+        {
+            Vector2i g = {rfd->creature_locations_x[i], rfd->creature_locations_y[i]};
+            g.x--; g.y--; // @convert room objects to tile grid coordinates
+            Creature* c = creature_add(room, rfd->creature_types[i], &g, NULL);
+        }
+
         goto exit_conditions;
     }
 

@@ -10,8 +10,8 @@
 #include "creature.h"
 #include "ai.h"
 
-Creature prior_creatures[MAX_CREATURES];
-Creature creatures[MAX_CREATURES];
+Creature prior_creatures[MAX_CREATURES] = {0};
+Creature creatures[MAX_CREATURES] = {0};
 glist* clist = NULL;
 
 static int creature_image_slug;
@@ -138,6 +138,7 @@ void creature_init_props(Creature* c)
             c->phys.mass = 2.0;
             c->phys.base_friction = 1.0;
             c->phys.hp_max = 3.0;
+            c->phys.floating = true;
             c->phys.radius = 8.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = true;
@@ -146,14 +147,16 @@ void creature_init_props(Creature* c)
         case CREATURE_TYPE_SHAMBLER:
         {
             c->phys.speed = 50.0;
-            c->act_time_min = 0.02;
-            c->act_time_max = 0.05;
-            c->phys.mass = 4.0;
+            c->act_time_min = 0.50;
+            c->act_time_max = 1.00;
+            c->phys.mass = 50.0;
             c->phys.base_friction = 15.0;
-            c->phys.hp_max = 20.0;
+            c->phys.hp_max = 100.0;
+            c->phys.floating = true;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = true;
-            c->xp = 25;
+            c->phys.radius = 20;
+            c->xp = 300;
         } break;
     }
 
@@ -451,6 +454,7 @@ void creature_update(Creature* c, float dt)
 
     c->phys.pos.x += dt*c->phys.vel.x;
     c->phys.pos.y += dt*c->phys.vel.y;
+    phys_apply_gravity(&c->phys, 1.0, dt);
 
     // update hit box
     c->hitbox.x = c->phys.pos.x;
@@ -809,29 +813,106 @@ static void creature_update_floater(Creature* c, float dt)
 
 static void creature_update_shambler(Creature* c, float dt)
 {
+    //phys_add_circular_time(&c->phys, dt);
+    //c->phys.pos.z = c->phys.height/2.0 + 15.0 + 3*sinf(5*c->phys.circular_dt);
+
+    bool low_health = (c->phys.hp < 0.25*c->phys.hp_max);
+    if(low_health)
+    {
+        c->phys.speed = 150.0;
+        c->color = COLOR_RED;
+    }
+
+    if(c->ai_state > 0)
+    {
+        c->ai_counter += dt;
+        if(c->ai_counter >= c->ai_counter_max)
+        {
+            c->ai_counter = 0.0;
+
+            if(c->ai_state == 1)
+            {
+                // fire 5 shots
+                Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+                float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
+                projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
+
+                c->ai_value++;
+                if(c->ai_value >= 5)
+                {
+                    c->ai_state = 0;
+                }
+            }
+            else if(c->ai_state == 2)
+            {
+                // fire 4 orthogonal shots
+                float aoffset = c->ai_value*10.0;
+
+                projectile_add_type(&c->phys, c->curr_room, c->proj_type, 0.0 + aoffset, 1.0, 1.0,false);
+                projectile_add_type(&c->phys, c->curr_room, c->proj_type, 90.0 + aoffset, 1.0, 1.0,false);
+                projectile_add_type(&c->phys, c->curr_room, c->proj_type, 180.0 + aoffset, 1.0, 1.0,false);
+                projectile_add_type(&c->phys, c->curr_room, c->proj_type, 270.0 + aoffset, 1.0, 1.0,false);
+
+                c->ai_value++;
+                if(c->ai_value >= 18)
+                {
+                    c->ai_state = 0;
+                }
+
+            }
+        }
+        return;
+    }
+
+    if(c->ai_counter == 0.0)
+    {
+        c->ai_counter_max = low_health ? RAND_FLOAT(0.5,1.0) : RAND_FLOAT(2.0,5.0);
+    }
+
+    c->ai_counter += dt;
+
     bool act = ai_update_action(c, dt);
 
     if(act)
     {
-        Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
-
-        Vector2f t = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
-        normalize(&t);
-
-        if(c->phys.hp <= 0.15*c->phys.hp_max)
+        if(c->ai_counter >= c->ai_counter_max)
         {
-            // move away from player
-            c->h = -t.x;
-            c->v = -t.y;
+            c->ai_counter = 0.0;
 
-            float angle = DEG(tan(t.y/t.x));
-            projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
+            int choice = ai_rand(low_health ? 3 : 2);
+
+            if(choice == 0)
+            {
+                // teleport
+                Room* room = level_get_room_by_index(&level, c->curr_room);
+                add_to_random_tile(c, room);
+
+                // explode projectiles
+                int num_projectiles = (rand() % 24) + 12;
+                for(int i = 0; i < num_projectiles; ++i)
+                {
+                    int angle = rand() % 360;
+                    projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
+                }
+            }
+            else if(choice == 1)
+            {
+                c->ai_state = 1;
+                c->ai_value = 0;
+                c->ai_counter = 0;
+                c->ai_counter_max = 0.2;
+            }
+            else if(choice == 2)
+            {
+                c->ai_state = 2;
+                c->ai_value = 0;
+                c->ai_counter = 0;
+                c->ai_counter_max = 0.1;
+            }
         }
         else
         {
-            // move toward player
-            c->h = t.x;
-            c->v = t.y;
+            ai_random_walk(c);
         }
 
     }

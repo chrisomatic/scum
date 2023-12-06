@@ -1023,6 +1023,12 @@ void update(float dt)
                     }
                     room->xp = 0;
                 }
+
+                if(room->type == ROOM_TYPE_BOSS)
+                {
+                    item_add(ITEM_CHEST, CENTER_X, CENTER_Y, player->curr_room);
+                    item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y-32, player->curr_room);
+                }
             }
 
             entity_build_all();
