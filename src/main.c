@@ -78,7 +78,8 @@ Vector2f transition_offsets = {0};
 Vector2f transition_targets = {0};
 
 Level level;
-unsigned int seed = 0;
+unsigned int level_seed = 0;
+int level_rank = 0;
 
 DrawLevelParams minimap_params = {0};
 DrawLevelParams bigmap_params = {0};
@@ -222,7 +223,13 @@ void set_game_state(GameState state)
             } break;
             case GAME_STATE_MENU:
             {
-                level_load_rooms();
+                show_tile_grid = false;
+                debug_enabled = false;
+                bool diff = room_file_load_all(false);
+                if(diff)
+                {
+                    game_generate_level(level_seed, level_rank);
+                }
                 net_client_disconnect();
                 set_menu_keys();
             } break;
@@ -536,10 +543,10 @@ void start_server()
     item_init();
 
     srand(time(0));
-    seed = rand();
+    level_seed = rand();
 
     level_init();
-    game_generate_level(seed);
+    game_generate_level(level_seed, 1);
 
     projectile_init();
     explosion_init();
@@ -549,14 +556,15 @@ void start_server()
 }
 
 
-void game_generate_level(unsigned int _seed)
+void game_generate_level(unsigned int _seed, int _rank)
 {
-    seed = _seed;
+    level_seed = _seed;
+    level_rank = _rank;
 
     creature_clear_all();
     item_clear_all();
 
-    level = level_generate(seed, 5);
+    level = level_generate(level_seed, level_rank);
 
     LOGI("  Valid Rooms");
     for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
@@ -698,8 +706,7 @@ void init()
 
     if(role == ROLE_LOCAL)
     {
-        // seed = 1700506349;
-        game_generate_level(seed);
+        game_generate_level(0, 5);
     }
 
     // camera_zoom(cam_zoom, true);

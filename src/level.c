@@ -8,8 +8,7 @@
 #include "entity.h"
 #include "physics.h"
 
-RoomFileData room_list[32] = {0};
-int room_list_count = 0;
+
 int dungeon_image = -1;
 
 
@@ -684,27 +683,7 @@ void level_init()
 
     dungeon_image = gfx_load_image("src/img/dungeon_set.png", false, true, TILE_SIZE, TILE_SIZE);
 
-    level_load_rooms();
-}
-
-void level_load_rooms()
-{
-    room_file_get_all();
-
-    room_list_count = 0;
-
-    for(int i = 0; i < room_file_count; ++i)
-    {
-        // printf("i: %d, Loading room %s\n",i, p_room_files[i]);
-
-        bool success = room_file_load(&room_list[room_list_count], true, "src/rooms/%s", p_room_files[i]);
-        if(!success)
-            continue;
-
-        room_list_count++;
-    }
-    // printf("room list count: %d\n",room_list_count);
-
+    room_file_load_all(false);
 }
 
 void level_print(Level* level)
@@ -731,7 +710,6 @@ Rect level_get_tile_rect(int x, int y)
     _y += (y+1)*TILE_SIZE;
 
     Rect r = RECT((_x+TILE_SIZE/2.0), (_y+TILE_SIZE/2.0), TILE_SIZE, TILE_SIZE);
-
     return r;
 }
 
@@ -934,7 +912,14 @@ Level level_generate(unsigned int seed, int rank)
     // seed PRNG
     slrand(seed);
 
-    LOGI("Generating level, seed: %u", seed);
+    if(rank != 5)
+    {
+        LOGW("Overriding rank!");
+        rank = 5;
+        level_rank = rank;
+    }
+
+    LOGI("Generating level, seed: %u, rank: %d", seed, rank);
 
     // start in center of grid
     level.start.x = floor(MAX_ROOMS_GRID_X/2);
@@ -972,8 +957,6 @@ Level level_generate(unsigned int seed, int rank)
     item_clear_all();
     creature_clear_all();
     min_depth_reached = false;
-
-    LOGI("Generating rooms, seed: %u", seed);
 
     generate_rooms(&level, level.start.x, level.start.y, DIR_NONE, 0);
 

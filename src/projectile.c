@@ -156,6 +156,7 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
 
         if(!proj.phys.ethereal)
         {
+            // printf("projdef->ghost_chance: %.2f\n", projdef->ghost_chance);
             p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= projdef->ghost_chance;
         }
 

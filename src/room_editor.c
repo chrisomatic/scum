@@ -150,27 +150,35 @@ void room_editor_start()
     editor_camera_set(true);
 
     // load room files
-    room_file_get_all();
+    // room_file_get_all();
+    room_file_load_all(false);
 }
 
 static RoomFileData loaded_rfd = {0};
+
 
 static void draw_room_file_gui()
 {
     static int prior_room_file_sel = 0;
     static int room_file_sel = 0;
+    static int room_file_sel_index_map[32] = {0}; // filtered list mapped to room_list index
     static char* filtered_room_files[256] = {0};
     static int filtered_room_files_count = 0;
     static char file_filter_str[32] = {0};
     static char selected_room_name_str[100] = {0};
+    static char selected_room_name[32] = {0};
     static int selected_rank = 0;
     static int selected_room_type = 0;
     static bool are_you_sure = false;
+    static bool force_reload = false;
+    static bool should_load_file = true;
+
+    static bool file_exists = false;
 
     static Rect room_files_panel_rect = {0};
 
     imgui_begin_panel("Files",1,1,true);
-        
+
         const float big = 16.0;
         imgui_text_sized(big,"Filter");
 
@@ -190,20 +198,51 @@ static void draw_room_file_gui()
         imgui_text_box("##FilterText",file_filter_str,IM_ARRAYSIZE(file_filter_str));
         if(imgui_button("Clear")) memset(file_filter_str,0,32);
         imgui_horizontal_end();
-        
-        // apply filter to selection list 
-        filtered_room_files_count = 0;
-        for(int i = 0; i < room_file_count; ++i)
-        {
-            RoomFileData rfd;
-            room_file_load(&rfd, false, "src/rooms/%s", p_room_files[i]); // @EFFICIENCY: Doing this every frame
 
-            bool match_rank        = selected_rank == 0 ? true : (rfd.rank == selected_rank);
-            bool match_room_type   = selected_room_type == 0 ? true : (rfd.type == selected_room_type-1);
+        bool file_diff = room_file_load_all(force_reload);
+        force_reload = false;
+
+        int _filtered_room_files_count = 0;
+        int _room_file_sel_index_map[32] = {0};
+        for(int i = 0; i < room_list_count; ++i)
+        {
+            RoomFileData* rfd = &room_list[i];
+            bool match_rank        = selected_rank == 0 ? true : (rfd->rank == selected_rank);
+            bool match_room_type   = selected_room_type == 0 ? true : (rfd->type == selected_room_type-1);
             bool match_filter_text = strstr(p_room_files[i],file_filter_str);
 
             if(match_rank && match_room_type && match_filter_text)
-                filtered_room_files[filtered_room_files_count++] = p_room_files[i];
+            {
+                _room_file_sel_index_map[_filtered_room_files_count] = i;
+                _filtered_room_files_count++;
+            }
+        }
+
+        // rebuild the filtered list
+        if(file_diff || _filtered_room_files_count != filtered_room_files_count || memcmp(_room_file_sel_index_map, room_file_sel_index_map, sizeof(int)*32) != 0)
+        {
+            filtered_room_files_count = _filtered_room_files_count;
+            memcpy(room_file_sel_index_map, _room_file_sel_index_map, sizeof(int)*32);
+            for(int i = 0; i < filtered_room_files_count; ++i)
+            {
+                filtered_room_files[i] = p_room_files[room_file_sel_index_map[i]];
+            }
+
+            room_file_sel = 0;
+            if(file_exists)
+            {
+                should_load_file = true;
+                for(int i = 0; i < filtered_room_files_count; ++i)
+                {
+                    if(strcmp(selected_room_name, filtered_room_files[i]) == 0)
+                    {
+                        // no need to reload
+                        should_load_file = false;
+                        room_file_sel = i;
+                        break;
+                    }
+                }
+            }
         }
 
         prior_room_file_sel = room_file_sel;
@@ -211,6 +250,8 @@ static void draw_room_file_gui()
 
         if(filtered_room_files[room_file_sel])
             snprintf(selected_room_name_str,100,"Selected: %s",filtered_room_files[room_file_sel]);
+
+        strcpy(selected_room_name, filtered_room_files[room_file_sel]);
 
         imgui_text(selected_room_name_str);
 
@@ -232,17 +273,25 @@ static void draw_room_file_gui()
                 char file_name[100] = {0};
                 snprintf(file_name,100,"src/rooms/%s",filtered_room_files[room_file_sel]);
                 remove(file_name);
-                room_file_get_all();
+                force_reload = true;
                 are_you_sure = false;
             }
 
             imgui_horizontal_end();
         }
 
-        if(prior_room_file_sel != room_file_sel)
+        if(prior_room_file_sel != room_file_sel || should_load_file)
         {
+            should_load_file = false;
+
             clear_all();
-            room_file_load(&loaded_rfd, true, "src/rooms/%s", filtered_room_files[room_file_sel]);
+            // memcpy(loaded_rfd, )
+            room_file_load(&loaded_rfd, true, true, "src/rooms/%s", filtered_room_files[room_file_sel]);
+            // printf("1  %s\n", filtered_room_files[room_file_sel]);
+            // printf("2  %s\n", p_room_files[room_file_sel_index_map[room_file_sel]]);
+
+            // p_room_files
+            // loaded_rfd.file_index
 
             // set properties
             room_type_sel = loaded_rfd.type;
@@ -286,7 +335,7 @@ static void draw_room_file_gui()
         char file_path[64] = {0};
         snprintf(file_path,63,"src/rooms/%s.room",room_file_name);
 
-        bool file_exists = io_file_exists(file_path);
+        file_exists = io_file_exists(file_path);
 
         if(!STR_EMPTY(room_file_name))
         {
@@ -335,7 +384,9 @@ static void draw_room_file_gui()
                     rfd.doors[i] = room.doors[i];
 
                 room_file_save(&rfd, file_path);
-                room_file_get_all();
+                // room_file_get_all();
+
+                force_reload = true;
             }
         }
 
@@ -386,9 +437,10 @@ bool room_editor_update(float dt)
         room->discovered = true;
 
         player->curr_room = room->index;
+        player->transition_room = player->curr_room;
 
         generate_walls(&level);
-        
+
         // add monsters
         for(int i = 0; i < loaded_rfd.creature_count; ++i)
         {

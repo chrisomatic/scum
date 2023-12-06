@@ -138,8 +138,8 @@ static void item_func_consumable(Item* pu, Player* p)
             pu->picked_up = true;
             // item_remove(pu);
 
-            seed = time(0)+rand()%1000;
-            game_generate_level(seed);
+            int seed = time(0)+rand()%1000;
+            game_generate_level(seed, level_rank+1);
         } break;
 
         case ITEM_GAUNTLET_SLOT:

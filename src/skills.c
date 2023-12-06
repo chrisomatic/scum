@@ -90,7 +90,7 @@ void skills_init()
     skill_list[i].rarity = SKILL_RARITY_COMMON;
     skill_list[i].rank = 1;
     skill_list[i].func = skills_phase_shift;
-    skill_list[i].periodic = true;
+    skill_list[i].periodic = false;
     strcpy(skill_list[i].name,"Phase Shift I");
     strcpy(skill_list[i].desc,"10% chance of ghost shot");
     i++;
@@ -100,7 +100,7 @@ void skills_init()
     skill_list[i].rarity = SKILL_RARITY_COMMON;
     skill_list[i].rank = 2;
     skill_list[i].func = skills_phase_shift;
-    skill_list[i].periodic = true;
+    skill_list[i].periodic = false;
     strcpy(skill_list[i].name,"Phase Shift II");
     strcpy(skill_list[i].desc,"25% chance of ghost shot");
     i++;
@@ -110,7 +110,7 @@ void skills_init()
     skill_list[i].rarity = SKILL_RARITY_COMMON;
     skill_list[i].rank = 1;
     skill_list[i].func = skills_sentience;
-    skill_list[i].periodic = true;
+    skill_list[i].periodic = false;
     strcpy(skill_list[i].name,"Sentience I");
     strcpy(skill_list[i].desc,"10% chance of homing shot");
     i++;
@@ -120,7 +120,7 @@ void skills_init()
     skill_list[i].rarity = SKILL_RARITY_LEGENDARY;
     skill_list[i].rank = 2;
     skill_list[i].func = skills_sentience;
-    skill_list[i].periodic = true;
+    skill_list[i].periodic = false;
     strcpy(skill_list[i].name,"Sentience II");
     strcpy(skill_list[i].desc,"25% chance of homing shot");
     i++;
@@ -362,6 +362,7 @@ static void skills_phase_shift(void* skill, void* player, float dt)
     {
         p->proj_def.ghost_chance += 0.15f;
     }
+    printf("p->proj_def.ghost_chance: %.2f\n", p->proj_def.ghost_chance);
 }
 
 static void skills_sentience(void* skill, void* player, float dt)

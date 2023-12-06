@@ -129,8 +129,6 @@ typedef struct
     Vector2i start;
 } Level;
 
-extern RoomFileData room_list[32];
-extern int room_list_count;
 extern int dungeon_image;
 
 void level_init();

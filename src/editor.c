@@ -108,11 +108,20 @@ void editor_draw()
             case 1: // level
             {
 
+                static char seed_str[32] = {0};
+                imgui_text_box("Input Seed##input seed",seed_str,32);
+                int _seed = atoi(seed_str);
+
+                static int _rank = 1;
+                imgui_number_box("Input Rank", 1, 10, &_rank);
+
                 if(imgui_button("Generate New Level"))
                 {
-                    seed = time(0)+rand()%1000;
-                    game_generate_level(seed);
+                    game_generate_level(_seed, _rank);
+                    _rank = level_rank;
                 }
+                imgui_text("Current Seed: %u", level_seed);
+                imgui_text("Current Rank: %u", level_rank);
 
                 TileType tt = level_get_tile_type_by_pos(room, wmx, wmy);
 
@@ -285,6 +294,7 @@ void editor_draw()
 
             case 4: // projectiles
             {
+                imgui_text("Total Count: %u", plist->count);
 
                 imgui_slider_float("Player Cooldown", 0.0,1.0,&player->proj_cooldown_max);
 

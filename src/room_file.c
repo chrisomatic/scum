@@ -1,3 +1,5 @@
+#include <sys/stat.h>  //TODO: windows?
+
 #include "core/io.h"
 #include "creature.h"
 #include "item.h"
@@ -11,6 +13,9 @@ static int __line_num;
 char room_files[256][32] = {0};
 char* p_room_files[256] = {0};
 int  room_file_count = 0;
+
+RoomFileData room_list[128] = {0};
+int room_list_count = 0;
 
 static bool get_next_section(FILE* fp, char* section);
 
@@ -102,16 +107,45 @@ void room_file_save(RoomFileData* rfd, char* path, ...)
         fputs("\n", fp);
 
         fclose(fp);
+
+        struct stat stats = {0};
+        if(stat(fpath, &stats) == 0)
+        {
+            rfd->mtime = stats.st_mtime;
+            rfd->fsize = stats.st_size;
+        }
+
+        printf("saved file: %s (%ld, %ld)\n", fpath, rfd->mtime, stats.st_mtime);
+
     }
 }
 
-bool room_file_load(RoomFileData* rfd, bool print_errors, char* path, ...)
+bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path, ...)
 {
     va_list args;
     va_start(args, path);
     char filename[256] = {0};
     vsprintf(filename, path, args);
     va_end(args);
+
+    struct stat stats = {0};
+    if(stat(filename, &stats) == 0)
+    {
+        // printf("size:  %d\n", stats.st_size);
+        // printf("mtime: %ld\n", stats.st_mtime);
+        if(rfd->mtime == stats.st_mtime && rfd->fsize == stats.st_size && !force)
+        {
+            return true;
+        }
+    }
+    else
+    {
+        // file dne
+        return false;
+    }
+
+    // printf("loading file: %s (%ld, %ld)\n", filename, rfd->mtime, stats.st_mtime);
+
 
     FILE* fp = fopen(filename,"r");
     if(!fp) return false;
@@ -357,40 +391,79 @@ bool room_file_load(RoomFileData* rfd, bool print_errors, char* path, ...)
 
     fclose(fp);
 
+    if(stat(filename, &stats) == 0)
+    {
+        rfd->mtime = stats.st_mtime;
+        rfd->fsize = stats.st_size;
+    }
+    // printf("loaded file: %s (%ld, %ld)\n", filename, rfd->mtime, stats.st_mtime);
+
     return true;
 }
 
-void room_file_get_all()
+bool room_file_load_all(bool force)
 {
-    memset(room_files,0,sizeof(char)*256*32);
+    bool file_diff = room_file_get_all(force);
+    if(!file_diff && !force) return false;
 
-    room_file_count = io_get_files_in_dir("src/rooms",".room", room_files);
+    room_list_count = 0;
+
+    for(int i = 0; i < room_file_count; ++i)
+    {
+        // printf("i: %d, Loading room %s\n",i, p_room_files[i]);
+        bool success = room_file_load(&room_list[room_list_count], force, true, "src/rooms/%s", p_room_files[i]);
+        if(!success) continue;
+
+        room_list[room_list_count].file_index = i;
+        room_list_count++;
+    }
+
+    return true;
+    // printf("room list count: %d\n",room_list_count);
+}
+
+bool room_file_get_all(bool force)
+{
+    char temp_room_files[256][32] = {0};
+    int temp_room_file_count = io_get_files_in_dir("src/rooms",".room", temp_room_files);
 
     // insertion sort
     int i, j;
     char key[32];
 
-    for (i = 1; i < room_file_count; ++i) 
+    for (i = 1; i < temp_room_file_count; ++i) 
     {
-        memcpy(key, room_files[i], 32*sizeof(char));
+        memcpy(key, temp_room_files[i], 32*sizeof(char));
         j = i - 1;
 
-        while (j >= 0 && strncmp(key,room_files[j],32) < 0)
+        while (j >= 0 && strncmp(key,temp_room_files[j],32) < 0)
         {
-            memcpy(room_files[j+1], room_files[j], 32*sizeof(char));
+            memcpy(temp_room_files[j+1], temp_room_files[j], 32*sizeof(char));
             j = j - 1;
         }
-        memcpy(room_files[j+1], key, 32*sizeof(char));
+        memcpy(temp_room_files[j+1], key, 32*sizeof(char));
     }
 
-    // copy to pointer array
-    for(int i = 0; i < room_file_count; ++i)
-        p_room_files[i] = room_files[i];
+    if(temp_room_file_count != room_file_count || force)
+    {
+        if(memcmp(temp_room_files, room_files, sizeof(char)*256*32) != 0 || force)
+        {
+            room_file_count = temp_room_file_count;
+            memcpy(room_files, temp_room_files, sizeof(char)*256*32);
 
-    LOGI("room files count: %d", room_file_count);
-    for(int i = 0; i < room_file_count; ++i)
-        LOGI("  %d) %s", i+1, room_files[i]);
+            // copy to pointer array
+            for(int i = 0; i < room_file_count; ++i)
+                p_room_files[i] = room_files[i];
 
+            LOGI("room files count: %d", room_file_count);
+            for(int i = 0; i < room_file_count; ++i)
+                LOGI("  %d) %s", i+1, room_files[i]);
+
+            return true;
+        }
+    }
+
+    return false;
 }
 
 static bool get_next_section(FILE* fp, char* section)

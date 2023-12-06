@@ -404,7 +404,7 @@ static void server_send(PacketType type, ClientInfo* cli)
     {
         case PACKET_TYPE_INIT:
         {
-            pack_u32(&pkt,seed);
+            pack_u32(&pkt,level_seed);
             net_send(&server.info,&cli->address,&pkt);
         } break;
 
@@ -1246,7 +1246,7 @@ void net_client_update()
             {
                 case PACKET_TYPE_INIT:
                 {
-                    seed = unpack_u32(&srvpkt,&offset);
+                    int seed = unpack_u32(&srvpkt,&offset);
                     level = level_generate(seed,1);
 
                     client.received_init_packet = true;

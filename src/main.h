@@ -120,6 +120,8 @@ extern Rect margin_top;
 extern Rect margin_bottom;
 
 extern Level level;
+extern unsigned int level_seed;
+extern int level_rank;
 
 extern Vector2f transition_offsets;
 extern Vector2f transition_targets;
@@ -136,7 +138,6 @@ extern bool show_walls;
 extern bool show_tile_grid;
 extern bool players_invincible;
 extern uint32_t background_color;
-extern unsigned int seed;
 extern float ascale;
 
 extern bool dynamic_zoom;
@@ -152,7 +153,7 @@ bool camera_can_be_limited(float x, float y, float z);
 
 void message_small_set(float duration, char* fmt, ...);
 
-void game_generate_level(unsigned int _seed);
+void game_generate_level(unsigned int _seed, int _rank);
 void set_game_state(GameState state);
 void update_input_state(PlayerInput* input, float _dt);
 

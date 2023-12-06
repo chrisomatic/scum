@@ -11,7 +11,7 @@ typedef struct
     int size_x, size_y;
     uint8_t type;
     uint8_t rank;
-    
+
     // tile
     int tiles[32][32];
 
@@ -30,12 +30,21 @@ typedef struct
     // doors
     bool doors[4];
 
+    int file_index;
+    time_t mtime;
+    size_t fsize;
+
+
 } RoomFileData;
 
 extern char room_files[256][32];
 extern char* p_room_files[256];
 extern int  room_file_count;
 
+extern RoomFileData room_list[128];
+extern int room_list_count;
+
 void room_file_save(RoomFileData* rfd, char* path, ...);
-bool room_file_load(RoomFileData* rfd, bool print_errors, char* path, ...);
-void room_file_get_all();
+bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path, ...);
+bool room_file_load_all(bool force);
+bool room_file_get_all(bool force);
