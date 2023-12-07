@@ -85,12 +85,11 @@ int creature_get_image(CreatureType type)
     }
 }
 
-
 void creature_init_props(Creature* c)
 {
     c->image = creature_get_image(c->type);
     c->phys.width  = gfx_images[c->image].visible_rects[0].w;
-    c->phys.height = gfx_images[c->image].visible_rects[0].h*2;
+    c->phys.height = gfx_images[c->image].visible_rects[0].h;
     c->phys.radius = c->phys.width / 2.0;
 
     switch(c->type)
@@ -514,7 +513,7 @@ void creature_draw(Creature* c)
 
     if(c->phys.dead) return;
 
-    float y = c->phys.pos.y - 0.5*c->phys.pos.z;
+    float y = c->phys.pos.y - 0.5*c->phys.pos.z - c->phys.width/1.5;
     gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, c->color, false, 1.0, 0.0, 1.0, false, false, false);
 }
 
@@ -764,8 +763,8 @@ static void creature_update_floater(Creature* c, float dt)
 
 static void creature_update_shambler(Creature* c, float dt)
 {
-    //phys_add_circular_time(&c->phys, dt);
-    //c->phys.pos.z = c->phys.height/2.0 + 15.0 + 3*sinf(5*c->phys.circular_dt);
+    phys_add_circular_time(&c->phys, dt);
+    c->phys.pos.z = 10.0 + 3*sinf(5*c->phys.circular_dt);
 
     bool low_health = (c->phys.hp < 0.25*c->phys.hp_max);
     if(low_health)

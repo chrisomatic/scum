@@ -319,7 +319,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
             proj->phys.pos.z + proj->phys.height/2.0,
             proj->phys.width,
             proj->phys.width,
-            proj->phys.height,
+            proj->phys.height*2,
         };
 
         Box check = {
@@ -328,7 +328,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
             phys->pos.z + phys->height/2.0,
             phys->width,
             phys->width,
-            phys->height,
+            phys->height*2,
         };
 
         hit = boxes_colliding(&proj_curr, &check);

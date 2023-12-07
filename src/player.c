@@ -1611,7 +1611,6 @@ void randomize_skill_choices(Player* p)
         int weights[SKILL_LIST_MAX] = {0};
         int max_weight = calc_skill_weights(a_skills, a_num, weights);
 
-
         // printf("%d ------------------------------\n", num_skill_choices);
         // for(int j = 0; j < a_num; ++j)
         // {

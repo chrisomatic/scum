@@ -569,6 +569,9 @@ void level_handle_room_collision(Room* room, Physics* phys, int entity_type)
         if(entity_type == ENTITY_TYPE_PLAYER && wall->type == WALL_TYPE_PIT)
             continue;
 
+        if(phys->pos.z > 0.0 && wall->type == WALL_TYPE_PIT)
+            continue;
+
         bool collision = false;
         bool check = false;
         Vector2f check_point;
