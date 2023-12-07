@@ -268,6 +268,18 @@ void editor_draw()
                         creature_add(room, CREATURE_TYPE_GEIZER, NULL, NULL);
                 }
 
+                if(imgui_button("Add Floater"))
+                {
+                    for(int i = 0; i < num_creatures; ++i)
+                        creature_add(room, CREATURE_TYPE_FLOATER, NULL, NULL);
+                }
+
+                if(imgui_button("Add Shambler"))
+                {
+                    for(int i = 0; i < num_creatures; ++i)
+                        creature_add(room, CREATURE_TYPE_SHAMBLER, NULL, NULL);
+                }
+
                 if(imgui_button("Clear"))
                 {
                     creature_clear_all();
@@ -350,6 +362,11 @@ void editor_draw()
                 particle_editor_gui();
             } break;
         }
+
+    if(selection != 5)
+    {
+        particle_spawner->hidden = true;
+    }
     gui_size = imgui_end();
 }
 

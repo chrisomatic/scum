@@ -976,7 +976,8 @@ void update(float dt)
         {
             if(role == ROLE_LOCAL)
             {
-                if(debug_enabled && window_mouse_left_went_up())
+                // if(debug_enabled && window_mouse_left_went_up())
+                if(window_mouse_left_went_up())
                 {
                     send_to_room_rect.x = mx;
                     send_to_room_rect.y = my;
@@ -1000,6 +1001,24 @@ void update(float dt)
                     p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
                 }
             }
+
+#if 0
+            if(debug_enabled)
+            {
+                static float ptimer = 1.0;
+                ptimer -= dt;
+                if(ptimer <= 0)
+                {
+                    ptimer = 1.0;
+                    Physics phys = player->phys;
+                    phys.pos.x = room_area.x-room_area.w/2.0 + room_area.w*0.80;
+                    phys.pos.y = CENTER_Y;
+                    phys.vel.x = 0;
+                    phys.vel.y = 0;
+                    projectile_add_type(&phys, player->curr_room, PROJECTILE_TYPE_PLAYER, 180.0, 1.0, 1.0,false);
+                }
+            }
+#endif
 
             // update point lights
             projectile_update(dt);
@@ -1161,7 +1180,8 @@ void draw_map(DrawLevelParams* params)
             }
 
             //TEMP
-            if(!IS_RECT_EMPTY(&send_to_room_rect) && debug_enabled && params->show_all && room->index != player->curr_room)
+            // if(!IS_RECT_EMPTY(&send_to_room_rect) && debug_enabled && params->show_all && room->index != player->curr_room)
+            if(!IS_RECT_EMPTY(&send_to_room_rect) && debug_enabled  && room->index != player->curr_room)
             {
                 if(rectangles_colliding(&room_rect, &send_to_room_rect))
                 {

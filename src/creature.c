@@ -443,6 +443,11 @@ void creature_update(Creature* c, float dt)
     c->phys.pos.x += dt*c->phys.vel.x;
     c->phys.pos.y += dt*c->phys.vel.y;
     phys_apply_gravity(&c->phys, 1.0, dt);
+
+    Rect r = RECT(c->phys.pos.x, c->phys.pos.y, 1, 1);
+    Vector2f adj = limit_rect_pos(&room_area, &r);
+    c->phys.pos.x += adj.x;
+    c->phys.pos.y += adj.y;
 }
 
 void creature_lerp(Creature* c, float dt)

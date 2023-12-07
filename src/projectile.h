@@ -68,7 +68,7 @@ typedef struct
     bool from_player;
 
     bool homing;
-    Physics* homing_target;
+    // Physics* homing_target;
     
     // Networking
     float lerp_t;

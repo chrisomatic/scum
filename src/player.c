@@ -1235,7 +1235,7 @@ void player_update(Player* p, float dt)
     }
 
     ptext->x = p->phys.pos.x - p->phys.radius/2.0 - 3.0;
-    ptext->y = (p->phys.pos.y - p->phys.pos.z/2.0) - p->phys.height/2.0 - ptext->text_height;
+    ptext->y = (p->phys.pos.y - p->phys.pos.z/2.0) - p->phys.height - ptext->text_height;
     text_list_update(ptext, dt);
 
     if(p->invulnerable)
@@ -1247,7 +1247,6 @@ void player_update(Player* p, float dt)
         }
     }
 
-
     if(boost_stats)
     {
         p->phys.speed = speed;
@@ -1256,7 +1255,6 @@ void player_update(Player* p, float dt)
         p->proj_def.num = pnum;
         p->proj_def.damage = pdamage;
     }
-
 }
 
 void player_ai_move_to_target(Player* p, Player* target)
@@ -1624,9 +1622,6 @@ void randomize_skill_choices(Player* p)
 
         // // printf("skill choices")
         skill_choices[i] = a_skills[idx];
-
-
-
 
         // printf("num_skill_choices: %d\n", num_skill_choices);
         a_num = remove_skill_choice(a_skills, a_num, idx);

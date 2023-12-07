@@ -19,6 +19,7 @@ typedef struct
     EntityType type;
     void* ptr;
     uint8_t curr_room;
+    int tile;   //TileType
     Physics* phys;
 } Entity;
 

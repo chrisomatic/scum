@@ -11,6 +11,15 @@
 Entity entities[MAX_ENTITIES] = {0};
 int num_entities;
 
+static void entity_update_tile(Entity* e)
+{
+    float cx = CPOSX(*e->phys);
+    float cy = CPOSY(*e->phys);
+    Vector2i tile_coords = level_get_room_coords_by_pos(cx, cy);
+    Room* room = level_get_room_by_index(&level, e->curr_room);
+    e->tile = level_get_tile_type(room, tile_coords.x, tile_coords.y);
+}
+
 static void add_entity(EntityType type, void* ptr, uint8_t curr_room, Physics* phys)
 {
     Entity* e = &entities[num_entities++];
@@ -19,6 +28,7 @@ static void add_entity(EntityType type, void* ptr, uint8_t curr_room, Physics* p
     e->ptr = ptr;
     e->curr_room = curr_room;
     e->phys = phys;
+    entity_update_tile(e);
 }
 
 static bool is_player_room(uint8_t room_index)
@@ -251,6 +261,10 @@ void entity_draw_all()
         Entity* e = &entities[i];
 
         if(e->curr_room != player->curr_room)
+            continue;
+
+        entity_update_tile(e);
+        if(e->tile == TILE_PIT || e->tile == TILE_BOULDER)
             continue;
 
         draw_entity_shadow(e->phys);
