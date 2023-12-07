@@ -118,11 +118,12 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
     proj.ttl  = 1.0;
     proj.color = projdef->color;
     proj.phys.height = gfx_images[projectile_image].visible_rects[0].h*proj.scale;
+    proj.phys.width = gfx_images[projectile_image].visible_rects[0].w*proj.scale;
     proj.phys.pos.x = phys->pos.x;
-    proj.phys.pos.y = phys->pos.y - phys->pos.z + phys->height/2.0 - proj.phys.height/2.0;
-    proj.phys.pos.z = phys->height/2.0;
+    proj.phys.pos.y = phys->pos.y;
+    proj.phys.pos.z = phys->height/2.0 + phys->pos.z;
     proj.phys.mass = 1.0;
-    proj.phys.radius = 4.0 * proj.scale;
+    proj.phys.radius = (MAX(proj.phys.height, proj.phys.width) / 2.0) * proj.scale;
     proj.phys.amorphous = projdef->bouncy ? false : true;
     proj.phys.elasticity = projdef->bouncy ? 1.0 : 0.1;
     proj.homing = projdef->homing;
@@ -130,15 +131,6 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
 
     proj.curr_room = curr_room;
     proj.from_player = from_player;
-
-    proj.hit_box.x = proj.phys.pos.x;
-    proj.hit_box.y = proj.phys.pos.y;
-    Rect* vr = &gfx_images[projectile_image].visible_rects[0];
-    float wh = MAX(vr->w, vr->h) * proj.scale;
-    proj.hit_box.w = wh;
-    proj.hit_box.h = wh;
-
-    memcpy(&proj.hit_box_prior, &proj.hit_box, sizeof(Rect));
 
     float min_speed = projdef->min_speed;
     float spread = projdef->angle_spread/2.0;
@@ -271,8 +263,6 @@ void projectile_update(float delta_t)
         proj->phys.pos.y += _dt*proj->phys.vel.y;
         phys_apply_gravity(&proj->phys,0.5, delta_t);
 
-        projectile_update_hit_box(proj);
-
         if(proj->phys.amorphous && proj->phys.pos.z <= 0.0)
         {
             projectile_kill(proj);
@@ -292,14 +282,6 @@ void projectile_update(float delta_t)
 
 }
 
-void projectile_update_hit_box(Projectile* proj)
-{
-    memcpy(&proj->hit_box_prior, &proj->hit_box, sizeof(Rect));
-    proj->hit_box.x = proj->phys.pos.x;
-    proj->hit_box.y = proj->phys.pos.y;
-    // print_rect(&proj->hit_box);
-}
-
 void projectile_handle_collision(Projectile* proj, Entity* e)
 {
     if(proj->phys.dead) return;
@@ -307,7 +289,6 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
     ProjectileDef* projdef = proj->proj_def;
 
     uint8_t curr_room = 0;
-    Rect* hitbox = NULL;
     Physics* phys = NULL;
 
     if(proj->from_player && e->type == ENTITY_TYPE_CREATURE)
@@ -315,7 +296,6 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         Creature* c = (Creature*)e->ptr;
 
         curr_room = c->curr_room;
-        hitbox = &c->hitbox;
         phys = &c->phys;
     }
     else if(!proj->from_player && e->type == ENTITY_TYPE_PLAYER)
@@ -323,7 +303,6 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         Player* p = (Player*)e->ptr;
 
         curr_room = p->curr_room;
-        hitbox = &p->hitbox;
         phys = &p->phys;
     }
 
@@ -334,29 +313,26 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         if(phys->dead) return;
         if(proj->curr_room != curr_room) return;
 
-        //hit = are_rects_colliding(&proj->hit_box_prior, &proj->hit_box, hitbox);
-        Vector4f proj_prior = {
-            proj->phys.prior_pos.x,
-            proj->phys.prior_pos.y,
-            proj->phys.prior_pos.z + proj->phys.radius,
-            proj->phys.radius
-        };
-
-        Vector4f proj_curr = {
+        Box proj_curr = {
             proj->phys.pos.x,
             proj->phys.pos.y,
-            proj->phys.pos.z + proj->phys.radius,
-            proj->phys.radius
+            proj->phys.pos.z + proj->phys.height/2.0,
+            proj->phys.width,
+            proj->phys.width,
+            proj->phys.height,
         };
 
-        Vector4f check = {
+        Box check = {
             phys->pos.x,
             phys->pos.y,
-            phys->pos.z + phys->radius,
-            phys->radius
+            phys->pos.z + phys->height/2.0,
+            phys->width,
+            phys->width,
+            phys->height,
         };
 
-        hit = are_spheres_colliding(&proj_prior, &proj_curr, &check);
+        hit = boxes_colliding(&proj_curr, &check);
+        //hit = are_spheres_colliding(&proj_prior, &proj_curr, &check);
 
         if(hit)
         {
@@ -399,34 +375,15 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
     }
 }
 
-void projectile_draw(Projectile* proj, bool batch)
+void projectile_draw(Projectile* proj)
 {
-
     if(proj->curr_room != player->curr_room)
         return; // don't draw projectile if not in same room
 
     float opacity = proj->phys.ethereal ? 0.3 : 1.0;
 
     float y = proj->phys.pos.y - 0.5*proj->phys.pos.z;
-    float shadow_scale = RANGE(0.25*(1.0 - (proj->phys.pos.z / 128.0)),0.08,0.25)*proj->scale;
-
-    if(batch)
-    {
-        gfx_sprite_batch_add(shadow_image, 0, proj->phys.pos.x, proj->phys.pos.y, COLOR_TINT_NONE, false, shadow_scale, 0.0, 0.5, false, false, false);
-        gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, y, proj->color, false, proj->scale, 0.0, opacity, false, true, false);
-    }
-    else
-    {
-        gfx_draw_image_ignore_light(shadow_image, 0, proj->phys.pos.x, proj->phys.pos.y, COLOR_TINT_NONE, shadow_scale, 0.0, 0.5, false, false);
-        gfx_draw_image_ignore_light(projectile_image, 0, proj->phys.pos.x, y, proj->color, proj->scale, 0.0, opacity, false, IN_WORLD);
-    }
-
-    if(debug_enabled)
-    {
-        gfx_draw_rect(&proj->hit_box_prior, COLOR_GREEN, 1.0, 0.0, 1.0, false, true);
-        gfx_draw_rect(&proj->hit_box, COLOR_BLUE, 1.0, 0.0, 1.0, false, true);
-    }
-
+    gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, y, proj->color, false, proj->scale, 0.0, opacity, false, true, false);
 }
 
 void projectile_lerp(Projectile* p, double dt)
@@ -439,8 +396,6 @@ void projectile_lerp(Projectile* p, double dt)
     Vector2f lp = lerp2f(&p->server_state_prior.pos,&p->server_state_target.pos,t);
     p->phys.pos.x = lp.x;
     p->phys.pos.y = lp.y;
-
-    projectile_update_hit_box(p);
 
     //printf("prior_pos: %f %f, target_pos: %f %f, pos: %f %f, t: %f\n",p->server_state_prior.pos.x, p->server_state_prior.pos.y, p->server_state_target.pos.x, p->server_state_target.pos.y, p->phys.pos.x, p->phys.pos.y, t);
 }

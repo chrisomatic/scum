@@ -62,6 +62,12 @@ typedef struct
 
 typedef struct
 {
+    float x,y,z; // center
+    float w,l,h; // dimensions
+} Box;
+
+typedef struct
+{
     Vector2f pos;
     Vector3f color;
 } LinePoint;
@@ -134,6 +140,8 @@ bool circles_colliding(Vector2f* p1, float r1, Vector2f* p2, float r2, float *di
 bool are_spheres_colliding(Vector4f* prior_s, Vector4f* curr_s, Vector4f* check);
 Vector2f limit_rect_pos(Rect* limit, Rect* rect);
 bool is_point_in_rect(Vector2f* p, Rect* rect);
+
+bool boxes_colliding(Box* b1, Box* b2);
 
 int angle_sector(float angle, int num_sectors);
 Vector2f angle_sector_range(int num_sectors, int sector);

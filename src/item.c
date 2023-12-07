@@ -549,7 +549,7 @@ void item_update_all(float dt)
 }
 
 
-void item_draw(Item* pu, bool batch)
+void item_draw(Item* pu)
 {
     if(pu->curr_room != player->curr_room)
         return;
@@ -567,18 +567,7 @@ void item_draw(Item* pu, bool batch)
     }
 
     float y = pu->phys.pos.y - 0.5*pu->phys.pos.z;
-    float shadow_scale = RANGE(0.5*(1.0 - (pu->phys.pos.z / 128.0)),0.08,0.4) *iscale;
-
-    if(batch)
-    {
-        gfx_sprite_batch_add(shadow_image, 0, pu->phys.pos.x, pu->phys.pos.y+pu->phys.height, color, false, shadow_scale, 0.0, 0.5, false, false, false);
-        gfx_sprite_batch_add(item_props[pu->type].image, sprite_index, pu->phys.pos.x, y, color, false, iscale, pu->angle, 1.0, true, false, false);
-    }
-    else
-    {
-        gfx_draw_image(shadow_image, 0, pu->phys.pos.x, pu->phys.pos.y+pu->phys.height, color, shadow_scale, 0.0, 0.5, false, IN_WORLD);
-        gfx_draw_image(item_props[pu->type].image, sprite_index, pu->phys.pos.x, y, color, iscale, pu->angle, 1.0, true, IN_WORLD);
-    }
+    gfx_sprite_batch_add(item_props[pu->type].image, sprite_index, pu->phys.pos.x, y, color, false, iscale, pu->angle, 1.0, true, false, false);
 }
 
 void item_handle_collision(Item* p, Entity* e)

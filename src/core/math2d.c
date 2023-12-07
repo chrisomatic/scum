@@ -805,4 +805,32 @@ float rand_float_between(float lower, float upper)
     float range = upper - lower;
     float value = ((float)rand()/(float)(RAND_MAX)) * range + lower;
     return value;
+
+}
+
+bool boxes_colliding(Box* b1, Box* b2)
+{
+    float hw = b1->w/2.0;
+    float hl = b1->l/2.0;
+    float hh = b1->h/2.0;
+
+    Vector3f b1_min = {b1->x - hw, b1->y - hl, b1->z - hh};
+    Vector3f b1_max = {b1->x + hw, b1->y + hl, b1->z + hh};
+
+    float hw2 = b2->w/2.0;
+    float hl2 = b2->l/2.0;
+    float hh2 = b2->h/2.0;
+
+    Vector3f b2_min = {b2->x - hw2, b2->y - hl2, b2->z - hh2};
+    Vector3f b2_max = {b2->x + hw2, b2->y + hl2, b2->z + hh2};
+
+    bool colliding = (b1_max.x > b2_min.x &&
+           b1_min.x < b2_max.x &&
+           b1_max.y > b2_min.y &&
+           b1_min.y < b2_max.y &&
+           b1_max.z > b2_min.z &&
+           b1_min.z < b2_max.z);
+
+    return colliding;
+
 }

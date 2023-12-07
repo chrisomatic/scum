@@ -35,6 +35,7 @@ typedef struct
     float radius;
     float mass;
     float height;
+    float width;
     float elasticity;
 
     int8_t hp;

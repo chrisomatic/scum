@@ -82,9 +82,6 @@ typedef struct
     GFXAnimation anim;
 
     uint8_t sprite_index;
-    Rect hitbox;
-    Rect hitbox_prior;
-
     uint8_t curr_room;
     uint8_t transition_room;
     Dir door;
@@ -144,11 +141,10 @@ void player2_init_keys();
 void player_send_to_room(Player* p, uint8_t room_index);
 void player_send_to_level_start(Player* p);
 void player_update(Player* p, float dt);
-void player_draw(Player* p, bool batch);
+void player_draw(Player* p);
 void player_draw_debug(Player* p);
 void player_lerp(Player* p, float dt);
 void player_handle_net_inputs(Player* p, double dt);
-void player_set_hit_box_pos(Player* p, float x, float y);
 void player_set_collision_pos(Player* p, float x, float y);
 void player_add_xp(Player* p, int xp);
 void player_hurt_no_inv(Player* p, int damage);

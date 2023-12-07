@@ -11,13 +11,12 @@
 #include "player.h"
 
 #define RADIUS_OFFSET_X 0
-#define RADIUS_OFFSET_Y 7.5
+#define RADIUS_OFFSET_Y 0
 
 
 void player_ai_move_to_target(Player* p, Player* target);
 
 static float sprite_index_to_angle(Player* p);
-static void update_player_boxes(Player* p);
 static void handle_room_collision(Player* p);
 
 int xp_levels[] = {100,150,200,250,300};
@@ -60,6 +59,7 @@ void player_init()
         p->phys.dead = false;
         p->phys.pos.x = CENTER_X;
         p->phys.pos.y = CENTER_Y;
+        p->phys.pos.z = 0.0;
 
         p->phys.speed = 700.0;
         p->phys.speed_factor = 1.0;
@@ -67,7 +67,8 @@ void player_init()
         p->phys.base_friction = 15.0;
         p->phys.vel.x = 0.0;
         p->phys.vel.y = 0.0;
-        p->phys.height = gfx_images[player_image].element_height;
+        p->phys.height = gfx_images[player_image].visible_rects[0].h;
+        p->phys.width  = gfx_images[player_image].visible_rects[0].w;
         p->phys.mass = 1.0;
         p->phys.elasticity = 0.0;
 
@@ -76,7 +77,7 @@ void player_init()
 
         p->sprite_index = 4;
 
-        p->phys.radius = 8.0;
+        p->phys.radius = p->phys.width / 2.0;
         p->phys.coffset.x = RADIUS_OFFSET_X;
         p->phys.coffset.y = RADIUS_OFFSET_Y;
 
@@ -282,20 +283,6 @@ void player2_init_keys()
 
     for(int i = 0;  i < PLAYER_ACTION_MAX; ++i)
         memset(&player2->actions[i], 0, sizeof(PlayerInput));
-}
-
-void player_set_hit_box_pos(Player* p, float x, float y)
-{
-    // memcpy(p->hitbox_prior, p->hitbox, sizeof(p->hitbox));
-
-    float dx = p->phys.pos.x - p->hitbox.x;
-    float dy = p->phys.pos.y - p->hitbox.y;
-
-    p->hitbox.x = x;
-    p->hitbox.y = y;
-
-    p->phys.pos.x = x + dx;
-    p->phys.pos.y = y + dy;
 }
 
 void player_set_collision_pos(Player* p, float x, float y)
@@ -623,25 +610,6 @@ void player_start_room_transition(Player* p)
     // printf("transition_targets: %.2f, %.2f  door: %d     (%.2f, %.2f)\n", transition_targets.x, transition_targets.y, p->door, vw, vh);
 }
 
-
-static void update_player_boxes(Player* p)
-{
-    GFXImage* img = &gfx_images[player_image];
-
-    Rect* vr = &img->visible_rects[p->sprite_index];
-
-    int w = img->element_width;
-    int h = img->element_height;
-
-    p->hitbox.x = p->phys.pos.x;
-    p->hitbox.y = p->phys.pos.y;
-    p->hitbox.w = w;
-    p->hitbox.h = h;
-
-    p->hitbox.y += 0.3*p->hitbox.h;
-    p->hitbox.h *= 0.4;
-    p->hitbox.w *= 0.6;
-}
 
 
 static float sprite_index_to_angle(Player* p)
@@ -1151,15 +1119,14 @@ void player_update(Player* p, float dt)
     p->phys.pos.x += p->phys.vel.x*dt;
     p->phys.pos.y += p->phys.vel.y*dt;
 
-    update_player_boxes(p);
-
+    /*
     Vector2f adj = limit_rect_pos(&player_area, &p->hitbox);
     if(!FEQ0(adj.x) || !FEQ0(adj.y))
     {
         p->phys.pos.x += adj.x;
         p->phys.pos.y += adj.y;
-        update_player_boxes(p);
     }
+    */
 
     // update player current tile
     GFXImage* img = &gfx_images[player_image];
@@ -1265,7 +1232,6 @@ void player_update(Player* p, float dt)
         text_list_add(text_lst, 10.0, "player pos was nan!");
         p->phys.pos.x = prior_x;
         p->phys.pos.y = prior_y;
-        update_player_boxes(p);
     }
 
     ptext->x = p->phys.pos.x - p->phys.radius/2.0 - 3.0;
@@ -1740,7 +1706,7 @@ void draw_skill_selection()
     message_small_set(0.1, "Press e to select skill (skill points: %d)", player->new_levels);
 }
 
-void player_draw(Player* p, bool batch)
+void player_draw(Player* p)
 {
     if(!p->active) return;
     if(p->curr_room != player->curr_room) return;
@@ -1753,61 +1719,12 @@ void player_draw(Player* p, bool batch)
     opacity = blink ? 0.3 : opacity;
     uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
 
-    float y = p->phys.pos.y-(0.5*p->phys.pos.z);
-
-    float shadow_scale = RANGE(0.5*(1.0 - (p->phys.pos.z / 128.0)),0.1,0.5);
-    float shadow_x = p->phys.pos.x;
-    float shadow_y = p->phys.pos.y+12;
-    TileType shadow_tt = level_get_tile_type_by_pos(room, shadow_x, shadow_y);
-    bool draw_shadow = !p->phys.falling && (shadow_tt != TILE_PIT && shadow_tt != TILE_BOULDER);
-
-    if(batch)
-    {
-        if(draw_shadow) gfx_sprite_batch_add(shadow_image, 0, shadow_x, shadow_y, color, false, shadow_scale, 0.0, 0.5, false, false, false);
-        gfx_sprite_batch_add(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, color, false, p->scale, 0.0, opacity, false, false, false);
-    }
-    else
-    {
-        if(draw_shadow) gfx_draw_image(shadow_image, 0, shadow_x, shadow_y, color, shadow_scale, 0.0, 0.5, false, IN_WORLD);
-        gfx_draw_image(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, color, p->scale, 0.0, opacity, false, IN_WORLD);
-    }
+    float y = p->phys.pos.y-(0.5*p->phys.pos.z)-p->phys.width/1.5;
+    gfx_sprite_batch_add(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, color, false, p->scale, 0.0, opacity, false, false, false);
 
     if(p == player)
     {
         text_list_draw(ptext);
-    }
-}
-
-void player_draw_debug(Player* p)
-{
-    if(!p->active) return;
-    if(p->curr_room != player->curr_room) return;
-
-    if(debug_enabled)
-    {
-        Rect r = RECT(p->phys.pos.x, p->phys.pos.y, 1, 1);
-        gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
-        // gfx_draw_rect(&p->hitbox, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-
-        r.x = CPOSX(p->phys);
-        r.y = CPOSY(p->phys);
-        r.w = 1.0;
-        r.h = 1.0;
-        gfx_draw_rect(&r, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, true, true);
-
-        // gfx_draw_circle(pit_circle.x, pit_circle.y, pit_circle.z, COLOR_RED, 1.0, false, IN_WORLD);
-        gfx_draw_rect(&t_rect, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-
-
-        // gfx_draw_string(p->phys.pos.x, p->phys.pos.y, COLOR_RED, 0.4, NO_ROTATION, FULL_OPACITY, IN_WORLD, DROP_SHADOW, 0, "%d", p->highlighted_index);
-
-        float x0 = p->phys.pos.x;
-        float y0 = p->phys.pos.y;
-
-        float x1 = x0 + p->phys.vel.x;
-        float y1 = y0 + p->phys.vel.y;
-        gfx_add_line(x0, y0, x1, y1, COLOR_RED);
-
     }
 }
 

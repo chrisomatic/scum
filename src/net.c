@@ -1855,8 +1855,6 @@ static void unpack_projectiles(Packet* pkt, int* offset)
         uint8_t from_player = unpack_u8(pkt, offset);
 
         p->id = id;
-        p->hit_box.w = 10;
-        p->hit_box.h = 10;
         p->curr_room = room_id;
         p->scale = scale;
         p->from_player = from_player == 0x01 ? true : false;

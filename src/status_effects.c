@@ -39,7 +39,7 @@ void status_effects_init()
     status_effects_image = gfx_load_image("src/img/status_effects.png", false, false, 8, 8);
 }
 
-void status_effects_draw(void* physics, bool batch)
+void status_effects_draw(void* physics)
 {
     Physics* phys = (Physics*)physics;
 
@@ -53,14 +53,7 @@ void status_effects_draw(void* physics, bool batch)
         float x = phys->pos.x - half_width + (total_width*((i+1)/phys->status_effects_count));
         float y = phys->pos.y-(phys->height+8)/2.0 - sin(2.0*effect->lifetime);
 
-        if(batch)
-        {
-            gfx_sprite_batch_add(status_effects_image, effect->type, x, y, COLOR_TINT_NONE, false, 1.0, 0.0, 0.5, false, false, false);
-        }
-        else
-        {
-            gfx_draw_image(status_effects_image, effect->type, x, y, COLOR_TINT_NONE, 1.0, 0.0, 0.5, false, IN_WORLD);
-        }
+        gfx_sprite_batch_add(status_effects_image, effect->type, x, y, COLOR_TINT_NONE, false, 1.0, 0.0, 0.5, false, false, false);
     }
 }
 

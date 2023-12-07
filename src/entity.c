@@ -53,6 +53,21 @@ static void sort_entities()
     }
 }
 
+static void draw_entity_shadow(Physics* phys)
+{
+    float scale = (phys->width/32.0);
+    float opacity = RANGE(0.5*(1.0 - (phys->pos.z / 128.0)),0.1,0.5);
+
+    float shadow_x = phys->pos.x;
+    float shadow_y = phys->pos.y;//+gfx_images[shadow_image].visible_rects[0].h/2.0;
+
+    //TileType shadow_tt = level_get_tile_type_by_pos(room, shadow_x, shadow_y);
+    bool draw_shadow = !phys->falling; //&& (shadow_tt != TILE_PIT && shadow_tt != TILE_BOULDER);
+
+    if(draw_shadow)
+        gfx_sprite_batch_add(shadow_image, 0, shadow_x, shadow_y, COLOR_TINT_NONE, false, scale, 0.0, opacity, false, false, false);
+}
+
 void entity_build_all()
 {
     num_entities = 0;
@@ -229,6 +244,20 @@ void entity_draw_all()
 {
     sort_entities();
 
+    // draw shadows
+    gfx_sprite_batch_begin(true);
+    for(int i = 0; i < num_entities; ++i)
+    {
+        Entity* e = &entities[i];
+
+        if(e->curr_room != player->curr_room)
+            continue;
+
+        draw_entity_shadow(e->phys);
+    }
+
+    gfx_sprite_batch_draw();
+            
     gfx_sprite_batch_begin(true);
 
     for(int i = 0; i < num_entities; ++i)
@@ -238,35 +267,63 @@ void entity_draw_all()
         {
             case ENTITY_TYPE_PLAYER:
             {
-                player_draw((Player*)e->ptr, true);
+                player_draw((Player*)e->ptr);
             }   break;
             case ENTITY_TYPE_CREATURE:
             {
-                creature_draw((Creature*)e->ptr, true);
+                creature_draw((Creature*)e->ptr);
             }   break;
             case ENTITY_TYPE_PROJECTILE:
             {
-                projectile_draw((Projectile*)e->ptr, true);
+                projectile_draw((Projectile*)e->ptr);
             }   break;
             case ENTITY_TYPE_ITEM:
             {
-                item_draw((Item*)e->ptr, true);
+                item_draw((Item*)e->ptr);
             }   break;
             default:
                 break;
+
         }
 
         // draw any status effects
-        status_effects_draw((void*)e->phys, true);
+        status_effects_draw((void*)e->phys);
 
-        if(debug_enabled)
-        {
-            if(e->curr_room == player->curr_room)
-                gfx_draw_circle(CPOSX(*e->phys), CPOSY(*e->phys), e->phys->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
-        }
     }
 
     gfx_sprite_batch_draw();
+
+    for(int i = 0; i < num_entities; ++i)
+    {
+        Entity* e = &entities[i];
+
+        if(e->curr_room != player->curr_room)
+            continue;
+
+        if(debug_enabled)
+        {
+            float vy = e->phys->pos.y - e->phys->pos.z/2.0;
+
+            // draw collision circle
+            gfx_draw_circle(CPOSX(*e->phys), CPOSY(*e->phys), e->phys->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
+
+            // draw base dot
+            gfx_draw_rect_xywh(e->phys->pos.x, vy, 1, 1, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+
+            // draw center dot
+            gfx_draw_rect_xywh(e->phys->pos.x, vy - e->phys->height/3.0, 1, 1, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+
+            // draw boundingbox
+            gfx_draw_rect_xywh(e->phys->pos.x, vy, e->phys->width, e->phys->width, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true); // bottom rect
+            gfx_draw_rect_xywh(e->phys->pos.x, vy - e->phys->height + e->phys->width/2.0, e->phys->width, e->phys->width, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true); // top rect
+
+            float x0 = e->phys->pos.x;
+            float y0 = e->phys->pos.y;
+            float x1 = x0 + e->phys->vel.x;
+            float y1 = y0 + e->phys->vel.y;
+            gfx_add_line(x0, y0, x1, y1, COLOR_RED);
+        }
+    }
 }
 
 static Physics* get_physics_from_type(int index, uint8_t curr_room, EntityType type)

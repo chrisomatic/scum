@@ -53,8 +53,6 @@ typedef struct
     ProjectileDef* proj_def;
     Physics phys;
 
-    Rect hit_box;
-    Rect hit_box_prior;
     float radius;
     float angle_deg;
     uint8_t curr_room;
@@ -92,6 +90,6 @@ void projectile_update_hit_box(Projectile* proj);
 void projectile_update(float delta_t);
 void projectile_kill(Projectile* proj);
 void projectile_handle_collision(Projectile* p, Entity* e);
-void projectile_draw(Projectile* proj, bool batch);
+void projectile_draw(Projectile* proj);
 void projectile_lerp(Projectile* p, double dt);
 const char* projectile_def_get_name(ProjectileType proj_type);

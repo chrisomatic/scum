@@ -86,7 +86,7 @@ void item_add(ItemType type, float x, float y, uint8_t curr_room);
 bool item_remove(Item* pu);
 void item_update(Item* pu, float dt);
 void item_update_all(float dt);
-void item_draw(Item* pu, bool batch);
+void item_draw(Item* pu);
 void item_handle_collision(Item* p, Entity* e);
 void item_apply_gauntlet(void* _proj_def, Item* gauntlet, uint8_t num_slots);
 

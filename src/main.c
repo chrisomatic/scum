@@ -884,7 +884,6 @@ void update(float dt)
             Player* p = &players[i];
             if(p->active)
             {
-                memcpy(&p->hitbox_prior, &p->hitbox, sizeof(Rect));
                 player_lerp(p, dt);
             }
         }
@@ -1404,10 +1403,6 @@ void draw()
         // l.x = cr.x-cr.w/2.0 + l.w/2.0;
         // l.y = cr.y;
         // gfx_draw_rect(&l, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-
-        if(game_state == GAME_STATE_PLAYING)
-            player_draw_debug(player);
-
     }
 
     if(editor_enabled)

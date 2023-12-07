@@ -89,8 +89,9 @@ int creature_get_image(CreatureType type)
 void creature_init_props(Creature* c)
 {
     c->image = creature_get_image(c->type);
-    c->phys.height = gfx_images[c->image].element_height;
-    c->phys.radius = c->phys.height / 2.0;
+    c->phys.width  = gfx_images[c->image].visible_rects[0].w;
+    c->phys.height = gfx_images[c->image].visible_rects[0].h*2;
+    c->phys.radius = c->phys.width / 2.0;
 
     switch(c->type)
     {
@@ -127,7 +128,6 @@ void creature_init_props(Creature* c)
             c->phys.hp_max = 10.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = false;
-            c->phys.radius = 12.0;
             c->xp = 10;
         } break;
         case CREATURE_TYPE_FLOATER:
@@ -139,7 +139,6 @@ void creature_init_props(Creature* c)
             c->phys.base_friction = 1.0;
             c->phys.hp_max = 3.0;
             c->phys.floating = true;
-            c->phys.radius = 8.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = true;
             c->xp = 10;
@@ -155,7 +154,6 @@ void creature_init_props(Creature* c)
             c->phys.floating = true;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = true;
-            c->phys.radius = 20;
             c->xp = 300;
         } break;
     }
@@ -215,12 +213,10 @@ static void add_to_random_wall_tile(Creature* c)
 
     c->phys.pos.x = rp.x;
     c->phys.pos.y = rp.y;
+    c->phys.pos.z = 0.0;
 
     c->spawn_tile_x = tile_x;
     c->spawn_tile_y = tile_y;
-
-    c->spawn.x = c->phys.pos.x;
-    c->spawn.y = c->phys.pos.y;
 }
 
 static void add_to_wall_tile(Creature* c, int tile_x, int tile_y)
@@ -267,9 +263,6 @@ static void add_to_wall_tile(Creature* c, int tile_x, int tile_y)
 
     c->spawn_tile_x = tile_x;
     c->spawn_tile_y = tile_y;
-
-    c->spawn.x = c->phys.pos.x;
-    c->spawn.y = c->phys.pos.y;
 }
 
 static void add_to_random_tile(Creature* c, Room* room)
@@ -296,8 +289,6 @@ static void add_to_random_tile(Creature* c, Room* room)
 
     c->spawn_tile_x = tile_x;
     c->spawn_tile_y = tile_y;
-    c->spawn.x = c->phys.pos.x;
-    c->spawn.y = c->phys.pos.y;
 }
 
 static void add_to_tile(Creature* c, int tile_x, int tile_y)
@@ -311,8 +302,6 @@ static void add_to_tile(Creature* c, int tile_x, int tile_y)
 
     c->spawn_tile_x = tile_x;
     c->spawn_tile_y = tile_y;
-    c->spawn.x = c->phys.pos.x;
-    c->spawn.y = c->phys.pos.y;
 }
 
 // specify first 3 args, or the last
@@ -455,14 +444,6 @@ void creature_update(Creature* c, float dt)
     c->phys.pos.x += dt*c->phys.vel.x;
     c->phys.pos.y += dt*c->phys.vel.y;
     phys_apply_gravity(&c->phys, 1.0, dt);
-
-    // update hit box
-    c->hitbox.x = c->phys.pos.x;
-    c->hitbox.y = c->phys.pos.y;
-
-    c->hitbox.w = 16;
-    c->hitbox.h = 16;
-
 }
 
 void creature_lerp(Creature* c, float dt)
@@ -480,7 +461,6 @@ void creature_lerp(Creature* c, float dt)
     c->phys.pos.y = lp.y;
 
     // printf("%.1f | %.1f -> %.1f  =  %.1f\n", t, c->server_state_prior.pos.x, c->server_state_target.pos.x, lp.x);
-    // creature_update_hit_box(c);
 }
 
 void creature_update_all(float dt)
@@ -527,7 +507,7 @@ void creature_handle_collision(Creature* c, Entity* e)
     }
 }
 
-void creature_draw(Creature* c, bool batch)
+void creature_draw(Creature* c)
 {
     if(c->curr_room != player->curr_room)
         return;
@@ -535,36 +515,7 @@ void creature_draw(Creature* c, bool batch)
     if(c->phys.dead) return;
 
     float y = c->phys.pos.y - 0.5*c->phys.pos.z;
-    float shadow_scale = RANGE(0.5*(1.0 - (c->phys.pos.z / 128.0)),0.08,0.4);
-
-    if(batch)
-    {
-        gfx_sprite_batch_add(shadow_image, 0, c->phys.pos.x, c->phys.pos.y, COLOR_TINT_NONE, false, shadow_scale, 0.0, 0.5, false, false, false);
-        gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, c->color, false, 1.0, 0.0, 1.0, false, false, false);
-    }
-    else
-    {
-        gfx_draw_image(c->image, c->sprite_index, c->phys.pos.x, c->phys.pos.y, COLOR_TINT_NONE, shadow_scale, 0.0, 0.5, false, false);
-        gfx_draw_image(c->image, c->sprite_index, c->phys.pos.x, y, c->color, 1.0, 0.0, 1.0, false, true);
-    }
-
-    if(debug_enabled)
-    {
-        gfx_draw_rect(&c->hitbox, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-
-        Rect r = c->hitbox;
-        r.x = c->spawn.x;
-        r.y = c->spawn.y;
-        // gfx_draw_rect(&r, COLOR_ORANGE, NOT_SCALED, NO_ROTATION, 0.2, true, true);
-
-        if(ai_has_target(c))
-        {
-            Vector2f pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
-            r.x = pos.x;
-            r.y = pos.y;
-            gfx_draw_rect(&r, COLOR_ORANGE, NOT_SCALED, NO_ROTATION, 0.2, true, true);
-        }
-    }
+    gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, c->color, false, 1.0, 0.0, 1.0, false, false, false);
 }
 
 void creature_draw_all()
@@ -572,7 +523,7 @@ void creature_draw_all()
     for(int i = clist->count; i >= 0; --i)
     {
         Creature* c = &creatures[i];
-        creature_draw(c, false);
+        creature_draw(c);
     }
 }
 

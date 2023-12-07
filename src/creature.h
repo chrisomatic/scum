@@ -26,7 +26,6 @@ typedef struct
 
     CreatureType type;
     Physics phys;
-    Rect hitbox;
 
     ProjectileType proj_type;
 
@@ -61,7 +60,6 @@ typedef struct
     int xp;
 
     // temp debug stuff
-    Vector2f spawn;
     int spawn_tile_x;    //room tile x
     int spawn_tile_y;    //room tile y
 
@@ -83,7 +81,7 @@ void creature_add_direct(Creature* c);
 void creature_update(Creature* c, float dt);
 void creature_lerp(Creature* c, float dt);
 void creature_update_all(float dt);
-void creature_draw(Creature* c, bool batch);
+void creature_draw(Creature* c);
 void creature_draw_all();
 void creature_handle_collision(Creature* c, Entity* e);
 
