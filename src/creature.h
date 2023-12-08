@@ -16,6 +16,7 @@ typedef enum
     CREATURE_TYPE_CLINGER,
     CREATURE_TYPE_GEIZER,
     CREATURE_TYPE_FLOATER,
+    CREATURE_TYPE_BUZZER,
     CREATURE_TYPE_SHAMBLER,
     CREATURE_TYPE_MAX,
 } CreatureType;
@@ -30,6 +31,8 @@ typedef struct
     ProjectileType proj_type;
 
     int image;
+
+    uint32_t base_color;
     uint32_t color;
     uint8_t sprite_index;
     uint8_t curr_room;
@@ -48,11 +51,11 @@ typedef struct
     float act_time_min;
     float act_time_max;
 
-    // general purpose
     float ai_counter;
     float ai_counter_max;
     int ai_state;
     int ai_value;
+    bool windup;
 
     Vector2i curr_tile;
     Vector2i target_tile;

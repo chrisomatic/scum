@@ -37,9 +37,9 @@ Buzzer
 Shambler
 
 ; Creatures
-0,4,4
-0,7,4
-0,10,4
+3,5,3
+3,9,3
+4,7,4
 
 ; Item Mapping
 Red Gem
@@ -68,5 +68,5 @@ Chest
 ; Items
 
 ; Doors
-1,0,1,1
+1,1,1,1
 

@@ -7,7 +7,7 @@
 1   # Monster
 
 ; Room Rank
-1
+2
 
 ; Tile Mapping
 None
@@ -37,9 +37,12 @@ Buzzer
 Shambler
 
 ; Creatures
-0,4,4
-0,7,4
-0,10,4
+0,4,2
+0,10,2
+4,5,4
+4,9,4
+0,4,6
+0,10,6
 
 ; Item Mapping
 Red Gem
@@ -68,5 +71,5 @@ Chest
 ; Items
 
 ; Doors
-1,0,1,1
+1,1,1,1
 

@@ -113,7 +113,7 @@ void ai_walk_dir(Creature* c, Dir dir)
 
     if(dir < DIR_NONE)
     {
-        if(c->type == CREATURE_TYPE_SLUG) // do this for any standard crawler creature
+        if(c->type == CREATURE_TYPE_SLUG || c->type == CREATURE_TYPE_BUZZER)
             _update_sprite_index(c, dir);
     }
 }

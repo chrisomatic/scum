@@ -6,6 +6,7 @@
 
 #define MAX_STATUS_EFFECTS 10 
 #define GRAVITY_EARTH 1.0
+#define CIRCULAR_DT_MAX 2*PI
 
 // collision position
 #define CPOSX(phys) ((phys).pos.x+(phys).coffset.x)
