@@ -825,7 +825,8 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
     float w = TILE_SIZE;
     float h = TILE_SIZE;
 
-    Rect r = {(x+w/2.0), (y+h/2.0), w,h};   // top left tile of the room
+    Rect r = {(x+w/2.0), (y+h/2.0), w,h};   // top left wall corner
+
     uint32_t color = room->color;
 
     // draw walls
@@ -844,27 +845,42 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
     gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_CORNER_RD, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, 1.0, 0.0, 1.0, false, true);
     gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_CORNER_DL, r.x,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, 1.0, 0.0, 1.0, false, true);
 
-    uint8_t sprite_door_up = SPRITE_TILE_DOOR_UP;
-    uint8_t sprite_door_right = SPRITE_TILE_DOOR_RIGHT;
-    uint8_t sprite_door_down = SPRITE_TILE_DOOR_DOWN;
-    uint8_t sprite_door_left = SPRITE_TILE_DOOR_LEFT;
+    uint8_t door_sprites[4] = {SPRITE_TILE_DOOR_UP, SPRITE_TILE_DOOR_RIGHT, SPRITE_TILE_DOOR_DOWN, SPRITE_TILE_DOOR_LEFT};
     if(room->doors_locked)
     {
-        sprite_door_up = SPRITE_TILE_DOOR_UP_CLOSED;
-        sprite_door_right = SPRITE_TILE_DOOR_RIGHT_CLOSED;
-        sprite_door_down = SPRITE_TILE_DOOR_DOWN_CLOSED;
-        sprite_door_left = SPRITE_TILE_DOOR_LEFT_CLOSED;
+        door_sprites[0] = SPRITE_TILE_DOOR_UP_CLOSED;
+        door_sprites[1] = SPRITE_TILE_DOOR_RIGHT_CLOSED;
+        door_sprites[2] = SPRITE_TILE_DOOR_DOWN_CLOSED;
+        door_sprites[3] = SPRITE_TILE_DOOR_LEFT_CLOSED;
     }
 
-    // draw doors
-    if(room->doors[DIR_UP])
-        gfx_draw_image(dungeon_image, sprite_door_up, r.x+w*(ROOM_TILE_SIZE_X+1)/2.0,r.y, color, 1.0, 0.0, 1.0, false, true);
-    if(room->doors[DIR_RIGHT])
-        gfx_draw_image(dungeon_image, sprite_door_right, r.x+w*(ROOM_TILE_SIZE_X+1),r.y+h*(ROOM_TILE_SIZE_Y+1)/2.0, color, 1.0, 0.0, 1.0, false, true);
-    if(room->doors[DIR_DOWN])
-        gfx_draw_image(dungeon_image, sprite_door_down, r.x+w*(ROOM_TILE_SIZE_X+1)/2.0,r.y+h*(ROOM_TILE_SIZE_Y+1), color, 1.0, 0.0, 1.0, false, true);
-    if(room->doors[DIR_LEFT])
-        gfx_draw_image(dungeon_image, sprite_door_left, r.x,r.y+h*(ROOM_TILE_SIZE_Y+1)/2.0, color, 1.0, 0.0, 1.0, false, true);
+    // center of the room
+    float halfw = TILE_SIZE*(ROOM_TILE_SIZE_X+1)/2.0;
+    float halfh = TILE_SIZE*(ROOM_TILE_SIZE_Y+1)/2.0;
+    float centerx = r.x + halfw;
+    float centery = r.y + halfh;
+
+    for(int i = 0; i < 4; ++i)
+    {
+        if(!room->doors[i]) continue;
+
+        Vector2i c = level_get_room_coords(room->index);
+        Vector2i o = get_dir_offsets(i);
+
+        uint32_t dcolor = color;
+
+        Room* aroom = level_get_room(&level, c.x+o.x, c.y+o.y);
+        if(aroom != NULL)
+        {
+            if(aroom->type == ROOM_TYPE_TREASURE)
+                dcolor = aroom->color;
+            else if(aroom->type == ROOM_TYPE_BOSS)
+                dcolor = aroom->color;
+        }
+        float _x = centerx + halfw*o.x;
+        float _y = centery + halfh*o.y;
+        gfx_draw_image(dungeon_image, door_sprites[i], _x, _y, dcolor, 1.0, 0.0, 1.0, false, true);
+    }
 
     RoomFileData* rdata;
     if(room_data != NULL)
@@ -1050,7 +1066,7 @@ Room* level_get_room(Level* level, int x, int y)
 {
     if(!level_is_room_valid(level, x, y))
     {
-        //LOGE("Room not valid, %d %d",x,y); //@TODO: Look into any of these prints
+        LOGE("Room not valid, %d %d",x,y); //@TODO: Look into any of these prints
         return NULL;
     }
     return &level->rooms[x][y];

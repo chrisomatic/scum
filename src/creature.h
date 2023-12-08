@@ -76,13 +76,15 @@ const char* creature_type_name(CreatureType type);
 int creature_get_image(CreatureType type);
 void creature_init_props(Creature* c);
 void creature_clear_all();
+void creature_clear_room(uint8_t room_index);
+void creature_kill_all();
+void creature_kill_room(uint8_t room_index);
 Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* creature);
 void creature_add_direct(Creature* c);
 void creature_update(Creature* c, float dt);
 void creature_lerp(Creature* c, float dt);
 void creature_update_all(float dt);
 void creature_draw(Creature* c);
-void creature_draw_all();
 void creature_handle_collision(Creature* c, Entity* e);
 
 void creature_hurt(Creature* c, float damage);

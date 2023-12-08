@@ -581,6 +581,16 @@ void game_generate_level(unsigned int _seed, int _rank)
 
     uint16_t ccount = creature_get_count();
     LOGI("Total creature count: %u", ccount);
+    for(int i = 0; i < ccount; ++i)
+    {
+        Creature* c = &creatures[i];
+        Room* room = level_get_room_by_index(&level, c->curr_room);
+        if(!room)
+        {
+            LOGE("Creature %d has invalid room: %u", c->curr_room);
+        }
+    }
+
     uint16_t ccount2 = 0;
     for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
     {
@@ -1181,7 +1191,7 @@ void draw_map(DrawLevelParams* params)
 
             //TEMP
             // if(!IS_RECT_EMPTY(&send_to_room_rect) && debug_enabled && params->show_all && room->index != player->curr_room)
-            if(!IS_RECT_EMPTY(&send_to_room_rect) && debug_enabled  && room->index != player->curr_room)
+            if(!IS_RECT_EMPTY(&send_to_room_rect) && params->show_all && room->index != player->curr_room)
             {
                 if(rectangles_colliding(&room_rect, &send_to_room_rect))
                 {

@@ -173,6 +173,42 @@ void creature_clear_all()
     list_clear(clist);
 }
 
+void creature_clear_room(uint8_t room_index)
+{
+    for(int i = clist->count; i >= 0; --i)
+    {
+        Creature* c = &creatures[i];
+        if(c->curr_room == room_index)
+        {
+            list_remove(clist, i);
+        }
+    }
+}
+
+void creature_kill_all()
+{
+    for(int i = clist->count-1; i >= 0; --i)
+    {
+        printf("killing creature %d\n", i);
+        creature_die(&creatures[i]);
+        printf("removing %d\n", i);
+        list_remove(clist, i);
+    }
+}
+
+void creature_kill_room(uint8_t room_index)
+{
+    for(int i = clist->count-1; i >= 0; --i)
+    {
+        if(creatures[i].curr_room == room_index)
+        {
+            creature_die(&creatures[i]);
+            list_remove(clist, i);
+        }
+    }
+}
+
+
 static void add_to_random_wall_tile(Creature* c)
 {
     int tile_x = 0;
@@ -522,14 +558,6 @@ void creature_draw(Creature* c)
     gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, c->color, false, 1.0, 0.0, 1.0, false, false, false);
 }
 
-void creature_draw_all()
-{
-    for(int i = clist->count; i >= 0; --i)
-    {
-        Creature* c = &creatures[i];
-        creature_draw(c);
-    }
-}
 
 void creature_die(Creature* c)
 {
@@ -537,6 +565,13 @@ void creature_die(Creature* c)
 
     // player_add_xp(player, c->xp);
     Room* room = level_get_room_by_index(&level, c->curr_room);
+    if(room == NULL)
+    {
+        LOGE("room is null");
+        printf("%u\n", c->curr_room);
+        return;
+    }
+
     room->xp += c->xp;
 
     Decal d = {0};

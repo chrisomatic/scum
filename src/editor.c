@@ -108,6 +108,11 @@ void editor_draw()
             case 1: // level
             {
 
+                if(imgui_button("Generate Random Level"))
+                {
+                    game_generate_level(rand(), level_rank);
+                }
+
                 static char seed_str[32] = {0};
                 imgui_text_box("Input Seed##input seed",seed_str,32);
                 int _seed = atoi(seed_str);
@@ -129,7 +134,7 @@ void editor_draw()
                 imgui_text("Mouse Tile: %d, %d", tc.x, tc.y);
 
                 Vector2f mc = level_get_pos_by_room_coords(tc.x, tc.y);
-                imgui_text("Back to Mouse coords: %f, %f",mc.x,mc.y);
+                imgui_text("Back to Mouse coords: %.1f, %.1f", mc.x,mc.y);
 
                 // int xd = (tc.x+1) * TILE_SIZE;
                 // int yd = (tc.y+1) * TILE_SIZE;
@@ -280,9 +285,16 @@ void editor_draw()
                         creature_add(room, CREATURE_TYPE_SHAMBLER, NULL, NULL);
                 }
 
-                if(imgui_button("Clear"))
+                if(imgui_button("Clear Room"))
                 {
-                    creature_clear_all();
+                    creature_kill_room(player->curr_room);
+                    // creature_clear_room(player->curr_room);
+                }
+
+                if(imgui_button("Clear All"))
+                {
+                    creature_kill_all();
+                    // creature_clear_all();
                 }
 
                 static float creature_speed = -1;
