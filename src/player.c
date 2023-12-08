@@ -390,6 +390,9 @@ void player_die(Player* p)
     p->phys.dead = true;
     status_effects_clear(&p->phys);
 
+    p->phys.falling = false;
+    p->scale = 1.0;
+
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         Player* p2 = &players[i];
@@ -902,8 +905,12 @@ void player_update(Player* p, float dt)
     }
     else
     {
-        Vector2i tile_coords = level_get_room_coords_by_pos(cx, cy);
-        TileType tt = level_get_tile_type(room, tile_coords.x, tile_coords.y);
+        p->curr_tile = level_get_room_coords_by_pos(cx, cy);
+        TileType tt = level_get_tile_type(room, p->curr_tile.x, p->curr_tile.y);
+        if(IS_SAFE_TILE(tt))
+        {
+            p->last_safe_tile = p->curr_tile;
+        }
 
         if(p->phys.pos.z == 0.0)
         {
@@ -926,7 +933,7 @@ void player_update(Player* p, float dt)
         {
 
             Rect p_rect = RECT(cx, cy, 2, 2);
-            Rect pit_rect = level_get_tile_rect(tile_coords.x, tile_coords.y);
+            Rect pit_rect = level_get_tile_rect(p->curr_tile.x, p->curr_tile.y);
 
             float shrink_fac = 0.7;
             float adj_fac = (1.0 - shrink_fac) / 2.0;
@@ -938,11 +945,11 @@ void player_update(Player* p, float dt)
             for(int dir = 0; dir < 4; ++dir)
             {
                 Vector2i o = get_dir_offsets(dir);
-                TileType _tt = level_get_tile_type(room, tile_coords.x + o.x, tile_coords.y + o.y);
+                TileType _tt = level_get_tile_type(room, p->curr_tile.x + o.x, p->curr_tile.y + o.y);
 
                 float xadj = 0;
                 float yadj = 0;
-                if(_tt == TILE_PIT || _tt == TILE_BOULDER || tile_coords.x == 0 || tile_coords.y == 0 || tile_coords.x == ROOM_TILE_SIZE_X-1 || tile_coords.y == ROOM_TILE_SIZE_Y-1)
+                if(_tt == TILE_PIT || _tt == TILE_BOULDER || p->curr_tile.x == 0 || p->curr_tile.y == 0 || p->curr_tile.x == ROOM_TILE_SIZE_X-1 || p->curr_tile.y == ROOM_TILE_SIZE_Y-1)
                 {
                     if(dir == DIR_LEFT)
                     {
@@ -988,8 +995,22 @@ void player_update(Player* p, float dt)
         {
             p->scale = 1.0;
             p->phys.falling = false;
+
+
+
+            TileType tt = level_get_tile_type(room, p->last_safe_tile.x, p->last_safe_tile.y);
+            if(IS_SAFE_TILE(tt))
+            {
+                Vector2f position = level_get_pos_by_room_coords(p->last_safe_tile.x, p->last_safe_tile.y);
+                player_set_collision_pos(p, position.x, position.y);
+            }
+            else
+            {
+                player_send_to_room(p, p->curr_room);
+            }
+
             // player_send_to_room(p, p->curr_room);
-            player_send_to_level_start(p);
+            // player_send_to_level_start(p);
         }
     }
 

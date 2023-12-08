@@ -38,6 +38,9 @@ typedef enum
     TILE_MAX
 } TileType;
 
+#define IS_SAFE_TILE(tt) (tt == TILE_FLOOR || tt == TILE_MUD || tt == TILE_ICE)
+
+
 typedef enum
 {
     DIR_UP,

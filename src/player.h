@@ -90,6 +90,7 @@ typedef struct
     float light_radius;
 
     Vector2i curr_tile;
+    Vector2i last_safe_tile;
 
     uint8_t proj_charge;
     float proj_cooldown;
