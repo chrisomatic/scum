@@ -29,6 +29,7 @@ bool boost_stats = false;
 char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 int player_image = -1;
 int shadow_image = -1;
+int card_image = -1;
 
 float jump_vel_z = 150.0;
 
@@ -47,6 +48,8 @@ void player_init()
     {
         player_image = gfx_load_image("src/img/spaceman.png", false, true, 32, 32);
         shadow_image = gfx_load_image("src/img/shadow.png", false, true, 32, 32);
+        card_image   = gfx_load_image("src/img/card.png", false, false, 200, 100);
+
         ptext = text_list_init(5, 0, 0, 0.05, COLOR_WHITE, false, TEXT_ALIGN_LEFT, IN_WORLD, false);
     }
 
@@ -1666,18 +1669,27 @@ void draw_skill_selection()
 
         if(i == 0)
         {
-            gfx_draw_string(x, y-size.y-3*pad, COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "Level Up! (Choose a Skill)");
+            gfx_draw_string(x, y-size.y-8*pad, COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "Level Up! (Choose a Skill)");
         }
 
         for(int j = 0; j < num_skills_row; ++j)
         {
-            gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_GRAY, 1.0, 0.0, 0.5,true,false);
+            Skill* skill = &skill_list[skill_choices[idx]];
+
+
+            uint32_t color;
+            switch(skill->rarity)
+            {
+                case SKILL_RARITY_COMMON: color = COLOR_TINT_NONE; break;
+                case SKILL_RARITY_RARE: color = 0x008888FF; break;
+                case SKILL_RARITY_EPIC: color = 0x00FFD755; break;
+                case SKILL_RARITY_LEGENDARY: color = 0x00FF88FF; break;
+                default: break;
+            }
 
             bool selected = (idx == skill_selection);
-            if(selected)
-                gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_BLUE, 1.0, 0.0, 0.5,true,false); // outline
-
-            Skill* skill = &skill_list[skill_choices[idx]];
+            gfx_draw_image_ignore_light(card_image,0,x + w/2.0, y+h/2.0, gfx_blend_colors(color, selected ? COLOR_BLUE : COLOR_TINT_NONE, 0.5), 1.0, 0.0, 0.95, true, NOT_IN_WORLD);
+            //gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_GRAY, 1.0, 0.0, 0.5,true,false);
 
             if(skill->rarity > SKILL_RARITY_COMMON)
             {
