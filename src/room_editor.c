@@ -826,7 +826,7 @@ void room_editor_draw()
         else
         {
             eraser = true;
-            error = false;
+            error = out_of_area;
         }
     }
 
@@ -844,12 +844,22 @@ void room_editor_draw()
     memcpy(&room_data_temp, &room_data, sizeof(RoomFileData));
     memcpy(&room_temp, &room, sizeof(Room));
 
+    if(out_of_area)
+    {
+        printf("return! (out of area)\n");
+        obj_sel = prior_obj_sel;
+        return;
+    }
+
     PlacedObject* o = &objects[obj_coords.x][obj_coords.y];
 
     if(eraser)
     {
-        if(obj_coords.x > 0 && obj_coords.y > 0 && (obj_coords.x-1) < ROOM_TILE_SIZE_X && (obj_coords.y-1) < ROOM_TILE_SIZE_Y)
+        // if(obj_coords.x > 0 && obj_coords.y > 0 && (obj_coords.x-1) < ROOM_TILE_SIZE_X && (obj_coords.y-1) < ROOM_TILE_SIZE_Y)
+        if(!out_of_room)
+        {
             room_data.tiles[obj_coords.x-1][obj_coords.y-1] = TILE_FLOOR;
+        }
         o->type = TYPE_NONE;
     }
     else if(obj_sel == 0) //tiles
@@ -889,7 +899,8 @@ void room_editor_draw()
     }
     else
     {
-        if(obj_coords.x > 0 && obj_coords.y > 0 && (obj_coords.x+1) < ROOM_TILE_SIZE_X && (obj_coords.y+1) < ROOM_TILE_SIZE_Y)
+        // if(obj_coords.x > 0 && obj_coords.y > 0 && (obj_coords.x+1) < ROOM_TILE_SIZE_X && (obj_coords.y+1) < ROOM_TILE_SIZE_Y)
+        if(!out_of_room)
         {
             TileType* tt = (TileType*)&room_data.tiles[obj_coords.x-1][obj_coords.y-1];
             if(*tt == TILE_PIT || *tt == TILE_BOULDER)

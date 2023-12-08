@@ -1066,7 +1066,7 @@ Room* level_get_room(Level* level, int x, int y)
 {
     if(!level_is_room_valid(level, x, y))
     {
-        LOGE("Room not valid, %d %d",x,y); //@TODO: Look into any of these prints
+        // LOGE("Room not valid, %d %d",x,y); //@TODO: Look into any of these prints
         return NULL;
     }
     return &level->rooms[x][y];
