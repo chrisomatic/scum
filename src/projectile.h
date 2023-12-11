@@ -21,8 +21,9 @@ typedef struct
 
     float damage;
     float range;
-    float min_speed;
     float base_speed;
+    float accel;
+    float gravity_factor;
 
     float angle_spread;
     float scale;
@@ -66,6 +67,7 @@ typedef struct
     float time;
     float ttl;
     bool from_player;
+    Vector3f accel_vector;
 
     bool homing;
     // Physics* homing_target;

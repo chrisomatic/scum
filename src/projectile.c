@@ -27,8 +27,9 @@ ProjectileDef projectile_lookup[] = {
         .color = 0x0050A0FF,
         .damage = 1.0,
         .range = 128,
-        .min_speed = 150.0,
         .base_speed = 215.0,
+        //.accel = -8.0,
+        .gravity_factor = 0.5,
         .angle_spread = 45.0,
         .scale = 1.0,
         .num = 1,
@@ -47,9 +48,9 @@ ProjectileDef projectile_lookup[] = {
         .color = 0x00FF5050,
         .damage = 1.0,
         .range = 32*6,
-        .min_speed = 200.0,
         .base_speed = 200.0,
         .angle_spread = 0.0,
+        .gravity_factor = 0.5,
         .scale = 1.0,
         .num = 1,
         .charge = false,
@@ -67,9 +68,9 @@ ProjectileDef projectile_lookup[] = {
         .color = 0x00FF5050,
         .damage = 1.0,
         .range = 32*6,
-        .min_speed = 200.0,
         .base_speed = 200.0,
         .angle_spread = 0.0,
+        .gravity_factor = 0.5,
         .scale = 1.0,
         .num = 1,
         .charge = false,
@@ -132,7 +133,6 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
     proj.curr_room = curr_room;
     proj.from_player = from_player;
 
-    float min_speed = projdef->min_speed;
     float spread = projdef->angle_spread/2.0;
 
     for(int i = 0; i < projdef->num; ++i)
@@ -181,16 +181,6 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
 
             if(target)
             {
-                // float tx = target->pos.x;
-                // float ty = target->pos.y;
-                // float tz = target->pos.y;
-                // Vector3f v = {tx - p.phys.pos.x, ty - p.phys.pos.y, tz - p.phys.pos.z};
-                // normalize3f(&v);
-                // // float m = magn(p.phys.vel);
-                // float m = dist3f(tx, ty, tz, p.phys.pos.x, p.phys.pos.y, p.phys.pos.z);
-                // p.phys.vel.x = v.x * m;
-                // p.phys.vel.y = v.y * m;
-
                 float tx = target->pos.x;
                 float ty = target->pos.y;
                 Vector2f v = {tx - p.phys.pos.x, ty - p.phys.pos.y};
@@ -198,83 +188,6 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
                 float m = dist(tx, ty, p.phys.pos.x, p.phys.pos.y);
                 p.phys.vel.x = v.x * speed;
                 p.phys.vel.y = v.y * speed;
-
-#if 0
-                static bool solved = false;
-                static float thetime = 0;
-                if(!solved)
-                {
-                    // solve for time until it hits the ground
-                    // vz(t) = vz(t-1) - g*dt
-                    // pz(t) = pz(t-1) + dt*vz(t)
-                    Physics phys = p.phys;
-                    float _dt = 1.0/60.0;
-                    for(;;)
-                    {
-                        phys_apply_gravity(&phys, 0.5, _dt);
-                        thetime += _dt;
-                        if(phys.pos.z <= 0)
-                            break;
-                    }
-                    solved = true;
-                }
-
-                float tx = target->pos.x + target->coffset.x;
-                float ty = target->pos.y + target->coffset.y;
-
-                float px = p.phys.pos.x;
-                float py = p.phys.pos.y;
-
-                // float r = p.phys.radius + target->radius;
-                float r = p.phys.radius;
-
-                Vector2f v = {tx - px, ty - py};
-                normalize(&v);
-
-                float maxspeed = speed*1;
-
-
-#if 0
-                float total_d = dist(tx, ty, px, py);
-
-                maxspeed = speed*2;
-
-                float nx = px + v.x*maxspeed*thetime;
-                float ny = py + v.y*maxspeed*thetime;
-
-                float d = dist(tx, ty, nx, ny);
-
-                // impossible to hit the target at max speed
-                if(total_d > (d+r))
-                {
-                    printf("speed: %.2f (max)\n", maxspeed);
-                    p.phys.vel.x = v.x * maxspeed;
-                    p.phys.vel.y = v.y * maxspeed;
-
-                    printf("total_d: %.2f\n", total_d);
-                    printf("d+r:     %.2f\n", d+r);
-                }
-
-                else
-#endif
-                {
-                    float s = 20.0;
-                    for(;;)
-                    {
-                        float nx = px + v.x*s*thetime;
-                        float ny = py + v.y*s*thetime;
-                        float d = dist(tx, ty, nx, ny);
-                        if(d <= r || s >= maxspeed)
-                        {
-                            // printf("speed: %.2f\n", s);
-                            break;
-                        }
-                        s += 1.0;
-                    }
-                    p.phys.vel.x = v.x * s;
-                    p.phys.vel.y = v.y * s;
-                }
-#endif
             }
         }
 
@@ -301,6 +214,7 @@ void projectile_kill(Projectile* proj)
 
     if(!proj->from_player)
     {
+        // make splash effect red
         splash.color1 = 0x00CC5050;
         splash.color2 = 0x00FF8080;
         splash.color3 = 0x00550000;
@@ -336,31 +250,25 @@ void projectile_update(float delta_t)
 
         proj->time += _dt;
 
-        // proj->prior_pos.x = proj->phys.pos.x;
-        // proj->prior_pos.y = proj->phys.pos.y;
+        if(proj->proj_def->accel != 0.0 && proj->accel_vector.x == 0.0 && proj->accel_vector.y == 0.0 && proj->accel_vector.z == 0.0)
+        {
+            Vector3f f = {proj->phys.vel.x, proj->phys.vel.y, proj->phys.vel.z};
+            normalize3f(&f);
 
-        // if(proj->homing)
-        // {
-        //     if(!proj->homing_target)
-        //     {
-        //         // get homing target
-        //         if(proj->from_player)
-        //             proj->homing_target = entity_get_closest_to(&proj->phys,proj->curr_room, ENTITY_TYPE_CREATURE);
-        //         else
-        //             proj->homing_target = entity_get_closest_to(&proj->phys,proj->curr_room, ENTITY_TYPE_PLAYER);
-        //     }
+            f.x *= proj->proj_def->accel;
+            f.y *= proj->proj_def->accel;
+            f.z *= proj->proj_def->accel;
 
-        //     if(proj->homing_target)
-        //     {
-        //         float m = magn(proj->phys.vel);
+            proj->accel_vector.x = f.x;
+            proj->accel_vector.y = f.y;
+            proj->accel_vector.z = f.z;
+        }
 
-        //         Vector2f v = {proj->homing_target->pos.x - proj->phys.pos.x, proj->homing_target->pos.y - proj->phys.pos.y};
-        //         normalize(&v);
+        proj->phys.vel.x += proj->accel_vector.x;
+        proj->phys.vel.y += proj->accel_vector.y;
+        proj->phys.vel.z += proj->accel_vector.z;
 
-        //         proj->phys.vel.x = v.x * m;
-        //         proj->phys.vel.y = v.y * m;
-        //     }
-        // }
+        //printf("adding %f %f; vel: %f %f\n",f.x, f.y, proj->phys.vel.x, proj->phys.vel.y);
 
         proj->phys.prior_pos.x = proj->phys.pos.x;
         proj->phys.prior_pos.y = proj->phys.pos.y;
@@ -368,10 +276,8 @@ void projectile_update(float delta_t)
 
         proj->phys.pos.x += _dt*proj->phys.vel.x;
         proj->phys.pos.y += _dt*proj->phys.vel.y;
-        if(proj->homing)
-            phys_apply_gravity(&proj->phys,0.5, delta_t);   //TODO
-        else
-            phys_apply_gravity(&proj->phys,0.5, delta_t);
+
+        phys_apply_gravity(&proj->phys,proj->proj_def->gravity_factor, delta_t);
 
         if(proj->phys.amorphous && proj->phys.pos.z <= 0.0)
         {

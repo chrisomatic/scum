@@ -19,6 +19,7 @@ static int creature_image_clinger;
 static int creature_image_geizer;
 static int creature_image_floater;
 static int creature_image_buzzer;
+static int creature_image_totem;
 static int creature_image_shambler;
 
 static void creature_update_slug(Creature* c, float dt);
@@ -26,6 +27,7 @@ static void creature_update_clinger(Creature* c, float dt);
 static void creature_update_geizer(Creature* c, float dt);
 static void creature_update_floater(Creature* c, float dt);
 static void creature_update_buzzer(Creature* c, float dt);
+static void creature_update_totem(Creature* c, float dt);
 static void creature_update_shambler(Creature* c, float dt);
 
 static uint16_t id_counter = 0;
@@ -47,6 +49,7 @@ void creature_init()
     creature_image_geizer = gfx_load_image("src/img/creature_geizer.png", false, false, 32, 64);
     creature_image_floater = gfx_load_image("src/img/creature_floater.png", false, false, 16, 16);
     creature_image_buzzer  = gfx_load_image("src/img/creature_buzzer.png", false, false, 32, 32);
+    creature_image_totem  = gfx_load_image("src/img/creature_totem.png", false, false, 32, 64);
     creature_image_shambler = gfx_load_image("src/img/creature_shambler.png", false, false, 32, 64);
 }
 
@@ -64,6 +67,8 @@ const char* creature_type_name(CreatureType type)
             return "Floater";
         case CREATURE_TYPE_BUZZER:
             return "Buzzer";
+        case CREATURE_TYPE_TOTEM:
+            return "Totem";
         case CREATURE_TYPE_SHAMBLER:
             return "Shambler";
         default:
@@ -85,6 +90,8 @@ int creature_get_image(CreatureType type)
             return creature_image_floater;
         case CREATURE_TYPE_BUZZER:
             return creature_image_buzzer;
+        case CREATURE_TYPE_TOTEM:
+            return creature_image_totem;
         case CREATURE_TYPE_SHAMBLER:
             return creature_image_shambler;
         default:
@@ -161,6 +168,20 @@ void creature_init_props(Creature* c)
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = true;
             c->xp = 40;
+        } break;
+        case CREATURE_TYPE_TOTEM:
+        {
+            c->phys.speed = 0.0;
+            c->act_time_min = 2.00;
+            c->act_time_max = 3.00;
+            c->phys.mass = 1000.0;
+            c->phys.base_friction = 50.0;
+            c->phys.hp_max = 128;
+            c->phys.floating = false;
+            c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
+            c->painful_touch = false;
+            c->invincible = true;
+            c->xp = 20;
         } break;
         case CREATURE_TYPE_SHAMBLER:
         {
@@ -412,6 +433,12 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
                 else     add_to_random_tile(&c, room);
                 c.sprite_index = 0;
             } break;
+            case CREATURE_TYPE_TOTEM:
+            {
+                if(tile) add_to_tile(&c, tile->x, tile->y);
+                else     add_to_random_tile(&c, room);
+                c.sprite_index = 0;
+            } break;
             case CREATURE_TYPE_SHAMBLER:
             {
                 if(tile) add_to_tile(&c, tile->x, tile->y);
@@ -463,6 +490,9 @@ void creature_update(Creature* c, float dt)
             break;
         case CREATURE_TYPE_BUZZER:
             creature_update_buzzer(c,dt);
+            break;
+        case CREATURE_TYPE_TOTEM:
+            creature_update_totem(c,dt);
             break;
         case CREATURE_TYPE_SHAMBLER:
             creature_update_shambler(c,dt);
@@ -620,6 +650,9 @@ void creature_die(Creature* c)
 
 void creature_hurt(Creature* c, float damage)
 {
+    if(c->invincible)
+        return;
+
     c->phys.hp -= damage;
 
     c->damaged = true;
@@ -861,6 +894,66 @@ static void creature_update_buzzer(Creature* c, float dt)
     {
         if(c->ai_counter == 0.0)
             c->ai_counter_max = 0.3;//RAND_FLOAT(0.2,0.5);
+
+        c->ai_counter += dt;
+
+        if(c->ai_counter >= c->ai_counter_max)
+        {
+            c->ai_counter = 0.0;
+
+            // fire shots
+            Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+            float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
+            projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
+
+            c->ai_value++;
+            if(c->ai_value >= 3)
+            {
+                c->ai_state = 0;
+            }
+        }
+    }
+
+}
+
+static void creature_update_totem(Creature* c, float dt)
+{
+    int creature_count = 0;
+    for(int i = 0; i < clist->count; ++i)
+    {
+        if(creatures[i].curr_room == c->curr_room)
+        {
+            // same room
+            if(creatures[i].type != CREATURE_TYPE_TOTEM)
+            {
+                creature_count++;
+            }
+        }
+            
+    }
+
+    if(creature_count == 0)
+    {
+        // deactivate totem
+        creature_die(c);
+    }
+
+    if(c->ai_state == 0)
+    {
+        // move
+        bool act = ai_update_action(c, dt);
+
+        if(act)
+        {
+            c->ai_counter = 0.0;
+            c->ai_state = 1;
+            c->ai_value = 0;
+        }
+    }
+    else if(c->ai_state == 1)
+    {
+        if(c->ai_counter == 0.0)
+            c->ai_counter_max = 0.3;
 
         c->ai_counter += dt;
 

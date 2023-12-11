@@ -17,6 +17,7 @@ typedef enum
     CREATURE_TYPE_GEIZER,
     CREATURE_TYPE_FLOATER,
     CREATURE_TYPE_BUZZER,
+    CREATURE_TYPE_TOTEM,
     CREATURE_TYPE_SHAMBLER,
     CREATURE_TYPE_MAX,
 } CreatureType;
@@ -43,6 +44,8 @@ typedef struct
 
     bool damaged;
     float damaged_time;
+
+    bool invincible;
 
     // AI
     float action_counter;

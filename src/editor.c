@@ -342,7 +342,8 @@ void editor_draw()
                 imgui_slider_float("Damage", 0.0,100.0,&projd->damage);
                 imgui_slider_float("Range", 0.0,1000.0,&projd->range);
                 imgui_slider_float("Base Speed", 100.0,1000.0,&projd->base_speed);
-                imgui_slider_float("Min Speed", 50.0,200.0,&projd->min_speed);
+                imgui_slider_float("Acceleration", -50.0,50.0,&projd->accel);
+                imgui_slider_float("Gravity Factor", -1.0,1.0,&projd->gravity_factor);
                 imgui_slider_float("Angle Spread", 0.0, 360.0,&projd->angle_spread);
                 imgui_slider_float("Scale", 0.1, 5.0,&projd->scale);
 

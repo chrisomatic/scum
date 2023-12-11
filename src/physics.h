@@ -28,7 +28,6 @@ typedef struct
     Vector3f vel;
     Vector3f prior_vel;
 
-
     float max_velocity;
     float base_friction;
     float speed;
