@@ -404,6 +404,8 @@ void camera_set(bool immediate)
 
     float cam_pos_z = (float)cam_zoom_temp/100.0;
 
+#if 0
+    // camera shake
     static int counter = 0;
     if(player->phys.hp == 1 && debug_enabled)
     {
@@ -419,6 +421,7 @@ void camera_set(bool immediate)
             // immediate = true;
         }
     }
+#endif
 
     bool ret = camera_move(cam_pos_x, cam_pos_y, cam_pos_z, immediate, &camera_limit);
     if(!ret)
@@ -1038,6 +1041,10 @@ void update(float dt)
             decal_update_all(dt);
             particles_update(dt);
 
+            entity_build_all();
+            entity_handle_collisions();
+            entity_handle_status_effects(dt);
+
             Room* room = level_get_room_by_index(&level, (int)player->curr_room);
             bool prior_locked = room->doors_locked;
             room->doors_locked = (creature_get_room_count(player->curr_room) != 0);
@@ -1066,9 +1073,6 @@ void update(float dt)
                 }
             }
 
-            entity_build_all();
-            entity_handle_collisions();
-            entity_handle_status_effects(dt);
         }
     }
 
@@ -1101,7 +1105,6 @@ void draw_map(DrawLevelParams* params)
     }
 
     bool dbg = params->show_all && debug_enabled;
-    float tscale = 0.0;
 
     gfx_draw_rect(&params->area, params->color_bg, NOT_SCALED, NO_ROTATION, params->opacity_bg, true, NOT_IN_WORLD);
     gfx_draw_rect(&params->area, params->color_border, NOT_SCALED, NO_ROTATION, params->opacity_border, false, NOT_IN_WORLD);
@@ -1113,8 +1116,11 @@ void draw_map(DrawLevelParams* params)
     float rw = params->area.w/MAX_ROOMS_GRID_X;
     float rh = params->area.h/MAX_ROOMS_GRID_Y;
     float len = MIN(rw, rh);
+    // printf("len: %.2f\n", len);
     params->area.w = len*MAX_ROOMS_GRID_X;
     params->area.h = len*MAX_ROOMS_GRID_Y;
+
+    float tscale = 0.12 * 57.0/len;
 
     float margin = len / 12.0;
     float room_wh = len-margin;
@@ -1123,18 +1129,19 @@ void draw_map(DrawLevelParams* params)
 
     float r = len/2.0;
 
-    if(dbg)
-    {
-        for(int i = 0; i < 100; ++i)
-        {
-            tscale += 0.01;
-            Vector2f size = gfx_string_get_size(tscale, "|");
-            if(size.y >= len/5.0)
-            {
-                break;
-            }
-        }
-    }
+    // if(dbg)
+    // {
+    //     for(int i = 0; i < 100; ++i)
+    //     {
+    //         tscale += 0.01;
+    //         Vector2f size = gfx_string_get_size(tscale, "|");
+    //         if(size.y >= len/5.0)
+    //         {
+    //             printf("tscale: %.2f\n", tscale);
+    //             break;
+    //         }
+    //     }
+    // }
 
     for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
     {
@@ -1186,15 +1193,19 @@ void draw_map(DrawLevelParams* params)
             {
                 float tlx = room_rect.x - room_rect.w/2.0 + 1.0;
                 float tly = room_rect.y - room_rect.h/2.0;
-                gfx_draw_string(tlx, tly, COLOR_WHITE, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "%d", creature_get_room_count(room->index));
+                gfx_draw_string(tlx, tly, COLOR_BLACK, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "creatures: %d", creature_get_room_count(room->index));
+
+                Vector2f size = gfx_string_get_size(tscale, "|");
+                gfx_draw_string(tlx, tly+size.y, COLOR_BLACK, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, room_rect.w, "%s", room_files[room_list[room->layout].file_index]);
             }
 
             //TEMP
-            // if(!IS_RECT_EMPTY(&send_to_room_rect) && debug_enabled && params->show_all && room->index != player->curr_room)
             if(!IS_RECT_EMPTY(&send_to_room_rect) && params->show_all && room->index != player->curr_room)
             {
                 if(rectangles_colliding(&room_rect, &send_to_room_rect))
                 {
+                    // printf("room->index: %u\n", room->index);
+                    // printf("player->curr_room: %u\n", player->curr_room);
                     player_send_to_room(player, room->index);
                 }
             }

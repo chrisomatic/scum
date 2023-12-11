@@ -846,7 +846,7 @@ void room_editor_draw()
 
     if(out_of_area)
     {
-        printf("return! (out of area)\n");
+        // printf("return! (out of area)\n");
         obj_sel = prior_obj_sel;
         return;
     }

@@ -599,3 +599,30 @@ void item_handle_collision(Item* p, Entity* e)
         } break;
     }
 }
+
+bool item_is_on_tile(Room* room, int tile_x, int tile_y)
+{
+    Rect rp = level_get_tile_rect(tile_x, tile_y);
+
+    for(int i = item_list->count-1; i >= 0; --i)
+    {
+        Item* pu = &items[i];
+
+        if(pu->curr_room != room->index)
+            continue;
+
+        float _x = CPOSX(pu->phys);
+        float _y = CPOSY(pu->phys);
+
+        // simple check
+        Rect ir = RECT(_x, _y, 1, 1);
+
+        if(rectangles_colliding(&ir, &rp))
+        {
+            return true;
+        }
+
+    }
+
+    return false;
+}

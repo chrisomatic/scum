@@ -767,7 +767,8 @@ void level_get_center_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* ti
             int _y = (ROOM_TILE_SIZE_Y-1)/2;
             _y += ((y % 2 == 0) ? -1 : 1) * y/2;
 
-            if(level_get_tile_type(room, _x, _y) == TILE_FLOOR)
+            // TODO: item_is_on_tile and creature_is_on_tile only do simple collision checks
+            if(IS_SAFE_TILE(level_get_tile_type(room, _x, _y)) && !item_is_on_tile(room, _x, _y) && !creature_is_on_tile(room, _x, _y))
             {
                 if(tile_coords)
                 {
@@ -779,7 +780,7 @@ void level_get_center_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* ti
                     Rect rp = level_get_tile_rect(_x, _y);
                     tile_pos->x = rp.x;
                     tile_pos->y = rp.y;
-                    // printf("setting tile_pos: %.2f, %.2f\n", tile_pos->x, tile_pos->y);
+                    // printf("setting tile_pos: %.2f, %.2f (%d, %d)\n", tile_pos->x, tile_pos->y, _x, _y);
                 }
                 return;
             }

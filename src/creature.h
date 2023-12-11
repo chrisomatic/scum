@@ -89,9 +89,9 @@ void creature_lerp(Creature* c, float dt);
 void creature_update_all(float dt);
 void creature_draw(Creature* c);
 void creature_handle_collision(Creature* c, Entity* e);
-
 void creature_hurt(Creature* c, float damage);
 void creature_die(Creature* c);
 uint16_t creature_get_count();
 uint16_t creature_get_room_count(uint8_t room_index);
+bool creature_is_on_tile(Room* room, int tile_x, int tile_y);
 
