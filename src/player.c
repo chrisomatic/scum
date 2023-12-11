@@ -1664,13 +1664,18 @@ void draw_skill_selection()
 {
     if(player->new_levels == 0) return;
 
-    float scale = 0.32 * ascale;
+    float scale = 0.30 * ascale;
+    float small_scale = 0.18 * ascale;
     Vector2f size = gfx_string_get_size(scale, "|");
 
     float pad = 5.0 * ascale;
 
-    float w = 200;
-    float h = 100;
+    Rect* vr = &gfx_images[card_image].visible_rects[0];
+
+    float w = 220;
+    // float h = 100;
+    float image_scale = w / vr->w;
+    float h = vr->h * image_scale;
 
     int max_per_row = 4;
     int num_rows = num_skill_choices / max_per_row;
@@ -1690,13 +1695,12 @@ void draw_skill_selection()
 
         if(i == 0)
         {
-            gfx_draw_string(x, y-size.y-8*pad, COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "Level Up! (Choose a Skill)");
+            gfx_draw_string(x, y-size.y-2*pad, COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "Level Up! (Choose a Skill)");
         }
 
         for(int j = 0; j < num_skills_row; ++j)
         {
             Skill* skill = &skill_list[skill_choices[idx]];
-
 
             uint32_t color;
             switch(skill->rarity)
@@ -1709,20 +1713,18 @@ void draw_skill_selection()
             }
 
             bool selected = (idx == skill_selection);
-            gfx_draw_image_ignore_light(card_image,0,x + w/2.0, y+h/2.0, gfx_blend_colors(color, selected ? COLOR_BLUE : COLOR_TINT_NONE, 0.5), 1.0, 0.0, 0.95, true, NOT_IN_WORLD);
-            //gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_GRAY, 1.0, 0.0, 0.5,true,false);
+            gfx_draw_image_ignore_light(card_image, 0, x+w/2.0, y+h/2.0, gfx_blend_colors(color, selected ? COLOR_BLUE : COLOR_TINT_NONE, 0.5), image_scale, 0.0, 0.95, true, NOT_IN_WORLD);
 
-            if(skill->rarity > SKILL_RARITY_COMMON)
-            {
-                // draw star
-                gfx_draw_image(items_image,20+skill->rarity,x+w-5, y+5, COLOR_TINT_NONE, 1.0, 0.0, 1.0, true, NOT_IN_WORLD);
-            }
+            // if(skill->rarity > SKILL_RARITY_COMMON)
+            // {
+            //     // draw star
+            //     gfx_draw_image(items_image,20+skill->rarity,x+w-5, y+5, COLOR_TINT_NONE, 1.0, 0.0, 1.0, true, NOT_IN_WORLD);
+            // }
 
-            // gfx_draw_string(x+1, y, selected ? COLOR_YELLOW : COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill->name);
-            // gfx_draw_string(x+1, y+size.y+2*pad, COLOR_GRAY, 0.20*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, "%s", skill->desc);
+            float xadj = 5;
 
-            gfx_draw_string(x+1, y, selected ? COLOR_YELLOW : COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, w-1, "%s", skill->name);
-            gfx_draw_string(x+1, y+size.y+2*pad, COLOR_GRAY, 0.20*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, w-1, "%s", skill->desc);
+            gfx_draw_string(x+xadj, y, selected ? COLOR_YELLOW : COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, w-xadj, "%s", skill->name);
+            gfx_draw_string(x+xadj, y+size.y+2*pad, COLOR_GRAY, small_scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, w-xadj, "%s", skill->desc);
 
             x += w + pad;
             idx++;

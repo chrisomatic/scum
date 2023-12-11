@@ -230,9 +230,7 @@ void creature_kill_all()
 {
     for(int i = clist->count-1; i >= 0; --i)
     {
-        printf("killing creature %d\n", i);
         creature_die(&creatures[i]);
-        printf("removing %d\n", i);
         list_remove(clist, i);
     }
 }
@@ -678,6 +676,21 @@ uint16_t creature_get_room_count(uint8_t room_index)
             count++;
     }
     return count;
+}
+
+bool creature_is_on_tile(Room* room, int tile_x, int tile_y)
+{
+    for(int i = clist->count-1; i >= 0; --i)
+    {
+        Creature* c = &creatures[i];
+        if(c->curr_room != room->index)
+            continue;
+
+        // simple check
+        if(c->curr_tile.x == tile_x && c->curr_tile.y == tile_y)
+            return true;
+    }
+    return false;
 }
 
 static Player* get_nearest_player(float x, float y)

@@ -117,7 +117,7 @@ typedef struct
     uint32_t color;
     Wall walls[MAX_WALLS_PER_ROOM];
     int wall_count;
-    int layout;
+    int layout; // rfd room_list index
     uint8_t index;
     bool discovered;
     int xp;
