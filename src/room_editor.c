@@ -151,7 +151,7 @@ void room_editor_start()
 
     // load room files
     // room_file_get_all();
-    room_file_load_all(false);
+    room_file_load_all(true);
 }
 
 static RoomFileData loaded_rfd = {0};

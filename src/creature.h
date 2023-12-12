@@ -17,7 +17,8 @@ typedef enum
     CREATURE_TYPE_GEIZER,
     CREATURE_TYPE_FLOATER,
     CREATURE_TYPE_BUZZER,
-    CREATURE_TYPE_TOTEM,
+    CREATURE_TYPE_TOTEM_RED,
+    CREATURE_TYPE_TOTEM_BLUE,
     CREATURE_TYPE_SHAMBLER,
     CREATURE_TYPE_MAX,
 } CreatureType;
@@ -58,7 +59,9 @@ typedef struct
     float ai_counter_max;
     int ai_state;
     int ai_value;
+
     bool windup;
+    float windup_max;
 
     Vector2i curr_tile;
     Vector2i target_tile;

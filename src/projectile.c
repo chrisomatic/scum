@@ -82,6 +82,26 @@ ProjectileDef projectile_lookup[] = {
         .penetrate = false,
         .poison_chance = 1.0,
         .cold_chance = 0.0,
+    },
+    {
+        // creature totem blue
+        .color = 0x003030FF,
+        .damage = 1.0,
+        .range = 32*6,
+        .base_speed = 200.0,
+        .angle_spread = 0.0,
+        .gravity_factor = 0.5,
+        .scale = 1.0,
+        .num = 1,
+        .charge = false,
+        .charge_rate = 16,
+        .ghost = false,
+        .explosive = false,
+        .homing = false,
+        .bouncy = false,
+        .penetrate = false,
+        .poison_chance = 0.0,
+        .cold_chance = 1.0,
     }
 };
 

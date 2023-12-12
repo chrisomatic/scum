@@ -19,7 +19,8 @@ static int creature_image_clinger;
 static int creature_image_geizer;
 static int creature_image_floater;
 static int creature_image_buzzer;
-static int creature_image_totem;
+static int creature_image_totem_red;
+static int creature_image_totem_blue;
 static int creature_image_shambler;
 
 static void creature_update_slug(Creature* c, float dt);
@@ -27,7 +28,8 @@ static void creature_update_clinger(Creature* c, float dt);
 static void creature_update_geizer(Creature* c, float dt);
 static void creature_update_floater(Creature* c, float dt);
 static void creature_update_buzzer(Creature* c, float dt);
-static void creature_update_totem(Creature* c, float dt);
+static void creature_update_totem_red(Creature* c, float dt);
+static void creature_update_totem_blue(Creature* c, float dt);
 static void creature_update_shambler(Creature* c, float dt);
 
 static uint16_t id_counter = 0;
@@ -49,7 +51,8 @@ void creature_init()
     creature_image_geizer = gfx_load_image("src/img/creature_geizer.png", false, false, 32, 64);
     creature_image_floater = gfx_load_image("src/img/creature_floater.png", false, false, 16, 16);
     creature_image_buzzer  = gfx_load_image("src/img/creature_buzzer.png", false, false, 32, 32);
-    creature_image_totem  = gfx_load_image("src/img/creature_totem.png", false, false, 32, 64);
+    creature_image_totem_red  = gfx_load_image("src/img/creature_totem_red.png", false, false, 32, 64);
+    creature_image_totem_blue  = gfx_load_image("src/img/creature_totem_blue.png", false, false, 32, 64);
     creature_image_shambler = gfx_load_image("src/img/creature_shambler.png", false, false, 32, 64);
 }
 
@@ -67,8 +70,10 @@ const char* creature_type_name(CreatureType type)
             return "Floater";
         case CREATURE_TYPE_BUZZER:
             return "Buzzer";
-        case CREATURE_TYPE_TOTEM:
-            return "Totem";
+        case CREATURE_TYPE_TOTEM_RED:
+            return "Totem Red";
+        case CREATURE_TYPE_TOTEM_BLUE:
+            return "Totem Blue";
         case CREATURE_TYPE_SHAMBLER:
             return "Shambler";
         default:
@@ -90,8 +95,10 @@ int creature_get_image(CreatureType type)
             return creature_image_floater;
         case CREATURE_TYPE_BUZZER:
             return creature_image_buzzer;
-        case CREATURE_TYPE_TOTEM:
-            return creature_image_totem;
+        case CREATURE_TYPE_TOTEM_RED:
+            return creature_image_totem_red;
+        case CREATURE_TYPE_TOTEM_BLUE:
+            return creature_image_totem_blue;
         case CREATURE_TYPE_SHAMBLER:
             return creature_image_shambler;
         default:
@@ -129,6 +136,7 @@ void creature_init_props(Creature* c)
             c->phys.hp_max = 5.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_CLINGER;
             c->painful_touch = false;
+            c->windup_max = 0.5;
             c->xp = 25;
         } break;
         case CREATURE_TYPE_GEIZER:
@@ -141,6 +149,7 @@ void creature_init_props(Creature* c)
             c->phys.hp_max = 10.0;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = false;
+            c->windup_max = 0.5;
             c->xp = 35;
         } break;
         case CREATURE_TYPE_FLOATER:
@@ -167,9 +176,10 @@ void creature_init_props(Creature* c)
             c->phys.floating = true;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = true;
+            c->windup_max = 0.5;
             c->xp = 40;
         } break;
-        case CREATURE_TYPE_TOTEM:
+        case CREATURE_TYPE_TOTEM_RED:
         {
             c->phys.speed = 0.0;
             c->act_time_min = 2.00;
@@ -181,6 +191,22 @@ void creature_init_props(Creature* c)
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = false;
             c->invincible = true;
+            c->windup_max = 0.5;
+            c->xp = 20;
+        } break;
+        case CREATURE_TYPE_TOTEM_BLUE:
+        {
+            c->phys.speed = 0.0;
+            c->act_time_min = 4.00;
+            c->act_time_max = 6.00;
+            c->phys.mass = 1000.0;
+            c->phys.base_friction = 50.0;
+            c->phys.hp_max = 128;
+            c->phys.floating = false;
+            c->proj_type = PROJECTILE_TYPE_CREATURE_TOTEM_BLUE;
+            c->painful_touch = false;
+            c->invincible = true;
+            c->windup_max = 0.5;
             c->xp = 20;
         } break;
         case CREATURE_TYPE_SHAMBLER:
@@ -194,6 +220,7 @@ void creature_init_props(Creature* c)
             c->phys.floating = true;
             c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = true;
+            c->windup_max = 0.5;
             c->xp = 300;
         } break;
     }
@@ -431,7 +458,13 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
                 else     add_to_random_tile(&c, room);
                 c.sprite_index = 0;
             } break;
-            case CREATURE_TYPE_TOTEM:
+            case CREATURE_TYPE_TOTEM_RED:
+            {
+                if(tile) add_to_tile(&c, tile->x, tile->y);
+                else     add_to_random_tile(&c, room);
+                c.sprite_index = 0;
+            } break;
+            case CREATURE_TYPE_TOTEM_BLUE:
             {
                 if(tile) add_to_tile(&c, tile->x, tile->y);
                 else     add_to_random_tile(&c, room);
@@ -470,6 +503,8 @@ void creature_update(Creature* c, float dt)
     if(!is_any_player_room(c->curr_room))
         return;
 
+    phys_add_circular_time(&c->phys, dt);
+
     c->curr_tile = level_get_room_coords_by_pos(CPOSX(c->phys), CPOSY(c->phys));
 
     switch(c->type)
@@ -489,14 +524,16 @@ void creature_update(Creature* c, float dt)
         case CREATURE_TYPE_BUZZER:
             creature_update_buzzer(c,dt);
             break;
-        case CREATURE_TYPE_TOTEM:
-            creature_update_totem(c,dt);
+        case CREATURE_TYPE_TOTEM_RED:
+            creature_update_totem_red(c,dt);
+            break;
+        case CREATURE_TYPE_TOTEM_BLUE:
+            creature_update_totem_blue(c,dt);
             break;
         case CREATURE_TYPE_SHAMBLER:
             creature_update_shambler(c,dt);
             break;
     }
-
 
     float speed = c->phys.speed*c->phys.speed_factor;
 
@@ -520,7 +557,10 @@ void creature_update(Creature* c, float dt)
         c->phys.vel.y *= speed;
     }
 
-    c->color = c->damaged ? COLOR_RED : gfx_blend_colors(COLOR_BLUE, c->base_color, c->phys.speed_factor);
+    // determine color
+    c->color = gfx_blend_colors(COLOR_BLUE, c->base_color, c->phys.speed_factor); // cold effect
+    c->color = c->windup && ((int)(c->phys.circular_dt * 100) % 2 == 0)? gfx_blend_colors(COLOR_YELLOW,c->color, 0.1) : c->color; // windup indication
+    c->color = c->damaged ? COLOR_RED : c->color; // damaged indication
 
     if(c->damaged)
     {
@@ -861,8 +901,6 @@ static void creature_update_geizer(Creature* c, float dt)
 
 static void creature_update_floater(Creature* c, float dt)
 {
-    phys_add_circular_time(&c->phys, dt);
-
     bool act = ai_update_action(c, dt);
 
     c->phys.pos.z = c->phys.height/2.0 + 10.0 + 3*sinf(5*c->phys.circular_dt);
@@ -878,8 +916,6 @@ static void creature_update_floater(Creature* c, float dt)
 
 static void creature_update_buzzer(Creature* c, float dt)
 {
-    phys_add_circular_time(&c->phys, dt);
-
     c->phys.pos.z = c->phys.height/2.0 + 10.0 + 3*sinf(5*c->phys.circular_dt);
 
     if(c->ai_state == 0)
@@ -929,7 +965,7 @@ static void creature_update_buzzer(Creature* c, float dt)
 
 }
 
-static void creature_update_totem(Creature* c, float dt)
+static void creature_update_totem_red(Creature* c, float dt)
 {
     int creature_count = 0;
     for(int i = 0; i < clist->count; ++i)
@@ -937,7 +973,7 @@ static void creature_update_totem(Creature* c, float dt)
         if(creatures[i].curr_room == c->curr_room)
         {
             // same room
-            if(creatures[i].type != CREATURE_TYPE_TOTEM)
+            if(creatures[i].type != CREATURE_TYPE_TOTEM_RED)
             {
                 creature_count++;
             }
@@ -970,28 +1006,112 @@ static void creature_update_totem(Creature* c, float dt)
 
         c->ai_counter += dt;
 
-        if(c->ai_counter >= c->ai_counter_max)
+        if(c->windup)
         {
-            c->ai_counter = 0.0;
-
-            // fire shots
-            Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
-            float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
-            projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
-
-            c->ai_value++;
-            if(c->ai_value >= 3)
+            if(c->ai_counter >= c->windup_max)
             {
-                c->ai_state = 0;
+                c->ai_counter = 0.0;
+                c->windup = false;
+            }
+        }
+        else
+        {
+            if(c->ai_counter >= c->ai_counter_max)
+            {
+                c->ai_counter = 0.0;
+
+                // fire shots
+                Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+                float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
+                projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
+
+                c->ai_value++;
+                if(c->ai_value >= 3)
+                {
+                    c->ai_state = 0;
+                }
             }
         }
     }
 
 }
 
+static void creature_update_totem_blue(Creature* c, float dt)
+{
+    int creature_count = 0;
+    for(int i = 0; i < clist->count; ++i)
+    {
+        if(creatures[i].curr_room == c->curr_room)
+        {
+            // same room
+            if(!creatures[i].invincible)
+            {
+                creature_count++;
+            }
+        }
+            
+    }
+
+    if(creature_count == 0)
+    {
+        // deactivate totem
+        creature_die(c);
+    }
+
+    if(c->ai_state == 0)
+    {
+        bool act = ai_update_action(c, dt);
+
+        if(act)
+        {
+            c->ai_counter = 0.0;
+            c->ai_state = 1;
+            c->ai_value = 0;
+            c->windup = true;
+        }
+    }
+    else if(c->ai_state == 1)
+    {
+        if(c->ai_counter == 0.0)
+            c->ai_counter_max = 0.3;
+
+        c->ai_counter += dt;
+
+        if(c->windup)
+        {
+            if(c->ai_counter >= c->windup_max)
+            {
+                c->ai_counter = 0.0;
+                c->windup = false;
+            }
+        }
+        else
+        {
+            if(c->ai_counter >= c->ai_counter_max)
+            {
+                c->ai_counter = 0.0;
+
+                // fire shots
+                Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+                float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
+
+                projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
+                projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle-30, 1.0, 1.0,false);
+                projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle-60, 1.0, 1.0,false);
+                projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle+30, 1.0, 1.0,false);
+                projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle+60, 1.0, 1.0,false);
+
+                c->ai_value++;
+                c->ai_state = 0;
+            }
+        }
+
+    }
+
+}
+
 static void creature_update_shambler(Creature* c, float dt)
 {
-    phys_add_circular_time(&c->phys, dt);
     c->phys.pos.z = 10.0 + 3*sinf(5*c->phys.circular_dt);
 
     bool low_health = (c->phys.hp < 0.30*c->phys.hp_max);
