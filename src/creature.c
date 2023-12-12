@@ -1033,7 +1033,6 @@ static void creature_update_totem_red(Creature* c, float dt)
             }
         }
     }
-
 }
 
 static void creature_update_totem_blue(Creature* c, float dt)
