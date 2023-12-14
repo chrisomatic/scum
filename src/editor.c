@@ -333,41 +333,34 @@ void editor_draw()
 
 
                 ProjectileDef* projd = &projectile_lookup[proj_sel];
+                ProjectileSpawn* projs = &projectile_spawn[proj_sel];
 
                 if(proj_sel == PROJECTILE_TYPE_PLAYER)
                 {
                     projd = &player->proj_def;
+                    projs = &player->proj_spawn;
                 }
 
                 imgui_slider_float("Damage", 0.0,100.0,&projd->damage);
-                imgui_slider_float("Range", 0.0,1000.0,&projd->range);
-                imgui_slider_float("Base Speed", 100.0,1000.0,&projd->base_speed);
+                imgui_slider_float("Base Speed", 100.0,1000.0,&projd->speed);
                 imgui_slider_float("Acceleration", -50.0,50.0,&projd->accel);
-                imgui_slider_float("Gravity Factor", -1.0,1.0,&projd->gravity_factor);
-                imgui_slider_float("Angle Spread", 0.0, 360.0,&projd->angle_spread);
+                imgui_slider_float("TTL", 0.0,60.0,&projd->ttl);
                 imgui_slider_float("Scale", 0.1, 5.0,&projd->scale);
+                imgui_slider_float("Angle Spread", 0.0, 360.0,&projs->spread);
 
-                int num = projd->num;
+                int num = projs->num;
                 imgui_number_box("Num", 1,100, &num);
-                projd->num = num;
-
-                // imgui_toggle_button(&projd->charge, "Charge");
-                // int charge_rate = projectile_lookup[0].charge_rate;
-                // imgui_number_box("Charge Rate", 1, 100, &charge_rate);
-                // projd->charge_rate = charge_rate;
+                projs->num = num;
 
                 imgui_text_sized(20.0,"Attributes:");
                 imgui_horizontal_line(1);
-                imgui_checkbox("Ghost", &projd->ghost);
                 imgui_checkbox("Explosive", &projd->explosive);
-                imgui_checkbox("Homing", &projd->homing);
                 imgui_checkbox("Bouncy", &projd->bouncy);
                 imgui_checkbox("Penetrate", &projd->penetrate);
-                imgui_slider_float("Homing Chance", 0.0, 1.0, &projd->homing_chance);
-                imgui_slider_float("Ghost Chance", 0.0, 1.0, &projd->ghost_chance);
-                imgui_slider_float("Cold Chance", 0.0, 1.0, &projd->cold_chance);
-                imgui_slider_float("Poison Chance", 0.0, 1.0,&projd->poison_chance);
-
+                imgui_slider_float("Homing Chance", 0.0, 1.0, &projs->homing_chance);
+                imgui_slider_float("Ghost Chance", 0.0, 1.0, &projs->ghost_chance);
+                imgui_slider_float("Cold Chance", 0.0, 1.0, &projs->cold_chance);
+                imgui_slider_float("Poison Chance", 0.0, 1.0,&projs->poison_chance);
             } break;
 
             case 5: // particle editor

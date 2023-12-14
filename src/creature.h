@@ -30,7 +30,7 @@ typedef struct
     CreatureType type;
     Physics phys;
 
-    ProjectileType proj_type;
+    ProjectileType proj_type; // TODO: remove proj_type
 
     int image;
 
@@ -83,6 +83,7 @@ extern Creature creatures[MAX_CREATURES];
 void creature_init();
 const char* creature_type_name(CreatureType type);
 int creature_get_image(CreatureType type);
+ProjectileType creature_get_projectile_type(Creature* c);
 void creature_init_props(Creature* c);
 void creature_clear_all();
 void creature_clear_room(uint8_t room_index);

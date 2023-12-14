@@ -1808,78 +1808,78 @@ static void unpack_creatures(Packet* pkt, int* offset)
 
 static void pack_projectiles(Packet* pkt, ClientInfo* cli)
 {
-    int index = pkt->data_len;
-    pkt->data_len += 2;
+    // int index = pkt->data_len;
+    // pkt->data_len += 2;
 
-    uint16_t num_projectiles = (uint16_t)plist->count;
-    uint16_t num_visible_projectiles = 0;
+    // uint16_t num_projectiles = (uint16_t)plist->count;
+    // uint16_t num_visible_projectiles = 0;
 
-    for(int i = 0; i < num_projectiles; ++i)
-    {
-        Projectile* p = &projectiles[i];
+    // for(int i = 0; i < num_projectiles; ++i)
+    // {
+    //     Projectile* p = &projectiles[i];
 
-        if(!is_any_player_room(p->curr_room))
-            continue;
+    //     if(!is_any_player_room(p->curr_room))
+    //         continue;
 
-        pack_u16(pkt,p->id);
-        pack_vec2(pkt,vec2(p->phys.pos.x, p->phys.pos.y));
-        pack_u8(pkt,p->player_id);
-        pack_u8(pkt,p->curr_room);
-        pack_float(pkt,p->scale);
-        pack_bool(pkt, p->from_player);
-        num_visible_projectiles++;
-    }
+    //     pack_u16(pkt,p->id);
+    //     pack_vec2(pkt,vec2(p->phys.pos.x, p->phys.pos.y));
+    //     pack_u8(pkt,p->player_id);
+    //     pack_u8(pkt,p->curr_room);
+    //     pack_float(pkt,p->scale);
+    //     pack_bool(pkt, p->from_player);
+    //     num_visible_projectiles++;
+    // }
 
-    pack_u16_at(pkt, num_visible_projectiles, index);
+    // pack_u16_at(pkt, num_visible_projectiles, index);
 }
 
 static void unpack_projectiles(Packet* pkt, int* offset)
 {
-    memcpy(prior_projectiles, projectiles, sizeof(Projectile)*MAX_PROJECTILES);
+    // memcpy(prior_projectiles, projectiles, sizeof(Projectile)*MAX_PROJECTILES);
 
-    // load projectiles
-    uint16_t num_projectiles = unpack_u16(pkt, offset);
+    // // load projectiles
+    // uint16_t num_projectiles = unpack_u16(pkt, offset);
 
-    list_clear(plist);
-    plist->count = num_projectiles;
+    // list_clear(plist);
+    // plist->count = num_projectiles;
 
-    for(int i = 0; i < num_projectiles; ++i)
-    {
-        Projectile* p = &projectiles[i];
+    // for(int i = 0; i < num_projectiles; ++i)
+    // {
+    //     Projectile* p = &projectiles[i];
 
-        uint16_t id = unpack_u16(pkt, offset);
-        Vector2f pos = unpack_vec2(pkt, offset);
-        uint8_t player_id = unpack_u8(pkt, offset);
-        uint8_t room_id = unpack_u8(pkt, offset);
-        float scale = unpack_float(pkt, offset);
-        uint8_t from_player = unpack_u8(pkt, offset);
+    //     uint16_t id = unpack_u16(pkt, offset);
+    //     Vector2f pos = unpack_vec2(pkt, offset);
+    //     uint8_t player_id = unpack_u8(pkt, offset);
+    //     uint8_t room_id = unpack_u8(pkt, offset);
+    //     float scale = unpack_float(pkt, offset);
+    //     uint8_t from_player = unpack_u8(pkt, offset);
 
-        p->id = id;
-        p->curr_room = room_id;
-        p->scale = scale;
-        p->from_player = from_player == 0x01 ? true : false;
-        p->lerp_t = 0.0;
+    //     p->id = id;
+    //     p->curr_room = room_id;
+    //     p->scale = scale;
+    //     p->from_player = from_player == 0x01 ? true : false;
+    //     p->lerp_t = 0.0;
 
-        p->server_state_prior.pos.x = pos.x;
-        p->server_state_prior.pos.y = pos.y;
+    //     p->server_state_prior.pos.x = pos.x;
+    //     p->server_state_prior.pos.y = pos.y;
 
-        //find the prior
-        for(int j = i; j < MAX_PROJECTILES; ++j)
-        {
-            Projectile* pj = &prior_projectiles[j];
-            if(pj->id == p->id)
-            {
-                p->server_state_prior.pos.x = pj->phys.pos.x;
-                p->server_state_prior.pos.y = pj->phys.pos.y;
-                break;
-            }
-        }
+    //     //find the prior
+    //     for(int j = i; j < MAX_PROJECTILES; ++j)
+    //     {
+    //         Projectile* pj = &prior_projectiles[j];
+    //         if(pj->id == p->id)
+    //         {
+    //             p->server_state_prior.pos.x = pj->phys.pos.x;
+    //             p->server_state_prior.pos.y = pj->phys.pos.y;
+    //             break;
+    //         }
+    //     }
 
-        p->server_state_target.pos.x = pos.x;
-        p->server_state_target.pos.y = pos.y;
+    //     p->server_state_target.pos.x = pos.x;
+    //     p->server_state_target.pos.y = pos.y;
 
-        p->player_id = player_id;
-    }
+    //     p->player_id = player_id;
+    // }
 }
 
 static void pack_decals(Packet* pkt, ClientInfo* cli)

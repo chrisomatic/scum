@@ -21,88 +21,134 @@ glist* plist = NULL;
 static int projectile_image;
 static uint16_t id_counter = 0;
 
+
+// .color = 0x003030FF,
+
 ProjectileDef projectile_lookup[] = {
     {
         // player
-        .color = 0x0050A0FF,
         .damage = 1.0,
-        .range = 128,
-        .base_speed = 215.0,
-        //.accel = -8.0,
-        .gravity_factor = 0.5,
-        .angle_spread = 45.0,
+        .speed = 215.0,
+        .accel = 0.0,
         .scale = 1.0,
-        .num = 1,
-        .charge = false,
-        .charge_rate = 16,
-        .ghost = false,
+        .ttl = 3.0,
         .explosive = false,
-        .homing = false,
         .bouncy = false,
         .penetrate = false,
-        .poison_chance = 0.0,
-        .cold_chance = 0.0,
     },
     {
-        // creature
-        .color = 0x00FF5050,
+        // player - kinetic discharge skill
+        .damage = 0.25,
+        .speed = 200.0,
+        .accel = 0.0,
+        .scale = 0.5,
+        .ttl = 3.0,
+        .explosive = false,
+        .bouncy = false,
+        .penetrate = false,
+    },
+    {
+        // creature generic
         .damage = 1.0,
-        .range = 32*6,
-        .base_speed = 200.0,
-        .angle_spread = 0.0,
-        .gravity_factor = 0.5,
-        .scale = 1.0,
-        .num = 1,
-        .charge = false,
-        .charge_rate = 16,
-        .ghost = false,
+        .speed = 200.0,
+        .accel = 0.0,
+        .scale = 0.8,
+        .ttl = 3.0,
+        .explosive = false,
+        .bouncy = false,
+        .penetrate = false,
+    },
+    {
+        // geizer
+        .damage = 1.0,
+        .speed = 200.0,
+        .accel = 0.0,
+        .scale = 0.8,
+        .ttl = 3.0,
         .explosive = true,
-        .homing = false,
         .bouncy = false,
         .penetrate = false,
+    },
+    {
+        // clinger
+        .damage = 1.0,
+        .speed = 200.0,
+        .accel = 0.0,
+        .scale = 0.8,
+        .ttl = 3.0,
+        .explosive = false,
+        .bouncy = false,
+        .penetrate = false,
+    },
+    {
+        // totem blue
+        .damage = 1.0,
+        .speed = 200.0,
+        .accel = 0.0,
+        .scale = 0.8,
+        .ttl = 3.0,
+        .explosive = false,
+        .bouncy = false,
+        .penetrate = false,
+    },
+};
+
+ProjectileSpawn projectile_spawn[] = {
+    {
+        // player
+        .num = 2,
+        .spread = 30.0,
+        .ghost_chance = 0.0,
+        .homing_chance = 0.0,
         .poison_chance = 0.0,
         .cold_chance = 0.0,
     },
     {
-        // creature clinger
-        .color = 0x00FF5050,
-        .damage = 1.0,
-        .range = 32*6,
-        .base_speed = 200.0,
-        .angle_spread = 0.0,
-        .gravity_factor = 0.5,
-        .scale = 1.0,
+        // player - kinetic discharge skill
         .num = 1,
-        .charge = false,
-        .charge_rate = 16,
-        .ghost = true,
-        .explosive = false,
-        .homing = false,
-        .bouncy = false,
-        .penetrate = false,
-        .poison_chance = 1.0,
+        .spread = 360.0,
+        .ghost_chance = 0.0,
+        .homing_chance = 0.0,
+        .poison_chance = 0.0,
         .cold_chance = 0.0,
     },
     {
-        // creature totem blue
-        .color = 0x003030FF,
-        .damage = 1.0,
-        .range = 32*6,
-        .base_speed = 200.0,
-        .angle_spread = 0.0,
-        .gravity_factor = 0.5,
-        .scale = 1.0,
+        // creature generic
         .num = 1,
-        .charge = false,
-        .charge_rate = 16,
-        .ghost = false,
-        .explosive = false,
-        .homing = false,
-        .bouncy = false,
-        .penetrate = false,
+        .spread = 0.0,
+        .spread = 0.0,
+        .ghost_chance = 0.0,
+        .homing_chance = 0.0,
+        .poison_chance = 0.0,
+        .cold_chance = 0.0,
+    },
+    {
+        // geizer
+        .num = 1,
+        .spread = 0.0,
+        .ghost_chance = 0.0,
+        .homing_chance = 0.0,
+        .poison_chance = 0.0,
+        .cold_chance = 0.0,
+    },
+    {
+        // clinger
+        .num = 1,
+        .spread = 0.0,
+        .ghost_chance = 0.0,
+        .homing_chance = 0.0,
+        .poison_chance = 0.0,
+        .cold_chance = 0.0,
+    },
+    {
+        // clinger
+        .num = 1,
+        .spread = 0.0,
+        .ghost_chance = 0.0,
+        .homing_chance = 0.0,
         .poison_chance = 0.0,
         .cold_chance = 1.0,
-    }
+    },
 };
 
 static void projectile_remove(int index)
@@ -129,15 +175,84 @@ void projectile_clear_all()
     list_clear(plist);
 }
 
+void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player)
+{
+    Projectile proj = {0};
+    proj.id = get_id();
+    proj.def = *def;
+    proj.color = color;
+    proj.phys.height = gfx_images[projectile_image].visible_rects[0].h * proj.def.scale;
+    proj.phys.width =  gfx_images[projectile_image].visible_rects[0].w * proj.def.scale;
+    proj.phys.pos.x = phys->pos.x;
+    proj.phys.pos.y = phys->pos.y;
+    proj.phys.pos.z = phys->height/2.0 + phys->pos.z;
+    proj.phys.mass = 1.0;
+    proj.phys.radius = (MAX(proj.phys.height, proj.phys.width) / 2.0) * proj.def.scale;
+    proj.phys.amorphous = proj.def.bouncy ? false : true;
+    proj.phys.elasticity = proj.def.bouncy ? 1.0 : 0.1;
+    proj.curr_room = curr_room;
+    proj.from_player = from_player;
+    proj.angle_deg = angle_deg;
+
+    float spread = spawn->spread/2.0;
+
+    for(int i = 0; i < spawn->num; ++i)
+    {
+        Projectile p = {0};
+        memcpy(&p, &proj, sizeof(Projectile));
+        p.id = get_id();
+
+        p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= spawn->ghost_chance;
+        p.poison = RAND_FLOAT(0.0,1.0) <= spawn->poison_chance;
+        p.cold = RAND_FLOAT(0.0,1.0) <= spawn->cold_chance;
+        bool homing = RAND_FLOAT(0.0,1.0) <= spawn->homing_chance;
+
+        if(!FEQ0(spread) && i > 0)
+        {
+            p.angle_deg += RAND_FLOAT(-spread, spread);
+        }
+
+        float angle = RAD(p.angle_deg);
+        p.phys.vel.x = +(p.def.speed)*cosf(angle) + phys->vel.x;
+        p.phys.vel.y = -(p.def.speed)*sinf(angle) + phys->vel.y;
+        p.phys.vel.z = 80.0;
+
+        if(homing)
+        {
+            Physics* target = NULL;
+            if(p.from_player)
+                target = entity_get_closest_to(&p.phys, p.curr_room, ENTITY_TYPE_CREATURE);
+            else
+                target = entity_get_closest_to(&p.phys, p.curr_room, ENTITY_TYPE_PLAYER);
+
+            if(target)
+            {
+                float tx = target->pos.x;
+                float ty = target->pos.y;
+                Vector2f v = {tx - p.phys.pos.x, ty - p.phys.pos.y};
+                normalize(&v);
+                // float m = dist(p.phys.pos.x, p.phys.pos.y, tx, ty);
+                p.angle_deg = calc_angle_deg(p.phys.pos.x, p.phys.pos.y, tx, ty);
+                p.phys.vel.x = v.x * p.def.speed;
+                p.phys.vel.y = v.y * p.def.speed;
+            }
+        }
+
+        list_add(plist, (void*)&p);
+    }
+
+}
+
+#if 0
 void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, float angle_deg, float scale, float damage_multiplier, bool from_player)
 {
     Projectile proj = {0};
     proj.proj_def = projdef;
-    proj.damage = projdef->damage * damage_multiplier;
-    proj.scale = scale * projdef->scale;
+    proj.damage = projdef.damage * damage_multiplier;
+    proj.scale = scale * projdef.scale;
     proj.time = 0.0;
     proj.ttl  = 1.0;
-    proj.color = projdef->color;
+    proj.color = projdef.color;
     proj.phys.height = gfx_images[projectile_image].visible_rects[0].h*proj.scale;
     proj.phys.width = gfx_images[projectile_image].visible_rects[0].w*proj.scale;
     proj.phys.pos.x = phys->pos.x;
@@ -145,17 +260,17 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
     proj.phys.pos.z = phys->height/2.0 + phys->pos.z;
     proj.phys.mass = 1.0;
     proj.phys.radius = (MAX(proj.phys.height, proj.phys.width) / 2.0) * proj.scale;
-    proj.phys.amorphous = projdef->bouncy ? false : true;
-    proj.phys.elasticity = projdef->bouncy ? 1.0 : 0.1;
-    proj.homing = projdef->homing;
-    proj.phys.ethereal = projdef->ghost;
+    proj.phys.amorphous = projdef.bouncy ? false : true;
+    proj.phys.elasticity = projdef.bouncy ? 1.0 : 0.1;
+    proj.homing = projdef.homing;
+    proj.phys.ethereal = projdef.ghost;
 
     proj.curr_room = curr_room;
     proj.from_player = from_player;
 
-    float spread = projdef->angle_spread/2.0;
+    float spread = projdef.angle_spread/2.0;
 
-    for(int i = 0; i < projdef->num; ++i)
+    for(int i = 0; i < projdef.num; ++i)
     {
         Projectile p = {0};
         memcpy(&p, &proj, sizeof(Projectile));
@@ -163,19 +278,19 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
 
         if(!proj.homing)
         {
-            p.homing = RAND_FLOAT(0.0,1.0) <= projdef->homing_chance;
+            p.homing = RAND_FLOAT(0.0,1.0) <= projdef.homing_chance;
         }
 
         if(!proj.phys.ethereal)
         {
-            // printf("projdef->ghost_chance: %.2f\n", projdef->ghost_chance);
-            p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= projdef->ghost_chance;
+            // printf("projdef.ghost_chance: %.2f\n", projdef.ghost_chance);
+            p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= projdef.ghost_chance;
         }
 
         // printf("proj scale: %.2f\n", p.scale);
 
         // add spread
-        float speed = projdef->base_speed;
+        float speed = projdef.base_speed;
         float angle = angle_deg;
         if(!FEQ0(spread) && i > 0)
         {
@@ -212,18 +327,19 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, fl
         }
 
         float d = dist(0,0, p.phys.vel.x,p.phys.vel.y); // distance travelled per second
-        p.ttl = 3.0; //projdef->range / d;
+        p.ttl = 3.0; //projdef.range / d;
 
         list_add(plist, (void*)&p);
     }
 
 }
+#endif
 
-void projectile_add_type(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player)
-{
-    ProjectileDef* projdef = &projectile_lookup[proj_type];
-    projectile_add(phys, curr_room, projdef, angle_deg, scale, damage_multiplier, from_player);
-}
+// void projectile_add_type(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player)
+// {
+//     ProjectileDef* projdef = &projectile_lookup[proj_type];
+//     projectile_add(phys, curr_room, projdef, angle_deg, scale, damage_multiplier, from_player);
+// }
 
 void projectile_kill(Projectile* proj)
 {
@@ -242,13 +358,13 @@ void projectile_kill(Projectile* proj)
 
     particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &splash, 0.5, true, false);
 
-    if(proj->proj_def->explosive)
+    if(proj->def.explosive)
     {
-        explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->scale, 100.0*proj->scale, proj->curr_room, proj->from_player);
+        explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, proj->curr_room, proj->from_player);
     }
 }
 
-void projectile_update(float delta_t)
+void projectile_update(float dt)
 {
     // printf("projectile update\n");
 
@@ -259,25 +375,31 @@ void projectile_update(float delta_t)
         if(proj->phys.dead)
             continue;
 
-        if(proj->time >= proj->ttl)
+        if(proj->def.ttl <= 0)
         {
             projectile_kill(proj);
             continue;
         }
 
-        float _dt = RANGE(proj->ttl - proj->time, 0.0, delta_t);
+        // if(proj->time >= proj->ttl)
+        // {
+        //     projectile_kill(proj);
+        //     continue;
+        // }
+
+        float _dt = RANGE(proj->def.ttl, 0.0, dt);
         // printf("%3d %.4f\n", i, delta_t);
 
-        proj->time += _dt;
+        proj->def.ttl -= _dt;
 
-        if(proj->proj_def->accel != 0.0 && proj->accel_vector.x == 0.0 && proj->accel_vector.y == 0.0 && proj->accel_vector.z == 0.0)
+        if(proj->def.accel != 0.0 && proj->accel_vector.x == 0.0 && proj->accel_vector.y == 0.0 && proj->accel_vector.z == 0.0)
         {
             Vector3f f = {proj->phys.vel.x, proj->phys.vel.y, proj->phys.vel.z};
             normalize3f(&f);
 
-            f.x *= proj->proj_def->accel;
-            f.y *= proj->proj_def->accel;
-            f.z *= proj->proj_def->accel;
+            f.x *= proj->def.accel;
+            f.y *= proj->def.accel;
+            f.z *= proj->def.accel;
 
             proj->accel_vector.x = f.x;
             proj->accel_vector.y = f.y;
@@ -297,7 +419,7 @@ void projectile_update(float delta_t)
         proj->phys.pos.x += _dt*proj->phys.vel.x;
         proj->phys.pos.y += _dt*proj->phys.vel.y;
 
-        phys_apply_gravity(&proj->phys,proj->proj_def->gravity_factor, delta_t);
+        phys_apply_gravity(&proj->phys, 0.5, _dt);
 
         if(proj->phys.amorphous && proj->phys.pos.z <= 0.0)
         {
@@ -322,7 +444,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 {
     if(proj->phys.dead) return;
 
-    ProjectileDef* projdef = proj->proj_def;
+    ProjectileDef* projdef = &proj->def;
 
     uint8_t curr_room = 0;
     Physics* phys = NULL;
@@ -381,25 +503,26 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
                 projectile_kill(proj);
             }
             
-            if(projdef->cold_chance > 0.0)
+            if(proj->cold)
             {
-                if(RAND_FLOAT(0.0,1.0) <= projdef->cold_chance)
-                    status_effects_add_type(phys,STATUS_EFFECT_COLD);
+                status_effects_add_type(phys,STATUS_EFFECT_COLD);
+
+                // if(RAND_FLOAT(0.0,1.0) <= projdef.cold_chance)
+                //     status_effects_add_type(phys,STATUS_EFFECT_COLD);
             }
             
-            if(projdef->poison_chance > 0.0)
+            if(proj->poison > 0.0)
             {
-                if(RAND_FLOAT(0.0,1.0) <= projdef->poison_chance)
-                    status_effects_add_type(phys,STATUS_EFFECT_POISON);
+                status_effects_add_type(phys,STATUS_EFFECT_POISON);
             }
 
             switch(e->type)
             {
                 case ENTITY_TYPE_PLAYER:
-                    player_hurt((Player*)e->ptr, proj->damage);
+                    player_hurt((Player*)e->ptr, proj->def.damage);
                     break;
                 case ENTITY_TYPE_CREATURE:
-                    creature_hurt((Creature*)e->ptr, proj->damage);
+                    creature_hurt((Creature*)e->ptr, proj->def.damage);
                     break;
             }
         }
@@ -407,7 +530,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 
     if(hit && projdef->explosive)
     {
-        explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->scale, 100.0*proj->scale, proj->curr_room, proj->from_player);
+        explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, proj->curr_room, proj->from_player);
     }
 }
 
@@ -419,7 +542,7 @@ void projectile_draw(Projectile* proj)
     float opacity = proj->phys.ethereal ? 0.3 : 1.0;
 
     float y = proj->phys.pos.y - 0.5*proj->phys.pos.z;
-    gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, y, proj->color, false, proj->scale, 0.0, opacity, false, true, false);
+    gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, y, proj->color, false, proj->def.scale, 0.0, opacity, false, true, false);
 }
 
 void projectile_lerp(Projectile* p, double dt)
@@ -441,8 +564,11 @@ const char* projectile_def_get_name(ProjectileType proj_type)
     switch(proj_type)
     {
         case PROJECTILE_TYPE_PLAYER: return "Player";
+        case PROJECTILE_TYPE_PLAYER_KINETIC_DISCHARGE: return "Kinetic Discharge";
         case PROJECTILE_TYPE_CREATURE_GENERIC: return "Creature";
+        case PROJECTILE_TYPE_CREATURE_GEIZER: return "Geizer";
         case PROJECTILE_TYPE_CREATURE_CLINGER: return "Clinger";
+        case PROJECTILE_TYPE_CREATURE_TOTEM_BLUE: return "Totem Blue";
         default: return "???";
     }
 }

@@ -76,8 +76,10 @@ typedef struct
     int num_skill_choices;
 
     ProjectileDef proj_def;
+    ProjectileSpawn proj_spawn;
+
     ProjectileDef proj_def_gauntlet;
-    ProjectileDef proj_discharge;
+    ProjectileSpawn proj_spawn_gauntlet;
 
     GFXAnimation anim;
 

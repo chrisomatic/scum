@@ -14,6 +14,8 @@ Creature prior_creatures[MAX_CREATURES] = {0};
 Creature creatures[MAX_CREATURES] = {0};
 glist* clist = NULL;
 
+#define PROJ_COLOR 0x00FF5050
+
 static int creature_image_slug;
 static int creature_image_clinger;
 static int creature_image_geizer;
@@ -106,6 +108,28 @@ int creature_get_image(CreatureType type)
     }
 }
 
+ProjectileType creature_get_projectile_type(Creature* c)
+{
+    ProjectileType pt = PROJECTILE_TYPE_CREATURE_GENERIC;
+    switch(c->type)
+    {
+        case CREATURE_TYPE_CLINGER:
+            pt = PROJECTILE_TYPE_CREATURE_CLINGER;
+            break;
+        case CREATURE_TYPE_GEIZER:
+            pt = PROJECTILE_TYPE_CREATURE_GEIZER;
+            break;
+        case CREATURE_TYPE_TOTEM_BLUE:
+            pt = PROJECTILE_TYPE_CREATURE_TOTEM_BLUE;
+            break;
+        case CREATURE_TYPE_TOTEM_RED:
+            break;
+        default:
+            break;
+    }
+    return pt;
+}
+
 void creature_init_props(Creature* c)
 {
     c->image = creature_get_image(c->type);
@@ -134,7 +158,6 @@ void creature_init_props(Creature* c)
             c->phys.mass = 1000.0;
             c->phys.base_friction = 0.0;
             c->phys.hp_max = 5.0;
-            c->proj_type = PROJECTILE_TYPE_CREATURE_CLINGER;
             c->painful_touch = false;
             c->windup_max = 0.5;
             c->xp = 25;
@@ -147,7 +170,6 @@ void creature_init_props(Creature* c)
             c->phys.mass = 1000.0; // so it doesn't slide when hit
             c->phys.base_friction = 50.0;
             c->phys.hp_max = 10.0;
-            c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = false;
             c->windup_max = 0.5;
             c->xp = 35;
@@ -161,7 +183,6 @@ void creature_init_props(Creature* c)
             c->phys.base_friction = 1.0;
             c->phys.hp_max = 3.0;
             c->phys.floating = true;
-            c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = true;
             c->xp = 10;
         } break;
@@ -174,7 +195,6 @@ void creature_init_props(Creature* c)
             c->phys.base_friction = 10.0;
             c->phys.hp_max = 10.0;
             c->phys.floating = true;
-            c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = true;
             c->windup_max = 0.5;
             c->xp = 40;
@@ -188,7 +208,6 @@ void creature_init_props(Creature* c)
             c->phys.base_friction = 50.0;
             c->phys.hp_max = 128;
             c->phys.floating = false;
-            c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = false;
             c->invincible = true;
             c->windup_max = 0.5;
@@ -218,7 +237,6 @@ void creature_init_props(Creature* c)
             c->phys.base_friction = 15.0;
             c->phys.hp_max = 100.0;
             c->phys.floating = true;
-            c->proj_type = PROJECTILE_TYPE_CREATURE_GENERIC;
             c->painful_touch = true;
             c->windup_max = 0.5;
             c->xp = 300;
@@ -230,11 +248,6 @@ void creature_init_props(Creature* c)
     c->phys.coffset.y = 0;
     c->damage = 1;
 }
-
-// Vector2f creature_get_collision(CreatureType type, float posx, float posy)
-// {
-
-// }
 
 void creature_clear_all()
 {
@@ -273,7 +286,6 @@ void creature_kill_room(uint8_t room_index)
         }
     }
 }
-
 
 static void add_to_random_wall_tile(Creature* c)
 {
@@ -792,17 +804,13 @@ static void creature_update_slug(Creature* c, float dt)
         }
 #endif
 }
-
-static void creature_fire_projectile_dir(Creature* c, Dir dir)
+static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
 {
-    if(dir == DIR_UP)
-        projectile_add_type(&c->phys, c->curr_room, c->proj_type,90.0, 1.0, 1.0,false);
-    else if(dir == DIR_RIGHT)
-        projectile_add_type(&c->phys, c->curr_room, c->proj_type,0.0, 1.0, 1.0,false);
-    else if(dir == DIR_DOWN)
-        projectile_add_type(&c->phys, c->curr_room, c->proj_type,270.0, 1.0, 1.0,false);
-    else if(dir == DIR_LEFT)
-        projectile_add_type(&c->phys, c->curr_room, c->proj_type,180.0, 1.0, 1.0,false);
+    ProjectileType pt = creature_get_projectile_type(c);
+    ProjectileDef def = projectile_lookup[pt];
+    ProjectileSpawn spawn = projectile_spawn[pt];
+
+    projectile_add(&c->phys, c->curr_room, &def, &spawn, color, angle, false);
 }
 
 static void creature_update_clinger(Creature* c, float dt)
@@ -856,9 +864,9 @@ static void creature_update_clinger(Creature* c, float dt)
         {
             // fire
             if(horiz)
-                creature_fire_projectile_dir(c, c->spawn_tile_y == -1 ? DIR_DOWN : DIR_UP);
+                creature_fire_projectile(c, dir_to_angle_deg(c->spawn_tile_y == -1 ? DIR_DOWN : DIR_UP), PROJ_COLOR);
             else
-                creature_fire_projectile_dir(c, c->spawn_tile_x == -1 ? DIR_RIGHT : DIR_LEFT);
+                creature_fire_projectile(c, dir_to_angle_deg(c->spawn_tile_x == -1 ? DIR_RIGHT : DIR_LEFT), PROJ_COLOR);
         }
     }
     else
@@ -894,7 +902,7 @@ static void creature_update_geizer(Creature* c, float dt)
         for(int i = 0; i < n_orbs; ++i)
         {
             int angle = rand() % 360;
-            projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
+            creature_fire_projectile(c, angle, PROJ_COLOR);
         }
     }
 }
@@ -952,8 +960,8 @@ static void creature_update_buzzer(Creature* c, float dt)
 
             // fire shots
             Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
-            float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
-            projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
+            float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y) + RAND_FLOAT(-10.0,10.0);
+            creature_fire_projectile(c, angle, PROJ_COLOR);
 
             c->ai_value++;
             if(c->ai_value >= 3)
@@ -1023,7 +1031,7 @@ static void creature_update_totem_red(Creature* c, float dt)
                 // fire shots
                 Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
-                projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
+                creature_fire_projectile(c, angle, PROJ_COLOR);
 
                 c->ai_value++;
                 if(c->ai_value >= 3)
@@ -1048,7 +1056,6 @@ static void creature_update_totem_blue(Creature* c, float dt)
                 creature_count++;
             }
         }
-            
     }
 
     if(creature_count == 0)
@@ -1094,11 +1101,12 @@ static void creature_update_totem_blue(Creature* c, float dt)
                 Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
 
-                projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
-                projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle-30, 1.0, 1.0,false);
-                projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle-60, 1.0, 1.0,false);
-                projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle+30, 1.0, 1.0,false);
-                projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle+60, 1.0, 1.0,false);
+                uint32_t color = 0x003030FF;
+                creature_fire_projectile(c, angle, color);
+                creature_fire_projectile(c, angle-30, color);
+                creature_fire_projectile(c, angle-60, color);
+                creature_fire_projectile(c, angle+30, color);
+                creature_fire_projectile(c, angle+60, color);
 
                 c->ai_value++;
                 c->ai_state = 0;
@@ -1133,7 +1141,7 @@ static void creature_update_shambler(Creature* c, float dt)
                 // fire 5 shots
                 Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
-                projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
+                creature_fire_projectile(c, angle, PROJ_COLOR);
 
                 c->ai_value++;
                 if(c->ai_value >= 5)
@@ -1145,11 +1153,10 @@ static void creature_update_shambler(Creature* c, float dt)
             {
                 // fire 4 orthogonal shots
                 float aoffset = c->ai_value*10.0;
-
-                projectile_add_type(&c->phys, c->curr_room, c->proj_type, 0.0 + aoffset, 1.0, 1.0,false);
-                projectile_add_type(&c->phys, c->curr_room, c->proj_type, 90.0 + aoffset, 1.0, 1.0,false);
-                projectile_add_type(&c->phys, c->curr_room, c->proj_type, 180.0 + aoffset, 1.0, 1.0,false);
-                projectile_add_type(&c->phys, c->curr_room, c->proj_type, 270.0 + aoffset, 1.0, 1.0,false);
+                creature_fire_projectile(c, 0.0 + aoffset, PROJ_COLOR);
+                creature_fire_projectile(c, 90.0 + aoffset, PROJ_COLOR);
+                creature_fire_projectile(c, 180.0 + aoffset, PROJ_COLOR);
+                creature_fire_projectile(c, 270.0 + aoffset, PROJ_COLOR);
 
                 c->ai_value++;
                 if(c->ai_value >= 18)
@@ -1190,7 +1197,7 @@ static void creature_update_shambler(Creature* c, float dt)
                 for(int i = 0; i < num_projectiles; ++i)
                 {
                     int angle = rand() % 360;
-                    projectile_add_type(&c->phys, c->curr_room, c->proj_type, angle, 1.0, 1.0,false);
+                    creature_fire_projectile(c, angle, PROJ_COLOR);
                 }
             }
             else if(choice == 1)

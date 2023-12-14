@@ -327,25 +327,34 @@ static void skills_kinetic_discharge(void* skill, void* player, float dt)
     {
         p->periodic_shot_counter = 0.0;
 
+        ProjectileDef def = projectile_lookup[PROJECTILE_TYPE_PLAYER_KINETIC_DISCHARGE];
+        ProjectileSpawn spawn = projectile_spawn[PROJECTILE_TYPE_PLAYER_KINETIC_DISCHARGE];
+
         // pick angle
         float angle_deg = rand() % 360;
 
-        memcpy(&p->proj_discharge,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
-        p->proj_discharge.scale = 0.5;
-        p->proj_discharge.color = COLOR_WHITE;
+        // memcpy(&p->proj_discharge,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
+        // p->proj_discharge.scale = 0.5;
+        // p->proj_discharge.color = COLOR_WHITE;
         
-        // discharge
-        if(s->rank == 1)
+        // // discharge
+        // if(s->rank == 1)
+        // {
+        //     projectile_add(&p->phys, p->curr_room, &p->proj_discharge, angle_deg, 1.0, 1.0, true);
+        // }
+
+        if(s->rank == 2)
         {
-            p->proj_discharge.damage *= 0.25;
-            projectile_add(&p->phys, p->curr_room, &p->proj_discharge, angle_deg, 1.0, 1.0, true);
+            def.damage *= 2.0;
+            def.speed *= 1.05;
+            def.scale += 0.10;
+            spawn.num += 1;
+
+            // projectile_add(&p->phys, p->curr_room, &p->proj_discharge, angle_deg, 1.0, 1.0, true);
+            // projectile_add(&p->phys, p->curr_room, &p->proj_discharge, angle_deg+90, 1.0, 1.0, true);
         }
-        else if(s->rank == 2)
-        {
-            p->proj_discharge.damage *= 0.50;
-            projectile_add(&p->phys, p->curr_room, &p->proj_discharge, angle_deg, 1.0, 1.0, true);
-            projectile_add(&p->phys, p->curr_room, &p->proj_discharge, angle_deg+90, 1.0, 1.0, true);
-        }
+        projectile_add(&p->phys, p->curr_room, &def, &spawn, COLOR_WHITE, angle_deg, true);
+
     }
 }
 
@@ -356,13 +365,13 @@ static void skills_phase_shift(void* skill, void* player, float dt)
 
     if(s->rank == 1)
     {
-        p->proj_def.ghost_chance += 0.10f;
+        p->proj_spawn.ghost_chance += 0.10f;
     }
     else if(s->rank == 2)
     {
-        p->proj_def.ghost_chance += 0.15f;
+        p->proj_spawn.ghost_chance += 0.15f;
     }
-    printf("p->proj_def.ghost_chance: %.2f\n", p->proj_def.ghost_chance);
+    printf("p->proj_spawn.ghost_chance: %.2f\n", p->proj_spawn.ghost_chance);
 }
 
 static void skills_sentience(void* skill, void* player, float dt)
@@ -372,11 +381,11 @@ static void skills_sentience(void* skill, void* player, float dt)
 
     if(s->rank == 1)
     {
-        p->proj_def.homing_chance += 0.10f;
+        p->proj_spawn.homing_chance += 0.10f;
     }
     else if(s->rank == 2)
     {
-        p->proj_def.homing_chance += 0.15f;
+        p->proj_spawn.homing_chance += 0.15f;
     }
 }
 
@@ -423,6 +432,6 @@ static void skills_multishot(void* skill, void* player, float dt)
     else if(s->rank == 3)
         n = 4;
 
-    p->proj_def.num += n;
-    p->proj_def.num = MIN(10, p->proj_def.num);
+    p->proj_spawn.num += n;
+    p->proj_spawn.num = MIN(10, p->proj_spawn.num);
 }

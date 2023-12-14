@@ -164,6 +164,7 @@ bool level_is_room_valid_index(Level* level, int index);
 bool level_is_room_discovered(Level* level, int x, int y);
 bool level_is_room_discovered_index(Level* level, int index);
 
+float dir_to_angle_deg(Dir dir);
 Vector2i get_dir_offsets(Dir door);
 void level_generate_room_outer_walls(Room* room);
 void generate_walls(Level* level);

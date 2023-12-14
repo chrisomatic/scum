@@ -89,6 +89,7 @@ void player_init()
         p->phys.floating = false;
 
         memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
+        memcpy(&p->proj_spawn,&projectile_spawn[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileSpawn));
 
         p->proj_cooldown_max = 0.40;
         p->door = DIR_NONE;
@@ -874,7 +875,8 @@ void player_update(Player* p, float dt)
     float speed = p->phys.speed;
     float maxv = p->phys.max_velocity;
     float pcooldown = p->proj_cooldown_max;
-    int pnum = p->proj_def.num;
+    int pnum = p->proj_spawn.num;
+    float pspread = p->proj_spawn.spread;
     float pdamage = p->proj_def.damage;
     int hp_max = p->phys.hp_max;
     if(boost_stats)
@@ -882,13 +884,15 @@ void player_update(Player* p, float dt)
         p->phys.speed += 300.0;
         p->phys.max_velocity += 90.0;
         p->proj_cooldown_max = 0.05;
-        p->proj_def.num += 4;
+        p->proj_spawn.num += 4;
+        p->proj_spawn.spread = 20.0;
         p->proj_def.damage += 9.0;
     }
 
     // apply gem effects
     p->proj_def_gauntlet = p->proj_def;
-    item_apply_gauntlet((void*)&p->proj_def_gauntlet, (Item*)p->gauntlet,p->gauntlet_slots);
+    p->proj_spawn_gauntlet = p->proj_spawn;
+    item_apply_gauntlet((void*)&p->proj_def_gauntlet, (void*)&p->proj_spawn_gauntlet, (Item*)p->gauntlet,p->gauntlet_slots);
 
     player_handle_skills(p,dt);
 
@@ -1218,7 +1222,7 @@ void player_update(Player* p, float dt)
 
             if(!p->phys.dead)
             {
-                projectile_add(&p->phys, p->curr_room, &p->proj_def_gauntlet, angle_deg, 1.0, 1.0, true);
+                projectile_add(&p->phys, p->curr_room, &p->proj_def_gauntlet, &p->proj_spawn_gauntlet, 0x0050A0FF, angle_deg, true);
             }
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;
@@ -1276,7 +1280,8 @@ void player_update(Player* p, float dt)
         p->phys.speed = speed;
         p->phys.max_velocity = maxv;
         p->proj_cooldown_max = pcooldown;
-        p->proj_def.num = pnum;
+        p->proj_spawn.num = pnum;
+        p->proj_spawn.spread = pspread;
         p->proj_def.damage = pdamage;
     }
 }
@@ -1428,7 +1433,8 @@ void draw_xp_bar()
     out_r.y = y + out_r.h/2.0;
     gfx_draw_rect(&out_r, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
 
-    gfx_draw_string(x + w + 5.0, y-1.0, COLOR_WHITE, 0.15*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "%d", player->level);
+    gfx_draw_string(x, y+h+1, COLOR_WHITE, 0.15*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "Level %d", player->level);
+    // gfx_draw_string(x + w + 5.0, y-1.0, COLOR_WHITE, 0.15*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "%d", player->level);
 }
 
 void draw_gauntlet()

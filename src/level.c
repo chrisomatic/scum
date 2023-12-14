@@ -1154,6 +1154,22 @@ bool level_is_room_discovered_index(Level* level, int index)
     return level_is_room_discovered(level, p.x, p.y);
 }
 
+float dir_to_angle_deg(Dir dir)
+{
+    switch(dir)
+    {
+        case DIR_UP:    return 90.0;
+        case DIR_DOWN:  return 270.0;
+        case DIR_LEFT:  return 180.0;
+        case DIR_RIGHT: return 0.0;
+        case DIR_UP_RIGHT:   return 45.0;
+        case DIR_DOWN_LEFT:  return 225.0;
+        case DIR_DOWN_RIGHT: return 315.0;
+        case DIR_UP_LEFT:    return 135.0;
+    }
+    return 0.0;
+}
+
 // grid x,y offsets
 Vector2i get_dir_offsets(Dir door)
 {
