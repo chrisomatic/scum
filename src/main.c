@@ -590,7 +590,7 @@ void game_generate_level(unsigned int _seed, int _rank)
                     if(room->doors[DIR_RIGHT])
                     {
                         LOGE("Door on the right!");
-                        got_got_bad_seedseed = true;
+                        got_bad_seed = true;
                         // window_set_close(1);
                     }
                 }
