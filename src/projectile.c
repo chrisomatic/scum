@@ -96,7 +96,7 @@ ProjectileDef projectile_lookup[] = {
 ProjectileSpawn projectile_spawn[] = {
     {
         // player
-        .num = 2,
+        .num = 1,
         .spread = 30.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
@@ -242,104 +242,6 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, Projec
     }
 
 }
-
-#if 0
-void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, float angle_deg, float scale, float damage_multiplier, bool from_player)
-{
-    Projectile proj = {0};
-    proj.proj_def = projdef;
-    proj.damage = projdef.damage * damage_multiplier;
-    proj.scale = scale * projdef.scale;
-    proj.time = 0.0;
-    proj.ttl  = 1.0;
-    proj.color = projdef.color;
-    proj.phys.height = gfx_images[projectile_image].visible_rects[0].h*proj.scale;
-    proj.phys.width = gfx_images[projectile_image].visible_rects[0].w*proj.scale;
-    proj.phys.pos.x = phys->pos.x;
-    proj.phys.pos.y = phys->pos.y;
-    proj.phys.pos.z = phys->height/2.0 + phys->pos.z;
-    proj.phys.mass = 1.0;
-    proj.phys.radius = (MAX(proj.phys.height, proj.phys.width) / 2.0) * proj.scale;
-    proj.phys.amorphous = projdef.bouncy ? false : true;
-    proj.phys.elasticity = projdef.bouncy ? 1.0 : 0.1;
-    proj.homing = projdef.homing;
-    proj.phys.ethereal = projdef.ghost;
-
-    proj.curr_room = curr_room;
-    proj.from_player = from_player;
-
-    float spread = projdef.angle_spread/2.0;
-
-    for(int i = 0; i < projdef.num; ++i)
-    {
-        Projectile p = {0};
-        memcpy(&p, &proj, sizeof(Projectile));
-        p.id = get_id();
-
-        if(!proj.homing)
-        {
-            p.homing = RAND_FLOAT(0.0,1.0) <= projdef.homing_chance;
-        }
-
-        if(!proj.phys.ethereal)
-        {
-            // printf("projdef.ghost_chance: %.2f\n", projdef.ghost_chance);
-            p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= projdef.ghost_chance;
-        }
-
-        // printf("proj scale: %.2f\n", p.scale);
-
-        // add spread
-        float speed = projdef.base_speed;
-        float angle = angle_deg;
-        if(!FEQ0(spread) && i > 0)
-        {
-            // printf("%.2f -> ", angle);
-            angle += RAND_FLOAT(-spread, spread);
-            // printf("%.2f\n", angle);
-        }
-
-        p.angle_deg = angle;
-        angle = RAD(angle);
-
-        p.phys.vel.x = +speed*cosf(angle) + phys->vel.x;
-        p.phys.vel.y = -speed*sinf(angle) + phys->vel.y;
-        p.phys.vel.z = 80.0;
-
-        if(p.homing)
-        {
-            Physics* target = NULL;
-            if(p.from_player)
-                target = entity_get_closest_to(&p.phys, p.curr_room, ENTITY_TYPE_CREATURE);
-            else
-                target = entity_get_closest_to(&p.phys, p.curr_room, ENTITY_TYPE_PLAYER);
-
-            if(target)
-            {
-                float tx = target->pos.x;
-                float ty = target->pos.y;
-                Vector2f v = {tx - p.phys.pos.x, ty - p.phys.pos.y};
-                normalize(&v);
-                float m = dist(tx, ty, p.phys.pos.x, p.phys.pos.y);
-                p.phys.vel.x = v.x * speed;
-                p.phys.vel.y = v.y * speed;
-            }
-        }
-
-        float d = dist(0,0, p.phys.vel.x,p.phys.vel.y); // distance travelled per second
-        p.ttl = 3.0; //projdef.range / d;
-
-        list_add(plist, (void*)&p);
-    }
-
-}
-#endif
-
-// void projectile_add_type(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player)
-// {
-//     ProjectileDef* projdef = &projectile_lookup[proj_type];
-//     projectile_add(phys, curr_room, projdef, angle_deg, scale, damage_multiplier, from_player);
-// }
 
 void projectile_kill(Projectile* proj)
 {

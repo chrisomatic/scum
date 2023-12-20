@@ -442,6 +442,7 @@ bool camera_can_be_limited(float x, float y, float z)
     return true;
 }
 
+bool got_bad_seed = false;
 void run()
 {
 
@@ -451,6 +452,12 @@ void run()
     double new_time  = 0.0;
     double accum = 0.0;
     const double dt = 1.0/TARGET_FPS;
+
+    // for(;;)
+    // {
+    //     game_generate_level(rand(), 5);
+    //     if(got_bad_seed) break;
+    // }
 
     // loop
     for(;;)
@@ -577,7 +584,17 @@ void game_generate_level(unsigned int _seed, int _rank)
             Room* room = &level.rooms[x][y];
             if(room->valid)
             {
-                LOGI("    %2u) %2d, %-2d", room->index, x, y);
+                char* room_fname = room_files[room_list[room->layout].file_index];
+                if(strcmp("geizer_3door.room", room_fname) == 0)
+                {
+                    if(room->doors[DIR_RIGHT])
+                    {
+                        LOGE("Door on the right!");
+                        got_got_bad_seedseed = true;
+                        // window_set_close(1);
+                    }
+                }
+                LOGI("    %2u) %2d, %-2d  %s", room->index, x, y, room_fname);
             }
         }
     }
@@ -600,6 +617,8 @@ void game_generate_level(unsigned int _seed, int _rank)
         for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
         {
             Room* room = &level.rooms[x][y];
+
+            if(room == NULL) printf("Room is NULL %d,%d\n", x, y);
             uint16_t c = creature_get_room_count(room->index);
             ccount2 += c;
             if(c > 0)
@@ -625,6 +644,7 @@ void game_generate_level(unsigned int _seed, int _rank)
         }
     }
 
+    LOGI("Send to level start");
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         player_send_to_level_start(&players[i]);

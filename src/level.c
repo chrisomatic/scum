@@ -225,7 +225,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
         goto exit_conditions;
     }
 
-    bool is_treasure_room = !level->has_treasure_room && ((level->num_rooms == MAX_ROOMS) || (level->num_rooms > 4 && (rand()%4 == 0)));
+    bool is_treasure_room = !level->has_treasure_room && ((level->num_rooms == MAX_ROOMS) || (level->num_rooms > 4 && (lrand()%4 == 0)));
 
     if(is_treasure_room)
     {

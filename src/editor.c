@@ -220,10 +220,14 @@ void editor_draw()
                     player_hurt(p, 1);
                 }
 
+                static int xp = 100;
+                imgui_number_box("XP to Add", 1, 1000, &xp);
+
                 if(imgui_button("Add XP"))
                 {
-                    player_add_xp(p, 100);
+                    player_add_xp(p, xp);
                 }
+
                 if(imgui_button("Add Gem"))
                 {
                     ItemType it = item_get_random_gem();

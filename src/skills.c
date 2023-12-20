@@ -371,7 +371,6 @@ static void skills_phase_shift(void* skill, void* player, float dt)
     {
         p->proj_spawn.ghost_chance += 0.15f;
     }
-    printf("p->proj_spawn.ghost_chance: %.2f\n", p->proj_spawn.ghost_chance);
 }
 
 static void skills_sentience(void* skill, void* player, float dt)
