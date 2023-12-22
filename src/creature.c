@@ -155,6 +155,8 @@ void creature_init_props(Creature* c)
             c->phys.base_friction = 20.0;
             c->phys.hp_max = 3.0;
             c->painful_touch = true;
+            c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
+            c->phys.height = 20;
             c->xp = 15;
         } break;
         case CREATURE_TYPE_CLINGER:
@@ -251,12 +253,14 @@ void creature_init_props(Creature* c)
         case CREATURE_TYPE_SPIKED_SLUG:
         {
             c->phys.speed = 30.0;
-            c->act_time_min = 1.5;
-            c->act_time_max = 3.0;
-            c->phys.mass = 0.5;
+            c->act_time_min = 0.3;
+            c->act_time_max = 1.0;
+            c->phys.mass = 1.0;
             c->phys.base_friction = 20.0;
             c->phys.hp_max = 10.0;
             c->painful_touch = true;
+            c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
+            c->phys.height = 25;
             c->xp = 25;
         } break;
     }
@@ -833,27 +837,46 @@ static void creature_update_slug(Creature* c, float dt)
 }
 static void creature_update_spiked_slug(Creature* c, float dt)
 {
-    /*
-    if(ai_has_target(c))
+
+    Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+    Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
+    normalize(&v);
+
+    float d = 0.0;
+    Vector2f dir = {0.0, 0.0};
+
+    switch(c->sprite_index)
     {
-        bool at_target = ai_move_to_target(c,dt);
-        if(at_target)
-        {
-            ai_clear_target(c);
-        }
+        case DIR_UP: {
+            dir.x = 0.0;
+            dir.y = -1.0;
+            d = vec_dot(v, dir);
+        } break;
+        case DIR_RIGHT: {
+            dir.x = 1.0;
+            dir.y = 0.0;
+            d = vec_dot(v, dir);
+        } break;
+        case DIR_DOWN: {
+            dir.x = 0.0;
+            dir.y = 1.0;
+            d = vec_dot(v, dir);
+        } break;
+        case DIR_LEFT: {
+            dir.x = -1.0;
+            dir.y = 0.0;
+            d = vec_dot(v, dir);
+        } break;
+    }
+
+    if(d >= 0.95 && d <= 1.00)
+    {
+        // in line of sight, charge
+        c->h = dir.x * 10.0*c->phys.speed;
+        c->v = dir.y * 10.0*c->phys.speed;
     }
     else
     {
-        Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
-        c->target_tile = level_get_room_coords_by_pos(p->phys.pos.x, p->phys.pos.y);
-
-        //float x0 = room_area.x - room_area.w/2.0;
-        //float y0 = room_area.y - room_area.h/2.0;
-        //Vector2f pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
-    }
-    */
-
-#if 1
         bool act = ai_update_action(c, dt);
 
         if(act)
@@ -865,10 +888,10 @@ static void creature_update_spiked_slug(Creature* c, float dt)
 
             if(ai_flip_coin())
             {
-                ai_random_walk(c);
+                ai_random_walk_cardinal(c);
             }
         }
-#endif
+    }
 }
 static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
 {
