@@ -161,7 +161,7 @@ static void draw_room_file_gui()
 {
     static int prior_room_file_sel = 0;
     static int room_file_sel = 0;
-    static int room_file_sel_index_map[32] = {0}; // filtered list mapped to room_list index
+    static int room_file_sel_index_map[MAX_ROOM_LIST_COUNT] = {0}; // filtered list mapped to room_list index
     static char* filtered_room_files[256] = {0};
     static int filtered_room_files_count = 0;
     static char file_filter_str[32] = {0};
@@ -203,7 +203,7 @@ static void draw_room_file_gui()
         force_reload = false;
 
         int _filtered_room_files_count = 0;
-        int _room_file_sel_index_map[32] = {0};
+        int _room_file_sel_index_map[MAX_ROOM_LIST_COUNT] = {0};
         for(int i = 0; i < room_list_count; ++i)
         {
             RoomFileData* rfd = &room_list[i];
@@ -219,10 +219,10 @@ static void draw_room_file_gui()
         }
 
         // rebuild the filtered list
-        if(file_diff || _filtered_room_files_count != filtered_room_files_count || memcmp(_room_file_sel_index_map, room_file_sel_index_map, sizeof(int)*32) != 0)
+        if(file_diff || _filtered_room_files_count != filtered_room_files_count || memcmp(_room_file_sel_index_map, room_file_sel_index_map, sizeof(int)*MAX_ROOM_LIST_COUNT) != 0)
         {
             filtered_room_files_count = _filtered_room_files_count;
-            memcpy(room_file_sel_index_map, _room_file_sel_index_map, sizeof(int)*32);
+            memcpy(room_file_sel_index_map, _room_file_sel_index_map, sizeof(int)*MAX_ROOM_LIST_COUNT);
             for(int i = 0; i < filtered_room_files_count; ++i)
             {
                 filtered_room_files[i] = p_room_files[room_file_sel_index_map[i]];

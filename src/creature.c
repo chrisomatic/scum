@@ -24,6 +24,7 @@ static int creature_image_buzzer;
 static int creature_image_totem_red;
 static int creature_image_totem_blue;
 static int creature_image_shambler;
+static int creature_image_spiked_slug;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -33,6 +34,7 @@ static void creature_update_buzzer(Creature* c, float dt);
 static void creature_update_totem_red(Creature* c, float dt);
 static void creature_update_totem_blue(Creature* c, float dt);
 static void creature_update_shambler(Creature* c, float dt);
+static void creature_update_spiked_slug(Creature* c, float dt);
 
 static uint16_t id_counter = 0;
 
@@ -56,6 +58,7 @@ void creature_init()
     creature_image_totem_red  = gfx_load_image("src/img/creature_totem_red.png", false, false, 32, 64);
     creature_image_totem_blue  = gfx_load_image("src/img/creature_totem_blue.png", false, false, 32, 64);
     creature_image_shambler = gfx_load_image("src/img/creature_shambler.png", false, false, 32, 64);
+    creature_image_spiked_slug = gfx_load_image("src/img/creature_spiked_slug.png", false, false, 32, 32);
 }
 
 const char* creature_type_name(CreatureType type)
@@ -78,6 +81,8 @@ const char* creature_type_name(CreatureType type)
             return "Totem Blue";
         case CREATURE_TYPE_SHAMBLER:
             return "Shambler";
+        case CREATURE_TYPE_SPIKED_SLUG:
+            return "Spiked Slug";
         default:
             return "???";
     }
@@ -103,6 +108,8 @@ int creature_get_image(CreatureType type)
             return creature_image_totem_blue;
         case CREATURE_TYPE_SHAMBLER:
             return creature_image_shambler;
+        case CREATURE_TYPE_SPIKED_SLUG:
+            return creature_image_spiked_slug;
         default:
             return -1;
     }
@@ -240,6 +247,17 @@ void creature_init_props(Creature* c)
             c->painful_touch = true;
             c->windup_max = 0.5;
             c->xp = 300;
+        } break;
+        case CREATURE_TYPE_SPIKED_SLUG:
+        {
+            c->phys.speed = 30.0;
+            c->act_time_min = 1.5;
+            c->act_time_max = 3.0;
+            c->phys.mass = 0.5;
+            c->phys.base_friction = 20.0;
+            c->phys.hp_max = 10.0;
+            c->painful_touch = true;
+            c->xp = 25;
         } break;
     }
 
@@ -488,6 +506,12 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
                 else     add_to_random_tile(&c, room);
                 c.sprite_index = 0;
             } break;
+            case CREATURE_TYPE_SPIKED_SLUG:
+            {
+                if(tile) add_to_tile(&c, tile->x, tile->y);
+                else     add_to_random_tile(&c, room);
+                c.sprite_index = 0;
+            } break;
         }
     }
 
@@ -544,6 +568,9 @@ void creature_update(Creature* c, float dt)
             break;
         case CREATURE_TYPE_SHAMBLER:
             creature_update_shambler(c,dt);
+            break;
+        case CREATURE_TYPE_SPIKED_SLUG:
+            creature_update_spiked_slug(c,dt);
             break;
     }
 
@@ -766,6 +793,45 @@ static Player* get_nearest_player(float x, float y)
 }
 
 static void creature_update_slug(Creature* c, float dt)
+{
+    /*
+    if(ai_has_target(c))
+    {
+        bool at_target = ai_move_to_target(c,dt);
+        if(at_target)
+        {
+            ai_clear_target(c);
+        }
+    }
+    else
+    {
+        Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+        c->target_tile = level_get_room_coords_by_pos(p->phys.pos.x, p->phys.pos.y);
+
+        //float x0 = room_area.x - room_area.w/2.0;
+        //float y0 = room_area.y - room_area.h/2.0;
+        //Vector2f pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
+    }
+    */
+
+#if 1
+        bool act = ai_update_action(c, dt);
+
+        if(act)
+        {
+            //Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+            //c->target_tile = level_get_room_coords_by_pos(p->phys.pos.x, p->phys.pos.y);
+
+            ai_stop_imm(c);
+
+            if(ai_flip_coin())
+            {
+                ai_random_walk(c);
+            }
+        }
+#endif
+}
+static void creature_update_spiked_slug(Creature* c, float dt)
 {
     /*
     if(ai_has_target(c))
@@ -1114,7 +1180,6 @@ static void creature_update_totem_blue(Creature* c, float dt)
         }
 
     }
-
 }
 
 static void creature_update_shambler(Creature* c, float dt)

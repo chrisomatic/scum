@@ -14,7 +14,7 @@ char room_files[256][32] = {0};
 char* p_room_files[256] = {0};
 int  room_file_count = 0;
 
-RoomFileData room_list[128] = {0};
+RoomFileData room_list[MAX_ROOM_LIST_COUNT] = {0};
 int room_list_count = 0;
 
 static bool get_next_section(FILE* fp, char* section);

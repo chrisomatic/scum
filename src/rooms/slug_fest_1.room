@@ -4,7 +4,7 @@
 13,7
 
 ; Room Type
-2   # Treasure
+1   # Monster
 
 ; Room Rank
 1
@@ -15,6 +15,9 @@ Floor
 Pit
 Boulder
 Mud
+Ice
+Spikes
+Timed Spikes
 
 ; Tile Data
 1,1,1,1,1,1,1,1,1,1,1,1,1
@@ -30,8 +33,19 @@ Slug
 Clinger
 Geizer
 Floater
+Buzzer
+Totem Red
+Totem Blue
+Shambler
+Spiked Slug
 
 ; Creatures
+0,5,3
+0,9,3
+8,4,4
+8,10,4
+0,3,5
+0,11,5
 
 ; Item Mapping
 Red Gem
@@ -42,9 +56,9 @@ Yellow Gem
 Purple Gem
 Full Heart
 Half Heart
+Empty Heart
 Cosmic Full Heart
 Cosmic Half Heart
-Glowing Orb
 Dragon Egg
 Shamrock
 Ruby Ring
@@ -54,11 +68,10 @@ Potion of Range
 Potion of Purple
 +1 Gauntlet Slot
 New Level
+Glowing Orb
 Chest
 
 ; Items
-20,1,1
-19,7,4
 
 ; Doors
 1,1,1,1

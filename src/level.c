@@ -14,10 +14,10 @@ int dungeon_image = -1;
 
 static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth);
 
-static int room_list_monster[32] = {0};
-static int room_list_empty[32] = {0};
-static int room_list_treasure[32] = {0};
-static int room_list_boss[32] = {0};
+static int room_list_monster[MAX_ROOM_LIST_COUNT] = {0};
+static int room_list_empty[MAX_ROOM_LIST_COUNT] = {0};
+static int room_list_treasure[MAX_ROOM_LIST_COUNT] = {0};
+static int room_list_boss[MAX_ROOM_LIST_COUNT] = {0};
 
 static int room_count_monster  = 0;
 static int room_count_empty    = 0;
@@ -93,25 +93,25 @@ try_again:
     if(random_doors[DIR_UP] && rfd->doors[DIR_UP] && (y > 0 && !level->rooms[x][y-1].valid))
     {
         room->doors[DIR_UP] = true;
-        generate_rooms(level, x,y-1,DIR_UP,depth+1);
+        generate_rooms(level, x,y-1,DIR_DOWN,depth+1);
     }
 
     if(random_doors[DIR_RIGHT] && rfd->doors[DIR_RIGHT] && (x < MAX_ROOMS_GRID_X-1 && !level->rooms[x+1][y].valid))
     {
         room->doors[DIR_RIGHT] = true;
-        generate_rooms(level, x+1,y,DIR_RIGHT,depth+1);
+        generate_rooms(level, x+1,y,DIR_LEFT,depth+1);
     }
 
     if(random_doors[DIR_DOWN] && rfd->doors[DIR_DOWN] && (y < MAX_ROOMS_GRID_Y-1 && !level->rooms[x][y+1].valid))
     {
         room->doors[DIR_DOWN] = true;
-        generate_rooms(level, x,y+1,DIR_DOWN,depth+1);
+        generate_rooms(level, x,y+1,DIR_UP,depth+1);
     }
 
     if(random_doors[DIR_LEFT] && rfd->doors[DIR_LEFT] && (x > 0 && !level->rooms[x-1][y].valid))
     {
         room->doors[DIR_LEFT] = true;
-        generate_rooms(level, x-1,y,DIR_LEFT,depth+1);
+        generate_rooms(level, x-1,y,DIR_RIGHT,depth+1);
     }
 }
 
@@ -188,10 +188,10 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
 
     switch(came_from)
     {
-        case DIR_UP:    room->doors[DIR_DOWN]  = true; break;
-        case DIR_RIGHT: room->doors[DIR_LEFT]  = true; break;
-        case DIR_DOWN:  room->doors[DIR_UP]    = true; break;
-        case DIR_LEFT:  room->doors[DIR_RIGHT] = true; break;
+        case DIR_UP:    room->doors[DIR_UP]    = true; break;
+        case DIR_RIGHT: room->doors[DIR_RIGHT] = true; break;
+        case DIR_DOWN:  room->doors[DIR_DOWN]  = true; break;
+        case DIR_LEFT:  room->doors[DIR_LEFT]  = true; break;
         default: break;
     }
 
