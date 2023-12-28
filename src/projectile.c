@@ -183,6 +183,7 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, Projec
     proj.color = color;
     proj.phys.height = gfx_images[projectile_image].visible_rects[0].h * proj.def.scale;
     proj.phys.width =  gfx_images[projectile_image].visible_rects[0].w * proj.def.scale;
+    proj.phys.length = gfx_images[projectile_image].visible_rects[0].w * proj.def.scale;
     proj.phys.pos.x = phys->pos.x;
     proj.phys.pos.y = phys->pos.y;
     proj.phys.pos.z = phys->height/2.0 + phys->pos.z;

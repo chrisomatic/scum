@@ -141,6 +141,7 @@ void creature_init_props(Creature* c)
 {
     c->image = creature_get_image(c->type);
     c->phys.width  = gfx_images[c->image].visible_rects[0].w;
+    c->phys.length = gfx_images[c->image].visible_rects[0].w;
     c->phys.height = gfx_images[c->image].visible_rects[0].h;
     c->phys.radius = c->phys.width / 2.0;
 
@@ -156,7 +157,7 @@ void creature_init_props(Creature* c)
             c->phys.hp_max = 3.0;
             c->painful_touch = true;
             c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
-            c->phys.height = 20;
+            c->phys.crawling = true;
             c->xp = 15;
         } break;
         case CREATURE_TYPE_CLINGER:
@@ -260,9 +261,15 @@ void creature_init_props(Creature* c)
             c->phys.hp_max = 10.0;
             c->painful_touch = true;
             c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
-            c->phys.height = 25;
+            c->phys.crawling = true;
             c->xp = 25;
         } break;
+    }
+
+    if(c->phys.crawling)
+    {
+        c->phys.length = c->phys.height;
+        c->phys.height = 20;
     }
 
     c->phys.speed_factor = 1.0;

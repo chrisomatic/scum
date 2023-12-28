@@ -72,6 +72,7 @@ void player_init()
         p->phys.vel.y = 0.0;
         p->phys.height = gfx_images[player_image].visible_rects[0].h;
         p->phys.width  = gfx_images[player_image].visible_rects[0].w;
+        p->phys.length = gfx_images[player_image].visible_rects[0].w;
         p->phys.mass = 1.0;
         p->phys.elasticity = 0.0;
 

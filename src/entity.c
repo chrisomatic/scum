@@ -316,10 +316,14 @@ void entity_draw_all()
 
         if(debug_enabled)
         {
-            float vy = e->phys->pos.y - e->phys->pos.z/2.0;
-
             // draw collision circle
-            gfx_draw_circle(CPOSX(*e->phys), CPOSY(*e->phys), e->phys->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
+            float cx = CPOSX(*e->phys);
+            float cy = CPOSY(*e->phys);
+
+            gfx_draw_circle(cx, cy, e->phys->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
+            gfx_draw_rect_xywh(cx, cy, e->phys->width, e->phys->length, COLOR_PURPLE, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
+
+            float vy = e->phys->pos.y - e->phys->pos.z/2.0;
 
             // draw base dot
             gfx_draw_rect_xywh(e->phys->pos.x, vy, 1, 1, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);

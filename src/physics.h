@@ -34,8 +34,9 @@ typedef struct
     float speed_factor;
     float radius;
     float mass;
-    float height;
     float width;
+    float length;
+    float height;
     float elasticity;
 
     int8_t hp;
@@ -49,6 +50,7 @@ typedef struct
 
     bool falling; // falling down a pit
     bool floating;
+    bool crawling;
 
     StatusEffect status_effects[MAX_STATUS_EFFECTS];
     int status_effects_count;
