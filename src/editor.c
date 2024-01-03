@@ -361,6 +361,7 @@ void editor_draw()
                 imgui_checkbox("Explosive", &projd->explosive);
                 imgui_checkbox("Bouncy", &projd->bouncy);
                 imgui_checkbox("Penetrate", &projd->penetrate);
+                imgui_checkbox("Cluster", &projd->cluster);
                 imgui_slider_float("Homing Chance", 0.0, 1.0, &projs->homing_chance);
                 imgui_slider_float("Ghost Chance", 0.0, 1.0, &projs->ghost_chance);
                 imgui_slider_float("Cold Chance", 0.0, 1.0, &projs->cold_chance);

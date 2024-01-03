@@ -29,6 +29,7 @@ typedef struct
     bool explosive;
     bool bouncy;
     bool penetrate;
+    bool cluster;
 } ProjectileDef;
 
 typedef struct

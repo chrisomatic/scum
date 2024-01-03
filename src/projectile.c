@@ -35,6 +35,7 @@ ProjectileDef projectile_lookup[] = {
         .explosive = false,
         .bouncy = false,
         .penetrate = false,
+        .cluster = false,
     },
     {
         // player - kinetic discharge skill
@@ -46,6 +47,7 @@ ProjectileDef projectile_lookup[] = {
         .explosive = false,
         .bouncy = false,
         .penetrate = false,
+        .cluster = false,
     },
     {
         // creature generic
@@ -57,6 +59,7 @@ ProjectileDef projectile_lookup[] = {
         .explosive = false,
         .bouncy = false,
         .penetrate = false,
+        .cluster = false,
     },
     {
         // geizer
@@ -68,6 +71,7 @@ ProjectileDef projectile_lookup[] = {
         .explosive = true,
         .bouncy = false,
         .penetrate = false,
+        .cluster = false,
     },
     {
         // clinger
@@ -79,6 +83,7 @@ ProjectileDef projectile_lookup[] = {
         .explosive = false,
         .bouncy = false,
         .penetrate = false,
+        .cluster = false,
     },
     {
         // totem blue
@@ -90,6 +95,7 @@ ProjectileDef projectile_lookup[] = {
         .explosive = false,
         .bouncy = false,
         .penetrate = false,
+        .cluster = true,
     },
 };
 
@@ -259,11 +265,34 @@ void projectile_kill(Projectile* proj)
         splash.color3 = 0x00550000;
     }
 
-    particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &splash, 0.5, true, false);
+    if(proj->def.scale > 0.25)
+    {
+        splash.scale.init_min *= proj->def.scale;
+        splash.scale.init_max *= proj->def.scale;
+        particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &splash, 0.5, true, false);
+    }
 
     if(proj->def.explosive)
     {
         explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, proj->curr_room, proj->from_player);
+    }
+
+    if(proj->def.cluster)
+    {
+        // printf("cluster\n");
+        ProjectileDef pd = proj->def;
+        pd.cluster = false;
+        pd.scale *= 0.5;
+        if(pd.scale <= 0.05)
+            return;
+        pd.speed = 50.0;
+
+        ProjectileSpawn sp = {0};
+        sp.num = 6;
+        sp.spread = 360.0;
+        proj->phys.vel.x = 0.0;
+        proj->phys.vel.y = 0.0;
+        projectile_add(&proj->phys, proj->curr_room, &pd, &sp, proj->color, 0, proj->from_player);
     }
 }
 
