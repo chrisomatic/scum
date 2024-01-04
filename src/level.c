@@ -557,7 +557,7 @@ void level_handle_room_collision(Room* room, Physics* phys, int entity_type)
     if(!room)
         return;
 
-    level_sort_walls(room->walls,room->wall_count, CPOSX(*phys),CPOSY(*phys), phys->radius);
+    level_sort_walls(room->walls,room->wall_count, phys->pos.x,phys->pos.y, phys->radius);
 
     for(int i = 0; i < room->wall_count; ++i)
     {
@@ -576,8 +576,8 @@ void level_handle_room_collision(Room* room, Physics* phys, int entity_type)
         bool check = false;
         Vector2f check_point;
 
-        float px = CPOSX(*phys);
-        float py = CPOSY(*phys);
+        float px = phys->pos.x;
+        float py = phys->pos.y;
 
         switch(wall->dir)
         {

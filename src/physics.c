@@ -3,8 +3,8 @@
 
 bool phys_collision_circles(Physics* phys1, Physics* phys2, CollisionInfo* ci)
 {
-    Vector2f p1 = {CPOSX(*phys1), CPOSY(*phys1)};
-    Vector2f p2 = {CPOSX(*phys2), CPOSY(*phys2)};
+    Vector2f p1 = {phys1->pos.x, phys1->pos.y};
+    Vector2f p2 = {phys2->pos.x, phys2->pos.y};
 
     float d = dist(p1.x,p1.y,p2.x,p2.y);
     float r  = (phys1->radius + phys2->radius);
@@ -54,8 +54,8 @@ void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci)
     float m1 = phys1->mass;
     float m2 = phys2->mass;
 
-    Vector2f x1 = {CPOSX(*phys1), CPOSY(*phys1)};
-    Vector2f x2 = {CPOSX(*phys2), CPOSY(*phys2)};
+    Vector2f x1 = {phys1->pos.x, phys1->pos.y};
+    Vector2f x2 = {phys2->pos.x, phys2->pos.y};
 
     Vector2f v1 = {phys1->vel.x, phys1->vel.y};
     Vector2f v2 = {phys2->vel.x, phys2->vel.y};

@@ -207,7 +207,7 @@ void editor_draw()
                 c = level_get_room_coords(p->transition_room);
                 imgui_text("T Room: %u (%d, %d)", p->transition_room, c.x, c.y);
 
-                Vector2i tc = level_get_room_coords_by_pos(CPOSX(p->phys), CPOSY(p->phys));
+                Vector2i tc = level_get_room_coords_by_pos(p->phys.pos.x, p->phys.pos.y);
                 imgui_text("Tile: %d, %d", tc.x, tc.y);
 
                 if(imgui_button("Send To Start"))

@@ -140,9 +140,9 @@ ProjectileType creature_get_projectile_type(Creature* c)
 void creature_init_props(Creature* c)
 {
     c->image = creature_get_image(c->type);
-    c->phys.width  = gfx_images[c->image].visible_rects[0].w;
-    c->phys.length = gfx_images[c->image].visible_rects[0].w;
-    c->phys.height = gfx_images[c->image].visible_rects[0].h;
+    c->phys.width  = gfx_images[c->image].visible_rects[0].w*0.80;
+    c->phys.length = gfx_images[c->image].visible_rects[0].w*0.80;
+    c->phys.height = gfx_images[c->image].visible_rects[0].h*0.80;
     c->phys.radius = c->phys.width / 2.0;
 
     switch(c->type)
@@ -273,8 +273,6 @@ void creature_init_props(Creature* c)
     }
 
     c->phys.speed_factor = 1.0;
-    c->phys.coffset.x = 0;
-    c->phys.coffset.y = 0;
     c->damage = 1;
 }
 
@@ -552,7 +550,7 @@ void creature_update(Creature* c, float dt)
 
     phys_add_circular_time(&c->phys, dt);
 
-    c->curr_tile = level_get_room_coords_by_pos(CPOSX(c->phys), CPOSY(c->phys));
+    c->curr_tile = level_get_room_coords_by_pos(c->phys.pos.x, c->phys.pos.y);
 
     switch(c->type)
     {

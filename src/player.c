@@ -10,14 +10,11 @@
 #include "status_effects.h"
 #include "player.h"
 
-#define RADIUS_OFFSET_X 0
-#define RADIUS_OFFSET_Y 0
-
-
 void player_ai_move_to_target(Player* p, Player* target);
 
 static float sprite_index_to_angle(Player* p);
 static void handle_room_collision(Player* p);
+static void player_set_sprite_index(Player* p, int sprite_index);
 
 int xp_levels[] = {100,150,200,250,300};
 int skill_selection = 0;
@@ -46,7 +43,7 @@ void player_init()
 {
     if(player_image == -1)
     {
-        player_image = gfx_load_image("src/img/spaceman.png", false, false, 32, 32);
+        player_image = gfx_load_image("src/img/robo.png", false, false, 32, 32);
         shadow_image = gfx_load_image("src/img/shadow.png", false, true, 32, 32);
         card_image   = gfx_load_image("src/img/card.png", false, false, 200, 100);
 
@@ -79,11 +76,9 @@ void player_init()
         p->phys.hp_max = 6;
         p->phys.hp = p->phys.hp_max;
 
-        p->sprite_index = 4;
+        player_set_sprite_index(p, 4);
 
         p->phys.radius = p->phys.width / 2.0;
-        p->phys.coffset.x = RADIUS_OFFSET_X;
-        p->phys.coffset.y = RADIUS_OFFSET_Y;
 
         p->scale = 1.0;
         p->phys.falling = false;
@@ -139,8 +134,8 @@ void player_drop_item(Player* p, Item* it)
     if(it == NULL) return;
     if(it->type == ITEM_NONE) return;
 
-    float px = CPOSX(p->phys);
-    float py = CPOSY(p->phys);
+    float px = p->phys.pos.x;
+    float py = p->phys.pos.y;
     float r = p->phys.radius + it->phys.radius + 2.0;
     float nx = px;
     float ny = py;
@@ -290,10 +285,11 @@ void player2_init_keys()
         memset(&player2->actions[i], 0, sizeof(PlayerInput));
 }
 
+
 void player_set_collision_pos(Player* p, float x, float y)
 {
-    p->phys.pos.x = x - p->phys.coffset.x;
-    p->phys.pos.y = y - p->phys.coffset.y;
+    p->phys.pos.x = x;
+    p->phys.pos.y = y;
 }
 
 int get_xp_req(int level)
@@ -512,8 +508,8 @@ void player_start_room_transition(Player* p)
     // new player positions
     RectXY rxy = {0};
     rect_to_rectxy(&room_area, &rxy);
-    float x1 = rxy.x[BL] - (CPOSX(p->phys) - rxy.x[TR]);
-    float y1 = rxy.y[BL] - (CPOSY(p->phys) - rxy.y[TL]);
+    float x1 = rxy.x[BL] - (p->phys.pos.x - rxy.x[TR]);
+    float y1 = rxy.y[BL] - (p->phys.pos.y - rxy.y[TL]);
 
     if(role == ROLE_SERVER || role == ROLE_LOCAL)
     {
@@ -523,26 +519,26 @@ void player_start_room_transition(Player* p)
         {
             case DIR_UP:
                 p->curr_room = (uint8_t)level_get_room_index(roomxy.x, roomxy.y-1);
-                player_set_collision_pos(p, CPOSX(p->phys), y1);
-                p->sprite_index = SPRITE_UP;
+                player_set_collision_pos(p, p->phys.pos.x, y1);
+                player_set_sprite_index(p, SPRITE_UP);
                 break;
 
             case DIR_RIGHT:
                 p->curr_room = (uint8_t)level_get_room_index(roomxy.x+1, roomxy.y);
-                player_set_collision_pos(p, x1, CPOSY(p->phys));
-                p->sprite_index = SPRITE_RIGHT;
+                player_set_collision_pos(p, x1, p->phys.pos.y);
+                player_set_sprite_index(p, SPRITE_RIGHT);
                 break;
 
             case DIR_DOWN:
                 p->curr_room = (uint8_t)level_get_room_index(roomxy.x, roomxy.y+1);
-                player_set_collision_pos(p, CPOSX(p->phys), y1);
-                p->sprite_index = SPRITE_DOWN;
+                player_set_collision_pos(p, p->phys.pos.x, y1);
+                player_set_sprite_index(p, SPRITE_DOWN);
                 break;
 
             case DIR_LEFT:
                 p->curr_room = (uint8_t)level_get_room_index(roomxy.x-1, roomxy.y);
-                player_set_collision_pos(p, x1, CPOSY(p->phys));
-                p->sprite_index = SPRITE_LEFT;
+                player_set_collision_pos(p, x1, p->phys.pos.y);
+                player_set_sprite_index(p, SPRITE_LEFT);
                 break;
 
             default:
@@ -560,7 +556,7 @@ void player_start_room_transition(Player* p)
             p2->curr_room = p->curr_room;
             p2->phys.pos.x = p->phys.pos.x;
             p2->phys.pos.y = p->phys.pos.y;
-            p2->sprite_index = p->sprite_index;
+            player_set_sprite_index(p2, p->sprite_index);
             p2->door = p->door;
         }
 
@@ -618,7 +614,11 @@ void player_start_room_transition(Player* p)
     // printf("transition_targets: %.2f, %.2f  door: %d     (%.2f, %.2f)\n", transition_targets.x, transition_targets.y, p->door, vw, vh);
 }
 
-
+static void player_set_sprite_index(Player* p, int sprite_index)
+{
+    p->sprite_index = sprite_index;
+    p->phys.rotation_deg = sprite_index_to_angle(p);
+}
 
 static float sprite_index_to_angle(Player* p)
 {
@@ -674,7 +674,7 @@ static void handle_room_collision(Player* p)
                 break;
         }
 
-        float d = dist(CPOSX(p->phys), CPOSY(p->phys), door_point.x, door_point.y);
+        float d = dist(p->phys.pos.x, p->phys.pos.y, door_point.x, door_point.y);
 
         bool colliding_with_door = (d < p->phys.radius);
         if(colliding_with_door && !room->doors_locked && p->new_levels == 0 && (p->phys.pos.z == 0.0 || p->phys.floating))
@@ -897,8 +897,8 @@ void player_update(Player* p, float dt)
 
     player_handle_skills(p,dt);
 
-    float cx = CPOSX(p->phys);
-    float cy = CPOSY(p->phys);
+    float cx = p->phys.pos.x;
+    float cy = p->phys.pos.y;
     Room* room = level_get_room_by_index(&level, p->curr_room);
 
     float mud_factor = 1.0;
@@ -1038,25 +1038,25 @@ void player_update(Player* p, float dt)
 
         if(up)
         {
-            p->sprite_index = SPRITE_UP;
+            player_set_sprite_index(p, SPRITE_UP);
             vel_dir.y = -1.0;
         }
 
         if(down)
         {
-            p->sprite_index = SPRITE_DOWN;
+            player_set_sprite_index(p, SPRITE_DOWN);
             vel_dir.y = 1.0;
         }
 
         if(left)
         {
-            p->sprite_index = SPRITE_LEFT;
+            player_set_sprite_index(p, SPRITE_LEFT);
             vel_dir.x = -1.0;
         }
 
         if(right)
         {
-            p->sprite_index = SPRITE_RIGHT;
+            player_set_sprite_index(p, SPRITE_RIGHT);
             vel_dir.x = 1.0;
         }
 
@@ -1213,17 +1213,16 @@ void player_update(Player* p, float dt)
 
         if(p->shoot_sprite_cooldown > 0)
         {
-            p->sprite_index = sprite_index;
+            player_set_sprite_index(p, sprite_index);
         }
 
         if(p->actions[p->last_shoot_action].state && p->proj_cooldown == 0.0)
         {
-            p->sprite_index = sprite_index;
-            float angle_deg = sprite_index_to_angle(p);
+            player_set_sprite_index(p, sprite_index);
 
             if(!p->phys.dead)
             {
-                projectile_add(&p->phys, p->curr_room, &p->proj_def_gauntlet, &p->proj_spawn_gauntlet, 0x0050A0FF, angle_deg, true);
+                projectile_add(&p->phys, p->curr_room, &p->proj_def_gauntlet, &p->proj_spawn_gauntlet, 0x0050A0FF, p->phys.rotation_deg, true);
             }
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;

@@ -8,11 +8,6 @@
 #define GRAVITY_EARTH 1.0
 #define CIRCULAR_DT_MAX 2*PI
 
-// collision position
-#define CPOSX(phys) ((phys).pos.x+(phys).coffset.x)
-#define CPOSY(phys) ((phys).pos.y+(phys).coffset.y)
-// #define CPOSY(phys) ((phys).pos.y+(phys).coffset.y-(phys).pos.z*0.5)
-
 typedef enum
 {
     COLLISION_SHAPE_CIRCLE,
@@ -38,6 +33,9 @@ typedef struct
     float length;
     float height;
     float elasticity;
+    float rotation_deg;
+
+    Rect collision_rect;
 
     int8_t hp;
     int8_t hp_max;
@@ -55,7 +53,6 @@ typedef struct
     StatusEffect status_effects[MAX_STATUS_EFFECTS];
     int status_effects_count;
 
-    Vector2f coffset;
 } Physics;
 
 typedef struct

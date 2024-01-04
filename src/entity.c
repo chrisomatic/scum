@@ -13,8 +13,8 @@ int num_entities;
 
 static void entity_update_tile(Entity* e)
 {
-    float cx = CPOSX(*e->phys);
-    float cy = CPOSY(*e->phys);
+    float cx = e->phys->pos.x;
+    float cy = e->phys->pos.y;
     Vector2i tile_coords = level_get_room_coords_by_pos(cx, cy);
     Room* room = level_get_room_by_index(&level, e->curr_room);
     e->tile = level_get_tile_type(room, tile_coords.x, tile_coords.y);
@@ -190,6 +190,18 @@ void entity_handle_collisions()
 {
     //printf("num entities: %d\n",num_entities);
 
+    /*
+    for(int i = 0; i < num_entities; ++i)
+    {
+        Physics* phys = &entities[i].phys;
+
+        phys->collision_rect.x = phys->pos.x;
+        phys->collision_rect.y = phys->pos.y;
+        phys->collision_rect.w = phys->width;
+        phys->collision_rect.h = phys->height;
+    }
+    */
+
     // handle entity collisions with other entities
     for(int i = 0; i < num_entities; ++i)
     {
@@ -317,8 +329,8 @@ void entity_draw_all()
         if(debug_enabled)
         {
             // draw collision circle
-            float cx = CPOSX(*e->phys);
-            float cy = CPOSY(*e->phys);
+            float cx = e->phys->pos.x;
+            float cy = e->phys->pos.y;
 
             gfx_draw_circle(cx, cy, e->phys->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
             gfx_draw_rect_xywh(cx, cy, e->phys->width, e->phys->length, COLOR_PURPLE, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);

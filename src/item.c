@@ -466,9 +466,8 @@ void item_update_all(float dt)
         if(item_props[pu->type].func == NULL)
             continue;
 
-        // Vector2f c1 = {CPOSX(player->phys), CPOSY(player->phys)};
         Vector2f c1 = {player->phys.pos.x, player->phys.pos.y};
-        Vector2f c2 = {CPOSX(pu->phys), CPOSY(pu->phys)};
+        Vector2f c2 = {pu->phys.pos.x, pu->phys.pos.y};
 
         float distance;
         bool in_pickup_radius = circles_colliding(&c1, player->phys.radius, &c2, ITEM_PICKUP_RADIUS, &distance);
@@ -612,8 +611,8 @@ bool item_is_on_tile(Room* room, int tile_x, int tile_y)
         if(pu->curr_room != room->index)
             continue;
 
-        float _x = CPOSX(pu->phys);
-        float _y = CPOSY(pu->phys);
+        float _x = pu->phys.pos.x;
+        float _y = pu->phys.pos.y;
 
         // simple check
         Rect ir = RECT(_x, _y, 1, 1);
