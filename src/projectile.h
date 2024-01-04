@@ -30,6 +30,11 @@ typedef struct
     bool bouncy;
     bool penetrate;
     bool cluster;
+
+    int cluster_stages;
+    int cluster_num[3];
+    float cluster_scales[3];
+
 } ProjectileDef;
 
 typedef struct
@@ -41,6 +46,8 @@ typedef struct
     float homing_chance;
     float poison_chance;
     float cold_chance;
+
+    int cluster_stage;
 } ProjectileSpawn;
 
 // typedef struct
@@ -100,6 +107,8 @@ typedef struct
     // float ttl;
     bool from_player;
     Vector3f accel_vector;
+
+    int cluster_stage;
 
     // bool homing;
     // Physics* homing_target;

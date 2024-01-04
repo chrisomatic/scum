@@ -35,7 +35,12 @@ ProjectileDef projectile_lookup[] = {
         .explosive = false,
         .bouncy = false,
         .penetrate = false,
-        .cluster = false,
+
+        .cluster = true,
+        //TODO: put these 3 props in editor.c
+        .cluster_stages = 3,
+        .cluster_num = {2, 2, 10},
+        .cluster_scales = {0.6, 0.4, 0.2},
     },
     {
         // player - kinetic discharge skill
@@ -201,6 +206,8 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, Projec
     proj.from_player = from_player;
     proj.angle_deg = angle_deg;
 
+    proj.cluster_stage = spawn->cluster_stage;
+
     float spread = spawn->spread/2.0;
 
     for(int i = 0; i < spawn->num; ++i)
@@ -281,18 +288,29 @@ void projectile_kill(Projectile* proj)
     {
         // printf("cluster\n");
         ProjectileDef pd = proj->def;
-        pd.cluster = false;
-        pd.scale *= 0.5;
-        if(pd.scale <= 0.05)
+
+        if(proj->cluster_stage >= (3) || proj->cluster_stage >= (pd.cluster_stages))
+        {
             return;
+        }
+
+        pd.cluster = true;
+        pd.scale = pd.cluster_scales[proj->cluster_stage];
+
+        // pd.cluster = false;
+        // pd.scale *= 0.5;
+        // if(pd.scale <= 0.05)
+        //     return;
         pd.speed = 50.0;
 
         ProjectileSpawn sp = {0};
-        sp.num = 6;
+        // sp.num = 6;
+        sp.num = pd.cluster_num[proj->cluster_stage];
         sp.spread = 360.0;
+        sp.cluster_stage = proj->cluster_stage+1;
         proj->phys.vel.x = 0.0;
         proj->phys.vel.y = 0.0;
-        projectile_add(&proj->phys, proj->curr_room, &pd, &sp, proj->color, 0, proj->from_player);
+        projectile_add(&proj->phys, proj->curr_room, &pd, &sp, proj->color, rand() % 360, proj->from_player);
     }
 }
 
