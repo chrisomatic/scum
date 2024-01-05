@@ -188,6 +188,10 @@ void editor_draw()
                     imgui_toggle_button(&p->active, "Active");
                 }
 
+                int selected_class = p->class;
+                imgui_dropdown(class_strs, 3, "Select Class", &selected_class, NULL);
+                player_set_class(p, (PlayerClass)selected_class);
+
                 imgui_text("Level: %d", p->level);
                 imgui_text("XP: %d / %d", p->xp, get_xp_req(p->level));
 

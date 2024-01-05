@@ -75,8 +75,8 @@ typedef struct
     bool in_world;
     bool dead;
     bool hidden;
+    int  userdata;
 } ParticleSpawner;
-
 
 extern int particles_image;
 extern ParticleSpawner spawners[MAX_PARTICLE_SPAWNERS];

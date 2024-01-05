@@ -1384,7 +1384,15 @@ void draw()
             decal_draw_all();
             entity_draw_all();
             explosion_draw_all();
-            particles_draw_spawners_all();
+
+            // draw particles
+            gfx_sprite_batch_begin(true);
+                for(int i = 0; i < spawner_list->count; ++i)
+                {
+                    if(spawners[i].userdata == player->curr_room)
+                        particles_draw_spawner(&spawners[i], true, true);
+                }
+            gfx_sprite_batch_draw();
         }
 
         // @TEST

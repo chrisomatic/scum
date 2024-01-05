@@ -34,7 +34,7 @@ typedef struct
     ProjectileType proj_type; // TODO: remove proj_type
 
     int image;
-
+    
     uint32_t base_color;
     uint32_t color;
     uint8_t sprite_index;

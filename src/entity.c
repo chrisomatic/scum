@@ -190,17 +190,15 @@ void entity_handle_collisions()
 {
     //printf("num entities: %d\n",num_entities);
 
-    /*
     for(int i = 0; i < num_entities; ++i)
     {
-        Physics* phys = &entities[i].phys;
+        Physics* phys = entities[i].phys;
 
         phys->collision_rect.x = phys->pos.x;
         phys->collision_rect.y = phys->pos.y;
         phys->collision_rect.w = phys->width;
         phys->collision_rect.h = phys->height;
     }
-    */
 
     // handle entity collisions with other entities
     for(int i = 0; i < num_entities; ++i)

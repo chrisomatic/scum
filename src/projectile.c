@@ -276,7 +276,8 @@ void projectile_kill(Projectile* proj)
     {
         splash.scale.init_min *= proj->def.scale;
         splash.scale.init_max *= proj->def.scale;
-        particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &splash, 0.5, true, false);
+        ParticleSpawner* ps = particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &splash, 0.5, true, false);
+        ps->userdata = (int)proj->curr_room;
     }
 
     if(proj->def.explosive)

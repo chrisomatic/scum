@@ -24,6 +24,19 @@ int num_skill_choices = 0;
 bool boost_stats = false;
 
 char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
+
+static bool _initialized = false;
+
+char* class_strs[] = 
+{
+    "Spaceman",
+    "Physicist",
+    "Robot"
+};
+
+int class_image_spaceman = -1;
+int class_image_robot = -1;
+
 int player_image = -1;
 int shadow_image = -1;
 int card_image = -1;
@@ -41,13 +54,20 @@ Rect t_rect = {0};
 
 void player_init()
 {
-    if(player_image == -1)
+    if(!_initialized)
     {
-        player_image = gfx_load_image("src/img/robo.png", false, false, 32, 32);
+        class_image_spaceman = gfx_load_image("src/img/spaceman.png", false, false, 32, 32);
+        class_image_robot    = gfx_load_image("src/img/robo.png", false, false, 32, 32);
+
+        player_image = class_image_spaceman;
+
         shadow_image = gfx_load_image("src/img/shadow.png", false, true, 32, 32);
         card_image   = gfx_load_image("src/img/card.png", false, false, 200, 100);
 
+
         ptext = text_list_init(5, 0, 0, 0.05, COLOR_WHITE, false, TEXT_ALIGN_LEFT, IN_WORLD, false);
+
+        _initialized = true;
     }
 
     for(int i = 0; i < MAX_PLAYERS; ++i)
@@ -75,6 +95,8 @@ void player_init()
 
         p->phys.hp_max = 6;
         p->phys.hp = p->phys.hp_max;
+
+        p->class = PLAYER_CLASS_SPACEMAN;
 
         player_set_sprite_index(p, 4);
 
@@ -1739,6 +1761,24 @@ void draw_skill_selection()
     }
 
     message_small_set(0.1, "Press e to select skill (skill points: %d)", player->new_levels);
+}
+
+void player_set_class(Player* p, PlayerClass class)
+{
+    p->class = class;
+
+    switch(class)
+    {
+        case PLAYER_CLASS_SPACEMAN:
+            player_image = class_image_spaceman;
+            break;
+        case PLAYER_CLASS_PHYSICIST:
+            player_image = class_image_spaceman;
+            break;
+        case PLAYER_CLASS_ROBOT:
+            player_image = class_image_robot;
+            break;
+    }
 }
 
 void player_draw(Player* p)

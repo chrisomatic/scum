@@ -46,6 +46,13 @@ typedef enum
     PLAYER_ACTION_MAX
 } PlayerActions;
 
+typedef enum
+{
+    PLAYER_CLASS_SPACEMAN,
+    PLAYER_CLASS_PHYSICIST,
+    PLAYER_CLASS_ROBOT,
+} PlayerClass;
+
 typedef struct
 {
     bool active;
@@ -56,6 +63,8 @@ typedef struct
     float vel_factor;
 
     float scale;
+
+    PlayerClass class;
 
     int xp;
     int level;
@@ -124,6 +133,7 @@ extern Player players[MAX_PLAYERS];
 extern Player* player;
 extern Player* player2;
 extern int xp_levels[];
+extern char* class_strs[];
 
 extern bool boost_stats;
 
@@ -157,6 +167,7 @@ void player_die(Player* p);
 void player_reset(Player* p);
 void player_draw_room_transition();
 void player_start_room_transition(Player* p);
+void player_set_class(Player* p, PlayerClass class);
 
 void player_set_active(Player* p, bool active);
 int player_get_active_count();
