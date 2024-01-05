@@ -38,9 +38,9 @@ ProjectileDef projectile_lookup[] = {
 
         .cluster = true,
         //TODO: put these 3 props in editor.c
-        .cluster_stages = 3,
-        .cluster_num = {2, 2, 10},
-        .cluster_scales = {0.6, 0.4, 0.2},
+        .cluster_stages = 1,
+        .cluster_num = {8, 2, 2},
+        .cluster_scales = {0.5, 0.5, 0.5},
     },
     {
         // player - kinetic discharge skill

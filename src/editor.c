@@ -366,6 +366,26 @@ void editor_draw()
                 imgui_checkbox("Bouncy", &projd->bouncy);
                 imgui_checkbox("Penetrate", &projd->penetrate);
                 imgui_checkbox("Cluster", &projd->cluster);
+
+                if(projd->cluster)
+                {
+                    imgui_number_box("Cluster Stages", 1,3, &projd->cluster_stages);
+
+                    imgui_number_box("Stage 1 Num", 1,10, &projd->cluster_num[0]);
+                    imgui_slider_float("Stage 1 Scale", 0.1, 2.0, &projd->cluster_scales[0]);
+
+                    if(projd->cluster_stages >= 2)
+                    {
+                        imgui_number_box("Stage 2 Num", 1,10, &projd->cluster_num[1]);
+                        imgui_slider_float("Stage 2 Scale", 0.1, 2.0, &projd->cluster_scales[1]);
+                    }
+
+                    if(projd->cluster_stages >= 3)
+                    {
+                        imgui_number_box("Stage 2 Num", 1,10, &projd->cluster_num[2]);
+                        imgui_slider_float("Stage 3 Scale", 0.1, 2.0, &projd->cluster_scales[2]);
+                    }
+                }
                 imgui_slider_float("Homing Chance", 0.0, 1.0, &projs->homing_chance);
                 imgui_slider_float("Ghost Chance", 0.0, 1.0, &projs->ghost_chance);
                 imgui_slider_float("Cold Chance", 0.0, 1.0, &projs->cold_chance);
