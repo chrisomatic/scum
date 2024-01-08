@@ -3,9 +3,7 @@
 #define MAX_ITEMS 500
 #define ITEM_PICKUP_RADIUS 28.0
 
-// order matters, see these functions:
-//  - item_is_gem()
-//  - item_is_heart()
+// order matters!
 typedef enum
 {
     ITEM_NONE = -1,
@@ -81,6 +79,7 @@ bool item_is_chest(ItemType type);
 
 ItemType item_get_random_gem();
 ItemType item_get_random_heart();
+ItemType item_rand(bool include_chest);
 
 const char* item_get_name(ItemType type);
 const char* item_get_description(ItemType type);

@@ -411,6 +411,18 @@ ItemType item_get_random_heart()
     }
 }
 
+ItemType item_rand(bool include_chest)
+{
+    for(;;)
+    {
+        ItemType t = rand() % ITEM_MAX;
+        if(t == ITEM_CHEST && !include_chest) continue;
+        if(t == ITEM_NEW_LEVEL) continue;
+        if(t == ITEM_HEART_EMPTY) continue;
+        return t;
+    }
+}
+
 const char* item_get_name(ItemType type)
 {
     switch(type)

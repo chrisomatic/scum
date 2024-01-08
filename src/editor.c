@@ -128,6 +128,16 @@ void editor_draw()
                 imgui_text("Current Seed: %u", level_seed);
                 imgui_text("Current Rank: %u", level_rank);
 
+                if(imgui_button("Add Item 'New Level'"))
+                {
+                    item_add(ITEM_NEW_LEVEL, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+                }
+
+                if(imgui_button("Add Item"))
+                {
+                    item_add(item_rand(true), player->phys.pos.x, player->phys.pos.y, player->curr_room);
+                }
+
                 TileType tt = level_get_tile_type_by_pos(room, wmx, wmy);
 
                 Vector2i tc = level_get_room_coords_by_pos(wmx, wmy);
@@ -230,13 +240,6 @@ void editor_draw()
                 if(imgui_button("Add XP"))
                 {
                     player_add_xp(p, xp);
-                }
-
-                if(imgui_button("Add Item"))
-                {
-                    // ItemType it = item_get_random_gem();
-                    ItemType it = rand() % ITEM_MAX;
-                    item_add(it, p->phys.pos.x, p->phys.pos.y, p->curr_room);
                 }
 
                 if(imgui_button("Clear Status Effects"))
