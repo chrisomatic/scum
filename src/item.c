@@ -13,7 +13,7 @@ const float iscale = 0.8;
 
 glist* item_list = NULL;
 Item items[MAX_ITEMS] = {0};
-ItemProps item_props[MAX_ITEMS] = {0};
+ItemProps item_props[ITEM_MAX] = {0};
 int items_image = -1;
 int chest_image = -1;
 
@@ -31,38 +31,28 @@ static uint16_t get_id()
 //     return;
 // }
 
+// static void item_func_socketable(Item* pu, Player* p)
+// {
+//     Item* it = &p->gauntlet[p->gauntlet_selection];
+//     player_drop_item(p, it);
+//     memcpy(it, pu, sizeof(Item));
+
+//     // for(int i = 0; i < p->gauntlet_slots; ++i)
+//     // {
+//     //     p->gauntlet_selection++;
+//     //     if(p->gauntlet_selection >= p->gauntlet_slots)
+//     //         p->gauntlet_selection = 0;
+//     //     if(p->gauntlet[p->gauntlet_selection].type == ITEM_NONE)
+//     //         break;
+//     // }
+//     pu->picked_up = true;
+// }
+
 static void item_func_chest(Item* pu, Player* p)
 {
     float x = pu->phys.pos.x;
     float y = pu->phys.pos.y;
     int croom = pu->curr_room;
-
-    // static int dbg = 0;
-    // if(dbg == 0)
-    // {
-    //     dbg++;
-    //     for(int i = 0; i < PLAYER_GAUNTLET_MAX; ++i)
-    //     {
-    //         item_add(ITEM_GAUNTLET_SLOT, x, y, croom);
-    //     }
-    //     return;
-    // }
-    // else if(dbg == 1)
-    // {
-    //     for(int i = 0; i < ITEM_MAX; ++i)
-    //     {
-    //         item_add(i, x, y, croom);
-    //     }
-    //     dbg++;
-    // }
-    // else if(dbg == 2)
-    // {
-    //     for(int i = 0; i < 8; ++i)
-    //     {
-    //         item_add(ITEM_CHEST, x, y, croom);
-    //     }
-    //     dbg++;
-    // }
 
     // always one gem
     item_add(item_get_random_gem(), x, y, croom);
@@ -94,6 +84,106 @@ static void item_func_chest(Item* pu, Player* p)
     }
 
 }
+
+static void item_func_new_level(Item* pu, Player* p)
+{
+    pu->picked_up = true;
+    // item_remove(pu);
+
+    int seed = time(0)+rand()%1000;
+    game_generate_level(seed, level_rank+1);
+}
+
+// called when player consumes the item
+static void item_func_consumable_timed(Item* pu, Player* p)
+{
+    float ttl = 10.0;
+    switch(pu->type)
+    {
+            case ITEM_GEM_RED:
+            case ITEM_GEM_GREEN:
+            case ITEM_GEM_BLUE:
+            case ITEM_GEM_WHITE:
+            case ITEM_GEM_YELLOW:
+            case ITEM_GEM_PURPLE:
+                ttl = 20.0;
+                break;
+
+            case ITEM_DRAGON_EGG:
+            case ITEM_SHAMROCK:
+            case ITEM_RUBY_RING:
+            case ITEM_POTION_STRENGTH:
+            case ITEM_POTION_SPEED:
+            case ITEM_POTION_RANGE:
+            case ITEM_POTION_PURPLE:
+                ttl = 15.0;
+                break;
+
+            default: break;
+    }
+
+    for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
+    {
+        if(p->timed_items[i] == pu->type)
+        {
+            p->timed_items_ttl[i] += ttl;
+            return;
+        }
+    }
+
+    for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
+    {
+        if(p->timed_items[i] == ITEM_NONE)
+        {
+            p->timed_items[i] = pu->type;
+            p->timed_items_ttl[i] = ttl;
+            return;
+        }
+    }
+}
+
+// called after player consumes the item (every frame)
+static void item_timed_func_consumable(ItemType type, Player* p)
+{
+    switch(type)
+    {
+        case ITEM_GEM_RED:
+            p->proj_def.damage += 1.0;
+            break;
+        case ITEM_GEM_GREEN:
+            p->proj_spawn.poison_chance = 1.0;
+            break;
+        case ITEM_GEM_BLUE:
+            p->proj_spawn.cold_chance = 1.0;
+            break;
+        case ITEM_GEM_WHITE:
+            p->proj_spawn.num += 1;
+            break;
+        case ITEM_GEM_YELLOW:
+            p->proj_def.bouncy = true;
+            break;
+        case ITEM_GEM_PURPLE:
+            p->proj_spawn.ghost_chance = 1.0;
+            break;
+
+        case ITEM_DRAGON_EGG:
+        case ITEM_SHAMROCK:
+        case ITEM_RUBY_RING:
+        case ITEM_POTION_STRENGTH:
+        case ITEM_POTION_SPEED:
+        case ITEM_POTION_RANGE:
+        case ITEM_POTION_PURPLE:
+            p->phys.speed *= 4.0;
+            p->phys.max_velocity *= 4.0;
+            break;
+
+        default: break;
+    }
+}
+
+
+
+
 
 static void item_func_consumable(Item* pu, Player* p)
 {
@@ -133,15 +223,6 @@ static void item_func_consumable(Item* pu, Player* p)
             p->light_radius += 1.0;
             pu->picked_up = true;
             break;
-        case ITEM_NEW_LEVEL:
-        {
-            pu->picked_up = true;
-            // item_remove(pu);
-
-            int seed = time(0)+rand()%1000;
-            game_generate_level(seed, level_rank+1);
-        } break;
-
         case ITEM_GAUNTLET_SLOT:
         {
             if(p->gauntlet_slots < PLAYER_GAUNTLET_MAX)
@@ -155,22 +236,22 @@ static void item_func_consumable(Item* pu, Player* p)
     }
 }
 
-static void item_func_gem(Item* pu, Player* p)
-{
-    Item* it = &p->gauntlet[p->gauntlet_selection];
-    player_drop_item(p, it);
-    memcpy(it, pu, sizeof(Item));
+// static void item_func_gem(Item* pu, Player* p)
+// {
+//     Item* it = &p->gauntlet[p->gauntlet_selection];
+//     player_drop_item(p, it);
+//     memcpy(it, pu, sizeof(Item));
 
-    for(int i = 0; i < p->gauntlet_slots; ++i)
-    {
-        p->gauntlet_selection++;
-        if(p->gauntlet_selection >= p->gauntlet_slots)
-            p->gauntlet_selection = 0;
-        if(p->gauntlet[p->gauntlet_selection].type == ITEM_NONE)
-            break;
-    }
-    pu->picked_up = true;
-}
+//     for(int i = 0; i < p->gauntlet_slots; ++i)
+//     {
+//         p->gauntlet_selection++;
+//         if(p->gauntlet_selection >= p->gauntlet_slots)
+//             p->gauntlet_selection = 0;
+//         if(p->gauntlet[p->gauntlet_selection].type == ITEM_NONE)
+//             break;
+//     }
+//     pu->picked_up = true;
+// }
 
 void item_init()
 {
@@ -191,6 +272,9 @@ void item_init()
         p->sprite_index = p->type == ITEM_CHEST ? 0 : i;
         p->func = NULL;
 
+        p->socketable = true;
+        // p->func = (void*)item_func_socketable;
+
         switch(p->type)
         {
             case ITEM_GEM_RED:
@@ -201,8 +285,10 @@ void item_init()
             case ITEM_GEM_PURPLE:
             {
                 p->touchable = false;
-                p->socketable = true;
-                p->func = (void*)item_func_gem;
+                p->func = (void*)item_func_consumable_timed;
+                p->timed_func = (void*)item_timed_func_consumable;
+                // p->socketable = true;
+                // p->func = (void*)item_func_gem;
 
             } break;
             case ITEM_DRAGON_EGG:
@@ -214,8 +300,10 @@ void item_init()
             case ITEM_POTION_PURPLE:
             {
                 p->touchable = false;
-                p->socketable = false;
-                p->func = NULL;
+                p->func = (void*)item_func_consumable_timed;
+                p->timed_func = (void*)item_timed_func_consumable;
+                // p->socketable = false;
+                // p->func = NULL;
             } break;
             case ITEM_HEART_FULL:
             case ITEM_HEART_HALF:
@@ -224,10 +312,9 @@ void item_init()
             case ITEM_COSMIC_HEART_HALF:
             case ITEM_GLOWING_ORB:
             case ITEM_GAUNTLET_SLOT:
-            case ITEM_NEW_LEVEL:
             {
                 p->touchable = false;
-                p->socketable = false;
+                // p->socketable = false;
                 p->func = (void*)item_func_consumable;
             } break;
             case ITEM_CHEST:
@@ -235,8 +322,13 @@ void item_init()
                 p->touchable = false;
                 p->socketable = false;
                 p->func = (void*)item_func_chest;
-            }
-            break;
+            } break;
+            case ITEM_NEW_LEVEL:
+            {
+                p->touchable = false;
+                p->socketable = false;
+                p->func = (void*)item_func_new_level;
+            } break;
         }
     }
 }
@@ -463,8 +555,8 @@ void item_update_all(float dt)
         if(pu->used)
             continue;
 
-        if(item_props[pu->type].func == NULL)
-            continue;
+        // if(item_props[pu->type].func == NULL)
+        //     continue;
 
         Vector2f c1 = {player->phys.pos.x, player->phys.pos.y};
         Vector2f c2 = {pu->phys.pos.x, pu->phys.pos.y};

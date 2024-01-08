@@ -40,6 +40,7 @@ typedef enum
 } ItemType;
 
 typedef void (*item_func)(void* item, void* player);
+typedef void (*item_timed_func)(ItemType type, void* player);
 
 typedef struct
 {
@@ -49,6 +50,7 @@ typedef struct
     bool touchable;
     bool socketable;
     item_func func;
+    item_timed_func timed_func; // called every frame!
 } ItemProps;
 
 typedef struct
@@ -66,7 +68,7 @@ typedef struct
 extern int items_image;
 extern glist* item_list;
 extern Item items[MAX_ITEMS];
-extern ItemProps item_props[MAX_ITEMS];
+extern ItemProps item_props[ITEM_MAX];
 
 #include "entity.h"
 

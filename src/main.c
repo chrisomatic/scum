@@ -1437,6 +1437,7 @@ void draw()
         draw_hearts();
         draw_xp_bar();
         draw_gauntlet();
+        draw_timed_items();
         draw_skill_selection();
     }
 

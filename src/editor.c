@@ -232,9 +232,10 @@ void editor_draw()
                     player_add_xp(p, xp);
                 }
 
-                if(imgui_button("Add Gem"))
+                if(imgui_button("Add Item"))
                 {
-                    ItemType it = item_get_random_gem();
+                    // ItemType it = item_get_random_gem();
+                    ItemType it = rand() % ITEM_MAX;
                     item_add(it, p->phys.pos.x, p->phys.pos.y, p->curr_room);
                 }
 

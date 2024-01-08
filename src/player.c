@@ -134,7 +134,7 @@ void player_init()
         p->anim.frame_sequence[3] = 3;
 
         p->gauntlet_selection = 0;
-        p->gauntlet_slots = MIN(2,PLAYER_GAUNTLET_MAX);
+        p->gauntlet_slots = MIN(3,PLAYER_GAUNTLET_MAX);
         for(int j = 0; j < PLAYER_GAUNTLET_MAX; ++j)
         {
             p->gauntlet[j].type = ITEM_NONE;
@@ -148,6 +148,14 @@ void player_init()
         p->skill_count = 0;
         p->num_skill_choices = MIN(3,MAX_SKILL_CHOICES);
         p->periodic_shot_counter = 0.0;
+
+        for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
+        {
+            p->timed_items[i] = ITEM_NONE;
+        }
+        // //@TEST
+        // p->timed_items[i] = ITEM_GEM_RED;
+        // p->timed_items_ttl[i] = 5.0;
     }
 }
 
@@ -274,14 +282,19 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_S);
     window_controls_add_key(&player->actions[PLAYER_ACTION_LEFT].state, GLFW_KEY_A);
     window_controls_add_key(&player->actions[PLAYER_ACTION_RIGHT].state, GLFW_KEY_D);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_JUMP].state, GLFW_KEY_SPACE);
+
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_UP].state, GLFW_KEY_I);
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_DOWN].state, GLFW_KEY_K);
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_LEFT].state, GLFW_KEY_J);
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_RIGHT].state, GLFW_KEY_L);
+
     window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_ENTER);
     window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_E);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_JUMP].state, GLFW_KEY_SPACE);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_GEM_MENU].state, GLFW_KEY_G);
+
+    window_controls_add_key(&player->actions[PLAYER_ACTION_USE_ITEM].state, GLFW_KEY_U);
+    window_controls_add_key(&player->actions[PLAYER_ACTION_DROP_ITEM].state, GLFW_KEY_N);
+
     window_controls_add_key(&player->actions[PLAYER_ACTION_TAB_CYCLE].state, GLFW_KEY_TAB);
     window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_CYCLE].state, GLFW_KEY_C);
 
@@ -763,8 +776,11 @@ void player_update(Player* p, float dt)
     }
 
     bool activate = p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
+    bool action_use = p->actions[PLAYER_ACTION_USE_ITEM].toggled_on;
+    bool action_drop = p->actions[PLAYER_ACTION_DROP_ITEM].toggled_on;
     bool tabbed = p->actions[PLAYER_ACTION_TAB_CYCLE].toggled_on;
     bool rshift = p->actions[PLAYER_ACTION_RSHIFT].state;
+
 
     if(p->new_levels == 0)
     {
@@ -809,29 +825,49 @@ void player_update(Player* p, float dt)
 
         if(activate)
         {
-            if(p->highlighted_item)
+            Item* pu = p->highlighted_item;
+            if(pu)
             {
-                ItemType type = p->highlighted_item->type;
+                ItemType type = pu->type;
+                ItemProps* pr = &item_props[type];
 
                 if(type == ITEM_CHEST)
                 {
-                    if(!p->highlighted_item->used)
+                    if(!pu->used)
                     {
-                        p->highlighted_item->used = true;
-                        if(item_props[type].func) item_props[type].func(p->highlighted_item,p);
+                        pu->used = true;
+                        if(item_props[type].func) item_props[type].func(pu, p);
                     }
+                }
+                else if(pr->socketable)
+                {
+                    Item* it = &p->gauntlet[p->gauntlet_selection];
+                    player_drop_item(p, it);
+                    memcpy(it, pu, sizeof(Item));
+                    pu->picked_up = true;
                 }
                 else
                 {
-                    if(item_props[type].func) item_props[type].func(p->highlighted_item,p);
-                    if(p->highlighted_item->picked_up)
-                        item_remove(p->highlighted_item);
+                    if(item_props[type].func) item_props[type].func(pu, p);
+                    if(pu->picked_up)
+                        item_remove(pu);
                 }
             }
-            else
+        }
+
+        if(action_use)
+        {
+            Item* it = &p->gauntlet[p->gauntlet_selection];
+            if(it->type != ITEM_NONE)
             {
-                player_drop_item(p, &p->gauntlet[p->gauntlet_selection]);
+                if(item_props[it->type].func) item_props[it->type].func(it, p);
             }
+            it->type = ITEM_NONE;
+        }
+
+        if(action_drop)
+        {
+            player_drop_item(p, &p->gauntlet[p->gauntlet_selection]);
         }
 
     }
@@ -895,27 +931,65 @@ void player_update(Player* p, float dt)
         }
     }
 
-    float speed = p->phys.speed;
-    float maxv = p->phys.max_velocity;
-    float pcooldown = p->proj_cooldown_max;
-    int pnum = p->proj_spawn.num;
-    float pspread = p->proj_spawn.spread;
-    float pdamage = p->proj_def.damage;
-    int hp_max = p->phys.hp_max;
-    if(boost_stats)
+    // copy stats/attributes
+    PlayerAttributes att = {0};
+    att.speed = p->phys.speed;
+    att.speed_factor = p->phys.speed_factor;
+    att.max_velocity = p->phys.max_velocity;
+    att.base_friction = p->phys.base_friction;
+    att.mass = p->phys.mass;
+    att.elasticity = p->phys.elasticity;
+    att.proj_cooldown_max = p->proj_cooldown_max;
+    att.projdef = p->proj_def;
+    att.projspawn = p->proj_spawn;
+
+    // float speed = p->phys.speed;
+    // float maxv = p->phys.max_velocity;
+    // float pcooldown = p->proj_cooldown_max;
+    // int pnum = p->proj_spawn.num;
+    // float pspread = p->proj_spawn.spread;
+    // float pdamage = p->proj_def.damage;
+    // int hp_max = p->phys.hp_max;
+    // if(boost_stats)
+    // {
+    //     p->phys.speed += 300.0;
+    //     p->phys.max_velocity += 90.0;
+    //     p->proj_cooldown_max = 0.05;
+    //     p->proj_spawn.num += 4;
+    //     p->proj_spawn.spread = 20.0;
+    //     p->proj_def.damage += 9.0;
+    // }
+
+    // // apply gem effects
+    // p->proj_def_gauntlet = p->proj_def;
+    // p->proj_spawn_gauntlet = p->proj_spawn;
+    // // item_apply_gauntlet((void*)&p->proj_def_gauntlet, (void*)&p->proj_spawn_gauntlet, (Item*)p->gauntlet,p->gauntlet_slots);
+
+
+    // printf("%.2f", p->phys.speed);
+    // apply timed items
+    for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
     {
-        p->phys.speed += 300.0;
-        p->phys.max_velocity += 90.0;
-        p->proj_cooldown_max = 0.05;
-        p->proj_spawn.num += 4;
-        p->proj_spawn.spread = 20.0;
-        p->proj_def.damage += 9.0;
+        if(p->timed_items[i] == ITEM_NONE)
+            continue;
+
+        p->timed_items_ttl[i] -= dt;
+        if(p->timed_items_ttl[i] <= 0)
+        {
+            p->timed_items_ttl[i] = 0.0;
+            p->timed_items[i] = ITEM_NONE;
+            continue;
+        }
+
+        ItemProps* pr = &item_props[p->timed_items[i]];
+        if(pr->timed_func)
+        {
+            pr->timed_func(p->timed_items[i], (void*)p);
+        }
+
     }
 
-    // apply gem effects
-    p->proj_def_gauntlet = p->proj_def;
-    p->proj_spawn_gauntlet = p->proj_spawn;
-    item_apply_gauntlet((void*)&p->proj_def_gauntlet, (void*)&p->proj_spawn_gauntlet, (Item*)p->gauntlet,p->gauntlet_slots);
+    // printf("-->  %.2f\n", p->phys.speed);
 
     player_handle_skills(p,dt);
 
@@ -1244,7 +1318,8 @@ void player_update(Player* p, float dt)
 
             if(!p->phys.dead)
             {
-                projectile_add(&p->phys, p->curr_room, &p->proj_def_gauntlet, &p->proj_spawn_gauntlet, 0x0050A0FF, p->phys.rotation_deg, true);
+                // projectile_add(&p->phys, p->curr_room, &p->proj_def_gauntlet, &p->proj_spawn_gauntlet, 0x0050A0FF, p->phys.rotation_deg, true);
+                projectile_add(&p->phys, p->curr_room, &p->proj_def, &p->proj_spawn, 0x0050A0FF, p->phys.rotation_deg, true);
             }
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;
@@ -1297,15 +1372,26 @@ void player_update(Player* p, float dt)
         }
     }
 
-    if(boost_stats)
-    {
-        p->phys.speed = speed;
-        p->phys.max_velocity = maxv;
-        p->proj_cooldown_max = pcooldown;
-        p->proj_spawn.num = pnum;
-        p->proj_spawn.spread = pspread;
-        p->proj_def.damage = pdamage;
-    }
+
+    p->phys.speed = att.speed;
+    p->phys.speed_factor = att.speed_factor;
+    p->phys.max_velocity = att.max_velocity;
+    p->phys.base_friction = att.base_friction;
+    p->phys.mass = att.mass;
+    p->phys.elasticity = att.elasticity;
+    p->proj_cooldown_max = att.proj_cooldown_max;
+    p->proj_def = att.projdef;
+    p->proj_spawn = att.projspawn;
+
+    // if(boost_stats)
+    // {
+    //     p->phys.speed = speed;
+    //     p->phys.max_velocity = maxv;
+    //     p->proj_cooldown_max = pcooldown;
+    //     p->proj_spawn.num = pnum;
+    //     p->proj_spawn.spread = pspread;
+    //     p->proj_def.damage = pdamage;
+    // }
 }
 
 void player_ai_move_to_target(Player* p, Player* target)
@@ -1516,6 +1602,33 @@ void draw_gauntlet()
         r.x += len;
         r.x += margin;
     }
+}
+
+void draw_timed_items()
+{
+    float len = 20.0 * ascale;
+    float margin = 5.0 * ascale;
+
+    int w = gfx_images[items_image].element_width;
+    float scale = len / (float)w;
+
+    float _x = 10.0;
+    float _y = 100.0;
+    for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
+    {
+        ItemType type = player->timed_items[i];
+        if(type != ITEM_NONE)
+        {
+            gfx_draw_image_ignore_light(item_props[type].image, item_props[type].sprite_index, _x, _y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+
+            float tscale = 0.17 * ascale;
+            // Vector2f size = gfx_string_get_size(scale, (char*)desc);
+            gfx_draw_string(_x+len*0.75, _y-len*0.5, COLOR_WHITE, tscale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%.1f", player->timed_items_ttl[i]);
+
+            _y += len + margin;
+        }
+    }
+
 }
 
 // skills

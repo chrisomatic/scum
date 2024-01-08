@@ -31,17 +31,21 @@ typedef enum
     PLAYER_ACTION_DOWN,
     PLAYER_ACTION_LEFT,
     PLAYER_ACTION_RIGHT,
-    PLAYER_ACTION_RSHIFT,
+    PLAYER_ACTION_JUMP,
+
     PLAYER_ACTION_SHOOT_UP,
     PLAYER_ACTION_SHOOT_DOWN,
     PLAYER_ACTION_SHOOT_LEFT,
     PLAYER_ACTION_SHOOT_RIGHT,
-    PLAYER_ACTION_GENERATE_ROOMS,
+
     PLAYER_ACTION_ACTIVATE,
-    PLAYER_ACTION_JUMP,
-    PLAYER_ACTION_GEM_MENU,
+
+    PLAYER_ACTION_USE_ITEM,
+    PLAYER_ACTION_DROP_ITEM,
+
     PLAYER_ACTION_TAB_CYCLE,
     PLAYER_ACTION_ITEM_CYCLE,
+    PLAYER_ACTION_RSHIFT,
 
     PLAYER_ACTION_MAX
 } PlayerActions;
@@ -52,6 +56,27 @@ typedef enum
     PLAYER_CLASS_PHYSICIST,
     PLAYER_CLASS_ROBOT,
 } PlayerClass;
+
+#define MAX_TIMED_ITEMS 10
+
+
+typedef struct
+{
+    //phys
+    float speed;
+    float speed_factor;
+    float max_velocity;
+    float base_friction;
+    float mass;
+    float elasticity;
+
+    // projectile
+    float proj_cooldown_max;
+    ProjectileDef projdef;
+    ProjectileSpawn projspawn;
+
+} PlayerAttributes;
+
 
 typedef struct
 {
@@ -79,6 +104,9 @@ typedef struct
     uint8_t gauntlet_selection;
     uint8_t gauntlet_slots;
     Item gauntlet[PLAYER_GAUNTLET_MAX];
+
+    ItemType timed_items[MAX_TIMED_ITEMS];
+    float timed_items_ttl[MAX_TIMED_ITEMS];
 
     int skills[PLAYER_MAX_SKILLS];
     int skill_count;
@@ -180,6 +208,7 @@ int player_names_build(bool include_all, bool only_active);
 void draw_hearts();
 void draw_xp_bar();
 void draw_gauntlet();
+void draw_timed_items();
 void randomize_skill_choices(Player* p);
 void draw_skill_selection();
 
