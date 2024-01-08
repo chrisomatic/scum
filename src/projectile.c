@@ -36,8 +36,7 @@ ProjectileDef projectile_lookup[] = {
         .bouncy = false,
         .penetrate = false,
 
-        .cluster = true,
-        //TODO: put these 3 props in editor.c
+        .cluster = false,
         .cluster_stages = 1,
         .cluster_num = {8, 2, 2},
         .cluster_scales = {0.5, 0.5, 0.5},

@@ -18,6 +18,7 @@ static void skills_health_boost(void* skill, void* player, float dt);
 static void skills_rapid_fire(void* skill, void* player, float dt);
 static void skills_multishot(void* skill, void* player, float dt);
 static void skills_more_choices(void* skill, void* player, float dt);
+static void skills_cluster_shot(void* skill, void* player, float dt);
 
 void skills_init()
 {
@@ -255,7 +256,35 @@ void skills_init()
     strcpy(skill_list[i].desc,"Increase number of skills to choose from");
     i++;
 
+    skill_list[i].type = SKILL_TYPE_CLUSTER_SHOT;
+    skill_list[i].min_level = 1;
+    skill_list[i].rarity = SKILL_RARITY_COMMON;
+    skill_list[i].rank = 1;
+    skill_list[i].func = skills_cluster_shot;
+    skill_list[i].periodic = false;
+    strcpy(skill_list[i].name,"Cluster Shot I");
+    strcpy(skill_list[i].desc,"Cluster shot level 1");
+    i++;
 
+    skill_list[i].type = SKILL_TYPE_CLUSTER_SHOT;
+    skill_list[i].min_level = 1;
+    skill_list[i].rarity = SKILL_RARITY_COMMON;
+    skill_list[i].rank = 2;
+    skill_list[i].func = skills_cluster_shot;
+    skill_list[i].periodic = false;
+    strcpy(skill_list[i].name,"Cluster Shot II");
+    strcpy(skill_list[i].desc,"Cluster shot level 2");
+    i++;
+
+    skill_list[i].type = SKILL_TYPE_CLUSTER_SHOT;
+    skill_list[i].min_level = 1;
+    skill_list[i].rarity = SKILL_RARITY_COMMON;
+    skill_list[i].rank = 3;
+    skill_list[i].func = skills_cluster_shot;
+    skill_list[i].periodic = false;
+    strcpy(skill_list[i].name,"Cluster Shot III");
+    strcpy(skill_list[i].desc,"Cluster shot level 3");
+    i++;
 
     skill_list_count = i;
 }
@@ -433,4 +462,38 @@ static void skills_multishot(void* skill, void* player, float dt)
 
     p->proj_spawn.num += n;
     p->proj_spawn.num = MIN(10, p->proj_spawn.num);
+}
+
+static void skills_cluster_shot(void* skill, void* player, float dt)
+{
+    Player* p = (Player*)player;
+    Skill* s = (Skill*)skill;
+
+    p->proj_def.cluster = true;
+
+    if(s->rank == 1)
+    {
+        p->proj_def.cluster_stages = 1;
+        p->proj_def.cluster_num[0] = 4;
+        p->proj_def.cluster_scales[0] = 0.5;
+    }
+    else if(s->rank == 2)
+    {
+        p->proj_def.cluster_stages = 2;
+        p->proj_def.cluster_num[0] = 2;
+        p->proj_def.cluster_scales[0] = 0.5;
+        p->proj_def.cluster_num[1] = 4;
+        p->proj_def.cluster_scales[1] = 0.30;
+    }
+    else if(s->rank == 3)
+    {
+        p->proj_def.cluster_stages = 3;
+        p->proj_def.cluster_num[0] = 2;
+        p->proj_def.cluster_scales[0] = 0.5;
+        p->proj_def.cluster_num[1] = 2;
+        p->proj_def.cluster_scales[1] = 0.35;
+        p->proj_def.cluster_num[2] = 2;
+        p->proj_def.cluster_scales[2] = 0.25;
+    }
+
 }
