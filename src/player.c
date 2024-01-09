@@ -16,7 +16,7 @@ static float sprite_index_to_angle(Player* p);
 static void handle_room_collision(Player* p);
 static void player_set_sprite_index(Player* p, int sprite_index);
 
-int xp_levels[] = {100,150,200,250,300};
+int xp_levels[] = {100,250,500,1000,2000};
 int skill_selection = 0;
 int skill_choices[MAX_SKILL_CHOICES] = {0};
 int num_skill_choices = 0;
@@ -93,6 +93,8 @@ void player_init()
         p->phys.mass = 1.0;
         p->phys.elasticity = 0.0;
 
+        phys_calc_collision_rect(&p->phys);
+
         p->phys.hp_max = 6;
         p->phys.hp = p->phys.hp_max;
 
@@ -100,7 +102,8 @@ void player_init()
 
         player_set_sprite_index(p, 4);
 
-        p->phys.radius = p->phys.width / 2.0;
+        p->phys.radius = calc_radius_from_rect(&p->phys.collision_rect);
+
 
         p->scale = 1.0;
         p->phys.falling = false;

@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #endif
 
+#include <float.h>
 #include "timer.h"
 
 static struct
@@ -13,6 +14,10 @@ static struct
     uint64_t  frequency;
     uint64_t  offset;
 } _timer;
+
+static double _fps_hist[60] = {0};
+static int _fps_hist_count = 0;
+static int _fps_hist_max_count = 0;
 
 #if _WIN32
 void usleep(__int64 usec)
@@ -94,6 +99,7 @@ void timer_begin(Timer* timer)
     timer->time_start = get_time();
     timer->time_last = timer->time_start;
     timer->frame_fps = 0.0f;
+    timer->frame_fps_avg = 0.0f;
 }
 
 double timer_get_time()
@@ -115,12 +121,25 @@ void timer_wait_for_frame(Timer* timer)
         now = get_time();
         if(now >= timer->time_last + timer->spf)
             break;
-        
-        //usleep(100);
     }
 
     timer->frame_fps = 1.0f / (now - timer->time_last);
     timer->time_last = now;
+
+    // calculate average FPS
+    _fps_hist[_fps_hist_count++] = timer->frame_fps;
+
+    if(_fps_hist_count >= 60)
+        _fps_hist_count = 0;
+
+    if(_fps_hist_max_count < 60)
+        _fps_hist_max_count++;
+
+    double fps_sum = 0.0;
+    for(int i = 0; i < _fps_hist_max_count; ++i)
+        fps_sum += _fps_hist[i];
+
+    timer->frame_fps_avg = (fps_sum / _fps_hist_max_count);
 }
 
 double timer_get_elapsed(Timer* timer)

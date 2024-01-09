@@ -65,7 +65,7 @@ static void sort_entities()
 
 static void draw_entity_shadow(Physics* phys)
 {
-    float scale = (phys->width/32.0);
+    float scale = (phys->collision_rect.w/32.0);
     float opacity = RANGE(0.5*(1.0 - (phys->pos.z / 128.0)),0.1,0.5);
 
     float shadow_x = phys->pos.x;
@@ -192,12 +192,7 @@ void entity_handle_collisions()
 
     for(int i = 0; i < num_entities; ++i)
     {
-        Physics* phys = entities[i].phys;
-
-        phys->collision_rect.x = phys->pos.x;
-        phys->collision_rect.y = phys->pos.y;
-        phys->collision_rect.w = phys->width;
-        phys->collision_rect.h = phys->height;
+        phys_calc_collision_rect(entities[i].phys);
     }
 
     // handle entity collisions with other entities
@@ -331,7 +326,7 @@ void entity_draw_all()
             float cy = e->phys->pos.y;
 
             gfx_draw_circle(cx, cy, e->phys->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
-            gfx_draw_rect_xywh(cx, cy, e->phys->width, e->phys->length, COLOR_PURPLE, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
+            gfx_draw_rect_xywh(cx, cy, e->phys->collision_rect.w, e->phys->collision_rect.h, COLOR_PURPLE, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
 
             float vy = e->phys->pos.y - e->phys->pos.z/2.0;
 
@@ -342,8 +337,8 @@ void entity_draw_all()
             gfx_draw_rect_xywh(e->phys->pos.x, vy - e->phys->height/3.0, 1, 1, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, true, true);
 
             // draw boundingbox
-            gfx_draw_rect_xywh(e->phys->pos.x, vy, e->phys->width, e->phys->width, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true); // bottom rect
-            gfx_draw_rect_xywh(e->phys->pos.x, vy - e->phys->height + e->phys->width/2.0, e->phys->width, e->phys->width, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true); // top rect
+            gfx_draw_rect_xywh(e->phys->pos.x, vy, e->phys->collision_rect.w, e->phys->collision_rect.h, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true); // bottom rect
+            gfx_draw_rect_xywh(e->phys->pos.x, vy - e->phys->height + e->phys->collision_rect.w/2.0, e->phys->collision_rect.w, e->phys->length, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true); // top rect
 
             float x0 = e->phys->pos.x;
             float y0 = e->phys->pos.y;

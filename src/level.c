@@ -7,6 +7,7 @@
 #include "room_file.h"
 #include "entity.h"
 #include "physics.h"
+#include "player.h"
 
 
 int dungeon_image = -1;
@@ -557,11 +558,19 @@ void level_handle_room_collision(Room* room, Physics* phys, int entity_type)
     if(!room)
         return;
 
-    level_sort_walls(room->walls,room->wall_count, phys->pos.x,phys->pos.y, phys->radius);
+    level_sort_walls(room->walls,room->wall_count, phys);
 
     for(int i = 0; i < room->wall_count; ++i)
     {
+
+        phys_calc_collision_rect(phys);
+
         Wall* wall = &room->walls[i];
+
+        float px = phys->pos.x;
+        float py = phys->pos.y;
+
+        wall->highlight = false;
 
         if(entity_type == ENTITY_TYPE_PROJECTILE && (wall->type == WALL_TYPE_PIT || wall->type == WALL_TYPE_INNER))
             continue;
@@ -572,112 +581,107 @@ void level_handle_room_collision(Room* room, Physics* phys, int entity_type)
         if(phys->pos.z > 0.0 && wall->type == WALL_TYPE_PIT)
             continue;
 
-        bool collision = false;
-        bool check = false;
-        Vector2f check_point;
+        if(wall->distance_to_player > phys->radius)
+            continue; // ignore wall if too far away
 
-        float px = phys->pos.x;
-        float py = phys->pos.y;
+        if(wall->dir == DIR_UP    && phys->vel.y < 0.0) continue;
+        if(wall->dir == DIR_RIGHT && phys->vel.x > 0.0) continue;
+        if(wall->dir == DIR_DOWN  && phys->vel.y > 0.0) continue;
+        if(wall->dir == DIR_LEFT  && phys->vel.x < 0.0) continue;
+
+        wall->highlight = true;
+
+        bool collision = false;
+
+        // p0 ------------ p1
+        // |               |
+        // |               |
+        // |               |
+        // p2 ------------ p3
+
+        Rect* r = &phys->collision_rect;
+
+        Vector2f p0 = {r->x - r->w/2.0, r->y - r->h/2.0};
+        Vector2f p1 = {r->x + r->w/2.0, r->y - r->h/2.0};
+        Vector2f p2 = {r->x - r->w/2.0, r->y + r->h/2.0};
+        Vector2f p3 = {r->x + r->w/2.0, r->y + r->h/2.0};
+
+        float delta = 0.0;
 
         switch(wall->dir)
         {
-            case DIR_UP: case DIR_DOWN:
-                if(px+phys->radius >= wall->p0.x && px-phys->radius <= wall->p1.x)
-                {
-                    check_point.x = px;
-                    check_point.y = wall->p0.y;
-                    check = true;
-                }
-                break;
-            case DIR_LEFT: case DIR_RIGHT:
-                if(py+phys->radius >= wall->p0.y && py-phys->radius <= wall->p1.y)
-                {
-                    check_point.x = wall->p0.x;
-                    check_point.y = py;
-                    check = true;
-                }
-                break;
+            case DIR_UP:    collision = (p2.y > wall->p0.y) && (p2.x < wall->p1.x && p3.x > wall->p0.x); delta = p2.y - wall->p0.y; break;
+            case DIR_RIGHT: collision = (p0.x < wall->p0.x) && (p0.y < wall->p1.y && p2.y > wall->p0.y); delta = wall->p0.x - p0.x; break;
+            case DIR_DOWN:  collision = (p0.y < wall->p0.y) && (p0.x < wall->p1.x && p1.x > wall->p0.x); delta = wall->p0.y - p0.y; break;
+            case DIR_LEFT:  collision = (p1.x > wall->p0.x) && (p1.y < wall->p1.y && p3.y > wall->p0.y); delta = p1.x - wall->p0.x; break;
         }
 
-        if(check)
+        delta += 0.01;
+
+        if(collision)
         {
-            float d = dist(px, py, check_point.x, check_point.y);
-            bool collision = (d < phys->radius);
-
-            if(collision)
+            if(phys->amorphous)
             {
-                if(phys->amorphous)
-                {
-                    phys->dead = true;
-                    return;
-                }
-
-                // if(entity_type == ENTITY_TYPE_PLAYER && wall->type == WALL_TYPE_PIT)
-                // {
-                //     if(phys->pos.z == 0.0 && !phys->falling)
-                //     {
-                //         phys->falling = true;
-                //     }
-                //     continue;
-                // }
-
-                //printf("Collision! player: %f %f. Wall point: %f %f. Dist: %f\n", px, py, check_point.x, check_point.y, d);
-                float delta = phys->radius - d + 0.1;
-                switch(wall->dir)
-                {
-                    case DIR_UP:    phys->pos.y -= delta; phys->vel.y *= -phys->elasticity; break;
-                    case DIR_DOWN:  phys->pos.y += delta; phys->vel.y *= -phys->elasticity; break;
-                    case DIR_LEFT:  phys->pos.x -= delta; phys->vel.x *= -phys->elasticity; break;
-                    case DIR_RIGHT: phys->pos.x += delta; phys->vel.x *= -phys->elasticity; break;
-                }
-
-                // add convenient sliding to get around walls
-
-                const int threshold = 10;
-
-                if(wall->dir == DIR_UP || wall->dir == DIR_DOWN)
-                {
-                    bool can_slide_left   = px-threshold < wall->p0.x;
-                    bool can_slide_right  = px+threshold > wall->p1.x;
-
-                    if(can_slide_left || can_slide_right)
-                    {
-                        Vector2i tile_coords = level_get_room_coords_by_pos(px, py);
-
-                        tile_coords.x += wall->dir == DIR_UP ? +1 : -1;
-                        //tile_coords.y += can_slide_up ? -1 : +1;
-
-                        TileType tt = level_get_tile_type(room, tile_coords.x, tile_coords.y);
-
-                        if(tt == TILE_FLOOR)
-                        {
-                            phys->pos.x += can_slide_left ? -1 : +1;
-                        }
-                    } 
-                }
-                else
-                {
-                    bool can_slide_up   = py-threshold < wall->p0.y;
-                    bool can_slide_down = py+threshold > wall->p1.y;
-
-                    if(can_slide_up || can_slide_down)
-                    {
-                        Vector2i tile_coords = level_get_room_coords_by_pos(px, py);
-
-                        tile_coords.x += wall->dir == DIR_LEFT ? +1 : -1;
-                        //tile_coords.y += can_slide_up ? -1 : +1;
-
-                        TileType tt = level_get_tile_type(room, tile_coords.x, tile_coords.y);
-
-                        if(tt == TILE_FLOOR)
-                        {
-                            phys->pos.y += can_slide_up ? -1.0 : +1.0;
-                        }
-                    } 
-                }
+                phys->dead = true;
+                return;
             }
+
+            switch(wall->dir)
+            {
+                case DIR_UP:    phys->pos.y -= delta; phys->vel.y *= -phys->elasticity; break;
+                case DIR_DOWN:  phys->pos.y += delta; phys->vel.y *= -phys->elasticity; break;
+                case DIR_LEFT:  phys->pos.x -= delta; phys->vel.x *= -phys->elasticity; break;
+                case DIR_RIGHT: phys->pos.x += delta; phys->vel.x *= -phys->elasticity; break;
+            }
+
+            // add convenient sliding to get around walls
+#if 0
+            const int threshold = 10;
+
+            if(wall->dir == DIR_UP || wall->dir == DIR_DOWN)
+            {
+                bool can_slide_left   = px-threshold < wall->p0.x;
+                bool can_slide_right  = px+threshold > wall->p1.x;
+
+                if(can_slide_left || can_slide_right)
+                {
+                    Vector2i tile_coords = level_get_room_coords_by_pos(px, py);
+
+                    tile_coords.x += wall->dir == DIR_UP ? +1 : -1;
+                    //tile_coords.y += can_slide_up ? -1 : +1;
+
+                    TileType tt = level_get_tile_type(room, tile_coords.x, tile_coords.y);
+
+                    if(tt == TILE_FLOOR)
+                    {
+                        phys->pos.x += can_slide_left ? -1 : +1;
+                    }
+                } 
+            }
+            else
+            {
+                bool can_slide_up   = py-threshold < wall->p0.y;
+                bool can_slide_down = py+threshold > wall->p1.y;
+
+                if(can_slide_up || can_slide_down)
+                {
+                    Vector2i tile_coords = level_get_room_coords_by_pos(px, py);
+
+                    tile_coords.x += wall->dir == DIR_LEFT ? +1 : -1;
+                    //tile_coords.y += can_slide_up ? -1 : +1;
+
+                    TileType tt = level_get_tile_type(room, tile_coords.x, tile_coords.y);
+
+                    if(tt == TILE_FLOOR)
+                    {
+                        phys->pos.y += can_slide_up ? -1.0 : +1.0;
+                    }
+                } 
+            }
+#endif
         }
     }
+
 }
 
 void level_init()
@@ -922,7 +926,7 @@ void room_draw_walls(Room* room)
         float w = ABS(wall->p0.x - wall->p1.x)+1;
         float h = ABS(wall->p0.y - wall->p1.y)+1;
 
-        gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_WHITE, NOT_SCALED, NO_ROTATION, FULL_OPACITY, true, IN_WORLD);
+        gfx_draw_rect_xywh_tl(x, y, w, h, wall->highlight ? COLOR_YELLOW : COLOR_WHITE, NOT_SCALED, NO_ROTATION, FULL_OPACITY, true, IN_WORLD);
     }
 }
 
@@ -998,34 +1002,40 @@ Level level_generate(unsigned int seed, int rank)
     return level;
 }
 
-void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radius)
+void level_sort_walls(Wall* walls, int wall_count, Physics* phys)
 {
     if(!walls)
         return;
+
+    float x = phys->collision_rect.x;
+    float y = phys->collision_rect.y;
 
     // calculate and store distance to player
     for(int i = 0; i < wall_count; ++i)
     {
         Wall* wall = &walls[i];
 
+        Vector2f check_point = {0.0,0.0};
+
         if(wall->dir == DIR_UP || wall->dir == DIR_DOWN)
         {
-            if(x+radius < wall->p0.x)
-                wall->distance_to_player = dist(x,y, wall->p0.x, wall->p0.y);
-            else if(x-radius > wall->p1.x)
-                wall->distance_to_player = dist(x,y, wall->p1.x, wall->p1.y);
-            else
-                wall->distance_to_player = ABS(y - wall->p0.y);
+            check_point.x = x;
+            check_point.y = wall->p0.y;
+
+            if(x < wall->p0.x)      check_point.x = wall->p0.x;
+            else if(x > wall->p1.x) check_point.x = wall->p1.x;
         }
         else if(wall->dir == DIR_LEFT || wall->dir == DIR_RIGHT)
         {
-            if(y+radius < wall->p0.y)
-                wall->distance_to_player = dist(x,y, wall->p0.x, wall->p0.y);
-            else if(y-radius > wall->p1.y)
-                wall->distance_to_player = dist(x,y, wall->p1.x, wall->p1.y);
-            else
-                wall->distance_to_player = ABS(x - wall->p0.x);
+            check_point.x = wall->p0.x;
+            check_point.y = y;
+
+            if(y < wall->p0.y)      check_point.y = wall->p0.y;
+            else if(y > wall->p1.y) check_point.y = wall->p1.y;
         }
+
+        wall->distance_to_player = dist(x,y,check_point.x,check_point.y);
+
     }
 
     // insertion sort
@@ -1037,7 +1047,7 @@ void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radiu
         memcpy(&key, &walls[i], sizeof(Wall));
         j = i - 1;
 
-        while (j >= 0 && walls[j].distance_to_player < key.distance_to_player)
+        while (j >= 0 && walls[j].distance_to_player > key.distance_to_player)
         {
             memcpy(&walls[j+1], &walls[j], sizeof(Wall));
             j = j - 1;

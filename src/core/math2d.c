@@ -591,6 +591,14 @@ bool is_point_in_rect(Vector2f* p, Rect* rect)
         && (p->y >= rect->y && p->y <= rect->y + rect->h);
 }
 
+float calc_radius_from_rect(Rect* r)
+{
+    float hw = r->w/2.0;
+    float hh = r->h/2.0;
+
+    return sqrt(hw*hw + hh*hh);
+}
+
 void get_scale_transform(Matrix* mat, Vector3f* scale)
 {
     memset(mat,0,sizeof(Matrix));

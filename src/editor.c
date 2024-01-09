@@ -83,7 +83,7 @@ void editor_draw()
         {
             case 0: // general
             {
-
+                imgui_text("FPS: %.0f (AVG: %.0f)",game_timer.frame_fps, game_timer.frame_fps_avg);
                 imgui_number_box("Camera Zoom", 0, 100, &cam_zoom);
                 imgui_number_box("Camera Min Zoom", 0, 100, &cam_min_zoom);
 

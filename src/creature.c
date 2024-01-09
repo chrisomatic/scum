@@ -36,6 +36,7 @@ static void creature_update_totem_blue(Creature* c, float dt);
 static void creature_update_shambler(Creature* c, float dt);
 static void creature_update_spiked_slug(Creature* c, float dt);
 
+
 static uint16_t id_counter = 0;
 
 static uint16_t get_id()
@@ -324,25 +325,25 @@ static void add_to_random_wall_tile(Creature* c)
     switch(wall)
     {
         case DIR_UP:
-            c->sprite_index = 2;
+            creature_set_sprite_index(c, 2);
             tile_x = (rand() % (ROOM_TILE_SIZE_X-1));
             if(tile_x >= ROOM_TILE_SIZE_X/2.0)tile_x+=1;
             tile_y = -1;
             break;
         case DIR_RIGHT:
-            c->sprite_index = 3;
+            creature_set_sprite_index(c, 3);
             tile_x = ROOM_TILE_SIZE_X;
             tile_y = (rand() % (ROOM_TILE_SIZE_Y-1));
             if(tile_y >= ROOM_TILE_SIZE_Y/2.0)tile_y+=1;
             break;
         case DIR_DOWN:
-            c->sprite_index = 0;
+            creature_set_sprite_index(c, 0);
             tile_x = (rand() % (ROOM_TILE_SIZE_X-1));
             if(tile_x >= ROOM_TILE_SIZE_X/2.0)tile_x+=1;
             tile_y = ROOM_TILE_SIZE_Y;
             break;
         case DIR_LEFT:
-            c->sprite_index = 1;
+            creature_set_sprite_index(c, 1);
             tile_x = -1;
             tile_y = (rand() % (ROOM_TILE_SIZE_Y-1));
             if(tile_y >= ROOM_TILE_SIZE_Y/2.0)tile_y+=1;
@@ -383,16 +384,16 @@ static void add_to_wall_tile(Creature* c, int tile_x, int tile_y)
     switch(wall)
     {
         case DIR_UP:
-            c->sprite_index = 2;
+            creature_set_sprite_index(c, 2);
             break;
         case DIR_RIGHT:
-            c->sprite_index = 3;
+            creature_set_sprite_index(c, 3);
             break;
         case DIR_DOWN:
-            c->sprite_index = 0;
+            creature_set_sprite_index(c, 0);
             break;
         case DIR_LEFT:
-            c->sprite_index = 1;
+            creature_set_sprite_index(c, 1);
             break;
     }
 
@@ -465,6 +466,8 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
         c.target_tile.x = -1;
         c.target_tile.y = -1;
 
+        creature_set_sprite_index(&c, 0);
+
         switch(c.type)
         {
             case CREATURE_TYPE_SLUG:
@@ -472,7 +475,7 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
                 if(tile) add_to_tile(&c, tile->x, tile->y);
                 else     add_to_random_tile(&c, room);
 
-                c.sprite_index = DIR_DOWN;
+                creature_set_sprite_index(&c, DIR_DOWN);
             } break;
             case CREATURE_TYPE_CLINGER:
             {
@@ -483,43 +486,36 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
             {
                 if(tile) add_to_tile(&c, tile->x, tile->y);
                 else     add_to_random_tile(&c, room);
-                c.sprite_index = 0;
             } break;
             case CREATURE_TYPE_FLOATER:
             {
                 if(tile) add_to_tile(&c, tile->x, tile->y);
                 else     add_to_random_tile(&c, room);
-                c.sprite_index = 0;
             } break;
             case CREATURE_TYPE_BUZZER:
             {
                 if(tile) add_to_tile(&c, tile->x, tile->y);
                 else     add_to_random_tile(&c, room);
-                c.sprite_index = 0;
             } break;
             case CREATURE_TYPE_TOTEM_RED:
             {
                 if(tile) add_to_tile(&c, tile->x, tile->y);
                 else     add_to_random_tile(&c, room);
-                c.sprite_index = 0;
             } break;
             case CREATURE_TYPE_TOTEM_BLUE:
             {
                 if(tile) add_to_tile(&c, tile->x, tile->y);
                 else     add_to_random_tile(&c, room);
-                c.sprite_index = 0;
             } break;
             case CREATURE_TYPE_SHAMBLER:
             {
                 if(tile) add_to_tile(&c, tile->x, tile->y);
                 else     add_to_random_tile(&c, room);
-                c.sprite_index = 0;
             } break;
             case CREATURE_TYPE_SPIKED_SLUG:
             {
                 if(tile) add_to_tile(&c, tile->x, tile->y);
                 else     add_to_random_tile(&c, room);
-                c.sprite_index = 0;
             } break;
         }
     }
@@ -722,7 +718,7 @@ void creature_die(Creature* c)
 
     Decal d = {0};
     d.image = particles_image;
-    d.sprite_index = 0;
+    creature_set_sprite_index(c, 0);
     d.tint = COLOR_RED;
     d.scale = 1.0;
     d.rotation = rand() % 360;

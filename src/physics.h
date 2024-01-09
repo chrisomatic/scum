@@ -35,6 +35,7 @@ typedef struct
     float elasticity;
     float rotation_deg;
 
+    Rect collision_rect_prior;
     Rect collision_rect;
 
     int8_t hp;
@@ -74,4 +75,5 @@ void phys_apply_friction(Physics* phys, float friction, float dt);
 
 // other
 void phys_add_circular_time(Physics* phys, float dt);
+void phys_calc_collision_rect(Physics* phys);
 

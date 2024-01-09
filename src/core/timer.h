@@ -7,6 +7,8 @@ typedef struct
     double time_start;
     double time_last;
     double frame_fps;
+    double frame_fps_hist[60];
+    double frame_fps_avg;
 } Timer;
 
 void init_timer(void);

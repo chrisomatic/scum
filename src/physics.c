@@ -164,3 +164,15 @@ void phys_apply_friction_y(Physics* phys, float friction, float dt)
     
     if(ABS(phys->vel.y) < 1.0) phys->vel.y = 0.0;
 }
+
+void phys_calc_collision_rect(Physics* phys)
+{
+    memcpy(&phys->collision_rect_prior, &phys->collision_rect, sizeof(Rect));
+
+    bool horizontal = (phys->rotation_deg == 0.0 || phys->rotation_deg == 180.0);
+
+    phys->collision_rect.x = phys->pos.x;
+    phys->collision_rect.y = phys->pos.y;
+    phys->collision_rect.w = horizontal ? phys->length : phys->width;
+    phys->collision_rect.h = horizontal ? phys->width  : phys->length;
+}

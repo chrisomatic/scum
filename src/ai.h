@@ -1,5 +1,24 @@
 #pragma once
 
+static float sprite_index_to_angle(Creature* c)
+{
+    if(c->sprite_index == 0)
+        return 90.0;
+    else if(c->sprite_index == 1)
+        return 0.0;
+    else if(c->sprite_index == 2)
+        return 270.0;
+
+    return 180.0;
+}
+
+static void creature_set_sprite_index(Creature* c, int sprite_index)
+{
+    c->sprite_index = sprite_index;
+    c->phys.rotation_deg = sprite_index_to_angle(c);
+}
+
+
 void ai_init_action(Creature* c)
 {
     c->action_counter = 0.0;
@@ -33,16 +52,16 @@ static void _update_sprite_index(Creature* c, Dir dir)
     switch(dir)
     {
         case DIR_UP: case DIR_UP_RIGHT:
-            c->sprite_index = DIR_UP;
+            creature_set_sprite_index(c,DIR_UP);
             break;
         case DIR_RIGHT: case DIR_DOWN_RIGHT:
-            c->sprite_index = DIR_RIGHT;
+            creature_set_sprite_index(c,DIR_RIGHT);
             break;
         case DIR_DOWN:  case DIR_DOWN_LEFT:
-            c->sprite_index = DIR_DOWN;
+            creature_set_sprite_index(c,DIR_DOWN);
             break;
         case DIR_LEFT:  case DIR_UP_LEFT:
-            c->sprite_index = DIR_LEFT;
+            creature_set_sprite_index(c,DIR_LEFT);
             break;
     }
 }

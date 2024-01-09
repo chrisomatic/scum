@@ -99,6 +99,7 @@ typedef struct
     Vector2f p1;
     float distance_to_player; // used for sorting walls
     WallType type;
+    bool highlight;
 } Wall;
 
 typedef enum
@@ -153,7 +154,7 @@ void level_get_rand_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile
 void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float yoffset);
 void room_draw_walls(Room* room);
 void level_print(Level* level);
-void level_sort_walls(Wall* walls, int wall_count, float x, float y, float radius);
+void level_sort_walls(Wall* walls, int wall_count, Physics* phys);
 void level_handle_room_collision(Room* room, Physics* phys, int entity_type);
 Room* level_get_room(Level* level, int x, int y);
 Room* level_get_room_by_index(Level* level, int index);
