@@ -952,30 +952,7 @@ void player_update(Player* p, float dt)
     att.projdef = p->proj_def;
     att.projspawn = p->proj_spawn;
 
-    // float speed = p->phys.speed;
-    // float maxv = p->phys.max_velocity;
-    // float pcooldown = p->proj_cooldown_max;
-    // int pnum = p->proj_spawn.num;
-    // float pspread = p->proj_spawn.spread;
-    // float pdamage = p->proj_def.damage;
-    // int hp_max = p->phys.hp_max;
-    // if(boost_stats)
-    // {
-    //     p->phys.speed += 300.0;
-    //     p->phys.max_velocity += 90.0;
-    //     p->proj_cooldown_max = 0.05;
-    //     p->proj_spawn.num += 4;
-    //     p->proj_spawn.spread = 20.0;
-    //     p->proj_def.damage += 9.0;
-    // }
 
-    // // apply gem effects
-    // p->proj_def_gauntlet = p->proj_def;
-    // p->proj_spawn_gauntlet = p->proj_spawn;
-    // // item_apply_gauntlet((void*)&p->proj_def_gauntlet, (void*)&p->proj_spawn_gauntlet, (Item*)p->gauntlet,p->gauntlet_slots);
-
-
-    // printf("%.2f", p->phys.speed);
     // apply timed items
     for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
     {
@@ -1393,24 +1370,10 @@ void player_update(Player* p, float dt)
     p->phys.base_friction = att.base_friction;
     p->phys.mass = att.mass;
     p->phys.elasticity = att.elasticity;
-
-    // p->phys.hp_max = att.hp_max;
-    // if(p->phys.hp > p->phys.hp_max)
-    //     p->phys.hp = p->phys.hp_max;
-
     p->proj_cooldown_max = att.proj_cooldown_max;
     p->proj_def = att.projdef;
     p->proj_spawn = att.projspawn;
 
-    // if(boost_stats)
-    // {
-    //     p->phys.speed = speed;
-    //     p->phys.max_velocity = maxv;
-    //     p->proj_cooldown_max = pcooldown;
-    //     p->proj_spawn.num = pnum;
-    //     p->proj_spawn.spread = pspread;
-    //     p->proj_def.damage = pdamage;
-    // }
 }
 
 void player_ai_move_to_target(Player* p, Player* target)

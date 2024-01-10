@@ -179,23 +179,23 @@ void editor_draw()
             case 2: // players
             {
 
-                bool _boost = false;
-                _boost = boost_stats;
-                imgui_toggle_button(&_boost, "Boost Stats");
-                if(_boost != boost_stats)
-                {
-                    boost_stats = _boost;
-                    if(boost_stats)
-                    {
-                        player->phys.hp_max += 10;
-                        player->phys.hp += 10;
-                    }
-                    else
-                    {
-                        player->phys.hp_max -= 10;
-                        player->phys.hp -= 10;
-                    }
-                }
+                // bool _boost = false;
+                // _boost = boost_stats;
+                // imgui_toggle_button(&_boost, "Boost Stats");
+                // if(_boost != boost_stats)
+                // {
+                //     boost_stats = _boost;
+                //     if(boost_stats)
+                //     {
+                //         player->phys.hp_max += 10;
+                //         player->phys.hp += 10;
+                //     }
+                //     else
+                //     {
+                //         player->phys.hp_max -= 10;
+                //         player->phys.hp -= 10;
+                //     }
+                // }
 
                 imgui_toggle_button(&players_invincible, "Invincibility");
 

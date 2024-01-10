@@ -21,7 +21,6 @@
 #define PLAYER_NAME_MAX 16
 #define PLAYER_MAX_SKILLS 20
 
-// #define PLAYER_SWAPPING_GEM(p) (p->gauntlet_item.type != ITEM_NONE)
 
 #define PLAYER_GAUNTLET_MAX 8
 
