@@ -108,7 +108,7 @@ typedef struct NetPlayerInput NetPlayerInput;
 typedef struct
 {
     Vector2f pos;
-    float invulnerable_time;
+    float invulnerable_temp_time;
 } ObjectState;
 
 extern char* server_ip_address;

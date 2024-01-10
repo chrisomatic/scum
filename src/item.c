@@ -26,27 +26,6 @@ static uint16_t get_id()
     return id_counter++;
 }
 
-// static void item_func_nothing(Item* pu, Player* p)
-// {
-//     return;
-// }
-
-// static void item_func_socketable(Item* pu, Player* p)
-// {
-//     Item* it = &p->gauntlet[p->gauntlet_selection];
-//     player_drop_item(p, it);
-//     memcpy(it, pu, sizeof(Item));
-
-//     // for(int i = 0; i < p->gauntlet_slots; ++i)
-//     // {
-//     //     p->gauntlet_selection++;
-//     //     if(p->gauntlet_selection >= p->gauntlet_slots)
-//     //         p->gauntlet_selection = 0;
-//     //     if(p->gauntlet[p->gauntlet_selection].type == ITEM_NONE)
-//     //         break;
-//     // }
-//     pu->picked_up = true;
-// }
 
 static void item_func_chest(Item* pu, Player* p)
 {
@@ -95,7 +74,7 @@ static void item_func_new_level(Item* pu, Player* p)
 }
 
 // called when player consumes the item
-static void item_func_consumable_timed(Item* pu, Player* p)
+static void item_timed_func_consumable_start(Item* pu, Player* p)
 {
     float ttl = 10.0;
     switch(pu->type)
@@ -109,9 +88,21 @@ static void item_func_consumable_timed(Item* pu, Player* p)
                 ttl = 20.0;
                 break;
 
-            case ITEM_DRAGON_EGG:
             case ITEM_SHAMROCK:
+                ttl = 10.0;
+                p->invulnerable = true;
+                break;
+
+            case ITEM_DRAGON_EGG:
+                ttl = 30.0;
+                p->phys.hp_max += 4;
+                p->phys.hp = p->phys.hp_max;
+                break;
+
             case ITEM_RUBY_RING:
+                ttl = 30.0;
+                break;
+
             case ITEM_POTION_STRENGTH:
             case ITEM_POTION_SPEED:
             case ITEM_POTION_RANGE:
@@ -143,7 +134,7 @@ static void item_func_consumable_timed(Item* pu, Player* p)
 }
 
 // called after player consumes the item (every frame)
-static void item_timed_func_consumable(ItemType type, Player* p)
+static void item_timed_func_consumable_periodic(ItemType type, Player* p)
 {
     switch(type)
     {
@@ -166,21 +157,42 @@ static void item_timed_func_consumable(ItemType type, Player* p)
             p->proj_spawn.ghost_chance = 1.0;
             break;
 
-        case ITEM_DRAGON_EGG:
-        case ITEM_SHAMROCK:
+
         case ITEM_RUBY_RING:
+            p->proj_cooldown_max -= 0.08;
+            break;
+
         case ITEM_POTION_STRENGTH:
         case ITEM_POTION_SPEED:
         case ITEM_POTION_RANGE:
         case ITEM_POTION_PURPLE:
-            p->phys.speed *= 4.0;
-            p->phys.max_velocity *= 4.0;
+            p->phys.speed += 100.0;
+            p->phys.max_velocity += 100.0;
             break;
 
         default: break;
     }
 }
 
+static void item_timed_func_consumable_end(ItemType type, Player* p)
+{
+    switch(type)
+    {
+
+        case ITEM_DRAGON_EGG:
+        {
+            p->phys.hp_max -= 4;
+            if(p->phys.hp > p->phys.hp_max)
+                p->phys.hp = p->phys.hp_max;
+        } break;
+    
+        case ITEM_SHAMROCK:
+            p->invulnerable = false;
+            break;
+
+        default: break;
+    }
+}
 
 
 
@@ -273,7 +285,6 @@ void item_init()
         p->func = NULL;
 
         p->socketable = true;
-        // p->func = (void*)item_func_socketable;
 
         switch(p->type)
         {
@@ -285,10 +296,9 @@ void item_init()
             case ITEM_GEM_PURPLE:
             {
                 p->touchable = false;
-                p->func = (void*)item_func_consumable_timed;
-                p->timed_func = (void*)item_timed_func_consumable;
-                // p->socketable = true;
-                // p->func = (void*)item_func_gem;
+                p->func = (void*)item_timed_func_consumable_start;
+                p->timed_func = (void*)item_timed_func_consumable_periodic;
+                // p->timed_func_end = (void*)item_timed_func_consumable_end;
 
             } break;
             case ITEM_DRAGON_EGG:
@@ -300,10 +310,9 @@ void item_init()
             case ITEM_POTION_PURPLE:
             {
                 p->touchable = false;
-                p->func = (void*)item_func_consumable_timed;
-                p->timed_func = (void*)item_timed_func_consumable;
-                // p->socketable = false;
-                // p->func = NULL;
+                p->func = (void*)item_timed_func_consumable_start;
+                p->timed_func = (void*)item_timed_func_consumable_periodic;
+                p->timed_func_end = (void*)item_timed_func_consumable_end;
             } break;
             case ITEM_HEART_FULL:
             case ITEM_HEART_HALF:
@@ -314,7 +323,6 @@ void item_init()
             case ITEM_GAUNTLET_SLOT:
             {
                 p->touchable = false;
-                // p->socketable = false;
                 p->func = (void*)item_func_consumable;
             } break;
             case ITEM_CHEST:

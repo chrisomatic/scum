@@ -133,10 +133,19 @@ void editor_draw()
                     item_add(ITEM_NEW_LEVEL, player->phys.pos.x, player->phys.pos.y, player->curr_room);
                 }
 
-                if(imgui_button("Add Item"))
+                if(imgui_button("Add Random Item"))
                 {
                     item_add(item_rand(true), player->phys.pos.x, player->phys.pos.y, player->curr_room);
                 }
+
+                if(imgui_button("Add All Items"))
+                {
+                    for(int i = 0; i < ITEM_MAX; ++i)
+                    {
+                        item_add(i, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+                    }
+                }
+
 
                 TileType tt = level_get_tile_type_by_pos(room, wmx, wmy);
 

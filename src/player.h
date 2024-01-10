@@ -136,8 +136,10 @@ typedef struct
     float proj_cooldown_max;
 
     bool invulnerable;
-    float invulnerable_time;
-    float invulnerable_max;
+
+    bool invulnerable_temp;
+    float invulnerable_temp_time;
+    float invulnerable_temp_max;
 
     Item* highlighted_item;
     int highlighted_index;

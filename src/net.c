@@ -1650,8 +1650,8 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             pack_u8(pkt, p->sprite_index+p->anim.curr_frame);
             pack_u8(pkt, p->curr_room);
             pack_u8(pkt, p->phys.hp);
-            pack_bool(pkt, p->invulnerable);
-            pack_float(pkt, p->invulnerable_time);
+            pack_bool(pkt, p->invulnerable_temp);
+            pack_float(pkt, p->invulnerable_temp_time);
             pack_u8(pkt, (uint8_t)p->door);
             pack_bool(pkt, p->phys.dead);
             player_count++;
@@ -1690,8 +1690,8 @@ static void unpack_players(Packet* pkt, int* offset)
         p->sprite_index = unpack_u8(pkt, offset);
         uint8_t curr_room  = unpack_u8(pkt, offset);
         p->phys.hp  = unpack_u8(pkt, offset);
-        p->invulnerable = unpack_bool(pkt, offset);
-        float invulnerable_time = unpack_float(pkt, offset);
+        p->invulnerable_temp = unpack_bool(pkt, offset);
+        float invulnerable_temp_time = unpack_float(pkt, offset);
         p->door  = (Dir)unpack_u8(pkt, offset);
         p->phys.dead  = unpack_bool(pkt,offset);
 
@@ -1718,11 +1718,11 @@ static void unpack_players(Packet* pkt, int* offset)
 
         p->server_state_prior.pos.x = p->phys.pos.x;
         p->server_state_prior.pos.y = p->phys.pos.y;
-        p->server_state_prior.invulnerable_time = p->invulnerable_time;
+        p->server_state_prior.invulnerable_temp_time = p->invulnerable_temp_time;
 
         p->server_state_target.pos.x = pos.x;
         p->server_state_target.pos.y = pos.y;
-        p->server_state_target.invulnerable_time = invulnerable_time;
+        p->server_state_target.invulnerable_temp_time = invulnerable_temp_time;
 
         if(!prior_active[client_id])
         {

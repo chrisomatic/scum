@@ -379,10 +379,13 @@ void player_add_hp(Player* p, int hp)
     p->phys.hp = RANGE(p->phys.hp,0,p->phys.hp_max);
 }
 
-// ignores invulnerability
+// ignores temp invulnerability
 void player_hurt_no_inv(Player* p, int damage)
 {
     if(players_invincible)
+        return;
+
+    if(p->invulnerable)
         return;
 
     // printf("player_hurt_no_inv\n");
@@ -404,6 +407,9 @@ void player_hurt(Player* p, int damage)
     if(p->invulnerable)
         return;
 
+    if(p->invulnerable_temp)
+        return;
+
     player_add_hp(p,-damage);
 
     if(p->phys.hp == 0)
@@ -413,9 +419,9 @@ void player_hurt(Player* p, int damage)
     }
     else
     {
-        p->invulnerable = true;
-        p->invulnerable_time = 0.0;
-        p->invulnerable_max = 1.0;
+        p->invulnerable_temp = true;
+        p->invulnerable_temp_time = 0.0;
+        p->invulnerable_temp_max = 1.0;
     }
 }
 
@@ -976,15 +982,20 @@ void player_update(Player* p, float dt)
         if(p->timed_items[i] == ITEM_NONE)
             continue;
 
+        ItemProps* pr = &item_props[p->timed_items[i]];
         p->timed_items_ttl[i] -= dt;
         if(p->timed_items_ttl[i] <= 0)
         {
+            if(pr->timed_func_end)
+            {
+                pr->timed_func_end(p->timed_items[i], (void*)p);
+            }
+
             p->timed_items_ttl[i] = 0.0;
             p->timed_items[i] = ITEM_NONE;
             continue;
         }
 
-        ItemProps* pr = &item_props[p->timed_items[i]];
         if(pr->timed_func)
         {
             pr->timed_func(p->timed_items[i], (void*)p);
@@ -1366,12 +1377,12 @@ void player_update(Player* p, float dt)
     ptext->y = (p->phys.pos.y - p->phys.pos.z/2.0) - p->phys.height - ptext->text_height;
     text_list_update(ptext, dt);
 
-    if(p->invulnerable)
+    if(p->invulnerable_temp)
     {
-        p->invulnerable_time += dt;
-        if(p->invulnerable_time >= p->invulnerable_max)
+        p->invulnerable_temp_time += dt;
+        if(p->invulnerable_temp_time >= p->invulnerable_temp_max)
         {
-            p->invulnerable = false;
+            p->invulnerable_temp = false;
         }
     }
 
@@ -1382,6 +1393,11 @@ void player_update(Player* p, float dt)
     p->phys.base_friction = att.base_friction;
     p->phys.mass = att.mass;
     p->phys.elasticity = att.elasticity;
+
+    // p->phys.hp_max = att.hp_max;
+    // if(p->phys.hp > p->phys.hp_max)
+    //     p->phys.hp = p->phys.hp_max;
+
     p->proj_cooldown_max = att.proj_cooldown_max;
     p->proj_def = att.projdef;
     p->proj_spawn = att.projspawn;
@@ -1904,7 +1920,7 @@ void player_draw(Player* p)
 
     Room* room = level_get_room_by_index(&level, (int)p->curr_room);
 
-    bool blink = p->invulnerable ? ((int)(p->invulnerable_time * 100)) % 2 == 0 : false;
+    bool blink = p->invulnerable_temp ? ((int)(p->invulnerable_temp_time * 100)) % 2 == 0 : false;
     float opacity = p->phys.dead ? 0.3 : 1.0;
 
     opacity = blink ? 0.3 : opacity;
@@ -1937,7 +1953,7 @@ void player_lerp(Player* p, float dt)
 
     // printf("[lerping player] t: %.2f, x: %.2f -> %.2f = %.2f\n", t, p->server_state_prior.pos.x, p->server_state_target.pos.x, lp.x);
 
-    p->invulnerable_time = lerp(p->server_state_prior.invulnerable_time, p->server_state_target.invulnerable_time, t);
+    p->invulnerable_temp_time = lerp(p->server_state_prior.invulnerable_temp_time, p->server_state_target.invulnerable_temp_time, t);
 
 
     if(p == player)

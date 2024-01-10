@@ -47,8 +47,9 @@ typedef struct
     uint8_t sprite_index;
     bool touchable;
     bool socketable;
-    item_func func;
-    item_timed_func timed_func; // called every frame!
+    item_func func; //start
+    item_timed_func timed_func; // called every frame
+    item_timed_func timed_func_end; //end
 } ItemProps;
 
 typedef struct
