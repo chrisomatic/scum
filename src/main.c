@@ -103,7 +103,8 @@ enum
 PlayerInput menu_keys[MENU_KEY_MAX] = {0};
 int menu_selected_option = 0;
 const char* menu_options[] = {
-    "Play Local",
+    "Continue Game",
+    "New Game",
     "Room Editor",
     "Play Online",
     "Host Local Server",
@@ -223,6 +224,7 @@ void set_game_state(GameState state)
             } break;
             case GAME_STATE_MENU:
             {
+                menu_selected_option = 0;
                 show_tile_grid = false;
                 debug_enabled = false;
                 bool diff = room_file_load_all(false);
@@ -571,9 +573,12 @@ void game_generate_level(unsigned int _seed, int _rank)
     level_seed = _seed;
     level_rank = _rank;
 
+DEBUG();
     creature_clear_all();
+DEBUG();
     item_clear_all();
 
+DEBUG();
     level = level_generate(level_seed, level_rank);
 
     LOGI("  Valid Rooms");
@@ -585,15 +590,15 @@ void game_generate_level(unsigned int _seed, int _rank)
             if(room->valid)
             {
                 char* room_fname = room_files[room_list[room->layout].file_index];
-                if(strcmp("geizer_3door.room", room_fname) == 0)
-                {
-                    if(room->doors[DIR_RIGHT])
-                    {
-                        LOGE("Door on the right!");
-                        got_bad_seed = true;
-                        // window_set_close(1);
-                    }
-                }
+                // if(strcmp("geizer_3door.room", room_fname) == 0)
+                // {
+                //     if(room->doors[DIR_RIGHT])
+                //     {
+                //         LOGE("Door on the right!");
+                //         got_bad_seed = true;
+                //         // window_set_close(1);
+                //     }
+                // }
                 LOGI("    %2u) %2d, %-2d  %s", room->index, x, y, room_fname);
             }
         }
@@ -959,8 +964,16 @@ void update(float dt)
         {
             const char* s = menu_options[menu_selected_option];
 
-            if(STR_EQUAL(s, "Play Local"))
+            if(STR_EQUAL(s, "Continue Game"))
             {
+                role = ROLE_LOCAL;
+                set_game_state(GAME_STATE_PLAYING);
+            }
+            else if(STR_EQUAL(s, "New Game"))
+            {
+                player_init();
+                game_generate_level(rand(), 1);
+
                 role = ROLE_LOCAL;
                 set_game_state(GAME_STATE_PLAYING);
             }
@@ -1328,7 +1341,7 @@ void draw()
     }
 
     // draw room
-    Room* room = level_get_room_by_index(&level, player->curr_room);
+    // Room* room = level_get_room_by_index(&level, player->curr_room);
     if(game_state == GAME_STATE_PLAYING)
     {
         player_draw_room_transition();
@@ -1336,6 +1349,7 @@ void draw()
         if(player->curr_room == player->transition_room)
         {
             Room* room = level_get_room_by_index(&level,player->curr_room);
+            if(!room) printf("room is null\n");
             level_draw_room(room, NULL, 0, 0);
         }
 
@@ -1413,7 +1427,11 @@ void draw()
     // draw walls
     if(debug_enabled && show_walls && game_state == GAME_STATE_PLAYING)
     {
-        room_draw_walls(room);
+        if(player->curr_room == player->transition_room)
+        {
+            Room* room = level_get_room_by_index(&level,player->curr_room);
+            room_draw_walls(room);
+        }
     }
 
     // // margins

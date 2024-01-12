@@ -114,9 +114,6 @@ typedef struct
     ProjectileDef proj_def;
     ProjectileSpawn proj_spawn;
 
-    ProjectileDef proj_def_gauntlet;
-    ProjectileSpawn proj_spawn_gauntlet;
-
     GFXAnimation anim;
 
     uint8_t sprite_index;
@@ -163,8 +160,6 @@ extern Player* player;
 extern Player* player2;
 extern int xp_levels[];
 extern char* class_strs[];
-
-extern bool boost_stats;
 
 
 extern int skill_selection;

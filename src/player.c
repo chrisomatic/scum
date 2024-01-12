@@ -21,7 +21,6 @@ int skill_selection = 0;
 int skill_choices[MAX_SKILL_CHOICES] = {0};
 int num_skill_choices = 0;
 
-bool boost_stats = false;
 
 char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 
@@ -98,6 +97,9 @@ void player_init()
         p->phys.hp_max = 6;
         p->phys.hp = p->phys.hp_max;
 
+        p->invulnerable = false;
+        p->invulnerable_temp_time = false;
+
         p->class = PLAYER_CLASS_SPACEMAN;
 
         player_set_sprite_index(p, 4);
@@ -137,12 +139,17 @@ void player_init()
         p->anim.frame_sequence[3] = 3;
 
         p->gauntlet_selection = 0;
-        p->gauntlet_slots = MIN(3,PLAYER_GAUNTLET_MAX);
+        p->gauntlet_slots = MIN(5,PLAYER_GAUNTLET_MAX);
         for(int j = 0; j < PLAYER_GAUNTLET_MAX; ++j)
         {
             p->gauntlet[j].type = ITEM_NONE;
+            p->gauntlet[j].type = item_rand(false);
         }
         p->gauntlet_item.type = ITEM_NONE;
+
+        p->xp = 0;
+        p->level = 0;
+        p->new_levels = 0;
 
         for(int j = 0; j < PLAYER_MAX_SKILLS; ++j)
         {
@@ -167,27 +174,48 @@ void player_drop_item(Player* p, Item* it)
     if(it == NULL) return;
     if(it->type == ITEM_NONE) return;
 
+    // float itr = it->phys.radius;
+    float itr = 16;
+
     float px = p->phys.pos.x;
     float py = p->phys.pos.y;
-    float r = p->phys.radius + it->phys.radius + 2.0;
+    float r = p->phys.radius + itr + 2.0;
     float nx = px;
     float ny = py;
 
-    Dir dirs[4] = {DIR_DOWN, DIR_RIGHT, DIR_LEFT, DIR_UP};
-    for(int i = 0; i < 4; ++i)
-    {
-        Vector2i o = get_dir_offsets(dirs[i]);
-        nx = px + o.x * r;
-        ny = py + o.y * r;
+    Room* room = level_get_room_by_index(&level, (int)player->curr_room);
+    if(!room) printf("room is null!\n");
 
-        Rect rect = RECT(nx, ny, it->phys.radius, it->phys.radius);
+    // Dir dirs[4] = {DIR_DOWN, DIR_RIGHT, DIR_LEFT, DIR_UP};
+    // for(int i = 0; i < 4; ++i)
+    for(int d = 0; d < DIR_NONE; ++d)
+    {
+        // Vector2i o = get_dir_offsets(dirs[i]);
+        Vector2i o = get_dir_offsets(d);
+        float _nx = px + o.x * r;
+        float _ny = py + o.y * r;
+
+        Vector2i tile_coords = level_get_room_coords_by_pos(_nx, _ny);
+
+        Rect rect = RECT(_nx, _ny, itr, itr);
         Vector2f l = limit_rect_pos(&player_area, &rect);
-        // print_rect(&rect);
-        if(FEQ0(l.x) && FEQ0(l.y))
+        TileType tt = level_get_tile_type_by_pos(room, _nx, _ny);
+        if(FEQ0(l.x) && FEQ0(l.y) && IS_SAFE_TILE(tt))
         {
             // printf("%s is good\n", get_dir_name(dirs[i]));
-            break;
+            nx = _nx;
+            ny = _ny;
+
+            if(!item_is_on_tile(room, tile_coords.x, tile_coords.y))
+            {
+                break;
+            }
         }
+        // else
+        // {
+        //     printf("no good: %s\n", get_tile_name(tt));
+        //     print_rect(&rect);
+        // }
     }
     // printf("dropping item at %.2f, %.2f\n", nx, ny);
     item_add(it->type, nx, ny, p->curr_room);
@@ -1309,7 +1337,6 @@ void player_update(Player* p, float dt)
 
             if(!p->phys.dead)
             {
-                // projectile_add(&p->phys, p->curr_room, &p->proj_def_gauntlet, &p->proj_spawn_gauntlet, 0x0050A0FF, p->phys.rotation_deg, true);
                 projectile_add(&p->phys, p->curr_room, &p->proj_def, &p->proj_spawn, 0x0050A0FF, p->phys.rotation_deg, true);
             }
             // text_list_add(text_lst, 5.0, "projectile");

@@ -36,7 +36,11 @@
 
 #define BOOLSTR(c) ((c) ? "true" : "false")
 
+#if 1
 #define DEBUG()   printf("%d %s %s()\n", __LINE__, __FILE__, __func__)
+#else
+#define DEBUG()
+#endif
 
 typedef enum
 {

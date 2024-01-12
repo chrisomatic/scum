@@ -220,9 +220,9 @@ static void item_func_consumable(Item* pu, Player* p)
         case ITEM_COSMIC_HEART_FULL:
         {
             p->phys.hp_max += 2;
+            pu->picked_up = true;
             player_add_hp(p,2);
             // printf("hp_max: %d\n",p->phys.hp_max);
-            pu->picked_up = true;
         } break;
         case ITEM_COSMIC_HEART_HALF:
         {

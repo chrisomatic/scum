@@ -1011,6 +1011,7 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
 
 void room_draw_walls(Room* room)
 {
+    if(!room) return;
     for(int i = 0; i < room->wall_count; ++i)
     {
         Wall* wall = &room->walls[i];
@@ -1049,6 +1050,7 @@ Level level_generate(unsigned int seed, int rank)
     room_count_treasure = 0;
     room_count_boss = 0;
 
+DEBUG();
     for(int i = 0; i < room_list_count; ++i)
     {
         RoomFileData* rfd = &room_list[i];
@@ -1072,10 +1074,13 @@ Level level_generate(unsigned int seed, int rank)
     printf("   # treasure rooms: %d\n",room_count_treasure);
     printf("   # boss rooms: %d\n",room_count_boss);
 
+DEBUG();
     item_clear_all();
+DEBUG();
     creature_clear_all();
     min_depth_reached = false;
 
+DEBUG();
     generate_rooms(&level, level.start.x, level.start.y, DIR_NONE, 0);
 
     for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
@@ -1090,7 +1095,9 @@ Level level_generate(unsigned int seed, int rank)
         }
     }
 
+DEBUG();
     generate_walls(&level);
+DEBUG();
     level_print(&level);
 
     return level;
