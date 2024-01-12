@@ -454,9 +454,205 @@ void level_generate_room_outer_walls(Room* room)
     }
 }
 
+static void add_wall(Room* room, Dir dir, WallType t, Vector2f* p0, Vector2f* p1)
+{
+    Wall* w = &room->walls[room->wall_count++];
+
+    w->dir = dir;
+    w->type = t;
+    w->p0.x = p0->x; w->p0.y = p0->y;
+    w->p1.x = p1->x; w->p1.y = p1->y;
+
+    p0->x = 0.0; p0->y = 0.0;
+    p1->x = 0.0; p1->y = 0.0;
+}
+
 void generate_walls(Level* level)
 {
-    const float wall_offset = 7.0;
+    int x0 = room_area.x - room_area.w/2.0;
+    int y0 = room_area.y - room_area.h/2.0;
+
+    for(int j = 0; j < MAX_ROOMS_GRID_Y; ++j)
+    {
+        for(int i = 0; i < MAX_ROOMS_GRID_X; ++i)
+        {
+            Room* room = &level->rooms[i][j];
+
+            if(room->valid)
+            {
+                level_generate_room_outer_walls(room);
+
+                RoomFileData* rdata = &room_list[room->layout];
+
+                // create horizontal walls
+                for(int rj = 0; rj < ROOM_TILE_SIZE_Y; ++rj)
+                {
+                    Vector2f up0 = {0.0, 0.0}; Vector2f up1 = {0.0, 0.0};
+                    Vector2f dn0 = {0.0, 0.0}; Vector2f dn1 = {0.0, 0.0};
+
+                    TileType tt;
+                    TileType tt_prior;
+
+                    for(int ri = 0; ri < ROOM_TILE_SIZE_X; ++ri)
+                    {
+                        tt_prior = tt;
+                        tt = rdata->tiles[ri][rj];
+
+                        // check up and down
+                        TileType tt_up = rdata->tiles[ri][rj-1];
+                        TileType tt_dn = rdata->tiles[ri][rj+1];
+
+                        bool _up = (tt == TILE_PIT && tt_up != TILE_PIT) || (tt == TILE_BOULDER && tt_up != TILE_BOULDER);
+                        bool _dn = (tt == TILE_PIT && tt_dn != TILE_PIT) || (tt == TILE_BOULDER && tt_dn != TILE_BOULDER);
+
+                        if(_up)
+                        {
+                            // start at top left
+                            Vector2f _p0 = {x0+TILE_SIZE*(ri+1), y0+TILE_SIZE*(rj+1)};
+                            Vector2f _p1 = {x0+TILE_SIZE*(ri+1) + TILE_SIZE, y0+TILE_SIZE*(rj+1)};
+
+                            if(up0.x == 0.0 && up0.y == 0.0)
+                            {
+                                // first segment
+                                up0.x = _p0.x; up0.y = _p0.y;
+                                up1.x = _p1.x; up1.y = _p1.y;
+                            }
+                            else if(up1.x == _p0.x && up1.y == _p0.y)
+                            {
+                                // continue segment
+                                up1.x = _p1.x; up1.y = _p1.y;
+                            }
+                        }
+                        else if(up0.x > 0.0 && up0.y > 0.0)
+                        {
+                            add_wall(room, DIR_UP, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &up0, &up1);
+                        }
+
+                        if(_dn)
+                        {
+                            // start at top left
+                            Vector2f _p0 = {x0+TILE_SIZE*(ri+1), y0+TILE_SIZE*(rj+1) + TILE_SIZE};
+                            Vector2f _p1 = {x0+TILE_SIZE*(ri+1) + TILE_SIZE, y0+TILE_SIZE*(rj+1) + TILE_SIZE};
+
+                            if(dn0.x == 0.0 && dn0.y == 0.0)
+                            {
+                                // first segment
+                                dn0.x = _p0.x; dn0.y = _p0.y;
+                                dn1.x = _p1.x; dn1.y = _p1.y;
+                            }
+                            else if(dn1.x == _p0.x && dn1.y == _p0.y)
+                            {
+                                // continue segment
+                                dn1.x = _p1.x; dn1.y = _p1.y;
+                            }
+                        }
+                        else if(dn0.x > 0.0 && dn0.y > 0.0)
+                        {
+                            add_wall(room, DIR_DOWN, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &dn0, &dn1);
+                        }
+                    }
+
+                    if(up0.x > 0.0 && up0.y > 0.0)
+                    {
+                        add_wall(room, DIR_UP, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &up0, &up1);
+                    }
+
+                    if(dn0.x > 0.0 && dn0.y > 0.0)
+                    {
+                        add_wall(room, DIR_DOWN, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &dn0, &dn1);
+                    }
+
+                }
+                
+                // create vertical walls
+                for(int ri = 0; ri < ROOM_TILE_SIZE_X; ++ri)
+                {
+                    Vector2f left0 = {0.0, 0.0}; Vector2f left1 = {0.0, 0.0};
+                    Vector2f right0 = {0.0, 0.0}; Vector2f right1 = {0.0, 0.0};
+
+                    TileType tt;
+                    TileType tt_prior;
+
+                    for(int rj = 0; rj < ROOM_TILE_SIZE_Y; ++rj)
+                    {
+                        tt_prior = tt;
+                        tt = rdata->tiles[ri][rj];
+
+                        // check left and down
+                        TileType tt_left = rdata->tiles[ri-1][rj];
+                        TileType tt_right = rdata->tiles[ri+1][rj];
+
+                        bool _left  = (tt == TILE_PIT && tt_left != TILE_PIT) || (tt == TILE_BOULDER && tt_left != TILE_BOULDER);
+                        bool _right = (tt == TILE_PIT && tt_right != TILE_PIT) || (tt == TILE_BOULDER && tt_right != TILE_BOULDER);
+
+                        if(_left)
+                        {
+                            // start at top left
+                            Vector2f _p0 = {x0+TILE_SIZE*(ri+1), y0+TILE_SIZE*(rj+1)};
+                            Vector2f _p1 = {x0+TILE_SIZE*(ri+1), y0+TILE_SIZE*(rj+1) + TILE_SIZE};
+
+                            if(left0.x == 0.0 && left0.y == 0.0)
+                            {
+                                // first segment
+                                left0.x = _p0.x; left0.y = _p0.y;
+                                left1.x = _p1.x; left1.y = _p1.y;
+                            }
+                            else if(left1.x == _p0.x && left1.y == _p0.y)
+                            {
+                                // continue segment
+                                left1.x = _p1.x; left1.y = _p1.y;
+                            }
+                        }
+                        else if(left0.x > 0.0 && left0.y > 0.0)
+                        {
+                            add_wall(room, DIR_LEFT, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &left0, &left1);
+                        }
+
+                        if(_right)
+                        {
+                            // start at top left
+                            Vector2f _p0 = {x0+TILE_SIZE*(ri+1) + TILE_SIZE, y0+TILE_SIZE*(rj+1)};
+                            Vector2f _p1 = {x0+TILE_SIZE*(ri+1) + TILE_SIZE, y0+TILE_SIZE*(rj+1) + TILE_SIZE};
+
+                            if(right0.x == 0.0 && right0.y == 0.0)
+                            {
+                                // first segment
+                                right0.x = _p0.x; right0.y = _p0.y;
+                                right1.x = _p1.x; right1.y = _p1.y;
+                            }
+                            else if(right1.x == _p0.x && right1.y == _p0.y)
+                            {
+                                // continue segment
+                                right1.x = _p1.x; right1.y = _p1.y;
+                            }
+                        }
+                        else if(right0.x > 0.0 && right0.y > 0.0)
+                        {
+                            add_wall(room, DIR_RIGHT, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &right0, &right1);
+                        }
+                    }
+
+                    if(left0.x > 0.0 && left0.y > 0.0)
+                    {
+                        add_wall(room, DIR_LEFT, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &left0, &left1);
+                    }
+
+                    if(right0.x > 0.0 && right0.y > 0.0)
+                    {
+                        add_wall(room, DIR_RIGHT, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &right0, &right1);
+                    }
+                }
+            }
+        }
+    }
+
+    /*
+    */
+
+}
+
+void generate_walls_old(Level* level)
+{
     int x0 = room_area.x - room_area.w/2.0;
     int y0 = room_area.y - room_area.h/2.0;
 
@@ -551,6 +747,136 @@ void generate_walls(Level* level)
             }
         }
     }
+
+    /*
+    // combine and simplify walls
+    for(int j = 0; j < MAX_ROOMS_GRID_Y; ++j)
+    {
+        for(int i = 0; i < MAX_ROOMS_GRID_X; ++i)
+        {
+            Room* room = &level->rooms[i][j];
+
+            if(room->valid)
+            {
+                Wall combined_walls[MAX_WALLS_PER_ROOM] = {0};
+                int combined_walls_count = 0;
+
+                bool combined[MAX_WALLS_PER_ROOM] = {false};
+
+                for(int i = 0; i < room->wall_count; ++i)
+                {
+                    if(combined[i]) // already considered
+                        continue;
+
+                    Wall* wi = &room->walls[i];
+
+                    combined[i] = true;
+
+                    Wall walls_to_combine[20] = {0};
+                    int walls_to_combine_count = 0;
+
+                    for(int j = 0; j < room->wall_count; ++j)
+                    {
+                        Wall* wj = &room->walls[j];
+
+                        if(wi == wj)
+                            continue;
+
+                        if(wi->dir != wj->dir)
+                            continue;
+
+                        bool colinear = false;
+
+                        if(wi->dir == DIR_UP || wi->dir == DIR_DOWN)
+                            colinear = (wi->p0.y == wj->p0.y);
+                        else
+                            colinear = (wi->p0.x == wj->p0.x);
+
+                        if(!colinear)
+                            continue;
+
+                        // wall is colinear, add to list of walls to combine
+                        memcpy(&walls_to_combine[walls_to_combine_count],wj,sizeof(Wall));
+                        walls_to_combine_count++;
+
+                        combined[j] = true;
+                    }
+
+                    if(walls_to_combine_count == 0)
+                    {
+                        // add single segment wall to new walls_list
+                        memcpy(&combined_walls[combined_walls_count++],wi,sizeof(Wall));
+                        continue;
+                    }
+
+                    // add wi to walls to combine list before sorting
+                    memcpy(&walls_to_combine[walls_to_combine_count],wi,sizeof(Wall));
+                    walls_to_combine_count++;
+
+                    // insertion sort walls_to_combine
+                    int k;
+                    Wall key;
+
+                    for (int j = 1; j < walls_to_combine_count; ++j) 
+                    {
+                        memcpy(&key, &walls_to_combine[j], sizeof(Wall));
+                        k = j - 1;
+
+                        if(wi->dir == DIR_UP || wi->dir == DIR_DOWN)
+                        {
+                            while (k >= 0 && (walls_to_combine[k].p0.x > key.p0.x))
+                            {
+                                memcpy(&walls_to_combine[k+1], &walls_to_combine[k], sizeof(Wall));
+                                k = k - 1;
+                            }
+                        }
+                        else
+                        {
+                            while (k >= 0 && (walls_to_combine[k].p0.y > key.p0.y))
+                            {
+                                memcpy(&walls_to_combine[k+1], &walls_to_combine[k], sizeof(Wall));
+                                k = k - 1;
+                            }
+                        }
+                        memcpy(&walls_to_combine[k+1], &key, sizeof(Wall));
+                    }
+#if 0
+                    printf("Walls to combine: %d\n", walls_to_combine_count);
+                    for(int j = 0; j < walls_to_combine_count; ++j)
+                    {
+                        Wall* w = &walls_to_combine[j];
+                        printf("Wall %d: p0: %f %f, p1: %f %f\n",j+1,w->p0.x, w->p0.y, w->p1.x, w->p1.y);
+                    }
+#endif
+                    if(wi->dir == DIR_UP || wi->dir == DIR_DOWN)
+                    {
+                        float x0 = walls_to_combine[0].p0.x
+                        float x1 = walls_to_combine[0].p1.x
+
+                        for(int j = 1; j < walls_to_combine_count; ++j)
+                        {
+                            if(walls_to_combine[j].p0.x == walls_to_combine[j-1].p1.x)
+                            {
+                                x1 = walls_to_combine[j].p0.x;
+                            }
+                            else
+                            {
+                                // gap. Add wall to combined walls list, reset x0
+                                Wall* cw = &combined_walls[combined_walls_count++];
+                                memcpy(cw,ci,sizeof(Wall));
+
+                                cw.p0.x = x0;
+                                cw.p1.x = x1;
+
+                                x0 = walls_to_combine[j].p0.x;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+*/
 }
 
 void level_handle_room_collision(Room* room, Physics* phys, int entity_type)
