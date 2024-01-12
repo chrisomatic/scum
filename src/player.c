@@ -796,13 +796,6 @@ void player_update(Player* p, float dt)
         if(player->curr_room != player->transition_room) return;
     }
 
-    bool ai = false;
-    if(p != player && p != player2)
-    {
-        ai = true;
-        player_ai_move_to_target(p, player);
-    }
-
     float prior_x = p->phys.pos.x;
     float prior_y = p->phys.pos.y;
 
@@ -1379,6 +1372,7 @@ void player_update(Player* p, float dt)
 
     ptext->x = p->phys.pos.x - p->phys.radius/2.0 - 3.0;
     ptext->y = (p->phys.pos.y - p->phys.pos.z/2.0) - p->phys.height - ptext->text_height;
+
     text_list_update(ptext, dt);
 
     if(p->invulnerable_temp)
@@ -1389,7 +1383,6 @@ void player_update(Player* p, float dt)
             p->invulnerable_temp = false;
         }
     }
-
 
     p->phys.speed = att.speed;
     p->phys.speed_factor = att.speed_factor;
@@ -1937,9 +1930,10 @@ void player_lerp(Player* p, float dt)
     // printf("[lerp prior]  %.2f, %.2f\n", p->server_state_prior.pos.x, p->server_state_prior.pos.y);
     // printf("[lerp target] %.2f, %.2f\n", p->server_state_target.pos.x, p->server_state_target.pos.y);
 
-    Vector2f lp = lerp2f(&p->server_state_prior.pos, &p->server_state_target.pos, t);
+    Vector3f lp = lerp3f(&p->server_state_prior.pos, &p->server_state_target.pos, t);
     p->phys.pos.x = lp.x;
     p->phys.pos.y = lp.y;
+    p->phys.pos.z = lp.z;
 
     // printf("[lerping player] t: %.2f, x: %.2f -> %.2f = %.2f\n", t, p->server_state_prior.pos.x, p->server_state_target.pos.x, lp.x);
 

@@ -554,6 +554,8 @@ void start_server()
     decal_init();
     item_init();
 
+    room_editor_init();
+
     srand(time(0));
     level_seed = rand();
 

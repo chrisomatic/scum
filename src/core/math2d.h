@@ -123,6 +123,7 @@ void mult_mat4(Matrix* m1, Matrix* m2, Matrix* result);
 void print_matrix(Matrix* mat);
 
 Vector2f vec2(float x, float y);
+Vector3f vec3(float x, float y, float z);
 
 float vec_dot(Vector2f a, Vector2f b);
 

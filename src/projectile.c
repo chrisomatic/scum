@@ -263,25 +263,28 @@ void projectile_kill(Projectile* proj)
     ParticleEffect splash = {0};
     memcpy(&splash, &particle_effects[EFFECT_SPLASH], sizeof(ParticleEffect));
 
-    if(!proj->from_player)
+    if(role != ROLE_SERVER)
     {
-        // make splash effect red
-        splash.color1 = 0x00CC5050;
-        splash.color2 = 0x00FF8080;
-        splash.color3 = 0x00550000;
-    }
+        if(!proj->from_player)
+        {
+            // make splash effect red
+            splash.color1 = 0x00CC5050;
+            splash.color2 = 0x00FF8080;
+            splash.color3 = 0x00550000;
+        }
 
-    if(proj->def.scale > 0.25)
-    {
-        splash.scale.init_min *= proj->def.scale;
-        splash.scale.init_max *= proj->def.scale;
-        ParticleSpawner* ps = particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &splash, 0.5, true, false);
-        ps->userdata = (int)proj->curr_room;
-    }
+        if(proj->def.scale > 0.25)
+        {
+            splash.scale.init_min *= proj->def.scale;
+            splash.scale.init_max *= proj->def.scale;
+            ParticleSpawner* ps = particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &splash, 0.5, true, false);
+            ps->userdata = (int)proj->curr_room;
+        }
 
-    if(proj->def.explosive)
-    {
-        explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, proj->curr_room, proj->from_player);
+        if(proj->def.explosive)
+        {
+            explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, proj->curr_room, proj->from_player);
+        }
     }
 
     if(proj->def.cluster)
@@ -502,9 +505,10 @@ void projectile_lerp(Projectile* p, double dt)
     float tick_time = 1.0/TICK_RATE;
     float t = (p->lerp_t / tick_time);
 
-    Vector2f lp = lerp2f(&p->server_state_prior.pos,&p->server_state_target.pos,t);
+    Vector3f lp = lerp3f(&p->server_state_prior.pos,&p->server_state_target.pos,t);
     p->phys.pos.x = lp.x;
     p->phys.pos.y = lp.y;
+    p->phys.pos.z = lp.z;
 
     //printf("prior_pos: %f %f, target_pos: %f %f, pos: %f %f, t: %f\n",p->server_state_prior.pos.x, p->server_state_prior.pos.y, p->server_state_target.pos.x, p->server_state_target.pos.y, p->phys.pos.x, p->phys.pos.y, t);
 }

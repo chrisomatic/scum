@@ -128,6 +128,7 @@ bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path
     vsprintf(filename, path, args);
     va_end(args);
 
+
     struct stat stats = {0};
     if(stat(filename, &stats) == 0)
     {
@@ -213,6 +214,7 @@ bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path
 
                 for(int i = 0; i < TILE_MAX; ++i)
                 {
+                    
                     if(STR_EQUAL(line, tile_names[i]))
                     {
                         tile_mapping[tmi++] = i;

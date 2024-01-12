@@ -676,6 +676,12 @@ Vector2f vec2(float x, float y)
     return v;
 }
 
+Vector3f vec3(float x, float y, float z)
+{
+    Vector3f v = {x,y,z};
+    return v;
+}
+
 float get_angle_between_vectors_rad(Vector3f* a, Vector3f* b)
 {
     float ma = magn(*a);

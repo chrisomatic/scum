@@ -638,9 +638,10 @@ void creature_lerp(Creature* c, float dt)
     float t = (c->lerp_t / tick_time);
 
 
-    Vector2f lp = lerp2f(&c->server_state_prior.pos, &c->server_state_target.pos, t);
+    Vector3f lp = lerp3f(&c->server_state_prior.pos, &c->server_state_target.pos, t);
     c->phys.pos.x = lp.x;
     c->phys.pos.y = lp.y;
+    c->phys.pos.z = lp.z;
 
     // printf("%.1f | %.1f -> %.1f  =  %.1f\n", t, c->server_state_prior.pos.x, c->server_state_target.pos.x, lp.x);
 }
