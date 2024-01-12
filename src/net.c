@@ -83,8 +83,6 @@ static NetPlayerInput net_player_inputs[INPUT_QUEUE_MAX]; // shared
 static int input_count = 0;
 static int inputs_per_packet = 1.0; //(TARGET_FPS/TICK_RATE);
 
-
-
 static inline void pack_bool(Packet* pkt, bool d);
 static inline void pack_u8(Packet* pkt, uint8_t d);
 static inline void pack_u8_at(Packet* pkt, uint8_t d, int index);
@@ -117,7 +115,8 @@ static void pack_projectiles(Packet* pkt, ClientInfo* cli);
 static void unpack_projectiles(Packet* pkt, int* offset);
 static void pack_decals(Packet* pkt, ClientInfo* cli);
 static void unpack_decals(Packet* pkt, int* offset);
-
+static void pack_other(Packet* pkt, ClientInfo* cli);
+static void unpack_other(Packet* pkt, int* offset);
 
 static uint64_t rand64(void)
 {
@@ -450,6 +449,7 @@ static void server_send(PacketType type, ClientInfo* cli)
             pack_creatures(&pkt, cli);
             pack_projectiles(&pkt, cli);
             pack_decals(&pkt, cli);
+            pack_other(&pkt, cli);
             //print_packet(&pkt, true);
 
             if(memcmp(&cli->prior_state_pkt.data, &pkt.data, pkt.data_len) == 0)
@@ -514,6 +514,10 @@ static void server_simulate()
 
             cli->input_count = 0;
         }
+
+
+        Room* room = level_get_room_by_index(&level, (int)p->curr_room);
+        room->doors_locked = (creature_get_room_count(p->curr_room) != 0);
     }
 
     projectile_update(dt);
@@ -1259,6 +1263,7 @@ void net_client_update()
                     unpack_creatures(&srvpkt, &offset);
                     unpack_projectiles(&srvpkt, &offset);
                     unpack_decals(&srvpkt, &offset);
+                    unpack_other(&srvpkt, &offset);
 
                     client.player_count = player_get_active_count();
                 } break;
@@ -1953,4 +1958,20 @@ static void unpack_decals(Packet* pkt, int* offset)
         d.room = unpack_u8(pkt, offset);
         decal_add(d);
     }
+}
+
+static void pack_other(Packet* pkt, ClientInfo* cli)
+{
+    Room* room = level_get_room_by_index(&level, (int)players[cli->client_id].curr_room);
+
+    // doors locked
+    pack_bool(pkt, room->doors_locked);
+}
+
+static void unpack_other(Packet* pkt, int* offset)
+{
+    Room* room = level_get_room_by_index(&level, (int)player->curr_room);
+
+    // doors locked
+    room->doors_locked = unpack_bool(pkt, offset);
 }

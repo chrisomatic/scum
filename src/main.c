@@ -575,12 +575,9 @@ void game_generate_level(unsigned int _seed, int _rank)
     level_seed = _seed;
     level_rank = _rank;
 
-DEBUG();
     creature_clear_all();
-DEBUG();
     item_clear_all();
 
-DEBUG();
     level = level_generate(level_seed, level_rank);
 
     LOGI("  Valid Rooms");
