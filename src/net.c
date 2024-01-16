@@ -17,6 +17,7 @@
 #include "creature.h"
 #include "level.h"
 #include "particles.h"
+#include "effects.h"
 #include "projectile.h"
 
 //#define SERVER_PRINT_SIMPLE 1
@@ -38,6 +39,10 @@
 #define PING_PERIOD 3.0f
 #define DISCONNECTION_TIMEOUT 7.0f // seconds
 #define INPUT_QUEUE_MAX 16
+#define MAX_NET_EVENTS 256
+
+
+
 
 typedef struct
 {
@@ -69,6 +74,8 @@ struct
     Address address;
     NodeInfo info;
     ClientInfo clients[MAX_CLIENTS];
+    NetEvent events[MAX_NET_EVENTS];
+    int event_count;
     int num_clients;
 } server = {0};
 
@@ -117,6 +124,8 @@ static void pack_decals(Packet* pkt, ClientInfo* cli);
 static void unpack_decals(Packet* pkt, int* offset);
 static void pack_other(Packet* pkt, ClientInfo* cli);
 static void unpack_other(Packet* pkt, int* offset);
+static void pack_events(Packet* pkt, ClientInfo* cli);
+static void unpack_events(Packet* pkt, int* offset);
 
 static uint64_t rand64(void)
 {
@@ -155,7 +164,6 @@ static char* packet_type_to_str(PacketType type)
         case PACKET_TYPE_PING: return "PING";
         case PACKET_TYPE_INPUT: return "INPUT";
         case PACKET_TYPE_STATE: return "STATE";
-        case PACKET_TYPE_EVENT: return "EVENT";
         case PACKET_TYPE_MESSAGE: return "MESSAGE";
         case PACKET_TYPE_ERROR: return "ERROR";
         default: return "UNKNOWN";
@@ -451,6 +459,7 @@ static void server_send(PacketType type, ClientInfo* cli)
             pack_projectiles(&pkt, cli);
             pack_decals(&pkt, cli);
             pack_other(&pkt, cli);
+            pack_events(&pkt,cli);
             //print_packet(&pkt, true);
 
             if(memcmp(&cli->prior_state_pkt.data, &pkt.data, pkt.data_len) == 0)
@@ -459,10 +468,6 @@ static void server_send(PacketType type, ClientInfo* cli)
             net_send(&server.info,&cli->address,&pkt);
             memcpy(&cli->prior_state_pkt, &pkt, get_packet_size(&pkt));
 
-        } break;
-
-        case PACKET_TYPE_EVENT:
-        {
         } break;
 
         case PACKET_TYPE_ERROR:
@@ -787,30 +792,15 @@ int net_server_start()
     }
 }
 
-void server_send_event(NetEvent* event)
+bool net_server_add_event(NetEvent* event)
 {
-    if(role != ROLE_SERVER)
-        return;
-
-    Packet pkt = {
-        .hdr.game_id = GAME_ID,
-        .hdr.id = server.info.local_latest_packet_id,
-        //.hdr.ack = cli->remote_latest_packet_id,
-        .hdr.type = PACKET_TYPE_EVENT
-    };
-
-    pack_u8(&pkt, event->type);
-
-    switch(event->type)
+    if(server.event_count >= MAX_NET_EVENTS)
     {
-        case EVENT_TYPE_MESSAGE:
-            break;
-        case EVENT_TYPE_PARTICLES:
-            break;
-        default:
-            break;
+        LOGW("Too many events!");
+        return false;
     }
 
+    memcpy(&server.events[server.event_count++], event, sizeof(NetEvent));
 }
 
 void server_send_message(uint8_t to, uint8_t from, char* fmt, ...)
@@ -1295,13 +1285,9 @@ void net_client_update()
                     unpack_projectiles(&srvpkt, &offset);
                     unpack_decals(&srvpkt, &offset);
                     unpack_other(&srvpkt, &offset);
+                    unpack_events(&srvpkt, &offset);
 
                     client.player_count = player_get_active_count();
-                } break;
-
-                case PACKET_TYPE_EVENT:
-                {
-
                 } break;
 
                 case PACKET_TYPE_PING:
@@ -2000,6 +1986,7 @@ static void unpack_decals(Packet* pkt, int* offset)
         d.ttl = unpack_float(pkt, offset);
         d.pos = unpack_vec2(pkt, offset);
         d.room = unpack_u8(pkt, offset);
+
         decal_add(d);
     }
 }
@@ -2018,4 +2005,86 @@ static void unpack_other(Packet* pkt, int* offset)
 
     // doors locked
     room->doors_locked = unpack_bool(pkt, offset);
+}
+
+static void pack_events(Packet* pkt, ClientInfo* cli)
+{
+    pack_u8(pkt, server.event_count);
+
+    int count = server.event_count;
+
+    int index0 = 0, index1 = 0;
+
+    for(int i = count-1; i >= 0; --i)
+    {
+        NetEvent* ev = &server.events[i];
+
+        pack_u8(pkt, ev->type);
+
+        switch(ev->type)
+        {
+            case EVENT_TYPE_MESSAGE:
+            {
+                pack_bytes(pkt, (uint8_t*)&ev->data.message, strlen(ev->data.message.msg) + (2*sizeof(uint8_t)));
+            } break;
+            case EVENT_TYPE_PARTICLES:
+            {
+                pack_u8(pkt, ev->data.particles.effect_index);
+                pack_vec2(pkt, ev->data.particles.pos);
+                pack_float(pkt, ev->data.particles.scale);
+                pack_u32(pkt, ev->data.particles.color1);
+                pack_u32(pkt, ev->data.particles.color2);
+                pack_u32(pkt, ev->data.particles.color3);
+                pack_float(pkt, ev->data.particles.lifetime);
+            } break;
+
+            default:
+                break;
+        }
+
+        --server.event_count;
+    }
+}
+
+static void unpack_events(Packet* pkt, int* offset)
+{
+    uint8_t event_count = unpack_u8(pkt, offset);
+
+    for(int i = 0; i < event_count; ++i)
+    {
+        NetEventType type = (NetEventType)unpack_u8(pkt, offset);
+
+        switch(type)
+        {
+            case EVENT_TYPE_MESSAGE:
+                break;
+
+            case EVENT_TYPE_PARTICLES:
+            {
+                uint8_t effect_index = unpack_u8(pkt, offset);
+                Vector2f pos = unpack_vec2(pkt, offset);
+                float scale  = unpack_float(pkt, offset);
+                uint32_t color1  = unpack_u32(pkt, offset);
+                uint32_t color2  = unpack_u32(pkt, offset);
+                uint32_t color3  = unpack_u32(pkt, offset);
+                float lifetime  = unpack_float(pkt, offset);
+
+                ParticleEffect effect = {0};
+                memcpy(&effect, &particle_effects[effect_index], sizeof(ParticleEffect));
+
+                effect.scale.init_min *= scale;
+                effect.scale.init_max *= scale;
+
+                effect.color1 = color1;
+                effect.color2 = color2;
+                effect.color3 = color3;
+
+                ParticleSpawner* ps = particles_spawn_effect(pos.x, pos.y, 0.0, &effect, lifetime, true, false);
+                ps->userdata = (int)player->curr_room;
+
+            } break;
+            default:
+                break;
+        }
+    }
 }

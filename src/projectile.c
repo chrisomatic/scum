@@ -262,7 +262,22 @@ void projectile_kill(Projectile* proj)
     ParticleEffect splash = {0};
     memcpy(&splash, &particle_effects[EFFECT_SPLASH], sizeof(ParticleEffect));
 
-    if(role != ROLE_SERVER)
+    if(role == ROLE_SERVER)
+    {
+        NetEvent ev = {
+            .type = EVENT_TYPE_PARTICLES,
+            .data.particles.effect_index = EFFECT_SPLASH,
+            .data.particles.pos = { proj->phys.pos.x, proj->phys.pos.y },
+            .data.particles.scale = proj->def.scale,
+            .data.particles.color1 = proj->from_player ? 0x006484BA : 0x00CC5050,
+            .data.particles.color2 = proj->from_player ? 0x001F87DC : 0x00FF8080,
+            .data.particles.color3 = proj->from_player ? 0x00112837 : 0x00550000,
+            .data.particles.lifetime = 0.5
+        };
+
+        net_server_add_event(&ev);
+    }
+    else
     {
         if(!proj->from_player)
         {

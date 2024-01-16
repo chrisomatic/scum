@@ -37,7 +37,6 @@ typedef enum
     PACKET_TYPE_PING,
     PACKET_TYPE_INPUT,
     PACKET_TYPE_STATE,
-    PACKET_TYPE_EVENT,
     PACKET_TYPE_MESSAGE,
     PACKET_TYPE_ERROR,
     PACKET_TYPE_MAX,
@@ -65,13 +64,6 @@ typedef enum
     PACKET_ERROR_BAD_FORMAT,
     PACKET_ERROR_INVALID,
 } PacketError;
-
-typedef enum
-{
-    EVENT_TYPE_NONE = 0,
-    EVENT_TYPE_MESSAGE,
-    EVENT_TYPE_PARTICLES,
-} NetEventType;
 
 PACK(struct PacketHeader
 {
@@ -110,16 +102,23 @@ extern char* server_ip_address;
 // Net Events
 //
 
+typedef enum
+{
+    EVENT_TYPE_NONE = 0,
+    EVENT_TYPE_MESSAGE,
+    EVENT_TYPE_PARTICLES,
+} NetEventType;
 
 typedef struct
 {
     uint8_t to;
     uint8_t from;
-    char* message;
+    char* msg;
 } NetEventMessage;
 
 typedef struct
 {
+    uint8_t effect_index;
     Vector2f pos;
     float scale;
     uint32_t color1;
@@ -128,22 +127,24 @@ typedef struct
     float lifetime;
 } NetEventParticles;
 
-struct NetEvent
+typedef struct
 {
     NetEventType type;
 
     union
     {
         NetEventMessage   message;
-        NetEventParticles particle_spawn;
+        NetEventParticles particles;
         // ...
     } data;
-};
+} NetEvent;
 
-typedef struct NetEvent NetEvent;
+extern char* server_ip_address;
+
 
 // Server
 int net_server_start();
+bool net_server_add_event(NetEvent* event);
 
 void server_send_message(uint8_t to, uint8_t from, char* fmt, ...);
 

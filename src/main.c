@@ -837,7 +837,6 @@ void parse_args(int argc, char* argv[])
 
 void update(float dt)
 {
-
     if(game_state == GAME_STATE_EDITOR)
     {
         bool res = room_editor_update(dt);
@@ -915,6 +914,7 @@ void update(float dt)
         }
 
         decal_update_all(dt);
+        particles_update(dt);
 
         for(int i = 0; i < MAX_CLIENTS; ++i)
         {
