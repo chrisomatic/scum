@@ -49,7 +49,7 @@ Player* player2 = NULL;
 text_list_t* ptext = NULL;
 
 // tile pit rect
-Rect t_rect = {0};
+Rect tile_pit_rect = {0};
 
 void player_init()
 {
@@ -143,7 +143,8 @@ void player_init()
         for(int j = 0; j < PLAYER_GAUNTLET_MAX; ++j)
         {
             p->gauntlet[j].type = ITEM_NONE;
-            p->gauntlet[j].type = item_rand(false);
+            // p->gauntlet[j].type = item_rand(false);
+            // p->gauntlet[j].type = ITEM_CHEST;
         }
         p->gauntlet_item.type = ITEM_NONE;
 
@@ -1014,7 +1015,7 @@ void player_update(Player* p, float dt)
 
     if(!room)
     {
-        LOGW("Failed to load room, player curr room: %d (number of rooms in level: %d)",p->curr_room,level.num_rooms);
+        LOGW("Failed to load room, player curr room: %u (number of rooms in level: %d)",p->curr_room, level.num_rooms);
     }
     else
     {
@@ -1051,9 +1052,9 @@ void player_update(Player* p, float dt)
             float shrink_fac = 0.7;
             float adj_fac = (1.0 - shrink_fac) / 2.0;
 
-            t_rect = pit_rect;
-            t_rect.w = pit_rect.w*shrink_fac;
-            t_rect.h = pit_rect.h*shrink_fac;
+            tile_pit_rect = pit_rect;
+            tile_pit_rect.w = pit_rect.w*shrink_fac;
+            tile_pit_rect.h = pit_rect.h*shrink_fac;
 
             for(int dir = 0; dir < 4; ++dir)
             {
@@ -1086,14 +1087,14 @@ void player_update(Player* p, float dt)
                     }
                 }
 
-                t_rect.x += xadj/2.0;
-                t_rect.w += ABS(xadj);
-                t_rect.y += yadj/2.0;
-                t_rect.h += ABS(yadj);
+                tile_pit_rect.x += xadj/2.0;
+                tile_pit_rect.w += ABS(xadj);
+                tile_pit_rect.y += yadj/2.0;
+                tile_pit_rect.h += ABS(yadj);
             }
             // printf("\n");
 
-            if(rectangles_colliding(&p_rect, &t_rect))
+            if(rectangles_colliding(&p_rect, &tile_pit_rect))
             {
                 p->phys.falling = true;
                 player_hurt(p, 1);
@@ -1110,7 +1111,6 @@ void player_update(Player* p, float dt)
             p->phys.falling = false;
 
 
-
             TileType tt = level_get_tile_type(room, p->last_safe_tile.x, p->last_safe_tile.y);
             if(IS_SAFE_TILE(tt))
             {
@@ -1120,10 +1120,9 @@ void player_update(Player* p, float dt)
             else
             {
                 player_send_to_room(p, p->curr_room);
+                // player_send_to_level_start(p);
             }
 
-            // player_send_to_room(p, p->curr_room);
-            // player_send_to_level_start(p);
         }
     }
 

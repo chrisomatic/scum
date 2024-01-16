@@ -244,7 +244,6 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, Projec
                 float ty = target->pos.y;
                 Vector2f v = {tx - p.phys.pos.x, ty - p.phys.pos.y};
                 normalize(&v);
-                // float m = dist(p.phys.pos.x, p.phys.pos.y, tx, ty);
                 p.angle_deg = calc_angle_deg(p.phys.pos.x, p.phys.pos.y, tx, ty);
                 p.phys.vel.x = v.x * p.def.speed;
                 p.phys.vel.y = v.y * p.def.speed;
@@ -333,12 +332,6 @@ void projectile_update(float dt)
             projectile_kill(proj);
             continue;
         }
-
-        // if(proj->time >= proj->ttl)
-        // {
-        //     projectile_kill(proj);
-        //     continue;
-        // }
 
         float _dt = RANGE(proj->def.ttl, 0.0, dt);
         // printf("%3d %.4f\n", i, delta_t);
@@ -443,7 +436,6 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         };
 
         hit = boxes_colliding(&proj_curr, &check);
-        //hit = are_spheres_colliding(&proj_prior, &proj_curr, &check);
 
         if(hit)
         {
@@ -455,13 +447,10 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
                 phys_collision_correct(&proj->phys,phys,&ci);
                 projectile_kill(proj);
             }
-            
+
             if(proj->cold)
             {
                 status_effects_add_type(phys,STATUS_EFFECT_COLD);
-
-                // if(RAND_FLOAT(0.0,1.0) <= projdef.cold_chance)
-                //     status_effects_add_type(phys,STATUS_EFFECT_COLD);
             }
             
             if(proj->poison > 0.0)

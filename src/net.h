@@ -103,22 +103,6 @@ PACK(struct NetPlayerInput
 
 typedef struct NetPlayerInput NetPlayerInput;
 
-// PACK(struct PlayerNetState
-// {
-//     bool active;
-//     uint16_t associated_packet_id;
-//     Vector2f pos;
-//     uint8_t sprite_index;
-// });
-
-// typedef struct PlayerNetState PlayerNetState;
-
-typedef struct
-{
-    Vector3f pos;
-    float invulnerable_temp_time;
-} ObjectState;
-
 extern char* server_ip_address;
 
 

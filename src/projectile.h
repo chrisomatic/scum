@@ -50,37 +50,11 @@ typedef struct
     int cluster_stage;
 } ProjectileSpawn;
 
-// typedef struct
-// {
-//     uint32_t color;
 
-//     float damage;
-//     float range;
-//     float base_speed;
-//     float accel;
-//     float gravity_factor;
-
-//     float angle_spread;
-//     float scale;
-//     uint8_t num;
-
-//     bool charge;
-//     uint8_t charge_rate;
-
-//     bool ghost;
-//     bool homing;
-//     bool explosive;
-//     bool bouncy;
-//     bool penetrate;
-
-//     float ghost_chance;
-//     float homing_chance;
-
-//     // elemental
-//     float poison_chance;
-//     float cold_chance;
-
-// } ProjectileDef;
+typedef struct
+{
+    Vector3f pos;
+} ProjectileNetLerp;
 
 typedef struct
 {
@@ -101,22 +75,15 @@ typedef struct
 
     uint32_t color;
 
-    // float scale;
-    // float damage;
-    // float time;
-    // float ttl;
     bool from_player;
     Vector3f accel_vector;
 
     int cluster_stage;
 
-    // bool homing;
-    // Physics* homing_target;
-
     // Networking
     float lerp_t;
-    ObjectState server_state_prior;
-    ObjectState server_state_target;
+    ProjectileNetLerp server_state_prior;
+    ProjectileNetLerp server_state_target;
 
 } Projectile;
 
@@ -129,8 +96,6 @@ extern glist* plist;
 void projectile_init();
 void projectile_clear_all();
 void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player);
-// void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* projdef, float angle_deg, float scale, float damage_multiplier, bool from_player);
-// void projectile_add_type(Physics* phys, uint8_t curr_room, ProjectileType proj_type, float angle_deg, float scale, float damage_multiplier, bool from_player);
 void projectile_update_hit_box(Projectile* proj);
 void projectile_update(float dt);
 void projectile_kill(Projectile* proj);

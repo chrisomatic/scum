@@ -26,15 +26,18 @@ typedef enum
 
 typedef struct
 {
+    Vector3f pos;
+} CreatureNetLerp;
+
+typedef struct
+{
     uint16_t id;
 
     CreatureType type;
     Physics phys;
 
-    ProjectileType proj_type; // TODO: remove proj_type
-
     int image;
-    
+
     uint32_t base_color;
     uint32_t color;
     uint8_t sprite_index;
@@ -74,8 +77,8 @@ typedef struct
     int spawn_tile_y;    //room tile y
 
     float lerp_t;
-    ObjectState server_state_prior;
-    ObjectState server_state_target;
+    CreatureNetLerp server_state_prior;
+    CreatureNetLerp server_state_target;
 } Creature;
 
 extern Creature prior_creatures[MAX_CREATURES];

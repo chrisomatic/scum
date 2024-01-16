@@ -37,7 +37,7 @@
 #define BOOLSTR(c) ((c) ? "true" : "false")
 
 #if 1
-#define DEBUG()   printf("%d %s %s()\n", __LINE__, __FILE__, __func__)
+#define DEBUG()   printf("[DEBUG] %s %s(): %d\n", __FILE__, __func__, __LINE__)
 #else
 #define DEBUG()
 #endif

@@ -76,6 +76,12 @@ typedef struct
 
 } PlayerAttributes;
 
+typedef struct
+{
+    Vector3f pos;
+    float invulnerable_temp_time;
+} PlayerNetLerp;
+
 
 typedef struct
 {
@@ -149,8 +155,8 @@ typedef struct
     NetPlayerInput input_prior;
 
     float lerp_t;
-    ObjectState server_state_prior;
-    ObjectState server_state_target;
+    PlayerNetLerp server_state_prior;
+    PlayerNetLerp server_state_target;
 
 } Player;
 
