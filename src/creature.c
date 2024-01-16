@@ -36,7 +36,6 @@ static void creature_update_totem_blue(Creature* c, float dt);
 static void creature_update_shambler(Creature* c, float dt);
 static void creature_update_spiked_slug(Creature* c, float dt);
 
-
 static uint16_t id_counter = 0;
 
 static uint16_t get_id()
@@ -466,6 +465,9 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
         c.target_tile.x = -1;
         c.target_tile.y = -1;
 
+        c.base_color = COLOR_TINT_NONE;
+        c.color = c.base_color;
+
         creature_set_sprite_index(&c, 0);
 
         switch(c.type)
@@ -520,8 +522,6 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
         }
     }
 
-    c.base_color = COLOR_TINT_NONE;
-    c.color = c.base_color;
     creature_init_props(&c);
 
     if(creature == NULL)

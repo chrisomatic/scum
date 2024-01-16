@@ -155,6 +155,7 @@ static char* packet_type_to_str(PacketType type)
         case PACKET_TYPE_PING: return "PING";
         case PACKET_TYPE_INPUT: return "INPUT";
         case PACKET_TYPE_STATE: return "STATE";
+        case PACKET_TYPE_EVENT: return "EVENT";
         case PACKET_TYPE_MESSAGE: return "MESSAGE";
         case PACKET_TYPE_ERROR: return "ERROR";
         default: return "UNKNOWN";
@@ -458,6 +459,10 @@ static void server_send(PacketType type, ClientInfo* cli)
             net_send(&server.info,&cli->address,&pkt);
             memcpy(&cli->prior_state_pkt, &pkt, get_packet_size(&pkt));
 
+        } break;
+
+        case PACKET_TYPE_EVENT:
+        {
         } break;
 
         case PACKET_TYPE_ERROR:
@@ -780,6 +785,32 @@ int net_server_start()
         //timer_wait_for_frame(&server_timer);
         timer_delay_us(1000);
     }
+}
+
+void server_send_event(NetEvent* event)
+{
+    if(role != ROLE_SERVER)
+        return;
+
+    Packet pkt = {
+        .hdr.game_id = GAME_ID,
+        .hdr.id = server.info.local_latest_packet_id,
+        //.hdr.ack = cli->remote_latest_packet_id,
+        .hdr.type = PACKET_TYPE_EVENT
+    };
+
+    pack_u8(&pkt, event->type);
+
+    switch(event->type)
+    {
+        case EVENT_TYPE_MESSAGE:
+            break;
+        case EVENT_TYPE_PARTICLES:
+            break;
+        default:
+            break;
+    }
+
 }
 
 void server_send_message(uint8_t to, uint8_t from, char* fmt, ...)
@@ -1266,6 +1297,11 @@ void net_client_update()
                     unpack_other(&srvpkt, &offset);
 
                     client.player_count = player_get_active_count();
+                } break;
+
+                case PACKET_TYPE_EVENT:
+                {
+
                 } break;
 
                 case PACKET_TYPE_PING:
@@ -1780,9 +1816,11 @@ static void pack_creatures(Packet* pkt, ClientInfo* cli)
         pack_u16(pkt, c->id);
         pack_u8(pkt, (uint8_t)c->type);
         pack_vec3(pkt, vec3(c->phys.pos.x, c->phys.pos.y, c->phys.pos.z));
+        pack_float(pkt,c->phys.width);
         pack_u8(pkt, c->sprite_index);
         pack_u8(pkt, c->curr_room);
         pack_float(pkt, c->phys.hp);
+        pack_u32(pkt, c->color);
         num_visible_creatures++;
     }
 
@@ -1801,17 +1839,23 @@ static void unpack_creatures(Packet* pkt, int* offset)
         uint16_t id = unpack_u16(pkt, offset);
         uint8_t  creature_type = unpack_u8(pkt, offset);
         Vector3f pos = unpack_vec3(pkt, offset);
+        float width = unpack_float(pkt,offset);
         uint8_t sprite_index = unpack_u8(pkt, offset);
         uint8_t curr_room = unpack_u8(pkt, offset);
         float hp = unpack_float(pkt, offset);
+        uint32_t color = unpack_u32(pkt,offset);
 
         Creature creature = {0};
         creature.id = id;
         creature.type = creature_type;
         memcpy(&creature.phys.pos, &pos, sizeof(Vector2f));
+        creature.phys.width = width;
+        creature.phys.collision_rect.w = width;
         creature.sprite_index = sprite_index;
         creature.curr_room = curr_room;
         creature.phys.hp = hp;
+        creature.color = color;
+
         Creature* c = creature_add(NULL, 0, NULL, &creature);
 
         c->server_state_prior.pos.x = pos.x;
