@@ -716,6 +716,7 @@ int net_server_start()
                     case PACKET_TYPE_CONNECT_CHALLENGE_RESP:
                     {
                         cli->state = SENDING_CHALLENGE_RESPONSE;
+                        LOGI("Accept client: %d", cli->client_id);
                         player_set_active(&players[cli->client_id],true);
 
                         server_send(PACKET_TYPE_CONNECT_ACCEPTED,cli);
@@ -1780,13 +1781,16 @@ static void unpack_players(Packet* pkt, int* offset)
 {
     uint8_t player_count = unpack_u8(pkt, offset);
     client.player_count = player_count;
+    // printf("player count: %u\n", player_count);
 
     bool prior_active[MAX_CLIENTS] = {0};
     for(int i = 0; i < MAX_CLIENTS; ++i)
     {
         prior_active[i] = players[i].active;
+        // printf("%d ", prior_active[i]);
         players[i].active = false;
     }
+    // printf("\n");
 
     for(int i = 0; i < player_count; ++i)
     {
@@ -1794,12 +1798,14 @@ static void unpack_players(Packet* pkt, int* offset)
 
         if(client_id >= MAX_CLIENTS)
         {
-            LOGE("Client ID is too large: %d",client_id);
+            LOGE("Client ID is too large: %u",client_id);
             return; //TODO
         }
 
+        // printf("client_id: %u\n", client_id);
+
         Player* p = &players[client_id];
-        players[i].active = true;
+        p->active = true;
 
         Vector3f pos    = unpack_vec3(pkt, offset);
         p->sprite_index = unpack_u8(pkt, offset);
@@ -1853,7 +1859,6 @@ static void unpack_players(Packet* pkt, int* offset)
         p->server_state_target.pos.x = pos.x;
         p->server_state_target.pos.y = pos.y;
         p->server_state_target.pos.z = pos.z;
-
         p->server_state_target.invulnerable_temp_time = invulnerable_temp_time;
 
         if(!prior_active[client_id])
