@@ -249,23 +249,6 @@ static void item_func_consumable(Item* pu, Player* p)
     }
 }
 
-// static void item_func_gem(Item* pu, Player* p)
-// {
-//     Item* it = &p->gauntlet[p->gauntlet_selection];
-//     player_drop_item(p, it);
-//     memcpy(it, pu, sizeof(Item));
-
-//     for(int i = 0; i < p->gauntlet_slots; ++i)
-//     {
-//         p->gauntlet_selection++;
-//         if(p->gauntlet_selection >= p->gauntlet_slots)
-//             p->gauntlet_selection = 0;
-//         if(p->gauntlet[p->gauntlet_selection].type == ITEM_NONE)
-//             break;
-//     }
-//     pu->picked_up = true;
-// }
-
 void item_init()
 {
     if(item_list)
@@ -697,7 +680,6 @@ void item_draw(Item* pu)
     if(pu->curr_room != player->curr_room)
         return;
 
-    // uint32_t color = pu->highlighted ? COLOR_TINT_NONE : 0x88888888;
     uint32_t color = 0x88888888;
     if(pu->highlighted && pu->id == player->highlighted_item_id)
     {
@@ -708,11 +690,6 @@ void item_draw(Item* pu)
 
     if(pu->used)
         sprite_index++;
-
-    // if(pu->type == ITEM_NEW_LEVEL)
-    // {
-    //     pu->angle += 5.0;
-    // }
 
     float y = pu->phys.pos.y - 0.5*pu->phys.pos.z;
     gfx_sprite_batch_add(item_props[pu->type].image, sprite_index, pu->phys.pos.x, y, color, false, iscale, pu->angle, 1.0, true, false, false);

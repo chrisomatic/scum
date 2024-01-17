@@ -210,11 +210,10 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
 // item_add(ITEM_GEM_RED, CENTER_X, CENTER_Y, room->index);
 // item_add(ITEM_GEM_RED+1, CENTER_X, CENTER_Y, room->index);
 // item_add(ITEM_GEM_RED+2, CENTER_X, CENTER_Y, room->index);
-
-        for(int i = 0; i < ITEM_MAX; ++i)
-        {
-            item_add(i, CENTER_X, CENTER_Y, room->index);
-        }
+        // for(int i = 0; i < ITEM_MAX; ++i)
+        // {
+        //     item_add(i, CENTER_X, CENTER_Y, room->index);
+        // }
 
         goto exit_conditions;
     }
