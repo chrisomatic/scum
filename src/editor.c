@@ -84,6 +84,22 @@ void editor_draw()
             case 0: // general
             {
                 imgui_text("FPS: %.0f (AVG: %.0f)",game_timer.frame_fps, game_timer.frame_fps_avg);
+
+                if(role == ROLE_CLIENT)
+                {
+                    imgui_text("Ping: %.2f", net_client_get_rtt());
+                    imgui_text("Traffic:");
+
+                    uint32_t sent_bytes = net_client_get_sent_bytes();
+                    uint32_t recv_bytes = net_client_get_recv_bytes();
+
+                    double connection_time = net_client_get_connected_time();
+                    double time_elapsed = timer_get_time() - connection_time;
+
+                    imgui_text("    Sent: %.0f B/s (total: %u B)", sent_bytes / time_elapsed, sent_bytes);
+                    imgui_text("    Recv: %.0f B/s (total: %u B)", recv_bytes / time_elapsed, recv_bytes);
+                }
+
                 imgui_number_box("Camera Zoom", 0, 100, &cam_zoom);
                 imgui_number_box("Camera Min Zoom", 0, 100, &cam_min_zoom);
 

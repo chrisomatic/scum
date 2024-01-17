@@ -136,6 +136,7 @@ extern text_list_t* text_lst;
 extern bool initialized;
 extern bool debug_enabled;
 extern bool editor_enabled;
+extern bool client_chat_enabled;
 extern bool paused;
 extern bool show_big_map;
 extern bool show_walls;

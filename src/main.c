@@ -36,6 +36,7 @@ text_list_t* text_lst = NULL;
 bool initialized = false;
 bool debug_enabled = false;
 bool editor_enabled = false;
+bool client_chat_enabled = false;
 bool paused = false;
 bool show_big_map = false;
 bool show_walls = false;
@@ -88,10 +89,13 @@ char* tile_names[TILE_MAX] = {0};
 char* creature_names[CREATURE_TYPE_MAX] = {0};
 char* item_names[ITEM_MAX] = {0};
 
+// client chat box
+char chat_text[128] = {0};
+uint32_t chat_box_hash = 0x0;
+
 #define MESSAGE_SMALL_MAX 256
 char message_small[MESSAGE_SMALL_MAX];
 float message_small_duration;
-
 
 enum
 {
@@ -113,7 +117,6 @@ const char* menu_options[] = {
     "Help",
     "Exit"
 };
-
 
 // =========================
 // Function Prototypes
@@ -1495,6 +1498,39 @@ void draw()
         // gfx_draw_rect(&l, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
     }
 
+    if(role == ROLE_CLIENT)
+    {
+        if(client_chat_enabled)
+        {
+            // draw chat box
+            static Rect gui_size = {321,28};
+            imgui_begin("##Chat", (view_width - gui_size.w)/ 2.0, view_height - gui_size.h - 100);
+            imgui_horizontal_begin();
+                imgui_text("Chat:");
+                uint32_t hash = imgui_text_box_sized("##chat_text",chat_text,IM_ARRAYSIZE(chat_text), 250, 24);
+                if(chat_box_hash == 0x0)
+                {
+                    chat_box_hash = hash;
+                    imgui_focus_text_box(hash);
+                }
+
+                if(imgui_text_get_enter())
+                {
+                    text_list_add(text_lst, 10.0, chat_text);
+                    memset(chat_text, 0, 128);
+                }
+                else if(imgui_text_get_ctrl_enter())
+                {
+                    client_chat_enabled = false;
+                    window_controls_set_key_mode(KEY_MODE_NORMAL);
+                }
+
+            imgui_horizontal_end();
+            gui_size = imgui_end();
+            //printf("w: %f, h: %f\n", gui_size.w, gui_size.h);
+        }
+    }
+
     if(editor_enabled)
     {
         editor_draw();
@@ -1522,6 +1558,20 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
             {
                 window_set_close(1);
             }
+
+            if(role == ROLE_CLIENT)
+            {
+                if(ctrl && key == GLFW_KEY_ENTER)
+                {
+                    client_chat_enabled = !client_chat_enabled;
+                    if(client_chat_enabled)
+                    {
+                        window_controls_set_text_buf(chat_text,128);
+                        window_controls_set_key_mode(KEY_MODE_TEXT);
+                    }
+                }
+            }
+
             if(key == GLFW_KEY_ESCAPE)
             {
                 if(editor_enabled)

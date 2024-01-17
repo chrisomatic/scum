@@ -202,6 +202,8 @@ static void draw_listbox(uint32_t hash, char* str, char* options[], int num_opti
 static void draw_panel(uint32_t hash, bool moveable);
 static void draw_tooltip();
 
+static bool _enter = false;
+static bool _ctrl_enter = false;
 static bool _editor_test = false;
 static char _editor_text[20]= {0};
 static char _editor_file_name[40] = {0};
@@ -1066,7 +1068,7 @@ Vector2f imgui_number_box(char* label, int min, int max, int* result)
     return imgui_number_box_formatted(label, min, max, "%d", result);
 }
 
-void imgui_text_box(char* label, char* buf, int bufsize)
+uint32_t imgui_text_box(char* label, char* buf, int bufsize)
 {
     uint32_t hash = hash_str(label,strlen(label),0x0);
 
@@ -1079,6 +1081,9 @@ void imgui_text_box(char* label, char* buf, int bufsize)
 
     if(ctx->focused_text_id == hash)
     {
+        window_controls_set_text_buf(buf,bufsize);
+        window_controls_set_key_mode(KEY_MODE_TEXT);
+
         if(ctx->text_box_props.text_cursor_index >= bufsize)
             ctx->text_box_props.text_cursor_index = bufsize-1;
 
@@ -1133,8 +1138,6 @@ void imgui_text_box(char* label, char* buf, int bufsize)
 
             if(mouse_went_down)
             {
-                window_controls_set_text_buf(buf,bufsize);
-                window_controls_set_key_mode(KEY_MODE_TEXT);
                 ctx->text_box_props.text_click_held = true;
                 ctx->text_box_props.text_cursor_x_held_from = ctx->text_box_props.text_cursor_x;
                 ctx->text_box_props.text_cursor_index_held_from = ctx->text_box_props.text_cursor_index;
@@ -1169,9 +1172,35 @@ void imgui_text_box(char* label, char* buf, int bufsize)
     ctx->curr.h = theme.text_box_height + theme.spacing;
 
     progress_pos();
+
+    return hash;
 }
 
-void imgui_text_box_sized(char* label, char* buf, int bufsize, int width, int height)
+bool imgui_text_set_ctrl_enter()
+{
+    _ctrl_enter = true;
+}
+
+bool imgui_text_get_ctrl_enter()
+{
+    bool ret = _ctrl_enter;
+    _ctrl_enter = false;
+    return ret;
+}
+
+bool imgui_text_set_enter()
+{
+    _enter = true;
+}
+
+bool imgui_text_get_enter()
+{
+    bool ret = _enter;
+    _enter = false;
+    return ret;
+}
+
+uint32_t imgui_text_box_sized(char* label, char* buf, int bufsize, int width, int height)
 {
     int width_prior = theme.text_box_width;
     int height_prior = theme.text_box_height;
@@ -1179,11 +1208,20 @@ void imgui_text_box_sized(char* label, char* buf, int bufsize, int width, int he
     theme.text_box_width = width;
     theme.text_box_height = height;
 
-    imgui_text_box(label, buf, bufsize);
+    uint32_t hash = imgui_text_box(label, buf, bufsize);
 
     theme.text_box_width = width_prior;
     theme.text_box_height = height_prior;
 
+    return hash;
+}
+
+void imgui_focus_text_box(uint32_t hash)
+{
+    ctx->focused_text_id = hash;
+    ctx->text_box_props.cursor_show = true;
+    ctx->text_box_props.cursor_blink_time = 0.0;
+    ctx->text_box_props.cursor_blink_t0 = timer_get_time();
 }
 
 void imgui_reset_cursor_blink()

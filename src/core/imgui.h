@@ -24,8 +24,9 @@ void imgui_color_picker(char* label, uint32_t* result);
 void imgui_slider_float(char* label, float min, float max, float* result);
 Vector2f imgui_number_box(char* label, int min, int max, int* result);
 Vector2f imgui_number_box_formatted(char* label, int min, int max, char* format, int* result);
-void imgui_text_box(char* label, char* buf, int bufsize);
-void imgui_text_box_sized(char* label, char* buf, int bufsize, int width, int height);
+uint32_t imgui_text_box(char* label, char* buf, int bufsize);
+uint32_t imgui_text_box_sized(char* label, char* buf, int bufsize, int width, int height);
+void imgui_focus_text_box(uint32_t hash);
 int imgui_button_select(int num_buttons, char* button_labels[], char* label);
 void imgui_dropdown(char* options[], int num_options, char* label, int* selected_index, bool* interacted);
 void imgui_listbox(char* options[], int num_options, char* label, int* selected_index);
@@ -53,6 +54,12 @@ int imgui_get_text_cursor_index();
 void imgui_set_text_cursor_indices(int i0, int i1);
 void imgui_get_text_cursor_indices(int* i0, int* i1);
 void imgui_text_cursor_inc(int val);
+
+bool imgui_text_set_enter();
+bool imgui_text_get_enter();
+
+bool imgui_text_set_ctrl_enter();
+bool imgui_text_get_ctrl_enter();
 
 // formatting
 void imgui_indent_begin(int indentpx);

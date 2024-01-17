@@ -76,6 +76,32 @@ struct
     int num_clients;
 } server = {0};
 
+struct
+{
+    int id;
+    bool received_init_packet;
+
+    Address address;
+    NodeInfo info;
+    ConnectionState state;
+    CircBuf input_packets;
+
+    double time_of_connection;
+    double time_of_latest_sent_packet;
+    double time_of_last_ping;
+    double time_of_last_received_ping;
+    double rtt;
+
+    uint32_t bytes_received;
+    uint32_t bytes_sent;
+
+    uint8_t player_count;
+    uint8_t server_salt[8];
+    uint8_t client_salt[8];
+    uint8_t xor_salts[8];
+
+} client = {0};
+
 // ---
 
 #define IMAX_BITS(m) ((m)/((m)%255+1) / 255%255*8 + 7-86/((m)%255+12))
@@ -285,6 +311,9 @@ static int net_send(NodeInfo* node_info, Address* to, Packet* pkt)
 
     node_info->local_latest_packet_id++;
 
+    if(node_info == &client.info)
+        client.bytes_sent += sent_bytes;
+
     return sent_bytes;
 }
 
@@ -299,6 +328,9 @@ static int net_recv(NodeInfo* node_info, Address* from, Packet* pkt)
     print_address(from);
     print_packet(pkt, false);
 #endif
+
+    if(node_info == &client.info)
+        client.bytes_received += recv_bytes;
 
     return recv_bytes;
 }
@@ -868,24 +900,6 @@ void server_send_message(uint8_t to, uint8_t from, char* fmt, ...)
 // @CLIENT
 // =========
 
-struct
-{
-    int id;
-    Address address;
-    NodeInfo info;
-    ConnectionState state;
-    CircBuf input_packets;
-    double time_of_latest_sent_packet;
-    double time_of_last_ping;
-    double time_of_last_received_ping;
-    double rtt;
-    bool received_init_packet;
-    uint8_t player_count;
-    uint8_t server_salt[8];
-    uint8_t client_salt[8];
-    uint8_t xor_salts[8];
-} client = {0};
-
 bool net_client_add_player_input(NetPlayerInput* input)
 {
     if(input_count >= INPUT_QUEUE_MAX)
@@ -1144,6 +1158,7 @@ bool net_client_connect_update()
                 LOGN("Received Connection Accepted.");
 
                 client.state = CONNECTED;
+                client.time_of_connection = timer_get_time();
                 uint8_t cid = unpack_u8(&srvpkt, &offset);
                 printf("cid: %u\n",cid);
                 if(cid < 0 || cid >= MAX_CLIENTS)
@@ -1215,6 +1230,7 @@ int net_client_connect()
                     case PACKET_TYPE_CONNECT_ACCEPTED:
                     {
                         client.state = CONNECTED;
+                        client.time_of_connection = timer_get_time();
                         uint8_t client_id = unpack_u8(&srvpkt, &offset);
                         client.id = client_id;
                         return (int)client_id;
@@ -1364,6 +1380,21 @@ bool net_client_is_connected()
 double net_client_get_rtt()
 {
     return client.rtt;
+}
+
+uint32_t net_client_get_sent_bytes()
+{
+    return client.bytes_sent;
+}
+
+uint32_t net_client_get_recv_bytes()
+{
+    return client.bytes_received;
+}
+
+double net_client_get_connected_time()
+{
+    return client.time_of_connection;
 }
 
 void net_client_disconnect()

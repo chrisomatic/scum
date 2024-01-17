@@ -531,6 +531,11 @@ static void key_callback(GLFWwindow* window, int key, int scan_code, int action,
             if(key == GLFW_KEY_ENTER)
             {
                 //windows_text_mode_buf_insert('\n',-1);
+                
+                if(control)
+                    imgui_text_set_ctrl_enter();
+                else
+                    imgui_text_set_enter();
             }
             else if(key == GLFW_KEY_BACKSPACE)
             {
