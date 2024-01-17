@@ -41,9 +41,6 @@
 #define INPUT_QUEUE_MAX 16
 #define MAX_NET_EVENTS 256
 
-
-
-
 typedef struct
 {
     int socket;
@@ -780,6 +777,10 @@ int net_server_start()
                     // send world state to connected clients...
                     server_send(PACKET_TYPE_STATE,cli);
                 }
+
+                // clear out any queued events
+                server.event_count = 0;
+
             }
             accum = 0.0;
 
@@ -2011,11 +2012,7 @@ static void pack_events(Packet* pkt, ClientInfo* cli)
 {
     pack_u8(pkt, server.event_count);
 
-    int count = server.event_count;
-
-    int index0 = 0, index1 = 0;
-
-    for(int i = count-1; i >= 0; --i)
+    for(int i = server.event_count-1; i >= 0; --i)
     {
         NetEvent* ev = &server.events[i];
 
@@ -2041,8 +2038,6 @@ static void pack_events(Packet* pkt, ClientInfo* cli)
             default:
                 break;
         }
-
-        --server.event_count;
     }
 }
 

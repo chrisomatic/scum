@@ -1,4 +1,4 @@
-#include "headers.h"
+#include "core/headers.h"
 #include "main.h"
 #include "window.h"
 #include "shader.h"
@@ -916,12 +916,14 @@ void update(float dt)
         decal_update_all(dt);
         particles_update(dt);
 
+        lighting_point_light_clear_all();
         for(int i = 0; i < MAX_CLIENTS; ++i)
         {
             Player* p = &players[i];
             if(p->active)
             {
                 player_lerp(p, dt);
+                p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
             }
         }
 
