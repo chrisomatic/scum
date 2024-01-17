@@ -83,6 +83,8 @@ typedef struct
 } PlayerNetLerp;
 
 
+#define NUM_NEAR_ITEMS  12
+
 typedef struct
 {
     bool active;
@@ -105,7 +107,7 @@ typedef struct
     PlayerActions last_shoot_action;
     float shoot_sprite_cooldown;
 
-    Item gauntlet_item;
+    // Item gauntlet_item;
     uint8_t gauntlet_selection;
     uint8_t gauntlet_slots;
     Item gauntlet[PLAYER_GAUNTLET_MAX];
@@ -143,8 +145,11 @@ typedef struct
     float invulnerable_temp_time;
     float invulnerable_temp_max;
 
-    Item* highlighted_item;
+    // Item* highlighted_item;
+    int32_t highlighted_item_id;
     int highlighted_index;
+    ItemSort near_items[NUM_NEAR_ITEMS];
+    int near_items_count;
 
     // periodic shot
     float periodic_shot_counter;

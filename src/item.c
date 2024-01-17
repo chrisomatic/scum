@@ -12,6 +12,7 @@
 const float iscale = 0.8;
 
 glist* item_list = NULL;
+Item prior_items[MAX_ITEMS] = {0};
 Item items[MAX_ITEMS] = {0};
 ItemProps item_props[ITEM_MAX] = {0};
 int items_image = -1;
@@ -346,6 +347,18 @@ void item_clear_all()
     list_clear(item_list);
 }
 
+Item* item_get_by_id(uint16_t id)
+{
+    for(int i = 0; i < item_list->count; ++i)
+    {
+        if(items[i].id == id)
+        {
+            return &items[i];
+        }
+    }
+    return NULL;
+}
+
 bool item_is_chest(ItemType type)
 {
     return (type == ITEM_CHEST);
@@ -535,28 +548,17 @@ void item_update(Item* pu, float dt)
 
     phys_apply_gravity(&pu->phys,GRAVITY_EARTH,dt);
     phys_apply_friction(&pu->phys,pu->phys.base_friction,dt);
-}
 
-typedef struct
-{
-    int index;
-    uint16_t id;
-    float dist;
-} ItemSort;
-#define NUM_NEAR_ITEMS  12
-ItemSort near_items_prior[NUM_NEAR_ITEMS] = {0};
-int near_items_count_prior = 0;
-ItemSort near_items[NUM_NEAR_ITEMS] = {0};
-int near_items_count = 0;
+    if(pu->type == ITEM_NEW_LEVEL)
+    {
+        pu->angle += 80.0 * dt;
+    }
+
+    pu->highlighted = false;
+}
 
 void item_update_all(float dt)
 {
-    memcpy(&near_items_prior, &near_items, sizeof(ItemSort)*NUM_NEAR_ITEMS);
-    near_items_count_prior = near_items_count;
-
-    memset(&near_items, 0, sizeof(ItemSort)*NUM_NEAR_ITEMS);
-    near_items_count = 0;
-
     for(int i = item_list->count-1; i >= 0; --i)
     {
         Item* pu = &items[i];
@@ -568,118 +570,168 @@ void item_update_all(float dt)
         }
 
         item_update(pu, dt);
-
-        if(pu->curr_room != player->curr_room)
-            continue;
-
-        if(pu->used)
-            continue;
-
-        // if(item_props[pu->type].func == NULL)
-        //     continue;
-
-        Vector2f c1 = {player->phys.pos.x, player->phys.pos.y};
-        Vector2f c2 = {pu->phys.pos.x, pu->phys.pos.y};
-
-        float distance;
-        bool in_pickup_radius = circles_colliding(&c1, player->phys.radius, &c2, ITEM_PICKUP_RADIUS, &distance);
-
-        if(in_pickup_radius && near_items_count < NUM_NEAR_ITEMS)
-        {
-            near_items[near_items_count].index = i;
-            near_items[near_items_count].dist = distance;
-            near_items[near_items_count].id = pu->id;
-            near_items_count++;
-        }
-
-        pu->highlighted = false;
     }
 
-    if(near_items_count > 0)
+
+    for(int k = 0; k < MAX_PLAYERS; ++k)
     {
-        // insertion sort
-        int i, j;
-        ItemSort key;
-        for (i = 1; i < near_items_count; ++i) 
-        {
-            memcpy(&key, &near_items[i], sizeof(ItemSort));
-            j = i - 1;
+        Player* p = &players[k];
 
-            while (j >= 0 && near_items[j].dist > key.dist)
+        if(role == ROLE_LOCAL && p != player) continue;
+        if(!p->active) continue;
+        if(p->phys.dead) continue;
+
+        ItemSort near_items_prior[NUM_NEAR_ITEMS] = {0};
+        int near_items_count_prior = 0;
+
+        memcpy(near_items_prior, p->near_items, sizeof(ItemSort)*NUM_NEAR_ITEMS);
+        near_items_count_prior = p->near_items_count;
+
+        memset(p->near_items, 0, sizeof(ItemSort)*NUM_NEAR_ITEMS);
+        p->near_items_count = 0;
+
+        for(int j = 0; j < item_list->count; ++j)
+        {
+            Item* pu = &items[j];
+
+            if(pu->curr_room != p->curr_room) continue;
+            if(pu->used) continue;
+
+            Vector2f c1 = {p->phys.pos.x, p->phys.pos.y};
+            Vector2f c2 = {pu->phys.pos.x, pu->phys.pos.y};
+
+            float distance;
+            bool in_pickup_radius = circles_colliding(&c1, p->phys.radius, &c2, ITEM_PICKUP_RADIUS, &distance);
+
+            if(in_pickup_radius && p->near_items_count < NUM_NEAR_ITEMS)
             {
-                memcpy(&near_items[j+1], &near_items[j], sizeof(ItemSort));
-                j = j - 1;
+                p->near_items[p->near_items_count].index = j;
+                p->near_items[p->near_items_count].dist = distance;
+                p->near_items[p->near_items_count].id = pu->id;
+                p->near_items_count++;
             }
-            memcpy(&near_items[j+1], &key, sizeof(ItemSort));
-        }
 
-        bool same_list = true;
-        if(near_items_count != near_items_count_prior)
+        }   //items
+
+        if(p->near_items_count > 0)
         {
-            same_list = false;
-        }
-        else
-        {
-            for(int i = 0; i < near_items_count; ++i)
+            // insertion sort
+            int i, j;
+            ItemSort key;
+            for (i = 1; i < p->near_items_count; ++i) 
             {
-                if(near_items[i].id != near_items_prior[i].id)
+                memcpy(&key, &p->near_items[i], sizeof(ItemSort));
+                j = i - 1;
+
+                while (j >= 0 && p->near_items[j].dist > key.dist)
                 {
-                    same_list = false;
-                    break;
+                    memcpy(&p->near_items[j+1], &p->near_items[j], sizeof(ItemSort));
+                    j = j - 1;
+                }
+                memcpy(&p->near_items[j+1], &key, sizeof(ItemSort));
+            }
+
+            bool same_list = true;
+            if(p->near_items_count != near_items_count_prior)
+            {
+                same_list = false;
+            }
+            else
+            {
+                for(int i = 0; i < p->near_items_count; ++i)
+                {
+                    if(p->near_items[i].id != near_items_prior[i].id)
+                    {
+                        same_list = false;
+                        break;
+                    }
                 }
             }
-        }
 
-        if(same_list)
-        {
-            // text_list_add(text_lst, 3.0, "Same list");
-            if(player->highlighted_index >= near_items_count)
+            if(same_list)
             {
-                // text_list_add(text_lst, 3.0, "same list: wrap selection");
-                player->highlighted_index = 0;
+                // text_list_add(text_lst, 3.0, "Same list");
+                if(p->highlighted_index >= p->near_items_count)
+                {
+                    // text_list_add(text_lst, 3.0, "same list: wrap selection -> 0");
+                    p->highlighted_index = 0;
+                }
+                else if(p->highlighted_index < 0)
+                {
+                    // text_list_add(text_lst, 3.0, "same list: wrap selection -> %d", p->near_items_count-1);
+                    p->highlighted_index = p->near_items_count-1;
+                }
             }
-            else if(player->highlighted_index < 0)
+            else
             {
-                player->highlighted_index = near_items_count-1;
+                // text_list_add(text_lst, 3.0, "new list");
+                p->highlighted_index = 0;
             }
+
+            Item* it = &items[p->near_items[p->highlighted_index].index];
+            it->highlighted = true;
+
+            // if(p->highlighted_item_id != it->id)
+            // {
+            //     text_list_add(text_lst, 3.0, "new id: %u", it->id);
+            // }
+            p->highlighted_item_id = it->id;
+
+            // p->highlighted_item = it;
+            // player->highlighted_item = &items[near_items[player->highlighted_index].index];
+            // player->highlighted_item->highlighted = true;
+
         }
         else
         {
-            // text_list_add(text_lst, 3.0, "new list");
-            player->highlighted_index = 0;
+            // p->highlighted_item = NULL;
+            p->highlighted_item_id = -1;
+            p->highlighted_index = 0;
         }
+    }   //players
 
-        player->highlighted_item = &items[near_items[player->highlighted_index].index];
-        player->highlighted_item->highlighted = true;
-
-    }
-    else
-    {
-        player->highlighted_item = NULL;
-        player->highlighted_index = 0;
-    }
 }
-
 
 void item_draw(Item* pu)
 {
     if(pu->curr_room != player->curr_room)
         return;
 
-    uint32_t color = pu->highlighted ? COLOR_TINT_NONE : 0x88888888;
+    // uint32_t color = pu->highlighted ? COLOR_TINT_NONE : 0x88888888;
+    uint32_t color = 0x88888888;
+    if(pu->highlighted && pu->id == player->highlighted_item_id)
+    {
+        color = COLOR_TINT_NONE;
+    }
 
     int sprite_index = item_props[pu->type].sprite_index;
 
     if(pu->used)
         sprite_index++;
 
-    if(pu->type == ITEM_NEW_LEVEL)
-    {
-        pu->angle += 5.0;
-    }
+    // if(pu->type == ITEM_NEW_LEVEL)
+    // {
+    //     pu->angle += 5.0;
+    // }
 
     float y = pu->phys.pos.y - 0.5*pu->phys.pos.z;
     gfx_sprite_batch_add(item_props[pu->type].image, sprite_index, pu->phys.pos.x, y, color, false, iscale, pu->angle, 1.0, true, false, false);
+}
+
+void item_lerp(Item* it, double dt)
+{
+    it->lerp_t += dt;
+
+    float tick_time = 1.0/TICK_RATE;
+    float t = (it->lerp_t / tick_time);
+
+    Vector3f lp = lerp3f(&it->server_state_prior.pos,&it->server_state_target.pos,t);
+    it->phys.pos.x = lp.x;
+    it->phys.pos.y = lp.y;
+    it->phys.pos.z = lp.z;
+
+    it->angle = lerp_angle_deg(it->server_state_prior.angle, it->server_state_target.angle, t);
+    //printf("prior_pos: %f %f, target_pos: %f %f, pos: %f %f, t: %f\n",p->server_state_prior.pos.x, p->server_state_prior.pos.y, p->server_state_target.pos.x, p->server_state_target.pos.y, p->phys.pos.x, p->phys.pos.y, t);
 }
 
 void item_handle_collision(Item* p, Entity* e)

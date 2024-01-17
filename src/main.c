@@ -840,8 +840,7 @@ void update(float dt)
     if(game_state == GAME_STATE_EDITOR)
     {
         bool res = room_editor_update(dt);
-        if(!res)
-            return;
+        if(!res) return;
     }
 
     gfx_clear_lines();
@@ -913,6 +912,11 @@ void update(float dt)
             creature_lerp(&creatures[i], dt);
         }
 
+        for(int i = 0; i < item_list->count; ++i)
+        {
+            item_lerp(&items[i], dt);
+        }
+
         decal_update_all(dt);
         particles_update(dt);
 
@@ -920,11 +924,7 @@ void update(float dt)
         for(int i = 0; i < MAX_CLIENTS; ++i)
         {
             Player* p = &players[i];
-            if(p->active)
-            {
-                player_lerp(p, dt);
-                p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
-            }
+            player_update(p, dt);
         }
 
         entity_build_all();
@@ -932,7 +932,8 @@ void update(float dt)
         camera_set(true);
 
         return;
-    }
+
+    } //client
 
     // Update Local
     // ------------------------------
@@ -1043,10 +1044,10 @@ void update(float dt)
                 Player* p = &players[i];
                 player_update(p, dt);
 
-                if(p->active && p->curr_room == player->curr_room)
-                {
-                    p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
-                }
+                // if(p->active && p->curr_room == player->curr_room)
+                // {
+                //     p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
+                // }
             }
 
 #if 0

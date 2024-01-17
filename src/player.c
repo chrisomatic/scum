@@ -139,18 +139,21 @@ void player_init()
         p->anim.frame_sequence[3] = 3;
 
         p->gauntlet_selection = 0;
-        p->gauntlet_slots = MIN(5,PLAYER_GAUNTLET_MAX);
+        p->gauntlet_slots = MIN(3,PLAYER_GAUNTLET_MAX);
         for(int j = 0; j < PLAYER_GAUNTLET_MAX; ++j)
         {
             p->gauntlet[j].type = ITEM_NONE;
             // p->gauntlet[j].type = item_rand(false);
             // p->gauntlet[j].type = ITEM_CHEST;
         }
-        p->gauntlet_item.type = ITEM_NONE;
+        // p->gauntlet_item.type = ITEM_NONE;
 
         p->xp = 0;
         p->level = 0;
         p->new_levels = 0;
+
+        p->highlighted_item_id = -1;
+        p->highlighted_index = 0;
 
         for(int j = 0; j < PLAYER_MAX_SKILLS; ++j)
         {
@@ -184,7 +187,7 @@ void player_drop_item(Player* p, Item* it)
     float nx = px;
     float ny = py;
 
-    Room* room = level_get_room_by_index(&level, (int)player->curr_room);
+    Room* room = level_get_room_by_index(&level, (int)p->curr_room);
     if(!room) printf("room is null!\n");
 
     // Dir dirs[4] = {DIR_DOWN, DIR_RIGHT, DIR_LEFT, DIR_UP};
@@ -792,9 +795,27 @@ void player_update(Player* p, float dt)
 {
     if(!p->active) return;
 
+    // has to be role local because server doesn't know about transition_room
     if(role == ROLE_LOCAL && p == player)
     {
         if(player->curr_room != player->transition_room) return;
+    }
+
+    if(role == ROLE_CLIENT)
+    {
+        player_lerp(p, dt);
+        if(p->curr_room == player->curr_room)
+        {
+            p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
+        }
+
+        if(p == player)
+        {
+            Room* room = level_get_room_by_index(&level, (int)p->curr_room);
+            if(room) room->discovered = true;
+        }
+
+        return;
     }
 
     float prior_x = p->phys.pos.x;
@@ -819,7 +840,7 @@ void player_update(Player* p, float dt)
         {
             if(rshift)
             {
-                if(player->gauntlet_selection == 0)
+                if(p->gauntlet_selection == 0)
                     p->gauntlet_selection = p->gauntlet_slots-1;
                 else
                     p->gauntlet_selection--;
@@ -832,31 +853,39 @@ void player_update(Player* p, float dt)
             }
         }
 
-        if(p->highlighted_item)
+        Item* highlighted_item = NULL;
+        if(p->highlighted_item_id != -1)
+        {
+            highlighted_item = item_get_by_id(p->highlighted_item_id);
+        }
+
+        if(highlighted_item)
         {
             if(p->actions[PLAYER_ACTION_ITEM_CYCLE].toggled_on)
             {
-                if(p->actions[PLAYER_ACTION_RSHIFT].state)
+                if(rshift)
                     p->highlighted_index--;
                 else
                     p->highlighted_index++;
             }
 
-            const char* desc = item_get_description(p->highlighted_item->type);
-            const char* name = item_get_name(p->highlighted_item->type);
-            if(strlen(desc) > 0)
-            {
-                message_small_set(0.1, "Item: %s (%s)", name, desc);
-            }
-            else
-            {
-                message_small_set(0.1, "Item: %s", name);
-            }
+            // if(p == player) player_set_highlighted_item_str(highlighted_item);
+
+            // const char* desc = item_get_description(highlighted_item->type);
+            // const char* name = item_get_name(highlighted_item->type);
+            // if(strlen(desc) > 0)
+            // {
+            //     message_small_set(0.1, "Item: %s (%s)", name, desc);
+            // }
+            // else
+            // {
+            //     message_small_set(0.1, "Item: %s", name);
+            // }
         }
 
         if(activate)
         {
-            Item* pu = p->highlighted_item;
+            Item* pu = highlighted_item;
             if(pu)
             {
                 ItemType type = pu->type;
@@ -875,6 +904,8 @@ void player_update(Player* p, float dt)
                     Item* it = &p->gauntlet[p->gauntlet_selection];
                     player_drop_item(p, it);
                     memcpy(it, pu, sizeof(Item));
+                    ItemType nt = p->gauntlet[p->gauntlet_selection].type;
+                    // printf("ht: %d   nt: %d\n", highlighted_item->type, nt);
                     pu->picked_up = true;
                 }
                 else
@@ -1232,7 +1263,6 @@ void player_update(Player* p, float dt)
         }
     }
 
-
     if(ABS(p->phys.vel.x) < 1.0) p->phys.vel.x = 0.0;
     if(ABS(p->phys.vel.y) < 1.0) p->phys.vel.y = 0.0;
 
@@ -1337,7 +1367,6 @@ void player_update(Player* p, float dt)
         }
     }
 
-
     // check tiles around player
     handle_room_collision(p);
 
@@ -1371,8 +1400,15 @@ void player_update(Player* p, float dt)
 
     ptext->x = p->phys.pos.x - p->phys.radius/2.0 - 3.0;
     ptext->y = (p->phys.pos.y - p->phys.pos.z/2.0) - p->phys.height - ptext->text_height;
-
     text_list_update(ptext, dt);
+
+    if(role == ROLE_LOCAL)
+    {
+        if(p->curr_room == player->curr_room)
+        {
+            p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
+        }
+    }
 
     if(p->invulnerable_temp)
     {
@@ -1913,6 +1949,26 @@ void player_draw(Player* p)
 
     if(p == player)
     {
+
+        Item* highlighted_item = NULL;
+        if(p->highlighted_item_id != -1)
+        {
+            highlighted_item = item_get_by_id(p->highlighted_item_id);
+        }
+        if(highlighted_item)
+        {
+            const char* desc = item_get_description(highlighted_item->type);
+            const char* name = item_get_name(highlighted_item->type);
+            if(strlen(desc) > 0)
+            {
+                message_small_set(0.1, "Item: %s (%s)", name, desc);
+            }
+            else
+            {
+                message_small_set(0.1, "Item: %s", name);
+            }
+        }
+
         text_list_draw(ptext);
     }
 }
@@ -1937,13 +1993,6 @@ void player_lerp(Player* p, float dt)
     // printf("[lerping player] t: %.2f, x: %.2f -> %.2f = %.2f\n", t, p->server_state_prior.pos.x, p->server_state_target.pos.x, lp.x);
 
     p->invulnerable_temp_time = lerp(p->server_state_prior.invulnerable_temp_time, p->server_state_target.invulnerable_temp_time, t);
-
-
-    if(p == player)
-    {
-        Room* room = level_get_room_by_index(&level, (int)p->curr_room);
-        room->discovered = true;
-    }
 }
 
 void player_handle_net_inputs(Player* p, double dt)

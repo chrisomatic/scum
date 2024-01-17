@@ -54,6 +54,12 @@ typedef struct
 
 typedef struct
 {
+    Vector3f pos;
+    float angle;
+} ItemNetLerp;
+
+typedef struct
+{
     ItemType type;
     uint16_t id;
     bool picked_up;
@@ -62,10 +68,23 @@ typedef struct
     bool highlighted;
     bool used;
     float angle;
+
+    // Networking
+    float lerp_t;
+    ItemNetLerp server_state_prior;
+    ItemNetLerp server_state_target;
 } Item;
+
+typedef struct
+{
+    int index;
+    uint16_t id;
+    float dist;
+} ItemSort;
 
 extern int items_image;
 extern glist* item_list;
+extern Item prior_items[MAX_ITEMS];
 extern Item items[MAX_ITEMS];
 extern ItemProps item_props[ITEM_MAX];
 
@@ -73,6 +92,7 @@ extern ItemProps item_props[ITEM_MAX];
 
 void item_init();
 void item_clear_all();
+Item* item_get_by_id(uint16_t id);
 
 bool item_is_gem(ItemType type);
 bool item_is_heart(ItemType type);
@@ -89,6 +109,7 @@ bool item_remove(Item* pu);
 void item_update(Item* pu, float dt);
 void item_update_all(float dt);
 void item_draw(Item* pu);
+void item_lerp(Item* it, double dt);
 void item_handle_collision(Item* p, Entity* e);
 void item_apply_gauntlet(void* _proj_def, void* _proj_spawn, Item* gauntlet, uint8_t num_slots);
 bool item_is_on_tile(Room* room, int tile_x, int tile_y);

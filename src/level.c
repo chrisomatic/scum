@@ -1,6 +1,7 @@
 #include "headers.h"
 #include "core/io.h"
 #include "core/gfx.h"
+#include "core/window.h"
 #include "main.h"
 #include "creature.h"
 #include "item.h"
@@ -202,6 +203,19 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
     {
         room->type   = ROOM_TYPE_EMPTY;
         room->layout = 0;
+
+        // // TEMP
+        // item_add(ITEM_CHEST, CENTER_X, CENTER_Y, room->index);
+        // for(int i = 0; i < 3; ++i) item_add(item_rand(false), CENTER_X, CENTER_Y, room->index);
+// item_add(ITEM_GEM_RED, CENTER_X, CENTER_Y, room->index);
+// item_add(ITEM_GEM_RED+1, CENTER_X, CENTER_Y, room->index);
+// item_add(ITEM_GEM_RED+2, CENTER_X, CENTER_Y, room->index);
+
+        for(int i = 0; i < ITEM_MAX; ++i)
+        {
+            item_add(i, CENTER_X, CENTER_Y, room->index);
+        }
+
         goto exit_conditions;
     }
 

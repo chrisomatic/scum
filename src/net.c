@@ -93,6 +93,7 @@ static inline void pack_u8_at(Packet* pkt, uint8_t d, int index);
 static inline void pack_u16(Packet* pkt, uint16_t d);
 static inline void pack_u16_at(Packet* pkt, uint16_t d, int index);
 static inline void pack_u32(Packet* pkt, uint32_t d);
+static inline void pack_i32(Packet* pkt, int32_t d);
 static inline void pack_u64(Packet* pkt, uint64_t d);
 static inline void pack_float(Packet* pkt, float d);
 static inline void pack_bytes(Packet* pkt, uint8_t* d, uint8_t len);
@@ -104,6 +105,7 @@ static inline bool unpack_bool(Packet* pkt, int* offset);
 static inline uint8_t  unpack_u8(Packet* pkt, int* offset);
 static inline uint16_t unpack_u16(Packet* pkt, int* offset);
 static inline uint32_t unpack_u32(Packet* pkt, int* offset);
+static inline int32_t unpack_i32(Packet* pkt, int* offset);
 static inline uint64_t unpack_u64(Packet* pkt, int* offset);
 static inline float    unpack_float(Packet* pkt, int* offset);
 static inline void unpack_bytes(Packet* pkt, uint8_t* d, int len, int* offset);
@@ -117,6 +119,8 @@ static void pack_creatures(Packet* pkt, ClientInfo* cli);
 static void unpack_creatures(Packet* pkt, int* offset);
 static void pack_projectiles(Packet* pkt, ClientInfo* cli);
 static void unpack_projectiles(Packet* pkt, int* offset);
+static void pack_items(Packet* pkt, ClientInfo* cli);
+static void unpack_items(Packet* pkt, int* offset);
 static void pack_decals(Packet* pkt, ClientInfo* cli);
 static void unpack_decals(Packet* pkt, int* offset);
 static void pack_other(Packet* pkt, ClientInfo* cli);
@@ -454,6 +458,7 @@ static void server_send(PacketType type, ClientInfo* cli)
             pack_players(&pkt, cli);
             pack_creatures(&pkt, cli);
             pack_projectiles(&pkt, cli);
+            pack_items(&pkt, cli);
             pack_decals(&pkt, cli);
             pack_other(&pkt, cli);
             pack_events(&pkt,cli);
@@ -529,6 +534,8 @@ static void server_simulate()
 
     projectile_update(dt);
     creature_update_all(dt);
+    item_update_all(dt);
+    // explosion_update_all(dt);
     decal_update_all(dt);
 
     entity_build_all();
@@ -1284,6 +1291,7 @@ void net_client_update()
                     unpack_players(&srvpkt, &offset);
                     unpack_creatures(&srvpkt, &offset);
                     unpack_projectiles(&srvpkt, &offset);
+                    unpack_items(&srvpkt, &offset);
                     unpack_decals(&srvpkt, &offset);
                     unpack_other(&srvpkt, &offset);
                     unpack_events(&srvpkt, &offset);
@@ -1473,6 +1481,16 @@ static inline void pack_u32(Packet* pkt, uint32_t d)
     pkt->data_len+=sizeof(uint32_t);
 }
 
+static inline void pack_i32(Packet* pkt, int32_t d)
+{
+    pkt->data[pkt->data_len+0] = (d>>24) & 0xFF;
+    pkt->data[pkt->data_len+1] = (d>>16) & 0xFF;
+    pkt->data[pkt->data_len+2] = (d>>8) & 0xFF;
+    pkt->data[pkt->data_len+3] = (d) & 0xFF;
+
+    pkt->data_len+=sizeof(uint32_t);
+}
+
 static inline void pack_u64(Packet* pkt, uint64_t d)
 {
     pkt->data[pkt->data_len+0] = (d>>56) & 0xFF;
@@ -1546,6 +1564,13 @@ static inline uint16_t unpack_u16(Packet* pkt, int* offset)
 static inline uint32_t unpack_u32(Packet* pkt, int* offset)
 {
     uint32_t r = pkt->data[*offset] << 24 | pkt->data[*offset+1] << 16 | pkt->data[*offset+2] << 8 | pkt->data[*offset+3];
+    (*offset)+=sizeof(uint32_t);
+    return r;
+}
+
+static inline int32_t unpack_i32(Packet* pkt, int* offset)
+{
+    int32_t r = pkt->data[*offset] << 24 | pkt->data[*offset+1] << 16 | pkt->data[*offset+2] << 8 | pkt->data[*offset+3];
     (*offset)+=sizeof(uint32_t);
     return r;
 }
@@ -1679,7 +1704,6 @@ void test_packing()
 }
 
 
-
 static void pack_players(Packet* pkt, ClientInfo* cli)
 {
     int index = pkt->data_len;
@@ -1699,6 +1723,17 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             pack_u8(pkt, p->sprite_index+p->anim.curr_frame);
             pack_u8(pkt, p->curr_room);
             pack_u8(pkt, p->phys.hp);
+            pack_i32(pkt, p->highlighted_item_id);
+
+            pack_u8(pkt, p->gauntlet_selection);
+            pack_u8(pkt, p->gauntlet_slots);
+            for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
+            {
+                pack_u8(pkt, (uint8_t)p->gauntlet[g].type);
+                // printf("%u ", pkt->data[pkt->data_len-1]);
+            }
+            // printf("\n");
+
             pack_bool(pkt, p->invulnerable_temp);
             pack_float(pkt, p->invulnerable_temp_time);
             pack_u8(pkt, (uint8_t)p->door);
@@ -1739,6 +1774,19 @@ static void unpack_players(Packet* pkt, int* offset)
         p->sprite_index = unpack_u8(pkt, offset);
         uint8_t curr_room  = unpack_u8(pkt, offset);
         p->phys.hp  = unpack_u8(pkt, offset);
+
+        p->highlighted_item_id = unpack_i32(pkt, offset);
+        p->gauntlet_selection = unpack_u8(pkt, offset);
+        p->gauntlet_slots = unpack_u8(pkt, offset);
+        for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
+        {
+            int8_t type = (int8_t)unpack_u8(pkt, offset);
+            // printf("%d(",type);
+            p->gauntlet[g].type = (ItemType)type;
+            // printf("%d) ",p->gauntlet[g].type);
+        }
+        // printf("\n");
+
         p->invulnerable_temp = unpack_bool(pkt, offset);
         float invulnerable_temp_time = unpack_float(pkt, offset);
         p->door  = (Dir)unpack_u8(pkt, offset);
@@ -1949,6 +1997,96 @@ static void unpack_projectiles(Packet* pkt, int* offset)
         p->server_state_target.pos.z = pos.z;
 
         p->player_id = player_id;
+    }
+}
+
+static void pack_items(Packet* pkt, ClientInfo* cli)
+{
+    int index = pkt->data_len;
+    pkt->data_len += 1;
+
+    uint16_t num_items = (uint16_t)item_list->count;
+    uint8_t num_visible_items = 0;
+
+    for(int i = 0; i < num_items; ++i)
+    {
+        Item* it = &items[i];
+
+        if(!is_any_player_room(it->curr_room))
+            continue;
+
+        if(it->picked_up)
+            continue;
+
+        pack_u16(pkt,it->id);
+        pack_u8(pkt,(uint8_t)it->type);
+        pack_vec3(pkt,vec3(it->phys.pos.x, it->phys.pos.y, it->phys.pos.z));
+        pack_u8(pkt,it->curr_room);
+        pack_float(pkt,it->angle);
+        pack_bool(pkt, it->highlighted);
+        pack_bool(pkt, it->used);
+        num_visible_items++;
+    }
+
+    pack_u8_at(pkt, num_visible_items, index);
+
+}
+
+static void unpack_items(Packet* pkt, int* offset)
+{
+    memcpy(prior_items, items, sizeof(Item)*MAX_ITEMS);
+
+    // load items
+    uint8_t num_items = unpack_u8(pkt, offset);
+
+    list_clear(item_list);
+    item_list->count = num_items;
+
+    for(int i = 0; i < num_items; ++i)
+    {
+        Item* it = &items[i];
+
+        uint16_t id = unpack_u16(pkt, offset);
+        int8_t _type = (int8_t)unpack_u8(pkt, offset);
+        ItemType type = (ItemType)_type;
+        Vector3f pos = unpack_vec3(pkt, offset);
+        uint8_t room_id = unpack_u8(pkt, offset);
+        float angle = unpack_float(pkt, offset);
+        bool highlighted = unpack_bool(pkt, offset);
+        bool used = unpack_bool(pkt, offset);
+
+        it->id = id;
+        it->type = type;
+        it->curr_room = room_id;
+        it->highlighted = highlighted;
+        it->used = used;
+        it->lerp_t = 0.0;
+
+        it->server_state_prior.pos.x = pos.x;
+        it->server_state_prior.pos.y = pos.y;
+        it->server_state_prior.pos.z = pos.z;
+        it->server_state_prior.angle = angle;
+
+        //find the prior
+        for(int j = i; j < MAX_ITEMS; ++j)
+        {
+            Item* itj = &prior_items[j];
+            if(itj->type == ITEM_NONE) break;
+            if(itj->id == it->id)
+            {
+                it->server_state_prior.pos.x = itj->phys.pos.x;
+                it->server_state_prior.pos.y = itj->phys.pos.y;
+                it->server_state_prior.pos.z = itj->phys.pos.z;
+                it->server_state_prior.angle = itj->angle;
+                break;
+            }
+        }
+
+        it->server_state_target.pos.x = pos.x;
+        it->server_state_target.pos.y = pos.y;
+        it->server_state_target.pos.z = pos.z;
+        it->server_state_target.angle = angle;
+
     }
 }
 
