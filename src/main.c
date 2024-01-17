@@ -65,9 +65,9 @@ Decal decals[MAX_DECALS];
 glist* decal_list = NULL;
 
 bool dynamic_zoom = false;
-int cam_zoom = 70;
+int cam_zoom = 54;
 int cam_zoom_temp = 70;
-int cam_min_zoom = 65;
+int cam_min_zoom = 54;
 
 Rect camera_limit = {0};
 Vector2f aim_camera_offset = {0};

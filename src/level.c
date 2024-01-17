@@ -795,7 +795,7 @@ void level_init()
 {
     if(dungeon_image > 0) return;
 
-    dungeon_image = gfx_load_image("src/img/dungeon_set.png", false, true, TILE_SIZE, TILE_SIZE);
+    dungeon_image = gfx_load_image("src/img/dungeon_set.png", false, false, TILE_SIZE, TILE_SIZE);
 
     room_file_load_all(false);
     printf("Done with room files\n");
@@ -942,21 +942,26 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
 
     uint32_t color = room->color;
 
+    gfx_sprite_batch_begin(true);
+
     // draw walls
     for(int i = 1; i < ROOM_TILE_SIZE_X+1; ++i) // top
-        gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_UP, r.x + i*w,r.y, color, 1.0, 0.0, 1.0, false, true);
+        gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_UP, r.x + i*w,r.y, color, false, 1.0, 0.0, 1.0, false, false, false);
+   
     for(int i = 1; i < ROOM_TILE_SIZE_Y+1; ++i) // right
-        gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_RIGHT, r.x + (ROOM_TILE_SIZE_X+1)*w,r.y+i*h, color, 1.0, 0.0, 1.0, false, true);
+        gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_RIGHT, r.x + (ROOM_TILE_SIZE_X+1)*w,r.y+i*h, color,false,  1.0, 0.0, 1.0, false, false, false);
+
     for(int i = 1; i < ROOM_TILE_SIZE_X+1; ++i) // bottom
-        gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_DOWN, r.x + i*w,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, 1.0, 0.0, 1.0, false, true);
+        gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_DOWN, r.x + i*w,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, false, 1.0, 0.0, 1.0, false, false, false);
+
     for(int i = 1; i < ROOM_TILE_SIZE_Y+1; ++i) // left
-        gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_LEFT, r.x,r.y+i*h, color, 1.0, 0.0, 1.0, false, true);
+        gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_LEFT, r.x,r.y+i*h, color, false, 1.0, 0.0, 1.0, false, false, false);
 
     // wall corners
-    gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_CORNER_LU, r.x,r.y, color, 1.0, 0.0, 1.0, false, true);
-    gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_CORNER_UR, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y, color, 1.0, 0.0, 1.0, false, true);
-    gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_CORNER_RD, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, 1.0, 0.0, 1.0, false, true);
-    gfx_draw_image(dungeon_image, SPRITE_TILE_WALL_CORNER_DL, r.x,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, 1.0, 0.0, 1.0, false, true);
+    gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_LU, r.x,r.y, color, false, 1.0, 0.0, 1.0, false, false, false);
+    gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_UR, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y, color, false, 1.0, 0.0, 1.0, false, false, false);
+    gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_RD, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, false, 1.0, 0.0, 1.0, false, false, false);
+    gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_DL, r.x,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, false, 1.0, 0.0, 1.0, false, false, false);
 
     uint8_t door_sprites[4] = {SPRITE_TILE_DOOR_UP, SPRITE_TILE_DOOR_RIGHT, SPRITE_TILE_DOOR_DOWN, SPRITE_TILE_DOOR_LEFT};
     if(room->doors_locked)
@@ -992,7 +997,7 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
         }
         float _x = centerx + halfw*o.x;
         float _y = centery + halfh*o.y;
-        gfx_draw_image(dungeon_image, door_sprites[i], _x, _y, dcolor, 1.0, 0.0, 1.0, false, true);
+        gfx_sprite_batch_add(dungeon_image, door_sprites[i], _x, _y, dcolor, false, 1.0, 0.0, 1.0, false, false, false);
     }
 
     RoomFileData* rdata;
@@ -1013,7 +1018,7 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
             float draw_x = r.x + (_x+1)*w;
             float draw_y = r.y + (_y+1)*h;
 
-            gfx_draw_image(dungeon_image, sprite, draw_x, draw_y, color, 1.0, 0.0, 1.0, false, true);
+            gfx_sprite_batch_add(dungeon_image, sprite, draw_x, draw_y, color, false, 1.0, 0.0, 1.0, false, false, false);
 
             if(debug_enabled && show_tile_grid)
             {
@@ -1021,6 +1026,8 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
             }
         }
     }
+
+    gfx_sprite_batch_draw();
 }
 
 void room_draw_walls(Room* room)
