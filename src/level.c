@@ -795,7 +795,7 @@ void level_init()
 {
     if(dungeon_image > 0) return;
 
-    dungeon_image = gfx_load_image("src/img/dungeon_set.png", false, false, TILE_SIZE, TILE_SIZE);
+    dungeon_image = gfx_load_image("src/img/dungeon_set.png", false, true, TILE_SIZE, TILE_SIZE);
 
     room_file_load_all(false);
     printf("Done with room files\n");
