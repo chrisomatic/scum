@@ -44,12 +44,13 @@ bool show_tile_grid = false;
 bool players_invincible = false;
 
 // Settings
-uint32_t background_color = COLOR_BLACK;
+// uint32_t background_color = COLOR_BLACK;
+uint32_t background_color = COLOR(30,30,30);
 uint32_t margin_color = COLOR_BLACK;
 
 // mouse
-float mx=0, my=0;
-float wmx=0, wmy=0;
+float mouse_x=0, mouse_y=0;
+float mouse_window_x=0, mouse_window_y=0;
 
 // areas
 Rect room_area = {0};
@@ -131,6 +132,8 @@ void update(float dt);
 void draw();
 void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods);
 void start_server();
+
+void handle_room_completion();
 
 void message_small_update(float dt);
 void message_small_draw();
@@ -240,14 +243,17 @@ void set_game_state(GameState state)
             } break;
             case GAME_STATE_PLAYING:
             {
+                debug_enabled = false;
+                editor_enabled = false;
+                paused = false;
                 ambient_light = ambient_light_default;
                 if(role == ROLE_LOCAL)
                 {
                     player = &players[0];
-                    player2 = &players[1];
                     player_set_active(player, true);
+                    // player2 = &players[1];
                     // player_set_active(player2, true);
-                    player2_init_keys();
+                    // player2_init_keys();
                 }
                 player_init_keys();
             } break;
@@ -260,6 +266,9 @@ void set_game_state(GameState state)
 void camera_set(bool immediate)
 {
     if(game_state == GAME_STATE_EDITOR)
+        return;
+
+    if(role == ROLE_SERVER)
         return;
 
     // if(paused) return;
@@ -276,8 +285,8 @@ void camera_set(bool immediate)
         float _vh = view_height;
 
         float r = 0.2;  //should be <= 0.5 to make sense otherwise player will end up off of the screen
-        float ox = (mx - _vw/2.0);
-        float oy = (my - _vh/2.0);
+        float ox = (mouse_x - _vw/2.0);
+        float oy = (mouse_y - _vh/2.0);
         float xr = _vw*r;
         float yr = _vh*r;
         ox = 2.0*xr*(ox/_vw);
@@ -295,10 +304,10 @@ void camera_set(bool immediate)
 
     if(!window_is_cursor_enabled())
     {
-        if(mx >= view_width || mx <= 0 || my >= view_height || my <= 0)
+        if(mouse_x >= view_width || mouse_x <= 0 || mouse_y >= view_height || mouse_y <= 0)
         {
-            int new_mx = RANGE(mx, 0, view_width);
-            int new_my = RANGE(my, 0, view_height);
+            int new_mx = RANGE(mouse_x, 0, view_width);
+            int new_my = RANGE(mouse_y, 0, view_height);
             window_set_mouse_view_coords(new_mx, new_my);
         }
     }
@@ -695,7 +704,7 @@ void init()
     ascale = view_width / 1200.0;
     LOGI("   ascale: %.2f", ascale);
 
-    text_lst = text_list_init(50, 10.0, view_height - 40.0, 0.12*ascale, COLOR_WHITE, false, TEXT_ALIGN_LEFT, NOT_IN_WORLD, true);
+    text_lst = text_list_init(50, 10.0, view_height - 40.0, 0.19*ascale, false, TEXT_ALIGN_LEFT, NOT_IN_WORLD, true);
 
     LOGI(" - Particles.");
     particles_init();
@@ -838,6 +847,141 @@ void parse_args(int argc, char* argv[])
     }
 }
 
+
+
+bool client_handle_connection()
+{
+    if(role != ROLE_CLIENT) return true;
+
+    ConnectionState check_state = net_client_get_state();
+
+    if(check_state != CONNECTED)
+    {
+        net_client_connect_update(); // progress through connection routine
+
+        ConnectionState curr_state = net_client_get_state();
+
+        if(curr_state != check_state)
+        {
+            // connection state changed
+            switch(curr_state)
+            {
+                case DISCONNECTED:
+                    text_list_add(text_lst, COLOR_RED, 3.0, "Disconnected from Server.");
+                    break;
+                case SENDING_CONNECTION_REQUEST:
+                    text_list_add(text_lst, COLOR_WHITE, 3.0, "Sending Connection Request.");
+                    break;
+                case SENDING_CHALLENGE_RESPONSE:
+                    text_list_add(text_lst, COLOR_WHITE, 3.0, "Sending Challenge Response.");
+                    break;
+                case CONNECTED:
+                {
+                    text_list_add(text_lst, COLOR_GREEN, 3.0, "Connected to Server.");
+                    int id = net_client_get_id();
+                    player = &players[id];
+                    window_controls_clear_keys();
+                    player_init_keys();
+                } break;
+            }
+        }
+
+        if(curr_state != CONNECTED)
+            return false;
+    }
+
+    // Client connected
+    net_client_update();
+
+    if(!net_client_received_init_packet())
+    {
+        // haven't received init packet from server yet
+        return false;
+    }
+
+    return true;
+}
+
+void update_main_menu(float dt)
+{
+    for(int i = 0; i < MENU_KEY_MAX; ++i)
+    {
+        update_input_state(&menu_keys[i], dt);
+    }
+
+    int num_opts = sizeof(menu_options)/sizeof(menu_options[0]);
+
+    if(menu_keys[MENU_KEY_UP].toggled_on || menu_keys[MENU_KEY_UP].hold)
+    {
+        menu_selected_option--;
+        if(menu_selected_option < 0) menu_selected_option = num_opts-1;
+    }
+
+    if(menu_keys[MENU_KEY_DOWN].toggled_on || menu_keys[MENU_KEY_DOWN].hold)
+    {
+        menu_selected_option++;
+        if(menu_selected_option >= num_opts) menu_selected_option = 0;
+    }
+
+    if(menu_keys[MENU_KEY_ENTER].toggled_on)
+    {
+        const char* s = menu_options[menu_selected_option];
+
+        if(STR_EQUAL(s, "Continue Game"))
+        {
+            role = ROLE_LOCAL;
+            set_game_state(GAME_STATE_PLAYING);
+        }
+        else if(STR_EQUAL(s, "New Game"))
+        {
+            player_init();
+            game_generate_level(rand(), 1);
+
+            role = ROLE_LOCAL;
+            set_game_state(GAME_STATE_PLAYING);
+        }
+        else if(STR_EQUAL(s, "Play Online"))
+        {
+            role = ROLE_CLIENT;
+            net_client_init();
+            net_client_set_server_ip(ONLINE_SERVER_IP);
+            set_game_state(GAME_STATE_PLAYING);
+        }
+        else if(STR_EQUAL(s, "Host Local Server"))
+        {
+            role = ROLE_SERVER;
+            deinit();
+
+            start_server();
+        }
+        else if(STR_EQUAL(s, "Join Local Server"))
+        {
+            role = ROLE_CLIENT;
+            net_client_init();
+            net_client_set_server_ip(LOCAL_SERVER_IP);
+            set_game_state(GAME_STATE_PLAYING);
+        }
+        else if(STR_EQUAL(s, "Room Editor"))
+        {
+            set_game_state(GAME_STATE_EDITOR);
+        }
+        else if(STR_EQUAL(s, "Settings"))
+        {
+            text_list_add(text_lst, COLOR_RED, 2.0, "'%s' not supported", s);
+        }
+        else if(STR_EQUAL(s, "Help"))
+        {
+            text_list_add(text_lst, COLOR_RED, 2.0, "'%s' not supported", s);
+        }
+        else if(STR_EQUAL(s, "Exit"))
+        {
+            window_set_close(1);
+        }
+    }
+}
+
+
+
 void update(float dt)
 {
     if(game_state == GAME_STATE_EDITOR)
@@ -846,275 +990,106 @@ void update(float dt)
         if(!res) return;
     }
 
+    // mouse stuff
+    // ------------------------------
+    window_get_mouse_view_coords(&mouse_x, &mouse_y);
+    window_get_mouse_world_coords(&mouse_window_x, &mouse_window_y);
+
+    if(role == ROLE_LOCAL)
+    {
+        // if(debug_enabled && window_mouse_left_went_up())
+        if(window_mouse_left_went_up())
+        {
+            send_to_room_rect.x = mouse_x;
+            send_to_room_rect.y = mouse_y;
+            send_to_room_rect.w = 1;
+            send_to_room_rect.h = 1;
+        }
+        else
+        {
+            memset(&send_to_room_rect, 0, sizeof(Rect));
+        }
+    }
+
     gfx_clear_lines();
 
     text_list_update(text_lst, dt);
 
+    if(game_state == GAME_STATE_MENU)
+    {
+        update_main_menu(dt);
+    }
+
     message_small_update(dt);
 
-    // Update Client
-    // ------------------------------
-    if(role == ROLE_CLIENT)
+    bool conn = client_handle_connection();
+    if(!conn) return;
+
+    player_handle_net_inputs(player, dt);
+
+    if(!paused)
     {
-        ConnectionState check_state = net_client_get_state();
-
-        if(check_state != CONNECTED)
-        {
-            net_client_connect_update(); // progress through connection routine
-
-            ConnectionState curr_state = net_client_get_state();
-
-            if(curr_state != check_state)
-            {
-                // connection state changed
-                switch(curr_state)
-                {
-                    case DISCONNECTED:
-                        text_list_add(text_lst, 3.0, "Disconnected from Server.");
-                        break;
-                    case SENDING_CONNECTION_REQUEST:
-                        text_list_add(text_lst, 3.0, "Sending Connection Request.");
-                        break;
-                    case SENDING_CHALLENGE_RESPONSE:
-                        text_list_add(text_lst, 3.0, "Sending Challenge Response.");
-                        break;
-                    case CONNECTED:
-                    {
-                        text_list_add(text_lst, 3.0, "Connected to Server.");
-                        int id = net_client_get_id();
-                        player = &players[id];
-                        window_controls_clear_keys();
-                        player_init_keys();
-
-                    } break;
-                }
-            }
-
-            if(curr_state != CONNECTED)
-                return;
-        }
-
-        // Client connected
-        net_client_update();
-
-        if(!net_client_received_init_packet())
-        {
-            // haven't received init packet from server yet
-            return;
-        }
-
-        player_handle_net_inputs(player, dt);
-
-        for(int i = 0; i < plist->count; ++i)
-        {
-            projectile_lerp(&projectiles[i], dt);
-        }
-
-        for(int i = 0; i < creature_get_count(); ++i)
-        {
-            creature_lerp(&creatures[i], dt);
-        }
-
-        for(int i = 0; i < item_list->count; ++i)
-        {
-            item_lerp(&items[i], dt);
-        }
-
+        lighting_point_light_clear_all();
+        player_update_all(dt);
+        projectile_update_all(dt);
+        creature_update_all(dt);
+        item_update_all(dt);
+        explosion_update_all(dt);
         decal_update_all(dt);
         particles_update(dt);
 
-        lighting_point_light_clear_all();
-        for(int i = 0; i < MAX_CLIENTS; ++i)
-        {
-            Player* p = &players[i];
-            player_update(p, dt);
-        }
-
         entity_build_all();
+        entity_handle_collisions();
+        entity_handle_status_effects(dt);
 
-        camera_set(true);
-
-        return;
-
-    } //client
-
-    // Update Local
-    // ------------------------------
-
-    window_get_mouse_view_coords(&mx, &my);
-    window_get_mouse_world_coords(&wmx, &wmy);
-
-    if(game_state == GAME_STATE_MENU)
-    {
-        for(int i = 0; i < MENU_KEY_MAX; ++i)
-        {
-            update_input_state(&menu_keys[i], dt);
-        }
-
-        int num_opts = sizeof(menu_options)/sizeof(menu_options[0]);
-
-        if(menu_keys[MENU_KEY_UP].toggled_on || menu_keys[MENU_KEY_UP].hold)
-        {
-            menu_selected_option--;
-            if(menu_selected_option < 0) menu_selected_option = num_opts-1;
-        }
-
-        if(menu_keys[MENU_KEY_DOWN].toggled_on || menu_keys[MENU_KEY_DOWN].hold)
-        {
-            menu_selected_option++;
-            if(menu_selected_option >= num_opts) menu_selected_option = 0;
-        }
-
-        if(menu_keys[MENU_KEY_ENTER].toggled_on)
-        {
-            const char* s = menu_options[menu_selected_option];
-
-            if(STR_EQUAL(s, "Continue Game"))
-            {
-                role = ROLE_LOCAL;
-                set_game_state(GAME_STATE_PLAYING);
-            }
-            else if(STR_EQUAL(s, "New Game"))
-            {
-                player_init();
-                game_generate_level(rand(), 1);
-
-                role = ROLE_LOCAL;
-                set_game_state(GAME_STATE_PLAYING);
-            }
-            else if(STR_EQUAL(s, "Play Online"))
-            {
-                role = ROLE_CLIENT;
-                net_client_init();
-                net_client_set_server_ip(ONLINE_SERVER_IP);
-                set_game_state(GAME_STATE_PLAYING);
-            }
-            else if(STR_EQUAL(s, "Host Local Server"))
-            {
-                role = ROLE_SERVER;
-                deinit();
-
-                start_server();
-            }
-            else if(STR_EQUAL(s, "Join Local Server"))
-            {
-                role = ROLE_CLIENT;
-                net_client_init();
-                net_client_set_server_ip(LOCAL_SERVER_IP);
-                set_game_state(GAME_STATE_PLAYING);
-            }
-            else if(STR_EQUAL(s, "Room Editor"))
-            {
-                set_game_state(GAME_STATE_EDITOR);
-            }
-            else if(STR_EQUAL(s, "Settings"))
-            {
-                text_list_add(text_lst, 2.0, "'%s' not supported", s);
-            }
-            else if(STR_EQUAL(s, "Help"))
-            {
-                text_list_add(text_lst, 2.0, "'%s' not supported", s);
-            }
-            else if(STR_EQUAL(s, "Exit"))
-            {
-                window_set_close(1);
-            }
-        }
-    }
-    else if(game_state == GAME_STATE_PLAYING)
-    {
-        if(!paused)
-        {
-            if(role == ROLE_LOCAL)
-            {
-                // if(debug_enabled && window_mouse_left_went_up())
-                if(window_mouse_left_went_up())
-                {
-                    send_to_room_rect.x = mx;
-                    send_to_room_rect.y = my;
-                    send_to_room_rect.w = 1;
-                    send_to_room_rect.h = 1;
-                }
-                else
-                {
-                    memset(&send_to_room_rect, 0, sizeof(Rect));
-                }
-            }
-
-            lighting_point_light_clear_all();
-            for(int i = 0; i < MAX_PLAYERS; ++i)
-            {
-                Player* p = &players[i];
-                player_update(p, dt);
-
-                // if(p->active && p->curr_room == player->curr_room)
-                // {
-                //     p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
-                // }
-            }
-
-#if 0
-            if(debug_enabled)
-            {
-                static float ptimer = 1.0;
-                ptimer -= dt;
-                if(ptimer <= 0)
-                {
-                    ptimer = 1.0;
-                    Physics phys = player->phys;
-                    phys.pos.x = room_area.x-room_area.w/2.0 + room_area.w*0.80;
-                    phys.pos.y = CENTER_Y;
-                    phys.vel.x = 0;
-                    phys.vel.y = 0;
-                    projectile_add_type(&phys, player->curr_room, PROJECTILE_TYPE_PLAYER, 180.0, 1.0, 1.0,false);
-                }
-            }
-#endif
-
-            // update point lights
-            projectile_update(dt);
-            creature_update_all(dt);
-            item_update_all(dt);
-            explosion_update_all(dt);
-            decal_update_all(dt);
-            particles_update(dt);
-
-            entity_build_all();
-            entity_handle_collisions();
-            entity_handle_status_effects(dt);
-
-            Room* room = level_get_room_by_index(&level, (int)player->curr_room);
-            bool prior_locked = room->doors_locked;
-            room->doors_locked = (creature_get_room_count(player->curr_room) != 0);
-            if(!room->doors_locked && prior_locked)
-            {
-                // if(player->new_levels == 0)
-                //     randomize_skill_choices(player);
-
-                if(room->xp > 0)
-                {
-                    for(int i = 0; i < MAX_PLAYERS; ++i)
-                    {
-                        Player* p = &players[i];
-                        if(p->active && p->curr_room == room->index)
-                        {
-                            player_add_xp(p, room->xp);
-                        }
-                    }
-                    room->xp = 0;
-                }
-
-                if(room->type == ROOM_TYPE_BOSS)
-                {
-                    item_add(ITEM_CHEST, CENTER_X, CENTER_Y, player->curr_room);
-                    item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y-32, player->curr_room);
-                }
-            }
-
-        }
+        handle_room_completion();
     }
 
     camera_set(false);
+}
+
+
+//TODO: make this work with server
+void handle_room_completion()
+{
+    if(role == ROLE_CLIENT) return;
+
+    Room* room = level_get_room_by_index(&level, (int)player->curr_room);
+    bool prior_locked = room->doors_locked;
+    room->doors_locked = (creature_get_room_count(player->curr_room) != 0);
+    if(!room->doors_locked && prior_locked)
+    {
+
+        if(room->xp > 0)
+        {
+            for(int i = 0; i < MAX_PLAYERS; ++i)
+            {
+                Player* p = &players[i];
+                if(p->active && p->curr_room == room->index)
+                {
+                    player_add_xp(p, room->xp);
+                }
+            }
+            room->xp = 0;
+        }
+
+        if(room->type == ROOM_TYPE_BOSS)
+        {
+            item_add(ITEM_CHEST, CENTER_X, CENTER_Y, player->curr_room);
+            item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y-32, player->curr_room);
+        }
+        else
+        {
+
+            if(rand() % 5 == 0)
+            {
+                Room* room = level_get_room_by_index(&level, player->curr_room);
+                Vector2f pos = {0};
+                level_get_center_floor_tile(room, NULL, &pos);
+                item_add(item_get_random_heart(), pos.x, pos.y, player->curr_room);
+            }
+        }
+    }
 }
 
 void draw_map(DrawLevelParams* params)
@@ -1327,177 +1302,8 @@ void draw_bigmap()
     draw_map(&bigmap_params);
 }
 
-void draw()
+void draw_chat_box()
 {
-
-    if(game_state == GAME_STATE_EDITOR)
-    {
-        room_editor_draw();
-        return;
-    }
-
-    if(debug_enabled && game_state == GAME_STATE_PLAYING)
-    {
-        gfx_clear_buffer(COLOR_YELLOW);
-    }
-    else
-    {
-        gfx_clear_buffer(background_color);
-    }
-
-    // draw room
-    // Room* room = level_get_room_by_index(&level, player->curr_room);
-    if(game_state == GAME_STATE_PLAYING)
-    {
-        player_draw_room_transition();
-
-        if(player->curr_room == player->transition_room)
-        {
-            Room* room = level_get_room_by_index(&level,player->curr_room);
-            if(!room) printf("room is null\n");
-            level_draw_room(room, NULL, 0, 0);
-        }
-
-        // gfx_draw_rect(&room_area, COLOR_WHITE, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-    }
-    else if(game_state == GAME_STATE_MENU)
-    {
-        // //TODO
-        // Room* room = &level.rooms[roomxy.x][roomxy.y];
-        // level_draw_room(room, NULL, 0, 0);
-        gfx_draw_rect(&room_area, COLOR(30,30,30), NOT_SCALED, NO_ROTATION, 1.0, true, true);
-    }
-
-
-    if(game_state == GAME_STATE_MENU)
-    {
-
-        // draw menu
-        float menu_item_scale = 0.6 * ascale;
-
-        // get text height first
-        Vector2f text_size = gfx_string_get_size(menu_item_scale, "A");
-        float margin = 1.0*ascale;
-
-        int num_opts = sizeof(menu_options)/sizeof(menu_options[0]);
-
-        float total_height = num_opts * (text_size.y+margin);
-
-        float x = view_width*0.35;
-        float y = CENTER_Y - total_height / 2.0;
-
-        for(int i = 0; i < num_opts; ++i)
-        {
-            uint32_t color = COLOR_WHITE;
-            if(i == menu_selected_option) color = COLOR_BLUE;
-            gfx_draw_string(x,y, color, menu_item_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, 0, (char*)menu_options[i]);
-            y += (text_size.y+margin);
-        }
-
-    }
-
-    if(game_state == GAME_STATE_PLAYING)
-    {
-        if(player->curr_room == player->transition_room)
-        {
-            decal_draw_all();
-            entity_draw_all();
-            explosion_draw_all();
-
-            // draw particles
-            gfx_sprite_batch_begin(true);
-                for(int i = 0; i < spawner_list->count; ++i)
-                {
-                    if(spawners[i].userdata == player->curr_room)
-                        particles_draw_spawner(&spawners[i], true, true);
-                }
-            gfx_sprite_batch_draw();
-        }
-
-        // @TEST
-        // {
-        //     float x = 200;
-        //     float y = 200;
-        //     float w = 200;
-        //     float h = 200;
-        //     gfx_draw_rect_xywh_tl(x, y, w, h, COLOR_GRAY, 1.0, 0.0, 0.5,true,false);
-        //     float scale = 0.32 * ascale;
-        //     // gfx_draw_string2(x, y, COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, w, "A B C D E F G H I J K123 L M N O P Q R S T U V W X Y Z 1 2 3 4 5 6 7 8 9");
-        //     gfx_draw_string2(x, y, COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, w, "A B C D E F G H I J K A B C D E F end");
-        // }
-
-        draw_bigmap();
-    }
-
-    // draw walls
-    if(debug_enabled && show_walls && game_state == GAME_STATE_PLAYING)
-    {
-        if(player->curr_room == player->transition_room)
-        {
-            Room* room = level_get_room_by_index(&level,player->curr_room);
-            room_draw_walls(room);
-        }
-    }
-
-    // // margins
-    // gfx_draw_rect(&margin_left, margin_color, NOT_SCALED, NO_ROTATION, 1.0, true, false);
-    // gfx_draw_rect(&margin_right, margin_color, NOT_SCALED, NO_ROTATION, 1.0, true, false);
-    // gfx_draw_rect(&margin_top, margin_color, NOT_SCALED, NO_ROTATION, 1.0, true, false);
-    // gfx_draw_rect(&margin_bottom, margin_color, NOT_SCALED, NO_ROTATION, 1.0, true, false);
-
-    if(game_state == GAME_STATE_MENU)
-    {
-        char* title = "SCUM";
-        float title_scale = 1.1*ascale;
-        Vector2f title_size = gfx_string_get_size(title_scale, title);
-        Rect title_r = RECT(margin_top.w/2.0, margin_top.h/2.0, title_size.x, title_size.y);
-        gfx_get_absolute_coords(&title_r, ALIGN_CENTER, &margin_top, ALIGN_TOP_LEFT);
-        gfx_draw_string(title_r.x, title_r.y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, 0, title);
-    }
-    else if(game_state == GAME_STATE_PLAYING)
-    {
-        draw_minimap();
-        draw_hearts();
-        draw_xp_bar();
-        draw_gauntlet();
-        draw_timed_items();
-        draw_skill_selection();
-    }
-
-    if(debug_enabled)
-    {
-        float zscale = 1.0 - camera_get_zoom();
-
-        Rect mr = RECT(mx, my, 10, 10);
-        gfx_draw_rect(&mr, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
-        // mr.x = wmx;
-        // mr.y = wmy;
-        // mr.w *= zscale;
-        // mr.h *= zscale;
-        // gfx_draw_rect(&mr, COLOR_BLUE, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
-
-        // room border
-        // gfx_draw_rect(&room_area, COLOR_WHITE, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-
-        // gfx_draw_rect(&margin_left, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
-        // gfx_draw_rect(&margin_right, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
-        // gfx_draw_rect(&margin_top, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
-        // gfx_draw_rect(&margin_bottom, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, false);
-
-        // Rect xaxis = RECT(0,0,1000,1);
-        // Rect yaxis = RECT(0,0,1,1000);
-        // gfx_draw_rect(&xaxis, COLOR_PURPLE, NOT_SCALED, NO_ROTATION, 1.0, true, true);
-        // gfx_draw_rect(&yaxis, COLOR_PURPLE, NOT_SCALED, NO_ROTATION, 1.0, true, true);
-
-        // //TEST
-        // Rect l = margin_left;
-        // l.w *= zscale;
-        // l.h *= zscale;
-        // l.x = cr.x-cr.w/2.0 + l.w/2.0;
-        // l.y = cr.y;
-        // gfx_draw_rect(&l, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-    }
-
     if(role == ROLE_CLIENT)
     {
         if(client_chat_enabled)
@@ -1516,31 +1322,153 @@ void draw()
 
                 if(imgui_text_get_enter())
                 {
-                    text_list_add(text_lst, 10.0, chat_text);
+                    net_client_send_message(chat_text);
                     memset(chat_text, 0, 128);
+                    client_chat_enabled = false;
                 }
                 else if(imgui_text_get_ctrl_enter())
                 {
                     client_chat_enabled = false;
-                    window_controls_set_key_mode(KEY_MODE_NORMAL);
                 }
 
             imgui_horizontal_end();
             gui_size = imgui_end();
             //printf("w: %f, h: %f\n", gui_size.w, gui_size.h);
+
+            if(!client_chat_enabled)
+            {
+                window_controls_set_key_mode(KEY_MODE_NORMAL);
+            }
+
         }
     }
+}
+
+void particles_draw_all()
+{
+    // draw particles
+    gfx_sprite_batch_begin(true);
+        for(int i = 0; i < spawner_list->count; ++i)
+        {
+            if(spawners[i].userdata == player->curr_room)
+                particles_draw_spawner(&spawners[i], true, true);
+        }
+    gfx_sprite_batch_draw();
+}
+
+void draw_main_menu()
+{
+    gfx_clear_buffer(background_color);
+
+    float menu_item_scale = 0.6 * ascale;
+
+    // get text height first
+    Vector2f text_size = gfx_string_get_size(menu_item_scale, "A");
+    float margin = 1.0*ascale;
+
+    int num_opts = sizeof(menu_options)/sizeof(menu_options[0]);
+
+    float total_height = num_opts * (text_size.y+margin);
+
+    float x = view_width*0.35;
+    float y = CENTER_Y - total_height / 2.0;
+
+    for(int i = 0; i < num_opts; ++i)
+    {
+        uint32_t color = COLOR_WHITE;
+        if(i == menu_selected_option) color = COLOR_BLUE;
+        gfx_draw_string(x,y, color, menu_item_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, 0, (char*)menu_options[i]);
+        y += (text_size.y+margin);
+    }
+
+    char* title = "SCUM";
+    float title_scale = 1.1*ascale;
+    Vector2f title_size = gfx_string_get_size(title_scale, title);
+    Rect title_r = RECT(margin_top.w/2.0, margin_top.h/2.0, title_size.x, title_size.y);
+    gfx_get_absolute_coords(&title_r, ALIGN_CENTER, &margin_top, ALIGN_TOP_LEFT);
+    gfx_draw_string(title_r.x, title_r.y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, 0, title);
+
+    text_list_draw(text_lst);
+}
+
+void draw()
+{
+
+    if(game_state == GAME_STATE_EDITOR)
+    {
+        room_editor_draw();
+        return;
+    }
+    else if(game_state == GAME_STATE_MENU)
+    {
+        draw_main_menu();
+        return;
+    }
+
+
+    // draw game
+
+    gfx_clear_buffer(background_color);
+
+    if(player->curr_room != player->transition_room)
+    {
+        lighting_point_light_clear_all();
+        player_draw_room_transition();
+    }
+    else
+    {
+        Room* room = level_get_room_by_index(&level,player->curr_room);
+        if(!room) printf("room is null\n");
+        level_draw_room(room, NULL, 0, 0);
+
+        // Vector2i c = level_get_room_coords(player->curr_room);
+        // for(int d = 0; d < 4; ++d)
+        // {
+        //     if(!room->doors[d]) continue;
+        //     Vector2i o = get_dir_offsets(d);
+        //     Room* r = level_get_room(&level, c.x+o.x, c.y+o.y);
+        //     if(!r) continue;
+        //     if(!r->valid) continue;
+        //     level_draw_room(r, NULL, room_area.w*o.x, room_area.h*o.y);
+        // }
+
+        decal_draw_all();
+        entity_draw_all();
+        explosion_draw_all();
+        particles_draw_all();
+
+        if(debug_enabled)
+        {
+            if(show_walls) room_draw_walls(room);
+        }
+
+    }
+
+    draw_minimap();
+    draw_hearts();
+    draw_xp_bar();
+    draw_gauntlet();
+    draw_timed_items();
+    draw_skill_selection();
+
+    if(debug_enabled)
+    {
+        Rect mr = RECT(mouse_x, mouse_y, 10, 10);
+        gfx_draw_rect(&mr, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
+    }
+
+    draw_bigmap();
 
     if(editor_enabled)
     {
         editor_draw();
     }
 
-    //imgui_draw_demo(10,10);
-
     text_list_draw(text_lst);
     message_small_draw();
     gfx_draw_lines();
+
+    draw_chat_box();
 }
 
 
@@ -1589,7 +1517,10 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
             }
             else if(key == GLFW_KEY_F3)
             {
-                editor_enabled = !editor_enabled;
+                if(role == ROLE_LOCAL)
+                {
+                    editor_enabled = !editor_enabled;
+                }
             }
             else if(key == GLFW_KEY_P)
             {
@@ -1600,8 +1531,10 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
             }
             else if(key == GLFW_KEY_M)
             {
-                if(game_state == GAME_STATE_PLAYING)
+                if(role == ROLE_LOCAL && game_state == GAME_STATE_PLAYING)
+                {
                     show_big_map = !show_big_map;
+                }
             }
 
         }

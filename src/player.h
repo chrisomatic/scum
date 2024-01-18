@@ -89,6 +89,8 @@ typedef struct
 {
     bool active;
 
+    int index;
+
     char name[PLAYER_NAME_MAX+1];
 
     Physics phys;
@@ -165,6 +167,7 @@ typedef struct
 
 } Player;
 
+extern uint32_t player_colors[MAX_PLAYERS];
 extern char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 extern Player players[MAX_PLAYERS];
 extern Player* player;
@@ -188,6 +191,7 @@ void player_init_keys();
 void player2_init_keys();
 void player_send_to_room(Player* p, uint8_t room_index);
 void player_send_to_level_start(Player* p);
+void player_update_all(float dt);
 void player_update(Player* p, float dt);
 void player_draw(Player* p);
 void player_draw_debug(Player* p);

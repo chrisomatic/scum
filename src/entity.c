@@ -142,6 +142,8 @@ static bool remove_status_effect(Physics* phys, int index)
 
 void entity_handle_status_effects(float dt)
 {
+    if(role == ROLE_CLIENT) return;
+
     for(int i = 0; i < num_entities; ++i)
     {
         Entity* e = &entities[i];
@@ -188,6 +190,7 @@ void entity_handle_status_effects(float dt)
 
 void entity_handle_collisions()
 {
+    if(role == ROLE_CLIENT) return;
     //printf("num entities: %d\n",num_entities);
 
     for(int i = 0; i < num_entities; ++i)
@@ -247,10 +250,12 @@ void entity_handle_collisions()
         if(e->phys->dead && e->type == ENTITY_TYPE_PROJECTILE)
         {
             Projectile* proj = (Projectile*)e->ptr;
-            if(proj->def.explosive)
-            {
-                explosion_add(e->phys->pos.x, e->phys->pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, e->curr_room, proj->from_player);
-            }
+            projectile_kill(proj);
+
+            // if(proj->def.explosive)
+            // {
+            //     explosion_add(e->phys->pos.x, e->phys->pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, e->curr_room, proj->from_player);
+            // }
         }
     }
 }

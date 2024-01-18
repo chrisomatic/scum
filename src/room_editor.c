@@ -465,8 +465,8 @@ bool room_editor_update(float dt)
 
     text_list_update(text_lst, dt);
 
-    window_get_mouse_view_coords(&mx, &my);
-    window_get_mouse_world_coords(&wmx, &wmy);
+    window_get_mouse_view_coords(&mouse_x, &mouse_y);
+    window_get_mouse_world_coords(&mouse_window_x, &mouse_window_x);
 
     if(window_mouse_left_went_down())
         lmouse_state = true;
@@ -551,7 +551,7 @@ void room_editor_draw()
 
     gfx_draw_rect(&room_area, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
 
-    tile_coords = level_get_room_coords_by_pos(wmx, wmy);
+    tile_coords = level_get_room_coords_by_pos(mouse_window_x, mouse_window_y);
     Rect tile_rect = level_get_tile_rect(tile_coords.x, tile_coords.y);
 
     obj_coords.x = tile_coords.x +1;
@@ -706,7 +706,7 @@ void room_editor_draw()
                 imgui_number_box("Camera Zoom", 0, 99, &ecam_pos_z);
 
                 imgui_text("Camera Zoom: %.2f", camera_get_zoom());
-                imgui_text("Mouse (view): %.1f, %.1f", mx, my);
+                imgui_text("Mouse (view): %.1f, %.1f", mouse_x, mouse_y);
                 imgui_text("Mouse States: %d, %d", lmouse_state, rmouse_state);
 
                 imgui_text("Object Coords: %d, %d", obj_coords.x, obj_coords.y);
@@ -782,7 +782,7 @@ void room_editor_draw()
     if(!lmouse_state && !rmouse_state)
         return;
 
-    Rect mr = RECT(mx, my, 1, 1);
+    Rect mr = RECT(mouse_x, mouse_y, 1, 1);
     if(rectangles_colliding(&mr, &gui_size))
         return;
 

@@ -546,6 +546,12 @@ void item_update_all(float dt)
     {
         Item* pu = &items[i];
 
+        if(role == ROLE_CLIENT)
+        {
+            item_lerp(pu, dt);
+            continue;
+        }
+
         if(pu->picked_up)
         {
             list_remove(item_list, i);
@@ -555,6 +561,8 @@ void item_update_all(float dt)
         item_update(pu, dt);
     }
 
+    if(role == ROLE_CLIENT)
+        return;
 
     for(int k = 0; k < MAX_PLAYERS; ++k)
     {

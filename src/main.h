@@ -111,8 +111,8 @@ void decal_add(Decal d);
 void decal_draw_all();
 void decal_update_all(float dt);
 
-extern float mx, my;
-extern float wmx, wmy;
+extern float mouse_x, mouse_y;
+extern float mouse_window_x, mouse_window_y;
 
 extern Rect room_area;
 extern Rect floor_area;

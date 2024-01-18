@@ -5,7 +5,7 @@
 
 #define FADEOUT_DURATION 1.0
 
-text_list_t* text_list_init(int max, float x, float y, float scale, uint32_t color, bool downward, text_align_t alignment, bool in_world, bool fade_out)
+text_list_t* text_list_init(int max, float x, float y, float scale, bool downward, text_align_t alignment, bool in_world, bool fade_out)
 {
     text_list_t* lst = calloc(1,sizeof(text_list_t));
     lst->max = MAX(max,1);
@@ -16,16 +16,17 @@ text_list_t* text_list_init(int max, float x, float y, float scale, uint32_t col
     lst->x = x;
     lst->y = y;
     lst->scale = scale;
-    lst->color = color;
+    // lst->color = color;
     lst->fade_out = fade_out;
     lst->text = calloc(lst->max, sizeof(char*));
     lst->durations = calloc(lst->max, sizeof(float));
+    lst->colors = calloc(lst->max, sizeof(uint32_t));
     Vector2f size = gfx_string_get_size(lst->scale, "P");
     lst->text_height = size.y;
     return lst;
 }
 
-void text_list_add(text_list_t* lst, float duration, char* fmt, ...)
+void text_list_add(text_list_t* lst, uint32_t color, float duration, char* fmt, ...)
 {
     if(lst == NULL) return;
     if(lst->count == lst->max) return;
@@ -54,6 +55,7 @@ void text_list_add(text_list_t* lst, float duration, char* fmt, ...)
     */
 
     lst->durations[lst->count] = duration;
+    lst->colors[lst->count] = color;
     lst->count++;
 }
 
@@ -73,6 +75,7 @@ void text_list_update(text_list_t* lst, float _dt)
             {
                 lst->text[j] = lst->text[j+1];
                 lst->durations[j] = lst->durations[j+1];
+                lst->colors[j] = lst->colors[j+1];
                 lst->text[j+1] = NULL;
             }
             lst->count--;
@@ -108,7 +111,7 @@ void text_list_draw(text_list_t* lst)
             _x -= _size.x/2.0;
         }
 
-        gfx_draw_string(_x, _y, lst->color, lst->scale, 0.0, opacity, lst->in_world, NO_DROP_SHADOW, 0, lst->text[i]);
+        gfx_draw_string(_x, _y, lst->colors[i], lst->scale, 0.0, opacity, lst->in_world, NO_DROP_SHADOW, 0, lst->text[i]);
 
         float yadj = (size.y + 1.0);
         _y += lst->downward ? yadj : -yadj;

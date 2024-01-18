@@ -170,7 +170,7 @@ double net_client_get_rtt();
 double net_client_get_connected_time();
 uint32_t net_client_get_sent_bytes();
 uint32_t net_client_get_recv_bytes();
-void net_client_send_message(uint8_t to, char* fmt, ...);
+void net_client_send_message(char* fmt, ...);
 int net_client_send(uint8_t* data, uint32_t len);
 int net_client_recv(Packet* pkt);
 void net_client_deinit();

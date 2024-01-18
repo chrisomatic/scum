@@ -19,6 +19,7 @@
 #include "particles.h"
 #include "effects.h"
 #include "projectile.h"
+#include "explosion.h"
 
 //#define SERVER_PRINT_SIMPLE 1
 //#define SERVER_PRINT_VERBOSE 1
@@ -564,10 +565,10 @@ static void server_simulate()
         room->doors_locked = (creature_get_room_count(p->curr_room) != 0);
     }
 
-    projectile_update(dt);
+    projectile_update_all(dt);
     creature_update_all(dt);
     item_update_all(dt);
-    // explosion_update_all(dt);
+    explosion_update_all(dt);
     decal_update_all(dt);
 
     entity_build_all();
@@ -738,17 +739,17 @@ int net_server_start()
                     case PACKET_TYPE_MESSAGE:
                     {
                         uint8_t from = cli->client_id;
-                        uint8_t to = unpack_u8(&recv_pkt, &offset);
+                        // uint8_t to = unpack_u8(&recv_pkt, &offset);
                         char msg[255+1] = {0};
                         uint8_t msg_len = unpack_string(&recv_pkt, msg, 255, &offset);
 
-#if SERVER_PRINT_VERBOSE
+#if SERVER_PRINT_VERBOSE || 1
                         LOGN("received message");
                         LOGN("  from: %u", from);
-                        LOGN("  to:   %u", to);
+                        // LOGN("  to:   %u", to);
                         LOGN("  msg:  %s", msg);
 #endif
-                        server_send_message(to, from, "%s",msg);
+                        server_send_message(TO_ALL, from, "%s", msg);
                     } break;
 
                     case PACKET_TYPE_PING:
@@ -1091,6 +1092,7 @@ static void client_send(PacketType type)
     client.time_of_latest_sent_packet = timer_get_time();
 }
 
+
 static bool client_get_input_packet(Packet* input, int packet_id)
 {
     for(int i = client.input_packets.count -1; i >= 0; --i)
@@ -1329,15 +1331,17 @@ void net_client_update()
                     char msg[255+1] = {0};
                     uint8_t msg_len = unpack_string(&srvpkt, msg, 255, &offset);
 
-                    char* from_str = "server";
                     if(from < MAX_PLAYERS)
                     {
-                        //from_str = players[from].settings.name; // @TODO
+                        text_list_add(text_lst, player_colors[from], 10.0, "Player %u: %s", from+1, msg);
+                    }
+                    else
+                    {
+                        text_list_add(text_lst, COLOR_WHITE, 10.0, "Server: %s", msg);
                     }
 
-                    text_list_add(text_lst, 5.0, "%s: %s", from_str, msg);
                 } break;
-                
+
                 case PACKET_TYPE_DISCONNECT:
                     client.state = DISCONNECTED;
                     client.id = -1;
@@ -1413,7 +1417,7 @@ bool net_client_received_init_packet()
     return client.received_init_packet;
 }
 
-void net_client_send_message(uint8_t to, char* fmt, ...)
+void net_client_send_message(char* fmt, ...)
 {
     if(role != ROLE_CLIENT)
     {
@@ -1438,7 +1442,7 @@ void net_client_send_message(uint8_t to, char* fmt, ...)
     va_end(args2);
 
     pack_bytes(&pkt, (uint8_t*)client.xor_salts, 8);
-    pack_u8(&pkt, to);
+    // pack_u8(&pkt, TO_ALL);
     pack_string(&pkt, msg, 255);
 
     free(msg);

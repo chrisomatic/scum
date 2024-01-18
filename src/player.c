@@ -22,6 +22,7 @@ int skill_choices[MAX_SKILL_CHOICES] = {0};
 int num_skill_choices = 0;
 
 
+uint32_t player_colors[MAX_PLAYERS];
 char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 
 static bool _initialized = false;
@@ -64,14 +65,20 @@ void player_init()
         card_image   = gfx_load_image("src/img/card.png", false, false, 200, 100);
 
 
-        ptext = text_list_init(5, 0, 0, 0.05, COLOR_WHITE, false, TEXT_ALIGN_LEFT, IN_WORLD, false);
+        ptext = text_list_init(5, 0, 0, 0.05, false, TEXT_ALIGN_LEFT, IN_WORLD, false);
 
         _initialized = true;
     }
 
+    uint32_t colors[] = {COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_PURPLE, COLOR_YELLOW, COLOR_ORANGE};
+
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         Player* p = &players[i];
+
+        p->index = i;
+
+        player_colors[i] = colors[i];
 
         p->active = false;
 
@@ -122,7 +129,7 @@ void player_init()
         p->shoot_sprite_cooldown = 0.0;
 
         memset(p->name, PLAYER_NAME_MAX, 0);
-        sprintf(p->name, "Player %d", i);
+        sprintf(p->name, "Player %d", i+1);
 
         // animation
         // --------------------------------------------------------
@@ -393,8 +400,8 @@ void player_add_xp(Player* p, int xp)
 
     if(p == player)
     {
-        text_list_add(ptext, 3.0, "+%d xp", xp);
-        if(num_new_levels > 0) text_list_add(ptext, 3.0, "+%d level%s", num_new_levels, num_new_levels > 1 ? "s" : "");
+        text_list_add(ptext, COLOR_WHITE, 3.0, "+%d xp", xp);
+        if(num_new_levels > 0) text_list_add(ptext, COLOR_GREEN, 3.0, "+%d level%s", num_new_levels, num_new_levels > 1 ? "s" : "");
         p->level += num_new_levels;
     }
     p->new_levels += num_new_levels;
@@ -426,7 +433,7 @@ void player_hurt_no_inv(Player* p, int damage)
 
     if(p->phys.hp == 0)
     {
-        text_list_add(text_lst, 3.0, "%s died", p->name);
+        text_list_add(text_lst, COLOR_WHITE, 3.0, "%s died", p->name);
         player_die(p);
     }
 }
@@ -446,7 +453,7 @@ void player_hurt(Player* p, int damage)
 
     if(p->phys.hp == 0)
     {
-        text_list_add(text_lst, 3.0, "%s died", p->name);
+        text_list_add(text_lst, COLOR_WHITE, 3.0, "%s died", p->name);
         player_die(p);
     }
     else
@@ -538,6 +545,9 @@ void player_draw_room_transition()
 
             camera_set(immediate);
 
+            Room* room = level_get_room_by_index(&level, player->curr_room);
+            level_draw_room(room, NULL, 0, 0);
+
         }
         else
         {
@@ -569,6 +579,20 @@ void player_draw_room_transition()
 
             Vector2i roomxy = level_get_room_coords((int)p->curr_room);
             level_draw_room(&level.rooms[roomxy.x][roomxy.y], NULL, x1, y1);
+
+
+            // Vector2i c = level_get_room_coords(p->curr_room);
+            // for(int d = 0; d < 4; ++d)
+            // {
+            //     if(!level.rooms[roomxy.x][roomxy.y].doors[d]) continue;
+            //     Vector2i o = get_dir_offsets(d);
+            //     Room* r = level_get_room(&level, c.x+o.x, c.y+o.y);
+            //     if(!r) continue;
+            //     if(!r->valid) continue;
+            //     if(r->index == p->transition_room) continue;
+            //     level_draw_room(r, NULL, room_area.w*o.x+x1, room_area.h*o.y+y1);
+            // }
+
         }
         // paused = true;  //uncommment to step through the transition
     }
@@ -788,6 +812,15 @@ void player_handle_skills(Player* p, float dt)
         {
             s->func(s,p,dt);
         }
+    }
+}
+
+void player_update_all(float dt)
+{
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        Player* p = &players[i];
+        player_update(p, dt);
     }
 }
 
@@ -1393,7 +1426,7 @@ void player_update(Player* p, float dt)
 
     if(isnan(p->phys.pos.x) || isnan(p->phys.pos.y))
     {
-        text_list_add(text_lst, 10.0, "player pos was nan!");
+        text_list_add(text_lst, COLOR_RED, 10.0, "player pos was nan!");
         p->phys.pos.x = prior_x;
         p->phys.pos.y = prior_y;
     }
@@ -1429,6 +1462,7 @@ void player_update(Player* p, float dt)
     p->proj_def = att.projdef;
     p->proj_spawn = att.projspawn;
 
+    // printf("z: %.2f\n", p->phys.pos.z);
 }
 
 void player_ai_move_to_target(Player* p, Player* target)
@@ -1997,6 +2031,8 @@ void player_lerp(Player* p, float dt)
 
 void player_handle_net_inputs(Player* p, double dt)
 {
+    if(role != ROLE_CLIENT) return;
+
     // handle input
     memcpy(&p->input_prior, &p->input, sizeof(NetPlayerInput));
 

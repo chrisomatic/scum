@@ -331,13 +331,19 @@ void projectile_kill(Projectile* proj)
     }
 }
 
-void projectile_update(float dt)
+void projectile_update_all(float dt)
 {
     // printf("projectile update\n");
 
     for(int i = plist->count - 1; i >= 0; --i)
     {
         Projectile* proj = &projectiles[i];
+
+        if(role == ROLE_CLIENT)
+        {
+            projectile_lerp(proj, dt);
+            continue;
+        }
 
         if(proj->phys.dead)
             continue;

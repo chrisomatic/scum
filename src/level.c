@@ -816,6 +816,7 @@ void level_print(Level* level)
     printf("\n");
 }
 
+
 Rect level_get_tile_rect(int x, int y)
 {
     float _x = room_area.x - room_area.w/2.0;
@@ -1020,10 +1021,10 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
 
             gfx_sprite_batch_add(dungeon_image, sprite, draw_x, draw_y, color, false, 1.0, 0.0, 1.0, false, false, false);
 
-            if(debug_enabled && show_tile_grid)
-            {
-                gfx_draw_rect_xywh(draw_x, draw_y, TILE_SIZE, TILE_SIZE, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
-            }
+            // if(debug_enabled && show_tile_grid)
+            // {
+            //     gfx_draw_rect_xywh(draw_x, draw_y, TILE_SIZE, TILE_SIZE, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+            // }
         }
     }
 
@@ -1262,7 +1263,7 @@ Vector2f level_get_pos_by_room_coords(int x, int y)
 
 bool level_is_room_valid(Level* level, int x, int y)
 {
-    if(x >= MAX_ROOMS_GRID_X || y >= MAX_ROOMS_GRID_Y)
+    if(x >= MAX_ROOMS_GRID_X || y >= MAX_ROOMS_GRID_Y || x < 0 || y < 0)
         return false;
     return level->rooms[x][y].valid;
 }

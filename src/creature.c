@@ -538,6 +538,12 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
 
 void creature_update(Creature* c, float dt)
 {
+    if(role == ROLE_CLIENT)
+    {
+        creature_lerp(c, dt);
+        return;
+    }
+
     if(c->phys.dead)
         return;
 
