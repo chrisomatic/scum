@@ -1791,17 +1791,19 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             bitpack_clear(&server.bp);
 
             //bitpack_write(&server.bp, 3,  (uint32_t)i);
-            bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.x);
-            bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.y);
-            bitpack_write(&server.bp, 7,  (uint32_t)p->phys.pos.z);
+            //bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.x);
+            //bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.y);
+            //bitpack_write(&server.bp, 7,  (uint32_t)p->phys.pos.z);
 
-            bitpack_flush(&server.bp);
-            bitpack_seek_begin(&server.bp);
+            //bitpack_flush(&server.bp);
+            //bitpack_seek_begin(&server.bp);
 
-            uint32_t pos = bitpack_read(&server.bp, 32);
+            //uint32_t pos = bitpack_read(&server.bp, 32);
 
             pack_u8(pkt,(uint8_t)i);
-            pack_u32(pkt,pos);
+            pack_u32(pkt,(uint32_t)p->phys.pos.x);
+            pack_u32(pkt,(uint32_t)p->phys.pos.y);
+            pack_u32(pkt,(uint32_t)p->phys.pos.z);
             pack_u8(pkt, p->sprite_index+p->anim.curr_frame);
             pack_u8(pkt, p->curr_room);
             pack_u8(pkt, p->phys.hp);
@@ -1857,17 +1859,23 @@ static void unpack_players(Packet* pkt, int* offset)
         Player* p = &players[client_id];
         p->active = true;
 
+        /*
         bitpack_clear(&client.bp);
 
-        uint32_t pos0 = unpack_u32(pkt,offset);
+        uint32_t x = unpack_u32(pkt,offset);
        
         bitpack_write(&client.bp, 32, pos0);
         bitpack_flush(&client.bp);
         bitpack_seek_begin(&client.bp);
 
-        uint32_t x = bitpack_read(&client.bp, 10);
+        uint32_t x = unbitpack_read(&client.bp, 10);
         uint32_t y = bitpack_read(&client.bp, 10);
         uint32_t z = bitpack_read(&client.bp, 12);
+        */
+
+        uint32_t x = unpack_u32(pkt,offset);
+        uint32_t y = unpack_u32(pkt,offset);
+        uint32_t z = unpack_u32(pkt,offset);
 
         Vector3f pos = {(float)x,(float)y,(float)z};
         p->sprite_index = unpack_u8(pkt, offset);
