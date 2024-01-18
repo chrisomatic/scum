@@ -16,6 +16,7 @@ gcc core/gfx.c \
     core/particles.c \
     core/camera.c \
     core/lighting.c \
+    core/bitpack.c \
     physics.c \
     effects.c \
     projectile.c \

@@ -10,6 +10,7 @@
 #include "core/window.h"
 #include "core/log.h"
 #include "core/circbuf.h"
+#include "core/bitpack.h"
 
 #include "main.h"
 #include "net.h"
@@ -73,6 +74,7 @@ struct
     NodeInfo info;
     ClientInfo clients[MAX_CLIENTS];
     NetEvent events[MAX_NET_EVENTS];
+    BitPack bp;
     int event_count;
     int num_clients;
 } server = {0};
@@ -86,6 +88,7 @@ struct
     NodeInfo info;
     ConnectionState state;
     CircBuf input_packets;
+    BitPack bp;
 
     double time_of_connection;
     double time_of_latest_sent_packet;
@@ -95,6 +98,9 @@ struct
 
     uint32_t bytes_received;
     uint32_t bytes_sent;
+
+    uint32_t largest_packet_size_sent;
+    uint32_t largest_packet_size_recv;
 
     uint8_t player_count;
     uint8_t server_salt[8];
@@ -313,7 +319,13 @@ static int net_send(NodeInfo* node_info, Address* to, Packet* pkt)
     node_info->local_latest_packet_id++;
 
     if(node_info == &client.info)
+    {
         client.bytes_sent += sent_bytes;
+        if(sent_bytes > client.largest_packet_size_sent)
+        {
+            client.largest_packet_size_sent = sent_bytes;
+        }
+    }
 
     return sent_bytes;
 }
@@ -331,7 +343,13 @@ static int net_recv(NodeInfo* node_info, Address* from, Packet* pkt)
 #endif
 
     if(node_info == &client.info)
+    {
         client.bytes_received += recv_bytes;
+        if(recv_bytes > client.largest_packet_size_recv)
+        {
+            client.largest_packet_size_recv = recv_bytes;
+        }
+    }
 
     return recv_bytes;
 }
@@ -578,11 +596,13 @@ static void server_simulate()
 int net_server_start()
 {
     LOGN("%s()", __func__);
+
     // init
     socket_initialize();
 
     memset(server.clients, 0, sizeof(ClientInfo)*MAX_CLIENTS);
     server.num_clients = 0;
+
 
     int sock;
 
@@ -599,6 +619,9 @@ int net_server_start()
     LOGN("Binding socket %u to any local ip on port %u.", sock, PORT);
     socket_bind(sock, NULL, PORT);
     server.info.socket = sock;
+    
+    // used for packing data
+    bitpack_create(&server.bp, 100);
 
     LOGN("Server Started with tick rate %f.", TICK_RATE);
 
@@ -996,6 +1019,7 @@ bool net_client_init()
     client.id = -1;
     client.info.socket = sock;
     circbuf_create(&client.input_packets,10, sizeof(Packet));
+    bitpack_create(&client.bp, 100);
 
     return true;
 }
@@ -1397,6 +1421,16 @@ uint32_t net_client_get_recv_bytes()
     return client.bytes_received;
 }
 
+uint32_t net_client_get_largest_packet_size_recv()
+{
+    return client.largest_packet_size_recv;
+}
+
+uint32_t net_client_get_largest_packet_size_sent()
+{
+    return client.largest_packet_size_sent;
+}
+
 double net_client_get_connected_time()
 {
     return client.time_of_connection;
@@ -1754,8 +1788,20 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             Player* p = &players[i];
             // LOGN("Packing player %d (%d)", i, server.clients[i].client_id);
 
+            bitpack_clear(&server.bp);
+
+            //bitpack_write(&server.bp, 3,  (uint32_t)i);
+            bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.x);
+            bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.y);
+            bitpack_write(&server.bp, 7,  (uint32_t)p->phys.pos.z);
+
+            bitpack_flush(&server.bp);
+            bitpack_seek_begin(&server.bp);
+
+            uint32_t pos = bitpack_read(&server.bp, 32);
+
             pack_u8(pkt,(uint8_t)i);
-            pack_vec3(pkt,vec3(p->phys.pos.x, p->phys.pos.y, p->phys.pos.z));
+            pack_u32(pkt,pos);
             pack_u8(pkt, p->sprite_index+p->anim.curr_frame);
             pack_u8(pkt, p->curr_room);
             pack_u8(pkt, p->phys.hp);
@@ -1811,7 +1857,19 @@ static void unpack_players(Packet* pkt, int* offset)
         Player* p = &players[client_id];
         p->active = true;
 
-        Vector3f pos    = unpack_vec3(pkt, offset);
+        bitpack_clear(&client.bp);
+
+        uint32_t pos0 = unpack_u32(pkt,offset);
+       
+        bitpack_write(&client.bp, 32, pos0);
+        bitpack_flush(&client.bp);
+        bitpack_seek_begin(&client.bp);
+
+        uint32_t x = bitpack_read(&client.bp, 10);
+        uint32_t y = bitpack_read(&client.bp, 10);
+        uint32_t z = bitpack_read(&client.bp, 12);
+
+        Vector3f pos = {(float)x,(float)y,(float)z};
         p->sprite_index = unpack_u8(pkt, offset);
         uint8_t curr_room  = unpack_u8(pkt, offset);
         p->phys.hp  = unpack_u8(pkt, offset);

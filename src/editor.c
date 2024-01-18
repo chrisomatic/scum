@@ -93,11 +93,14 @@ void editor_draw()
                     uint32_t sent_bytes = net_client_get_sent_bytes();
                     uint32_t recv_bytes = net_client_get_recv_bytes();
 
+                    uint32_t largest_sent = net_client_get_largest_packet_size_sent();
+                    uint32_t largest_recv = net_client_get_largest_packet_size_recv();
+
                     double connection_time = net_client_get_connected_time();
                     double time_elapsed = timer_get_time() - connection_time;
 
-                    imgui_text("    Sent: %.0f B/s (total: %u B)", sent_bytes / time_elapsed, sent_bytes);
-                    imgui_text("    Recv: %.0f B/s (total: %u B)", recv_bytes / time_elapsed, recv_bytes);
+                    imgui_text("    Sent: %.0f B/s (total: %u B, largest: %u B)", sent_bytes / time_elapsed, sent_bytes, largest_sent);
+                    imgui_text("    Recv: %.0f B/s (total: %u B, largest: %u B)", recv_bytes / time_elapsed, recv_bytes, largest_recv);
                 }
 
                 imgui_number_box("Camera Zoom", 0, 100, &cam_zoom);
