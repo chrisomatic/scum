@@ -21,6 +21,7 @@ void bitpack_delete(BitPack* bp);
 void bitpack_seek_begin(BitPack* bp);
 void bitpack_seek_to_written(BitPack* bp);
 void bitpack_write(BitPack* bp, int num_bits, uint32_t value);
+void bitpack_memcpy(BitPack* bp, uint8_t* data, int len);
 void bitpack_flush(BitPack* bp);
 uint32_t bitpack_read(BitPack* bp, int num_bits);
 uint32_t bitpack_print(BitPack* bp);

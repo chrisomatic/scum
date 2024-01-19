@@ -208,6 +208,8 @@ void player_draw_room_transition();
 void player_start_room_transition(Player* p);
 void player_set_class(Player* p, PlayerClass class);
 
+void player_print(Player* p);
+
 void player_set_active(Player* p, bool active);
 int player_get_active_count();
 void player_handle_collision(Player* p, Entity* e);

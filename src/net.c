@@ -130,6 +130,7 @@ static inline void pack_i32(Packet* pkt, int32_t d);
 static inline void pack_u64(Packet* pkt, uint64_t d);
 static inline void pack_float(Packet* pkt, float d);
 static inline void pack_bytes(Packet* pkt, uint8_t* d, uint8_t len);
+static inline void pack_bytes_u32(Packet* pkt, uint32_t* d, uint8_t len);
 static inline void pack_string(Packet* pkt, char* s, uint8_t max_len);
 static inline void pack_vec2(Packet* pkt, Vector2f d);
 static inline void pack_vec3(Packet* pkt, Vector3f d);
@@ -147,7 +148,9 @@ static inline Vector2f unpack_vec2(Packet* pkt, int* offset);
 static inline Vector3f unpack_vec3(Packet* pkt, int* offset);
 
 static void pack_players(Packet* pkt, ClientInfo* cli);
+static void pack_players_bitpacked(Packet* pkt, ClientInfo* cli); // temp
 static void unpack_players(Packet* pkt, int* offset);
+static void unpack_players_bitpacked(Packet* pkt, int* offset);
 static void pack_creatures(Packet* pkt, ClientInfo* cli);
 static void unpack_creatures(Packet* pkt, int* offset);
 static void pack_projectiles(Packet* pkt, ClientInfo* cli);
@@ -506,6 +509,7 @@ static void server_send(PacketType type, ClientInfo* cli)
 
         case PACKET_TYPE_STATE:
         {
+            //pack_players_bitpacked(&pkt, cli);
             pack_players(&pkt, cli);
             pack_creatures(&pkt, cli);
             pack_projectiles(&pkt, cli);
@@ -513,6 +517,7 @@ static void server_send(PacketType type, ClientInfo* cli)
             pack_decals(&pkt, cli);
             pack_other(&pkt, cli);
             pack_events(&pkt,cli);
+
             //print_packet(&pkt, true);
 
             if(memcmp(&cli->prior_state_pkt.data, &pkt.data, pkt.data_len) == 0)
@@ -1331,6 +1336,7 @@ void net_client_update()
                 {
                     //print_packet(&srvpkt, true);
 
+                    //unpack_players_bitpacked(&srvpkt, &offset);
                     unpack_players(&srvpkt, &offset);
                     unpack_creatures(&srvpkt, &offset);
                     unpack_projectiles(&srvpkt, &offset);
@@ -1588,6 +1594,12 @@ static inline void pack_bytes(Packet* pkt, uint8_t* d, uint8_t len)
     pkt->data_len+=len*sizeof(uint8_t);
 }
 
+static inline void pack_bytes_u32(Packet* pkt, uint32_t* d, uint8_t len)
+{
+    memcpy(&pkt->data[pkt->data_len],d,sizeof(uint32_t)*len);
+    pkt->data_len+=len*sizeof(uint8_t);
+}
+
 static inline void pack_string(Packet* pkt, char* s, uint8_t max_len)
 {
     uint8_t slen = (uint8_t)MIN(max_len,strlen(s));
@@ -1774,6 +1786,82 @@ void test_packing()
 }
 
 
+static void pack_players_bitpacked(Packet* pkt, ClientInfo* cli)
+{
+    int index = pkt->data_len;
+    pkt->data_len += 1;
+
+    uint8_t player_count = 0;
+
+    bitpack_clear(&server.bp);
+
+    for(int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        if(server.clients[i].state == CONNECTED)
+        {
+            Player* p = &players[i];
+            player_count++;
+
+            // LOGN("Packing player %d (%d)", i, server.clients[i].client_id);
+
+            bitpack_write(&server.bp, 3,  (uint32_t)i);
+            bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.x);
+            bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.y);
+            bitpack_write(&server.bp, 6,  (uint32_t)p->phys.pos.z);
+            bitpack_write(&server.bp, 4,  (uint32_t)p->sprite_index+p->anim.curr_frame);
+            bitpack_write(&server.bp, 7,  (uint32_t)p->curr_room);
+            bitpack_write(&server.bp, 4,  (uint32_t)p->phys.hp);
+            bitpack_write(&server.bp, 16, (uint32_t)(p->highlighted_item_id+1));
+            bitpack_write(&server.bp, 4,  (uint32_t)p->gauntlet_selection);
+            bitpack_write(&server.bp, 4,  (uint32_t)p->gauntlet_slots);
+
+            for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
+                bitpack_write(&server.bp, 6,  (uint32_t)(p->gauntlet[g].type + 1));
+
+            bitpack_write(&server.bp, 1, (uint32_t)(p->invulnerable_temp ? 1 : 0));
+            bitpack_write(&server.bp, 6, (uint32_t)p->invulnerable_temp_time);
+            bitpack_write(&server.bp, 4, (uint32_t)p->door);
+            bitpack_write(&server.bp, 1, (uint32_t)(p->phys.dead ? 1 : 0));
+
+            bitpack_flush(&server.bp);
+            bitpack_seek_begin(&server.bp);
+            bitpack_print(&server.bp);
+
+            int num_bytes = ceil(server.bp.bits_written / 8.0);
+            pack_bytes(pkt, (uint8_t*)server.bp.data, num_bytes);
+
+            // check
+            /*
+            printf("\nCHECK!\n");
+            printf("%u == %u\n", bitpack_read(&server.bp, 3),  (uint32_t)i);
+            printf("%u == %u\n", bitpack_read(&server.bp, 10), (uint32_t)p->phys.pos.x);
+            printf("%u == %u\n", bitpack_read(&server.bp, 10), (uint32_t)p->phys.pos.y);
+            printf("%u == %u\n", bitpack_read(&server.bp, 6),  (uint32_t)p->phys.pos.z);
+            printf("%u == %u\n", bitpack_read(&server.bp, 4),  (uint32_t)p->sprite_index+p->anim.curr_frame);
+            printf("%u == %u\n", bitpack_read(&server.bp, 7),  (uint32_t)p->curr_room);
+            printf("%u == %u\n", bitpack_read(&server.bp, 4),  (uint32_t)p->phys.hp);
+            printf("%u == %u\n", bitpack_read(&server.bp, 16), (uint32_t)(p->highlighted_item_id+1));
+            printf("%u == %u\n", bitpack_read(&server.bp, 4),  (uint32_t)p->gauntlet_selection);
+            printf("%u == %u\n", bitpack_read(&server.bp, 4),  (uint32_t)p->gauntlet_slots);
+
+            for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
+                printf("%u == %u\n", bitpack_read(&server.bp, 6),  (uint32_t)(p->gauntlet[g].type+1));
+
+            printf("%u == %u\n", bitpack_read(&server.bp, 1),  (uint32_t)(p->invulnerable_temp ? 1 : 0));
+            printf("%u == %u\n", bitpack_read(&server.bp, 6),  (uint32_t)p->invulnerable_temp_time);
+            printf("%u == %u\n", bitpack_read(&server.bp, 4),  (uint32_t)p->door);
+            printf("%u == %u\n", bitpack_read(&server.bp, 1),  (uint32_t)(p->phys.dead ? 1 : 0));
+            */
+
+            //print_packet(pkt,true);
+
+            //getchar(); // pause
+        }
+    }
+
+    pack_u8_at(pkt, player_count, index);
+}
+
 static void pack_players(Packet* pkt, ClientInfo* cli)
 {
     int index = pkt->data_len;
@@ -1787,18 +1875,6 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
         {
             Player* p = &players[i];
             // LOGN("Packing player %d (%d)", i, server.clients[i].client_id);
-
-            bitpack_clear(&server.bp);
-
-            //bitpack_write(&server.bp, 3,  (uint32_t)i);
-            //bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.x);
-            //bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.y);
-            //bitpack_write(&server.bp, 7,  (uint32_t)p->phys.pos.z);
-
-            //bitpack_flush(&server.bp);
-            //bitpack_seek_begin(&server.bp);
-
-            //uint32_t pos = bitpack_read(&server.bp, 32);
 
             pack_u8(pkt,(uint8_t)i);
             pack_u32(pkt,(uint32_t)p->phys.pos.x);
@@ -1827,6 +1903,140 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
     }
 
     pack_u8_at(pkt, player_count, index);
+}
+
+static void unpack_players_bitpacked(Packet* pkt, int* offset)
+{
+    uint8_t player_count = unpack_u8(pkt, offset);
+    client.player_count = player_count;
+
+    bool prior_active[MAX_CLIENTS] = {0};
+    for(int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        prior_active[i] = players[i].active;
+        players[i].active = false;
+    }
+
+    bitpack_clear(&client.bp);
+    bitpack_memcpy(&client.bp, &pkt->data[*offset], pkt->data_len);
+    bitpack_seek_begin(&client.bp);
+    bitpack_print(&client.bp);
+
+    for(int i = 0; i < player_count; ++i)
+    {
+        *offset += 16;
+
+        uint32_t id                  = bitpack_read(&client.bp, 3);
+        uint32_t x                   = bitpack_read(&client.bp, 10);
+        uint32_t y                   = bitpack_read(&client.bp, 10);
+        uint32_t z                   = bitpack_read(&client.bp, 6);
+        uint32_t sprite_index        = bitpack_read(&client.bp, 4);
+        uint32_t c_room              = bitpack_read(&client.bp, 7);
+        uint32_t hp                  = bitpack_read(&client.bp, 4);
+        uint32_t highlighted_item_id = bitpack_read(&client.bp, 16);
+        uint32_t gauntlet_selection  = bitpack_read(&client.bp, 4);
+        uint32_t gauntlet_slots      = bitpack_read(&client.bp, 4);
+
+        uint32_t gauntlet_types[PLAYER_GAUNTLET_MAX] = {0};
+        for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
+            gauntlet_types[g] = bitpack_read(&client.bp, 6);
+
+        uint32_t invunerable_temp = bitpack_read(&client.bp, 1);
+        uint32_t inv_temp_time    = bitpack_read(&client.bp, 6);
+        uint32_t door             = bitpack_read(&client.bp, 4);
+        uint32_t dead             = bitpack_read(&client.bp, 1);
+
+        printf("%u\n", sprite_index);
+
+        /*
+        printf("%u\n", id);
+        printf("%u\n", x);
+        printf("%u\n", y);
+        printf("%u\n", z);
+        printf("%u\n", sprite_index);
+        printf("%u\n", c_room);
+        printf("%u\n", hp);
+        printf("%u\n", highlighted_item_id);
+        printf("%u\n", gauntlet_selection);
+        printf("%u\n", gauntlet_slots);
+        for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
+            printf("%u\n", gauntlet_types[g]);
+        printf("%u\n", invunerable_temp);
+        printf("%u\n", inv_temp_time);
+        printf("%u\n", door);
+        printf("%u\n", dead);
+        */
+
+        uint8_t client_id = (uint8_t)id;
+
+        if(client_id >= MAX_CLIENTS)
+        {
+            LOGE("Client ID is too large: %u",client_id);
+            return; //TODO
+        }
+
+        Player* p = &players[client_id];
+        p->active = true;
+
+        Vector3f pos = {(float)x,(float)y,(float)z};
+        p->sprite_index = (uint8_t)sprite_index;
+        uint8_t curr_room  = (uint8_t)c_room;
+        p->phys.hp  = (uint8_t)hp;
+
+        p->highlighted_item_id = ((int32_t)highlighted_item_id)-1;
+        p->gauntlet_selection = (uint8_t)gauntlet_selection;
+        p->gauntlet_slots = (uint8_t)gauntlet_slots;
+        for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
+        {
+            int8_t type = ((int8_t)gauntlet_types[g]) - 1;
+            p->gauntlet[g].type = (ItemType)type;
+        }
+
+        p->invulnerable_temp = invunerable_temp == 1 ? true : false;
+        float invulnerable_temp_time = (float)inv_temp_time;
+        p->door  = (Dir)door;
+        p->phys.dead  = dead == 1 ? true: false;
+
+        // moving between rooms
+        if(curr_room != p->curr_room)
+        {
+            if(p == player)
+            {
+                p->transition_room = p->curr_room;
+                p->curr_room = curr_room;
+                //printf("net recv: %d -> %d\n", p->transition_room, p->curr_room); printf("door: %d\n", p->door);
+                player_start_room_transition(p);
+            }
+            else
+            {
+                p->transition_room = curr_room;
+                p->curr_room = curr_room;
+            }
+            p->phys.pos.x = pos.x;
+            p->phys.pos.y = pos.y;
+            p->phys.pos.z = pos.z;
+        }
+
+        p->lerp_t = 0.0;
+
+        p->server_state_prior.pos.x = p->phys.pos.x;
+        p->server_state_prior.pos.y = p->phys.pos.y;
+        p->server_state_prior.pos.z = p->phys.pos.z;
+        p->server_state_prior.invulnerable_temp_time = p->invulnerable_temp_time;
+
+        p->server_state_target.pos.x = pos.x;
+        p->server_state_target.pos.y = pos.y;
+        p->server_state_target.pos.z = pos.z;
+        p->server_state_target.invulnerable_temp_time = invulnerable_temp_time;
+
+        if(!prior_active[client_id])
+        {
+            printf("first state packet for %d\n", client_id);
+            memcpy(&p->server_state_prior, &p->server_state_target, sizeof(p->server_state_target));
+        }
+
+        player_print(p);
+    }
 }
 
 static void unpack_players(Packet* pkt, int* offset)
@@ -1858,20 +2068,6 @@ static void unpack_players(Packet* pkt, int* offset)
 
         Player* p = &players[client_id];
         p->active = true;
-
-        /*
-        bitpack_clear(&client.bp);
-
-        uint32_t x = unpack_u32(pkt,offset);
-       
-        bitpack_write(&client.bp, 32, pos0);
-        bitpack_flush(&client.bp);
-        bitpack_seek_begin(&client.bp);
-
-        uint32_t x = unbitpack_read(&client.bp, 10);
-        uint32_t y = bitpack_read(&client.bp, 10);
-        uint32_t z = bitpack_read(&client.bp, 12);
-        */
 
         uint32_t x = unpack_u32(pkt,offset);
         uint32_t y = unpack_u32(pkt,offset);

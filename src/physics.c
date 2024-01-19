@@ -176,3 +176,51 @@ void phys_calc_collision_rect(Physics* phys)
     phys->collision_rect.w = horizontal ? phys->length : phys->width;
     phys->collision_rect.h = horizontal ? phys->width  : phys->length;
 }
+
+void phys_print(Physics* phys)
+{
+    printf("    phys: {\n");
+    printf("        pos:           %.2f %.2f %.2f\n", phys->pos.x, phys->pos.y, phys->pos.z);
+    printf("        prior_pos:     %.2f %.2f %.2f\n", phys->prior_pos.x, phys->prior_pos.y, phys->prior_pos.z);
+    printf("        vel:           %.2f %.2f %.2f\n", phys->vel.x, phys->vel.y, phys->vel.z);
+    printf("        prior_vel:     %.2f %.2f %.2f\n", phys->prior_vel.x, phys->prior_vel.y, phys->prior_vel.z);
+    printf("        max_vel:       %.2f\n",phys->max_velocity);
+    printf("        base_friction: %.2f\n",phys->base_friction);
+    printf("        speed:         %.2f\n",phys->speed);
+    printf("        speed_factor:  %.2f\n",phys->speed_factor);
+    printf("        radius:        %.2f\n",phys->radius);
+    printf("        mass:          %.2f\n",phys->mass);
+    printf("        width:         %.2f\n",phys->width);
+    printf("        length:        %.2f\n",phys->length);
+    printf("        height:        %.2f\n",phys->height);
+    printf("        elasticity:    %.2f\n",phys->elasticity);
+    printf("        rotation_deg:  %.2f\n",phys->rotation_deg);
+    printf("        hp:            %d\n",phys->hp);
+    printf("        hp_max:        %d\n",phys->hp_max);
+    printf("        circular_dt:   %.2f\n",phys->circular_dt);
+    printf("        dead:          %s\n", phys->dead ? "true" : "false");
+    printf("        amorphous:     %s\n", phys->amorphous ? "true" : "false");
+    printf("        ethereal:      %s\n", phys->ethereal ? "true" : "false");
+    printf("        falling:       %s\n", phys->falling ? "true" : "false");
+    printf("        floating:      %s\n", phys->floating ? "true" : "false");
+    printf("        crawling:      %s\n", phys->crawling ? "true" : "false");
+    printf("        status_effects: {\n");
+    for(int i = 0; i < phys->status_effects_count; ++i)
+    {
+        printf("      [%d]\n", i);
+        printf("          type:           %d\n", phys->status_effects[i].type);
+        printf("          lifetime:       %.2f\n", phys->status_effects[i].lifetime);
+        printf("          lifetime_max:   %.2f\n", phys->status_effects[i].lifetime_max);
+        printf("          periodic:       %s\n", phys->status_effects[i].periodic ? "true" : "false");
+        printf("          period:         %.2f\n", phys->status_effects[i].period);
+        printf("          periods_passed: %d\n", phys->status_effects[i].periods_passed);
+        printf("          applied:        %s\n", phys->status_effects[i].applied ? "true" : "false");
+    }
+    printf("        };\n");
+
+    Rect* r = &phys->collision_rect;
+    Rect* rp = &phys->collision_rect_prior;
+    printf("        collision_rect:       [%.2f %.2f %.2f %.2f]\n",r->x, r->y, r->w, r->h);
+    printf("        collision_rect_prior: [%.2f %.2f %.2f %.2f]\n",rp->x, rp->y, rp->w, rp->h);
+    printf("  };\n");
+}

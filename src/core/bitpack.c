@@ -52,6 +52,7 @@ void bitpack_create(BitPack* bp, size_t num_bytes)
 
     bp->size_in_bits = 8*num_bytes;
     bp->size_in_words = num_bytes/4;
+
     bp->bits_written = 0;
     bp->word_index = 0;
     bp->words_written = 0;
@@ -63,6 +64,8 @@ void bitpack_create(BitPack* bp, size_t num_bytes)
 void bitpack_clear(BitPack* bp)
 {
     memset(bp->data,0,4*bp->size_in_words);
+    bp->scratch = 0x0;
+    bp->bit_index = 0;
     bp->bits_written = 0;
     bp->word_index = 0;
     bp->words_written = 0;
@@ -89,6 +92,18 @@ void bitpack_seek_to_written(BitPack* bp)
 {
     bp->bit_index = bp->bits_written;
     bp->word_index = bp->words_written;
+}
+
+void bitpack_memcpy(BitPack* bp, uint8_t* data, int len)
+{
+    uint8_t* p = (uint8_t*)bp->data;
+    p = p + (int)ceil(bp->bits_written/8.0);
+    memcpy(p, data, len);
+
+    bp->words_written = ceil(len / 4.0);
+    bp->word_index = bp->words_written;
+    bp->bit_index = 0;
+    bp->bits_written = len * 8;
 }
 
 void bitpack_write(BitPack* bp, int num_bits, uint32_t value)

@@ -180,6 +180,32 @@ void player_init()
     }
 }
 
+void player_print(Player* p)
+{
+    printf("==========================:\n");
+    printf("Player:\n");
+    printf("    active: %s\n", p->active ? "true" : "false");
+    printf("    index:  %d\n", p->index);
+    printf("    name:   %s\n", p->name);
+    phys_print(&p->phys);
+    printf("    vel_factor: %.2f\n", p->vel_factor);
+    printf("    scale:      %.2f\n", p->scale);
+    printf("    class:      %d\n", p->class);
+    printf("    xp:         %d\n", p->xp);
+    printf("    level:      %d\n", p->level);
+    printf("    new_levels: %d\n", p->new_levels);
+    printf("    gauntlet_selection: %u\n", p->gauntlet_selection);
+    printf("    gauntlet_slots:     %u\n", p->gauntlet_slots);
+    printf("    skill_count:      %d\n", p->skill_count);
+    printf("    sprite_index:    %u\n", p->sprite_index);
+    printf("    curr_room:       %u\n", p->curr_room);
+    printf("    transition_room: %u\n", p->transition_room);
+    printf("    door: %d\n", p->door);
+    printf("    invulnerable:      %s\n", p->invulnerable ? "true" : "false");
+    printf("    invulnerable_temp: %s\n", p->invulnerable_temp ? "true" : "false");
+    printf("==========================:\n");
+}
+
 void player_drop_item(Player* p, Item* it)
 {
     if(it == NULL) return;
