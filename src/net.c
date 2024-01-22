@@ -134,6 +134,7 @@ static inline void pack_bytes_u32(Packet* pkt, uint32_t* d, uint8_t len);
 static inline void pack_string(Packet* pkt, char* s, uint8_t max_len);
 static inline void pack_vec2(Packet* pkt, Vector2f d);
 static inline void pack_vec3(Packet* pkt, Vector3f d);
+static inline void pack_itemtype(Packet* pkt, ItemType type);
 
 static inline bool unpack_bool(Packet* pkt, int* offset);
 static inline uint8_t  unpack_u8(Packet* pkt, int* offset);
@@ -146,6 +147,7 @@ static inline void unpack_bytes(Packet* pkt, uint8_t* d, int len, int* offset);
 static inline uint8_t unpack_string(Packet* pkt, char* s, int maxlen, int* offset);
 static inline Vector2f unpack_vec2(Packet* pkt, int* offset);
 static inline Vector3f unpack_vec3(Packet* pkt, int* offset);
+static inline ItemType unpack_itemtype(Packet* pkt, int* offset);
 
 static void pack_players(Packet* pkt, ClientInfo* cli);
 static void pack_players_bitpacked(Packet* pkt, ClientInfo* cli); // temp
@@ -1622,6 +1624,12 @@ static inline void pack_vec3(Packet* pkt, Vector3f d)
     pkt->data_len+=sizeof(Vector3f);
 }
 
+static inline void pack_itemtype(Packet* pkt, ItemType type)
+{
+    pack_u8(pkt, (uint8_t)type);
+}
+
+
 static inline bool unpack_bool(Packet* pkt, int* offset)
 {
     uint8_t r = pkt->data[*offset];
@@ -1715,6 +1723,13 @@ static inline Vector3f unpack_vec3(Packet* pkt, int* offset)
     (*offset) += sizeof(Vector3f);
     return r;
 }
+
+static inline ItemType unpack_itemtype(Packet* pkt, int* offset)
+{
+    int8_t type = (int8_t)unpack_u8(pkt, offset);
+    return (ItemType)type;
+}
+
 
 void test_packing()
 {
@@ -1889,7 +1904,8 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             pack_u8(pkt, p->gauntlet_slots);
             for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
             {
-                pack_u8(pkt, (uint8_t)p->gauntlet[g].type);
+                pack_itemtype(pkt, p->gauntlet[g].type);
+                // pack_u8(pkt, (uint8_t)p->gauntlet[g].type);
                 // printf("%u ", pkt->data[pkt->data_len-1]);
             }
             // printf("\n");
@@ -1898,6 +1914,13 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             pack_float(pkt, p->invulnerable_temp_time);
             pack_u8(pkt, (uint8_t)p->door);
             pack_bool(pkt, p->phys.dead);
+
+            for(int t = 0; t < MAX_TIMED_ITEMS; ++t)
+            {
+                pack_itemtype(pkt, p->timed_items[t]);
+                pack_float(pkt, p->timed_items_ttl[t]);
+            }
+
             player_count++;
         }
     }
@@ -2083,10 +2106,11 @@ static void unpack_players(Packet* pkt, int* offset)
         p->gauntlet_slots = unpack_u8(pkt, offset);
         for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
         {
-            int8_t type = (int8_t)unpack_u8(pkt, offset);
-            // printf("%d(",type);
-            p->gauntlet[g].type = (ItemType)type;
-            // printf("%d) ",p->gauntlet[g].type);
+            p->gauntlet[g].type = unpack_itemtype(pkt, offset);
+            // int8_t type = (int8_t)unpack_u8(pkt, offset);
+            // // printf("%d(",type);
+            // p->gauntlet[g].type = (ItemType)type;
+            // // printf("%d) ",p->gauntlet[g].type);
         }
         // printf("\n");
 
@@ -2094,6 +2118,12 @@ static void unpack_players(Packet* pkt, int* offset)
         float invulnerable_temp_time = unpack_float(pkt, offset);
         p->door  = (Dir)unpack_u8(pkt, offset);
         p->phys.dead  = unpack_bool(pkt,offset);
+
+        for(int t = 0; t < MAX_TIMED_ITEMS; ++t)
+        {
+            p->timed_items[t] = unpack_itemtype(pkt, offset);
+            p->timed_items_ttl[t] = unpack_float(pkt, offset);
+        }
 
         // moving between rooms
         if(curr_room != p->curr_room)

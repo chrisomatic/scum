@@ -872,6 +872,12 @@ void player_update(Player* p, float dt)
         {
             Room* room = level_get_room_by_index(&level, (int)p->curr_room);
             if(room) room->discovered = true;
+
+            for(int t = 0; t < MAX_TIMED_ITEMS; ++t)
+            {
+                if(p->timed_items[t] == ITEM_NONE) continue;
+                p->timed_items_ttl[t] -= dt;
+            }
         }
 
         return;
