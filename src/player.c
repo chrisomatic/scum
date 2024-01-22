@@ -52,6 +52,99 @@ text_list_t* ptext = NULL;
 // tile pit rect
 Rect tile_pit_rect = {0};
 
+void player_set_defaults(Player* p)
+{
+    p->phys.dead = false;
+    p->phys.pos.x = CENTER_X;
+    p->phys.pos.y = CENTER_Y;
+    p->phys.pos.z = 0.0;
+
+    p->phys.speed = 700.0;
+    p->phys.speed_factor = 1.0;
+    p->phys.max_velocity = 120.0;
+    p->phys.base_friction = 15.0;
+    p->phys.vel.x = 0.0;
+    p->phys.vel.y = 0.0;
+    p->phys.height = gfx_images[player_image].visible_rects[0].h;
+    p->phys.width  = gfx_images[player_image].visible_rects[0].w;
+    p->phys.length = gfx_images[player_image].visible_rects[0].w;
+    p->phys.mass = 1.0;
+    p->phys.elasticity = 0.0;
+
+    phys_calc_collision_rect(&p->phys);
+
+    p->phys.hp_max = 6;
+    p->phys.hp = p->phys.hp_max;
+
+    p->invulnerable = false;
+    p->invulnerable_temp_time = false;
+
+    p->class = PLAYER_CLASS_SPACEMAN;
+
+    player_set_sprite_index(p, 4);
+
+    p->phys.radius = calc_radius_from_rect(&p->phys.collision_rect);
+
+
+    p->scale = 1.0;
+    p->phys.falling = false;
+    p->phys.floating = false;
+
+    memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
+    memcpy(&p->proj_spawn,&projectile_spawn[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileSpawn));
+
+    p->proj_cooldown_max = 0.40;
+    p->door = DIR_NONE;
+    p->light_radius = 1.0;
+
+    p->last_shoot_action = PLAYER_ACTION_SHOOT_UP;
+    p->shoot_sprite_cooldown = 0.0;
+
+    // animation
+    // --------------------------------------------------------
+    p->anim.curr_frame = 0;
+    p->anim.max_frames = 4;
+    p->anim.curr_frame_time = 0.0f;
+    p->anim.max_frame_time = 0.07f;
+    p->anim.finite = false;
+    p->anim.curr_loop = 0;
+    p->anim.max_loops = 0;
+    p->anim.frame_sequence[0] = 0;
+    p->anim.frame_sequence[1] = 1;
+    p->anim.frame_sequence[2] = 2;
+    p->anim.frame_sequence[3] = 3;
+
+    p->gauntlet_selection = 0;
+    p->gauntlet_slots = MIN(3,PLAYER_GAUNTLET_MAX);
+    for(int j = 0; j < PLAYER_GAUNTLET_MAX; ++j)
+    {
+        p->gauntlet[j].type = ITEM_NONE;
+        // p->gauntlet[j].type = item_rand(false);
+        // p->gauntlet[j].type = ITEM_CHEST;
+    }
+    // p->gauntlet_item.type = ITEM_NONE;
+
+    p->xp = 0;
+    p->level = 0;
+    p->new_levels = 0;
+
+    p->highlighted_item_id = -1;
+    p->highlighted_index = 0;
+
+    for(int j = 0; j < PLAYER_MAX_SKILLS; ++j)
+    {
+        p->skills[j] = -1;
+    }
+    p->skill_count = 0;
+    p->num_skill_choices = MIN(3,MAX_SKILL_CHOICES);
+    p->periodic_shot_counter = 0.0;
+
+    for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
+    {
+        p->timed_items[i] = ITEM_NONE;
+    }
+}
+
 void player_init()
 {
     if(!_initialized)
@@ -77,103 +170,14 @@ void player_init()
         Player* p = &players[i];
 
         p->index = i;
+        memset(p->name, PLAYER_NAME_MAX, 0);
+        sprintf(p->name, "Player %d", i+1);
 
+        player_set_defaults(p);
         player_colors[i] = colors[i];
 
         p->active = false;
 
-        p->phys.dead = false;
-        p->phys.pos.x = CENTER_X;
-        p->phys.pos.y = CENTER_Y;
-        p->phys.pos.z = 0.0;
-
-        p->phys.speed = 700.0;
-        p->phys.speed_factor = 1.0;
-        p->phys.max_velocity = 120.0;
-        p->phys.base_friction = 15.0;
-        p->phys.vel.x = 0.0;
-        p->phys.vel.y = 0.0;
-        p->phys.height = gfx_images[player_image].visible_rects[0].h;
-        p->phys.width  = gfx_images[player_image].visible_rects[0].w;
-        p->phys.length = gfx_images[player_image].visible_rects[0].w;
-        p->phys.mass = 1.0;
-        p->phys.elasticity = 0.0;
-
-        phys_calc_collision_rect(&p->phys);
-
-        p->phys.hp_max = 6;
-        p->phys.hp = p->phys.hp_max;
-
-        p->invulnerable = false;
-        p->invulnerable_temp_time = false;
-
-        p->class = PLAYER_CLASS_SPACEMAN;
-
-        player_set_sprite_index(p, 4);
-
-        p->phys.radius = calc_radius_from_rect(&p->phys.collision_rect);
-
-
-        p->scale = 1.0;
-        p->phys.falling = false;
-        p->phys.floating = false;
-
-        memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
-        memcpy(&p->proj_spawn,&projectile_spawn[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileSpawn));
-
-        p->proj_cooldown_max = 0.40;
-        p->door = DIR_NONE;
-        p->light_radius = 1.0;
-
-        p->last_shoot_action = PLAYER_ACTION_SHOOT_UP;
-        p->shoot_sprite_cooldown = 0.0;
-
-        memset(p->name, PLAYER_NAME_MAX, 0);
-        sprintf(p->name, "Player %d", i+1);
-
-        // animation
-        // --------------------------------------------------------
-        p->anim.curr_frame = 0;
-        p->anim.max_frames = 4;
-        p->anim.curr_frame_time = 0.0f;
-        p->anim.max_frame_time = 0.07f;
-        p->anim.finite = false;
-        p->anim.curr_loop = 0;
-        p->anim.max_loops = 0;
-        p->anim.frame_sequence[0] = 0;
-        p->anim.frame_sequence[1] = 1;
-        p->anim.frame_sequence[2] = 2;
-        p->anim.frame_sequence[3] = 3;
-
-        p->gauntlet_selection = 0;
-        p->gauntlet_slots = MIN(3,PLAYER_GAUNTLET_MAX);
-        for(int j = 0; j < PLAYER_GAUNTLET_MAX; ++j)
-        {
-            p->gauntlet[j].type = ITEM_NONE;
-            // p->gauntlet[j].type = item_rand(false);
-            // p->gauntlet[j].type = ITEM_CHEST;
-        }
-        // p->gauntlet_item.type = ITEM_NONE;
-
-        p->xp = 0;
-        p->level = 0;
-        p->new_levels = 0;
-
-        p->highlighted_item_id = -1;
-        p->highlighted_index = 0;
-
-        for(int j = 0; j < PLAYER_MAX_SKILLS; ++j)
-        {
-            p->skills[j] = -1;
-        }
-        p->skill_count = 0;
-        p->num_skill_choices = MIN(3,MAX_SKILL_CHOICES);
-        p->periodic_shot_counter = 0.0;
-
-        for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
-        {
-            p->timed_items[i] = ITEM_NONE;
-        }
         // //@TEST
         // p->timed_items[i] = ITEM_GEM_RED;
         // p->timed_items_ttl[i] = 5.0;
@@ -479,7 +483,6 @@ void player_hurt(Player* p, int damage)
 
     if(p->phys.hp == 0)
     {
-        text_list_add(text_lst, COLOR_WHITE, 3.0, "%s died", p->name);
         player_die(p);
     }
     else
@@ -493,8 +496,10 @@ void player_hurt(Player* p, int damage)
 
 void player_die(Player* p)
 {
-    // should reset all?
+    text_list_add(text_lst, COLOR_WHITE, 3.0, "%s died. Miraculously you awake, reborn...", p->name);
+
     p->phys.dead = true;
+    p->phys.floating = true;
     status_effects_clear(&p->phys);
 
     p->phys.falling = false;
@@ -508,7 +513,6 @@ void player_die(Player* p)
         if(!p2->phys.dead) return;
     }
 
-
     // all are dead
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
@@ -521,11 +525,9 @@ void player_die(Player* p)
 
 void player_reset(Player* p)
 {
-    p->phys.dead = false;
-    p->phys.hp = p->phys.hp_max;
-    p->phys.vel.x = 0.0;
-    p->phys.vel.y = 0.0;
+    player_set_defaults(p);
 
+    /*
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         Player* p2 = &players[i];
@@ -534,6 +536,7 @@ void player_reset(Player* p)
         player_send_to_room(p, p2->curr_room);
         return;
     }
+    */
 
     player_send_to_level_start(p);
 }

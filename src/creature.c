@@ -793,6 +793,9 @@ static Player* get_nearest_player(float x, float y)
     for(int i = 0; i < num_players; ++i)
     {
         Player* p = &players[i];
+        if(p->phys.dead)
+            continue;
+
         float d = dist(x,y, p->phys.pos.x, p->phys.pos.y);
         if(d < min_dist)
         {
