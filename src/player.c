@@ -521,6 +521,8 @@ void player_die(Player* p)
 
         player_reset(p2);
     }
+
+    game_generate_level(rand(), level_rank);
 }
 
 void player_reset(Player* p)
