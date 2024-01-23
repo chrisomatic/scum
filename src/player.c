@@ -1562,6 +1562,63 @@ void player_ai_move_to_target(Player* p, Player* target)
 
 }
 
+void draw_hearts_other_player(Player* p)
+{
+    int num = p->phys.hp / 2;
+    int rem = p->phys.hp % 2;
+
+    int sprite_index = p->sprite_index+p->anim.curr_frame;
+    float ph = gfx_images[player_image].visible_rects[sprite_index].h;
+    float pw = gfx_images[player_image].visible_rects[sprite_index].w;
+
+    float x = p->phys.pos.x;
+    float y = p->phys.pos.y-(0.5*p->phys.pos.z)-p->phys.width/1.5;  // see player draw
+
+    y += ph/2.0;
+    //TODO: maybe make this a property on the player (y location of their feet)
+
+    // Rect r = RECT(x, y, 1, 1);
+    // gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
+
+    y += 4.0*ascale;
+
+    float l = 4.0*ascale; // image size
+    float pad = 1.0*ascale;
+
+    uint8_t image_full = item_props[ITEM_HEART_FULL].image;
+    int si_full = item_props[ITEM_HEART_FULL].sprite_index;
+    int image_half = item_props[ITEM_HEART_FULL].image;
+    uint8_t si_half = item_props[ITEM_HEART_HALF].sprite_index;
+    int image_empty = item_props[ITEM_HEART_EMPTY].image;
+    // uint8_t si_empty = item_props[ITEM_HEART_EMPTY].sprite_index;
+
+    // float w = gfx_images[image_full].visible_rects[si_full].w;
+    float w = gfx_images[image_full].element_width;
+    float scale = l / w;
+
+    // start from the left
+    x -= (num+rem)*l/2.0;
+    x -= (num+rem-1)*pad/2.0;
+
+    // draw image from center
+    x += l/2.0;
+    y += l/2.0;
+
+    float opacity = 0.5;
+
+    for(int i = 0; i < num; ++i)
+    {
+        gfx_sprite_batch_add(image_full, si_full, x, y, COLOR_TINT_NONE, false, scale, 0.0, opacity, false, false, false);
+        x += (l+pad);
+    }
+
+    if(rem == 1)
+    {
+        gfx_sprite_batch_add(image_half, si_half, x, y, COLOR_TINT_NONE, false, scale, 0.0, opacity, false, false, false);
+        x += (l+pad);
+    }
+}
+
 
 float xp_bar_y = 0.0;
 void draw_hearts()
@@ -1624,6 +1681,8 @@ void draw_hearts()
         gfx_draw_image(image_empty, si_empty, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
         x += (l+pad);
     }
+
+    draw_hearts_other_player(player);
 
 }
 
@@ -2041,6 +2100,11 @@ void player_draw(Player* p)
         }
 
         text_list_draw(ptext);
+
+    }
+    else
+    {
+        draw_hearts_other_player(p);
     }
 }
 
