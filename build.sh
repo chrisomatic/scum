@@ -32,6 +32,7 @@ gcc core/gfx.c \
     room_editor.c \
     room_file.c \
     skills.c \
+    settings.c \
     main.c \
     -Icore \
     -lglfw -lGLU -lGLEW -lGL -lm \

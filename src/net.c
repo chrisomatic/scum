@@ -21,6 +21,7 @@
 #include "effects.h"
 #include "projectile.h"
 #include "explosion.h"
+#include "settings.h"
 
 //#define SERVER_PRINT_SIMPLE 1
 //#define SERVER_PRINT_VERBOSE 1
@@ -202,6 +203,7 @@ static char* packet_type_to_str(PacketType type)
         case PACKET_TYPE_DISCONNECT: return "DISCONNECT";
         case PACKET_TYPE_PING: return "PING";
         case PACKET_TYPE_INPUT: return "INPUT";
+        case PACKET_TYPE_SETTINGS: return "SETTINGS";
         case PACKET_TYPE_STATE: return "STATE";
         case PACKET_TYPE_MESSAGE: return "MESSAGE";
         case PACKET_TYPE_ERROR: return "ERROR";
@@ -508,6 +510,35 @@ static void server_send(PacketType type, ClientInfo* cli)
             pkt.data_len = 0;
             net_send(&server.info,&cli->address,&pkt);
             break;
+
+        case PACKET_TYPE_SETTINGS:
+        {
+            int num_clients = 0;
+
+            pkt.data_len = 1;
+
+            for (int i = 0; i < MAX_CLIENTS; ++i)
+            {
+                if (server.clients[i].state == CONNECTED)
+                {
+                    pack_u8(&pkt, (uint8_t)i);
+                    pack_u8(&pkt, players[i].settings.class);
+                    pack_u32(&pkt, players[i].settings.color);
+                    pack_string(&pkt, players[i].settings.name, PLAYER_NAME_MAX);
+
+                    LOGNV("Sending Settings, Client ID: %d", i);
+                    LOGNV("  name: %s", players[i].settings.name);
+                    LOGNV("  class: %u", players[i].settings.class);
+                    LOGNV("  color: 0x%08x", players[i].settings.color);
+
+                    num_clients++;
+                }
+            }
+
+            pkt.data[0] = num_clients;
+
+            net_send(&server.info, &cli->address, &pkt);
+        } break;
 
         case PACKET_TYPE_STATE:
         {
@@ -1127,6 +1158,21 @@ static void client_send(PacketType type)
             net_send(&client.info,&server.address,&pkt);
         } break;
 
+        case PACKET_TYPE_SETTINGS:
+        {
+            pack_bytes(&pkt, (uint8_t*)client.xor_salts, 8);
+            pack_u8(&pkt, player->settings.class);
+            pack_u32(&pkt, player->settings.color);
+            pack_string(&pkt, player->settings.name, PLAYER_NAME_MAX);
+
+            // LOGN("Client Send Settings");
+            // LOGN("  color: 0x%08x", player->settings.color);
+            // LOGN("  sprite index: %u", player->settings.sprite_index);
+            // LOGN("  name (%d): %s", strlen(player->settings.name), player->settings.name);
+
+            net_send(&client.info,&server.address,&pkt);
+        } break;
+
         case PACKET_TYPE_PING:
         {
             pack_bytes(&pkt, (uint8_t*)client.xor_salts, 8);
@@ -1416,6 +1462,36 @@ void net_client_update()
 
                 } break;
 
+                case PACKET_TYPE_SETTINGS:
+                {
+                    uint8_t num_players = unpack_u8(&srvpkt, &offset);
+
+                    for(int i = 0; i < num_players; ++i)
+                    {
+                        uint8_t client_id = unpack_u8(&srvpkt, &offset);
+
+                        //LOGN("  %d: Client ID %d", i, client_id);
+
+                        if(client_id >= MAX_CLIENTS)
+                        {
+                            LOGE("Client ID is too large: %d", client_id);
+                            break;
+                        }
+
+                        Player* p = &players[client_id];
+                        p->settings.class = unpack_u8(&srvpkt, &offset);
+                        p->settings.color = unpack_u32(&srvpkt, &offset);
+                        uint8_t namelen = unpack_string(&srvpkt, p->settings.name, PLAYER_NAME_MAX, &offset);
+
+                        LOGN("Client Received Settings, Client ID: %d", client_id);
+                        LOGN("  class: %u", p->settings.class);
+                        LOGN("  color: 0x%08x", p->settings.color);
+                        LOGN("  name (%u): %s", namelen, p->settings.name);
+
+                    }
+
+                } break;
+
                 case PACKET_TYPE_DISCONNECT:
                     client.state = DISCONNECTED;
                     client.id = -1;
@@ -1494,6 +1570,11 @@ void net_client_disconnect()
         client.state = DISCONNECTED;
         client_clear();
     }
+}
+
+void net_client_send_settings()
+{
+    client_send(PACKET_TYPE_SETTINGS);
 }
 
 bool net_client_received_init_packet()

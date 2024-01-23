@@ -7,6 +7,7 @@
 #include "item.h"
 #include "skills.h"
 #include "projectile.h"
+#include "settings.h"
 
 
 #define MAX_PLAYERS 4
@@ -54,6 +55,7 @@ typedef enum
     PLAYER_CLASS_SPACEMAN,
     PLAYER_CLASS_PHYSICIST,
     PLAYER_CLASS_ROBOT,
+    PLAYER_CLASS_MAX,
 } PlayerClass;
 
 #define MAX_TIMED_ITEMS 10
@@ -104,6 +106,7 @@ typedef struct
     int level;
     int new_levels;
 
+    Settings settings;
     PlayerInput actions[PLAYER_ACTION_MAX];
 
     PlayerActions last_shoot_action;
@@ -181,6 +184,7 @@ extern int skill_choices[MAX_SKILL_CHOICES];
 extern int num_skill_choices;
 extern float jump_vel_z;
 
+extern int player_image;
 extern int shadow_image;
 
 void player_init();

@@ -79,6 +79,7 @@ void player_set_defaults(Player* p)
     p->invulnerable = false;
     p->invulnerable_temp_time = false;
 
+    p->settings.class = PLAYER_CLASS_SPACEMAN;
     p->class = PLAYER_CLASS_SPACEMAN;
 
     player_set_sprite_index(p, 4);
@@ -194,7 +195,7 @@ void player_print(Player* p)
     phys_print(&p->phys);
     printf("    vel_factor: %.2f\n", p->vel_factor);
     printf("    scale:      %.2f\n", p->scale);
-    printf("    class:      %d\n", p->class);
+    printf("    class:      %d\n", p->settings.class);
     printf("    xp:         %d\n", p->xp);
     printf("    level:      %d\n", p->level);
     printf("    new_levels: %d\n", p->new_levels);
@@ -2045,7 +2046,7 @@ void draw_skill_selection()
 
 void player_set_class(Player* p, PlayerClass class)
 {
-    p->class = class;
+    p->settings.class = class;
 
     switch(class)
     {

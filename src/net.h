@@ -37,6 +37,7 @@ typedef enum
     PACKET_TYPE_PING,
     PACKET_TYPE_INPUT,
     PACKET_TYPE_STATE,
+    PACKET_TYPE_SETTINGS,
     PACKET_TYPE_MESSAGE,
     PACKET_TYPE_ERROR,
     PACKET_TYPE_MAX,
@@ -163,6 +164,7 @@ bool net_client_add_player_input(NetPlayerInput* input);
 bool net_client_received_init_packet();
 bool net_client_is_connected();
 void net_client_disconnect();
+void net_client_send_settings();
 bool net_client_set_server_ip(char* address);
 void net_client_get_server_ip_str(char* ip_str);
 int net_client_data_waiting();

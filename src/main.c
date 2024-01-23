@@ -25,6 +25,7 @@
 #include "text_list.h"
 #include "skills.h"
 #include "bitpack.h"
+#include "settings.h"
 
 // =========================
 // Global Vars
@@ -48,6 +49,8 @@ bool players_invincible = false;
 // uint32_t background_color = COLOR_BLACK;
 uint32_t background_color = COLOR(30,30,30);
 uint32_t margin_color = COLOR_BLACK;
+
+Settings menu_settings = {0};
 
 // mouse
 float mouse_x=0, mouse_y=0;
@@ -240,6 +243,14 @@ void set_game_state(GameState state)
                 {
                     game_generate_level(level_seed, level_rank);
                 }
+                net_client_disconnect();
+                set_menu_keys();
+            } break;
+            case GAME_STATE_SETTINGS:
+            {
+                menu_selected_option = 0;
+                show_tile_grid = false;
+                debug_enabled = false;
                 net_client_disconnect();
                 set_menu_keys();
             } break;
@@ -755,6 +766,9 @@ void init()
     LOGI(" - Items.");
     item_init();
 
+    LOGI(" - Settings.");
+    settings_load(DEFAULT_SETTINGS, &menu_settings);
+
     if(role == ROLE_LOCAL)
     {
         game_generate_level(0, 5);
@@ -969,7 +983,7 @@ void update_main_menu(float dt)
         }
         else if(STR_EQUAL(s, "Settings"))
         {
-            text_list_add(text_lst, COLOR_RED, 2.0, "'%s' not supported", s);
+            set_game_state(GAME_STATE_SETTINGS);
         }
         else if(STR_EQUAL(s, "Help"))
         {
@@ -1392,6 +1406,29 @@ void draw_main_menu()
     text_list_draw(text_lst);
 }
 
+void draw_settings()
+{
+    gfx_clear_buffer(background_color);
+
+    int x = (view_width-200)/2.0;
+    int y = (view_height-200)/2.0;
+
+    imgui_begin_panel("Settings", x, y, false);
+        //imgui_set_text_size(menu_item_scale);
+        imgui_text_box("Name", menu_settings.name, PLAYER_NAME_MAX);
+        imgui_dropdown(class_strs, PLAYER_CLASS_MAX, "Class", (int8_t*)&menu_settings.class, NULL);
+        imgui_color_picker("Color", &menu_settings.color);
+        imgui_newline();
+        if(imgui_button("Return"))
+        {
+            set_game_state(GAME_STATE_MENU);
+            settings_save(DEFAULT_SETTINGS, &menu_settings);
+        }
+    imgui_end();
+
+    text_list_draw(text_lst);
+}
+
 void draw()
 {
 
@@ -1403,6 +1440,11 @@ void draw()
     else if(game_state == GAME_STATE_MENU)
     {
         draw_main_menu();
+        return;
+    }
+    else if(game_state == GAME_STATE_SETTINGS)
+    {
+        draw_settings();
         return;
     }
 
