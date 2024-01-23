@@ -2074,7 +2074,7 @@ void player_draw(Player* p)
     opacity = blink ? 0.3 : opacity;
     uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
 
-    float y = p->phys.pos.y-(0.5*p->phys.pos.z)-p->phys.width/1.5;
+    float y = p->phys.pos.y-(0.5*p->phys.pos.z) - p->phys.width/1.5;
     gfx_sprite_batch_add(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, color, false, p->scale, 0.0, opacity, false, false, false);
 
     if(p == player)

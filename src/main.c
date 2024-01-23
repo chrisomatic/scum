@@ -1051,7 +1051,7 @@ void update(float dt)
 }
 
 
-//TODO: make this work with server
+//TODO: make this work with server: pass in room index!
 void handle_room_completion()
 {
     if(role == ROLE_CLIENT) return;
@@ -1061,7 +1061,6 @@ void handle_room_completion()
     room->doors_locked = (creature_get_room_count(player->curr_room) != 0);
     if(!room->doors_locked && prior_locked)
     {
-
         if(room->xp > 0)
         {
             for(int i = 0; i < MAX_PLAYERS; ++i)

@@ -554,6 +554,9 @@ static void server_simulate()
 {
     float dt = 1.0/TARGET_FPS;
 
+    int num_rooms = 0;
+    int the_rooms[MAX_CLIENTS] = {0};
+
     for(int i = 0; i < MAX_CLIENTS; ++i)
     {
         ClientInfo* cli = &server.clients[i];
@@ -585,9 +588,48 @@ static void server_simulate()
             cli->input_count = 0;
         }
 
+        bool inlist = false;
+        for(int j = 0; j < num_rooms; ++j)
+        {
+            if(the_rooms[j] == p->curr_room)
+            {
+                inlist = true;
+                break;
+            }
+        }
+        if(!inlist)
+        {
+            the_rooms[num_rooms] = p->curr_room;
+            num_rooms++;
+        }
 
-        Room* room = level_get_room_by_index(&level, (int)p->curr_room);
-        room->doors_locked = (creature_get_room_count(p->curr_room) != 0);
+    }
+
+    for(int i = 0; i < num_rooms; ++i)
+    {
+        Room* room = level_get_room_by_index(&level, the_rooms[i]);
+        if(!room) continue;
+        bool prior_locked = room->doors_locked;
+        room->doors_locked = (creature_get_room_count(the_rooms[i]) != 0);
+        if(!room->doors_locked && prior_locked)
+        {
+            if(room->type == ROOM_TYPE_BOSS)
+            {
+                item_add(ITEM_CHEST, CENTER_X, CENTER_Y, the_rooms[i]);
+                item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y-32, the_rooms[i]);
+            }
+            else
+            {
+                if(rand() % 5 == 0) //TODO: probability
+                {
+                    Room* room = level_get_room_by_index(&level, the_rooms[i]);
+                    Vector2f pos = {0};
+                    level_get_center_floor_tile(room, NULL, &pos);
+                    item_add(item_get_random_heart(), pos.x, pos.y, the_rooms[i]);
+                }
+            }
+            //TODO: xp
+        }
     }
 
     projectile_update_all(dt);
