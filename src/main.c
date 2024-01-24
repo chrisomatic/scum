@@ -235,7 +235,7 @@ void set_game_state(GameState state)
             } break;
             case GAME_STATE_MENU:
             {
-                menu_selected_option = 0;
+                // menu_selected_option = 0;
                 show_tile_grid = false;
                 debug_enabled = false;
                 bool diff = room_file_load_all(false);
@@ -248,7 +248,7 @@ void set_game_state(GameState state)
             } break;
             case GAME_STATE_SETTINGS:
             {
-                menu_selected_option = 0;
+                // menu_selected_option = 0;
                 show_tile_grid = false;
                 debug_enabled = false;
                 net_client_disconnect();
@@ -1416,7 +1416,9 @@ void draw_settings()
     imgui_begin_panel("Settings", x, y, false);
         //imgui_set_text_size(menu_item_scale);
         imgui_text_box("Name", menu_settings.name, PLAYER_NAME_MAX);
-        imgui_dropdown(class_strs, PLAYER_CLASS_MAX, "Class", (int8_t*)&menu_settings.class, NULL);
+        int class = (int)menu_settings.class;
+        imgui_dropdown(class_strs, PLAYER_CLASS_MAX, "Class", &class, NULL);
+        menu_settings.class = class;
         imgui_color_picker("Color", &menu_settings.color);
         imgui_newline();
         if(imgui_button("Return"))
