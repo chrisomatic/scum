@@ -869,6 +869,35 @@ int net_server_start()
                         server_send_message(TO_ALL, from, "%s", msg);
                     } break;
 
+                    case PACKET_TYPE_SETTINGS:
+                    {
+                        Player* p = &players[cli->client_id];
+
+                        uint8_t class = unpack_u8(&recv_pkt, &offset);
+                        p->settings.class = class;
+                        player_set_class(p, class);
+
+                        uint32_t color = unpack_u32(&recv_pkt, &offset);
+                        p->settings.color = color;
+
+                        memset(p->settings.name, 0, PLAYER_NAME_MAX);
+                        uint8_t namelen = unpack_string(&recv_pkt, p->settings.name, PLAYER_NAME_MAX, &offset);
+
+                        LOGNV("Server Received Settings, Client ID: %d", cli->client_id);
+                        LOGNV("  color: 0x%08x", p->settings.color);
+                        LOGNV("  class: %u", p->settings.class);
+                        LOGNV("  name (%u): %s", namelen, p->settings.name);
+
+                        for(int i = 0; i < MAX_CLIENTS; ++i)
+                        {
+                            ClientInfo* cli = &server.clients[i];
+                            if(cli == NULL) continue;
+                            if(cli->state != CONNECTED) continue;
+
+                            server_send(PACKET_TYPE_SETTINGS,cli);
+                        }
+                    } break;
+
                     case PACKET_TYPE_PING:
                     {
                         server_send(PACKET_TYPE_PING, cli);
@@ -1467,7 +1496,7 @@ void net_client_update()
 
                     if(from < MAX_PLAYERS)
                     {
-                        text_list_add(text_lst, player_colors[from], 10.0, "Player %u: %s", from+1, msg);
+                        text_list_add(text_lst, players[from].settings.color, 10.0, "%s: %s", players[from].settings.name, msg);
                     }
                     else
                     {
@@ -1496,6 +1525,8 @@ void net_client_update()
                         p->settings.class = unpack_u8(&srvpkt, &offset);
                         p->settings.color = unpack_u32(&srvpkt, &offset);
                         uint8_t namelen = unpack_string(&srvpkt, p->settings.name, PLAYER_NAME_MAX, &offset);
+
+                        player_set_class(p, p->settings.class);
 
                         LOGN("Client Received Settings, Client ID: %d", client_id);
                         LOGN("  class: %u", p->settings.class);

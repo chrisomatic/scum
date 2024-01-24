@@ -71,7 +71,7 @@ void editor_draw()
     imgui_begin_panel("Editor", view_width - gui_size.w, 1, true);
 
         imgui_newline();
-        char* buttons[] = {"General", "Level", "Players", "Creatures", "Projectiles", "Particles"};
+        char* buttons[] = {"General", "Level", "Players", "Creatures", "Projectiles", "Particles", "Theme Editor"};
         int selection = imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "");
         imgui_horizontal_line(1);
 
@@ -427,6 +427,10 @@ void editor_draw()
             case 5: // particle editor
             {
                 particle_editor_gui();
+            } break;
+            case 6:
+            {
+                imgui_theme_editor();
             } break;
         }
 

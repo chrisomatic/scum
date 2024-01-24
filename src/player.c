@@ -22,7 +22,6 @@ int skill_selection = 0;
 // int num_skill_choices = 0;
 
 
-uint32_t player_colors[MAX_PLAYERS];
 char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 
 static bool _initialized = false;
@@ -158,13 +157,10 @@ void player_init()
         shadow_image = gfx_load_image("src/img/shadow.png", false, true, 32, 32);
         card_image   = gfx_load_image("src/img/card.png", false, false, 200, 100);
 
-
         ptext = text_list_init(5, 0, 0, 0.05, false, TEXT_ALIGN_LEFT, IN_WORLD, false);
 
         _initialized = true;
     }
-
-    uint32_t colors[] = {COLOR_BLUE, COLOR_GREEN, COLOR_RED, COLOR_PURPLE, COLOR_YELLOW, COLOR_ORANGE};
 
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
@@ -175,7 +171,6 @@ void player_init()
         sprintf(p->name, "Player %d", i+1);
 
         player_set_defaults(p);
-        player_colors[i] = colors[i];
 
         p->active = false;
 
@@ -1967,7 +1962,6 @@ void randomize_skill_choices(Player* p)
             if(i != p->num_skill_selection_choices-1) LOGE("Error!");
             break;
         }
-
     }
 }
 
@@ -2078,7 +2072,7 @@ void player_draw(Player* p)
     uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
 
     float y = p->phys.pos.y-(0.5*p->phys.pos.z) - p->phys.width/1.5;
-    gfx_sprite_batch_add(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, color, false, p->scale, 0.0, opacity, false, false, false);
+    gfx_sprite_batch_add(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, p->settings.color, true, p->scale, 0.0, opacity, false, false, false);
 
     if(p == player)
     {

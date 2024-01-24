@@ -369,6 +369,10 @@ bool imgui_load_theme(char* file_name)
                     theme_index = i;
                 return success;
             }
+            else
+            {
+                LOGW("Theme not found: %s\n", file_path);
+            }
         }
     }
 

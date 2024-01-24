@@ -184,7 +184,6 @@ typedef struct
 
 } Player;
 
-extern uint32_t player_colors[MAX_PLAYERS];
 extern char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 extern Player players[MAX_PLAYERS];
 extern Player* player;

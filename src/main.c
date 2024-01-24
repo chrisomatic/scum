@@ -24,7 +24,6 @@
 #include "room_editor.h"
 #include "text_list.h"
 #include "skills.h"
-#include "bitpack.h"
 #include "settings.h"
 
 // =========================
@@ -162,7 +161,6 @@ int main(int argc, char* argv[])
     }
 
     init();
-    bitpack_test();
 
     camera_move(CENTER_X, CENTER_Y, (float)cam_zoom/100.0, true, NULL);
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
@@ -264,6 +262,7 @@ void set_game_state(GameState state)
                 {
                     player = &players[0];
                     player_set_active(player, true);
+                    memcpy(&player->settings, &menu_settings,sizeof(Settings));
                     // player2 = &players[1];
                     // player_set_active(player2, true);
                     // player2_init_keys();
@@ -736,6 +735,9 @@ void init()
     LOGI(" - Skills.");
     skills_init();
 
+    LOGI(" - Settings.");
+    settings_load(DEFAULT_SETTINGS, &menu_settings);
+
     LOGI(" - Player.");
     player = &players[0];
     player_init();
@@ -755,7 +757,7 @@ void init()
     LOGI(" - Explosions.");
     explosion_init();
 
-    //imgui_load_theme("nord_deep.theme");
+    imgui_load_theme("retro.theme");
 
     LOGI(" - Editor.");
     editor_init();
@@ -765,9 +767,6 @@ void init()
 
     LOGI(" - Items.");
     item_init();
-
-    LOGI(" - Settings.");
-    settings_load(DEFAULT_SETTINGS, &menu_settings);
 
     if(role == ROLE_LOCAL)
     {
@@ -896,6 +895,11 @@ bool client_handle_connection()
                     text_list_add(text_lst, COLOR_GREEN, 3.0, "Connected to Server.");
                     int id = net_client_get_id();
                     player = &players[id];
+
+                    // send settings to Server
+                    memcpy(&player->settings, &menu_settings,sizeof(Settings));
+                    net_client_send_settings();
+
                     window_controls_clear_keys();
                     player_init_keys();
                 } break;
@@ -1411,15 +1415,15 @@ void draw_settings()
     gfx_clear_buffer(background_color);
 
     int x = (view_width-200)/2.0;
-    int y = (view_height-200)/2.0;
+    int y = (view_height-200)/2.0 - 100;
 
     imgui_begin_panel("Settings", x, y, false);
         //imgui_set_text_size(menu_item_scale);
         imgui_text_box("Name", menu_settings.name, PLAYER_NAME_MAX);
+        imgui_color_picker("Color", &menu_settings.color);
         int class = (int)menu_settings.class;
         imgui_dropdown(class_strs, PLAYER_CLASS_MAX, "Class", &class, NULL);
         menu_settings.class = class;
-        imgui_color_picker("Color", &menu_settings.color);
         imgui_newline();
         if(imgui_button("Return"))
         {
@@ -1428,6 +1432,10 @@ void draw_settings()
         }
     imgui_end();
 
+    player_set_class(player, menu_settings.class);
+    gfx_draw_image_color_mask(player_image, SPRITE_DOWN + player->anim.curr_frame, (view_width-32)/2.0, (view_height-32)/2.0 + 20, menu_settings.color, 3.0, 0.0, 1.0, false, NOT_IN_WORLD);
+
+    gfx_anim_update(&player->anim, 0.010);
     text_list_draw(text_lst);
 }
 

@@ -26,7 +26,7 @@ void main() {
     if(mask_color0 == uint(1))
     {
         // replace red pixels with color0
-        if(tex_color.r > 0.0 && tex_color.g == 0.0 && tex_color.b == 0.00)
+        if(tex_color.r > tex_color.g && tex_color.r > tex_color.b && tex_color.g == tex_color.b)
         {
             float amount = tex_color.r / 1.0;
             tex_color = vec4(color0.r * amount, color0.g * amount, color0.b * amount, tex_color.a);
