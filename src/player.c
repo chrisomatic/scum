@@ -1441,6 +1441,22 @@ void player_update(Player* p, float dt)
     // check tiles around player
     handle_room_collision(p);
 
+    {
+        float cx = p->phys.pos.x;
+        float cy = p->phys.pos.y;
+        Vector2i coords = level_get_room_coords_by_pos(cx, cy);
+        TileType tt = level_get_tile_type(room, coords.x, coords.y);
+        if(tt == TILE_BOULDER)
+        {
+            TileType tt = level_get_tile_type(room, p->last_safe_tile.x, p->last_safe_tile.y);
+            if(IS_SAFE_TILE(tt))
+            {
+                Vector2f position = level_get_pos_by_room_coords(p->last_safe_tile.x, p->last_safe_tile.y);
+                player_set_collision_pos(p, position.x, position.y);
+            }
+        }
+    }
+
     if(p == player)
     {
         Room* room = level_get_room_by_index(&level, (int)p->curr_room);
