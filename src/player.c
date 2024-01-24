@@ -1702,7 +1702,7 @@ void draw_xp_bar()
     in_r.h = h;
     in_r.x = x + in_r.w/2.0;
     in_r.y = y + in_r.h/2.0;
-    gfx_draw_rect(&in_r, COLOR_RED, NOT_SCALED, NO_ROTATION, 0.6, true, NOT_IN_WORLD);
+    gfx_draw_rect(&in_r, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 0.6, true, NOT_IN_WORLD);
 
     Rect out_r = {0};
     out_r.w = w + 1.0;
@@ -1711,7 +1711,7 @@ void draw_xp_bar()
     out_r.y = y + out_r.h/2.0;
     gfx_draw_rect(&out_r, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
 
-    gfx_draw_string(x, y+h+1, COLOR_WHITE, 0.15*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "Level %d", player->level);
+    gfx_draw_string(x+1, y+h+2, COLOR_WHITE, 0.15*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "Level %d", player->level);
     // gfx_draw_string(x + w + 5.0, y-1.0, COLOR_WHITE, 0.15*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "%d", player->level);
 }
 
