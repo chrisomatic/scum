@@ -263,6 +263,7 @@ void set_game_state(GameState state)
                     player = &players[0];
                     player_set_active(player, true);
                     memcpy(&player->settings, &menu_settings,sizeof(Settings));
+                    player_set_class(player, player->settings.class);
                     // player2 = &players[1];
                     // player_set_active(player2, true);
                     // player2_init_keys();
@@ -898,6 +899,7 @@ bool client_handle_connection()
 
                     // send settings to Server
                     memcpy(&player->settings, &menu_settings,sizeof(Settings));
+                    player_set_class(player, player->settings.class);
                     net_client_send_settings();
 
                     window_controls_clear_keys();

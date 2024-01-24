@@ -64,9 +64,9 @@ void player_set_defaults(Player* p)
     p->phys.base_friction = 15.0;
     p->phys.vel.x = 0.0;
     p->phys.vel.y = 0.0;
-    p->phys.height = gfx_images[player_image].visible_rects[0].h;
-    p->phys.width  = gfx_images[player_image].visible_rects[0].w;
-    p->phys.length = gfx_images[player_image].visible_rects[0].w;
+    p->phys.height = gfx_images[player_image].visible_rects[0].h * 0.80;
+    p->phys.width  = gfx_images[player_image].visible_rects[0].w * 0.80;
+    p->phys.length = gfx_images[player_image].visible_rects[0].w * 0.80;
     p->phys.mass = 1.0;
     p->phys.elasticity = 0.0;
 
