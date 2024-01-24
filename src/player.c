@@ -16,10 +16,8 @@ static float sprite_index_to_angle(Player* p);
 static void handle_room_collision(Player* p);
 static void player_set_sprite_index(Player* p, int sprite_index);
 
-int xp_levels[] = {100,250,500,1000,2000};
+int xp_levels[] = {100,120,140,160,180,200};
 int skill_selection = 0;
-// int skill_choices[MAX_SKILL_CHOICES] = {0};
-// int num_skill_choices = 0;
 
 
 char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
@@ -417,7 +415,9 @@ int get_xp_req(int level)
 void player_add_xp(Player* p, int xp)
 {
     int num = sizeof(xp_levels) / sizeof(xp_levels[0]);
+
     p->xp += xp;
+    LOGI("Added %d xp to player %d, total: %d", xp, p->index, p->xp);
 
     int num_new_levels = 0;
 
@@ -440,6 +440,8 @@ void player_add_xp(Player* p, int xp)
 
     p->level += num_new_levels;
     p->new_levels += num_new_levels;
+
+    LOGI("Level: %u, new: %u", p->level, p->new_levels);
 
     if(p->new_levels > 0)
     {

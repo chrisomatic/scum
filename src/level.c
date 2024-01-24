@@ -186,7 +186,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
     room->color = COLOR_TINT_NONE;//COLOR((lrand() % 159) + 96,(lrand() % 159) + 96,(lrand() % 159) + 96);
     room->index = level_get_room_index(x,y);
 
-    printf("adding room, depth: %d\n",depth);
+    // printf("adding room, depth: %d\n",depth);
 
     switch(came_from)
     {
@@ -205,6 +205,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
         room->layout = 0;
 
         // // TEMP
+        item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, room->index);
         // item_add(ITEM_CHEST, CENTER_X, CENTER_Y, room->index);
         // for(int i = 0; i < 3; ++i) item_add(item_rand(false), CENTER_X, CENTER_Y, room->index);
 // item_add(ITEM_GEM_RED, CENTER_X, CENTER_Y, room->index);

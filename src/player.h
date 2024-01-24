@@ -192,11 +192,7 @@ extern int xp_levels[];
 extern char* class_strs[];
 
 
-// extern int skill_selection;
-// extern int skill_choices[MAX_SKILL_CHOICES];
-// extern int num_skill_choices;
 extern float jump_vel_z;
-
 extern int player_image;
 extern int shadow_image;
 

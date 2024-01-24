@@ -466,7 +466,7 @@ bool room_editor_update(float dt)
     text_list_update(text_lst, dt);
 
     window_get_mouse_view_coords(&mouse_x, &mouse_y);
-    window_get_mouse_world_coords(&mouse_window_x, &mouse_window_x);
+    window_get_mouse_world_coords(&mouse_window_x, &mouse_window_y);
 
     if(window_mouse_left_went_down())
         lmouse_state = true;

@@ -1572,7 +1572,7 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
             }
             else if(key == GLFW_KEY_F3)
             {
-                if(role == ROLE_LOCAL)
+                // if(role == ROLE_LOCAL)
                 {
                     editor_enabled = !editor_enabled;
                 }

@@ -127,44 +127,49 @@ void editor_draw()
             case 1: // level
             {
 
-                if(imgui_button("Generate Random Level"))
-                {
-                    game_generate_level(rand(), level_rank);
-                }
 
-                static char seed_str[32] = {0};
-                imgui_text_box("Input Seed##input seed",seed_str,32);
-                int _seed = atoi(seed_str);
-
-                static int _rank = 1;
-                imgui_number_box("Input Rank", 1, 10, &_rank);
-
-                if(imgui_button("Generate New Level"))
-                {
-                    game_generate_level(_seed, _rank);
-                    _rank = level_rank;
-                }
                 imgui_text("Current Seed: %u", level_seed);
                 imgui_text("Current Rank: %u", level_rank);
 
-                if(imgui_button("Add Item 'New Level'"))
+                if(role == ROLE_LOCAL)
                 {
-                    item_add(ITEM_NEW_LEVEL, player->phys.pos.x, player->phys.pos.y, player->curr_room);
-                }
 
-                if(imgui_button("Add Random Item"))
-                {
-                    item_add(item_rand(true), player->phys.pos.x, player->phys.pos.y, player->curr_room);
-                }
-
-                if(imgui_button("Add All Items"))
-                {
-                    for(int i = 0; i < ITEM_MAX; ++i)
+                    if(imgui_button("Generate Random Level"))
                     {
-                        item_add(i, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+                        game_generate_level(rand(), level_rank);
+                    }
+
+                    static char seed_str[32] = {0};
+                    imgui_text_box("Input Seed##input seed",seed_str,32);
+                    int _seed = atoi(seed_str);
+
+                    static int _rank = 1;
+                    imgui_number_box("Input Rank", 1, 10, &_rank);
+
+                    if(imgui_button("Generate New Level"))
+                    {
+                        game_generate_level(_seed, _rank);
+                        _rank = level_rank;
+                    }
+
+                    if(imgui_button("Add Item 'New Level'"))
+                    {
+                        item_add(ITEM_NEW_LEVEL, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+                    }
+
+                    if(imgui_button("Add Random Item"))
+                    {
+                        item_add(item_rand(true), player->phys.pos.x, player->phys.pos.y, player->curr_room);
+                    }
+
+                    if(imgui_button("Add All Items"))
+                    {
+                        for(int i = 0; i < ITEM_MAX; ++i)
+                        {
+                            item_add(i, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+                        }
                     }
                 }
-
 
                 TileType tt = level_get_tile_type_by_pos(room, mouse_window_x, mouse_window_y);
 
@@ -198,46 +203,35 @@ void editor_draw()
             case 2: // players
             {
 
-                // bool _boost = false;
-                // _boost = boost_stats;
-                // imgui_toggle_button(&_boost, "Boost Stats");
-                // if(_boost != boost_stats)
-                // {
-                //     boost_stats = _boost;
-                //     if(boost_stats)
-                //     {
-                //         player->phys.hp_max += 10;
-                //         player->phys.hp += 10;
-                //     }
-                //     else
-                //     {
-                //         player->phys.hp_max -= 10;
-                //         player->phys.hp -= 10;
-                //     }
-                // }
 
-                imgui_toggle_button(&players_invincible, "Invincibility");
+                Player* p = player;
 
-                imgui_dropdown(player_names, name_count, "Select Player", &player_selection, NULL);
-                Player* p = &players[player_selection];
-
-                if(p != player)
+                if(role == ROLE_LOCAL)
                 {
-                    imgui_toggle_button(&p->active, "Active");
-                }
 
-                int selected_class = p->class;
-                imgui_dropdown(class_strs, 3, "Select Class", &selected_class, NULL);
-                player_set_class(p, (PlayerClass)selected_class);
+                    imgui_toggle_button(&players_invincible, "Invincibility");
+
+                    imgui_dropdown(player_names, name_count, "Select Player", &player_selection, NULL);
+                    Player* p = &players[player_selection];
+
+                    if(p != player)
+                    {
+                        imgui_toggle_button(&p->active, "Active");
+                    }
+
+                    int selected_class = p->class;
+                    imgui_dropdown(class_strs, 3, "Select Class", &selected_class, NULL);
+                    player_set_class(p, (PlayerClass)selected_class);
+
+                    int hp = p->phys.hp;
+                    imgui_number_box("HP", 0, p->phys.hp_max, &hp);
+                    p->phys.hp = (uint8_t)hp;
+
+                    imgui_slider_float("Jump Velocity", 0.0, 1000.0, &jump_vel_z);
+                }
 
                 imgui_text("Level: %d", p->level);
                 imgui_text("XP: %d / %d", p->xp, get_xp_req(p->level));
-
-                int hp = p->phys.hp;
-                imgui_number_box("HP", 0, p->phys.hp_max, &hp);
-                p->phys.hp = (uint8_t)hp;
-
-                imgui_slider_float("Jump Velocity", 0.0, 1000.0, &jump_vel_z);
 
                 imgui_text_sized(big, "Info");
                 imgui_text("Pos: %.2f, %.2f", p->phys.pos.x, p->phys.pos.y);
@@ -252,27 +246,30 @@ void editor_draw()
                 Vector2i tc = level_get_room_coords_by_pos(p->phys.pos.x, p->phys.pos.y);
                 imgui_text("Tile: %d, %d", tc.x, tc.y);
 
-                if(imgui_button("Send To Start"))
+                if(role == ROLE_LOCAL)
                 {
-                    player_send_to_level_start(p);
-                }
+                    if(imgui_button("Send To Start"))
+                    {
+                        player_send_to_level_start(p);
+                    }
 
-                if(imgui_button("Hurt"))
-                {
-                    player_hurt(p, 1);
-                }
+                    if(imgui_button("Hurt"))
+                    {
+                        player_hurt(p, 1);
+                    }
 
-                static int xp = 100;
-                imgui_number_box("XP to Add", 1, 1000, &xp);
+                    static int xp = 100;
+                    imgui_number_box("XP to Add", 1, 1000, &xp);
 
-                if(imgui_button("Add XP"))
-                {
-                    player_add_xp(p, xp);
-                }
+                    if(imgui_button("Add XP"))
+                    {
+                        player_add_xp(p, xp);
+                    }
 
-                if(imgui_button("Clear Status Effects"))
-                {
-                    status_effects_clear(&p->phys);
+                    if(imgui_button("Clear Status Effects"))
+                    {
+                        status_effects_clear(&p->phys);
+                    }
                 }
 
                 imgui_text("Skills: %d", p->skill_count);
@@ -290,70 +287,74 @@ void editor_draw()
                 imgui_text("Total Count: %u", creature_get_count());
                 imgui_text("Room Count: %u", creature_get_room_count(player->curr_room));
 
-                static int num_creatures = 1;
-                imgui_number_box("Spawn", 1, 100, &num_creatures);
-
-                Room* room = level_get_room_by_index(&level, player->curr_room);
-
-                if(imgui_button("Add Slug"))
+                if(role == ROLE_LOCAL)
                 {
-                    for(int i = 0; i < num_creatures; ++i)
-                        creature_add(room, CREATURE_TYPE_SLUG, NULL, NULL);
+                    static int num_creatures = 1;
+                    imgui_number_box("Spawn", 1, 100, &num_creatures);
+
+                    Room* room = level_get_room_by_index(&level, player->curr_room);
+
+                    if(imgui_button("Add Slug"))
+                    {
+                        for(int i = 0; i < num_creatures; ++i)
+                            creature_add(room, CREATURE_TYPE_SLUG, NULL, NULL);
+                    }
+
+                    if(imgui_button("Add Clinger"))
+                    {
+                        for(int i = 0; i < num_creatures; ++i)
+                            creature_add(room, CREATURE_TYPE_CLINGER, NULL, NULL);
+                    }
+
+                    if(imgui_button("Add Geizer"))
+                    {
+                        for(int i = 0; i < num_creatures; ++i)
+                            creature_add(room, CREATURE_TYPE_GEIZER, NULL, NULL);
+                    }
+
+                    if(imgui_button("Add Floater"))
+                    {
+                        for(int i = 0; i < num_creatures; ++i)
+                            creature_add(room, CREATURE_TYPE_FLOATER, NULL, NULL);
+                    }
+
+                    if(imgui_button("Add Shambler"))
+                    {
+                        for(int i = 0; i < num_creatures; ++i)
+                            creature_add(room, CREATURE_TYPE_SHAMBLER, NULL, NULL);
+                    }
+
+                    if(imgui_button("Clear Room"))
+                    {
+                        creature_kill_room(player->curr_room);
+                        // creature_clear_room(player->curr_room);
+                    }
+
+                    if(imgui_button("Clear All"))
+                    {
+                        creature_kill_all();
+                        // creature_clear_all();
+                    }
+
+                    static float creature_speed = -1;
+                    static bool  creature_painful_touch = false;
+
+                    if(creature_speed == -1)
+                    {
+                        creature_speed = creatures[0].phys.speed;
+                        creature_painful_touch = creatures[0].painful_touch;
+                    }
+
+                    imgui_slider_float("Speed",10.0,100.0,&creature_speed);
+                    imgui_toggle_button(&creature_painful_touch, "Painful Touch");
+
+                    for(int i = 0; i < creature_get_count(); ++i)
+                    {
+                        creatures[i].phys.speed = creature_speed;
+                        creatures[i].painful_touch = creature_painful_touch;
+                    }
                 }
 
-                if(imgui_button("Add Clinger"))
-                {
-                    for(int i = 0; i < num_creatures; ++i)
-                        creature_add(room, CREATURE_TYPE_CLINGER, NULL, NULL);
-                }
-
-                if(imgui_button("Add Geizer"))
-                {
-                    for(int i = 0; i < num_creatures; ++i)
-                        creature_add(room, CREATURE_TYPE_GEIZER, NULL, NULL);
-                }
-
-                if(imgui_button("Add Floater"))
-                {
-                    for(int i = 0; i < num_creatures; ++i)
-                        creature_add(room, CREATURE_TYPE_FLOATER, NULL, NULL);
-                }
-
-                if(imgui_button("Add Shambler"))
-                {
-                    for(int i = 0; i < num_creatures; ++i)
-                        creature_add(room, CREATURE_TYPE_SHAMBLER, NULL, NULL);
-                }
-
-                if(imgui_button("Clear Room"))
-                {
-                    creature_kill_room(player->curr_room);
-                    // creature_clear_room(player->curr_room);
-                }
-
-                if(imgui_button("Clear All"))
-                {
-                    creature_kill_all();
-                    // creature_clear_all();
-                }
-
-                static float creature_speed = -1;
-                static bool  creature_painful_touch = false;
-
-                if(creature_speed == -1)
-                {
-                    creature_speed = creatures[0].phys.speed;
-                    creature_painful_touch = creatures[0].painful_touch;
-                }
-
-                imgui_slider_float("Speed",10.0,100.0,&creature_speed);
-                imgui_toggle_button(&creature_painful_touch, "Painful Touch");
-
-                for(int i = 0; i < creature_get_count(); ++i)
-                {
-                    creatures[i].phys.speed = creature_speed;
-                    creatures[i].painful_touch = creature_painful_touch;
-                }
             } break;
 
             case 4: // projectiles
@@ -362,66 +363,71 @@ void editor_draw()
 
                 imgui_slider_float("Player Cooldown", 0.0,1.0,&player->proj_cooldown_max);
 
-                char* proj_def_names[PROJECTILE_TYPE_MAX] = {0};
-                for(int i = 0; i < PROJECTILE_TYPE_MAX; ++i)
+                if(role == ROLE_LOCAL)
                 {
-                    proj_def_names[i] = (char*)projectile_def_get_name(i);
-                }
 
-                static int proj_sel = 0;
-                imgui_dropdown(proj_def_names, PROJECTILE_TYPE_MAX, "Projectile Definition", &proj_sel, NULL);
-
-
-                ProjectileDef* projd = &projectile_lookup[proj_sel];
-                ProjectileSpawn* projs = &projectile_spawn[proj_sel];
-
-                if(proj_sel == PROJECTILE_TYPE_PLAYER)
-                {
-                    projd = &player->proj_def;
-                    projs = &player->proj_spawn;
-                }
-
-                imgui_slider_float("Damage", 0.0,100.0,&projd->damage);
-                imgui_slider_float("Base Speed", 100.0,1000.0,&projd->speed);
-                imgui_slider_float("Acceleration", -50.0,50.0,&projd->accel);
-                imgui_slider_float("TTL", 0.0,60.0,&projd->ttl);
-                imgui_slider_float("Scale", 0.1, 5.0,&projd->scale);
-                imgui_slider_float("Angle Spread", 0.0, 360.0,&projs->spread);
-
-                int num = projs->num;
-                imgui_number_box("Num", 1,100, &num);
-                projs->num = num;
-
-                imgui_text_sized(20.0,"Attributes:");
-                imgui_horizontal_line(1);
-                imgui_checkbox("Explosive", &projd->explosive);
-                imgui_checkbox("Bouncy", &projd->bouncy);
-                imgui_checkbox("Penetrate", &projd->penetrate);
-                imgui_checkbox("Cluster", &projd->cluster);
-
-                if(projd->cluster)
-                {
-                    imgui_number_box("Cluster Stages", 1,3, &projd->cluster_stages);
-
-                    imgui_number_box("Stage 1 Num", 1,10, &projd->cluster_num[0]);
-                    imgui_slider_float("Stage 1 Scale", 0.1, 2.0, &projd->cluster_scales[0]);
-
-                    if(projd->cluster_stages >= 2)
+                    char* proj_def_names[PROJECTILE_TYPE_MAX] = {0};
+                    for(int i = 0; i < PROJECTILE_TYPE_MAX; ++i)
                     {
-                        imgui_number_box("Stage 2 Num", 1,10, &projd->cluster_num[1]);
-                        imgui_slider_float("Stage 2 Scale", 0.1, 2.0, &projd->cluster_scales[1]);
+                        proj_def_names[i] = (char*)projectile_def_get_name(i);
                     }
 
-                    if(projd->cluster_stages >= 3)
+                    static int proj_sel = 0;
+                    imgui_dropdown(proj_def_names, PROJECTILE_TYPE_MAX, "Projectile Definition", &proj_sel, NULL);
+
+
+                    ProjectileDef* projd = &projectile_lookup[proj_sel];
+                    ProjectileSpawn* projs = &projectile_spawn[proj_sel];
+
+                    if(proj_sel == PROJECTILE_TYPE_PLAYER)
                     {
-                        imgui_number_box("Stage 3 Num", 1,10, &projd->cluster_num[2]);
-                        imgui_slider_float("Stage 3 Scale", 0.1, 2.0, &projd->cluster_scales[2]);
+                        projd = &player->proj_def;
+                        projs = &player->proj_spawn;
                     }
+
+                    imgui_slider_float("Damage", 0.0,100.0,&projd->damage);
+                    imgui_slider_float("Base Speed", 100.0,1000.0,&projd->speed);
+                    imgui_slider_float("Acceleration", -50.0,50.0,&projd->accel);
+                    imgui_slider_float("TTL", 0.0,60.0,&projd->ttl);
+                    imgui_slider_float("Scale", 0.1, 5.0,&projd->scale);
+                    imgui_slider_float("Angle Spread", 0.0, 360.0,&projs->spread);
+
+                    int num = projs->num;
+                    imgui_number_box("Num", 1,100, &num);
+                    projs->num = num;
+
+                    imgui_text_sized(20.0,"Attributes:");
+                    imgui_horizontal_line(1);
+                    imgui_checkbox("Explosive", &projd->explosive);
+                    imgui_checkbox("Bouncy", &projd->bouncy);
+                    imgui_checkbox("Penetrate", &projd->penetrate);
+                    imgui_checkbox("Cluster", &projd->cluster);
+
+                    if(projd->cluster)
+                    {
+                        imgui_number_box("Cluster Stages", 1,3, &projd->cluster_stages);
+
+                        imgui_number_box("Stage 1 Num", 1,10, &projd->cluster_num[0]);
+                        imgui_slider_float("Stage 1 Scale", 0.1, 2.0, &projd->cluster_scales[0]);
+
+                        if(projd->cluster_stages >= 2)
+                        {
+                            imgui_number_box("Stage 2 Num", 1,10, &projd->cluster_num[1]);
+                            imgui_slider_float("Stage 2 Scale", 0.1, 2.0, &projd->cluster_scales[1]);
+                        }
+
+                        if(projd->cluster_stages >= 3)
+                        {
+                            imgui_number_box("Stage 3 Num", 1,10, &projd->cluster_num[2]);
+                            imgui_slider_float("Stage 3 Scale", 0.1, 2.0, &projd->cluster_scales[2]);
+                        }
+                    }
+                    imgui_slider_float("Homing Chance", 0.0, 1.0, &projs->homing_chance);
+                    imgui_slider_float("Ghost Chance", 0.0, 1.0, &projs->ghost_chance);
+                    imgui_slider_float("Cold Chance", 0.0, 1.0, &projs->cold_chance);
+                    imgui_slider_float("Poison Chance", 0.0, 1.0,&projs->poison_chance);
                 }
-                imgui_slider_float("Homing Chance", 0.0, 1.0, &projs->homing_chance);
-                imgui_slider_float("Ghost Chance", 0.0, 1.0, &projs->ghost_chance);
-                imgui_slider_float("Cold Chance", 0.0, 1.0, &projs->cold_chance);
-                imgui_slider_float("Poison Chance", 0.0, 1.0,&projs->poison_chance);
+
             } break;
 
             case 5: // particle editor

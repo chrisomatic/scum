@@ -647,9 +647,9 @@ static void server_simulate()
 
             if(room->xp > 0)
             {
-                for(int i = 0; i < MAX_CLIENTS; ++i)
+                for(int j = 0; j < MAX_CLIENTS; ++j)
                 {
-                    Player* p = &players[i];
+                    Player* p = &players[j];
                     if(p->active && p->curr_room == room->index)
                     {
                         player_add_xp(p, room->xp);
@@ -2068,6 +2068,12 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             pack_u8(pkt, p->phys.hp);
             pack_i32(pkt, p->highlighted_item_id);
 
+            pack_u8(pkt, (uint8_t)p->skill_count);
+            for(int j = 0; j < p->skill_count; ++j)
+            {
+                pack_u8(pkt, (uint8_t)p->skills[j]);
+            }
+
             pack_u16(pkt, (uint16_t)p->xp);
             pack_u8(pkt, p->level);
             pack_u8(pkt, p->new_levels);
@@ -2281,6 +2287,11 @@ static void unpack_players(Packet* pkt, int* offset)
         p->phys.hp  = unpack_u8(pkt, offset);
         p->highlighted_item_id = unpack_i32(pkt, offset);
 
+        p->skill_count = (int)unpack_u8(pkt, offset);
+        for(int j = 0; j < p->skill_count; ++j)
+        {
+            p->skills[j] = (int)unpack_u8(pkt, offset);
+        }
 
         int xp = p->xp;
         p->xp = (int)unpack_u16(pkt, offset);
