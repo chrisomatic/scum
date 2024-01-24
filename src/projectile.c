@@ -27,7 +27,7 @@ static uint16_t id_counter = 0;
 ProjectileDef projectile_lookup[] = {
     {
         // player
-        .damage = 2.0,
+        .damage = 200.0,
         .speed = 215.0,
         .accel = 0.0,
         .scale = 1.0,
@@ -249,6 +249,8 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, Projec
                 p.phys.vel.y = v.y * p.def.speed;
             }
         }
+
+        // printf("%s damage: %.2f\n", __func__, p.def.damage);
 
         list_add(plist, (void*)&p);
     }
@@ -482,10 +484,11 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
             switch(e->type)
             {
                 case ENTITY_TYPE_PLAYER:
-                    player_hurt((Player*)e->ptr, proj->def.damage);
+                    player_hurt((Player*)e->ptr, projdef->damage);
                     break;
                 case ENTITY_TYPE_CREATURE:
-                    creature_hurt((Creature*)e->ptr, proj->def.damage);
+                    // printf("%s damage: %.2f\n", __func__, projdef->damage);
+                    creature_hurt((Creature*)e->ptr, projdef->damage);
                     break;
             }
         }

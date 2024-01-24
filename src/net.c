@@ -644,6 +644,20 @@ static void server_simulate()
         room->doors_locked = (creature_get_room_count(the_rooms[i]) != 0);
         if(!room->doors_locked && prior_locked)
         {
+
+            if(room->xp > 0)
+            {
+                for(int i = 0; i < MAX_CLIENTS; ++i)
+                {
+                    Player* p = &players[i];
+                    if(p->active && p->curr_room == room->index)
+                    {
+                        player_add_xp(p, room->xp);
+                    }
+                }
+            }
+            room->xp = 0;
+
             if(room->type == ROOM_TYPE_BOSS)
             {
                 item_add(ITEM_CHEST, CENTER_X, CENTER_Y, the_rooms[i]);
@@ -2023,6 +2037,17 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             pack_u8(pkt, p->phys.hp);
             pack_i32(pkt, p->highlighted_item_id);
 
+            pack_u16(pkt, (uint16_t)p->xp);
+            pack_u8(pkt, p->level);
+            pack_u8(pkt, p->new_levels);
+
+            pack_u8(pkt, p->skill_selection);
+            pack_u8(pkt, p->num_skill_selection_choices);
+            for(int j = 0; j < MAX_SKILL_CHOICES; ++j)
+            {
+                pack_u16(pkt, p->skill_choices[j]);
+            }
+
             pack_u8(pkt, p->gauntlet_selection);
             pack_u8(pkt, p->gauntlet_slots);
             for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
@@ -2223,8 +2248,21 @@ static void unpack_players(Packet* pkt, int* offset)
         p->sprite_index = unpack_u8(pkt, offset);
         uint8_t curr_room  = unpack_u8(pkt, offset);
         p->phys.hp  = unpack_u8(pkt, offset);
-
         p->highlighted_item_id = unpack_i32(pkt, offset);
+
+
+        int xp = p->xp;
+        p->xp = (int)unpack_u16(pkt, offset);
+
+        p->level = unpack_u8(pkt, offset);
+        p->new_levels = unpack_u8(pkt, offset);
+        p->skill_selection = unpack_u8(pkt, offset);
+        p->num_skill_selection_choices = unpack_u8(pkt, offset);
+        for(int j = 0; j < MAX_SKILL_CHOICES; ++j)
+        {
+            p->skill_choices[j] = unpack_u16(pkt, offset);
+        }
+
         p->gauntlet_selection = unpack_u8(pkt, offset);
         p->gauntlet_slots = unpack_u8(pkt, offset);
         for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)

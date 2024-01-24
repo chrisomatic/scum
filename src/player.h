@@ -43,8 +43,16 @@ typedef enum
     PLAYER_ACTION_USE_ITEM,
     PLAYER_ACTION_DROP_ITEM,
 
+    PLAYER_ACTION_ITEM_1,
+    PLAYER_ACTION_ITEM_2,
+    PLAYER_ACTION_ITEM_3,
+    PLAYER_ACTION_ITEM_4,
+    PLAYER_ACTION_ITEM_5,
+    PLAYER_ACTION_ITEM_6,
+    PLAYER_ACTION_ITEM_7,
+    PLAYER_ACTION_ITEM_8,
+
     PLAYER_ACTION_TAB_CYCLE,
-    PLAYER_ACTION_ITEM_CYCLE,
     PLAYER_ACTION_RSHIFT,
 
     PLAYER_ACTION_MAX
@@ -102,15 +110,16 @@ typedef struct
 
     PlayerClass class;
 
-    int xp;
-    int level;
-    int new_levels;
+    uint16_t xp;
+    uint8_t level;
+    uint8_t new_levels;
 
     Settings settings;
     PlayerInput actions[PLAYER_ACTION_MAX];
 
     PlayerActions last_shoot_action;
     float shoot_sprite_cooldown;
+
 
     // Item gauntlet_item;
     uint8_t gauntlet_selection;
@@ -120,9 +129,14 @@ typedef struct
     ItemType timed_items[MAX_TIMED_ITEMS];
     float timed_items_ttl[MAX_TIMED_ITEMS];
 
-    int skills[PLAYER_MAX_SKILLS];
-    int skill_count;
-    int num_skill_choices;
+    uint16_t skills[PLAYER_MAX_SKILLS];
+    uint8_t skill_count;
+    uint8_t num_skill_choices;
+
+    uint8_t skill_selection;
+    uint8_t num_skill_selection_choices;
+    uint16_t skill_choices[MAX_SKILL_CHOICES];
+
 
     ProjectileDef proj_def;
     ProjectileSpawn proj_spawn;
@@ -179,9 +193,9 @@ extern int xp_levels[];
 extern char* class_strs[];
 
 
-extern int skill_selection;
-extern int skill_choices[MAX_SKILL_CHOICES];
-extern int num_skill_choices;
+// extern int skill_selection;
+// extern int skill_choices[MAX_SKILL_CHOICES];
+// extern int num_skill_choices;
 extern float jump_vel_z;
 
 extern int player_image;

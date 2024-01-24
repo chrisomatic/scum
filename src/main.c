@@ -119,7 +119,7 @@ const char* menu_options[] = {
     "Host Local Server",
     "Join Local Server",
     "Settings",
-    "Help",
+    // "Help",
     "Exit"
 };
 
@@ -647,7 +647,7 @@ void game_generate_level(unsigned int _seed, int _rank)
         {
             Room* room = &level.rooms[x][y];
 
-            if(room == NULL) printf("Room is NULL %d,%d\n", x, y);
+            if(room == NULL) LOGE("Room is NULL %d,%d", x, y);
             uint16_t c = creature_get_room_count(room->index);
             ccount2 += c;
             if(c > 0)
@@ -985,10 +985,10 @@ void update_main_menu(float dt)
         {
             set_game_state(GAME_STATE_SETTINGS);
         }
-        else if(STR_EQUAL(s, "Help"))
-        {
-            text_list_add(text_lst, COLOR_RED, 2.0, "'%s' not supported", s);
-        }
+        // else if(STR_EQUAL(s, "Help"))
+        // {
+        //     text_list_add(text_lst, COLOR_RED, 2.0, "'%s' not supported", s);
+        // }
         else if(STR_EQUAL(s, "Exit"))
         {
             window_set_close(1);
@@ -1461,7 +1461,7 @@ void draw()
     else
     {
         Room* room = level_get_room_by_index(&level,player->curr_room);
-        if(!room) printf("room is null\n");
+        if(!room) LOGW("room is null");
         level_draw_room(room, NULL, 0, 0);
 
         // Vector2i c = level_get_room_coords(player->curr_room);

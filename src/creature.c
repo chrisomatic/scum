@@ -716,12 +716,13 @@ void creature_die(Creature* c)
     Room* room = level_get_room_by_index(&level, c->curr_room);
     if(room == NULL)
     {
-        LOGE("room is null");
-        printf("%u\n", c->curr_room);
+        LOGE("room is null %u", c->curr_room);
         return;
     }
 
+    // printf("room xp %d -> ", room->xp);
     room->xp += c->xp;
+    // printf("%d\n", room->xp);
 
     Decal d = {0};
     d.image = particles_image;
@@ -742,12 +743,24 @@ void creature_hurt(Creature* c, float damage)
     if(c->invincible)
         return;
 
-    c->phys.hp -= damage;
+    float hp = (float)c->phys.hp;
+
+    hp -= damage;
+
+    if(hp <= 0)
+    {
+        c->phys.hp = 0;
+    }
+    else
+    {
+        c->phys.hp = (int8_t)hp;
+    }
+
 
     c->damaged = true;
     c->damaged_time = 0.0;
 
-    if(c->phys.hp <= 0.0)
+    if(c->phys.hp <= 0)
     {
         creature_die(c);
     }
