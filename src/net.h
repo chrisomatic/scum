@@ -108,6 +108,7 @@ typedef enum
     EVENT_TYPE_NONE = 0,
     EVENT_TYPE_MESSAGE,
     EVENT_TYPE_PARTICLES,
+    EVENT_TYPE_NEW_LEVEL,
 } NetEventType;
 
 typedef struct

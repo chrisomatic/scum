@@ -5,6 +5,7 @@
 #include "gfx.h"
 #include "core/text_list.h"
 #include "log.h"
+#include "net.h"
 
 #include "player.h"
 #include "item.h"
@@ -72,6 +73,12 @@ static void item_func_new_level(Item* pu, Player* p)
 
     int seed = time(0)+rand()%1000;
     game_generate_level(seed, level_rank+1);
+
+    if(role == ROLE_SERVER)
+    {
+        NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
+        net_server_add_event(&ev);
+    }
 }
 
 // called when player consumes the item

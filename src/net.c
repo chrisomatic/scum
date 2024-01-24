@@ -2698,6 +2698,12 @@ static void pack_events(Packet* pkt, ClientInfo* cli)
                 pack_u8(pkt, ev->data.particles.room_index);
             } break;
 
+            case EVENT_TYPE_NEW_LEVEL:
+            {
+                pack_u32(pkt,level_seed);
+                pack_u8(pkt,level_rank);
+            }
+
             default:
                 break;
         }
@@ -2749,6 +2755,15 @@ static void unpack_events(Packet* pkt, int* offset)
 
 
             } break;
+
+            case EVENT_TYPE_NEW_LEVEL:
+            {
+                level_seed = unpack_u32(pkt,offset);
+                level_rank = unpack_u8(pkt,offset);
+
+                level = level_generate(level_seed,level_rank);
+            }
+
             default:
                 break;
         }
