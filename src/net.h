@@ -126,6 +126,7 @@ typedef struct
     uint32_t color2;
     uint32_t color3;
     float lifetime;
+    uint8_t room_index;
 } NetEventParticles;
 
 typedef struct

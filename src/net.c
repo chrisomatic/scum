@@ -2664,6 +2664,7 @@ static void pack_events(Packet* pkt, ClientInfo* cli)
                 pack_u32(pkt, ev->data.particles.color2);
                 pack_u32(pkt, ev->data.particles.color3);
                 pack_float(pkt, ev->data.particles.lifetime);
+                pack_u8(pkt, ev->data.particles.room_index);
             } break;
 
             default:
@@ -2694,6 +2695,13 @@ static void unpack_events(Packet* pkt, int* offset)
                 uint32_t color2  = unpack_u32(pkt, offset);
                 uint32_t color3  = unpack_u32(pkt, offset);
                 float lifetime  = unpack_float(pkt, offset);
+                uint8_t room_index  = unpack_u8(pkt, offset);
+
+                if(room_index != player->curr_room)
+                {
+                    // printf("%u != %u\n", room_index, player->curr_room);
+                    continue;
+                }
 
                 ParticleEffect effect = {0};
                 memcpy(&effect, &particle_effects[effect_index], sizeof(ParticleEffect));
@@ -2706,7 +2714,8 @@ static void unpack_events(Packet* pkt, int* offset)
                 effect.color3 = color3;
 
                 ParticleSpawner* ps = particles_spawn_effect(pos.x, pos.y, 0.0, &effect, lifetime, true, false);
-                ps->userdata = (int)player->curr_room;
+                ps->userdata = (int)room_index;
+
 
             } break;
             default:
