@@ -10,9 +10,8 @@
 #include "physics.h"
 #include "player.h"
 
-
 int dungeon_image = -1;
-
+float level_grace_time = 0.0;
 
 static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth);
 
@@ -800,6 +799,12 @@ void level_init()
 
     room_file_load_all(false);
     printf("Done with room files\n");
+}
+
+void level_update(float dt)
+{
+    level_grace_time -= dt;
+    level_grace_time = MAX(0.0, level_grace_time);
 }
 
 void level_print(Level* level)

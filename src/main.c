@@ -1037,9 +1037,13 @@ void update(float dt)
 
     text_list_update(text_lst, dt);
 
+    if(game_state == GAME_STATE_SETTINGS)
+        return;
+
     if(game_state == GAME_STATE_MENU)
     {
         update_main_menu(dt);
+        return;
     }
 
     message_small_update(dt);
@@ -1052,6 +1056,7 @@ void update(float dt)
     if(!paused)
     {
         lighting_point_light_clear_all();
+        level_update(dt);
         player_update_all(dt);
         projectile_update_all(dt);
         creature_update_all(dt);
@@ -1435,6 +1440,7 @@ void draw_settings()
     imgui_end();
 
     player_set_class(player, menu_settings.class);
+
     gfx_draw_image_color_mask(player_image, SPRITE_DOWN + player->anim.curr_frame, (view_width-32)/2.0, (view_height-32)/2.0 + 20, menu_settings.color, 3.0, 0.0, 1.0, false, NOT_IN_WORLD);
 
     gfx_anim_update(&player->anim, 0.010);

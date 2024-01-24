@@ -24,6 +24,8 @@
 
 #define MAX_ROOM_LIST_COUNT 128
 
+#define ROOM_GRACE_TIME 1.0
+
 #define ROOM_W  TILE_SIZE*(ROOM_TILE_SIZE_X+2)
 #define ROOM_H  TILE_SIZE*(ROOM_TILE_SIZE_Y+2)
 
@@ -136,8 +138,10 @@ typedef struct
 } Level;
 
 extern int dungeon_image;
+extern float level_grace_time;
 
 void level_init();
+void level_update(float dt);
 void level_load_rooms();
 
 // void level_generate(Level* level, unsigned int seed, int rank);

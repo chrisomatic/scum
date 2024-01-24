@@ -27,6 +27,9 @@ void ai_init_action(Creature* c)
 
 bool ai_update_action(Creature* c, float dt)
 {
+    if(level_grace_time > 0.0)
+        return false;
+
     c->action_counter += dt;
 
     if(c->action_counter >= c->action_counter_max)

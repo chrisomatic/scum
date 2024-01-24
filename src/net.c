@@ -677,6 +677,7 @@ static void server_simulate()
         }
     }
 
+    level_update(dt);
     projectile_update_all(dt);
     creature_update_all(dt);
     item_update_all(dt);
@@ -685,6 +686,7 @@ static void server_simulate()
 
     entity_build_all();
     entity_handle_collisions();
+    entity_handle_status_effects(dt);
 }
 
 int net_server_start()

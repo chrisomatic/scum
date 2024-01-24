@@ -828,6 +828,7 @@ static void handle_room_collision(Player* p)
                 p->phys.vel.y = 0;
                 p->door = i;
                 player_start_room_transition(p);
+                level_grace_time = ROOM_GRACE_TIME;
             }
             break;
         }
@@ -2071,7 +2072,8 @@ void player_draw(Player* p)
     float opacity = p->phys.dead ? 0.3 : 1.0;
 
     opacity = blink ? 0.3 : opacity;
-    uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
+
+    //uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
 
     float y = p->phys.pos.y-(0.5*p->phys.pos.z) - p->phys.width/1.5;
     gfx_sprite_batch_add(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, p->settings.color, true, p->scale, 0.0, opacity, false, false, false);
