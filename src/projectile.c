@@ -19,8 +19,6 @@ Projectile prior_projectiles[MAX_PROJECTILES];
 glist* plist = NULL;
 
 static int projectile_image;
-static uint16_t id_counter = 0;
-
 
 // .color = 0x003030FF,
 
@@ -161,17 +159,18 @@ ProjectileSpawn projectile_spawn[] = {
     },
 };
 
-static void projectile_remove(int index)
-{
-    list_remove(plist, index);
-}
-
+static uint16_t id_counter = 1;
 static uint16_t get_id()
 {
     if(id_counter >= 65535)
         id_counter = 0;
 
     return id_counter++;
+}
+
+static void projectile_remove(int index)
+{
+    list_remove(plist, index);
 }
 
 void projectile_init()
@@ -261,24 +260,31 @@ void projectile_kill(Projectile* proj)
 {
     proj->phys.dead = true;
 
+    const float scale_particle_thresh = 0.2;
+
     ParticleEffect splash = {0};
     memcpy(&splash, &particle_effects[EFFECT_SPLASH], sizeof(ParticleEffect));
 
     if(role == ROLE_SERVER)
     {
-        NetEvent ev = {
-            .type = EVENT_TYPE_PARTICLES,
-            .data.particles.effect_index = EFFECT_SPLASH,
-            .data.particles.pos = { proj->phys.pos.x, proj->phys.pos.y },
-            .data.particles.scale = proj->def.scale,
-            .data.particles.color1 = proj->from_player ? 0x006484BA : 0x00CC5050,
-            .data.particles.color2 = proj->from_player ? 0x001F87DC : 0x00FF8080,
-            .data.particles.color3 = proj->from_player ? 0x00112837 : 0x00550000,
-            .data.particles.lifetime = 0.5,
-            .data.particles.room_index = proj->curr_room,
-        };
 
-        net_server_add_event(&ev);
+        if(proj->def.scale > scale_particle_thresh)
+        {
+            NetEvent ev = {
+                .type = EVENT_TYPE_PARTICLES,
+                .data.particles.effect_index = EFFECT_SPLASH,
+                .data.particles.pos = { proj->phys.pos.x, proj->phys.pos.y },
+                .data.particles.scale = proj->def.scale,
+                .data.particles.color1 = proj->from_player ? 0x006484BA : 0x00CC5050,
+                .data.particles.color2 = proj->from_player ? 0x001F87DC : 0x00FF8080,
+                .data.particles.color3 = proj->from_player ? 0x00112837 : 0x00550000,
+                .data.particles.lifetime = 0.5,
+                .data.particles.room_index = proj->curr_room,
+            };
+
+            net_server_add_event(&ev);
+        }
+
     }
     else
     {
@@ -290,12 +296,12 @@ void projectile_kill(Projectile* proj)
             splash.color3 = 0x00550000;
         }
 
-        if(proj->def.scale > 0.25)
+        if(proj->def.scale > 0.20)
         {
             splash.scale.init_min *= proj->def.scale;
             splash.scale.init_max *= proj->def.scale;
             ParticleSpawner* ps = particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &splash, 0.5, true, false);
-            ps->userdata = (int)proj->curr_room;
+            if(ps != NULL) ps->userdata = (int)proj->curr_room;
         }
 
         if(proj->def.explosive)

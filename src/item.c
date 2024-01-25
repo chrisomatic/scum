@@ -19,7 +19,7 @@ ItemProps item_props[ITEM_MAX] = {0};
 int items_image = -1;
 int chest_image = -1;
 
-static uint16_t id_counter = 0;
+static uint16_t id_counter = 1;
 static uint16_t get_id()
 {
     if(id_counter >= 65535)

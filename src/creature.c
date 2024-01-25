@@ -36,8 +36,7 @@ static void creature_update_totem_blue(Creature* c, float dt);
 static void creature_update_shambler(Creature* c, float dt);
 static void creature_update_spiked_slug(Creature* c, float dt);
 
-static uint16_t id_counter = 0;
-
+static uint16_t id_counter = 1;
 static uint16_t get_id()
 {
     if(id_counter >= 65535)

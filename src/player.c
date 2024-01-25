@@ -520,7 +520,7 @@ void player_die(Player* p)
         if(!p2->phys.dead) return;
     }
 
-    // all are dead
+    // if all are dead
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         Player* p2 = &players[i];
@@ -981,6 +981,7 @@ void player_update(Player* p, float dt)
                 }
                 else
                 {
+                    LOGI("Using item type: %d", type);
                     if(item_props[type].func) item_props[type].func(pu, p);
                     if(pu->picked_up)
                         item_remove(pu);

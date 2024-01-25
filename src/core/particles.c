@@ -106,16 +106,27 @@ void print_particle_effect(ParticleEffect* e)
 }
 
 
-void delete_spawner(int index)
+void delete_spawner_index(int index)
 {
     list_delete(spawners[index].particle_list);
     list_remove(spawner_list, index);
 }
 
+void particles_delete_spawner(int id)
+{
+    for(int i = 0; i < spawner_list->count; ++i)
+    {
+        if(spawners[i].id == id)
+        {
+            list_delete(spawners[i].particle_list);
+            list_remove(spawner_list, i);
+        }
+    }
+}
+
 void particles_show_spawner(int id, bool show)
 {
     ParticleSpawner* spawner = get_spawner_by_id(id);
-
     if(spawner)
     {
         spawner->hidden = !show;
@@ -264,7 +275,7 @@ void particles_update(double delta_t)
 
             if(spawner->dead && list_is_empty(spawner->particle_list))
             {
-                delete_spawner(i);
+                delete_spawner_index(i);
             }
         }
 

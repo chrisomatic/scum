@@ -204,16 +204,21 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
         room->layout = 0;
 
         // // TEMP
-        item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, room->index);
-        // item_add(ITEM_CHEST, CENTER_X, CENTER_Y, room->index);
-        // for(int i = 0; i < 3; ++i) item_add(item_rand(false), CENTER_X, CENTER_Y, room->index);
-// item_add(ITEM_GEM_RED, CENTER_X, CENTER_Y, room->index);
-// item_add(ITEM_GEM_RED+1, CENTER_X, CENTER_Y, room->index);
-// item_add(ITEM_GEM_RED+2, CENTER_X, CENTER_Y, room->index);
-        // for(int i = 0; i < ITEM_MAX; ++i)
-        // {
-        //     item_add(i, CENTER_X, CENTER_Y, room->index);
-        // }
+        if(role != ROLE_CLIENT)
+        {
+
+            item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, room->index);
+
+            // item_add(ITEM_CHEST, CENTER_X, CENTER_Y, room->index);
+            // for(int i = 0; i < 3; ++i) item_add(item_rand(false), CENTER_X, CENTER_Y, room->index);
+        // item_add(ITEM_GEM_RED, CENTER_X, CENTER_Y, room->index);
+        // item_add(ITEM_GEM_RED+1, CENTER_X, CENTER_Y, room->index);
+        // item_add(ITEM_GEM_RED+2, CENTER_X, CENTER_Y, room->index);
+            // for(int i = 0; i < ITEM_MAX; ++i)
+            // {
+            //     item_add(i, CENTER_X, CENTER_Y, room->index);
+            // }
+        }
 
         goto exit_conditions;
     }
@@ -228,12 +233,17 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
         level->has_boss_room = true;
 
         // add monsters
-        RoomFileData* rfd = &room_list[room->layout];
-        for(int i = 0; i < rfd->creature_count; ++i)
+        if(role != ROLE_CLIENT)
         {
-            Vector2i g = {rfd->creature_locations_x[i], rfd->creature_locations_y[i]};
-            g.x--; g.y--; // @convert room objects to tile grid coordinates
-            Creature* c = creature_add(room, rfd->creature_types[i], &g, NULL);
+
+            RoomFileData* rfd = &room_list[room->layout];
+            for(int i = 0; i < rfd->creature_count; ++i)
+            {
+                Vector2i g = {rfd->creature_locations_x[i], rfd->creature_locations_y[i]};
+                g.x--; g.y--; // @convert room objects to tile grid coordinates
+                Creature* c = creature_add(room, rfd->creature_types[i], &g, NULL);
+            }
+
         }
 
         goto exit_conditions;
@@ -258,13 +268,19 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
         room->layout = get_rand_room_index(ROOM_TYPE_MONSTER, came_from);
         room->color = COLOR(200,100,100);
 
+
         // add monsters
-        RoomFileData* rfd = &room_list[room->layout];
-        for(int i = 0; i < rfd->creature_count; ++i)
+        if(role != ROLE_CLIENT)
         {
-            Vector2i g = {rfd->creature_locations_x[i], rfd->creature_locations_y[i]};
-            g.x--; g.y--; // @convert room objects to tile grid coordinates
-            Creature* c = creature_add(room, rfd->creature_types[i], &g, NULL);
+
+            RoomFileData* rfd = &room_list[room->layout];
+            for(int i = 0; i < rfd->creature_count; ++i)
+            {
+                Vector2i g = {rfd->creature_locations_x[i], rfd->creature_locations_y[i]};
+                g.x--; g.y--; // @convert room objects to tile grid coordinates
+                Creature* c = creature_add(room, rfd->creature_types[i], &g, NULL);
+            }
+        
         }
     }
     else
@@ -279,12 +295,17 @@ exit_conditions:
 
     RoomFileData* rfd = &room_list[room->layout];
 
-    for(int i = 0; i < rfd->item_count; ++i)
+    if(role != ROLE_CLIENT)
     {
-        Vector2f pos = level_get_pos_by_room_coords(rfd->item_locations_x[i]-1, rfd->item_locations_y[i]-1); // @convert room objects to tile grid coordinates
 
-        // printf("Adding item of type: %s to (%f %f)\n", item_get_name(rfd->item_types[i]), pos.x, pos.y);
-        item_add(rfd->item_types[i], pos.x, pos.y, room->index);
+        for(int i = 0; i < rfd->item_count; ++i)
+        {
+            Vector2f pos = level_get_pos_by_room_coords(rfd->item_locations_x[i]-1, rfd->item_locations_y[i]-1); // @convert room objects to tile grid coordinates
+
+            // printf("Adding item of type: %s to (%f %f)\n", item_get_name(rfd->item_types[i]), pos.x, pos.y);
+            item_add(rfd->item_types[i], pos.x, pos.y, room->index);
+        }
+
     }
 
     if(level->num_rooms >= MAX_ROOMS)

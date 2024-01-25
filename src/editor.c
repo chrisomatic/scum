@@ -64,6 +64,12 @@ void editor_init()
 
 void editor_draw()
 {
+    if(!editor_enabled)
+    {
+        if(particle_spawner != NULL) particle_spawner->hidden = true;
+        return;
+    }
+
     int name_count = player_names_build(false, false);
 
     static Rect gui_size = {0};

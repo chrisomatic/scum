@@ -1519,11 +1519,7 @@ void draw()
     }
 
     draw_bigmap();
-
-    if(editor_enabled)
-    {
-        editor_draw();
-    }
+    editor_draw();
 
     text_list_draw(text_lst);
     message_small_draw();
