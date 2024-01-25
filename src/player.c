@@ -326,6 +326,11 @@ void player_send_to_room(Player* p, uint8_t room_index)
     p->transition_room = p->curr_room;
 
     Room* room = level_get_room_by_index(&level, room_index);
+    if(!room)
+    {
+        LOGE("room is null");
+        return;
+    }
 
     Vector2f pos = {0};
     level_get_center_floor_tile(room, NULL, &pos);
@@ -335,8 +340,11 @@ void player_send_to_room(Player* p, uint8_t room_index)
 
 void player_send_to_level_start(Player* p)
 {
+    DEBUG();
     uint8_t idx = level_get_room_index(level.start.x, level.start.y);
+    DEBUG();
     player_send_to_room(p, idx);
+    DEBUG();
 }
 
 void player_init_keys()
@@ -983,6 +991,12 @@ void player_update(Player* p, float dt)
                 {
                     LOGI("Using item type: %d", type);
                     if(item_props[type].func) item_props[type].func(pu, p);
+
+                    if(type == ITEM_NEW_LEVEL)
+                    {
+                        return;
+                    }
+
                     if(pu->picked_up)
                         item_remove(pu);
                 }
