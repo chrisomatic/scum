@@ -686,6 +686,8 @@ static void server_send(PacketType type, ClientInfo* cli)
 
         case PACKET_TYPE_STATE:
         {
+            bitpack_clear(&server.bp);
+
             //pack_players_bitpacked(&pkt, cli);
             pack_players(&pkt, cli);
             pack_creatures(&pkt, cli);
@@ -861,7 +863,7 @@ int net_server_start()
     server.info.socket = sock;
 
     // used for packing data
-    bitpack_create(&server.bp, 100);
+    bitpack_create(&server.bp, 1024);
 
     LOGN("Server Started with tick rate %f.", TICK_RATE);
 
@@ -1307,7 +1309,7 @@ bool net_client_init()
     client.id = -1;
     client.info.socket = sock;
     circbuf_create(&client.input_packets,10, sizeof(Packet));
-    bitpack_create(&client.bp, 100);
+    bitpack_create(&client.bp, 1024);
 
     return true;
 }
@@ -1634,6 +1636,11 @@ void net_client_update()
                 case PACKET_TYPE_STATE:
                 {
                     //print_packet(&srvpkt, true);
+
+                    bitpack_clear(&client.bp);
+                    bitpack_memcpy(&client.bp, &srvpkt.data[offset], srvpkt.data_len-1);
+                    bitpack_seek_begin(&client.bp);
+                    bitpack_print(&client.bp);
 
                     //unpack_players_bitpacked(&srvpkt, &offset);
                     unpack_players(&srvpkt, &offset);
@@ -2137,19 +2144,20 @@ void test_packing()
 
 static void pack_players_bitpacked(Packet* pkt, ClientInfo* cli)
 {
-    int index = pkt->data_len;
-    pkt->data_len += 1;
-
     uint8_t player_count = 0;
+    for(int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        if(server.clients[i].state == CONNECTED)
+            player_count++;
+    }
 
-    bitpack_clear(&server.bp);
+    bitpack_write(&server.bp, 4,  (uint32_t)player_count);
 
     for(int i = 0; i < MAX_CLIENTS; ++i)
     {
         if(server.clients[i].state == CONNECTED)
         {
             Player* p = &players[i];
-            player_count++;
 
             // LOGN("Packing player %d (%d)", i, server.clients[i].client_id);
 
@@ -2157,7 +2165,7 @@ static void pack_players_bitpacked(Packet* pkt, ClientInfo* cli)
             bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.x);
             bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.y);
             bitpack_write(&server.bp, 6,  (uint32_t)p->phys.pos.z);
-            bitpack_write(&server.bp, 4,  (uint32_t)p->sprite_index+p->anim.curr_frame);
+            bitpack_write(&server.bp, 5,  (uint32_t)p->sprite_index+p->anim.curr_frame);
             bitpack_write(&server.bp, 7,  (uint32_t)p->curr_room);
             bitpack_write(&server.bp, 4,  (uint32_t)p->phys.hp);
             bitpack_write(&server.bp, 16, (uint32_t)(p->highlighted_item_id+1));
@@ -2176,7 +2184,8 @@ static void pack_players_bitpacked(Packet* pkt, ClientInfo* cli)
             bitpack_seek_begin(&server.bp);
             bitpack_print(&server.bp);
 
-            int num_bytes = ceil(server.bp.bits_written / 8.0);
+            int num_bytes = server.bp.words_written*4;
+            printf("bytes written: %d\n", num_bytes);
             pack_bytes(pkt, (uint8_t*)server.bp.data, num_bytes);
 
             // check
@@ -2207,8 +2216,6 @@ static void pack_players_bitpacked(Packet* pkt, ClientInfo* cli)
             //getchar(); // pause
         }
     }
-
-    pack_u8_at(pkt, player_count, index);
 }
 
 static void pack_players(Packet* pkt, ClientInfo* cli)
@@ -2281,7 +2288,7 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
 
 static void unpack_players_bitpacked(Packet* pkt, int* offset)
 {
-    uint8_t player_count = unpack_u8(pkt, offset);
+    uint8_t player_count = (uint8_t)bitpack_read(&client.bp, 4);
     client.player_count = player_count;
 
     bool prior_active[MAX_CLIENTS] = {0};
@@ -2291,20 +2298,13 @@ static void unpack_players_bitpacked(Packet* pkt, int* offset)
         players[i].active = false;
     }
 
-    bitpack_clear(&client.bp);
-    bitpack_memcpy(&client.bp, &pkt->data[*offset], pkt->data_len);
-    bitpack_seek_begin(&client.bp);
-    bitpack_print(&client.bp);
-
     for(int i = 0; i < player_count; ++i)
     {
-        *offset += 16;
-
         uint32_t id                  = bitpack_read(&client.bp, 3);
         uint32_t x                   = bitpack_read(&client.bp, 10);
         uint32_t y                   = bitpack_read(&client.bp, 10);
         uint32_t z                   = bitpack_read(&client.bp, 6);
-        uint32_t sprite_index        = bitpack_read(&client.bp, 4);
+        uint32_t sprite_index        = bitpack_read(&client.bp, 5);
         uint32_t c_room              = bitpack_read(&client.bp, 7);
         uint32_t hp                  = bitpack_read(&client.bp, 4);
         uint32_t highlighted_item_id = bitpack_read(&client.bp, 16);
@@ -2409,8 +2409,12 @@ static void unpack_players_bitpacked(Packet* pkt, int* offset)
             memcpy(&p->server_state_prior, &p->server_state_target, sizeof(p->server_state_target));
         }
 
-        player_print(p);
+        //player_print(p);
     }
+
+    int bytes_read = 4*(client.bp.word_index+1);
+    printf("bytes_read: %d\n", bytes_read);
+    *offset += bytes_read;
 }
 
 static void unpack_players(Packet* pkt, int* offset)
