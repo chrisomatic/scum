@@ -63,14 +63,14 @@ static void sort_entities()
     }
 }
 
+//TODO: fix up shadow
 static void draw_entity_shadow(Physics* phys)
 {
     float scale = (phys->collision_rect.w/32.0);
     float opacity = RANGE(0.5*(1.0 - (phys->pos.z / 128.0)),0.1,0.5);
 
     float shadow_x = phys->pos.x;
-    float shadow_y = phys->pos.y;//+gfx_images[shadow_image].visible_rects[0].h/2.0;
-
+    float shadow_y = phys->pos.y+gfx_images[shadow_image].visible_rects[0].h/2.0;
     //TileType shadow_tt = level_get_tile_type_by_pos(room, shadow_x, shadow_y);
     bool draw_shadow = !phys->falling; //&& (shadow_tt != TILE_PIT && shadow_tt != TILE_BOULDER);
 
@@ -196,6 +196,13 @@ void entity_handle_collisions()
     for(int i = 0; i < num_entities; ++i)
     {
         phys_calc_collision_rect(entities[i].phys);
+    }
+
+    // special check for players first
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        bool check = player_check_other_player_collision(&players[i]);
+        if(!check) players[i].ignore_player_collision = false;
     }
 
     // handle entity collisions with other entities

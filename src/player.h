@@ -98,10 +98,10 @@ typedef struct
 typedef struct
 {
     bool active;
-
     int index;
-
     char name[PLAYER_NAME_MAX+1];
+
+    bool ignore_player_collision;
 
     Physics phys;
     float vel_factor;
@@ -202,7 +202,7 @@ void player_drop_item(Player* p, Item* it);
 bool player_gauntlet_full(Player* p);
 void player_init_keys();
 void player2_init_keys();
-void player_send_to_room(Player* p, uint8_t room_index);
+void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i tile);
 void player_send_to_level_start(Player* p);
 void player_update_all(float dt);
 void player_update(Player* p, float dt);
@@ -225,6 +225,7 @@ void player_print(Player* p);
 
 void player_set_active(Player* p, bool active);
 int player_get_active_count();
+bool player_check_other_player_collision(Player* p);
 void player_handle_collision(Player* p, Entity* e);
 bool is_any_player_room(uint8_t curr_room);
 int player_get_count_in_room(uint8_t curr_room);

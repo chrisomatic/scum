@@ -63,8 +63,8 @@ void player_set_defaults(Player* p)
     p->phys.vel.x = 0.0;
     p->phys.vel.y = 0.0;
     p->phys.height = gfx_images[player_image].visible_rects[0].h * 0.80;
-    p->phys.width  = gfx_images[player_image].visible_rects[0].w * 0.80;
-    p->phys.length = gfx_images[player_image].visible_rects[0].w * 0.80;
+    p->phys.width  = gfx_images[player_image].visible_rects[0].w * 0.70;
+    p->phys.length = gfx_images[player_image].visible_rects[0].w * 0.70;
     p->phys.mass = 1.0;
     p->phys.elasticity = 0.0;
 
@@ -319,11 +319,13 @@ int player_names_build(bool include_all, bool only_active)
     return count;
 }
 
-
-void player_send_to_room(Player* p, uint8_t room_index)
+void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i tile)
 {
     p->curr_room = room_index;
-    p->transition_room = p->curr_room;
+    if(instant)
+    {
+        p->transition_room = p->curr_room;
+    }
 
     Room* room = level_get_room_by_index(&level, room_index);
     if(!room)
@@ -332,18 +334,44 @@ void player_send_to_room(Player* p, uint8_t room_index)
         return;
     }
 
+
     Vector2f pos = {0};
-    level_get_center_floor_tile(room, NULL, &pos);
+    level_get_safe_floor_tile(room, tile, NULL, &pos);
+
+    // Vector2f pos = level_get_pos_by_room_coords(tile.x, tile.y);
+
+    // Vector2f pos = {0};
+    // level_get_center_floor_tile(room, NULL, &pos);
+
     p->phys.pos.x = pos.x;
     p->phys.pos.y = pos.y;
+    // p->phys.pos.z = 0;
+
+    p->ignore_player_collision = true;
 }
+
+// void player_send_to_room(Player* p, uint8_t room_index)
+// {
+//     p->curr_room = room_index;
+//     p->transition_room = p->curr_room;
+//     Room* room = level_get_room_by_index(&level, room_index);
+//     if(!room)
+//     {
+//         LOGE("room is null");
+//         return;
+//     }
+//     Vector2f pos = {0};
+//     level_get_center_floor_tile(room, NULL, &pos);
+//     p->phys.pos.x = pos.x;
+//     p->phys.pos.y = pos.y;
+// }
 
 void player_send_to_level_start(Player* p)
 {
     DEBUG();
     uint8_t idx = level_get_room_index(level.start.x, level.start.y);
     DEBUG();
-    player_send_to_room(p, idx);
+    player_send_to_room(p, idx, true, level_get_door_tile_coords(DIR_NONE));
     DEBUG();
 }
 
@@ -661,50 +689,84 @@ void player_start_room_transition(Player* p)
     {
         p->transition_room = p->curr_room;
 
+        Vector2i o = get_dir_offsets(p->door);
+        uint8_t room_index = level_get_room_index(roomxy.x + o.x, roomxy.y + o.y);
+
+        Dir other_door = DIR_NONE;
+        uint8_t sprite_index = 0;
+
+        // player_send_to_room(p, room_index, false, level_get_door_tile_coords(DIR_DOWN));
+
         switch(p->door)
         {
             case DIR_UP:
-                p->curr_room = (uint8_t)level_get_room_index(roomxy.x, roomxy.y-1);
-                player_set_collision_pos(p, p->phys.pos.x, y1);
-                player_set_sprite_index(p, SPRITE_UP);
+                // p->curr_room = (uint8_t)level_get_room_index(roomxy.x, roomxy.y-1);
+                // player_set_collision_pos(p, p->phys.pos.x, y1);
+                // player_send_to_room(p, level_get_room_index(roomxy.x, roomxy.y-1), false, level_get_door_tile_coords(DIR_DOWN));
+                // player_set_sprite_index(p, SPRITE_UP);
+                other_door = DIR_DOWN;
+                sprite_index = SPRITE_UP;
                 break;
 
             case DIR_RIGHT:
-                p->curr_room = (uint8_t)level_get_room_index(roomxy.x+1, roomxy.y);
-                player_set_collision_pos(p, x1, p->phys.pos.y);
-                player_set_sprite_index(p, SPRITE_RIGHT);
+                // p->curr_room = (uint8_t)level_get_room_index(roomxy.x+1, roomxy.y);
+                // player_set_collision_pos(p, x1, p->phys.pos.y);
+                // player_set_sprite_index(p, SPRITE_RIGHT);
+                other_door = DIR_LEFT;
+                sprite_index = SPRITE_RIGHT;
                 break;
 
             case DIR_DOWN:
-                p->curr_room = (uint8_t)level_get_room_index(roomxy.x, roomxy.y+1);
-                player_set_collision_pos(p, p->phys.pos.x, y1);
-                player_set_sprite_index(p, SPRITE_DOWN);
+                // p->curr_room = (uint8_t)level_get_room_index(roomxy.x, roomxy.y+1);
+                // player_set_collision_pos(p, p->phys.pos.x, y1);
+                // player_set_sprite_index(p, SPRITE_DOWN);
+                other_door = DIR_UP;
+                sprite_index = SPRITE_DOWN;
                 break;
 
             case DIR_LEFT:
-                p->curr_room = (uint8_t)level_get_room_index(roomxy.x-1, roomxy.y);
-                player_set_collision_pos(p, x1, p->phys.pos.y);
-                player_set_sprite_index(p, SPRITE_LEFT);
+                // p->curr_room = (uint8_t)level_get_room_index(roomxy.x-1, roomxy.y);
+                // player_set_collision_pos(p, x1, p->phys.pos.y);
+                // player_set_sprite_index(p, SPRITE_LEFT);
+                other_door = DIR_RIGHT;
+                sprite_index = SPRITE_LEFT;
                 break;
 
             default:
                 break;
         }
 
+
         for(int i = 0; i < MAX_PLAYERS; ++i)
         {
             Player* p2 = &players[i];
-            if(p == p2) continue;
             if(!p2->active) continue;
-            if(p2->curr_room == p->curr_room) continue;
-            if(p->transition_room != p2->curr_room) continue;
+            if(p2->curr_room == room_index) continue;   // if they're already in the room
+            player_send_to_room(p2, room_index, false, level_get_door_tile_coords(other_door));
+            player_set_sprite_index(p2, sprite_index);
+            // if(p->transition_room != p2->curr_room) continue;
 
-            p2->curr_room = p->curr_room;
-            p2->phys.pos.x = p->phys.pos.x;
-            p2->phys.pos.y = p->phys.pos.y;
-            player_set_sprite_index(p2, p->sprite_index);
-            p2->door = p->door;
+            // p2->curr_room = p->curr_room;
+            // p2->phys.pos.x = p->phys.pos.x;
+            // p2->phys.pos.y = p->phys.pos.y;
+            // player_set_sprite_index(p2, p->sprite_index);
+            // p2->door = p->door;
         }
+
+        // for(int i = 0; i < MAX_PLAYERS; ++i)
+        // {
+        //     Player* p2 = &players[i];
+        //     if(p == p2) continue;
+        //     if(!p2->active) continue;
+        //     if(p2->curr_room == p->curr_room) continue;
+        //     if(p->transition_room != p2->curr_room) continue;
+
+        //     p2->curr_room = p->curr_room;
+        //     p2->phys.pos.x = p->phys.pos.x;
+        //     p2->phys.pos.y = p->phys.pos.y;
+        //     player_set_sprite_index(p2, p->sprite_index);
+        //     p2->door = p->door;
+        // }
 
         // printf("start room transition: %d -> %d\n", p->transition_room, p->curr_room);
     }
@@ -1227,7 +1289,6 @@ void player_update(Player* p, float dt)
             p->scale = 1.0;
             p->phys.falling = false;
 
-
             TileType tt = level_get_tile_type(room, p->last_safe_tile.x, p->last_safe_tile.y);
             if(IS_SAFE_TILE(tt))
             {
@@ -1236,7 +1297,8 @@ void player_update(Player* p, float dt)
             }
             else
             {
-                player_send_to_room(p, p->curr_room);
+                LOGW("Sending to center!");
+                player_send_to_room(p, p->curr_room, true, level_get_door_tile_coords(DIR_NONE));
                 // player_send_to_level_start(p);
             }
 
@@ -1632,9 +1694,13 @@ void draw_hearts_other_player(Player* p)
     x -= (num+rem)*l/2.0;
     x -= (num+rem-1)*pad/2.0;
 
+    float name_x = x;
+    float name_y = y + l;
+
     // draw image from center
     x += l/2.0;
     y += l/2.0;
+
 
     float opacity = 0.5;
 
@@ -1649,6 +1715,8 @@ void draw_hearts_other_player(Player* p)
         gfx_sprite_batch_add(image_half, si_half, x, y, COLOR_TINT_NONE, false, scale, 0.0, opacity, false, false, false);
         x += (l+pad);
     }
+
+    gfx_draw_string(name_x, name_y, COLOR_WHITE, 0.06*ascale, NO_ROTATION, 0.7, IN_WORLD, DROP_SHADOW, 0, "%s", p->settings.name);
 }
 
 
@@ -1714,7 +1782,7 @@ void draw_hearts()
         x += (l+pad);
     }
 
-    draw_hearts_other_player(player);
+    // draw_hearts_other_player(player);
 
 }
 
@@ -2192,6 +2260,29 @@ void player_handle_net_inputs(Player* p, double dt)
     }
 }
 
+bool player_check_other_player_collision(Player* p)
+{
+    if(p->phys.dead)
+        return false;
+    if(!p->active)
+        return false;
+
+    CollisionInfo ci = {0};
+    bool check = false;
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        Player* p2 = &players[i];
+        if(p == p2) continue;
+        if(!p2->active) continue;
+        if(p2->phys.dead) continue;
+
+        check = phys_collision_circles(&p->phys,&p2->phys, &ci);
+        if(check) break;
+    }
+
+    return check;
+}
+
 void player_handle_collision(Player* p, Entity* e)
 {
     if(p->phys.dead)
@@ -2220,13 +2311,16 @@ void player_handle_collision(Player* p, Entity* e)
         {
             Player* p2 = (Player*)e->ptr;
 
-            CollisionInfo ci = {0};
-            bool collided = phys_collision_circles(&p->phys,&p2->phys, &ci);
+            if(p->ignore_player_collision || p2->ignore_player_collision) return;
 
+            CollisionInfo ci = {0};
+
+            bool collided = phys_collision_circles(&p->phys,&p2->phys, &ci);
             if(collided)
             {
                 phys_collision_correct(&p->phys, &p2->phys,&ci);
             }
+
         } break;
 
         case ENTITY_TYPE_ITEM:

@@ -256,16 +256,23 @@ static void print_address(Address* addr)
     LOGN("[ADDR] %u.%u.%u.%u:%u",addr->a,addr->b,addr->c,addr->d,addr->port);
 }
 
-static bool compare_address(Address* addr1, Address* addr2)
+static bool compare_address(Address* addr1, Address* addr2, bool incl_port)
 {
-    // if both are local ip address then compare port as well
-    if(is_local_address(addr1) && is_local_address(addr2))
+    // // if both are local ip address then compare port as well
+    // if(is_local_address(addr1) && is_local_address(addr2))
+    // {
+    //     return (memcmp(addr1, addr2, sizeof(Address)) == 0);
+    // }
+
+    if(incl_port)
     {
         return (memcmp(addr1, addr2, sizeof(Address)) == 0);
     }
 
+
     return (addr1->a == addr2->a && addr1->b == addr2->b && addr1->c == addr2->c && addr1->d == addr2->d);
 }
+
 
 static void print_packet(Packet* pkt, bool full)
 {
@@ -428,15 +435,11 @@ static int server_get_client(Address* addr, ClientInfo** cli)
 {
     for(int i = 0; i < MAX_CLIENTS; ++i)
     {
-#if COOL_SERVER_PLAYER_LOGIC
-        // if(memcmp(&server.clients[i].address, addr, sizeof(Address)) == 0)
-        if(compare_address(&server.clients[i].address, addr) && server.clients[i].state != DISCONNECTED)
-        // if(memcmp(&server.clients[i].address, addr, sizeof(Address)) == 0 && server.clients[i].state != DISCONNECTED)
-#else
-        // if(memcmp(&server.clients[i].address, addr, sizeof(Address)) == 0)
-#endif
+        bool addr_check = compare_address(&server.clients[i].address, addr, true);
+        bool conn = server.clients[i].state != DISCONNECTED;
+
+        if(addr_check && conn)
         {
-            // found existing client, exit
             *cli = &server.clients[i];
             return i;
         }
@@ -448,7 +451,7 @@ static int server_get_client(Address* addr, ClientInfo** cli)
 // 0: unable to assign new client
 // 1: assigned new client
 // 2: assigned new client and assigned them to their previous spot
-static int server_assign_new_client(Address* addr, ClientInfo** cli)
+static int server_assign_new_client(Address* addr, ClientInfo** cli, char* name)
 {
     LOGN("server_assign_new_client()");
     print_address(addr);
@@ -468,38 +471,26 @@ static int server_assign_new_client(Address* addr, ClientInfo** cli)
         return 0;
     }
 
-
-// test code for same player joining -> leaving -> rejoining
-#define TEST2 0
-
-#if TEST2
-
-    int start = 0;
-    if(cnt > 0) start = 1;
-    for(int i = start; i < MAX_CLIENTS; ++i)
-#else
     for(int i = 0; i < MAX_CLIENTS; ++i)
-#endif
     {
         // print_address(&server.clients[i].address);
 
-#if TEST2
-        if(!is_empty_address(&server.clients[i].address))
-#else
-        if(compare_address(&server.clients[i].address, addr))
-#endif
+        bool addr_check = compare_address(&server.clients[i].address, addr, false);
+        bool name_check = memcmp(name, players[i].settings.name, PLAYER_NAME_MAX*sizeof(char)) == 0;
+
+        if(addr_check && name_check)
         {
             if(server.clients[i].state == DISCONNECTED)
             {
 
                 *cli = &server.clients[i];
                 (*cli)->client_id = i;
-                LOGN("Found client entry with same address (not connected) id: %d", (*cli)->client_id);
+                LOGN("Found client entry with same name and address (not connected) id: %d", (*cli)->client_id);
                 return 2;
             }
             else
             {
-                LOGN("Client already connected with this address");
+                LOGN("Client already connected with this name and address");
                 return 0;
             }
         }
@@ -904,67 +895,77 @@ int net_server_start()
 
             ClientInfo* cli = NULL;
 
-            int client_id = server_get_client(&from, &cli);
-
-            if(client_id == -1) // net client
+            if(recv_pkt.hdr.type == PACKET_TYPE_CONNECT_REQUEST)
             {
-                // printf("new client\n");
-                if(recv_pkt.hdr.type == PACKET_TYPE_CONNECT_REQUEST)
+
+                if(recv_pkt.data_len != 1024)
                 {
-                    if(recv_pkt.data_len != 1024)
-                    {
-                        LOGN("Packet length doesn't equal %d",1024);
-                        remove_client(cli);
-                        break;
-                    }
-
-                    int ret = server_assign_new_client(&from, &cli);
-                    if(ret > 0)
-                    {
-                        cli->state = SENDING_CONNECTION_REQUEST;
-                        memcpy(&cli->address,&from,sizeof(Address));
-                        update_server_num_clients();
-
-                        LOGN("Welcome New Client! (%d/%d)", server.num_clients, MAX_CLIENTS);
-                        print_address(&cli->address);
-
-                        if(ret == 1)
-                        {
-                            player_reset(&players[cli->client_id]);
-                        }
-
-                        for(int i = 0; i < MAX_CLIENTS; ++i)
-                        {
-                            if(i == cli->client_id) continue;
-                            if(players[i].active)
-                            {
-                                if(ret == 1 || players[cli->client_id].curr_room != players[i].curr_room)
-                                {
-                                    player_send_to_room(&players[cli->client_id], players[i].curr_room);
-                                }
-                                break;
-                            }
-                        }
-
-                        // store salt
-                        unpack_bytes(&recv_pkt, cli->client_salt, 8, &offset);
-                        server_send(PACKET_TYPE_CONNECT_CHALLENGE, cli);
-                    }
-                    else
-                    {
-                        LOGNV("Creating temporary client");
-                        // create a temporary ClientInfo so we can send a reject packet back
-                        ClientInfo tmp_cli = {0};
-                        memcpy(&tmp_cli.address,&from,sizeof(Address));
-
-                        tmp_cli.last_reject_reason = CONNECT_REJECT_REASON_SERVER_FULL;
-                        server_send(PACKET_TYPE_CONNECT_REJECTED, &tmp_cli);
-                        break;
-                    }
+                    LOGN("Packet length doesn't equal %d",1024);
+                    // remove_client(cli);
+                    break;
                 }
+
+                uint8_t salt[8] = {0};
+                unpack_bytes(&recv_pkt, salt, 8, &offset);
+
+                char name[PLAYER_NAME_MAX+1] = {0};
+                uint8_t namelen = unpack_string(&recv_pkt, name, PLAYER_NAME_MAX, &offset);
+                if(namelen == 0) printf("namelen is 0!\n");
+
+                int ret = server_assign_new_client(&from, &cli, name);
+
+                if(ret > 0)
+                {
+                    cli->state = SENDING_CONNECTION_REQUEST;
+                    memcpy(&cli->address,&from,sizeof(Address));
+                    update_server_num_clients();
+
+                    LOGN("Welcome New Client! (%d/%d)", server.num_clients, MAX_CLIENTS);
+                    print_address(&cli->address);
+
+                    if(ret == 1)
+                    {
+                        player_reset(&players[cli->client_id]);
+                    }
+
+                    for(int i = 0; i < MAX_CLIENTS; ++i)
+                    {
+                        if(i == cli->client_id) continue;
+                        if(players[i].active)
+                        {
+                            if(ret == 1 || players[cli->client_id].curr_room != players[i].curr_room)
+                            {
+                                Vector2i tile = level_get_room_coords_by_pos(players[i].phys.pos.x, players[i].phys.pos.y);
+                                player_send_to_room(&players[cli->client_id], players[i].curr_room, true, tile);
+                            }
+                            break;
+                        }
+                    }
+
+                    // store salt
+                    memcpy(cli->client_salt, salt, 8);
+                    // unpack_bytes(&recv_pkt, cli->client_salt, 8, &offset);
+                    server_send(PACKET_TYPE_CONNECT_CHALLENGE, cli);
+                }
+                else
+                {
+                    LOGNV("Creating temporary client");
+                    // create a temporary ClientInfo so we can send a reject packet back
+                    ClientInfo tmp_cli = {0};
+                    memcpy(&tmp_cli.address,&from,sizeof(Address));
+
+                    tmp_cli.last_reject_reason = CONNECT_REJECT_REASON_SERVER_FULL;
+                    server_send(PACKET_TYPE_CONNECT_REJECTED, &tmp_cli);
+                    break;
+                }
+
             }
             else
             {
+
+               int client_id = server_get_client(&from, &cli);
+               if(client_id == -1) break;
+
                 // existing client
                 bool auth = authenticate_client(&recv_pkt,cli);
                 offset = 8;
@@ -1353,6 +1354,8 @@ static void client_send(PacketType type)
             memcpy(client.client_salt, (uint8_t*)&salt,8);
 
             pack_bytes(&pkt, (uint8_t*)client.client_salt, 8);
+            // pack_string(&pkt, (uint8_t*)client.client_salt, 8);
+            pack_string(&pkt, player->settings.name, PLAYER_NAME_MAX);
             pkt.data_len = 1024; // pad to 1024
 
             net_send(&client.info,&server.address,&pkt);
@@ -1640,7 +1643,7 @@ void net_client_update()
                     bitpack_clear(&client.bp);
                     bitpack_memcpy(&client.bp, &srvpkt.data[offset], srvpkt.data_len-1);
                     bitpack_seek_begin(&client.bp);
-                    bitpack_print(&client.bp);
+                    // bitpack_print(&client.bp);
 
                     //unpack_players_bitpacked(&srvpkt, &offset);
                     unpack_players(&srvpkt, &offset);
@@ -2407,6 +2410,7 @@ static void unpack_players_bitpacked(Packet* pkt, int* offset)
         {
             printf("first state packet for %d\n", client_id);
             memcpy(&p->server_state_prior, &p->server_state_target, sizeof(p->server_state_target));
+            p->transition_room = p->curr_room;
         }
 
         //player_print(p);

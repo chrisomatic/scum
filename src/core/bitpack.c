@@ -105,7 +105,7 @@ void bitpack_memcpy(BitPack* bp, uint8_t* data, int len)
     bp->bit_index = 0;
     bp->bits_written = len * 8;
 
-    printf("len: %d, words written: %d, bits written: %d\n", len, bp->words_written, bp->bits_written);
+    // printf("len: %d, words written: %d, bits written: %d\n", len, bp->words_written, bp->bits_written);
 }
 
 void bitpack_write(BitPack* bp, int num_bits, uint32_t value)

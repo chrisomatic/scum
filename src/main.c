@@ -118,9 +118,10 @@ const char* menu_options[] = {
     "Host Local Server",
     "Join Local Server",
     "Settings",
-    // "Help",
     "Exit"
 };
+
+char arg_name[PLAYER_NAME_MAX+1];
 
 // =========================
 // Function Prototypes
@@ -258,16 +259,12 @@ void set_game_state(GameState state)
                 editor_enabled = false;
                 paused = false;
                 ambient_light = ambient_light_default;
-                if(role == ROLE_LOCAL)
-                {
-                    player = &players[0];
-                    player_set_active(player, true);
-                    memcpy(&player->settings, &menu_settings,sizeof(Settings));
-                    player_set_class(player, player->settings.class);
-                    // player2 = &players[1];
-                    // player_set_active(player2, true);
-                    // player2_init_keys();
-                }
+                player = &players[0];
+                player_set_active(player, true);
+                player_set_active(&players[1], true);
+
+                memcpy(&player->settings, &menu_settings,sizeof(Settings));
+                player_set_class(player, player->settings.class);
                 player_init_keys();
             } break;
         }
@@ -738,6 +735,10 @@ void init()
 
     LOGI(" - Settings.");
     settings_load(DEFAULT_SETTINGS, &menu_settings);
+    if(strlen(arg_name) > 0)
+    {
+        memcpy(menu_settings.name, arg_name, PLAYER_NAME_MAX);
+    }
 
     LOGI(" - Player.");
     player = &players[0];
@@ -827,6 +828,7 @@ void parse_args(int argc, char* argv[])
     // --local
     // --server
     // --client <ip-addr>
+    // --name <name>
 
     role = ROLE_LOCAL;
 
@@ -852,6 +854,16 @@ void parse_args(int argc, char* argv[])
                 else if(strncmp(argv[i]+2,"client",6) == 0)
                 {
                     role = ROLE_CLIENT;
+                }
+
+                // name
+                else if(strncmp(argv[i]+2,"name",6) == 0)
+                {
+                    if(argc > i+1)
+                    {
+                        memcpy(arg_name, argv[i+1], MIN(strlen(argv[i+1]), PLAYER_NAME_MAX));
+                        i++;
+                    }
                 }
             }
             else
@@ -886,6 +898,7 @@ bool client_handle_connection()
                     text_list_add(text_lst, COLOR_RED, 3.0, "Disconnected from Server.");
                     break;
                 case SENDING_CONNECTION_REQUEST:
+                    memcpy(&player->settings, &menu_settings, sizeof(Settings));
                     text_list_add(text_lst, COLOR_WHITE, 3.0, "Sending Connection Request.");
                     break;
                 case SENDING_CHALLENGE_RESPONSE:
@@ -898,7 +911,7 @@ bool client_handle_connection()
                     player = &players[id];
 
                     // send settings to Server
-                    memcpy(&player->settings, &menu_settings,sizeof(Settings));
+                    memcpy(&player->settings, &menu_settings, sizeof(Settings));
                     player_set_class(player, player->settings.class);
                     net_client_send_settings();
 
@@ -991,10 +1004,6 @@ void update_main_menu(float dt)
         {
             set_game_state(GAME_STATE_SETTINGS);
         }
-        // else if(STR_EQUAL(s, "Help"))
-        // {
-        //     text_list_add(text_lst, COLOR_RED, 2.0, "'%s' not supported", s);
-        // }
         else if(STR_EQUAL(s, "Exit"))
         {
             window_set_close(1);
@@ -1245,7 +1254,8 @@ void draw_map(DrawLevelParams* params)
                 {
                     // printf("room->index: %u\n", room->index);
                     // printf("player->curr_room: %u\n", player->curr_room);
-                    player_send_to_room(player, room->index);
+                    player_send_to_room(player, room->index, true, level_get_door_tile_coords(DIR_NONE));
+
                 }
             }
 

@@ -928,6 +928,41 @@ void level_get_center_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* ti
     }
 }
 
+void level_get_safe_floor_tile(Room* room, Vector2i start, Vector2i* tile_coords, Vector2f* tile_pos)
+{
+    for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
+    {
+        int _x = start.x;
+        _x += ((x % 2 == 0) ? -1 : 1) * x/2;
+        if(_x < 0 || _x >= ROOM_TILE_SIZE_X) continue;
+
+        for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
+        {
+            int _y = start.y;
+            _y += ((y % 2 == 0) ? -1 : 1) * y/2;
+            if( _y < 0 || _y >= ROOM_TILE_SIZE_Y) continue;
+
+            // TODO: item_is_on_tile and creature_is_on_tile only do simple collision checks
+            if(IS_SAFE_TILE(level_get_tile_type(room, _x, _y)) && !item_is_on_tile(room, _x, _y) && !creature_is_on_tile(room, _x, _y))
+            {
+                if(tile_coords)
+                {
+                    tile_coords->x = _x;
+                    tile_coords->y = _y;
+                }
+                if(tile_pos)
+                {
+                    Rect rp = level_get_tile_rect(_x, _y);
+                    tile_pos->x = rp.x;
+                    tile_pos->y = rp.y;
+                    // printf("setting tile_pos: %.2f, %.2f (%d, %d)\n", tile_pos->x, tile_pos->y, _x, _y);
+                }
+                return;
+            }
+        }
+    }
+}
+
 
 void level_get_rand_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile_pos)
 {
@@ -951,6 +986,37 @@ void level_get_rand_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile
             return;
         }
     }
+}
+
+Vector2i level_get_door_tile_coords(Dir dir)
+{
+    Vector2i c = {0};
+    if(dir == DIR_NONE)
+    {
+        c.x = ROOM_TILE_SIZE_X/2;
+        c.y = ROOM_TILE_SIZE_Y/2;
+    }
+    else if(dir == DIR_LEFT)
+    {
+        c.x = 0;
+        c.y = ROOM_TILE_SIZE_Y/2;
+    }
+    else if(dir == DIR_RIGHT)
+    {
+        c.x = ROOM_TILE_SIZE_X-1;
+        c.y = ROOM_TILE_SIZE_Y/2;
+    }
+    else if(dir == DIR_UP)
+    {
+        c.x = ROOM_TILE_SIZE_X/2;
+        c.y = 0;
+    }
+    else if(dir == DIR_DOWN)
+    {
+        c.x = ROOM_TILE_SIZE_X/2;
+        c.y = ROOM_TILE_SIZE_Y-1;
+    }
+    return c;
 }
 
 void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float yoffset)

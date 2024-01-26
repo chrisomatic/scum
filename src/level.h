@@ -26,6 +26,7 @@
 
 #define ROOM_GRACE_TIME 1.0
 
+// +2 for walls
 #define ROOM_W  TILE_SIZE*(ROOM_TILE_SIZE_X+2)
 #define ROOM_H  TILE_SIZE*(ROOM_TILE_SIZE_Y+2)
 
@@ -154,6 +155,11 @@ TileType level_get_tile_type(Room* room, int x, int y);
 TileType level_get_tile_type_by_pos(Room* room, float x, float y);
 void level_get_center_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile_pos);
 void level_get_rand_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile_pos);
+
+void level_get_safe_floor_tile(Room* room, Vector2i start, Vector2i* tile_coords, Vector2f* tile_pos);
+
+// Note: DIR_NONE is center tile
+Vector2i level_get_door_tile_coords(Dir dir);
 
 void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float yoffset);
 void room_draw_walls(Room* room);
