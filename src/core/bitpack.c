@@ -104,8 +104,6 @@ void bitpack_memcpy(BitPack* bp, uint8_t* data, int len)
     bp->word_index = bp->words_written;
     bp->bit_index = 0;
     bp->bits_written = len * 8;
-
-    // printf("len: %d, words written: %d, bits written: %d\n", len, bp->words_written, bp->bits_written);
 }
 
 void bitpack_write(BitPack* bp, int num_bits, uint32_t value)
@@ -115,6 +113,13 @@ void bitpack_write(BitPack* bp, int num_bits, uint32_t value)
 
     if(num_bits < 0 || num_bits > 32)
         return;
+
+    uint64_t max = ((uint64_t)1 << (num_bits));
+
+    if(value >= max)
+    {
+        printf("value needs more bits! (value: %u, max: %ld (%d bits)\n", value, max, num_bits);
+    }
 
     value &= ((uint64_t)1 << num_bits) -1;
 
@@ -179,10 +184,11 @@ uint32_t bitpack_read(BitPack* bp, int num_bits)
         uint32_t bit = 0x1 & ((word >> (31 - bp->bit_index)));
         val |= (bit << (num_bits - i - 1));
 
-        bp->bit_index ++;
+        bp->bit_index++;
         if(bp->bit_index >= 32)
         {
             bp->word_index++;
+            word = bp->data[bp->word_index];
             bp->bit_index -= 32;
         }
     }
@@ -210,7 +216,7 @@ void bitpack_test()
     // 10000000 00001001 10111111 11100101
 
     bitpack_flush(&bp);
-    bitpack_print(&bp);
+    //bitpack_print(&bp);
     bitpack_seek_begin(&bp);
 
     uint32_t v1 = bitpack_read(&bp,12);

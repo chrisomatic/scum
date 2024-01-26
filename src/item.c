@@ -542,6 +542,7 @@ void item_update(Item* pu, float dt)
     if(pu->type == ITEM_NEW_LEVEL)
     {
         pu->angle += 80.0 * dt;
+        pu->angle = fmod(pu->angle,360.0f);
     }
 
     pu->highlighted = false;

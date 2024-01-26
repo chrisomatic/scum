@@ -24,6 +24,7 @@
 #include "settings.h"
 
 #define COOL_SERVER_PLAYER_LOGIC 1
+#define BITPACK 0
 
 //#define SERVER_PRINT_SIMPLE 1
 //#define SERVER_PRINT_VERBOSE 1
@@ -44,7 +45,7 @@
 #define PING_PERIOD 3.0f
 #define DISCONNECTION_TIMEOUT 7.0f // seconds
 #define INPUT_QUEUE_MAX 16
-#define MAX_NET_EVENTS 256
+#define MAX_NET_EVENTS 255
 
 typedef struct
 {
@@ -153,9 +154,7 @@ static inline Vector3f unpack_vec3(Packet* pkt, int* offset);
 static inline ItemType unpack_itemtype(Packet* pkt, int* offset);
 
 static void pack_players(Packet* pkt, ClientInfo* cli);
-static void pack_players_bitpacked(Packet* pkt, ClientInfo* cli); // temp
 static void unpack_players(Packet* pkt, int* offset);
-static void unpack_players_bitpacked(Packet* pkt, int* offset);
 static void pack_creatures(Packet* pkt, ClientInfo* cli);
 static void unpack_creatures(Packet* pkt, int* offset);
 static void pack_projectiles(Packet* pkt, ClientInfo* cli);
@@ -168,6 +167,21 @@ static void pack_other(Packet* pkt, ClientInfo* cli);
 static void unpack_other(Packet* pkt, int* offset);
 static void pack_events(Packet* pkt, ClientInfo* cli);
 static void unpack_events(Packet* pkt, int* offset);
+
+static void pack_players_bp(Packet* pkt, ClientInfo* cli); // temp
+static void unpack_players_bp(Packet* pkt, int* offset);
+static void pack_creatures_bp(Packet* pkt, ClientInfo* cli);
+static void unpack_creatures_bp(Packet* pkt, int* offset);
+static void pack_projectiles_bp(Packet* pkt, ClientInfo* cli);
+static void unpack_projectiles_bp(Packet* pkt, int* offset);
+static void pack_items_bp(Packet* pkt, ClientInfo* cli);
+static void unpack_items_bp(Packet* pkt, int* offset);
+static void pack_decals_bp(Packet* pkt, ClientInfo* cli);
+static void unpack_decals_bp(Packet* pkt, int* offset);
+static void pack_other_bp(Packet* pkt, ClientInfo* cli);
+static void unpack_other_bp(Packet* pkt, int* offset);
+static void pack_events_bp(Packet* pkt, ClientInfo* cli);
+static void unpack_events_bp(Packet* pkt, int* offset);
 
 static uint64_t rand64(void)
 {
@@ -677,9 +691,26 @@ static void server_send(PacketType type, ClientInfo* cli)
 
         case PACKET_TYPE_STATE:
         {
+
+#if BITPACK
             bitpack_clear(&server.bp);
 
-            //pack_players_bitpacked(&pkt, cli);
+            pack_players_bp(&pkt, cli);
+            pack_creatures_bp(&pkt, cli);
+            pack_projectiles_bp(&pkt, cli);
+            pack_items_bp(&pkt,cli);
+            pack_decals_bp(&pkt, cli);
+            pack_events_bp(&pkt,cli);
+            pack_other_bp(&pkt, cli);
+
+            bitpack_flush(&server.bp);
+            bitpack_seek_begin(&server.bp);
+            //bitpack_print(&server.bp);
+
+            int num_bytes = server.bp.words_written*4;
+            //printf("bytes written: %d\n", num_bytes);
+            pack_bytes(&pkt, (uint8_t*)server.bp.data, num_bytes);
+#else
             pack_players(&pkt, cli);
             pack_creatures(&pkt, cli);
             pack_projectiles(&pkt, cli);
@@ -687,6 +718,7 @@ static void server_send(PacketType type, ClientInfo* cli)
             pack_decals(&pkt, cli);
             pack_other(&pkt, cli);
             pack_events(&pkt,cli);
+#endif
 
             //print_packet(&pkt, true);
 
@@ -853,8 +885,9 @@ int net_server_start()
     socket_bind(sock, NULL, PORT);
     server.info.socket = sock;
 
-    // used for packing data
+#if BITPACK
     bitpack_create(&server.bp, 1024);
+#endif
 
     LOGN("Server Started with tick rate %f.", TICK_RATE);
 
@@ -897,7 +930,6 @@ int net_server_start()
 
             if(recv_pkt.hdr.type == PACKET_TYPE_CONNECT_REQUEST)
             {
-
                 if(recv_pkt.data_len != 1024)
                 {
                     LOGN("Packet length doesn't equal %d",1024);
@@ -1310,7 +1342,10 @@ bool net_client_init()
     client.id = -1;
     client.info.socket = sock;
     circbuf_create(&client.input_packets,10, sizeof(Packet));
+
+#if BITPACK
     bitpack_create(&client.bp, 1024);
+#endif
 
     return true;
 }
@@ -1640,12 +1675,25 @@ void net_client_update()
                 {
                     //print_packet(&srvpkt, true);
 
+#if BITPACK
                     bitpack_clear(&client.bp);
-                    bitpack_memcpy(&client.bp, &srvpkt.data[offset], srvpkt.data_len-1);
+                    bitpack_memcpy(&client.bp, &srvpkt.data[offset], srvpkt.data_len);
                     bitpack_seek_begin(&client.bp);
-                    // bitpack_print(&client.bp);
+                    //bitpack_print(&client.bp);
 
-                    //unpack_players_bitpacked(&srvpkt, &offset);
+                    unpack_players_bp(&srvpkt, &offset);
+                    unpack_creatures_bp(&srvpkt, &offset);
+                    unpack_projectiles_bp(&srvpkt, &offset);
+                    unpack_items_bp(&srvpkt,&offset);
+                    unpack_decals_bp(&srvpkt, &offset);
+                    unpack_events_bp(&srvpkt,&offset);
+                    unpack_other_bp(&srvpkt,&offset);
+
+                    int bytes_read = 4*(client.bp.word_index+1);
+                    //printf("bytes_read: %d\n", bytes_read);
+                    offset += bytes_read;
+#else
+
                     unpack_players(&srvpkt, &offset);
                     unpack_creatures(&srvpkt, &offset);
                     unpack_projectiles(&srvpkt, &offset);
@@ -1653,6 +1701,7 @@ void net_client_update()
                     unpack_decals(&srvpkt, &offset);
                     unpack_other(&srvpkt, &offset);
                     unpack_events(&srvpkt, &offset);
+#endif
 
                     client.player_count = player_get_active_count();
                 } break;
@@ -2145,7 +2194,7 @@ void test_packing()
 }
 
 
-static void pack_players_bitpacked(Packet* pkt, ClientInfo* cli)
+static void pack_players_bp(Packet* pkt, ClientInfo* cli)
 {
     uint8_t player_count = 0;
     for(int i = 0; i < MAX_CLIENTS; ++i)
@@ -2182,41 +2231,6 @@ static void pack_players_bitpacked(Packet* pkt, ClientInfo* cli)
             bitpack_write(&server.bp, 6, (uint32_t)p->invulnerable_temp_time);
             bitpack_write(&server.bp, 4, (uint32_t)p->door);
             bitpack_write(&server.bp, 1, (uint32_t)(p->phys.dead ? 1 : 0));
-
-            bitpack_flush(&server.bp);
-            bitpack_seek_begin(&server.bp);
-            bitpack_print(&server.bp);
-
-            int num_bytes = server.bp.words_written*4;
-            printf("bytes written: %d\n", num_bytes);
-            pack_bytes(pkt, (uint8_t*)server.bp.data, num_bytes);
-
-            // check
-            /*
-            printf("\nCHECK!\n");
-            printf("%u == %u\n", bitpack_read(&server.bp, 3),  (uint32_t)i);
-            printf("%u == %u\n", bitpack_read(&server.bp, 10), (uint32_t)p->phys.pos.x);
-            printf("%u == %u\n", bitpack_read(&server.bp, 10), (uint32_t)p->phys.pos.y);
-            printf("%u == %u\n", bitpack_read(&server.bp, 6),  (uint32_t)p->phys.pos.z);
-            printf("%u == %u\n", bitpack_read(&server.bp, 4),  (uint32_t)p->sprite_index+p->anim.curr_frame);
-            printf("%u == %u\n", bitpack_read(&server.bp, 7),  (uint32_t)p->curr_room);
-            printf("%u == %u\n", bitpack_read(&server.bp, 4),  (uint32_t)p->phys.hp);
-            printf("%u == %u\n", bitpack_read(&server.bp, 16), (uint32_t)(p->highlighted_item_id+1));
-            printf("%u == %u\n", bitpack_read(&server.bp, 4),  (uint32_t)p->gauntlet_selection);
-            printf("%u == %u\n", bitpack_read(&server.bp, 4),  (uint32_t)p->gauntlet_slots);
-
-            for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
-                printf("%u == %u\n", bitpack_read(&server.bp, 6),  (uint32_t)(p->gauntlet[g].type+1));
-
-            printf("%u == %u\n", bitpack_read(&server.bp, 1),  (uint32_t)(p->invulnerable_temp ? 1 : 0));
-            printf("%u == %u\n", bitpack_read(&server.bp, 6),  (uint32_t)p->invulnerable_temp_time);
-            printf("%u == %u\n", bitpack_read(&server.bp, 4),  (uint32_t)p->door);
-            printf("%u == %u\n", bitpack_read(&server.bp, 1),  (uint32_t)(p->phys.dead ? 1 : 0));
-            */
-
-            //print_packet(pkt,true);
-
-            //getchar(); // pause
         }
     }
 }
@@ -2289,7 +2303,7 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
     pack_u8_at(pkt, player_count, index);
 }
 
-static void unpack_players_bitpacked(Packet* pkt, int* offset)
+static void unpack_players_bp(Packet* pkt, int* offset)
 {
     uint8_t player_count = (uint8_t)bitpack_read(&client.bp, 4);
     client.player_count = player_count;
@@ -2322,27 +2336,6 @@ static void unpack_players_bitpacked(Packet* pkt, int* offset)
         uint32_t inv_temp_time    = bitpack_read(&client.bp, 6);
         uint32_t door             = bitpack_read(&client.bp, 4);
         uint32_t dead             = bitpack_read(&client.bp, 1);
-
-        printf("%u\n", sprite_index);
-
-        /*
-        printf("%u\n", id);
-        printf("%u\n", x);
-        printf("%u\n", y);
-        printf("%u\n", z);
-        printf("%u\n", sprite_index);
-        printf("%u\n", c_room);
-        printf("%u\n", hp);
-        printf("%u\n", highlighted_item_id);
-        printf("%u\n", gauntlet_selection);
-        printf("%u\n", gauntlet_slots);
-        for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
-            printf("%u\n", gauntlet_types[g]);
-        printf("%u\n", invunerable_temp);
-        printf("%u\n", inv_temp_time);
-        printf("%u\n", door);
-        printf("%u\n", dead);
-        */
 
         uint8_t client_id = (uint8_t)id;
 
@@ -2415,10 +2408,6 @@ static void unpack_players_bitpacked(Packet* pkt, int* offset)
 
         //player_print(p);
     }
-
-    int bytes_read = 4*(client.bp.word_index+1);
-    printf("bytes_read: %d\n", bytes_read);
-    *offset += bytes_read;
 }
 
 static void unpack_players(Packet* pkt, int* offset)
@@ -2572,6 +2561,48 @@ static void pack_creatures(Packet* pkt, ClientInfo* cli)
     pack_u16_at(pkt, num_visible_creatures, index);
 }
 
+static void pack_creatures_bp(Packet* pkt, ClientInfo* cli)
+{
+    uint16_t num_creatures = creature_get_count();
+    uint16_t num_visible_creatures = 0;
+
+    for(int i = 0; i < num_creatures; ++i)
+    {
+        if(!is_any_player_room(creatures[i].curr_room))
+            continue;
+
+        num_visible_creatures++;
+    }
+
+    bitpack_write(&server.bp, 8,  (uint32_t)num_visible_creatures);
+
+    for(int i = 0; i < num_creatures; ++i)
+    {
+        Creature* c = &creatures[i];
+
+        if(!is_any_player_room(c->curr_room))
+            continue;
+
+        uint8_t r = (c->color >> 16) & 0xFF;
+        uint8_t g = (c->color >>  8) & 0xFF;
+        uint8_t b = (c->color >>  0) & 0xFF;
+
+        bitpack_write(&server.bp, 16, (uint32_t)c->id);
+        bitpack_write(&server.bp, 6,  (uint32_t)c->type);
+        bitpack_write(&server.bp, 10, (uint32_t)c->phys.pos.x);
+        bitpack_write(&server.bp, 10, (uint32_t)c->phys.pos.y);
+        bitpack_write(&server.bp, 6,  (uint32_t)c->phys.pos.z);
+        bitpack_write(&server.bp, 8,  (uint32_t)c->phys.width);
+        bitpack_write(&server.bp, 6,  (uint32_t)c->sprite_index);
+        bitpack_write(&server.bp, 7,  (uint32_t)c->curr_room);
+        bitpack_write(&server.bp, 5,  (uint32_t)c->phys.hp);
+
+        bitpack_write(&server.bp, 8,  (uint32_t)r);
+        bitpack_write(&server.bp, 8,  (uint32_t)g);
+        bitpack_write(&server.bp, 8,  (uint32_t)b);
+    }
+}
+
 static void unpack_creatures(Packet* pkt, int* offset)
 {
     memcpy(prior_creatures, creatures, sizeof(Creature)*MAX_CREATURES);
@@ -2627,6 +2658,67 @@ static void unpack_creatures(Packet* pkt, int* offset)
     }
 }
 
+static void unpack_creatures_bp(Packet* pkt, int* offset)
+{
+    memcpy(prior_creatures, creatures, sizeof(Creature)*MAX_CREATURES);
+    creature_clear_all();
+
+    uint32_t num_creatures = bitpack_read(&client.bp, 8);
+
+    for(int i = 0; i < num_creatures; ++i)
+    {
+        uint32_t id           = bitpack_read(&client.bp, 16);
+        uint32_t type         = bitpack_read(&client.bp, 6);
+        uint32_t x            = bitpack_read(&client.bp, 10);
+        uint32_t y            = bitpack_read(&client.bp, 10);
+        uint32_t z            = bitpack_read(&client.bp, 6);
+        uint32_t width        = bitpack_read(&client.bp, 8);
+        uint32_t sprite_index = bitpack_read(&client.bp, 6);
+        uint32_t curr_room    = bitpack_read(&client.bp, 7);
+        uint32_t hp           = bitpack_read(&client.bp, 5);
+        uint32_t r            = bitpack_read(&client.bp, 8);
+        uint32_t g            = bitpack_read(&client.bp, 8);
+        uint32_t b            = bitpack_read(&client.bp, 8);
+
+        Creature creature = {0};
+        creature.id = (uint16_t)id;
+        creature.type = (CreatureType)type;
+        creature.phys.pos.x = (float)x;
+        creature.phys.pos.y = (float)y;
+        creature.phys.pos.z = (float)z;
+        creature.phys.width = (float)width;
+        creature.phys.collision_rect.w = (float)width;
+        creature.sprite_index = (uint8_t)sprite_index;
+        creature.curr_room = (uint8_t)curr_room;
+        creature.phys.hp = (int8_t)hp;
+        creature.color = COLOR(r,g,b);
+
+        Creature* c = creature_add(NULL, 0, NULL, &creature);
+
+        c->server_state_prior.pos.x = x;
+        c->server_state_prior.pos.y = y;
+        c->server_state_prior.pos.z = z;
+
+        //find the prior
+        for(int j = i; j < MAX_CREATURES; ++j)
+        {
+            Creature* cj = &prior_creatures[j];
+            if(cj->id == c->id)
+            {
+                c->server_state_prior.pos.x = cj->phys.pos.x;
+                c->server_state_prior.pos.y = cj->phys.pos.y;
+                c->server_state_prior.pos.z = cj->phys.pos.z;
+                break;
+            }
+        }
+
+        c->lerp_t = 0.0;
+        c->server_state_target.pos.x = x;
+        c->server_state_target.pos.y = y;
+        c->server_state_target.pos.z = z;
+    }
+}
+
 
 static void pack_projectiles(Packet* pkt, ClientInfo* cli)
 {
@@ -2654,6 +2746,46 @@ static void pack_projectiles(Packet* pkt, ClientInfo* cli)
     }
 
     pack_u16_at(pkt, num_visible_projectiles, index);
+}
+
+static void pack_projectiles_bp(Packet* pkt, ClientInfo* cli)
+{
+    uint16_t num_projectiles = (uint16_t)plist->count;
+    uint16_t num_visible_projectiles = 0;
+
+    for(int i = 0; i < num_projectiles; ++i)
+    {
+        if(!is_any_player_room(projectiles[i].curr_room))
+            continue;
+
+        num_visible_projectiles++;
+    }
+
+    bitpack_write(&server.bp, 12,  (uint32_t)num_visible_projectiles);
+
+    for(int i = 0; i < num_projectiles; ++i)
+    {
+        Projectile* p = &projectiles[i];
+
+        if(!is_any_player_room(p->curr_room))
+            continue;
+
+        uint8_t r = (p->color >> 16) & 0xFF;
+        uint8_t g = (p->color >>  8) & 0xFF;
+        uint8_t b = (p->color >>  0) & 0xFF;
+
+        bitpack_write(&server.bp, 16, (uint32_t)p->id);
+        bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.x);
+        bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.y);
+        bitpack_write(&server.bp, 6,  (uint32_t)p->phys.pos.z);
+        bitpack_write(&server.bp, 8,  (uint32_t)r);
+        bitpack_write(&server.bp, 8,  (uint32_t)g);
+        bitpack_write(&server.bp, 8,  (uint32_t)b);
+        bitpack_write(&server.bp, 3,  (uint32_t)(p->player_id));
+        bitpack_write(&server.bp, 7,  (uint32_t)(p->curr_room));
+        bitpack_write(&server.bp, 8,  (uint32_t)(p->def.scale*255.0f));
+        bitpack_write(&server.bp, 1,  (uint32_t)(p->from_player ? 0x01 : 0x00));
+    }
 }
 
 static void unpack_projectiles(Packet* pkt, int* offset)
@@ -2707,6 +2839,63 @@ static void unpack_projectiles(Packet* pkt, int* offset)
         p->server_state_target.pos.z = pos.z;
 
         p->player_id = player_id;
+    }
+}
+
+static void unpack_projectiles_bp(Packet* pkt, int* offset)
+{
+    memcpy(prior_projectiles, projectiles, sizeof(Projectile)*MAX_PROJECTILES);
+
+    // load projectiles
+    uint32_t num_projectiles = bitpack_read(&client.bp, 12);
+
+    list_clear(plist);
+    plist->count = num_projectiles;
+
+    for(int i = 0; i < num_projectiles; ++i)
+    {
+        Projectile* p = &projectiles[i];
+
+        uint32_t id          = bitpack_read(&client.bp, 16);
+        uint32_t x           = bitpack_read(&client.bp, 10);
+        uint32_t y           = bitpack_read(&client.bp, 10);
+        uint32_t z           = bitpack_read(&client.bp, 6);
+        uint32_t r           = bitpack_read(&client.bp, 8);
+        uint32_t g           = bitpack_read(&client.bp, 8);
+        uint32_t b           = bitpack_read(&client.bp, 8);
+        uint32_t pid         = bitpack_read(&client.bp, 3);
+        uint32_t curr_room   = bitpack_read(&client.bp, 7);
+        uint32_t scale       = bitpack_read(&client.bp, 8);
+        uint32_t from_player = bitpack_read(&client.bp, 1);
+
+        p->id = (uint16_t)id;
+        p->color = COLOR(r,g,b);
+        p->curr_room = (uint8_t)curr_room;
+        p->def.scale = (float)(scale / 255.0f);
+        p->from_player = from_player == 0x01 ? true : false;
+        p->player_id = (uint8_t)pid;
+        p->lerp_t = 0.0;
+
+        p->server_state_prior.pos.x = (float)x;
+        p->server_state_prior.pos.y = (float)y;
+        p->server_state_prior.pos.z = (float)z;
+
+        //find the prior
+        for(int j = i; j < MAX_PROJECTILES; ++j)
+        {
+            Projectile* pj = &prior_projectiles[j];
+            if(pj->id == p->id)
+            {
+                p->server_state_prior.pos.x = pj->phys.pos.x;
+                p->server_state_prior.pos.y = pj->phys.pos.y;
+                p->server_state_prior.pos.z = pj->phys.pos.z;
+                break;
+            }
+        }
+
+        p->server_state_target.pos.x = (float)x;
+        p->server_state_target.pos.y = (float)y;
+        p->server_state_target.pos.z = (float)z;
     }
 }
 
@@ -2812,6 +3001,118 @@ static void unpack_items(Packet* pkt, int* offset)
     }
 }
 
+static void pack_items_bp(Packet* pkt, ClientInfo* cli)
+{
+    uint16_t num_items = (uint16_t)item_list->count;
+    uint8_t num_visible_items = 0;
+
+    for(int i = 0; i < num_items; ++i)
+    {
+        Item* it = &items[i];
+        if(!is_any_player_room(it->curr_room))
+            continue;
+        if(it->picked_up)
+            continue;
+        num_visible_items++;
+    }
+
+    bitpack_write(&server.bp, 6,  (uint32_t)num_visible_items);
+
+    for(int i = 0; i < num_items; ++i)
+    {
+        Item* it = &items[i];
+
+        if(!is_any_player_room(it->curr_room))
+            continue;
+
+        if(it->picked_up)
+            continue;
+
+        bitpack_write(&server.bp, 16, (uint32_t)it->id);
+        bitpack_write(&server.bp, 6,  (uint32_t)(it->type + 1));
+        bitpack_write(&server.bp, 10, (uint32_t)it->phys.pos.x);
+        bitpack_write(&server.bp, 10, (uint32_t)it->phys.pos.y);
+        bitpack_write(&server.bp, 6,  (uint32_t)it->phys.pos.z);
+        bitpack_write(&server.bp, 7,  (uint32_t)it->curr_room);
+        bitpack_write(&server.bp, 9,  (uint32_t)(it->angle));
+        bitpack_write(&server.bp, 1,  (uint32_t)(it->highlighted ? 0x01 : 0x00));
+        bitpack_write(&server.bp, 1,  (uint32_t)(it->used ? 0x01 : 0x00));
+    }
+}
+
+static void unpack_items_bp(Packet* pkt, int* offset)
+{
+    memcpy(prior_items, items, sizeof(Item)*MAX_ITEMS);
+
+    uint32_t num_items   = bitpack_read(&client.bp, 6);
+
+    list_clear(item_list);
+    item_list->count = num_items;
+
+    for(int i = 0; i < num_items; ++i)
+    {
+        Item* it = &items[i];
+        uint32_t id          = bitpack_read(&client.bp, 16);
+        uint32_t type        = bitpack_read(&client.bp, 6);
+        uint32_t x           = bitpack_read(&client.bp, 10);
+        uint32_t y           = bitpack_read(&client.bp, 10);
+        uint32_t z           = bitpack_read(&client.bp, 6);
+        uint32_t c_room      = bitpack_read(&client.bp, 7);
+        uint32_t _angle      = bitpack_read(&client.bp, 9);
+        uint32_t highlighted = bitpack_read(&client.bp, 1);
+        uint32_t used        = bitpack_read(&client.bp, 1);
+
+        it->id = id;
+        it->type = (int32_t)type-1;
+        it->curr_room = (uint8_t)c_room;
+        it->highlighted = highlighted == 1 ? true : false;
+        it->used = used == 1 ? true : false;
+        float angle = (float)_angle;
+        Vector3f pos = {(float)x,(float)y,(float)z};
+
+        it->lerp_t = 0.0;
+
+        it->server_state_prior.pos.x = pos.x;
+        it->server_state_prior.pos.y = pos.y;
+        it->server_state_prior.pos.z = pos.z;
+        it->server_state_prior.angle = angle;
+
+        bool found_prior = false;
+
+        //find the prior
+        for(int j = i; j < MAX_ITEMS; ++j)
+        {
+            Item* itj = &prior_items[j];
+            if(itj->type == ITEM_NONE) break;
+            if(itj->id == it->id)
+            {
+                // printf("found prior: %d\n", itj->id);
+                found_prior = true;
+                it->server_state_prior.pos.x = itj->phys.pos.x;
+                it->server_state_prior.pos.y = itj->phys.pos.y;
+                it->server_state_prior.pos.z = itj->phys.pos.z;
+                it->server_state_prior.angle = itj->angle;
+                break;
+            }
+        }
+
+        it->server_state_target.pos.x = pos.x;
+        it->server_state_target.pos.y = pos.y;
+        it->server_state_target.pos.z = pos.z;
+        it->server_state_target.angle = angle;
+
+        if(!found_prior)
+        {
+            // printf("didn't find prior\n");
+            it->server_state_prior.pos.x = it->server_state_target.pos.x;
+            it->server_state_prior.pos.y = it->server_state_target.pos.y;
+            it->server_state_prior.pos.z = it->server_state_target.pos.z;
+            it->server_state_prior.angle = it->server_state_target.angle;
+        }
+
+    }
+}
+
 static void pack_decals(Packet* pkt, ClientInfo* cli)
 {
     uint8_t count = (uint8_t)decal_list->count;
@@ -2828,6 +3129,50 @@ static void pack_decals(Packet* pkt, ClientInfo* cli)
         pack_float(pkt, d->ttl);
         pack_vec2(pkt, vec2(d->pos.x,d->pos.y));
         pack_u8(pkt, d->room);
+    }
+}
+
+static void pack_decals_bp(Packet* pkt, ClientInfo* cli)
+{
+    bitpack_write(&server.bp, 7,  (uint32_t)decal_list->count);
+
+    for(int i = 0; i < decal_list->count; ++i)
+    {
+        Decal* d = &decals[i];
+
+        bitpack_write(&server.bp, 5,  (uint32_t)d->sprite_index);
+        bitpack_write(&server.bp, 32, (uint32_t)d->tint);
+        bitpack_write(&server.bp, 8,  (uint32_t)(d->scale*255.0f));
+        bitpack_write(&server.bp, 8,  (uint32_t)(d->rotation*255.0f));
+        bitpack_write(&server.bp, 8,  (uint32_t)(d->opacity*255.0f));
+        bitpack_write(&server.bp, 8,  (uint32_t)(d->ttl*10.0f));
+        bitpack_write(&server.bp, 10, (uint32_t)d->pos.x);
+        bitpack_write(&server.bp, 10, (uint32_t)d->pos.y);
+        bitpack_write(&server.bp, 7, (uint32_t)d->room);
+    }
+}
+
+static void unpack_decals_bp(Packet* pkt, int* offset)
+{
+    uint8_t count = (uint8_t)bitpack_read(&client.bp, 7);
+
+    for(int i = 0; i < count; ++i)
+    {
+        Decal d = {0};
+
+        d.image = particles_image;
+
+        d.sprite_index = (uint8_t)bitpack_read(&client.bp,5);
+        d.tint         = (uint32_t)bitpack_read(&client.bp,32);
+        d.scale        = (float)(bitpack_read(&client.bp,8)/255.0f);
+        d.rotation     = (float)(bitpack_read(&client.bp,8)/255.0f);
+        d.opacity      = (float)(bitpack_read(&client.bp,8)/255.0f);
+        d.ttl          = (float)(bitpack_read(&client.bp,8)/10.0f);
+        d.pos.x        = (float)bitpack_read(&client.bp,10);
+        d.pos.y        = (float)bitpack_read(&client.bp,10);
+        d.room         = (uint8_t)bitpack_read(&client.bp,7);
+
+        decal_add(d);
     }
 }
 
@@ -2868,6 +3213,23 @@ static void unpack_other(Packet* pkt, int* offset)
     room->doors_locked = unpack_bool(pkt, offset);
 }
 
+static void pack_other_bp(Packet* pkt, ClientInfo* cli)
+{
+    Room* room = level_get_room_by_index(&level, (int)players[cli->client_id].curr_room);
+
+    // doors locked
+
+    bitpack_write(&server.bp, 1,  (uint32_t)(room->doors_locked ? 0x01 : 0x00));
+}
+
+static void unpack_other_bp(Packet* pkt, int* offset)
+{
+    Room* room = level_get_room_by_index(&level, (int)player->curr_room);
+
+    // doors locked
+    room->doors_locked = bitpack_read(&client.bp, 1) == 0x01 ? true : false;
+}
+
 static void pack_events(Packet* pkt, ClientInfo* cli)
 {
     pack_u8(pkt, server.event_count);
@@ -2880,10 +3242,6 @@ static void pack_events(Packet* pkt, ClientInfo* cli)
 
         switch(ev->type)
         {
-            case EVENT_TYPE_MESSAGE:
-            {
-                pack_bytes(pkt, (uint8_t*)&ev->data.message, strlen(ev->data.message.msg) + (2*sizeof(uint8_t)));
-            } break;
             case EVENT_TYPE_PARTICLES:
             {
                 pack_u8(pkt, ev->data.particles.effect_index);
@@ -2908,6 +3266,44 @@ static void pack_events(Packet* pkt, ClientInfo* cli)
     }
 }
 
+static void pack_events_bp(Packet* pkt, ClientInfo* cli)
+{
+    bitpack_write(&server.bp, 8,  (uint32_t)server.event_count);
+
+    for(int i = server.event_count-1; i >= 0; --i)
+    {
+        NetEvent* ev = &server.events[i];
+
+        bitpack_write(&server.bp, 4,  (uint32_t)ev->type);
+
+        switch(ev->type)
+        {
+            case EVENT_TYPE_PARTICLES:
+            {
+                bitpack_write(&server.bp, 5,  (uint32_t)ev->data.particles.effect_index);
+                bitpack_write(&server.bp, 10, (uint32_t)ev->data.particles.pos.x);
+                bitpack_write(&server.bp, 10, (uint32_t)ev->data.particles.pos.y);
+                bitpack_write(&server.bp, 8,  (uint32_t)(255.0f * ev->data.particles.scale));
+                bitpack_write(&server.bp, 32, (uint32_t)ev->data.particles.color1);
+                bitpack_write(&server.bp, 32, (uint32_t)ev->data.particles.color2);
+                bitpack_write(&server.bp, 32, (uint32_t)ev->data.particles.color3);
+                bitpack_write(&server.bp, 8,  (uint32_t)(10.0f * ev->data.particles.lifetime));
+                bitpack_write(&server.bp, 7,  (uint32_t)(ev->data.particles.room_index));
+
+            } break;
+
+            case EVENT_TYPE_NEW_LEVEL:
+            {
+                bitpack_write(&server.bp, 32,  (uint32_t)level_seed);
+                bitpack_write(&server.bp,  8,  (uint32_t)level_rank);
+            }
+
+            default:
+                break;
+        }
+    }
+}
+
 static void unpack_events(Packet* pkt, int* offset)
 {
     uint8_t event_count = unpack_u8(pkt, offset);
@@ -2918,9 +3314,6 @@ static void unpack_events(Packet* pkt, int* offset)
 
         switch(type)
         {
-            case EVENT_TYPE_MESSAGE:
-                break;
-
             case EVENT_TYPE_PARTICLES:
             {
                 uint8_t effect_index = unpack_u8(pkt, offset);
@@ -2957,6 +3350,63 @@ static void unpack_events(Packet* pkt, int* offset)
             {
                 level_seed = unpack_u32(pkt,offset);
                 level_rank = unpack_u8(pkt,offset);
+
+                level = level_generate(level_seed,level_rank);
+            }
+
+            default:
+                break;
+        }
+    }
+}
+
+static void unpack_events_bp(Packet* pkt, int* offset)
+{
+    uint8_t event_count = (uint8_t)bitpack_read(&client.bp,8);
+
+    for(int i = 0; i < event_count; ++i)
+    {
+        NetEventType type = (NetEventType)bitpack_read(&client.bp,4);
+
+        switch(type)
+        {
+            case EVENT_TYPE_PARTICLES:
+            {
+                uint8_t effect_index = (uint8_t)bitpack_read(&client.bp,5);
+                float x              = (float)bitpack_read(&client.bp,10);
+                float y              = (float)bitpack_read(&client.bp,10);
+                float scale          = (float)(bitpack_read(&client.bp,8)/255.0f);
+                uint32_t color1      = bitpack_read(&client.bp,32);
+                uint32_t color2      = bitpack_read(&client.bp,32);
+                uint32_t color3      = bitpack_read(&client.bp,32);
+                float lifetime       = (float)(bitpack_read(&client.bp,8)/10.0f);
+                uint8_t room_index   = (uint8_t)bitpack_read(&client.bp,7);
+
+                if(room_index != player->curr_room)
+                {
+                    // printf("%u != %u\n", room_index, player->curr_room);
+                    continue;
+                }
+
+                ParticleEffect effect = {0};
+                memcpy(&effect, &particle_effects[effect_index], sizeof(ParticleEffect));
+
+                effect.scale.init_min *= scale;
+                effect.scale.init_max *= scale;
+
+                effect.color1 = color1;
+                effect.color2 = color2;
+                effect.color3 = color3;
+
+                ParticleSpawner* ps = particles_spawn_effect(x, y, 0.0, &effect, lifetime, true, false);
+                if(ps != NULL) ps->userdata = (int)room_index;
+
+            } break;
+
+            case EVENT_TYPE_NEW_LEVEL:
+            {
+                level_seed = bitpack_read(&client.bp,32);
+                level_rank = (uint8_t)bitpack_read(&client.bp,8);
 
                 level = level_generate(level_seed,level_rank);
             }

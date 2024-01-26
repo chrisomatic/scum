@@ -215,7 +215,7 @@ void creature_init_props(Creature* c)
             c->act_time_max = 3.00;
             c->phys.mass = 1000.0;
             c->phys.base_friction = 50.0;
-            c->phys.hp_max = 128;
+            c->phys.hp_max = 127;
             c->phys.floating = false;
             c->painful_touch = false;
             c->invincible = true;
@@ -229,7 +229,7 @@ void creature_init_props(Creature* c)
             c->act_time_max = 6.00;
             c->phys.mass = 1000.0;
             c->phys.base_friction = 50.0;
-            c->phys.hp_max = 128;
+            c->phys.hp_max = 127;
             c->phys.floating = false;
             // c->proj_type = PROJECTILE_TYPE_CREATURE_TOTEM_BLUE;
             c->painful_touch = false;
