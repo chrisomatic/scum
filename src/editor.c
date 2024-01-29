@@ -70,7 +70,7 @@ void editor_draw()
         return;
     }
 
-    int name_count = player_names_build(false, false);
+    // int name_count = player_names_build(false, false);
 
     static Rect gui_size = {0};
 
@@ -217,7 +217,9 @@ void editor_draw()
 
                     imgui_toggle_button(&players_invincible, "Invincibility");
 
-                    imgui_dropdown(player_names, name_count, "Select Player", &player_selection, NULL);
+                    char* pnames[] = ASCII_NUMS;
+                    // imgui_dropdown(player_names, name_count, "Select Player", &player_selection, NULL);
+                    imgui_dropdown(pnames, MAX_PLAYERS, "Select Player", &player_selection, NULL);
                     Player* p = &players[player_selection];
 
                     if(p != player)
@@ -225,7 +227,7 @@ void editor_draw()
                         imgui_toggle_button(&p->active, "Active");
                     }
 
-                    int selected_class = p->class;
+                    int selected_class = p->settings.class;
                     imgui_dropdown(class_strs, 3, "Select Class", &selected_class, NULL);
                     player_set_class(p, (PlayerClass)selected_class);
 

@@ -675,10 +675,10 @@ static void server_send(PacketType type, ClientInfo* cli)
                     pack_u32(&pkt, players[i].settings.color);
                     pack_string(&pkt, players[i].settings.name, PLAYER_NAME_MAX);
 
-                    LOGNV("Sending Settings, Client ID: %d", i);
-                    LOGNV("  name: %s", players[i].settings.name);
-                    LOGNV("  class: %u", players[i].settings.class);
-                    LOGNV("  color: 0x%08x", players[i].settings.color);
+                    LOGN("Sending Settings, Client ID: %d", i);
+                    LOGN("  name: %s", players[i].settings.name);
+                    LOGN("  class: %u", players[i].settings.class);
+                    LOGN("  color: 0x%08x", players[i].settings.color);
 
                     num_clients++;
                 }
@@ -1083,10 +1083,10 @@ int net_server_start()
                         memset(p->settings.name, 0, PLAYER_NAME_MAX);
                         uint8_t namelen = unpack_string(&recv_pkt, p->settings.name, PLAYER_NAME_MAX, &offset);
 
-                        LOGNV("Server Received Settings, Client ID: %d", cli->client_id);
-                        LOGNV("  color: 0x%08x", p->settings.color);
-                        LOGNV("  class: %u", p->settings.class);
-                        LOGNV("  name (%u): %s", namelen, p->settings.name);
+                        LOGN("Server Received Settings, Client ID: %d", cli->client_id);
+                        LOGN("  color: 0x%08x", p->settings.color);
+                        LOGN("  class: %u", p->settings.class);
+                        LOGN("  name (%u): %s", namelen, p->settings.name);
 
                         for(int i = 0; i < MAX_CLIENTS; ++i)
                         {

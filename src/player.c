@@ -19,7 +19,7 @@ static void player_set_sprite_index(Player* p, int sprite_index);
 int xp_levels[] = {100,120,140,160,180,200};
 int skill_selection = 0;
 
-
+int player_ignore_input = 0;
 char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 
 static bool _initialized = false;
@@ -34,7 +34,7 @@ char* class_strs[] =
 int class_image_spaceman = -1;
 int class_image_robot = -1;
 
-int player_image = -1;
+// int player_image = -1;
 int shadow_image = -1;
 int card_image = -1;
 
@@ -52,6 +52,9 @@ Rect tile_pit_rect = {0};
 void player_set_defaults(Player* p)
 {
     p->phys.dead = false;
+
+    player_set_class(p, PLAYER_CLASS_SPACEMAN);
+
     p->phys.pos.x = CENTER_X;
     p->phys.pos.y = CENTER_Y;
     p->phys.pos.z = 0.0;
@@ -62,9 +65,9 @@ void player_set_defaults(Player* p)
     p->phys.base_friction = 15.0;
     p->phys.vel.x = 0.0;
     p->phys.vel.y = 0.0;
-    p->phys.height = gfx_images[player_image].visible_rects[0].h * 0.80;
-    p->phys.width  = gfx_images[player_image].visible_rects[0].w * 0.70;
-    p->phys.length = gfx_images[player_image].visible_rects[0].w * 0.70;
+    p->phys.height = gfx_images[p->image].visible_rects[0].h * 0.80;
+    p->phys.width  = gfx_images[p->image].visible_rects[0].w * 0.70;
+    p->phys.length = gfx_images[p->image].visible_rects[0].w * 0.70;
     p->phys.mass = 1.0;
     p->phys.elasticity = 0.0;
 
@@ -76,8 +79,6 @@ void player_set_defaults(Player* p)
     p->invulnerable = false;
     p->invulnerable_temp_time = false;
 
-    p->settings.class = PLAYER_CLASS_SPACEMAN;
-    p->class = PLAYER_CLASS_SPACEMAN;
 
     player_set_sprite_index(p, 4);
 
@@ -150,7 +151,7 @@ void player_init()
         class_image_spaceman = gfx_load_image("src/img/spaceman.png", false, false, 32, 32);
         class_image_robot    = gfx_load_image("src/img/robo.png", false, false, 32, 32);
 
-        player_image = class_image_spaceman;
+        // player_image = class_image_spaceman;
 
         shadow_image = gfx_load_image("src/img/shadow.png", false, true, 32, 32);
         card_image   = gfx_load_image("src/img/card.png", false, false, 200, 100);
@@ -165,8 +166,8 @@ void player_init()
         Player* p = &players[i];
 
         p->index = i;
-        memset(p->name, PLAYER_NAME_MAX, 0);
-        sprintf(p->name, "Player %d", i+1);
+        // memset(p->settings.name, PLAYER_NAME_MAX, 0);
+        // sprintf(p->settings.name, "Player %d", i+1);
 
         player_set_defaults(p);
 
@@ -184,7 +185,7 @@ void player_print(Player* p)
     printf("Player:\n");
     printf("    active: %s\n", p->active ? "true" : "false");
     printf("    index:  %d\n", p->index);
-    printf("    name:   %s\n", p->name);
+    printf("    name:   %s\n", p->settings.name);
     phys_print(&p->phys);
     printf("    vel_factor: %.2f\n", p->vel_factor);
     printf("    scale:      %.2f\n", p->scale);
@@ -290,34 +291,34 @@ int player_get_active_count()
     return num;
 }
 
-int player_names_build(bool include_all, bool only_active)
-{
-    int count = 0;
+// int player_names_build(bool include_all, bool only_active)
+// {
+//     int count = 0;
 
-    if(include_all)
-    {
-        if(player_names[0]) free(player_names[0]);
-        player_names[0] = calloc(4, sizeof(char));
-        strncpy(player_names[0],"ALL",3);
-        count++;
-    }
+//     if(include_all)
+//     {
+//         if(player_names[0]) free(player_names[0]);
+//         player_names[0] = calloc(4, sizeof(char));
+//         strncpy(player_names[0],"ALL",3);
+//         count++;
+//     }
 
-    // fill out useful player_names array
-    for(int i = 0; i < MAX_PLAYERS; ++i)
-    {
-        Player* p = &players[i];
-        if(only_active && !p->active) continue;
+//     // fill out useful player_names array
+//     for(int i = 0; i < MAX_PLAYERS; ++i)
+//     {
+//         Player* p = &players[i];
+//         if(only_active && !p->active) continue;
 
-        if(player_names[count]) free(player_names[count]);
+//         if(player_names[count]) free(player_names[count]);
 
-        int namelen  = strlen(p->name);
-        player_names[count] = calloc(namelen, sizeof(char));
-        strncpy(player_names[count], p->name, namelen);
-        count++;
-    }
+//         int namelen  = strlen(p->name);
+//         player_names[count] = calloc(namelen, sizeof(char));
+//         strncpy(player_names[count], p->name, namelen);
+//         count++;
+//     }
 
-    return count;
-}
+//     return count;
+// }
 
 void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i tile)
 {
@@ -506,7 +507,7 @@ void player_hurt_no_inv(Player* p, int damage)
 
     if(p->phys.hp == 0)
     {
-        text_list_add(text_lst, COLOR_WHITE, 3.0, "%s died", p->name);
+        text_list_add(text_lst, COLOR_WHITE, 3.0, "%s died", p->settings.name);
         player_die(p);
     }
 }
@@ -539,7 +540,7 @@ void player_hurt(Player* p, int damage)
 
 void player_die(Player* p)
 {
-    text_list_add(text_lst, COLOR_WHITE, 3.0, "%s died. Miraculously you awake, reborn...", p->name);
+    text_list_add(text_lst, COLOR_WHITE, 3.0, "%s died. Miraculously you awake, reborn...", p->settings.name);
 
     p->phys.dead = true;
     p->phys.floating = true;
@@ -1016,6 +1017,7 @@ void player_update(Player* p, float dt)
 
         if(activate)
         {
+            // printf("activate\n");
             Item* pu = highlighted_item;
             if(pu)
             {
@@ -1443,7 +1445,7 @@ void player_update(Player* p, float dt)
     */
 
     // update player current tile
-    GFXImage* img = &gfx_images[player_image];
+    GFXImage* img = &gfx_images[p->image];
     Rect* vr = &img->visible_rects[p->sprite_index];
 
     if(p->proj_cooldown > 0.0)
@@ -1662,8 +1664,8 @@ void draw_hearts_other_player(Player* p)
     int rem = p->phys.hp % 2;
 
     int sprite_index = p->sprite_index+p->anim.curr_frame;
-    float ph = gfx_images[player_image].visible_rects[sprite_index].h;
-    float pw = gfx_images[player_image].visible_rects[sprite_index].w;
+    float ph = gfx_images[p->image].visible_rects[sprite_index].h;
+    float pw = gfx_images[p->image].visible_rects[sprite_index].w;
 
     float x = p->phys.pos.x;
     float y = p->phys.pos.y-(0.5*p->phys.pos.z)-p->phys.width/1.5;  // see player draw
@@ -2149,13 +2151,13 @@ void player_set_class(Player* p, PlayerClass class)
     switch(class)
     {
         case PLAYER_CLASS_SPACEMAN:
-            player_image = class_image_spaceman;
+            p->image = class_image_spaceman;
             break;
         case PLAYER_CLASS_PHYSICIST:
-            player_image = class_image_spaceman;
+            p->image = class_image_spaceman;
             break;
         case PLAYER_CLASS_ROBOT:
-            player_image = class_image_robot;
+            p->image = class_image_robot;
             break;
     }
 }
@@ -2175,7 +2177,7 @@ void player_draw(Player* p)
     //uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
 
     float y = p->phys.pos.y-(0.5*p->phys.pos.z) - p->phys.width/1.5;
-    gfx_sprite_batch_add(player_image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, p->settings.color, true, p->scale, 0.0, opacity, false, false, false);
+    gfx_sprite_batch_add(p->image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, p->settings.color, true, p->scale, 0.0, opacity, false, false, false);
 
     if(p == player)
     {
@@ -2243,7 +2245,7 @@ void player_handle_net_inputs(Player* p, double dt)
 
     for(int i = 0; i < PLAYER_ACTION_MAX; ++i)
     {
-        if(p->actions[i].state)
+        if(p->actions[i].state && (player_ignore_input == 0))
         {
             p->input.keys |= (1<<i);
         }
@@ -2254,9 +2256,17 @@ void player_handle_net_inputs(Player* p, double dt)
         p->input.keys = 0;
     }
 
-    if(p->input.keys != p->input_prior.keys)
+    if(p->input.keys != p->input_prior.keys && (player_ignore_input == 0))
     {
+        // printf("enter state: %d\n", p->actions[PLAYER_ACTION_ACTIVATE].state);
+        // printf("add player input: %d\n", player_ignore_input);
         net_client_add_player_input(&p->input);
+    }
+
+    if(player_ignore_input > 0)
+    {
+        player_ignore_input--;
+        // printf("player_ignore_input: %d\n", player_ignore_input);
     }
 }
 

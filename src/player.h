@@ -99,7 +99,8 @@ typedef struct
 {
     bool active;
     int index;
-    char name[PLAYER_NAME_MAX+1];
+    int image;
+    // char name[PLAYER_NAME_MAX+1];
 
     bool ignore_player_collision;
 
@@ -184,7 +185,7 @@ typedef struct
 
 } Player;
 
-extern char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
+extern int player_ignore_input;
 extern Player players[MAX_PLAYERS];
 extern Player* player;
 extern Player* player2;
@@ -193,7 +194,6 @@ extern char* class_strs[];
 
 
 extern float jump_vel_z;
-extern int player_image;
 extern int shadow_image;
 
 void player_init();

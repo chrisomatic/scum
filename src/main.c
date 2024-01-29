@@ -261,7 +261,7 @@ void set_game_state(GameState state)
                 ambient_light = ambient_light_default;
                 player = &players[0];
                 player_set_active(player, true);
-                player_set_active(&players[1], true);
+                // player_set_active(&players[1], true);
 
                 memcpy(&player->settings, &menu_settings,sizeof(Settings));
                 player_set_class(player, player->settings.class);
@@ -1373,6 +1373,7 @@ void draw_chat_box()
 
             if(!client_chat_enabled)
             {
+                player_ignore_input = 2;
                 window_controls_set_key_mode(KEY_MODE_NORMAL);
             }
 
@@ -1451,7 +1452,7 @@ void draw_settings()
 
     player_set_class(player, menu_settings.class);
 
-    gfx_draw_image_color_mask(player_image, SPRITE_DOWN + player->anim.curr_frame, (view_width-32)/2.0, (view_height-32)/2.0 + 20, menu_settings.color, 3.0, 0.0, 1.0, false, NOT_IN_WORLD);
+    gfx_draw_image_color_mask(player->image, SPRITE_DOWN + player->anim.curr_frame, (view_width-32)/2.0, (view_height-32)/2.0 + 20, menu_settings.color, 3.0, 0.0, 1.0, false, NOT_IN_WORLD);
 
     gfx_anim_update(&player->anim, 0.010);
     text_list_draw(text_lst);
@@ -1561,8 +1562,16 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
                     client_chat_enabled = !client_chat_enabled;
                     if(client_chat_enabled)
                     {
+                        // printf("client chat enabled\n");
+                        player->actions[PLAYER_ACTION_ACTIVATE].state = false;
+                        player_ignore_input = 2;
                         window_controls_set_text_buf(chat_text,128);
                         window_controls_set_key_mode(KEY_MODE_TEXT);
+                    }
+                    else
+                    {
+                        // printf("client chat disabled\n");
+                        player_ignore_input = 2;
                     }
                 }
             }
