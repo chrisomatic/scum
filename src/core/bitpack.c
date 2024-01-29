@@ -106,18 +106,20 @@ void bitpack_memcpy(BitPack* bp, uint8_t* data, int len)
     bp->bits_written = len * 8;
 }
 
-void bitpack_write(BitPack* bp, int num_bits, uint32_t value)
+bool bitpack_write(BitPack* bp, int num_bits, uint32_t value)
 {
     if(!bp->data)
-        return;
+        return false;
 
     if(num_bits < 0 || num_bits > 32)
-        return;
+        return false;
 
     uint64_t max = ((uint64_t)1 << (num_bits));
 
+    bool ret = true;
     if(value >= max)
     {
+        ret = false;
         printf("value needs more bits! (value: %u, max: %ld (%d bits)\n", value, max, num_bits);
     }
 
@@ -135,6 +137,8 @@ void bitpack_write(BitPack* bp, int num_bits, uint32_t value)
         bp->bit_index -= 32;
     }
     bp->bits_written += num_bits;
+
+    return ret;
 }
 
 void bitpack_flush(BitPack* bp)

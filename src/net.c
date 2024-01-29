@@ -26,7 +26,7 @@
 #define COOL_SERVER_PLAYER_LOGIC 1
 #define BITPACK 1
 
-//#define SERVER_PRINT_SIMPLE 1
+#define SERVER_PRINT_SIMPLE 1
 //#define SERVER_PRINT_VERBOSE 1
 
 #if SERVER_PRINT_VERBOSE
@@ -2192,6 +2192,7 @@ void test_packing()
     LOGI("u64: %llu  =  %llu", u64_0, u64_1);
 }
 
+#define BPW(a,b,c) {if(!bitpack_write(a,b,c)) printf("ERROR: %d\n", __LINE__);}
 
 static void pack_players_bp(Packet* pkt, ClientInfo* cli)
 {
@@ -2202,7 +2203,7 @@ static void pack_players_bp(Packet* pkt, ClientInfo* cli)
             player_count++;
     }
 
-    bitpack_write(&server.bp, 4,  (uint32_t)player_count);
+    BPW(&server.bp, 4,  (uint32_t)player_count);
 
     for(int i = 0; i < MAX_CLIENTS; ++i)
     {
@@ -2212,42 +2213,42 @@ static void pack_players_bp(Packet* pkt, ClientInfo* cli)
 
             // LOGN("Packing player %d (%d)", i, server.clients[i].client_id);
 
-            bitpack_write(&server.bp, 3,  (uint32_t)i);
-            bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.x);
-            bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.y);
-            bitpack_write(&server.bp, 6,  (uint32_t)p->phys.pos.z);
-            bitpack_write(&server.bp, 5,  (uint32_t)p->sprite_index+p->anim.curr_frame);
-            bitpack_write(&server.bp, 7,  (uint32_t)p->curr_room);
-            bitpack_write(&server.bp, 4,  (uint32_t)p->phys.hp);
-            bitpack_write(&server.bp, 16, (uint32_t)(p->highlighted_item_id+1));
+            BPW(&server.bp, 3,  (uint32_t)i);
+            BPW(&server.bp, 10, (uint32_t)p->phys.pos.x);
+            BPW(&server.bp, 10, (uint32_t)p->phys.pos.y);
+            BPW(&server.bp, 6,  (uint32_t)p->phys.pos.z);
+            BPW(&server.bp, 5,  (uint32_t)p->sprite_index+p->anim.curr_frame);
+            BPW(&server.bp, 7,  (uint32_t)p->curr_room);
+            BPW(&server.bp, 4,  (uint32_t)p->phys.hp);
+            BPW(&server.bp, 16, (uint32_t)(p->highlighted_item_id+1));
 
-            bitpack_write(&server.bp, 5, (uint32_t)(p->skill_count));
+            BPW(&server.bp, 5, (uint32_t)(p->skill_count));
             for(int j = 0; j < p->skill_count; ++j)
             {
-                bitpack_write(&server.bp, 8, (uint32_t)(p->skills[j]));
+                BPW(&server.bp, 8, (uint32_t)(p->skills[j]));
             }
 
-            bitpack_write(&server.bp, 12, (uint32_t)(p->xp));
-            bitpack_write(&server.bp, 5, (uint32_t)(p->level));
-            bitpack_write(&server.bp, 5, (uint32_t)(p->new_levels));
+            BPW(&server.bp, 12, (uint32_t)(p->xp));
+            BPW(&server.bp, 5, (uint32_t)(p->level));
+            BPW(&server.bp, 5, (uint32_t)(p->new_levels));
 
-            bitpack_write(&server.bp, 3, (uint32_t)(p->skill_selection));
-            bitpack_write(&server.bp, 3, (uint32_t)(p->num_skill_selection_choices));
+            BPW(&server.bp, 3, (uint32_t)(p->skill_selection));
+            BPW(&server.bp, 3, (uint32_t)(p->num_skill_selection_choices));
             for(int j = 0; j < p->num_skill_selection_choices; ++j)
             {
-                bitpack_write(&server.bp, 8, (uint32_t)(p->skill_choices[j]));
+                BPW(&server.bp, 8, (uint32_t)(p->skill_choices[j]));
             }
 
-            bitpack_write(&server.bp, 4,  (uint32_t)p->gauntlet_selection);
-            bitpack_write(&server.bp, 4,  (uint32_t)p->gauntlet_slots);
+            BPW(&server.bp, 4,  (uint32_t)p->gauntlet_selection);
+            BPW(&server.bp, 4,  (uint32_t)p->gauntlet_slots);
 
             for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
-                bitpack_write(&server.bp, 6,  (uint32_t)(p->gauntlet[g].type + 1));
+                BPW(&server.bp, 6,  (uint32_t)(p->gauntlet[g].type + 1));
 
-            bitpack_write(&server.bp, 1, (uint32_t)(p->invulnerable_temp ? 1 : 0));
-            bitpack_write(&server.bp, 6, (uint32_t)p->invulnerable_temp_time);
-            bitpack_write(&server.bp, 4, (uint32_t)p->door);
-            bitpack_write(&server.bp, 1, (uint32_t)(p->phys.dead ? 1 : 0));
+            BPW(&server.bp, 1, (uint32_t)(p->invulnerable_temp ? 1 : 0));
+            BPW(&server.bp, 6, (uint32_t)p->invulnerable_temp_time);
+            BPW(&server.bp, 4, (uint32_t)p->door);
+            BPW(&server.bp, 1, (uint32_t)(p->phys.dead ? 1 : 0));
         }
     }
 }
@@ -2625,7 +2626,7 @@ static void pack_creatures_bp(Packet* pkt, ClientInfo* cli)
         num_visible_creatures++;
     }
 
-    bitpack_write(&server.bp, 8,  (uint32_t)num_visible_creatures);
+    BPW(&server.bp, 8,  (uint32_t)num_visible_creatures);
 
     for(int i = 0; i < num_creatures; ++i)
     {
@@ -2638,19 +2639,19 @@ static void pack_creatures_bp(Packet* pkt, ClientInfo* cli)
         uint8_t g = (c->color >>  8) & 0xFF;
         uint8_t b = (c->color >>  0) & 0xFF;
 
-        bitpack_write(&server.bp, 16, (uint32_t)c->id);
-        bitpack_write(&server.bp, 6,  (uint32_t)c->type);
-        bitpack_write(&server.bp, 10, (uint32_t)c->phys.pos.x);
-        bitpack_write(&server.bp, 10, (uint32_t)c->phys.pos.y);
-        bitpack_write(&server.bp, 6,  (uint32_t)c->phys.pos.z);
-        bitpack_write(&server.bp, 8,  (uint32_t)c->phys.width);
-        bitpack_write(&server.bp, 6,  (uint32_t)c->sprite_index);
-        bitpack_write(&server.bp, 7,  (uint32_t)c->curr_room);
-        bitpack_write(&server.bp, 5,  (uint32_t)c->phys.hp);
+        BPW(&server.bp, 16, (uint32_t)c->id);
+        BPW(&server.bp, 6,  (uint32_t)c->type);
+        BPW(&server.bp, 10, (uint32_t)c->phys.pos.x);
+        BPW(&server.bp, 10, (uint32_t)c->phys.pos.y);
+        BPW(&server.bp, 6,  (uint32_t)c->phys.pos.z);
+        BPW(&server.bp, 8,  (uint32_t)c->phys.width);
+        BPW(&server.bp, 6,  (uint32_t)c->sprite_index);
+        BPW(&server.bp, 7,  (uint32_t)c->curr_room);
+        BPW(&server.bp, 5,  (uint32_t)c->phys.hp);
 
-        bitpack_write(&server.bp, 8,  (uint32_t)r);
-        bitpack_write(&server.bp, 8,  (uint32_t)g);
-        bitpack_write(&server.bp, 8,  (uint32_t)b);
+        BPW(&server.bp, 8,  (uint32_t)r);
+        BPW(&server.bp, 8,  (uint32_t)g);
+        BPW(&server.bp, 8,  (uint32_t)b);
     }
 }
 
@@ -2812,7 +2813,7 @@ static void pack_projectiles_bp(Packet* pkt, ClientInfo* cli)
         num_visible_projectiles++;
     }
 
-    bitpack_write(&server.bp, 12,  (uint32_t)num_visible_projectiles);
+    BPW(&server.bp, 12,  (uint32_t)num_visible_projectiles);
 
     for(int i = 0; i < num_projectiles; ++i)
     {
@@ -2825,17 +2826,17 @@ static void pack_projectiles_bp(Packet* pkt, ClientInfo* cli)
         uint8_t g = (p->color >>  8) & 0xFF;
         uint8_t b = (p->color >>  0) & 0xFF;
 
-        bitpack_write(&server.bp, 16, (uint32_t)p->id);
-        bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.x);
-        bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.y);
-        bitpack_write(&server.bp, 6,  (uint32_t)p->phys.pos.z);
-        bitpack_write(&server.bp, 8,  (uint32_t)r);
-        bitpack_write(&server.bp, 8,  (uint32_t)g);
-        bitpack_write(&server.bp, 8,  (uint32_t)b);
-        bitpack_write(&server.bp, 3,  (uint32_t)(p->player_id));
-        bitpack_write(&server.bp, 7,  (uint32_t)(p->curr_room));
-        bitpack_write(&server.bp, 8,  (uint32_t)(p->def.scale*255.0f));
-        bitpack_write(&server.bp, 1,  (uint32_t)(p->from_player ? 0x01 : 0x00));
+        BPW(&server.bp, 16, (uint32_t)p->id);
+        BPW(&server.bp, 10, (uint32_t)p->phys.pos.x);
+        BPW(&server.bp, 10, (uint32_t)p->phys.pos.y);
+        BPW(&server.bp, 6,  (uint32_t)p->phys.pos.z);
+        BPW(&server.bp, 8,  (uint32_t)r);
+        BPW(&server.bp, 8,  (uint32_t)g);
+        BPW(&server.bp, 8,  (uint32_t)b);
+        BPW(&server.bp, 3,  (uint32_t)(p->player_id));
+        BPW(&server.bp, 7,  (uint32_t)(p->curr_room));
+        BPW(&server.bp, 8,  (uint32_t)(p->def.scale*255.0f));
+        BPW(&server.bp, 1,  (uint32_t)(p->from_player ? 0x01 : 0x00));
     }
 }
 
@@ -3067,7 +3068,7 @@ static void pack_items_bp(Packet* pkt, ClientInfo* cli)
         num_visible_items++;
     }
 
-    bitpack_write(&server.bp, 6,  (uint32_t)num_visible_items);
+    BPW(&server.bp, 6,  (uint32_t)num_visible_items);
 
     for(int i = 0; i < num_items; ++i)
     {
@@ -3079,15 +3080,15 @@ static void pack_items_bp(Packet* pkt, ClientInfo* cli)
         if(it->picked_up)
             continue;
 
-        bitpack_write(&server.bp, 16, (uint32_t)it->id);
-        bitpack_write(&server.bp, 6,  (uint32_t)(it->type + 1));
-        bitpack_write(&server.bp, 10, (uint32_t)it->phys.pos.x);
-        bitpack_write(&server.bp, 10, (uint32_t)it->phys.pos.y);
-        bitpack_write(&server.bp, 6,  (uint32_t)it->phys.pos.z);
-        bitpack_write(&server.bp, 7,  (uint32_t)it->curr_room);
-        bitpack_write(&server.bp, 9,  (uint32_t)(it->angle));
-        bitpack_write(&server.bp, 1,  (uint32_t)(it->highlighted ? 0x01 : 0x00));
-        bitpack_write(&server.bp, 1,  (uint32_t)(it->used ? 0x01 : 0x00));
+        BPW(&server.bp, 16, (uint32_t)it->id);
+        BPW(&server.bp, 6,  (uint32_t)(it->type + 1));
+        BPW(&server.bp, 10, (uint32_t)it->phys.pos.x);
+        BPW(&server.bp, 10, (uint32_t)it->phys.pos.y);
+        BPW(&server.bp, 6,  (uint32_t)it->phys.pos.z);
+        BPW(&server.bp, 7,  (uint32_t)it->curr_room);
+        BPW(&server.bp, 9,  (uint32_t)(it->angle));
+        BPW(&server.bp, 1,  (uint32_t)(it->highlighted ? 0x01 : 0x00));
+        BPW(&server.bp, 1,  (uint32_t)(it->used ? 0x01 : 0x00));
     }
 }
 
@@ -3185,21 +3186,21 @@ static void pack_decals(Packet* pkt, ClientInfo* cli)
 
 static void pack_decals_bp(Packet* pkt, ClientInfo* cli)
 {
-    bitpack_write(&server.bp, 7,  (uint32_t)decal_list->count);
+    BPW(&server.bp, 7,  (uint32_t)decal_list->count);
 
     for(int i = 0; i < decal_list->count; ++i)
     {
         Decal* d = &decals[i];
 
-        bitpack_write(&server.bp, 5,  (uint32_t)d->sprite_index);
-        bitpack_write(&server.bp, 32, (uint32_t)d->tint);
-        bitpack_write(&server.bp, 8,  (uint32_t)(d->scale*255.0f));
-        bitpack_write(&server.bp, 8,  (uint32_t)(d->rotation*255.0f));
-        bitpack_write(&server.bp, 8,  (uint32_t)(d->opacity*255.0f));
-        bitpack_write(&server.bp, 8,  (uint32_t)(d->ttl*10.0f));
-        bitpack_write(&server.bp, 10, (uint32_t)d->pos.x);
-        bitpack_write(&server.bp, 10, (uint32_t)d->pos.y);
-        bitpack_write(&server.bp, 7, (uint32_t)d->room);
+        BPW(&server.bp, 5,  (uint32_t)d->sprite_index);
+        BPW(&server.bp, 32, (uint32_t)d->tint);
+        BPW(&server.bp, 8,  (uint32_t)(d->scale*255.0f));
+        BPW(&server.bp, 8,  (uint32_t)(d->rotation*255.0f));
+        BPW(&server.bp, 8,  (uint32_t)(d->opacity*255.0f));
+        BPW(&server.bp, 8,  (uint32_t)(d->ttl*10.0f));
+        BPW(&server.bp, 10, (uint32_t)d->pos.x);
+        BPW(&server.bp, 10, (uint32_t)d->pos.y);
+        BPW(&server.bp, 7, (uint32_t)d->room);
     }
 }
 
@@ -3270,7 +3271,7 @@ static void pack_other_bp(Packet* pkt, ClientInfo* cli)
 
     // doors locked
 
-    bitpack_write(&server.bp, 1,  (uint32_t)(room->doors_locked ? 0x01 : 0x00));
+    BPW(&server.bp, 1,  (uint32_t)(room->doors_locked ? 0x01 : 0x00));
 }
 
 static void unpack_other_bp(Packet* pkt, int* offset)
@@ -3319,34 +3320,34 @@ static void pack_events(Packet* pkt, ClientInfo* cli)
 
 static void pack_events_bp(Packet* pkt, ClientInfo* cli)
 {
-    bitpack_write(&server.bp, 8,  (uint32_t)server.event_count);
+    BPW(&server.bp, 8,  (uint32_t)server.event_count);
 
     for(int i = server.event_count-1; i >= 0; --i)
     {
         NetEvent* ev = &server.events[i];
 
-        bitpack_write(&server.bp, 4,  (uint32_t)ev->type);
+        BPW(&server.bp, 4,  (uint32_t)ev->type);
 
         switch(ev->type)
         {
             case EVENT_TYPE_PARTICLES:
             {
-                bitpack_write(&server.bp, 5,  (uint32_t)ev->data.particles.effect_index);
-                bitpack_write(&server.bp, 10, (uint32_t)ev->data.particles.pos.x);
-                bitpack_write(&server.bp, 10, (uint32_t)ev->data.particles.pos.y);
-                bitpack_write(&server.bp, 8,  (uint32_t)(255.0f * ev->data.particles.scale));
-                bitpack_write(&server.bp, 32, (uint32_t)ev->data.particles.color1);
-                bitpack_write(&server.bp, 32, (uint32_t)ev->data.particles.color2);
-                bitpack_write(&server.bp, 32, (uint32_t)ev->data.particles.color3);
-                bitpack_write(&server.bp, 8,  (uint32_t)(10.0f * ev->data.particles.lifetime));
-                bitpack_write(&server.bp, 7,  (uint32_t)(ev->data.particles.room_index));
+                BPW(&server.bp, 5,  (uint32_t)ev->data.particles.effect_index);
+                BPW(&server.bp, 10, (uint32_t)ev->data.particles.pos.x);
+                BPW(&server.bp, 10, (uint32_t)ev->data.particles.pos.y);
+                BPW(&server.bp, 8,  (uint32_t)(255.0f * ev->data.particles.scale));
+                BPW(&server.bp, 32, (uint32_t)ev->data.particles.color1);
+                BPW(&server.bp, 32, (uint32_t)ev->data.particles.color2);
+                BPW(&server.bp, 32, (uint32_t)ev->data.particles.color3);
+                BPW(&server.bp, 8,  (uint32_t)(10.0f * ev->data.particles.lifetime));
+                BPW(&server.bp, 7,  (uint32_t)(ev->data.particles.room_index));
 
             } break;
 
             case EVENT_TYPE_NEW_LEVEL:
             {
-                bitpack_write(&server.bp, 32,  (uint32_t)level_seed);
-                bitpack_write(&server.bp,  8,  (uint32_t)level_rank);
+                BPW(&server.bp, 32,  (uint32_t)level_seed);
+                BPW(&server.bp,  8,  (uint32_t)level_rank);
             }
 
             default:

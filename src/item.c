@@ -90,38 +90,38 @@ static void item_timed_func_consumable_start(Item* pu, Player* p)
     float ttl = 10.0;
     switch(pu->type)
     {
-            case ITEM_GEM_RED:
-            case ITEM_GEM_GREEN:
-            case ITEM_GEM_BLUE:
-            case ITEM_GEM_WHITE:
-            case ITEM_GEM_YELLOW:
-            case ITEM_GEM_PURPLE:
-                ttl = 20.0;
-                break;
+        case ITEM_GEM_RED:
+        case ITEM_GEM_GREEN:
+        case ITEM_GEM_BLUE:
+        case ITEM_GEM_WHITE:
+        case ITEM_GEM_YELLOW:
+        case ITEM_GEM_PURPLE:
+            ttl = 20.0;
+            break;
 
-            case ITEM_SHAMROCK:
-                ttl = 10.0;
-                p->invulnerable = true;
-                break;
+        case ITEM_SHAMROCK:
+            ttl = 10.0;
+            p->invulnerable = true;
+            break;
 
-            case ITEM_DRAGON_EGG:
-                ttl = 30.0;
-                p->phys.hp_max += 4;
-                p->phys.hp = p->phys.hp_max;
-                break;
+        case ITEM_DRAGON_EGG:
+            ttl = 30.0;
+            p->phys.hp_max += 4;
+            p->phys.hp = p->phys.hp_max;
+            break;
 
-            case ITEM_RUBY_RING:
-                ttl = 30.0;
-                break;
+        case ITEM_RUBY_RING:
+            ttl = 30.0;
+            break;
 
-            case ITEM_POTION_STRENGTH:
-            case ITEM_POTION_SPEED:
-            case ITEM_POTION_RANGE:
-            case ITEM_POTION_PURPLE:
-                ttl = 15.0;
-                break;
+        case ITEM_POTION_STRENGTH:
+        case ITEM_POTION_SPEED:
+        case ITEM_POTION_RANGE:
+        case ITEM_POTION_PURPLE:
+            ttl = 15.0;
+            break;
 
-            default: break;
+        default: break;
     }
 
     for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
