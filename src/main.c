@@ -676,13 +676,6 @@ void game_generate_level(unsigned int _seed, int _rank)
         player_send_to_level_start(&players[i]);
     }
 
-    // Room* room = level_get_room_by_index(&level, player->curr_room);
-    // Vector2f pos = {0};
-    // for(int i = 0; i < 5; ++i)
-    // {
-    //     level_get_rand_floor_tile(room, NULL, &pos);
-    //     item_add(ITEM_CHEST, pos.x, pos.y, player->curr_room);
-    // }
 }
 
 void init()
@@ -1563,7 +1556,7 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
                     if(client_chat_enabled)
                     {
                         // printf("client chat enabled\n");
-                        player->actions[PLAYER_ACTION_ACTIVATE].state = false;
+                        player->actions[PLAYER_ACTION_ACTIVATE].state = false;  //must manually set the state to false since key mode gets changed
                         player_ignore_input = 2;
                         window_controls_set_text_buf(chat_text,128);
                         window_controls_set_key_mode(KEY_MODE_TEXT);

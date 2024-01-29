@@ -20,7 +20,6 @@ int xp_levels[] = {100,120,140,160,180,200};
 int skill_selection = 0;
 
 int player_ignore_input = 0;
-char* player_names[MAX_PLAYERS+1]; // used for name dropdown. +1 for ALL option.
 
 static bool _initialized = false;
 
@@ -34,7 +33,6 @@ char* class_strs[] =
 int class_image_spaceman = -1;
 int class_image_robot = -1;
 
-// int player_image = -1;
 int shadow_image = -1;
 int card_image = -1;
 
@@ -164,18 +162,17 @@ void player_init()
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         Player* p = &players[i];
-
         p->index = i;
-        // memset(p->settings.name, PLAYER_NAME_MAX, 0);
-        // sprintf(p->settings.name, "Player %d", i+1);
 
         player_set_defaults(p);
 
-        p->active = false;
+        if(strlen(p->settings.name) == 0)
+        {
+            char* nms[] = {"Randy","Jenger","Peepa","The Hammer"};
+            strcpy(p->settings.name, nms[rand()%4]);
+        }
 
-        // //@TEST
-        // p->timed_items[i] = ITEM_GEM_RED;
-        // p->timed_items_ttl[i] = 5.0;
+        p->active = false;
     }
 }
 
@@ -291,35 +288,6 @@ int player_get_active_count()
     return num;
 }
 
-// int player_names_build(bool include_all, bool only_active)
-// {
-//     int count = 0;
-
-//     if(include_all)
-//     {
-//         if(player_names[0]) free(player_names[0]);
-//         player_names[0] = calloc(4, sizeof(char));
-//         strncpy(player_names[0],"ALL",3);
-//         count++;
-//     }
-
-//     // fill out useful player_names array
-//     for(int i = 0; i < MAX_PLAYERS; ++i)
-//     {
-//         Player* p = &players[i];
-//         if(only_active && !p->active) continue;
-
-//         if(player_names[count]) free(player_names[count]);
-
-//         int namelen  = strlen(p->name);
-//         player_names[count] = calloc(namelen, sizeof(char));
-//         strncpy(player_names[count], p->name, namelen);
-//         count++;
-//     }
-
-//     return count;
-// }
-
 void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i tile)
 {
     p->curr_room = room_index;
@@ -350,22 +318,6 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
 
     p->ignore_player_collision = true;
 }
-
-// void player_send_to_room(Player* p, uint8_t room_index)
-// {
-//     p->curr_room = room_index;
-//     p->transition_room = p->curr_room;
-//     Room* room = level_get_room_by_index(&level, room_index);
-//     if(!room)
-//     {
-//         LOGE("room is null");
-//         return;
-//     }
-//     Vector2f pos = {0};
-//     level_get_center_floor_tile(room, NULL, &pos);
-//     p->phys.pos.x = pos.x;
-//     p->phys.pos.y = pos.y;
-// }
 
 void player_send_to_level_start(Player* p)
 {
@@ -696,39 +648,24 @@ void player_start_room_transition(Player* p)
         Dir other_door = DIR_NONE;
         uint8_t sprite_index = 0;
 
-        // player_send_to_room(p, room_index, false, level_get_door_tile_coords(DIR_DOWN));
-
         switch(p->door)
         {
             case DIR_UP:
-                // p->curr_room = (uint8_t)level_get_room_index(roomxy.x, roomxy.y-1);
-                // player_set_collision_pos(p, p->phys.pos.x, y1);
-                // player_send_to_room(p, level_get_room_index(roomxy.x, roomxy.y-1), false, level_get_door_tile_coords(DIR_DOWN));
-                // player_set_sprite_index(p, SPRITE_UP);
                 other_door = DIR_DOWN;
                 sprite_index = SPRITE_UP;
                 break;
 
             case DIR_RIGHT:
-                // p->curr_room = (uint8_t)level_get_room_index(roomxy.x+1, roomxy.y);
-                // player_set_collision_pos(p, x1, p->phys.pos.y);
-                // player_set_sprite_index(p, SPRITE_RIGHT);
                 other_door = DIR_LEFT;
                 sprite_index = SPRITE_RIGHT;
                 break;
 
             case DIR_DOWN:
-                // p->curr_room = (uint8_t)level_get_room_index(roomxy.x, roomxy.y+1);
-                // player_set_collision_pos(p, p->phys.pos.x, y1);
-                // player_set_sprite_index(p, SPRITE_DOWN);
                 other_door = DIR_UP;
                 sprite_index = SPRITE_DOWN;
                 break;
 
             case DIR_LEFT:
-                // p->curr_room = (uint8_t)level_get_room_index(roomxy.x-1, roomxy.y);
-                // player_set_collision_pos(p, x1, p->phys.pos.y);
-                // player_set_sprite_index(p, SPRITE_LEFT);
                 other_door = DIR_RIGHT;
                 sprite_index = SPRITE_LEFT;
                 break;
@@ -753,21 +690,6 @@ void player_start_room_transition(Player* p)
             // player_set_sprite_index(p2, p->sprite_index);
             // p2->door = p->door;
         }
-
-        // for(int i = 0; i < MAX_PLAYERS; ++i)
-        // {
-        //     Player* p2 = &players[i];
-        //     if(p == p2) continue;
-        //     if(!p2->active) continue;
-        //     if(p2->curr_room == p->curr_room) continue;
-        //     if(p->transition_room != p2->curr_room) continue;
-
-        //     p2->curr_room = p->curr_room;
-        //     p2->phys.pos.x = p->phys.pos.x;
-        //     p2->phys.pos.y = p->phys.pos.y;
-        //     player_set_sprite_index(p2, p->sprite_index);
-        //     p2->door = p->door;
-        // }
 
         // printf("start room transition: %d -> %d\n", p->transition_room, p->curr_room);
     }
@@ -2321,7 +2243,7 @@ void player_handle_collision(Player* p, Entity* e)
         {
             Player* p2 = (Player*)e->ptr;
 
-            if(p->ignore_player_collision || p2->ignore_player_collision) return;
+            if(p->ignore_player_collision && p2->ignore_player_collision) return;
 
             CollisionInfo ci = {0};
 
