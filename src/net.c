@@ -884,7 +884,7 @@ int net_server_start()
     server.info.socket = sock;
 
 #if BITPACK
-    bitpack_create(&server.bp, 1024);
+    bitpack_create(&server.bp, BITPACK_SIZE);
 #endif
 
     LOGN("Server Started with tick rate %f.", TICK_RATE);
@@ -1342,7 +1342,7 @@ bool net_client_init()
     circbuf_create(&client.input_packets,10, sizeof(Packet));
 
 #if BITPACK
-    bitpack_create(&client.bp, 1024);
+    bitpack_create(&client.bp, BITPACK_SIZE);
 #endif
 
     return true;
