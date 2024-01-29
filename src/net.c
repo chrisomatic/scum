@@ -2224,21 +2224,19 @@ static void pack_players_bp(Packet* pkt, ClientInfo* cli)
             bitpack_write(&server.bp, 5, (uint32_t)(p->skill_count));
             for(int j = 0; j < p->skill_count; ++j)
             {
-                bitpack_write(&server.bp, 8, (uint32_t)(p->skill_count));
-                pack_u8(pkt, (uint8_t)p->skills[j]);
+                bitpack_write(&server.bp, 8, (uint32_t)(p->skills[j]));
             }
 
-            pack_u16(pkt, (uint16_t)p->xp);
-            pack_u8(pkt, p->level);
-            pack_u8(pkt, p->new_levels);
+            bitpack_write(&server.bp, 12, (uint32_t)(p->xp));
+            bitpack_write(&server.bp, 5, (uint32_t)(p->level));
+            bitpack_write(&server.bp, 5, (uint32_t)(p->new_levels));
 
-            pack_u8(pkt, p->skill_selection);
-            pack_u8(pkt, p->num_skill_selection_choices);
-            for(int j = 0; j < MAX_SKILL_CHOICES; ++j)
+            bitpack_write(&server.bp, 3, (uint32_t)(p->skill_selection));
+            bitpack_write(&server.bp, 3, (uint32_t)(p->num_skill_selection_choices));
+            for(int j = 0; j < p->num_skill_selection_choices; ++j)
             {
-                pack_u16(pkt, p->skill_choices[j]);
+                bitpack_write(&server.bp, 8, (uint32_t)(p->skill_choices[j]));
             }
-
 
             bitpack_write(&server.bp, 4,  (uint32_t)p->gauntlet_selection);
             bitpack_write(&server.bp, 4,  (uint32_t)p->gauntlet_slots);
@@ -2344,6 +2342,23 @@ static void unpack_players_bp(Packet* pkt, int* offset)
         uint32_t c_room              = bitpack_read(&client.bp, 7);
         uint32_t hp                  = bitpack_read(&client.bp, 4);
         uint32_t highlighted_item_id = bitpack_read(&client.bp, 16);
+        uint32_t skill_count         = bitpack_read(&client.bp, 5);
+
+        uint32_t skills[PLAYER_MAX_SKILLS] = {0};
+        for(int j = 0; j < skill_count; ++j)
+            skills[j] =  bitpack_read(&client.bp, 8);
+
+        uint32_t xp                  = bitpack_read(&client.bp, 12);
+        uint32_t level               = bitpack_read(&client.bp, 5);
+        uint32_t new_levels          = bitpack_read(&client.bp, 5);
+
+        uint32_t skill_selection     = bitpack_read(&client.bp, 3);
+        uint32_t num_skill_choices   = bitpack_read(&client.bp, 3);
+
+        uint32_t skill_choices[MAX_SKILL_CHOICES] = {0};
+        for(int j = 0; j < num_skill_choices; ++j)
+            skill_choices[j] =  bitpack_read(&client.bp, 8);
+
         uint32_t gauntlet_selection  = bitpack_read(&client.bp, 4);
         uint32_t gauntlet_slots      = bitpack_read(&client.bp, 4);
 
@@ -2373,6 +2388,24 @@ static void unpack_players_bp(Packet* pkt, int* offset)
         p->phys.hp  = (uint8_t)hp;
 
         p->highlighted_item_id = ((int32_t)highlighted_item_id)-1;
+
+        p->skill_count = (int)skill_count;
+        for(int j = 0; j < p->skill_count; ++j)
+        {
+            p->skills[j] = (int)skills[j];
+        }
+
+        p->xp = (uint16_t)xp;
+        p->level = (uint8_t)level;
+        p->new_levels = (uint8_t)new_levels;
+        p->skill_selection = (uint8_t)skill_selection;
+        p->num_skill_selection_choices = (uint8_t)num_skill_choices;
+
+        for(int j = 0; j < MAX_SKILL_CHOICES; ++j)
+        {
+            p->skill_choices[j] = (uint16_t)skill_choices[j];
+        }
+
         p->gauntlet_selection = (uint8_t)gauntlet_selection;
         p->gauntlet_slots = (uint8_t)gauntlet_slots;
         for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
@@ -2475,7 +2508,6 @@ static void unpack_players(Packet* pkt, int* offset)
             p->skills[j] = (int)unpack_u8(pkt, offset);
         }
 
-        int xp = p->xp;
         p->xp = (int)unpack_u16(pkt, offset);
 
         p->level = unpack_u8(pkt, offset);
