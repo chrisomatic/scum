@@ -85,6 +85,7 @@ Vector2f transition_targets = {0};
 Level level;
 unsigned int level_seed = 0;
 int level_rank = 0;
+int level_transition = 0;
 
 DrawLevelParams minimap_params = {0};
 DrawLevelParams bigmap_params = {0};
@@ -240,7 +241,7 @@ void set_game_state(GameState state)
                 bool diff = room_file_load_all(false);
                 if(diff)
                 {
-                    game_generate_level(level_seed, level_rank);
+                    game_generate_level(level_seed, level_rank, 0);
                 }
                 net_client_disconnect();
                 set_menu_keys();
@@ -582,7 +583,7 @@ void start_server()
     level_seed = rand();
 
     level_init();
-    game_generate_level(level_seed, 1);
+    game_generate_level(level_seed, 1, 0);
 
     projectile_init();
     explosion_init();
@@ -591,16 +592,51 @@ void start_server()
     net_server_start();
 }
 
+float level_trans_time = 0.0;
+int level_transition_state = 0;
+float level_transition_opacity = 0.0;
 
-void game_generate_level(unsigned int _seed, int _rank)
+// 0: no transition
+// 1: fade up transition
+// 2: fade down, then up transition
+void game_generate_level(unsigned int _seed, int _rank, int transition)
 {
+    if(role == ROLE_SERVER)
+        transition = 0;
+
     level_seed = _seed;
     level_rank = _rank;
+    level_transition = transition;
 
     creature_clear_all();
     item_clear_all();
 
-    level = level_generate(level_seed, level_rank);
+    if(role == ROLE_CLIENT || role == ROLE_LOCAL)
+    {
+        if(level_transition == 0)
+        {
+            level = level_generate(level_seed, level_rank);
+        }
+        else if(level_transition == 1)
+        {
+            level = level_generate(level_seed, level_rank);
+            level_trans_time = 0.0;
+            level_transition_state = 2;
+        }
+        else if(level_transition == 2)
+        {
+            level_trans_time = 0.0;
+            level_transition_state = 1;
+        }
+    }
+
+    if(role == ROLE_CLIENT)
+        return;
+
+    if(role == ROLE_SERVER)
+    {
+        level = level_generate(level_seed, level_rank);
+    }
 
     LOGI("  Valid Rooms");
     for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
@@ -670,10 +706,13 @@ void game_generate_level(unsigned int _seed, int _rank)
         }
     }
 
-    LOGI("Send to level start");
-    for(int i = 0; i < MAX_PLAYERS; ++i)
+    if(level_transition <= 1)
     {
-        player_send_to_level_start(&players[i]);
+        LOGI("Send to level start");
+        for(int i = 0; i < MAX_PLAYERS; ++i)
+        {
+            player_send_to_level_start(&players[i]);
+        }
     }
 
 }
@@ -765,7 +804,7 @@ void init()
 
     if(role == ROLE_LOCAL)
     {
-        game_generate_level(0, 5);
+        game_generate_level(0, 5, 0);
     }
 
     // camera_zoom(cam_zoom, true);
@@ -963,7 +1002,7 @@ void update_main_menu(float dt)
         else if(STR_EQUAL(s, "New Game"))
         {
             player_init();
-            game_generate_level(rand(), 1);
+            game_generate_level(rand(), 1, 0);
 
             role = ROLE_LOCAL;
             set_game_state(GAME_STATE_PLAYING);
@@ -1057,6 +1096,7 @@ void update(float dt)
 
     if(!paused)
     {
+
         lighting_point_light_clear_all();
         level_update(dt);
         player_update_all(dt);
@@ -1072,6 +1112,37 @@ void update(float dt)
         entity_handle_status_effects(dt);
 
         handle_room_completion();
+
+        const float transition_duration = 0.6;
+        // fade from black to clear
+        if(level_transition_state == 2)
+        {
+            level_trans_time += dt;
+
+            level_transition_opacity = 1.0 - RANGE(level_trans_time / transition_duration, 0.0, 1.0);
+
+            if(level_trans_time >= transition_duration)
+            {
+                // printf("finished fading to clear\n");
+                level_transition_state = 0;
+                level_trans_time = 0.0;
+            }
+        }
+        // fade from clear to black
+        else if(level_transition_state == 1)
+        {
+            level_trans_time += dt;
+
+            level_transition_opacity = RANGE(level_trans_time / transition_duration, 0.0, 1.0);
+
+            if(level_trans_time >= transition_duration)
+            {
+                // printf("finished fading to black\n");
+                level_transition_state = 2;
+                level_trans_time = 0.0;
+                game_generate_level(level_seed, level_rank, 0);
+            }
+        }
     }
 
     camera_set(false);
@@ -1451,6 +1522,7 @@ void draw_settings()
     text_list_draw(text_lst);
 }
 
+
 void draw()
 {
 
@@ -1530,6 +1602,15 @@ void draw()
     gfx_draw_lines();
 
     draw_chat_box();
+
+
+    if(level_transition_state != 0)
+    {
+        Rect cr = get_camera_rect();
+        // Rect cr = RECT(CENTER_X, CENTER_Y)
+        gfx_draw_rect(&cr, COLOR_BLACK, NOT_SCALED, NO_ROTATION, level_transition_opacity, true, IN_WORLD);
+    }
+
 }
 
 

@@ -68,17 +68,20 @@ static void item_func_chest(Item* pu, Player* p)
 
 static void item_func_new_level(Item* pu, Player* p)
 {
+    printf("you shouldn't be here!!!  >:(\n");
+    return;
+
     pu->picked_up = true;
     // item_remove(pu);
 
     int seed = time(0)+rand()%1000;
-    game_generate_level(seed, level_rank+1);
+    game_generate_level(seed, level_rank+1, 2);
 
-    if(role == ROLE_SERVER)
-    {
-        NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
-        net_server_add_event(&ev);
-    }
+    // if(role == ROLE_SERVER)
+    // {
+    //     NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
+    //     net_server_add_event(&ev);
+    // }
 }
 
 // called when player consumes the item

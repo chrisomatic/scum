@@ -51,11 +51,6 @@ void player_set_defaults(Player* p)
 {
     p->phys.dead = false;
 
-    player_set_class(p, PLAYER_CLASS_SPACEMAN);
-
-    p->phys.pos.x = CENTER_X;
-    p->phys.pos.y = CENTER_Y;
-    p->phys.pos.z = 0.0;
 
     p->phys.speed = 700.0;
     p->phys.speed_factor = 1.0;
@@ -77,11 +72,7 @@ void player_set_defaults(Player* p)
     p->invulnerable = false;
     p->invulnerable_temp_time = false;
 
-
-    player_set_sprite_index(p, 4);
-
     p->phys.radius = calc_radius_from_rect(&p->phys.collision_rect);
-
 
     p->scale = 1.0;
     p->phys.falling = false;
@@ -163,6 +154,11 @@ void player_init()
     {
         Player* p = &players[i];
         p->index = i;
+        p->phys.pos.x = CENTER_X;
+        p->phys.pos.y = CENTER_Y;
+        p->phys.pos.z = 0.0;
+        player_set_sprite_index(p, 4);
+        player_set_class(p, PLAYER_CLASS_SPACEMAN);
 
         player_set_defaults(p);
 
@@ -518,7 +514,7 @@ void player_die(Player* p)
         player_reset(p2);
     }
 
-    game_generate_level(rand(), level_rank);
+    game_generate_level(rand(), level_rank, 2);
 }
 
 void player_reset(Player* p)
@@ -536,7 +532,7 @@ void player_reset(Player* p)
     }
     */
 
-    player_send_to_level_start(p);
+    // player_send_to_level_start(p);
 }
 
 void player_draw_room_transition()
@@ -976,12 +972,26 @@ void player_update(Player* p, float dt)
                 else
                 {
                     LOGI("Using item type: %d", type);
-                    if(item_props[type].func) item_props[type].func(pu, p);
 
                     if(type == ITEM_NEW_LEVEL)
                     {
+                        DEBUG();
+                        item_remove(pu);
+                        DEBUG();
+                        game_generate_level(rand(), level_rank+1, 2);
+                        DEBUG();
+
+                        if(role == ROLE_SERVER)
+                        {
+                            NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
+                            net_server_add_event(&ev);
+                        }
+
+                        DEBUG();
                         return;
                     }
+
+                    if(item_props[type].func) item_props[type].func(pu, p);
 
                     if(pu->picked_up)
                         item_remove(pu);
