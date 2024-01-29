@@ -1399,7 +1399,6 @@ void player_update(Player* p, float dt)
 
     if(p->last_shoot_action >= PLAYER_ACTION_SHOOT_UP && p->last_shoot_action <= PLAYER_ACTION_SHOOT_RIGHT)
     {
-
         if(p->actions[p->last_shoot_action].toggled_off)
         {
             for(int i = 0; i < 4; ++i)
@@ -1452,6 +1451,7 @@ void player_update(Player* p, float dt)
     // check tiles around player
     handle_room_collision(p);
 
+    if(!p->phys.dead)
     {
         float cx = p->phys.pos.x;
         float cy = p->phys.pos.y;

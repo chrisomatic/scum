@@ -524,7 +524,7 @@ void generate_walls(Level* level)
                     Vector2f up0 = {0.0, 0.0}; Vector2f up1 = {0.0, 0.0};
                     Vector2f dn0 = {0.0, 0.0}; Vector2f dn1 = {0.0, 0.0};
 
-                    TileType tt;
+                    TileType tt = TILE_NONE;
                     TileType tt_prior;
 
                     for(int ri = 0; ri < ROOM_TILE_SIZE_X; ++ri)
@@ -538,6 +538,12 @@ void generate_walls(Level* level)
 
                         bool _up = (tt == TILE_PIT && tt_up != TILE_PIT) || (tt == TILE_BOULDER && tt_up != TILE_BOULDER);
                         bool _dn = (tt == TILE_PIT && tt_dn != TILE_PIT) || (tt == TILE_BOULDER && tt_dn != TILE_BOULDER);
+
+                        if(_up && tt != tt_prior)
+                        {
+                            // wall switched from pit to boulder (or boulder to pit) in same line
+                            add_wall(room, DIR_UP, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &up0, &up1);
+                        }
 
                         if(_up)
                         {
@@ -560,6 +566,11 @@ void generate_walls(Level* level)
                         else if(up0.x > 0.0 && up0.y > 0.0)
                         {
                             add_wall(room, DIR_UP, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &up0, &up1);
+                        }
+
+                        if(_dn && tt != tt_prior)
+                        {
+                            add_wall(room, DIR_DOWN, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &dn0, &dn1);
                         }
 
                         if(_dn)
@@ -588,12 +599,12 @@ void generate_walls(Level* level)
 
                     if(up0.x > 0.0 && up0.y > 0.0)
                     {
-                        add_wall(room, DIR_UP, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &up0, &up1);
+                        add_wall(room, DIR_UP, (tt == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &up0, &up1);
                     }
 
                     if(dn0.x > 0.0 && dn0.y > 0.0)
                     {
-                        add_wall(room, DIR_DOWN, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &dn0, &dn1);
+                        add_wall(room, DIR_DOWN, (tt == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &dn0, &dn1);
                     }
 
                 }
@@ -604,7 +615,7 @@ void generate_walls(Level* level)
                     Vector2f left0 = {0.0, 0.0}; Vector2f left1 = {0.0, 0.0};
                     Vector2f right0 = {0.0, 0.0}; Vector2f right1 = {0.0, 0.0};
 
-                    TileType tt;
+                    TileType tt = TILE_NONE;
                     TileType tt_prior;
 
                     for(int rj = 0; rj < ROOM_TILE_SIZE_Y; ++rj)
@@ -618,6 +629,11 @@ void generate_walls(Level* level)
 
                         bool _left  = (tt == TILE_PIT && tt_left != TILE_PIT) || (tt == TILE_BOULDER && tt_left != TILE_BOULDER);
                         bool _right = (tt == TILE_PIT && tt_right != TILE_PIT) || (tt == TILE_BOULDER && tt_right != TILE_BOULDER);
+
+                        if(_left && (tt != tt_prior))
+                        {
+                            add_wall(room, DIR_LEFT, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &left0, &left1);
+                        }
 
                         if(_left)
                         {
@@ -640,6 +656,11 @@ void generate_walls(Level* level)
                         else if(left0.x > 0.0 && left0.y > 0.0)
                         {
                             add_wall(room, DIR_LEFT, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &left0, &left1);
+                        }
+
+                        if(_right && (tt != tt_prior))
+                        {
+                            add_wall(room, DIR_RIGHT, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &right0, &right1);
                         }
 
                         if(_right)
@@ -668,12 +689,12 @@ void generate_walls(Level* level)
 
                     if(left0.x > 0.0 && left0.y > 0.0)
                     {
-                        add_wall(room, DIR_LEFT, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &left0, &left1);
+                        add_wall(room, DIR_LEFT, (tt == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &left0, &left1);
                     }
 
                     if(right0.x > 0.0 && right0.y > 0.0)
                     {
-                        add_wall(room, DIR_RIGHT, (tt_prior == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &right0, &right1);
+                        add_wall(room, DIR_RIGHT, (tt == TILE_PIT ? WALL_TYPE_PIT : WALL_TYPE_BLOCK), &right0, &right1);
                     }
                 }
             }
@@ -690,15 +711,12 @@ void level_handle_room_collision(Room* room, Physics* phys, int entity_type)
 
     for(int i = 0; i < room->wall_count; ++i)
     {
-
         phys_calc_collision_rect(phys);
 
         Wall* wall = &room->walls[i];
 
         float px = phys->pos.x;
         float py = phys->pos.y;
-
-        wall->highlight = false;
 
         if(entity_type == ENTITY_TYPE_PROJECTILE && (wall->type == WALL_TYPE_PIT || wall->type == WALL_TYPE_INNER))
             continue;
@@ -717,7 +735,7 @@ void level_handle_room_collision(Room* room, Physics* phys, int entity_type)
         if(wall->dir == DIR_DOWN  && phys->vel.y > 0.0) continue;
         if(wall->dir == DIR_LEFT  && phys->vel.x < 0.0) continue;
 
-        wall->highlight = true;
+        if(phys->dead && wall->type != WALL_TYPE_OUTER) continue;
 
         bool collision = false;
 
@@ -1136,7 +1154,17 @@ void room_draw_walls(Room* room)
         float w = ABS(wall->p0.x - wall->p1.x)+1;
         float h = ABS(wall->p0.y - wall->p1.y)+1;
 
-        gfx_draw_rect_xywh_tl(x, y, w, h, wall->highlight ? COLOR_YELLOW : COLOR_WHITE, NOT_SCALED, NO_ROTATION, FULL_OPACITY, true, IN_WORLD);
+        uint32_t color = COLOR_WHITE;
+
+        switch(wall->type)
+        {
+            case WALL_TYPE_BLOCK: color = COLOR_WHITE;  break;
+            case WALL_TYPE_PIT:   color = COLOR_YELLOW; break;
+            case WALL_TYPE_INNER: color = COLOR_CYAN;   break;
+            case WALL_TYPE_OUTER: color = COLOR_RED;    break;
+        }
+
+        gfx_draw_rect_xywh_tl(x, y, w, h, color, NOT_SCALED, NO_ROTATION, FULL_OPACITY, true, IN_WORLD);
     }
 }
 
@@ -1165,7 +1193,6 @@ Level level_generate(unsigned int seed, int rank)
     room_count_treasure = 0;
     room_count_boss = 0;
 
-DEBUG();
     for(int i = 0; i < room_list_count; ++i)
     {
         RoomFileData* rfd = &room_list[i];
@@ -1189,13 +1216,10 @@ DEBUG();
     printf("   # treasure rooms: %d\n",room_count_treasure);
     printf("   # boss rooms: %d\n",room_count_boss);
 
-DEBUG();
     item_clear_all();
-DEBUG();
     creature_clear_all();
     min_depth_reached = false;
 
-DEBUG();
     generate_rooms(&level, level.start.x, level.start.y, DIR_NONE, 0);
 
     for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
@@ -1210,9 +1234,7 @@ DEBUG();
         }
     }
 
-DEBUG();
     generate_walls(&level);
-DEBUG();
     level_print(&level);
 
     return level;

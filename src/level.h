@@ -102,7 +102,6 @@ typedef struct
     Vector2f p1;
     float distance_to_player; // used for sorting walls
     WallType type;
-    bool highlight;
 } Wall;
 
 typedef enum

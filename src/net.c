@@ -24,7 +24,7 @@
 #include "settings.h"
 
 #define COOL_SERVER_PLAYER_LOGIC 1
-#define BITPACK 0
+#define BITPACK 1
 
 //#define SERVER_PRINT_SIMPLE 1
 //#define SERVER_PRINT_VERBOSE 1
@@ -867,7 +867,6 @@ int net_server_start()
 
     memset(server.clients, 0, sizeof(ClientInfo)*MAX_CLIENTS);
     server.num_clients = 0;
-
 
     int sock;
 
@@ -2221,6 +2220,26 @@ static void pack_players_bp(Packet* pkt, ClientInfo* cli)
             bitpack_write(&server.bp, 7,  (uint32_t)p->curr_room);
             bitpack_write(&server.bp, 4,  (uint32_t)p->phys.hp);
             bitpack_write(&server.bp, 16, (uint32_t)(p->highlighted_item_id+1));
+
+            bitpack_write(&server.bp, 5, (uint32_t)(p->skill_count));
+            for(int j = 0; j < p->skill_count; ++j)
+            {
+                bitpack_write(&server.bp, 8, (uint32_t)(p->skill_count));
+                pack_u8(pkt, (uint8_t)p->skills[j]);
+            }
+
+            pack_u16(pkt, (uint16_t)p->xp);
+            pack_u8(pkt, p->level);
+            pack_u8(pkt, p->new_levels);
+
+            pack_u8(pkt, p->skill_selection);
+            pack_u8(pkt, p->num_skill_selection_choices);
+            for(int j = 0; j < MAX_SKILL_CHOICES; ++j)
+            {
+                pack_u16(pkt, p->skill_choices[j]);
+            }
+
+
             bitpack_write(&server.bp, 4,  (uint32_t)p->gauntlet_selection);
             bitpack_write(&server.bp, 4,  (uint32_t)p->gauntlet_slots);
 

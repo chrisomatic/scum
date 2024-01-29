@@ -247,8 +247,8 @@ void entity_handle_collisions()
     for(int i = 0; i < num_entities; ++i)
     {
         Entity* e = &entities[i];
-        if(e->phys->dead || e->phys->ethereal) continue;
 
+        if(e->phys->ethereal) continue;
         if(e->type == ENTITY_TYPE_EXPLOSION) continue;
 
         Room* room = level_get_room_by_index(&level, entities[i].curr_room);
