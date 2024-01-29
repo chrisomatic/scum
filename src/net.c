@@ -26,7 +26,7 @@
 #define COOL_SERVER_PLAYER_LOGIC 1
 #define BITPACK 1
 
-#define SERVER_PRINT_SIMPLE 1
+//#define SERVER_PRINT_SIMPLE 1
 //#define SERVER_PRINT_VERBOSE 1
 
 #if SERVER_PRINT_VERBOSE
@@ -133,8 +133,7 @@ static inline void pack_u32(Packet* pkt, uint32_t d);
 static inline void pack_i32(Packet* pkt, int32_t d);
 static inline void pack_u64(Packet* pkt, uint64_t d);
 static inline void pack_float(Packet* pkt, float d);
-static inline void pack_bytes(Packet* pkt, uint8_t* d, uint8_t len);
-static inline void pack_bytes_u32(Packet* pkt, uint32_t* d, uint8_t len);
+static inline void pack_bytes(Packet* pkt, uint8_t* d, uint32_t len);
 static inline void pack_string(Packet* pkt, char* s, uint8_t max_len);
 static inline void pack_vec2(Packet* pkt, Vector2f d);
 static inline void pack_vec3(Packet* pkt, Vector3f d);
@@ -1982,15 +1981,9 @@ static inline void pack_float(Packet* pkt, float d)
     pkt->data_len+=sizeof(float);
 }
 
-static inline void pack_bytes(Packet* pkt, uint8_t* d, uint8_t len)
+static inline void pack_bytes(Packet* pkt, uint8_t* d, uint32_t len)
 {
     memcpy(&pkt->data[pkt->data_len],d,sizeof(uint8_t)*len);
-    pkt->data_len+=len*sizeof(uint8_t);
-}
-
-static inline void pack_bytes_u32(Packet* pkt, uint32_t* d, uint8_t len)
-{
-    memcpy(&pkt->data[pkt->data_len],d,sizeof(uint32_t)*len);
     pkt->data_len+=len*sizeof(uint8_t);
 }
 
@@ -2647,7 +2640,7 @@ static void pack_creatures_bp(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 8,  (uint32_t)c->phys.width);
         BPW(&server.bp, 6,  (uint32_t)c->sprite_index);
         BPW(&server.bp, 7,  (uint32_t)c->curr_room);
-        BPW(&server.bp, 5,  (uint32_t)c->phys.hp);
+        BPW(&server.bp, 8,  (uint32_t)c->phys.hp);
 
         BPW(&server.bp, 8,  (uint32_t)r);
         BPW(&server.bp, 8,  (uint32_t)g);
@@ -2727,7 +2720,7 @@ static void unpack_creatures_bp(Packet* pkt, int* offset)
         uint32_t width        = bitpack_read(&client.bp, 8);
         uint32_t sprite_index = bitpack_read(&client.bp, 6);
         uint32_t curr_room    = bitpack_read(&client.bp, 7);
-        uint32_t hp           = bitpack_read(&client.bp, 5);
+        uint32_t hp           = bitpack_read(&client.bp, 8);
         uint32_t r            = bitpack_read(&client.bp, 8);
         uint32_t g            = bitpack_read(&client.bp, 8);
         uint32_t b            = bitpack_read(&client.bp, 8);
@@ -3195,7 +3188,7 @@ static void pack_decals_bp(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 5,  (uint32_t)d->sprite_index);
         BPW(&server.bp, 32, (uint32_t)d->tint);
         BPW(&server.bp, 8,  (uint32_t)(d->scale*255.0f));
-        BPW(&server.bp, 8,  (uint32_t)(d->rotation*255.0f));
+        BPW(&server.bp, 9,  (uint32_t)(d->rotation));
         BPW(&server.bp, 8,  (uint32_t)(d->opacity*255.0f));
         BPW(&server.bp, 8,  (uint32_t)(d->ttl*10.0f));
         BPW(&server.bp, 10, (uint32_t)d->pos.x);
@@ -3217,7 +3210,7 @@ static void unpack_decals_bp(Packet* pkt, int* offset)
         d.sprite_index = (uint8_t)bitpack_read(&client.bp,5);
         d.tint         = (uint32_t)bitpack_read(&client.bp,32);
         d.scale        = (float)(bitpack_read(&client.bp,8)/255.0f);
-        d.rotation     = (float)(bitpack_read(&client.bp,8)/255.0f);
+        d.rotation     = (float)(bitpack_read(&client.bp,9));
         d.opacity      = (float)(bitpack_read(&client.bp,8)/255.0f);
         d.ttl          = (float)(bitpack_read(&client.bp,8)/10.0f);
         d.pos.x        = (float)bitpack_read(&client.bp,10);
