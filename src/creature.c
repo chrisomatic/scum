@@ -748,7 +748,10 @@ void creature_draw(Creature* c)
 
     if(c->phys.dead) return;
 
-    float y = c->phys.pos.y - 0.5*c->phys.pos.z;// - c->phys.width/1.5;
+    bool horizontal = (c->phys.rotation_deg == 0.0 || c->phys.rotation_deg == 180.0);
+    float dim = horizontal ? c->phys.vr.w : c->phys.vr.h;
+
+    float y = c->phys.pos.y - (dim + c->phys.pos.z)/2.0;
     gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, c->color, false, 1.0, 0.0, 1.0, false, false, false);
 }
 

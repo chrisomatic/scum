@@ -1606,7 +1606,7 @@ void draw_hearts_other_player(Player* p)
 
     //TODO: maybe make this a property on the player (y location of their feet)
     float x = p->phys.pos.x;
-    float y = p->phys.bottom_y;
+    float y = p->phys.pos.y;
 
     // Rect r = RECT(x, y, 1, 1);
     // gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
@@ -2120,7 +2120,7 @@ void player_draw(Player* p)
     opacity = blink ? 0.3 : opacity;
 
     //uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
-    float y = p->phys.pos.y - p->phys.pos.z*0.5;
+    float y = p->phys.pos.y - (p->phys.vr.h + p->phys.pos.z)/2.0;
     bool ret = gfx_sprite_batch_add(p->image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, p->settings.color, true, p->scale, 0.0, opacity, false, false, false);
     if(!ret) printf("Failed to add player to batch!\n");
 

@@ -186,18 +186,26 @@ void projectile_clear_all()
 
 void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player)
 {
+
     Projectile proj = {0};
-    proj.id = get_id();
+
     proj.def = *def;
+
+    Rect vr = gfx_images[projectile_image].visible_rects[0];
+
+    vr.w *= proj.def.scale;
+    vr.h *= proj.def.scale;
+
     proj.color = color;
-    proj.phys.height = gfx_images[projectile_image].visible_rects[0].h * proj.def.scale;
-    proj.phys.width =  gfx_images[projectile_image].visible_rects[0].w * proj.def.scale;
-    proj.phys.length = gfx_images[projectile_image].visible_rects[0].w * proj.def.scale;
+    proj.phys.height = vr.h;
+    proj.phys.width =  vr.w;
+    proj.phys.length = vr.w;
+    proj.phys.vr = vr;
     proj.phys.pos.x = phys->pos.x;
     proj.phys.pos.y = phys->pos.y;
     proj.phys.pos.z = phys->height/2.0 + phys->pos.z;
     proj.phys.mass = 1.0;
-    proj.phys.radius = (MAX(proj.phys.height, proj.phys.width) / 2.0) * proj.def.scale;
+    proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * proj.def.scale;
     proj.phys.amorphous = proj.def.bouncy ? false : true;
     proj.phys.elasticity = proj.def.bouncy ? 1.0 : 0.1;
     proj.curr_room = curr_room;
@@ -467,7 +475,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         Box check = {
             phys->collision_rect.x,
             phys->collision_rect.y,
-            phys->pos.z/2.0 + phys->height/2.0,
+            phys->pos.z + phys->height/2.0,
             phys->collision_rect.w,
             phys->collision_rect.h,
             phys->height*2,
@@ -522,7 +530,8 @@ void projectile_draw(Projectile* proj)
 
     float opacity = proj->phys.ethereal ? 0.3 : 1.0;
 
-    float y = proj->phys.pos.y - 0.5*proj->phys.pos.z;
+    //float y = proj->phys.pos.y - 0.5*proj->phys.pos.z;
+    float y = proj->phys.pos.y - (proj->phys.vr.h + proj->phys.pos.z)/2.0;
     gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, y, proj->color, false, proj->def.scale, 0.0, opacity, false, true, false);
 }
 

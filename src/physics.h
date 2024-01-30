@@ -36,8 +36,6 @@ typedef struct
     float rotation_deg;
 
     Rect vr;
-    float bottom_y;
-
     Rect collision_rect_prior;
     Rect collision_rect;
 

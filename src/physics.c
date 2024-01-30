@@ -183,9 +183,7 @@ void phys_calc_collision_rect(Physics* phys)
     float vrh = horizontal ? phys->vr.w : phys->vr.h;
 
     phys->collision_rect.x = phys->pos.x;
-    phys->collision_rect.y = phys->pos.y - phys->pos.z*0.5 + vrh*0.4;
-
-    phys->bottom_y = phys->pos.y + vrh*0.6;
+    phys->collision_rect.y = phys->pos.y;
 }
 
 void phys_set_collision_pos(Physics* phys, float new_x, float new_y)

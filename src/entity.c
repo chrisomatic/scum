@@ -75,14 +75,13 @@ static void draw_entity_shadow(Physics* phys)
 
     // bool horizontal = (phys->rotation_deg == 0.0 || phys->rotation_deg == 180.0);
     if(phys->height < 24.0 && phys->pos.z == 0.0) return;
-    // printf("phys->height")
 
     // float scale = (phys->collision_rect.w/32.0);
     float scale = (phys->vr.w/32.0 * 0.80);
     float opacity = RANGE(0.5*(1.0 - (phys->pos.z / 128.0)),0.1,0.5);
 
     float shadow_x = phys->pos.x;
-    float shadow_y = phys->bottom_y;
+    float shadow_y = phys->pos.y;
 
     gfx_sprite_batch_add(shadow_image, 0, shadow_x, shadow_y, COLOR_TINT_NONE, false, scale, 0.0, opacity, false, false, false);
 }
@@ -324,6 +323,7 @@ void entity_draw_all()
         //     phys_calc_collision_rect(e->phys);
 
         draw_entity_shadow(e->phys);
+
     }
 
     gfx_sprite_batch_draw();
