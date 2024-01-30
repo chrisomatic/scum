@@ -579,7 +579,7 @@ static void update_server_num_clients()
             player_reset(&players[i]);
             // memset(&server.clients[i],0, sizeof(ClientInfo));
         }
-        game_generate_level(rand(), 1, 0);
+        trigger_generate_level(rand(), 1, 0);
     }
 #endif
 
@@ -751,6 +751,8 @@ static void server_send(PacketType type, ClientInfo* cli)
 
 static void server_simulate()
 {
+    game_generate_level();
+
     float dt = 1.0/TARGET_FPS;
 
     int num_rooms = 0;
@@ -1665,7 +1667,7 @@ void net_client_update()
                 {
                     int seed = unpack_u32(&srvpkt,&offset);
                     uint8_t rank = unpack_u8(&srvpkt,&offset);
-                    game_generate_level(seed,rank,1);
+                    trigger_generate_level(seed,rank,1);
 
                     client.received_init_packet = true;
                 } break;
@@ -3396,7 +3398,7 @@ static void unpack_events(Packet* pkt, int* offset)
                 level_seed = unpack_u32(pkt,offset);
                 level_rank = unpack_u8(pkt,offset);
 
-                game_generate_level(level_seed, level_rank, 2);
+                trigger_generate_level(level_seed, level_rank, 2);
             }
 
             default:
@@ -3453,7 +3455,7 @@ static void unpack_events_bp(Packet* pkt, int* offset)
                 level_seed = bitpack_read(&client.bp,32);
                 level_rank = (uint8_t)bitpack_read(&client.bp,8);
 
-                game_generate_level(level_seed, level_rank, 2);
+                trigger_generate_level(level_seed, level_rank, 2);
             }
 
             default:

@@ -515,7 +515,7 @@ void player_die(Player* p)
         player_reset(p2);
     }
 
-    game_generate_level(rand(), level_rank, 2);
+    trigger_generate_level(rand(), level_rank, 2);
 }
 
 void player_reset(Player* p)
@@ -1003,11 +1003,8 @@ void player_update(Player* p, float dt)
 
                     if(type == ITEM_NEW_LEVEL)
                     {
-                        DEBUG();
                         item_remove(pu);
-                        DEBUG();
-                        game_generate_level(rand(), level_rank+1, 2);
-                        DEBUG();
+                        trigger_generate_level(rand(), level_rank+1, 2);
 
                         if(role == ROLE_SERVER)
                         {
@@ -1015,7 +1012,6 @@ void player_update(Player* p, float dt)
                             net_server_add_event(&ev);
                         }
 
-                        DEBUG();
                         return;
                     }
 

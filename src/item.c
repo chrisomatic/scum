@@ -75,7 +75,7 @@ static void item_func_new_level(Item* pu, Player* p)
     // item_remove(pu);
 
     int seed = time(0)+rand()%1000;
-    game_generate_level(seed, level_rank+1, 2);
+    trigger_generate_level(seed, level_rank+1, 2);
 
     // if(role == ROLE_SERVER)
     // {
