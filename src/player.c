@@ -510,6 +510,12 @@ void player_die(Player* p)
     }
 
     trigger_generate_level(rand(), level_rank, 2);
+
+    if(role == ROLE_SERVER)
+    {
+        NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
+        net_server_add_event(&ev);
+    }
 }
 
 void player_reset(Player* p)
