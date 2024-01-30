@@ -18,7 +18,6 @@ static void creature_set_sprite_index(Creature* c, int sprite_index)
     c->phys.rotation_deg = sprite_index_to_angle(c);
 }
 
-
 void ai_init_action(Creature* c)
 {
     c->action_counter = 0.0;
@@ -135,7 +134,7 @@ void ai_walk_dir(Creature* c, Dir dir)
 
     if(dir < DIR_NONE)
     {
-        if(c->type == CREATURE_TYPE_SLUG || c->type == CREATURE_TYPE_BUZZER || c->type == CREATURE_TYPE_SPIKED_SLUG)
+        if(c->type == CREATURE_TYPE_SLUG || c->type == CREATURE_TYPE_BUZZER || c->type == CREATURE_TYPE_SPIKED_SLUG || c->type == CREATURE_TYPE_INFECTED)
             _update_sprite_index(c, dir);
     }
 }

@@ -267,7 +267,6 @@ void projectile_kill(Projectile* proj)
 
     if(role == ROLE_SERVER)
     {
-
         if(proj->def.scale > scale_particle_thresh)
         {
             NetEvent ev = {

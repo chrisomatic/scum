@@ -575,6 +575,7 @@ void start_server()
     skills_init();
     player_init();
     creature_init();
+    effects_load_all();
     decal_init();
     item_init();
 
@@ -1531,6 +1532,10 @@ void draw_settings()
         {
             set_game_state(GAME_STATE_MENU);
             settings_save(DEFAULT_SETTINGS, &menu_settings);
+
+            player->anim.curr_frame = 0;
+            player->anim.curr_frame_time = 0.0;
+            player->anim.curr_loop = 0;
         }
     imgui_end();
 

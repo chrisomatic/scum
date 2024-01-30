@@ -8,6 +8,7 @@
 #include "glist.h"
 #include "particles.h"
 #include "creature.h"
+#include "effects.h"
 #include "ai.h"
 
 Creature prior_creatures[MAX_CREATURES] = {0};
@@ -25,6 +26,7 @@ static int creature_image_totem_red;
 static int creature_image_totem_blue;
 static int creature_image_shambler;
 static int creature_image_spiked_slug;
+static int creature_image_infected;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -35,6 +37,7 @@ static void creature_update_totem_red(Creature* c, float dt);
 static void creature_update_totem_blue(Creature* c, float dt);
 static void creature_update_shambler(Creature* c, float dt);
 static void creature_update_spiked_slug(Creature* c, float dt);
+static void creature_update_infected(Creature* c, float dt);
 
 static uint16_t id_counter = 1;
 static uint16_t get_id()
@@ -58,6 +61,7 @@ void creature_init()
     creature_image_totem_blue  = gfx_load_image("src/img/creature_totem_blue.png", false, false, 32, 64);
     creature_image_shambler = gfx_load_image("src/img/creature_shambler.png", false, false, 32, 64);
     creature_image_spiked_slug = gfx_load_image("src/img/creature_spiked_slug.png", false, false, 32, 32);
+    creature_image_infected = gfx_load_image("src/img/creature_infected.png", false, false, 32, 32);
 }
 
 const char* creature_type_name(CreatureType type)
@@ -82,6 +86,8 @@ const char* creature_type_name(CreatureType type)
             return "Shambler";
         case CREATURE_TYPE_SPIKED_SLUG:
             return "Spiked Slug";
+        case CREATURE_TYPE_INFECTED:
+            return "Infected";
         default:
             return "???";
     }
@@ -109,6 +115,8 @@ int creature_get_image(CreatureType type)
             return creature_image_shambler;
         case CREATURE_TYPE_SPIKED_SLUG:
             return creature_image_spiked_slug;
+        case CREATURE_TYPE_INFECTED:
+            return creature_image_infected;
         default:
             return -1;
     }
@@ -262,6 +270,17 @@ void creature_init_props(Creature* c)
             c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
             c->phys.crawling = true;
             c->xp = 25;
+        } break;
+        case CREATURE_TYPE_INFECTED:
+        {
+            c->phys.speed = 70.0;
+            c->act_time_min = 0.3;
+            c->act_time_max = 1.0;
+            c->phys.mass = 1.0;
+            c->phys.base_friction = 20.0;
+            c->phys.hp_max = 10.0;
+            c->painful_touch = true;
+            c->xp = 20;
         } break;
     }
 
@@ -518,6 +537,11 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
                 if(tile) add_to_tile(&c, tile->x, tile->y);
                 else     add_to_random_tile(&c, room);
             } break;
+            case CREATURE_TYPE_INFECTED:
+            {
+                if(tile) add_to_tile(&c, tile->x, tile->y);
+                else     add_to_random_tile(&c, room);
+            } break;
         }
     }
 
@@ -581,6 +605,9 @@ void creature_update(Creature* c, float dt)
             break;
         case CREATURE_TYPE_SPIKED_SLUG:
             creature_update_spiked_slug(c,dt);
+            break;
+        case CREATURE_TYPE_INFECTED:
+            creature_update_infected(c,dt);
             break;
     }
 
@@ -711,6 +738,32 @@ void creature_die(Creature* c)
 {
     c->phys.dead = true;
 
+    ParticleEffect* eff = &particle_effects[EFFECT_BLOOD2];
+
+    if(role == ROLE_SERVER)
+    {
+        printf("effect colors: %08X, %08X, %08X\n", eff->color1, eff->color2, eff->color3);
+
+        NetEvent ev = {
+            .type = EVENT_TYPE_PARTICLES,
+            .data.particles.effect_index = EFFECT_BLOOD2,
+            .data.particles.pos = { c->phys.pos.x, c->phys.pos.y },
+            .data.particles.scale = 1.0,
+            .data.particles.color1 = eff->color1,
+            .data.particles.color2 = eff->color2,
+            .data.particles.color3 = eff->color3,
+            .data.particles.lifetime = 0.5,
+            .data.particles.room_index = c->curr_room,
+        };
+
+        net_server_add_event(&ev);
+    }
+    else
+    {
+        ParticleSpawner* ps = particles_spawn_effect(c->phys.pos.x,c->phys.pos.y, 0.0, eff, 0.5, true, false);
+        if(ps != NULL) ps->userdata = (int)c->curr_room;
+    }
+
     // player_add_xp(player, c->xp);
     Room* room = level_get_room_by_index(&level, c->curr_room);
     if(room == NULL)
@@ -821,22 +874,20 @@ static Player* get_nearest_player(float x, float y)
 
 static void creature_update_slug(Creature* c, float dt)
 {
+    bool act = ai_update_action(c, dt);
 
-#if 1
-        bool act = ai_update_action(c, dt);
+    if(act)
+    {
 
-        if(act)
+        ai_stop_imm(c);
+
+        if(ai_flip_coin())
         {
-
-            ai_stop_imm(c);
-
-            if(ai_flip_coin())
-            {
-                ai_random_walk(c);
-            }
+            ai_random_walk(c);
         }
-#endif
+    }
 }
+
 static void creature_update_spiked_slug(Creature* c, float dt)
 {
 
@@ -892,6 +943,7 @@ static void creature_update_spiked_slug(Creature* c, float dt)
         }
     }
 }
+
 static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
 {
     ProjectileType pt = creature_get_projectile_type(c);
@@ -1308,4 +1360,34 @@ static void creature_update_shambler(Creature* c, float dt)
         }
 
     }
+}
+
+static void creature_update_infected(Creature* c, float dt)
+{
+    Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+
+    Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
+    normalize(&v);
+
+    float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
+
+    Dir dir = angle_to_dir_cardinal(angle);
+    creature_set_sprite_index(c, dir);
+
+    c->phys.vel.x = c->phys.speed*v.x;
+    c->phys.vel.y = c->phys.speed*v.y;
+
+    /*
+    bool act = ai_update_action(c, dt);
+
+    if(act)
+    {
+        ai_stop_imm(c);
+
+        if(ai_flip_coin())
+        {
+            ai_random_walk(c);
+        }
+    }
+    */
 }

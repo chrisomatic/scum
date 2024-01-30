@@ -1402,6 +1402,27 @@ bool level_is_room_discovered_index(Level* level, int index)
     return level_is_room_discovered(level, p.x, p.y);
 }
 
+Dir angle_to_dir_cardinal(float angle_deg)
+{
+
+    if(angle_deg > 45.0 && angle_deg <= 135.0)
+    {
+        return DIR_UP;
+    }
+    else if(angle_deg > 315.0 || angle_deg <= 45.0)
+    {
+        return DIR_RIGHT;
+    }
+    else if(angle_deg > 225.0 && angle_deg <= 315)
+    {
+        return DIR_DOWN;
+    }
+    else
+    {
+        return DIR_LEFT;
+    }
+}
+
 float dir_to_angle_deg(Dir dir)
 {
     switch(dir)

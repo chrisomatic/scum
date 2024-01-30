@@ -12,6 +12,7 @@ EffectEntry effect_map[] = {
     {EFFECT_HEAL2,"heal2.effect"},
     {EFFECT_HOLY1,"holy1.effect"},
     {EFFECT_BLOOD1,"blood1.effect"},
+    {EFFECT_BLOOD2,"blood2.effect"},
     {EFFECT_DEBRIS1,"debris1.effect"},
     {EFFECT_MELEE1,"melee1.effect"},
     {EFFECT_BULLET_CASING,"bullet_casing.effect"},

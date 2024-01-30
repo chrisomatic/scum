@@ -105,7 +105,7 @@ void explosion_handle_collision(Explosion* ex, Entity* e)
         case ENTITY_TYPE_PLAYER:
         {
             if(ex->from_player) return;
-            Creature* p2 = (Creature*)e->ptr;
+            Player* p2 = (Player*)e->ptr;
 
             CollisionInfo ci = {0};
             bool collided = phys_collision_circles(&ex->phys, &p2->phys, &ci);
