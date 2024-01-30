@@ -764,7 +764,7 @@ void init()
     ascale = view_width / 1200.0;
     LOGI("   ascale: %.2f", ascale);
 
-    text_lst = text_list_init(50, 2.0, view_height - 40.0, 0.19*ascale, false, TEXT_ALIGN_LEFT, NOT_IN_WORLD, true);
+    text_lst = text_list_init(50, 2.0, view_height - 40.0, 0.19*ascale, true, TEXT_ALIGN_LEFT, NOT_IN_WORLD, true);
 
     LOGI(" - Particles.");
     particles_init();
@@ -1425,43 +1425,46 @@ void draw_bigmap()
 
 void draw_chat_box()
 {
-    if(role == ROLE_CLIENT)
+    if(client_chat_enabled)
     {
-        if(client_chat_enabled)
-        {
-            // draw chat box
-            static Rect gui_size = {321,28};
-            imgui_begin("##Chat", (view_width - gui_size.w)/ 2.0, view_height - gui_size.h - 100);
-            imgui_horizontal_begin();
-                imgui_text("Chat:");
-                uint32_t hash = imgui_text_box_sized("##chat_text",chat_text,IM_ARRAYSIZE(chat_text), 250, 24);
-                if(chat_box_hash == 0x0)
-                {
-                    chat_box_hash = hash;
-                    imgui_focus_text_box(hash);
-                }
-
-                if(imgui_text_get_enter())
-                {
-                    net_client_send_message(chat_text);
-                    memset(chat_text, 0, 128);
-                    client_chat_enabled = false;
-                }
-                else if(imgui_text_get_ctrl_enter())
-                {
-                    client_chat_enabled = false;
-                }
-
-            imgui_horizontal_end();
-            gui_size = imgui_end();
-            //printf("w: %f, h: %f\n", gui_size.w, gui_size.h);
-
-            if(!client_chat_enabled)
+        // draw chat box
+        static Rect gui_size = {321,28};
+        imgui_begin("##Chat", (view_width - gui_size.w)/ 2.0, view_height - gui_size.h - 100);
+        imgui_horizontal_begin();
+            imgui_text("Chat:");
+            uint32_t hash = imgui_text_box_sized("##chat_text",chat_text,IM_ARRAYSIZE(chat_text), 250, 24);
+            if(chat_box_hash == 0x0)
             {
-                player_ignore_input = 2;
-                window_controls_set_key_mode(KEY_MODE_NORMAL);
+                chat_box_hash = hash;
+                imgui_focus_text_box(hash);
             }
 
+            if(imgui_text_get_enter())
+            {
+                if(role == ROLE_CLIENT)
+                {
+                    net_client_send_message(chat_text);
+                }
+                else if(role == ROLE_LOCAL)
+                {
+                    text_list_add(text_lst, player->settings.color, 10.0, "%s: %s", player->settings.name, chat_text);
+                }
+                memset(chat_text, 0, 128);
+                client_chat_enabled = false;
+            }
+            else if(imgui_text_get_ctrl_enter())
+            {
+                client_chat_enabled = false;
+            }
+
+        imgui_horizontal_end();
+        gui_size = imgui_end();
+        //printf("w: %f, h: %f\n", gui_size.w, gui_size.h);
+
+        if(!client_chat_enabled)
+        {
+            player_ignore_input = 2;
+            window_controls_set_key_mode(KEY_MODE_NORMAL);
         }
     }
 }
@@ -1482,7 +1485,7 @@ void draw_main_menu()
 {
     gfx_clear_buffer(background_color);
 
-    float menu_item_scale = 0.6 * ascale;
+    float menu_item_scale = 0.4 * ascale;
 
     // get text height first
     Vector2f text_size = gfx_string_get_size(menu_item_scale, "A");
@@ -1492,8 +1495,8 @@ void draw_main_menu()
 
     float total_height = num_opts * (text_size.y+margin);
 
-    float x = view_width*0.35;
-    float y = CENTER_Y - total_height / 2.0;
+    float x = (view_width - 200)/2.0;
+    float y = CENTER_Y - total_height / 2.0 + 50;
 
     for(int i = 0; i < num_opts; ++i)
     {
@@ -1504,11 +1507,14 @@ void draw_main_menu()
     }
 
     char* title = "SCUM";
-    float title_scale = 1.1*ascale;
+    float title_scale = 2.5*ascale;
     Vector2f title_size = gfx_string_get_size(title_scale, title);
     Rect title_r = RECT(margin_top.w/2.0, margin_top.h/2.0, title_size.x, title_size.y);
     gfx_get_absolute_coords(&title_r, ALIGN_CENTER, &margin_top, ALIGN_TOP_LEFT);
-    gfx_draw_string(title_r.x, title_r.y, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, 0, title);
+    gfx_draw_string(title_r.x, title_r.y+150, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, 0, title);
+
+    //gfx_draw_image(d->image, d->sprite_index, d->pos.x, d->pos.y, d->tint, d->scale, d->rotation, d->opacity*op, false, true);
+
 
     text_list_draw(text_lst);
 }
@@ -1654,24 +1660,21 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
                 window_set_close(1);
             }
 
-            if(role == ROLE_CLIENT)
+            if(ctrl && key == GLFW_KEY_ENTER)
             {
-                if(ctrl && key == GLFW_KEY_ENTER)
+                client_chat_enabled = !client_chat_enabled;
+                if(client_chat_enabled)
                 {
-                    client_chat_enabled = !client_chat_enabled;
-                    if(client_chat_enabled)
-                    {
-                        // printf("client chat enabled\n");
-                        player->actions[PLAYER_ACTION_ACTIVATE].state = false;  //must manually set the state to false since key mode gets changed
-                        player_ignore_input = 2;
-                        window_controls_set_text_buf(chat_text,128);
-                        window_controls_set_key_mode(KEY_MODE_TEXT);
-                    }
-                    else
-                    {
-                        // printf("client chat disabled\n");
-                        player_ignore_input = 2;
-                    }
+                    // printf("client chat enabled\n");
+                    player->actions[PLAYER_ACTION_ACTIVATE].state = false;  //must manually set the state to false since key mode gets changed
+                    player_ignore_input = 2;
+                    window_controls_set_text_buf(chat_text,128);
+                    window_controls_set_key_mode(KEY_MODE_TEXT);
+                }
+                else
+                {
+                    // printf("client chat disabled\n");
+                    player_ignore_input = 2;
                 }
             }
 

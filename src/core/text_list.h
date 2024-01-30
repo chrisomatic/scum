@@ -19,6 +19,7 @@ typedef struct
     bool in_world;
     float x;
     float y;
+    float y_shift;
     float scale;
     // uint32_t color;
     float text_height;

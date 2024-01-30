@@ -4,6 +4,7 @@
 #include "text_list.h"
 
 #define FADEOUT_DURATION 1.0
+#define SHIFT_DURATION 0.3
 
 text_list_t* text_list_init(int max, float x, float y, float scale, bool downward, text_align_t alignment, bool in_world, bool fade_out)
 {
@@ -15,6 +16,7 @@ text_list_t* text_list_init(int max, float x, float y, float scale, bool downwar
     lst->in_world = in_world;
     lst->x = x;
     lst->y = y;
+    lst->y_shift = 0.0;
     lst->scale = scale;
     // lst->color = color;
     lst->fade_out = fade_out;
@@ -57,6 +59,11 @@ void text_list_add(text_list_t* lst, uint32_t color, float duration, char* fmt, 
     lst->durations[lst->count] = duration;
     lst->colors[lst->count] = color;
     lst->count++;
+
+    if(lst->downward)
+    {
+        lst->y_shift = SHIFT_DURATION;
+    }
 }
 
 void text_list_update(text_list_t* lst, float _dt)
@@ -69,6 +76,9 @@ void text_list_update(text_list_t* lst, float _dt)
         lst->durations[i] -= _dt;
         if(lst->durations[i] <= 0.0)
         {
+            if(!lst->downward)
+                lst->y_shift += SHIFT_DURATION;
+
             if(lst->text[i]) free(lst->text[i]);
             lst->text[i] = NULL;
             for(int j = i; j < lst->count; j++)
@@ -81,6 +91,14 @@ void text_list_update(text_list_t* lst, float _dt)
             lst->count--;
         }
     }
+
+    if(lst->y_shift > 0.0)
+    {
+        lst->y_shift -= (lst->y_shift*_dt*10.0);
+
+        if(lst->y_shift < 0.0)
+            lst->y_shift = 0.0;
+    }
 }
 
 void text_list_draw(text_list_t* lst)
@@ -88,8 +106,15 @@ void text_list_draw(text_list_t* lst)
     if(lst == NULL) return;
     if(lst->count == 0) return;
 
-    Vector2f size = gfx_string_get_size(lst->scale, "P");
     float _y = lst->y;
+    float yadj = (lst->text_height + 1.0);
+
+    if(lst->downward)
+    {
+        _y -= ((lst->count-1) * yadj);
+    }
+
+    _y += (lst->downward ? 1 : -1) * (yadj * (lst->y_shift/SHIFT_DURATION));
 
     for(int i = 0; i < lst->count; ++i)
     {
@@ -113,7 +138,6 @@ void text_list_draw(text_list_t* lst)
 
         gfx_draw_string(_x, _y, lst->colors[i], lst->scale, 0.0, opacity, lst->in_world, NO_DROP_SHADOW, 0, lst->text[i]);
 
-        float yadj = (size.y + 1.0);
         _y += lst->downward ? yadj : -yadj;
     }
 }
