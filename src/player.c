@@ -286,6 +286,7 @@ int player_get_active_count()
 
 void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i tile)
 {
+    p->transition_room = p->curr_room;
     p->curr_room = room_index;
     if(instant)
     {
@@ -670,21 +671,20 @@ void player_start_room_transition(Player* p)
                 break;
         }
 
+        Vector2i nt = level_get_door_tile_coords(other_door);
 
         for(int i = 0; i < MAX_PLAYERS; ++i)
         {
             Player* p2 = &players[i];
             if(!p2->active) continue;
-            if(p2->curr_room == room_index) continue;   // if they're already in the room
-            player_send_to_room(p2, room_index, false, level_get_door_tile_coords(other_door));
+            if(p2->curr_room == room_index)
+            {
+                // printf("player %d is in the room already\n", i);
+                continue;
+            }
+            player_send_to_room(p2, room_index, false, nt);
             player_set_sprite_index(p2, sprite_index);
-            // if(p->transition_room != p2->curr_room) continue;
-
-            // p2->curr_room = p->curr_room;
-            // p2->phys.pos.x = p->phys.pos.x;
-            // p2->phys.pos.y = p->phys.pos.y;
-            // player_set_sprite_index(p2, p->sprite_index);
-            // p2->door = p->door;
+            p2->door = p->door;
         }
 
         // printf("start room transition: %d -> %d\n", p->transition_room, p->curr_room);
@@ -850,6 +850,34 @@ void player_update_all(float dt)
         Player* p = &players[i];
         player_update(p, dt);
     }
+}
+
+static PlayerAttributes copy_attributes(Player* p)
+{
+    PlayerAttributes att = {0};
+    att.speed = p->phys.speed;
+    att.speed_factor = p->phys.speed_factor;
+    att.max_velocity = p->phys.max_velocity;
+    att.base_friction = p->phys.base_friction;
+    att.mass = p->phys.mass;
+    att.elasticity = p->phys.elasticity;
+    att.proj_cooldown_max = p->proj_cooldown_max;
+    att.projdef = p->proj_def;
+    att.projspawn = p->proj_spawn;
+    return att;
+}
+
+static void apply_attributes(Player* p, PlayerAttributes att)
+{
+    p->phys.speed = att.speed;
+    p->phys.speed_factor = att.speed_factor;
+    p->phys.max_velocity = att.max_velocity;
+    p->phys.base_friction = att.base_friction;
+    p->phys.mass = att.mass;
+    p->phys.elasticity = att.elasticity;
+    p->proj_cooldown_max = att.proj_cooldown_max;
+    p->proj_def = att.projdef;
+    p->proj_spawn = att.projspawn;
 }
 
 void player_update(Player* p, float dt)
@@ -1076,16 +1104,18 @@ void player_update(Player* p, float dt)
     }
 
     // copy stats/attributes
-    PlayerAttributes att = {0};
-    att.speed = p->phys.speed;
-    att.speed_factor = p->phys.speed_factor;
-    att.max_velocity = p->phys.max_velocity;
-    att.base_friction = p->phys.base_friction;
-    att.mass = p->phys.mass;
-    att.elasticity = p->phys.elasticity;
-    att.proj_cooldown_max = p->proj_cooldown_max;
-    att.projdef = p->proj_def;
-    att.projspawn = p->proj_spawn;
+    PlayerAttributes att = copy_attributes(p);
+
+    // PlayerAttributes att = {0};
+    // att.speed = p->phys.speed;
+    // att.speed_factor = p->phys.speed_factor;
+    // att.max_velocity = p->phys.max_velocity;
+    // att.base_friction = p->phys.base_friction;
+    // att.mass = p->phys.mass;
+    // att.elasticity = p->phys.elasticity;
+    // att.proj_cooldown_max = p->proj_cooldown_max;
+    // att.projdef = p->proj_def;
+    // att.projspawn = p->proj_spawn;
 
 
     // apply timed items
@@ -1517,15 +1547,17 @@ void player_update(Player* p, float dt)
         }
     }
 
-    p->phys.speed = att.speed;
-    p->phys.speed_factor = att.speed_factor;
-    p->phys.max_velocity = att.max_velocity;
-    p->phys.base_friction = att.base_friction;
-    p->phys.mass = att.mass;
-    p->phys.elasticity = att.elasticity;
-    p->proj_cooldown_max = att.proj_cooldown_max;
-    p->proj_def = att.projdef;
-    p->proj_spawn = att.projspawn;
+    apply_attributes(p, att);
+
+    // p->phys.speed = att.speed;
+    // p->phys.speed_factor = att.speed_factor;
+    // p->phys.max_velocity = att.max_velocity;
+    // p->phys.base_friction = att.base_friction;
+    // p->phys.mass = att.mass;
+    // p->phys.elasticity = att.elasticity;
+    // p->proj_cooldown_max = att.proj_cooldown_max;
+    // p->proj_def = att.projdef;
+    // p->proj_spawn = att.projspawn;
 
     // printf("z: %.2f\n", p->phys.pos.z);
 }
@@ -2108,7 +2140,8 @@ void player_draw(Player* p)
 
     //uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
 
-    float y = p->phys.pos.y-(0.5*p->phys.pos.z) - p->phys.width/1.5;
+    // float y = p->phys.pos.y-(0.5*p->phys.pos.z) - p->phys.width/1.5;
+    float y = p->phys.pos.y-(0.5*p->phys.pos.z);// - p->phys.width/1.5;
     gfx_sprite_batch_add(p->image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, p->settings.color, true, p->scale, 0.0, opacity, false, false, false);
 
     if(p == player)
