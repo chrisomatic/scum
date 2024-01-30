@@ -13,8 +13,8 @@ int num_entities;
 
 static void entity_update_tile(Entity* e)
 {
-    float cx = e->phys->pos.x;
-    float cy = e->phys->pos.y;
+    float cx = e->phys->collision_rect.x;
+    float cy = e->phys->collision_rect.y;
     Vector2i tile_coords = level_get_room_coords_by_pos(cx, cy);
     Room* room = level_get_room_by_index(&level, e->curr_room);
     e->tile = level_get_tile_type(room, tile_coords.x, tile_coords.y);
@@ -28,6 +28,12 @@ static void add_entity(EntityType type, void* ptr, uint8_t curr_room, Physics* p
     e->ptr = ptr;
     e->curr_room = curr_room;
     e->phys = phys;
+
+    if(role == ROLE_CLIENT)
+    {
+        // need to do this in order to draw shadow and debug stuff properly
+        phys_calc_collision_rect(phys);
+    }
     entity_update_tile(e);
 }
 
@@ -63,19 +69,22 @@ static void sort_entities()
     }
 }
 
-//TODO: fix up shadow
 static void draw_entity_shadow(Physics* phys)
 {
-    float scale = (phys->collision_rect.w/32.0);
+    if(phys->falling) return;
+
+    // bool horizontal = (phys->rotation_deg == 0.0 || phys->rotation_deg == 180.0);
+    if(phys->height < 24.0 && phys->pos.z == 0.0) return;
+    // printf("phys->height")
+
+    // float scale = (phys->collision_rect.w/32.0);
+    float scale = (phys->vr.w/32.0 * 0.80);
     float opacity = RANGE(0.5*(1.0 - (phys->pos.z / 128.0)),0.1,0.5);
 
     float shadow_x = phys->pos.x;
-    float shadow_y = phys->pos.y+gfx_images[shadow_image].visible_rects[0].h/2.0;
-    //TileType shadow_tt = level_get_tile_type_by_pos(room, shadow_x, shadow_y);
-    bool draw_shadow = !phys->falling; //&& (shadow_tt != TILE_PIT && shadow_tt != TILE_BOULDER);
+    float shadow_y = phys->bottom_y;
 
-    if(draw_shadow)
-        gfx_sprite_batch_add(shadow_image, 0, shadow_x, shadow_y, COLOR_TINT_NONE, false, scale, 0.0, opacity, false, false, false);
+    gfx_sprite_batch_add(shadow_image, 0, shadow_x, shadow_y, COLOR_TINT_NONE, false, scale, 0.0, opacity, false, false, false);
 }
 
 void entity_build_all()
@@ -87,7 +96,6 @@ void entity_build_all()
     {
         Player* p = &players[i];
         if(!p->active) continue;
-
         add_entity(ENTITY_TYPE_PLAYER,p,p->curr_room, &p->phys);
     }
 
@@ -265,6 +273,31 @@ void entity_handle_collisions()
             // }
         }
     }
+
+    // // double check for players getting stuck inside walls
+    // for(int i = 0; i < MAX_PLAYERS; ++i)
+    // {
+    //     Player* p = &players[i];
+    //     if(!p->active) continue;
+
+    // }
+    // if(!p->phys.dead)
+    // {
+    //     float cx = p->phys.pos.x;
+    //     float cy = p->phys.pos.y;
+    //     Vector2i coords = level_get_room_coords_by_pos(cx, cy);
+    //     TileType tt = level_get_tile_type(room, coords.x, coords.y);
+    //     if(tt == TILE_BOULDER)
+    //     {
+    //         TileType tt = level_get_tile_type(room, p->last_safe_tile.x, p->last_safe_tile.y);
+    //         if(IS_SAFE_TILE(tt))
+    //         {
+    //             Vector2f position = level_get_pos_by_room_coords(p->last_safe_tile.x, p->last_safe_tile.y);
+    //             phys_set_collision_pos(&p->phys, position.x, position.y);
+    //         }
+    //     }
+    // }
+
 }
 
 void entity_draw_all()
@@ -284,11 +317,17 @@ void entity_draw_all()
         if(e->tile == TILE_PIT || e->tile == TILE_BOULDER)
             continue;
 
+        // if(e->type == ENTITY_TYPE_CREATURE)
+        //     printf("height %.2f\n", e->phys->height);
+
+        // if(role == ROLE_CLIENT)
+        //     phys_calc_collision_rect(e->phys);
+
         draw_entity_shadow(e->phys);
     }
 
     gfx_sprite_batch_draw();
-            
+
     gfx_sprite_batch_begin(true);
 
     for(int i = 0; i < num_entities; ++i)
@@ -333,27 +372,26 @@ void entity_draw_all()
 
         if(debug_enabled)
         {
-            // draw collision circle
-            float cx = e->phys->pos.x;
-            float cy = e->phys->pos.y;
-
-            gfx_draw_circle(cx, cy, e->phys->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
-            gfx_draw_rect_xywh(cx, cy, e->phys->collision_rect.w, e->phys->collision_rect.h, COLOR_PURPLE, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
-
+            float vx = e->phys->pos.x;
             float vy = e->phys->pos.y - e->phys->pos.z/2.0;
+            float cx = e->phys->collision_rect.x;
+            float cy = e->phys->collision_rect.y;
+
+            // draw collision circle
+            gfx_draw_circle(cx, cy, e->phys->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
 
             // draw base dot
-            gfx_draw_rect_xywh(e->phys->pos.x, vy, 1, 1, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+            gfx_draw_rect_xywh(vx, vy, 1, 1, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, true, true);
 
             // draw center dot
-            gfx_draw_rect_xywh(e->phys->pos.x, vy - e->phys->height/3.0, 1, 1, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, true, true);
+            gfx_draw_rect_xywh(cx, cy, 1, 1, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, true, true);
 
             // draw boundingbox
-            gfx_draw_rect_xywh(e->phys->pos.x, vy, e->phys->collision_rect.w, e->phys->collision_rect.h, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true); // bottom rect
-            gfx_draw_rect_xywh(e->phys->pos.x, vy - e->phys->height + e->phys->collision_rect.w/2.0, e->phys->collision_rect.w, e->phys->length, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true); // top rect
+            gfx_draw_rect_xywh(cx, cy, e->phys->collision_rect.w, e->phys->collision_rect.h, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true); // bottom rect
+            gfx_draw_rect_xywh(cx, cy - e->phys->height, e->phys->collision_rect.w, e->phys->collision_rect.h, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true); // top rect
 
-            float x0 = e->phys->pos.x;
-            float y0 = e->phys->pos.y;
+            float x0 = vx;
+            float y0 = vy;
             float x1 = x0 + e->phys->vel.x;
             float y1 = y0 + e->phys->vel.y;
             gfx_add_line(x0, y0, x1, y1, COLOR_RED);

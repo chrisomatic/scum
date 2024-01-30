@@ -51,6 +51,7 @@ void player_set_defaults(Player* p)
 {
     p->phys.dead = false;
 
+    Rect* vr = &gfx_images[p->image].visible_rects[0];
 
     p->phys.speed = 700.0;
     p->phys.speed_factor = 1.0;
@@ -58,13 +59,15 @@ void player_set_defaults(Player* p)
     p->phys.base_friction = 15.0;
     p->phys.vel.x = 0.0;
     p->phys.vel.y = 0.0;
-    p->phys.height = gfx_images[p->image].visible_rects[0].h * 0.80;
-    p->phys.width  = gfx_images[p->image].visible_rects[0].w * 0.70;
-    p->phys.length = gfx_images[p->image].visible_rects[0].w * 0.70;
+    p->phys.height = vr->h * 0.80;
+    p->phys.width  = vr->w * 0.60;
+    p->phys.length = vr->w * 0.60;
     p->phys.mass = 1.0;
     p->phys.elasticity = 0.0;
+    p->phys.vr = *vr;
 
     phys_calc_collision_rect(&p->phys);
+    p->phys.radius = calc_radius_from_rect(&p->phys.collision_rect);
 
     p->phys.hp_max = 6;
     p->phys.hp = p->phys.hp_max;
@@ -72,11 +75,17 @@ void player_set_defaults(Player* p)
     p->invulnerable = false;
     p->invulnerable_temp_time = false;
 
-    p->phys.radius = calc_radius_from_rect(&p->phys.collision_rect);
-
     p->scale = 1.0;
     p->phys.falling = false;
     p->phys.floating = false;
+
+    static bool _prnt = false;
+    if(!_prnt)
+    {
+        _prnt = true;
+        printf("[Player Phys Dimensions]\n");
+        phys_print_dimensions(&p->phys);
+    }
 
     memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
     memcpy(&p->proj_spawn,&projectile_spawn[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileSpawn));
@@ -304,25 +313,15 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
     Vector2f pos = {0};
     level_get_safe_floor_tile(room, tile, NULL, &pos);
 
-    // Vector2f pos = level_get_pos_by_room_coords(tile.x, tile.y);
-
-    // Vector2f pos = {0};
-    // level_get_center_floor_tile(room, NULL, &pos);
-
-    p->phys.pos.x = pos.x;
-    p->phys.pos.y = pos.y;
-    // p->phys.pos.z = 0;
+    phys_set_collision_pos(&p->phys, pos.x, pos.y);
 
     p->ignore_player_collision = true;
 }
 
 void player_send_to_level_start(Player* p)
 {
-    DEBUG();
     uint8_t idx = level_get_room_index(level.start.x, level.start.y);
-    DEBUG();
     player_send_to_room(p, idx, true, level_get_door_tile_coords(DIR_NONE));
-    DEBUG();
 }
 
 void player_init_keys()
@@ -381,11 +380,6 @@ void player2_init_keys()
 }
 
 
-void player_set_collision_pos(Player* p, float x, float y)
-{
-    p->phys.pos.x = x;
-    p->phys.pos.y = y;
-}
 
 int get_xp_req(int level)
 {
@@ -626,14 +620,7 @@ void player_draw_room_transition()
 void player_start_room_transition(Player* p)
 {
     // printf("start room transition\n");
-
     Vector2i roomxy = level_get_room_coords((int)p->curr_room);
-
-    // new player positions
-    RectXY rxy = {0};
-    rect_to_rectxy(&room_area, &rxy);
-    float x1 = rxy.x[BL] - (p->phys.pos.x - rxy.x[TR]);
-    float y1 = rxy.y[BL] - (p->phys.pos.y - rxy.y[TL]);
 
     if(role == ROLE_SERVER || role == ROLE_LOCAL)
     {
@@ -744,7 +731,7 @@ void player_start_room_transition(Player* p)
 static void player_set_sprite_index(Player* p, int sprite_index)
 {
     p->sprite_index = sprite_index;
-    p->phys.rotation_deg = sprite_index_to_angle(p);
+    p->aim_deg = sprite_index_to_angle(p);
 }
 
 static float sprite_index_to_angle(Player* p)
@@ -801,7 +788,7 @@ static void handle_room_collision(Player* p)
                 break;
         }
 
-        float d = dist(p->phys.pos.x, p->phys.pos.y, door_point.x, door_point.y);
+        float d = dist(p->phys.collision_rect.x, p->phys.collision_rect.y, door_point.x, door_point.y);
 
         bool colliding_with_door = (d < p->phys.radius);
         if(colliding_with_door && !room->doors_locked && p->new_levels == 0 && (p->phys.pos.z == 0.0 || p->phys.floating))
@@ -1145,8 +1132,8 @@ void player_update(Player* p, float dt)
 
     player_handle_skills(p,dt);
 
-    float cx = p->phys.pos.x;
-    float cy = p->phys.pos.y;
+    float cx = p->phys.collision_rect.x;
+    float cy = p->phys.collision_rect.y;
     Room* room = level_get_room_by_index(&level, p->curr_room);
 
     float mud_factor = 1.0;
@@ -1185,7 +1172,7 @@ void player_update(Player* p, float dt)
         if(tt == TILE_PIT && p->phys.pos.z == 0.0 && !p->phys.falling)
         {
 
-            Rect p_rect = RECT(cx, cy, 2, 2);
+            Rect p_rect = RECT(cx, cy, 1, 1);
             Rect pit_rect = level_get_tile_rect(p->curr_tile.x, p->curr_tile.y);
 
             float shrink_fac = 0.7;
@@ -1253,7 +1240,7 @@ void player_update(Player* p, float dt)
             if(IS_SAFE_TILE(tt))
             {
                 Vector2f position = level_get_pos_by_room_coords(p->last_safe_tile.x, p->last_safe_tile.y);
-                player_set_collision_pos(p, position.x, position.y);
+                phys_set_collision_pos(&p->phys, position.x, position.y);
             }
             else
             {
@@ -1466,7 +1453,7 @@ void player_update(Player* p, float dt)
 
             if(!p->phys.dead)
             {
-                projectile_add(&p->phys, p->curr_room, &p->proj_def, &p->proj_spawn, 0x0050A0FF, p->phys.rotation_deg, true);
+                projectile_add(&p->phys, p->curr_room, &p->proj_def, &p->proj_spawn, 0x0050A0FF, p->aim_deg, true);
             }
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;
@@ -1477,22 +1464,7 @@ void player_update(Player* p, float dt)
     // check tiles around player
     handle_room_collision(p);
 
-    if(!p->phys.dead)
-    {
-        float cx = p->phys.pos.x;
-        float cy = p->phys.pos.y;
-        Vector2i coords = level_get_room_coords_by_pos(cx, cy);
-        TileType tt = level_get_tile_type(room, coords.x, coords.y);
-        if(tt == TILE_BOULDER)
-        {
-            TileType tt = level_get_tile_type(room, p->last_safe_tile.x, p->last_safe_tile.y);
-            if(IS_SAFE_TILE(tt))
-            {
-                Vector2f position = level_get_pos_by_room_coords(p->last_safe_tile.x, p->last_safe_tile.y);
-                player_set_collision_pos(p, position.x, position.y);
-            }
-        }
-    }
+    player_check_stuck_in_wall(p);
 
     if(p == player)
     {
@@ -1627,11 +1599,14 @@ void draw_hearts_other_player(Player* p)
     float ph = gfx_images[p->image].visible_rects[sprite_index].h;
     float pw = gfx_images[p->image].visible_rects[sprite_index].w;
 
-    float x = p->phys.pos.x;
-    float y = p->phys.pos.y-(0.5*p->phys.pos.z)-p->phys.width/1.5;  // see player draw
+    // float x = p->phys.pos.x;
+    // float y = p->phys.pos.y - (0.5*p->phys.pos.z);//-p->phys.width/1.5;  // see player draw
 
-    y += ph/2.0;
+    // y += ph/2.0;
+
     //TODO: maybe make this a property on the player (y location of their feet)
+    float x = p->phys.pos.x;
+    float y = p->phys.bottom_y;
 
     // Rect r = RECT(x, y, 1, 1);
     // gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
@@ -2119,7 +2094,17 @@ void player_set_class(Player* p, PlayerClass class)
         case PLAYER_CLASS_ROBOT:
             p->image = class_image_robot;
             break;
+        default:
+            LOGE("Invalid class: %d", class);
+            p->image = class_image_robot;
+            break;
     }
+
+    Rect* vr = &gfx_images[p->image].visible_rects[0];
+    p->phys.vr = *vr;
+    phys_calc_collision_rect(&p->phys);
+    p->phys.radius = calc_radius_from_rect(&p->phys.collision_rect);
+
 }
 
 void player_draw(Player* p)
@@ -2135,10 +2120,9 @@ void player_draw(Player* p)
     opacity = blink ? 0.3 : opacity;
 
     //uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
-
-    // float y = p->phys.pos.y-(0.5*p->phys.pos.z) - p->phys.width/1.5;
-    float y = p->phys.pos.y-(0.5*p->phys.pos.z);// - p->phys.width/1.5;
-    gfx_sprite_batch_add(p->image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, p->settings.color, true, p->scale, 0.0, opacity, false, false, false);
+    float y = p->phys.pos.y - p->phys.pos.z*0.5;
+    bool ret = gfx_sprite_batch_add(p->image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, p->settings.color, true, p->scale, 0.0, opacity, false, false, false);
+    if(!ret) printf("Failed to add player to batch!\n");
 
     if(p == player)
     {
@@ -2252,6 +2236,27 @@ bool player_check_other_player_collision(Player* p)
     }
 
     return check;
+}
+
+void player_check_stuck_in_wall(Player* p)
+{
+    if(!p->active) return;
+    if(p->phys.dead) return;
+
+    float cx = p->phys.collision_rect.x;
+    float cy = p->phys.collision_rect.y;
+    Vector2i coords = level_get_room_coords_by_pos(cx, cy);
+    Room* room = level_get_room_by_index(&level, (int)p->curr_room);
+    TileType tt = level_get_tile_type(room, coords.x, coords.y);
+    if(tt == TILE_BOULDER)
+    {
+        TileType tt = level_get_tile_type(room, p->last_safe_tile.x, p->last_safe_tile.y);
+        if(IS_SAFE_TILE(tt))
+        {
+            Vector2f position = level_get_pos_by_room_coords(p->last_safe_tile.x, p->last_safe_tile.y);
+            phys_set_collision_pos(&p->phys, position.x, position.y);
+        }
+    }
 }
 
 void player_handle_collision(Player* p, Entity* e)

@@ -901,8 +901,12 @@ TileType level_get_tile_type(Room* room, int x, int y)
 {
     if(x < 0 || x >= ROOM_TILE_SIZE_X) return TILE_NONE;
     if(y < 0 || y >= ROOM_TILE_SIZE_Y) return TILE_NONE;
+    if(!room) return TILE_NONE;
+    if(room->layout >= MAX_ROOM_LIST_COUNT) return TILE_NONE;
 
     RoomFileData* rdata = &room_list[room->layout];
+    if(!rdata) return TILE_NONE;
+
     return rdata->tiles[x][y];
 }
 
@@ -1130,7 +1134,16 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
             float draw_x = r.x + (_x+1)*w;
             float draw_y = r.y + (_y+1)*h;
 
-            gfx_sprite_batch_add(dungeon_image, sprite, draw_x, draw_y, color, false, 1.0, 0.0, 1.0, false, false, false);
+            uint32_t tcolor = color;
+            if(debug_enabled)
+            {
+                if(player->curr_tile.x == _x && player->curr_tile.y == _y)
+                {
+                    tcolor = COLOR_RED;
+                }
+            }
+
+            gfx_sprite_batch_add(dungeon_image, sprite, draw_x, draw_y, tcolor, false, 1.0, 0.0, 1.0, false, false, false);
 
             // if(debug_enabled && show_tile_grid)
             // {

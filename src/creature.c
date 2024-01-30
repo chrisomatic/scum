@@ -144,13 +144,28 @@ ProjectileType creature_get_projectile_type(Creature* c)
     return pt;
 }
 
+void print_creature_dimensions(Creature* c)
+{
+    static bool _prnt[CREATURE_TYPE_MAX] = {0};
+
+    if(!_prnt[c->type])
+    {
+        _prnt[c->type] = true;
+        printf("[%s Phys Dimensions]\n", creature_type_name(c->type));
+        phys_print_dimensions(&c->phys);
+    }
+}
+
 void creature_init_props(Creature* c)
 {
+
     c->image = creature_get_image(c->type);
-    c->phys.width  = gfx_images[c->image].visible_rects[0].w*0.80;
-    c->phys.length = gfx_images[c->image].visible_rects[0].w*0.80;
-    c->phys.height = gfx_images[c->image].visible_rects[0].h*0.80;
+    Rect* vr = &gfx_images[c->image].visible_rects[0];
+    c->phys.width  = vr->w * 0.80;
+    c->phys.length = vr->w * 0.80;
+    c->phys.height = vr->h * 0.80;
     c->phys.radius = c->phys.width / 2.0;
+    c->phys.vr = *vr;
 
     switch(c->type)
     {
@@ -232,6 +247,8 @@ void creature_init_props(Creature* c)
         } break;
         case CREATURE_TYPE_TOTEM_BLUE:
         {
+            // print_rect(&c->phys.vr);
+            // exit(1);
             c->phys.speed = 0.0;
             c->act_time_min = 4.00;
             c->act_time_max = 6.00;
@@ -292,6 +309,8 @@ void creature_init_props(Creature* c)
 
     c->phys.speed_factor = 1.0;
     c->damage = 1;
+
+    print_creature_dimensions(c);
 }
 
 void creature_clear_all()
@@ -729,7 +748,7 @@ void creature_draw(Creature* c)
 
     if(c->phys.dead) return;
 
-    float y = c->phys.pos.y - 0.5*c->phys.pos.z - c->phys.width/1.5;
+    float y = c->phys.pos.y - 0.5*c->phys.pos.z;// - c->phys.width/1.5;
     gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, c->color, false, 1.0, 0.0, 1.0, false, false, false);
 }
 
@@ -1037,6 +1056,7 @@ static void creature_update_geizer(Creature* c, float dt)
 
     if(act)
     {
+        // printf("geizer act\n");
         int n_orbs = 5 + (rand() % 5);
 
         for(int i = 0; i < n_orbs; ++i)

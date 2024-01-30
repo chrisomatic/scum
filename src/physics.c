@@ -3,8 +3,10 @@
 
 bool phys_collision_circles(Physics* phys1, Physics* phys2, CollisionInfo* ci)
 {
-    Vector2f p1 = {phys1->pos.x, phys1->pos.y};
-    Vector2f p2 = {phys2->pos.x, phys2->pos.y};
+    // Vector2f p1 = {phys1->pos.x, phys1->pos.y};
+    // Vector2f p2 = {phys2->pos.x, phys2->pos.y};
+    Vector2f p1 = {phys1->collision_rect.x, phys1->collision_rect.y};
+    Vector2f p2 = {phys2->collision_rect.x, phys2->collision_rect.y};
 
     float d = dist(p1.x,p1.y,p2.x,p2.y);
     float r  = (phys1->radius + phys2->radius);
@@ -91,6 +93,10 @@ void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci)
 
     phys2->vel.x = v2x;
     phys2->vel.y = v2y;
+
+    // update
+    phys_calc_collision_rect(phys1);
+    phys_calc_collision_rect(phys2);
 }
 
 void phys_apply_gravity(Physics* phys, float gravity_factor, float dt)
@@ -161,7 +167,7 @@ void phys_apply_friction_y(Physics* phys, float friction, float dt)
 
     f.y *= applied_friction;
     phys->vel.y += f.y;
-    
+
     if(ABS(phys->vel.y) < 1.0) phys->vel.y = 0.0;
 }
 
@@ -171,10 +177,27 @@ void phys_calc_collision_rect(Physics* phys)
 
     bool horizontal = (phys->rotation_deg == 0.0 || phys->rotation_deg == 180.0);
 
-    phys->collision_rect.x = phys->pos.x;
-    phys->collision_rect.y = phys->pos.y;
     phys->collision_rect.w = horizontal ? phys->length : phys->width;
     phys->collision_rect.h = horizontal ? phys->width  : phys->length;
+
+    float vrh = horizontal ? phys->vr.w : phys->vr.h;
+
+    phys->collision_rect.x = phys->pos.x;
+    phys->collision_rect.y = phys->pos.y - phys->pos.z*0.5 + vrh*0.4;
+
+    phys->bottom_y = phys->pos.y + vrh*0.6;
+}
+
+void phys_set_collision_pos(Physics* phys, float new_x, float new_y)
+{
+    float dx = phys->pos.x - phys->collision_rect.x;
+    float dy = phys->pos.y - phys->collision_rect.y;
+
+    phys->collision_rect.x = new_x;
+    phys->collision_rect.y = new_y;
+
+    phys->pos.x = phys->collision_rect.x + dx;
+    phys->pos.y = phys->collision_rect.y + dy;
 }
 
 void phys_print(Physics* phys)
@@ -223,4 +246,12 @@ void phys_print(Physics* phys)
     printf("        collision_rect:       [%.2f %.2f %.2f %.2f]\n",r->x, r->y, r->w, r->h);
     printf("        collision_rect_prior: [%.2f %.2f %.2f %.2f]\n",rp->x, rp->y, rp->w, rp->h);
     printf("  };\n");
+}
+
+void phys_print_dimensions(Physics* phys)
+{
+    printf("  radius:  %.2f\n", phys->radius);
+    printf("  height:  %.2f\n", phys->height);
+    printf("  width:   %.2f\n", phys->width);
+    printf("  length:  %.2f\n", phys->length);
 }

@@ -694,13 +694,13 @@ static void server_send(PacketType type, ClientInfo* cli)
 #if BITPACK
             bitpack_clear(&server.bp);
 
-            pack_events_bp(&pkt,cli);
             pack_players_bp(&pkt, cli);
             pack_creatures_bp(&pkt, cli);
             pack_projectiles_bp(&pkt, cli);
             pack_items_bp(&pkt,cli);
             pack_decals_bp(&pkt, cli);
             pack_other_bp(&pkt, cli);
+            pack_events_bp(&pkt,cli);
 
             bitpack_flush(&server.bp);
             bitpack_seek_begin(&server.bp);
@@ -1681,13 +1681,13 @@ void net_client_update()
                     bitpack_seek_begin(&client.bp);
                     //bitpack_print(&client.bp);
 
-                    unpack_events_bp(&srvpkt,&offset);
                     unpack_players_bp(&srvpkt, &offset);
                     unpack_creatures_bp(&srvpkt, &offset);
                     unpack_projectiles_bp(&srvpkt, &offset);
                     unpack_items_bp(&srvpkt,&offset);
                     unpack_decals_bp(&srvpkt, &offset);
                     unpack_other_bp(&srvpkt,&offset);
+                    unpack_events_bp(&srvpkt,&offset);
 
                     int bytes_read = 4*(client.bp.word_index+1);
                     //printf("bytes_read: %d\n", bytes_read);

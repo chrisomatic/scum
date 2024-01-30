@@ -455,12 +455,21 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
             proj->phys.height*2,
         };
 
+        // Box check = {
+        //     phys->pos.x,
+        //     phys->pos.y,
+        //     phys->pos.z + phys->height/2.0,
+        //     phys->width,
+        //     phys->width,
+        //     phys->height*2,
+        // };
+
         Box check = {
-            phys->pos.x,
-            phys->pos.y,
-            phys->pos.z + phys->height/2.0,
-            phys->width,
-            phys->width,
+            phys->collision_rect.x,
+            phys->collision_rect.y,
+            phys->pos.z/2.0 + phys->height/2.0,
+            phys->collision_rect.w,
+            phys->collision_rect.h,
             phys->height*2,
         };
 

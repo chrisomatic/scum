@@ -106,6 +106,7 @@ typedef struct
     Physics phys;
     float vel_factor;
 
+    float aim_deg;
     float scale;
 
     PlayerClass class;
@@ -209,7 +210,6 @@ void player_draw(Player* p);
 void player_draw_debug(Player* p);
 void player_lerp(Player* p, float dt);
 void player_handle_net_inputs(Player* p, double dt);
-void player_set_collision_pos(Player* p, float x, float y);
 void player_add_xp(Player* p, int xp);
 void player_hurt_no_inv(Player* p, int damage);
 void player_hurt(Player* p, int damage);
@@ -224,6 +224,7 @@ void player_print(Player* p);
 
 void player_set_active(Player* p, bool active);
 int player_get_active_count();
+void player_check_stuck_in_wall(Player* p);
 bool player_check_other_player_collision(Player* p);
 void player_handle_collision(Player* p, Entity* e);
 bool is_any_player_room(uint8_t curr_room);

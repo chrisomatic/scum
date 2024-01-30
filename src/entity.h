@@ -21,6 +21,7 @@ typedef struct
     uint8_t curr_room;
     int tile;   //TileType
     Physics* phys;
+    //bool shadow;
 } Entity;
 
 extern Entity entities[MAX_ENTITIES];

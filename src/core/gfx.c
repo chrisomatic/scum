@@ -403,7 +403,7 @@ bool gfx_sprite_batch_add(int img_index, int sprite_index, float x, float y, uin
 
     if(img_index < 0 || img_index >= MAX_GFX_IMAGES)
     {
-        LOGE("%s: Invalid image index!", __func__);
+        LOGE("%s: Invalid image index %d", __func__, img_index);
         return false;
     }
 
