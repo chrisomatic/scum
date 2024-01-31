@@ -26,7 +26,7 @@ void skills_init()
 
     skill_list[i].type = SKILL_TYPE_KINETIC_DISCHARGE;
     skill_list[i].func = skills_kinetic_discharge;
-    skill_list[i].min_level = 2;
+    skill_list[i].min_level = 1;
     skill_list[i].rarity = SKILL_RARITY_COMMON;
     skill_list[i].rank = 1;
     skill_list[i].periodic = true;
@@ -37,7 +37,7 @@ void skills_init()
 
     skill_list[i].type = SKILL_TYPE_KINETIC_DISCHARGE;
     skill_list[i].func = skills_kinetic_discharge;
-    skill_list[i].min_level = 3;
+    skill_list[i].min_level = 1;
     skill_list[i].rarity = SKILL_RARITY_COMMON;
     skill_list[i].rank = 2;
     skill_list[i].periodic = true;
@@ -77,7 +77,7 @@ void skills_init()
     i++;
 
     skill_list[i].type = SKILL_TYPE_CROWN_OF_THORNS;
-    skill_list[i].min_level = 1;
+    skill_list[i].min_level = 4;
     skill_list[i].rarity = SKILL_RARITY_COMMON;
     skill_list[i].rank = 1;
     skill_list[i].func = skills_crown_of_thorns;
@@ -167,7 +167,7 @@ void skills_init()
     i++;
 
     skill_list[i].type = SKILL_TYPE_RAPID_FIRE;
-    skill_list[i].min_level = 1;
+    skill_list[i].min_level = 2;
     skill_list[i].rarity = SKILL_RARITY_COMMON;
     skill_list[i].rank = 1;
     skill_list[i].func = skills_rapid_fire;
@@ -177,7 +177,7 @@ void skills_init()
     i++;
 
     skill_list[i].type = SKILL_TYPE_RAPID_FIRE;
-    skill_list[i].min_level = 1;
+    skill_list[i].min_level = 3;
     skill_list[i].rarity = SKILL_RARITY_COMMON;
     skill_list[i].rank = 2;
     skill_list[i].func = skills_rapid_fire;
@@ -187,7 +187,7 @@ void skills_init()
     i++;
 
     skill_list[i].type = SKILL_TYPE_RAPID_FIRE;
-    skill_list[i].min_level = 1;
+    skill_list[i].min_level = 4;
     skill_list[i].rarity = SKILL_RARITY_COMMON;
     skill_list[i].rank = 3;
     skill_list[i].func = skills_rapid_fire;
@@ -197,7 +197,7 @@ void skills_init()
     i++;
 
     skill_list[i].type = SKILL_TYPE_MULTISHOT;
-    skill_list[i].min_level = 1;
+    skill_list[i].min_level = 3;
     skill_list[i].rarity = SKILL_RARITY_COMMON;
     skill_list[i].rank = 1;
     skill_list[i].func = skills_multishot;
@@ -207,7 +207,7 @@ void skills_init()
     i++;
 
     skill_list[i].type = SKILL_TYPE_MULTISHOT;
-    skill_list[i].min_level = 1;
+    skill_list[i].min_level = 6;
     skill_list[i].rarity = SKILL_RARITY_COMMON;
     skill_list[i].rank = 2;
     skill_list[i].func = skills_multishot;
@@ -217,7 +217,7 @@ void skills_init()
     i++;
 
     skill_list[i].type = SKILL_TYPE_MULTISHOT;
-    skill_list[i].min_level = 1;
+    skill_list[i].min_level = 10;
     skill_list[i].rarity = SKILL_RARITY_COMMON;
     skill_list[i].rank = 3;
     skill_list[i].func = skills_multishot;
@@ -257,7 +257,7 @@ void skills_init()
     i++;
 
     skill_list[i].type = SKILL_TYPE_CLUSTER_SHOT;
-    skill_list[i].min_level = 1;
+    skill_list[i].min_level = 3;
     skill_list[i].rarity = SKILL_RARITY_COMMON;
     skill_list[i].rank = 1;
     skill_list[i].func = skills_cluster_shot;
@@ -267,7 +267,7 @@ void skills_init()
     i++;
 
     skill_list[i].type = SKILL_TYPE_CLUSTER_SHOT;
-    skill_list[i].min_level = 1;
+    skill_list[i].min_level = 6;
     skill_list[i].rarity = SKILL_RARITY_COMMON;
     skill_list[i].rank = 2;
     skill_list[i].func = skills_cluster_shot;
@@ -277,7 +277,7 @@ void skills_init()
     i++;
 
     skill_list[i].type = SKILL_TYPE_CLUSTER_SHOT;
-    skill_list[i].min_level = 1;
+    skill_list[i].min_level = 10;
     skill_list[i].rarity = SKILL_RARITY_COMMON;
     skill_list[i].rank = 3;
     skill_list[i].func = skills_cluster_shot;
