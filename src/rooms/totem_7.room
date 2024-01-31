@@ -4,7 +4,7 @@
 13,7
 
 ; Room Type
-0   # Empty
+1   # Monster
 
 ; Room Rank
 3
