@@ -563,7 +563,7 @@ static void update_server_num_clients()
             player_reset(&players[i]);
             // memset(&server.clients[i],0, sizeof(ClientInfo));
         }
-        trigger_generate_level(rand(), 1, 0);
+        trigger_generate_level(rand(), 1, 0, __LINE__);
     }
 #endif
 
@@ -677,13 +677,13 @@ static void server_send(PacketType type, ClientInfo* cli)
 
             bitpack_clear(&server.bp);
 
+            pack_events_bp(&pkt,cli);
             pack_players_bp(&pkt, cli);
             pack_creatures_bp(&pkt, cli);
             pack_projectiles_bp(&pkt, cli);
             pack_items_bp(&pkt,cli);
             pack_decals_bp(&pkt, cli);
             pack_other_bp(&pkt, cli);
-            pack_events_bp(&pkt,cli);
 
             bitpack_flush(&server.bp);
             bitpack_seek_begin(&server.bp);
@@ -722,14 +722,12 @@ static void server_send(PacketType type, ClientInfo* cli)
     }
 }
 
+
 static void server_simulate()
 {
     game_generate_level();
 
     float dt = 1.0/TARGET_FPS;
-
-    int num_rooms = 0;
-    int the_rooms[MAX_CLIENTS] = {0};
 
     for(int i = 0; i < MAX_CLIENTS; ++i)
     {
@@ -760,63 +758,6 @@ static void server_simulate()
             }
 
             cli->input_count = 0;
-        }
-
-        bool inlist = false;
-        for(int j = 0; j < num_rooms; ++j)
-        {
-            if(the_rooms[j] == p->curr_room)
-            {
-                inlist = true;
-                break;
-            }
-        }
-        if(!inlist)
-        {
-            the_rooms[num_rooms] = p->curr_room;
-            num_rooms++;
-        }
-
-    }
-
-    for(int i = 0; i < num_rooms; ++i)
-    {
-        Room* room = level_get_room_by_index(&level, the_rooms[i]);
-        if(!room) continue;
-        bool prior_locked = room->doors_locked;
-        room->doors_locked = (creature_get_room_count(the_rooms[i]) != 0);
-        if(!room->doors_locked && prior_locked)
-        {
-
-            if(room->xp > 0)
-            {
-                for(int j = 0; j < MAX_CLIENTS; ++j)
-                {
-                    Player* p = &players[j];
-                    if(p->active && p->curr_room == room->index)
-                    {
-                        player_add_xp(p, room->xp);
-                    }
-                }
-            }
-            room->xp = 0;
-
-            if(room->type == ROOM_TYPE_BOSS)
-            {
-                item_add(ITEM_CHEST, CENTER_X, CENTER_Y, the_rooms[i]);
-                item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y-32, the_rooms[i]);
-            }
-            else
-            {
-                if(rand() % 5 == 0) //TODO: probability
-                {
-                    Room* room = level_get_room_by_index(&level, the_rooms[i]);
-                    Vector2f pos = {0};
-                    level_get_center_floor_tile(room, NULL, &pos);
-                    item_add(item_get_random_heart(), pos.x, pos.y, the_rooms[i]);
-                }
-            }
-            //TODO: xp
         }
     }
 
@@ -1141,8 +1082,7 @@ int net_server_start()
 
             }
             accum = 0.0;
-
-            list_clear(decal_list);
+            decal_clear_all();
         }
 
         // don't wait, just proceed to handling packets
@@ -1636,7 +1576,7 @@ void net_client_update()
                 {
                     int seed = unpack_u32(&srvpkt,&offset);
                     uint8_t rank = unpack_u8(&srvpkt,&offset);
-                    trigger_generate_level(seed,rank,1);
+                    trigger_generate_level(seed,rank,0, __LINE__);
 
                     client.received_init_packet = true;
                 } break;
@@ -1649,13 +1589,13 @@ void net_client_update()
                     bitpack_seek_begin(&client.bp);
                     //bitpack_print(&client.bp);
 
+                    unpack_events_bp(&srvpkt,&offset);
                     unpack_players_bp(&srvpkt, &offset);
                     unpack_creatures_bp(&srvpkt, &offset);
                     unpack_projectiles_bp(&srvpkt, &offset);
                     unpack_items_bp(&srvpkt,&offset);
                     unpack_decals_bp(&srvpkt, &offset);
                     unpack_other_bp(&srvpkt,&offset);
-                    unpack_events_bp(&srvpkt,&offset);
 
                     int bytes_read = 4*(client.bp.word_index+1);
                     offset += bytes_read;
@@ -2172,6 +2112,7 @@ static void pack_players_bp(Packet* pkt, ClientInfo* cli)
             BPW(&server.bp, 5,  (uint32_t)p->sprite_index+p->anim.curr_frame);
             BPW(&server.bp, 7,  (uint32_t)p->curr_room);
             BPW(&server.bp, 4,  (uint32_t)p->phys.hp);
+            BPW(&server.bp, 4,  (uint32_t)p->phys.hp_max);
             BPW(&server.bp, 16, (uint32_t)(p->highlighted_item_id+1));
 
             BPW(&server.bp, 5, (uint32_t)(p->skill_count));
@@ -2241,6 +2182,7 @@ static void unpack_players_bp(Packet* pkt, int* offset)
         uint32_t sprite_index        = bitpack_read(&client.bp, 5);
         uint32_t c_room              = bitpack_read(&client.bp, 7);
         uint32_t hp                  = bitpack_read(&client.bp, 4);
+        uint32_t hp_max              = bitpack_read(&client.bp, 4);
         uint32_t highlighted_item_id = bitpack_read(&client.bp, 16);
         uint32_t skill_count         = bitpack_read(&client.bp, 5);
 
@@ -2297,6 +2239,7 @@ static void unpack_players_bp(Packet* pkt, int* offset)
         p->sprite_index = (uint8_t)sprite_index;
         uint8_t curr_room  = (uint8_t)c_room;
         p->phys.hp  = (uint8_t)hp;
+        p->phys.hp_max  = (uint8_t)hp_max;
 
         p->highlighted_item_id = ((int32_t)highlighted_item_id)-1;
 
@@ -2342,6 +2285,14 @@ static void unpack_players_bp(Packet* pkt, int* offset)
             p->timed_items_ttl[t] = (ti_ttl/10.0f);
         }
 
+        if(!prior_active[client_id])
+        {
+            p->curr_room = curr_room;
+            p->transition_room = p->curr_room;
+        }
+
+        uint8_t prior_curr_room = p->curr_room;
+
         // moving between rooms
         if(curr_room != p->curr_room)
         {
@@ -2349,14 +2300,19 @@ static void unpack_players_bp(Packet* pkt, int* offset)
             {
                 p->transition_room = p->curr_room;
                 p->curr_room = curr_room;
-                //printf("net recv: %d -> %d\n", p->transition_room, p->curr_room); printf("door: %d\n", p->door);
-                player_start_room_transition(p);
+
+                if(level_transition_state == 0 && !level_generate_triggered)
+                {
+                    player_start_room_transition(p);
+                }
+
             }
             else
             {
                 p->transition_room = curr_room;
                 p->curr_room = curr_room;
             }
+            // avoid lerping
             p->phys.pos.x = pos.x;
             p->phys.pos.y = pos.y;
             p->phys.pos.z = pos.z;
@@ -2845,7 +2801,8 @@ static void unpack_events_bp(Packet* pkt, int* offset)
                 level_seed = bitpack_read(&client.bp,32);
                 level_rank = (uint8_t)bitpack_read(&client.bp,8);
 
-                trigger_generate_level(level_seed, level_rank, 2);
+                // printf("[event] new level\n");
+                trigger_generate_level(level_seed, level_rank, 1, __LINE__);
             }
 
             default:

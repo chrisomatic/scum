@@ -142,7 +142,7 @@ void editor_draw()
 
                     if(imgui_button("Generate Random Level"))
                     {
-                        trigger_generate_level(rand(), level_rank, 1);
+                        trigger_generate_level(rand(), level_rank, 1, __LINE__);
                     }
 
                     static char seed_str[32] = {0};
@@ -154,7 +154,7 @@ void editor_draw()
 
                     if(imgui_button("Generate New Level"))
                     {
-                        trigger_generate_level(_seed, _rank, 2);
+                        trigger_generate_level(_seed, _rank, 2, __LINE__);
                         _rank = level_rank;
                     }
 

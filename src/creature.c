@@ -573,6 +573,9 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
 
     ai_init_action(&c);
 
+    phys_calc_collision_rect(&c.phys);
+    // c->phys.radius = calc_radius_from_rect(&c->phys.collision_rect);
+
     list_add(clist, (void*)&c);
 
     return &creatures[clist->count-1];
@@ -594,7 +597,7 @@ void creature_update(Creature* c, float dt)
 
     phys_add_circular_time(&c->phys, dt);
 
-    c->curr_tile = level_get_room_coords_by_pos(c->phys.pos.x, c->phys.pos.y);
+    c->curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
 
     switch(c->type)
     {
@@ -810,6 +813,9 @@ void creature_die(Creature* c)
     d.pos.y = c->phys.pos.y;
     d.room = c->curr_room;
     decal_add(d);
+
+    // handle_room_completion(c->curr_room);
+    handle_room_completion(room);
 }
 
 void creature_hurt(Creature* c, float damage)
@@ -819,7 +825,11 @@ void creature_hurt(Creature* c, float damage)
 
     float hp = (float)c->phys.hp;
 
+    // printf("damage: %.2f, hp: %.2f -> ", damage, hp);
+
     hp -= damage;
+
+    // printf("%.2f ", hp);
 
     if(hp <= 0)
     {
@@ -830,6 +840,7 @@ void creature_hurt(Creature* c, float damage)
         c->phys.hp = (int8_t)hp;
     }
 
+    // printf("(%d)\n", c->phys.hp);
 
     c->damaged = true;
     c->damaged_time = 0.0;
@@ -850,7 +861,7 @@ uint16_t creature_get_room_count(uint8_t room_index)
     uint16_t count = 0;
     for(int i = 0; i < clist->count; ++i)
     {
-        if(creatures[i].curr_room == room_index)
+        if(creatures[i].curr_room == room_index && !creatures[i].phys.dead)
             count++;
     }
     return count;
@@ -864,24 +875,47 @@ bool creature_is_on_tile(Room* room, int tile_x, int tile_y)
         if(c->curr_room != room->index)
             continue;
 
+        if(c->phys.dead)
+            continue;
+
+        // printf("  creature check (%d, %d)", tile_x, tile_y);
+
         // simple check
         if(c->curr_tile.x == tile_x && c->curr_tile.y == tile_y)
+        {
+            // printf("  on the tile!\n");
             return true;
+        }
+
+        // if it's overlapping with the tile at all
+        Vector2f pos = level_get_pos_by_room_coords(tile_x, tile_y);
+        float d = dist(pos.x, pos.y, c->phys.collision_rect.x, c->phys.collision_rect.y);
+        if(d <= (TILE_SIZE + c->phys.radius))
+        {
+            // printf("  overlap with tile!\n");
+            return true;
+        }
+        // else
+        // {
+        //     // printf(" tpos(%.2f, %.2f)  cpos(%.2f, %.2f)  dist(%.2f)  radius(%.2f)\n", pos.x, pos.y, c->phys.collision_rect.x, c->phys.collision_rect.y, d, c->phys.radius);
+        // }
+
+        // printf(" not on tile\n");
     }
     return false;
 }
 
 static Player* get_nearest_player(float x, float y)
 {
-    float min_dist = 10000.0;
+    float min_dist = 100000.0;
     int min_index = 0;
 
-    int num_players = player_get_active_count();
-    for(int i = 0; i < num_players; ++i)
+    // int num_players = player_get_active_count();
+    for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         Player* p = &players[i];
-        if(p->phys.dead)
-            continue;
+        if(!p->active) continue;
+        if(p->phys.dead) continue;
 
         float d = dist(x,y, p->phys.pos.x, p->phys.pos.y);
         if(d < min_dist)
@@ -900,7 +934,6 @@ static void creature_update_slug(Creature* c, float dt)
 
     if(act)
     {
-
         ai_stop_imm(c);
 
         if(ai_flip_coin())
@@ -1149,7 +1182,6 @@ static void creature_update_totem_red(Creature* c, float dt)
                 creature_count++;
             }
         }
-            
     }
 
     if(creature_count == 0)

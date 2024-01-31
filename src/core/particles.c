@@ -301,6 +301,17 @@ void particles_update(double delta_t)
     }
 }
 
+//doesn't work properly
+void particles_delete_all_spawners()
+{
+    if(spawner_list == NULL) return;
+    for(int i = spawner_list->count-1; i >= 0; --i)
+    {
+        particles_clear(&spawners[i]);
+        delete_spawner_index(i);
+    }
+}
+
 void particles_draw_spawner(ParticleSpawner* spawner, bool ignore_light, bool add_to_existing_batch)
 {
     if(spawner == NULL) return;

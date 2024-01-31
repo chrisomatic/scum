@@ -71,11 +71,11 @@ static void item_func_new_level(Item* pu, Player* p)
     printf("you shouldn't be here!!!  >:(\n");
     return;
 
-    pu->picked_up = true;
-    // item_remove(pu);
+    // pu->picked_up = true;
+    // // item_remove(pu);
 
-    int seed = time(0)+rand()%1000;
-    trigger_generate_level(seed, level_rank+1, 2);
+    // int seed = time(0)+rand()%1000;
+    // trigger_generate_level(seed, level_rank+1, 2);
 
     // if(role == ROLE_SERVER)
     // {

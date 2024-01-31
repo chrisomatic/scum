@@ -198,27 +198,22 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
 
     bool is_start_room = (x == level->start.x && y == level->start.y);
 
+
+    if(role != ROLE_CLIENT)
+    {
+        item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, room->index);
+    }
+
     if(is_start_room)
     {
         room->type   = ROOM_TYPE_EMPTY;
         room->layout = 0;
 
         // // TEMP
-        if(role != ROLE_CLIENT)
-        {
-
-            item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, room->index);
-
-            // item_add(ITEM_CHEST, CENTER_X, CENTER_Y, room->index);
-            // for(int i = 0; i < 3; ++i) item_add(item_rand(false), CENTER_X, CENTER_Y, room->index);
-        // item_add(ITEM_GEM_RED, CENTER_X, CENTER_Y, room->index);
-        // item_add(ITEM_GEM_RED+1, CENTER_X, CENTER_Y, room->index);
-        // item_add(ITEM_GEM_RED+2, CENTER_X, CENTER_Y, room->index);
-            // for(int i = 0; i < ITEM_MAX; ++i)
-            // {
-            //     item_add(i, CENTER_X, CENTER_Y, room->index);
-            // }
-        }
+        // if(role != ROLE_CLIENT)
+        // {
+        //     item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, room->index);
+        // }
 
         goto exit_conditions;
     }
@@ -916,39 +911,6 @@ TileType level_get_tile_type_by_pos(Room* room, float x, float y)
     return level_get_tile_type(room, tile_coords.x, tile_coords.y);
 }
 
-
-void level_get_center_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile_pos)
-{
-    for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
-    {
-        int _x = (ROOM_TILE_SIZE_X-1)/2;
-        _x += ((x % 2 == 0) ? -1 : 1) * x/2;
-
-        for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
-        {
-            int _y = (ROOM_TILE_SIZE_Y-1)/2;
-            _y += ((y % 2 == 0) ? -1 : 1) * y/2;
-
-            // TODO: item_is_on_tile and creature_is_on_tile only do simple collision checks
-            if(IS_SAFE_TILE(level_get_tile_type(room, _x, _y)) && !item_is_on_tile(room, _x, _y) && !creature_is_on_tile(room, _x, _y))
-            {
-                if(tile_coords)
-                {
-                    tile_coords->x = _x;
-                    tile_coords->y = _y;
-                }
-                if(tile_pos)
-                {
-                    Rect rp = level_get_tile_rect(_x, _y);
-                    tile_pos->x = rp.x;
-                    tile_pos->y = rp.y;
-                    // printf("setting tile_pos: %.2f, %.2f (%d, %d)\n", tile_pos->x, tile_pos->y, _x, _y);
-                }
-                return;
-            }
-        }
-    }
-}
 
 void level_get_safe_floor_tile(Room* room, Vector2i start, Vector2i* tile_coords, Vector2f* tile_pos)
 {

@@ -145,6 +145,7 @@ typedef struct
     GFXAnimation anim;
 
     uint8_t sprite_index;
+
     uint8_t curr_room;
     uint8_t transition_room;
     Dir door;
@@ -165,7 +166,6 @@ typedef struct
     float invulnerable_temp_time;
     float invulnerable_temp_max;
 
-    // Item* highlighted_item;
     int32_t highlighted_item_id;
     int highlighted_index;
     ItemSort near_items[NUM_NEAR_ITEMS];

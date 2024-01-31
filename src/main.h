@@ -111,6 +111,7 @@ void decal_init();
 void decal_add(Decal d);
 void decal_draw_all();
 void decal_update_all(float dt);
+void decal_clear_all();
 
 extern float mouse_x, mouse_y;
 extern float mouse_window_x, mouse_window_y;
@@ -128,6 +129,7 @@ extern Level level;
 extern unsigned int level_seed;
 extern int level_rank;
 extern int level_transition;
+extern int level_transition_state;
 extern bool level_generate_triggered;
 
 extern Vector2f transition_offsets;
@@ -159,9 +161,9 @@ extern char* item_names[];
 void camera_set(bool immediate);
 bool camera_can_be_limited(float x, float y, float z);
 
-void trigger_generate_level(unsigned int _seed, int _rank, int transition);
-// void game_generate_level(unsigned int _seed, int _rank, int transition);
+void trigger_generate_level(unsigned int _seed, int _rank, int transition, int line);
 void game_generate_level();
+void handle_room_completion(Room* room);
 void set_game_state(GameState state);
 void update_input_state(PlayerInput* input, float _dt);
 

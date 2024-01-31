@@ -152,7 +152,6 @@ Rect level_get_tile_rect(int x, int y);
 Rect level_get_rect_by_pos(float x, float y);
 TileType level_get_tile_type(Room* room, int x, int y);
 TileType level_get_tile_type_by_pos(Room* room, float x, float y);
-void level_get_center_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile_pos);
 void level_get_rand_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile_pos);
 
 void level_get_safe_floor_tile(Room* room, Vector2i start, Vector2i* tile_coords, Vector2f* tile_pos);

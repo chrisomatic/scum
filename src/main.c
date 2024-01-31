@@ -87,6 +87,7 @@ Level level;
 unsigned int level_seed = 0;
 int level_rank = 0;
 int level_transition = 0;
+int level_transition_state = 0;
 bool level_generate_triggered = false;
 
 DrawLevelParams minimap_params = {0};
@@ -136,7 +137,9 @@ void draw();
 void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods);
 void start_server();
 
-void handle_room_completion();
+// void handle_room_completion();
+// void message_small_update(float dt);
+// void message_small_draw();
 
 // =========================
 // Main Loop
@@ -236,7 +239,7 @@ void set_game_state(GameState state)
                 bool diff = room_file_load_all(false);
                 if(diff)
                 {
-                    trigger_generate_level(level_seed, level_rank, 0);
+                    trigger_generate_level(level_seed, level_rank, 0, __LINE__);
                 }
                 net_client_disconnect();
                 set_menu_keys();
@@ -256,11 +259,13 @@ void set_game_state(GameState state)
                 paused = false;
                 ambient_light = ambient_light_default;
                 player = &players[0];
-                player_set_active(player, true);
+                if(role == ROLE_LOCAL)
+                {
+                    player_set_active(player, true);
+                    memcpy(&player->settings, &menu_settings,sizeof(Settings));
+                    player_set_class(player, player->settings.class);
+                }
                 // player_set_active(&players[1], true);
-
-                memcpy(&player->settings, &menu_settings,sizeof(Settings));
-                player_set_class(player, player->settings.class);
                 player_init_keys();
             } break;
         }
@@ -579,7 +584,7 @@ void start_server()
     level_seed = rand();
 
     level_init();
-    trigger_generate_level(level_seed, 1, 0);
+    trigger_generate_level(level_seed, 1, 0, __LINE__);
 
     projectile_init();
     explosion_init();
@@ -588,23 +593,40 @@ void start_server()
     net_server_start();
 }
 
-void trigger_generate_level(unsigned int _seed, int _rank, int transition)
-{
-    if(role == ROLE_SERVER)
-        transition = 0;
-    level_seed = _seed;
-    level_rank = _rank;
-    level_transition = transition;
-    level_generate_triggered = true;
-}
-
 float level_trans_time = 0.0;
-int level_transition_state = 0;
 float level_transition_opacity = 0.0;
+
 // 0: no transition
 // 1: fade up transition
 // 2: fade down, then up transition
-// void game_generate_level(unsigned int _seed, int _rank, int transition)
+void trigger_generate_level(unsigned int _seed, int _rank, int transition, int line)
+{
+    if(role == ROLE_SERVER) transition = 0;
+
+    level_seed = _seed;
+    level_rank = _rank;
+    level_transition = transition;
+
+    level_grace_time = ROOM_GRACE_TIME;
+
+    if(level_transition == 0 || level_transition == 1)
+    {
+        level_generate_triggered = true;
+        // printf("set level_generate_triggered = true (line: %d)\n", line);
+    }
+
+    if(level_transition == 1)
+    {
+        level_trans_time = 0.0;
+        level_transition_state = 2;
+    }
+    else if(level_transition == 2)
+    {
+        level_trans_time = 0.0;
+        level_transition_state = 1;
+    }
+}
+
 void game_generate_level()
 {
     if(!level_generate_triggered)
@@ -612,45 +634,36 @@ void game_generate_level()
         return;
     }
     level_generate_triggered = false;
-
-    // if(role == ROLE_SERVER)
-    //     transition = 0;
-
-    // level_seed = _seed;
-    // level_rank = _rank;
-    // level_transition = transition;
+    // printf("set level_generate_triggered = false\n");
 
     creature_clear_all();
     item_clear_all();
+    decal_clear_all();
 
-    if(role == ROLE_CLIENT || role == ROLE_LOCAL)
-    {
-        if(level_transition == 0)
-        {
-            level = level_generate(level_seed, level_rank);
-        }
-        else if(level_transition == 1)
-        {
-            level = level_generate(level_seed, level_rank);
-            level_trans_time = 0.0;
-            level_transition_state = 2;
-        }
-        else if(level_transition == 2)
-        {
-            level_trans_time = 0.0;
-            level_transition_state = 1;
-        }
+    // if(role == ROLE_CLIENT || role == ROLE_LOCAL)
+    // {
+    //     if(level_transition == 0)
+    //     {
+    //         level = level_generate(level_seed, level_rank);
+    //     }
+    //     else if(level_transition == 1)
+    //     {
+    //         level = level_generate(level_seed, level_rank);
+    //         level_trans_time = 0.0;
+    //         level_transition_state = 2;
+    //     }
+    //     else if(level_transition == 2)
+    //     {
+    //         level_trans_time = 0.0;
+    //         level_transition_state = 1;
+    //     }
+    // }
 
-        ui_message_set_title(2.0, 0x00CCCCCC, "Level %d", level_rank);
-    }
+    level = level_generate(level_seed, level_rank);
+    ui_message_set_title(2.0, 0x00CCCCCC, "Level %d", level_rank);
 
     if(role == ROLE_CLIENT)
         return;
-
-    if(role == ROLE_SERVER)
-    {
-        level = level_generate(level_seed, level_rank);
-    }
 
     LOGI("  Valid Rooms");
     for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
@@ -818,7 +831,7 @@ void init()
 
     if(role == ROLE_LOCAL)
     {
-        trigger_generate_level(0,5,0);
+        trigger_generate_level(0,5,0,__LINE__);
         // trigger_generate_level(0, 5, 0);
     }
 
@@ -1016,7 +1029,7 @@ void update_main_menu(float dt)
         else if(STR_EQUAL(s, "New Game"))
         {
             player_init();
-            trigger_generate_level(rand(), 1, 0);
+            trigger_generate_level(rand(), 1, 0, __LINE__);
 
             role = ROLE_LOCAL;
             set_game_state(GAME_STATE_PLAYING);
@@ -1057,7 +1070,39 @@ void update_main_menu(float dt)
     }
 }
 
+void update_level_transition(float dt)
+{
+    const float transition_duration = 0.6;
+    // fade from black to clear
+    if(level_transition_state == 2)
+    {
+        level_trans_time += dt;
 
+        level_transition_opacity = 1.0 - RANGE(level_trans_time / transition_duration, 0.0, 1.0);
+
+        if(level_trans_time >= transition_duration)
+        {
+            // printf("finished fading to clear\n");
+            level_transition_state = 0;
+            level_trans_time = 0.0;
+        }
+    }
+    // fade from clear to black
+    else if(level_transition_state == 1)
+    {
+        level_trans_time += dt;
+
+        level_transition_opacity = RANGE(level_trans_time / transition_duration, 0.0, 1.0);
+
+        if(level_trans_time >= transition_duration)
+        {
+            // printf("finished fading to black\n");
+            // level_transition_state = 2;
+            // level_trans_time = 0.0;
+            trigger_generate_level(level_seed, level_rank, 1, __LINE__);
+        }
+    }
+}
 
 void update(float dt)
 {
@@ -1106,13 +1151,19 @@ void update(float dt)
     ui_update(dt);
 
     bool conn = client_handle_connection();
-    if(!conn) return;
+    if(!conn)
+    {
+        creature_clear_all();
+        item_clear_all();
+        decal_clear_all();
+        // particles_delete_all_spawners(); //doesn't work properly
+        return;
+    }
 
     player_handle_net_inputs(player, dt);
 
     if(!paused)
     {
-
         lighting_point_light_clear_all();
         level_update(dt);
         player_update_all(dt);
@@ -1127,81 +1178,60 @@ void update(float dt)
         entity_handle_collisions();
         entity_handle_status_effects(dt);
 
-        handle_room_completion();
-
-        const float transition_duration = 0.6;
-        // fade from black to clear
-        if(level_transition_state == 2)
-        {
-            level_trans_time += dt;
-
-            level_transition_opacity = 1.0 - RANGE(level_trans_time / transition_duration, 0.0, 1.0);
-
-            if(level_trans_time >= transition_duration)
-            {
-                // printf("finished fading to clear\n");
-                level_transition_state = 0;
-                level_trans_time = 0.0;
-            }
-        }
-        // fade from clear to black
-        else if(level_transition_state == 1)
-        {
-            level_trans_time += dt;
-
-            level_transition_opacity = RANGE(level_trans_time / transition_duration, 0.0, 1.0);
-
-            if(level_trans_time >= transition_duration)
-            {
-                // printf("finished fading to black\n");
-                level_transition_state = 2;
-                level_trans_time = 0.0;
-                trigger_generate_level(level_seed, level_rank, 0);
-            }
-        }
+        update_level_transition(dt);
     }
 
     camera_set(false);
 }
 
-
-//TODO: make this work with server: pass in room index!
-void handle_room_completion()
+// void handle_room_completion(int room_index)
+void handle_room_completion(Room* room)
 {
     if(role == ROLE_CLIENT) return;
 
-    Room* room = level_get_room_by_index(&level, (int)player->curr_room);
+    // Room* room = level_get_room_by_index(&level, room_index);
+    // if(!room) return;
+
+    uint8_t room_index = room->index;
+
     bool prior_locked = room->doors_locked;
-    room->doors_locked = (creature_get_room_count(player->curr_room) != 0);
+    room->doors_locked = (creature_get_room_count(room_index) != 0);
+
     if(!room->doors_locked && prior_locked)
     {
+
         if(room->xp > 0)
         {
-            for(int i = 0; i < MAX_PLAYERS; ++i)
+            for(int j = 0; j < MAX_CLIENTS; ++j)
             {
-                Player* p = &players[i];
-                if(p->active && p->curr_room == room->index)
+                Player* p = &players[j];
+                if(p->active && p->curr_room == room->index && !p->phys.dead)
                 {
                     player_add_xp(p, room->xp);
                 }
             }
-            room->xp = 0;
         }
+        room->xp = 0;
 
         if(room->type == ROOM_TYPE_BOSS)
         {
-            item_add(ITEM_CHEST, CENTER_X, CENTER_Y, player->curr_room);
-            item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y-32, player->curr_room);
+            Vector2f pos = {0};
+            Vector2i start = {.x = ROOM_TILE_SIZE_X/2, .y = ROOM_TILE_SIZE_Y/2};
+
+            level_get_safe_floor_tile(room, start, NULL, &pos);
+            item_add(ITEM_CHEST, pos.x, pos.y, room_index);
+
+            level_get_safe_floor_tile(room, start, NULL, &pos);
+            item_add(ITEM_NEW_LEVEL, pos.x, pos.y, room_index);
         }
         else
         {
-
-            if(rand() % 5 == 0)
+            if(rand() % 5 == 0) //TODO: probability
             {
-                Room* room = level_get_room_by_index(&level, player->curr_room);
                 Vector2f pos = {0};
-                level_get_center_floor_tile(room, NULL, &pos);
-                item_add(item_get_random_heart(), pos.x, pos.y, player->curr_room);
+                Vector2i start = {.x = ROOM_TILE_SIZE_X/2, .y = ROOM_TILE_SIZE_Y/2};
+                level_get_safe_floor_tile(room, start, NULL, &pos);
+                item_add(item_get_random_heart(), pos.x, pos.y, room_index);
             }
         }
     }
@@ -1573,6 +1603,8 @@ void draw()
 
     gfx_clear_buffer(background_color);
 
+    uint8_t room_index = player->curr_room;
+
     if(player->curr_room != player->transition_room)
     {
         lighting_point_light_clear_all();
@@ -1580,7 +1612,13 @@ void draw()
     }
     else
     {
-        Room* room = level_get_room_by_index(&level,player->curr_room);
+
+        // if(player->temp_room != -1)
+        // {
+        //     player->curr_room = player->temp_room;
+        // }
+
+        Room* room = level_get_room_by_index(&level, player->curr_room);
         if(!room) LOGW("room is null");
         level_draw_room(room, NULL, 0, 0);
 
@@ -1599,6 +1637,7 @@ void draw()
         entity_draw_all();
         explosion_draw_all();
         particles_draw_all();
+
 
         if(debug_enabled)
         {
@@ -1637,6 +1676,7 @@ void draw()
         gfx_draw_rect(&cr, COLOR_BLACK, NOT_SCALED, NO_ROTATION, level_transition_opacity, true, IN_WORLD);
     }
 
+    player->curr_room = room_index;
 }
 
 
@@ -1765,4 +1805,10 @@ void decal_update_all(float dt)
             list_remove(decal_list, i);
         }
     }
+}
+
+void decal_clear_all()
+{
+    list_clear(decal_list);
+
 }

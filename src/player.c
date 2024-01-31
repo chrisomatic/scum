@@ -92,6 +92,8 @@ void player_set_defaults(Player* p)
     memcpy(&p->proj_spawn,&projectile_spawn[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileSpawn));
 
     p->proj_cooldown_max = 0.40;
+
+    // p->temp_room = -1;
     p->door = DIR_NONE;
     p->light_radius = 1.0;
 
@@ -310,10 +312,10 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
         return;
     }
 
-
+    // printf("player send to room %u (%d, %d)\n", room_index, tile.x, tile.y);
     Vector2f pos = {0};
     level_get_safe_floor_tile(room, tile, NULL, &pos);
-
+    // printf("pos: %.2f, %.2f\n", pos.x, pos.y);
     phys_set_collision_pos(&p->phys, pos.x, pos.y);
 
     p->ignore_player_collision = true;
@@ -511,7 +513,7 @@ void player_die(Player* p)
         player_reset(p2);
     }
 
-    trigger_generate_level(rand(), level_rank, 2);
+    trigger_generate_level(rand(), level_rank, 2, __LINE__);
 
     if(role == ROLE_SERVER)
     {
@@ -626,7 +628,7 @@ void player_draw_room_transition()
 
 void player_start_room_transition(Player* p)
 {
-    // printf("start room transition\n");
+    printf("start room transition\n");
     Vector2i roomxy = level_get_room_coords((int)p->curr_room);
 
     if(role == ROLE_SERVER || role == ROLE_LOCAL)
@@ -798,7 +800,7 @@ static void handle_room_collision(Player* p)
         float d = dist(p->phys.collision_rect.x, p->phys.collision_rect.y, door_point.x, door_point.y);
 
         bool colliding_with_door = (d < p->phys.radius);
-        if(colliding_with_door && !room->doors_locked && p->new_levels == 0 && (p->phys.pos.z == 0.0 || p->phys.floating))
+        if(colliding_with_door && !room->doors_locked && p->new_levels == 0 && (p->phys.pos.z == 0.0 || p->phys.floating) && !p->phys.dead)
         {
             bool k = false;
             k |= i == DIR_UP && p->actions[PLAYER_ACTION_UP].state;
@@ -999,19 +1001,26 @@ void player_update(Player* p, float dt)
 
                     if(type == ITEM_NEW_LEVEL)
                     {
-                        item_remove(pu);
-                        trigger_generate_level(rand(), level_rank+1, 2);
-
-                        if(role == ROLE_SERVER)
+                        if(level_grace_time <= 0.0)
                         {
-                            NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
-                            net_server_add_event(&ev);
+                            item_remove(pu);
+                            trigger_generate_level(rand(), level_rank+1, 2, __LINE__);
+
+                            if(role == ROLE_SERVER)
+                            {
+                                NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
+                                net_server_add_event(&ev);
+                            }
+
+                            return;
                         }
 
-                        return;
+                    }
+                    else
+                    {
+                        if(item_props[type].func) item_props[type].func(pu, p);
                     }
 
-                    if(item_props[type].func) item_props[type].func(pu, p);
 
                     if(pu->picked_up)
                         item_remove(pu);
@@ -2128,7 +2137,7 @@ void player_draw(Player* p)
     if(!p->active) return;
     if(p->curr_room != player->curr_room) return;
 
-    Room* room = level_get_room_by_index(&level, (int)p->curr_room);
+    // Room* room = level_get_room_by_index(&level, (int)p->curr_room);
 
     bool blink = p->invulnerable_temp ? ((int)(p->invulnerable_temp_time * 100)) % 2 == 0 : false;
     float opacity = p->phys.dead ? 0.3 : 1.0;
