@@ -46,7 +46,6 @@ bool show_tile_grid = false;
 bool players_invincible = false;
 
 // Settings
-// uint32_t background_color = COLOR_BLACK;
 uint32_t background_color = COLOR(30,30,30);
 uint32_t margin_color = COLOR_BLACK;
 
@@ -136,10 +135,6 @@ void update(float dt);
 void draw();
 void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods);
 void start_server();
-
-// void handle_room_completion();
-// void message_small_update(float dt);
-// void message_small_draw();
 
 // =========================
 // Main Loop
@@ -636,28 +631,11 @@ void game_generate_level()
     level_generate_triggered = false;
     // printf("set level_generate_triggered = false\n");
 
+    projectile_clear_all();
     creature_clear_all();
     item_clear_all();
     decal_clear_all();
-
-    // if(role == ROLE_CLIENT || role == ROLE_LOCAL)
-    // {
-    //     if(level_transition == 0)
-    //     {
-    //         level = level_generate(level_seed, level_rank);
-    //     }
-    //     else if(level_transition == 1)
-    //     {
-    //         level = level_generate(level_seed, level_rank);
-    //         level_trans_time = 0.0;
-    //         level_transition_state = 2;
-    //     }
-    //     else if(level_transition == 2)
-    //     {
-    //         level_trans_time = 0.0;
-    //         level_transition_state = 1;
-    //     }
-    // }
+    // particles_delete_all_spawners(); //doesn't work properly
 
     level = level_generate(level_seed, level_rank);
     ui_message_set_title(2.0, 0x00CCCCCC, "Level %d", level_rank);
@@ -1613,11 +1591,6 @@ void draw()
     else
     {
 
-        // if(player->temp_room != -1)
-        // {
-        //     player->curr_room = player->temp_room;
-        // }
-
         Room* room = level_get_room_by_index(&level, player->curr_room);
         if(!room) LOGW("room is null");
         level_draw_room(room, NULL, 0, 0);
@@ -1672,7 +1645,6 @@ void draw()
     if(level_transition_state != 0)
     {
         Rect cr = get_camera_rect();
-        // Rect cr = RECT(CENTER_X, CENTER_Y)
         gfx_draw_rect(&cr, COLOR_BLACK, NOT_SCALED, NO_ROTATION, level_transition_opacity, true, IN_WORLD);
     }
 

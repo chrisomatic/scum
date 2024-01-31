@@ -2305,6 +2305,10 @@ static void unpack_players_bp(Packet* pkt, int* offset)
                 {
                     player_start_room_transition(p);
                 }
+                else
+                {
+                    p->transition_room = p->curr_room;
+                }
 
             }
             else

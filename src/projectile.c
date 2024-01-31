@@ -25,7 +25,7 @@ static int projectile_image;
 ProjectileDef projectile_lookup[] = {
     {
         // player
-        .damage = 2.0,
+        .damage = 200.0,
         .speed = 215.0,
         .accel = 0.0,
         .scale = 1.0,
@@ -104,7 +104,7 @@ ProjectileDef projectile_lookup[] = {
 ProjectileSpawn projectile_spawn[] = {
     {
         // player
-        .num = 1,
+        .num = 10,
         .spread = 30.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
