@@ -1023,6 +1023,7 @@ void player_update(Player* p, float dt)
             {
                 if(item_props[it->type].func) item_props[it->type].func(it, p);
             }
+
             it->type = ITEM_NONE;
         }
 
@@ -1131,7 +1132,6 @@ void player_update(Player* p, float dt)
         {
             pr->timed_func(p->timed_items[i], (void*)p);
         }
-
     }
 
     // printf("-->  %.2f\n", p->phys.speed);

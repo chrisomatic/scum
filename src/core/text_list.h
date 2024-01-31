@@ -21,12 +21,9 @@ typedef struct
     float y;
     float y_shift;
     float scale;
-    // uint32_t color;
     float text_height;
     bool fade_out;
 } text_list_t;
-
-
 
 text_list_t* text_list_init(int max, float x, float y, float scale, bool downward, text_align_t alignment, bool in_world, bool fade_out);
 void text_list_add(text_list_t* lst, uint32_t color, float duration, char* fmt, ...);

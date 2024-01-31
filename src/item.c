@@ -206,8 +206,6 @@ static void item_timed_func_consumable_end(ItemType type, Player* p)
 }
 
 
-
-
 static void item_func_consumable(Item* pu, Player* p)
 {
     switch(pu->type)
