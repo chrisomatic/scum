@@ -25,7 +25,7 @@ static int projectile_image;
 ProjectileDef projectile_lookup[] = {
     {
         // player
-        .damage = 200.0,
+        .damage = 2.0,
         .speed = 215.0,
         .accel = 0.0,
         .scale = 1.0,
@@ -41,7 +41,7 @@ ProjectileDef projectile_lookup[] = {
     },
     {
         // player - kinetic discharge skill
-        .damage = 0.25,
+        .damage = 1.0,
         .speed = 200.0,
         .accel = 0.0,
         .scale = 0.5,
@@ -104,7 +104,7 @@ ProjectileDef projectile_lookup[] = {
 ProjectileSpawn projectile_spawn[] = {
     {
         // player
-        .num = 10,
+        .num = 1,
         .spread = 30.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,

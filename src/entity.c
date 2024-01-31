@@ -39,9 +39,9 @@ static void add_entity(EntityType type, void* ptr, uint8_t curr_room, Physics* p
 
 static bool is_player_room(uint8_t room_index)
 {
-    int num_players = player_get_active_count();
-    for(int i = 0; i < num_players; ++i)
+    for(int i = 0; i < MAX_PLAYERS; ++i)
     {
+        if(!players[i].active) continue;
         if(players[i].curr_room == room_index)
             return true;
     }
@@ -421,7 +421,7 @@ Physics* entity_get_closest_to(Physics* phys, uint8_t curr_room, EntityType type
     switch(type)
     {
         case ENTITY_TYPE_PLAYER:
-            count = player_get_active_count();
+            count = player_get_active_count(); //TODO: could be empty spots in player list
             break;
         case ENTITY_TYPE_CREATURE:
             count = creature_get_count();
