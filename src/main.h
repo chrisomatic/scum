@@ -159,8 +159,6 @@ extern char* item_names[];
 void camera_set(bool immediate);
 bool camera_can_be_limited(float x, float y, float z);
 
-void message_small_set(float duration, char* fmt, ...);
-
 void trigger_generate_level(unsigned int _seed, int _rank, int transition);
 // void game_generate_level(unsigned int _seed, int _rank, int transition);
 void game_generate_level();

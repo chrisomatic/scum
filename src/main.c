@@ -24,6 +24,7 @@
 #include "room_editor.h"
 #include "text_list.h"
 #include "skills.h"
+#include "ui.h"
 #include "settings.h"
 
 // =========================
@@ -99,10 +100,6 @@ char* item_names[ITEM_MAX] = {0};
 char chat_text[128] = {0};
 uint32_t chat_box_hash = 0x0;
 
-#define MESSAGE_SMALL_MAX 256
-char message_small[MESSAGE_SMALL_MAX];
-float message_small_duration;
-
 enum
 {
     MENU_KEY_UP,
@@ -140,9 +137,6 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods);
 void start_server();
 
 void handle_room_completion();
-
-void message_small_update(float dt);
-void message_small_draw();
 
 // =========================
 // Main Loop
@@ -646,6 +640,8 @@ void game_generate_level()
             level_trans_time = 0.0;
             level_transition_state = 1;
         }
+
+        ui_message_set_title(2.0, 0x00CCCCCC, "Level %d", level_rank);
     }
 
     if(role == ROLE_CLIENT)
@@ -857,7 +853,6 @@ void init()
     params->opacity_player = 0.3;
 
     set_menu_keys();
-
 
     if(role == ROLE_CLIENT)
     {
@@ -1108,7 +1103,7 @@ void update(float dt)
         return;
     }
 
-    message_small_update(dt);
+    ui_update(dt);
 
     bool conn = client_handle_connection();
     if(!conn) return;
@@ -1629,7 +1624,7 @@ void draw()
     editor_draw();
 
     text_list_draw(text_lst);
-    message_small_draw();
+    ui_draw();
     gfx_draw_lines();
 
     draw_chat_box();
@@ -1717,65 +1712,6 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
 
         }
     }
-}
-
-// ==================================================================================
-// SMALL MESSAGE
-// ==================================================================================
-
-void message_small_set(float duration, char* fmt, ...)
-{
-    static char temp[MESSAGE_SMALL_MAX] = {0};
-    memset(temp, 0, sizeof(char)*MESSAGE_SMALL_MAX);
-    va_list args;
-    va_start(args, fmt);
-    int ret = vsnprintf(temp, MESSAGE_SMALL_MAX, fmt, args);
-    va_end(args);
-
-    if(ret < 0 || ret >= MESSAGE_SMALL_MAX)
-    {
-        LOGE("Failed to format message_small (%d)", ret);
-        return;
-    }
-
-    memcpy(message_small, temp, sizeof(char)*MESSAGE_SMALL_MAX);
-    message_small_duration = duration;
-}
-
-void message_small_update(float dt)
-{
-    message_small_duration -= dt;
-}
-
-
-void message_small_draw()
-{
-    if(message_small_duration <= 0)
-        return;
-
-    if(!message_small)
-        return;
-
-    if(strlen(message_small) == 0)
-        return;
-
-    float scale = 0.25 * ascale;
-
-    Vector2f size = gfx_string_get_size(scale, message_small);
-
-    float pad = 10.0;
-
-    Rect bg = {0};
-    bg.w = size.x + pad;
-    bg.h = size.y + pad;
-    bg.x = bg.w/2.0 + 1.0;
-    bg.y = view_height - bg.h/2.0 - 1.0;
-
-    gfx_draw_rect(&bg, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.6, true, NOT_IN_WORLD);
-
-    float tx = bg.x - bg.w/2.0 + pad/2.0;
-    float ty = bg.y - bg.h/2.0 + pad/4.0;
-    gfx_draw_string(tx, ty, COLOR_WHITE, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, NO_DROP_SHADOW, 0, message_small);
 }
 
 

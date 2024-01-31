@@ -33,6 +33,7 @@ gcc core/gfx.c \
     room_file.c \
     skills.c \
     settings.c \
+    ui.c \
     main.c \
     -Icore \
     -lglfw -lGLU -lGLEW -lGL -lm \

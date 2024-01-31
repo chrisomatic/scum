@@ -8,6 +8,7 @@
 #include "camera.h"
 #include "lighting.h"
 #include "status_effects.h"
+#include "ui.h"
 #include "player.h"
 
 void player_ai_move_to_target(Player* p, Player* target);
@@ -316,6 +317,7 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
     phys_set_collision_pos(&p->phys, pos.x, pos.y);
 
     p->ignore_player_collision = true;
+
 }
 
 void player_send_to_level_start(Player* p)
@@ -571,7 +573,6 @@ void player_draw_room_transition()
 
             Room* room = level_get_room_by_index(&level, player->curr_room);
             level_draw_room(room, NULL, 0, 0);
-
         }
         else
         {
@@ -894,7 +895,9 @@ void player_update(Player* p, float dt)
         if(p == player)
         {
             Room* room = level_get_room_by_index(&level, (int)p->curr_room);
-            if(room) room->discovered = true;
+
+            if(room)
+                room->discovered = true;
 
             for(int t = 0; t < MAX_TIMED_ITEMS; ++t)
             {
@@ -1475,7 +1478,14 @@ void player_update(Player* p, float dt)
     if(p == player)
     {
         Room* room = level_get_room_by_index(&level, (int)p->curr_room);
+
+        if(room->type == ROOM_TYPE_BOSS && !room->discovered)
+        {
+            ui_message_set_title(2.0, 0x00CC4444, "Boss");
+        }
+
         room->discovered = true;
+
     }
 
     // update animation
@@ -2082,7 +2092,7 @@ void draw_skill_selection()
         y += h + pad;
     }
 
-    message_small_set(0.1, "Press e to select skill (skill points: %d)", player->new_levels);
+    ui_message_set_small(0.1, "Press e to select skill (skill points: %d)", player->new_levels);
 }
 
 void player_set_class(Player* p, PlayerClass class)
@@ -2144,11 +2154,11 @@ void player_draw(Player* p)
             const char* name = item_get_name(highlighted_item->type);
             if(strlen(desc) > 0)
             {
-                message_small_set(0.1, "Item: %s (%s)", name, desc);
+                ui_message_set_small(0.1, "Item: %s (%s)", name, desc);
             }
             else
             {
-                message_small_set(0.1, "Item: %s", name);
+                ui_message_set_small(0.1, "Item: %s", name);
             }
         }
 
