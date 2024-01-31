@@ -201,19 +201,14 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
 
     if(role != ROLE_CLIENT)
     {
-        item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, room->index);
+        if(is_start_room)
+            item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, room->index);
     }
 
     if(is_start_room)
     {
         room->type   = ROOM_TYPE_EMPTY;
         room->layout = 0;
-
-        // // TEMP
-        // if(role != ROLE_CLIENT)
-        // {
-        //     item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, room->index);
-        // }
 
         goto exit_conditions;
     }
