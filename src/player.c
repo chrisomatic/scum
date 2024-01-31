@@ -1490,7 +1490,7 @@ void player_update(Player* p, float dt)
 
         if(room->type == ROOM_TYPE_BOSS && !room->discovered)
         {
-            ui_message_set_title(2.0, 0x00CC4444, "Boss");
+            ui_message_set_title(2.0, 0x00880000, "Boss");
         }
 
         room->discovered = true;

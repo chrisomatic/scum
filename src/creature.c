@@ -24,6 +24,7 @@ static int creature_image_floater;
 static int creature_image_buzzer;
 static int creature_image_totem_red;
 static int creature_image_totem_blue;
+static int creature_image_totem_yellow;
 static int creature_image_shambler;
 static int creature_image_spiked_slug;
 static int creature_image_infected;
@@ -35,6 +36,7 @@ static void creature_update_floater(Creature* c, float dt);
 static void creature_update_buzzer(Creature* c, float dt);
 static void creature_update_totem_red(Creature* c, float dt);
 static void creature_update_totem_blue(Creature* c, float dt);
+static void creature_update_totem_yellow(Creature* c, float dt);
 static void creature_update_shambler(Creature* c, float dt);
 static void creature_update_spiked_slug(Creature* c, float dt);
 static void creature_update_infected(Creature* c, float dt);
@@ -59,6 +61,7 @@ void creature_init()
     creature_image_buzzer  = gfx_load_image("src/img/creature_buzzer.png", false, false, 32, 32);
     creature_image_totem_red  = gfx_load_image("src/img/creature_totem_red.png", false, false, 32, 64);
     creature_image_totem_blue  = gfx_load_image("src/img/creature_totem_blue.png", false, false, 32, 64);
+    creature_image_totem_yellow  = gfx_load_image("src/img/creature_totem_yellow.png", false, false, 32, 64);
     creature_image_shambler = gfx_load_image("src/img/creature_shambler.png", false, false, 32, 64);
     creature_image_spiked_slug = gfx_load_image("src/img/creature_spiked_slug.png", false, false, 32, 32);
     creature_image_infected = gfx_load_image("src/img/creature_infected.png", false, false, 32, 32);
@@ -82,6 +85,8 @@ const char* creature_type_name(CreatureType type)
             return "Totem Red";
         case CREATURE_TYPE_TOTEM_BLUE:
             return "Totem Blue";
+        case CREATURE_TYPE_TOTEM_YELLOW:
+            return "Totem Yellow";
         case CREATURE_TYPE_SHAMBLER:
             return "Shambler";
         case CREATURE_TYPE_SPIKED_SLUG:
@@ -111,6 +116,8 @@ int creature_get_image(CreatureType type)
             return creature_image_totem_red;
         case CREATURE_TYPE_TOTEM_BLUE:
             return creature_image_totem_blue;
+        case CREATURE_TYPE_TOTEM_YELLOW:
+            return creature_image_totem_yellow;
         case CREATURE_TYPE_SHAMBLER:
             return creature_image_shambler;
         case CREATURE_TYPE_SPIKED_SLUG:
@@ -133,10 +140,12 @@ ProjectileType creature_get_projectile_type(Creature* c)
         case CREATURE_TYPE_GEIZER:
             pt = PROJECTILE_TYPE_CREATURE_GEIZER;
             break;
+        case CREATURE_TYPE_TOTEM_RED:
+            break;
         case CREATURE_TYPE_TOTEM_BLUE:
             pt = PROJECTILE_TYPE_CREATURE_TOTEM_BLUE;
             break;
-        case CREATURE_TYPE_TOTEM_RED:
+        case CREATURE_TYPE_TOTEM_YELLOW:
             break;
         default:
             break;
@@ -247,8 +256,6 @@ void creature_init_props(Creature* c)
         } break;
         case CREATURE_TYPE_TOTEM_BLUE:
         {
-            // print_rect(&c->phys.vr);
-            // exit(1);
             c->phys.speed = 0.0;
             c->act_time_min = 4.00;
             c->act_time_max = 6.00;
@@ -261,6 +268,21 @@ void creature_init_props(Creature* c)
             c->invincible = true;
             c->windup_max = 0.5;
             c->xp = 20;
+        } break;
+        case CREATURE_TYPE_TOTEM_YELLOW:
+        {
+            c->phys.speed = 0.0;
+            c->act_time_min = 0.80;
+            c->act_time_max = 0.80;
+            c->phys.mass = 1000.0;
+            c->phys.base_friction = 50.0;
+            c->phys.hp_max = 127;
+            c->phys.floating = false;
+            // c->proj_type = PROJECTILE_TYPE_CREATURE_TOTEM_YELLOW;
+            c->painful_touch = false;
+            c->invincible = true;
+            c->windup_max = 0.5;
+            c->xp = 24;
         } break;
         case CREATURE_TYPE_SHAMBLER:
         {
@@ -507,60 +529,15 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
 
         creature_set_sprite_index(&c, 0);
 
-        switch(c.type)
+        if(c.type == CREATURE_TYPE_CLINGER)
         {
-            case CREATURE_TYPE_SLUG:
-            {
-                if(tile) add_to_tile(&c, tile->x, tile->y);
-                else     add_to_random_tile(&c, room);
-
-                creature_set_sprite_index(&c, DIR_DOWN);
-            } break;
-            case CREATURE_TYPE_CLINGER:
-            {
-                if(tile) add_to_wall_tile(&c, tile->x, tile->y);
-                else     add_to_random_wall_tile(&c);
-            } break;
-            case CREATURE_TYPE_GEIZER:
-            {
-                if(tile) add_to_tile(&c, tile->x, tile->y);
-                else     add_to_random_tile(&c, room);
-            } break;
-            case CREATURE_TYPE_FLOATER:
-            {
-                if(tile) add_to_tile(&c, tile->x, tile->y);
-                else     add_to_random_tile(&c, room);
-            } break;
-            case CREATURE_TYPE_BUZZER:
-            {
-                if(tile) add_to_tile(&c, tile->x, tile->y);
-                else     add_to_random_tile(&c, room);
-            } break;
-            case CREATURE_TYPE_TOTEM_RED:
-            {
-                if(tile) add_to_tile(&c, tile->x, tile->y);
-                else     add_to_random_tile(&c, room);
-            } break;
-            case CREATURE_TYPE_TOTEM_BLUE:
-            {
-                if(tile) add_to_tile(&c, tile->x, tile->y);
-                else     add_to_random_tile(&c, room);
-            } break;
-            case CREATURE_TYPE_SHAMBLER:
-            {
-                if(tile) add_to_tile(&c, tile->x, tile->y);
-                else     add_to_random_tile(&c, room);
-            } break;
-            case CREATURE_TYPE_SPIKED_SLUG:
-            {
-                if(tile) add_to_tile(&c, tile->x, tile->y);
-                else     add_to_random_tile(&c, room);
-            } break;
-            case CREATURE_TYPE_INFECTED:
-            {
-                if(tile) add_to_tile(&c, tile->x, tile->y);
-                else     add_to_random_tile(&c, room);
-            } break;
+            if(tile) add_to_wall_tile(&c, tile->x, tile->y);
+            else     add_to_random_wall_tile(&c);
+        }
+        else
+        {
+            if(tile) add_to_tile(&c, tile->x, tile->y);
+            else     add_to_random_tile(&c, room);
         }
     }
 
@@ -621,6 +598,9 @@ void creature_update(Creature* c, float dt)
             break;
         case CREATURE_TYPE_TOTEM_BLUE:
             creature_update_totem_blue(c,dt);
+            break;
+        case CREATURE_TYPE_TOTEM_YELLOW:
+            creature_update_totem_yellow(c,dt);
             break;
         case CREATURE_TYPE_SHAMBLER:
             creature_update_shambler(c,dt);
@@ -1302,6 +1282,85 @@ static void creature_update_totem_blue(Creature* c, float dt)
                 creature_fire_projectile(c, angle-60, color);
                 creature_fire_projectile(c, angle+30, color);
                 creature_fire_projectile(c, angle+60, color);
+
+                c->ai_value++;
+                c->ai_state = 0;
+            }
+        }
+
+    }
+}
+
+static void creature_update_totem_yellow(Creature* c, float dt)
+{
+    int creature_count = 0;
+    for(int i = 0; i < clist->count; ++i)
+    {
+        if(creatures[i].curr_room == c->curr_room)
+        {
+            // same room
+            if(!creatures[i].invincible)
+            {
+                creature_count++;
+            }
+        }
+    }
+
+    if(creature_count == 0)
+    {
+        // deactivate totem
+        creature_die(c);
+    }
+
+    if(c->ai_state == 0)
+    {
+        bool act = ai_update_action(c, dt);
+
+        if(act)
+        {
+            c->ai_counter = 0.0;
+            c->ai_state = 1;
+            if(c->ai_value > 1)
+                c->ai_value = 0;
+            c->windup = true;
+        }
+    }
+    else if(c->ai_state == 1)
+    {
+        if(c->ai_counter == 0.0)
+            c->ai_counter_max = 0.3;
+
+        c->ai_counter += dt;
+
+        if(c->windup)
+        {
+            if(c->ai_counter >= c->windup_max)
+            {
+                c->ai_counter = 0.0;
+                c->windup = false;
+            }
+        }
+        else
+        {
+            if(c->ai_counter >= c->ai_counter_max)
+            {
+                c->ai_counter = 0.0;
+
+                // fire shots
+                if(c->ai_value == 0)
+                {
+                    creature_fire_projectile(c, 0.0, PROJ_COLOR);
+                    creature_fire_projectile(c, 90.0, PROJ_COLOR);
+                    creature_fire_projectile(c, 180.0, PROJ_COLOR);
+                    creature_fire_projectile(c, 270.0, PROJ_COLOR);
+                }
+                else
+                {
+                    creature_fire_projectile(c, 45.0, PROJ_COLOR);
+                    creature_fire_projectile(c, 135.0, PROJ_COLOR);
+                    creature_fire_projectile(c, 225.0, PROJ_COLOR);
+                    creature_fire_projectile(c, 315.0, PROJ_COLOR);
+                }
 
                 c->ai_value++;
                 c->ai_state = 0;
