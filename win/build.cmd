@@ -13,11 +13,12 @@ set bindir=..\bin
 
 echo Copying data files to output folder
 rmdir /Q /S src
-mkdir %bindir%\src\core\shaders %bindir%\src\core\fonts %bindir%\src\img %bindir%\src\effects %bindir%\src\themes
+mkdir %bindir%\src\core\shaders %bindir%\src\core\fonts %bindir%\src\img %bindir%\src\effects %bindir%\src\themes %bindir%\src\rooms
 
 xcopy %srcdir%\img %bindir%\src\img
 xcopy %srcdir%\effects %bindir%\src\effects
 xcopy %srcdir%\themes %bindir%\src\themes
+xcopy %srcdir%\rooms %bindir%\src\rooms
 
 xcopy %srcdir%\core\shaders %bindir%\src\core\shaders
 xcopy %srcdir%\core\fonts %bindir%\src\core\fonts
@@ -29,5 +30,6 @@ set includes=/I..\include /I%srcdir% /I%srcdir%\core /I..\dlls
 set libs="OpenGL32.lib" "GLu32.lib" "glfw3_mt.lib" "glew32.lib" "kernel32.lib" "user32.lib" "gdi32.lib" "winspool.lib" "comdlg32.lib" "advapi32.lib" "shell32.lib" "ole32.lib" "oleaut32.lib" "uuid.lib" "odbc32.lib" "odbccp32.lib"
 
 echo Compiling project
+echo cl %opts% %includes% %srcfiles% /link /LIBPATH:..\lib /NODEFAULTLIB:MSVCRT %libs% /OUT:%bindir%\Scum.exe 
 cl %opts% %includes% %srcfiles% /link /LIBPATH:..\lib /NODEFAULTLIB:MSVCRT %libs% /OUT:%bindir%\Scum.exe 
 popd

@@ -79,7 +79,7 @@ static char* io_get_string_from_file(char* filename)
         int length = ftell(fp);
         fseek(fp, 0, SEEK_SET);
 
-        buffer = malloc(length);
+        buffer = (char*)malloc(length);
         if(buffer)
         {
             fread(buffer, 1, length, fp);
@@ -89,6 +89,16 @@ static char* io_get_string_from_file(char* filename)
     }
 
     return buffer;
+}
+
+static void io_replace_char(char* str, char original, char replace)
+{
+    while(*str)
+    {
+        if(*str == original)
+            *str = replace;
+        ++str;
+    }
 }
 
 static int io_get_files_in_dir(char* dir_path, char* match_str, char files[32][32])
@@ -123,11 +133,14 @@ static int io_get_files_in_dir(char* dir_path, char* match_str, char files[32][3
         return -1;
     } 
 
+    /*
     char full_file_path[MAX_SIZE] = {0};
     StringCchCopy(full_file_path, MAX_SIZE,dir_path);
     StringCchCat(full_file_path, MAX_SIZE, "\\");
     StringCchCat(full_file_path, MAX_SIZE, ffd.cFileName);
     StringCchCopy(files[num_files], MAX_SIZE,full_file_path);
+    */
+    StringCchCopy(files[num_files], MAX_SIZE,ffd.cFileName);
 
     do
     {
@@ -137,10 +150,13 @@ static int io_get_files_in_dir(char* dir_path, char* match_str, char files[32][3
         }
         else
         {
+            /*
             StringCchCopy(full_file_path, MAX_SIZE,dir_path);
             StringCchCat(full_file_path, MAX_SIZE, "\\");
             StringCchCat(full_file_path, MAX_SIZE, ffd.cFileName);
             StringCchCopy(files[num_files++], MAX_SIZE,full_file_path);
+            */
+            StringCchCopy(files[num_files++], MAX_SIZE,ffd.cFileName);
         }
     } while (FindNextFile(hFind, &ffd) != 0);
 

@@ -1218,14 +1218,14 @@ void handle_room_completion(Room* room)
 void draw_map(DrawLevelParams* params)
 {
     // could also add this bool to Room struct
-    bool near[MAX_ROOMS_GRID_X][MAX_ROOMS_GRID_Y] = {0};
+    bool _near[MAX_ROOMS_GRID_X][MAX_ROOMS_GRID_Y] = {0};
     for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
     {
         for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
         {
             Room* room = &level.rooms[x][y];
-            if(room->discovered) near[x][y] = false;
-            if(near[x][y]) continue;
+            if(room->discovered) _near[x][y] = false;
+            if(_near[x][y]) continue;
 
             if(room->discovered)
             {
@@ -1234,7 +1234,7 @@ void draw_map(DrawLevelParams* params)
                     if(!room->doors[d]) continue;
                     Vector2i o = get_dir_offsets(d);
                     Room* nroom = level_get_room(&level, x+o.x, y+o.y);
-                    if(nroom != NULL) near[x+o.x][y+o.y] = true;
+                    if(nroom != NULL) _near[x+o.x][y+o.y] = true;
                 }
             }
         }
@@ -1303,7 +1303,7 @@ void draw_map(DrawLevelParams* params)
             }
 
             bool discovered = room->discovered;
-            bool is_near = near[x][y];
+            bool is_near = _near[x][y];
 
             if(!params->show_all && !discovered && !is_near)
             {

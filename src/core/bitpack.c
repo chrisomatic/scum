@@ -120,7 +120,7 @@ bool bitpack_write(BitPack* bp, int num_bits, uint32_t value)
     if(value >= max)
     {
         ret = false;
-        printf("value needs more bits! (value: %u, max: %ld (%d bits)\n", value, max, num_bits);
+        printf("value needs more bits! (value: %u, max: %lld (%d bits)\n", value, max, num_bits);
     }
 
     value &= ((uint64_t)1 << num_bits) -1;

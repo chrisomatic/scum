@@ -1,6 +1,6 @@
 #include <sys/stat.h>  //TODO: windows?
 
-#include "core/io.h"
+#include "core/files.h"
 #include "creature.h"
 #include "item.h"
 #include "level.h"
@@ -128,8 +128,9 @@ bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path
     vsprintf(filename, path, args);
     va_end(args);
 
-
     struct stat stats = {0};
+#if 0
+
     if(stat(filename, &stats) == 0)
     {
         // printf("size:  %d\n", stats.st_size);
@@ -142,14 +143,23 @@ bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path
     else
     {
         // file dne
+        printf("DNE\n");
         return false;
     }
+#endif
 
-    // printf("loading file: %s (%ld, %ld)\n", filename, rfd->mtime, stats.st_mtime);
+    printf("loading file: %s\n", filename);
+
+    io_replace_char(filename, '\\', '/');
+    printf("after replace: %s\n", filename);
 
 
     FILE* fp = fopen(filename,"r");
-    if(!fp) return false;
+    if(!fp) 
+    {
+        printf("No file found (%s)\n", filename);
+        return false;
+    }
 
     // clear rfd
     memset(rfd,0,sizeof(RoomFileData));
@@ -414,7 +424,11 @@ bool room_file_load_all(bool force)
     {
         // printf("i: %d, Loading room %s\n",i, p_room_files[i]);
         bool success = room_file_load(&room_list[room_list_count], force, true, "src/rooms/%s", p_room_files[i]);
-        if(!success) continue;
+        if(!success)
+        {
+            printf("Failed to open room file!\n");
+            continue;
+        }
 
         room_list[room_list_count].file_index = i;
         room_list_count++;
