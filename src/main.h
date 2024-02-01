@@ -167,3 +167,6 @@ void handle_room_completion(Room* room);
 void set_game_state(GameState state);
 void update_input_state(PlayerInput* input, float _dt);
 
+
+char* string_split_index(char* str, const char* delim, int index, int* ret_len, bool split_past_index);
+char* string_split_index_copy(char* str, const char* delim, int index, bool split_past_index);

@@ -978,7 +978,47 @@ int net_server_start()
                         // LOGN("  to:   %u", to);
                         LOGN("  msg:  %s", msg);
 #endif
-                        server_send_message(TO_ALL, from, "%s", msg);
+
+                        bool is_cmd = false;
+                        if(msg_len > 4)
+                        {
+                            if(memcmp("cmd ", msg, 4) == 0)
+                            {
+                                is_cmd = true;
+                                char* argv[20] = {0};
+                                int argc = 0;
+
+                                for(int i = 0; i < 20; ++i)
+                                {
+                                    char* s = string_split_index_copy(msg+4, " ", i, true);
+                                    if(!s) break;
+                                    argv[argc++] = s;
+                                }
+
+                                bool ret = server_process_command(argv, argc, cli->client_id);
+
+                                if(!ret)
+                                {
+                                    server_send_message(from, FROM_SERVER, "Invalid command or command syntax");
+                                }
+                                else
+                                {
+                                    server_send_message(from, FROM_SERVER, "%s has entered a command!", players[cli->client_id].settings.name);
+                                }
+
+                                // free
+                                for(int i = 0; i < argc; ++i)
+                                {
+                                    free(argv[i]);
+                                }
+
+                            }
+                        }
+
+                        if(!is_cmd)
+                        {
+                            server_send_message(TO_ALL, from, "%s", msg);
+                        }
                     } break;
 
                     case PACKET_TYPE_SETTINGS:
@@ -1153,6 +1193,63 @@ void server_send_message(uint8_t to, uint8_t from, char* fmt, ...)
         pkt.hdr.ack = cli->remote_latest_packet_id;
         net_send(&server.info,&cli->address,&pkt);
     }
+}
+
+/*
+add_xp <amount> <target>
+    cmd add_xp 100 all
+    cmd add_xp 20 3
+
+*/
+
+bool server_process_command(char* argv[20], int argc, int client_id)
+{
+    if(argc <= 0) return false;
+
+    for(int i = 0; i < argc; ++i)
+    {
+        printf("  %d: '%s'\n", i, argv[i]);
+    }
+
+    bool err = false;
+
+    if(STR_EQUAL(argv[0], "add_xp"))
+    {
+        if(argc != 3) return false;
+        int o = 1;
+
+        int xp = atoi(argv[o++]);
+        if(xp <= 0) return false;
+
+        char* t = argv[o++];
+        if(STR_EQUAL(t, "all"))
+        {
+            for(int i = 0; i < MAX_CLIENTS; ++i)
+            {
+                if(!players[i].active) continue;
+                player_add_xp(&players[i], xp);
+            }
+        }
+        else
+        {
+            int idx = atoi(t);
+            if(idx < 0 || idx >= MAX_CLIENTS) return false;
+            if(players[idx].active)
+            {
+                player_add_xp(&players[idx], xp);
+            }
+        }
+    }
+    else if(STR_EQUAL(argv[0], "get_id"))
+    {
+        server_send_message(client_id, FROM_SERVER, "your client id is %d", client_id);
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
 }
 
 // =========

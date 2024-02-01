@@ -1784,3 +1784,65 @@ void decal_clear_all()
     list_clear(decal_list);
 
 }
+
+
+// ==================================================================================
+// string parsing
+// ==================================================================================
+
+char* string_split_index(char* str, const char* delim, int index, int* ret_len, bool split_past_index)
+{
+    char* s = str;
+    char* s_end = str+strlen(str);
+
+    for(int i = 0; i < (index+1); ++i)
+    {
+        char* end = strstr(s, delim);
+
+        if(end == NULL)
+            end = s_end;
+
+        int len = end - s;
+
+        if(len == 0)
+        {
+            *ret_len = 0;
+            return NULL;
+        }
+
+        // printf("%d]  '%.*s' \n", i, len, s);
+
+        if(i == index)
+        {
+            if(split_past_index)
+                *ret_len = len;
+            else
+                *ret_len = s_end-s;
+            return s;
+        }
+
+        if(end == s_end)
+        {
+            *ret_len = 0;
+            return NULL;
+        }
+
+        s += len+strlen(delim);
+    }
+
+    *ret_len = 0;
+    return NULL;
+}
+
+char* string_split_index_copy(char* str, const char* delim, int index, bool split_past_index)
+{
+    int len = 0;
+    char* s = string_split_index(str, delim, index, &len, split_past_index);
+
+    if(s == NULL || len == 0)
+        return NULL;
+
+    char* ret = calloc(len+1,sizeof(char));
+    memcpy(ret, s, len);
+    return ret;
+}
