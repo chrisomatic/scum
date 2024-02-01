@@ -151,6 +151,7 @@ int net_server_start();
 bool net_server_add_event(NetEvent* event);
 
 void server_send_message(uint8_t to, uint8_t from, char* fmt, ...);
+bool server_process_command(char* argv[20], int argc, int client_id);
 
 // Client
 bool net_client_init();

@@ -978,7 +978,47 @@ int net_server_start()
                         // LOGN("  to:   %u", to);
                         LOGN("  msg:  %s", msg);
 #endif
-                        server_send_message(TO_ALL, from, "%s", msg);
+
+                        bool is_cmd = false;
+                        if(msg_len > 4)
+                        {
+                            if(memcmp("cmd ", msg, 4) == 0)
+                            {
+                                is_cmd = true;
+                                char* argv[20] = {0};
+                                int argc = 0;
+
+                                for(int i = 0; i < 20; ++i)
+                                {
+                                    char* s = string_split_index_copy(msg+4, " ", i, true);
+                                    if(!s) break;
+                                    argv[argc++] = s;
+                                }
+
+                                bool ret = server_process_command(argv, argc, cli->client_id);
+
+                                if(!ret)
+                                {
+                                    server_send_message(from, FROM_SERVER, "Invalid command or command syntax");
+                                }
+                                else
+                                {
+                                    // server_send_message(from, FROM_SERVER, "%s has entered a command!", players[cli->client_id].settings.name);
+                                }
+
+                                // free
+                                for(int i = 0; i < argc; ++i)
+                                {
+                                    free(argv[i]);
+                                }
+
+                            }
+                        }
+
+                        if(!is_cmd)
+                        {
+                            server_send_message(TO_ALL, from, "%s", msg);
+                        }
                     } break;
 
                     case PACKET_TYPE_SETTINGS:
@@ -1153,6 +1193,172 @@ void server_send_message(uint8_t to, uint8_t from, char* fmt, ...)
         pkt.hdr.ack = cli->remote_latest_packet_id;
         net_send(&server.info,&cli->address,&pkt);
     }
+}
+
+/*
+add xp <amount> <target>
+    cmd add xp 100 all
+    cmd add xp 20 3
+
+add hp <amount> <target>
+    cmd add hp 2 all
+    cmd add hp 4 2
+
+kill creatures
+
+kill player <target>
+
+get id
+
+*/
+
+bool server_process_command(char* argv[20], int argc, int client_id)
+{
+    if(argc <= 0) return false;
+
+    for(int i = 0; i < argc; ++i)
+    {
+        printf("  %d: '%s'\n", i, argv[i]);
+    }
+
+    bool err = false;
+
+    if(STR_EQUAL(argv[0], "add"))
+    {
+        if(argc != 4) return false;
+        int o = 1;
+
+        char* add_str = argv[o++];
+        int add_type = 0;
+        if(STR_EQUAL(add_str, "xp"))
+        {
+            add_type = 0;
+        }
+        else if(STR_EQUAL(add_str, "hp"))
+        {
+            add_type = 1;
+        }
+        else
+        {
+            return false;
+        }
+
+        int val = atoi(argv[o++]);
+        if(val <= 0) return false;
+
+        char* t = argv[o++];
+        if(STR_EQUAL(t, "all"))
+        {
+            for(int i = 0; i < MAX_CLIENTS; ++i)
+            {
+                if(!players[i].active) continue;
+                if(add_type == 0)
+                    player_add_xp(&players[i], val);
+                else if(add_type == 1)
+                    player_add_hp(&players[i], val);
+            }
+        }
+        else
+        {
+            int idx = atoi(t);
+            if(idx < 0 || idx >= MAX_CLIENTS) return false;
+            if(players[idx].active)
+            {
+                if(add_type == 0)
+                    player_add_xp(&players[idx], val);
+                else if(add_type == 1)
+                    player_add_hp(&players[idx], val);
+            }
+        }
+    }
+    else if(STR_EQUAL(argv[0], "kill"))
+    {
+        if(argc < 2) return false;
+
+        int o = 1;
+        char* kill_str = argv[o++];
+        int kill_type = 0;
+
+        if(STR_EQUAL(kill_str, "creatures"))
+        {
+            kill_type = 0;
+        }
+        else if(STR_EQUAL(kill_str, "player"))
+        {
+            kill_type = 1;
+        }
+        else
+        {
+            return false;
+        }
+
+        if(kill_type == 0)
+        {
+            creature_kill_room(players[client_id].curr_room);
+        }
+        else if(kill_type == 1)
+        {
+            if(argc != 3) return false;
+
+            char* t = argv[o++];
+            if(STR_EQUAL(t, "all"))
+            {
+                for(int i = 0; i < MAX_CLIENTS; ++i)
+                {
+                    if(!players[i].active) continue;
+                    if(!players[i].phys.dead) continue;
+                    player_die(&players[i]);
+                }
+            }
+            else
+            {
+                int idx = atoi(t);
+                if(idx < 0 || idx >= MAX_CLIENTS) return false;
+                if(players[idx].active && !players[idx].phys.dead)
+                {
+                    player_die(&players[idx]);
+                }
+            }
+
+        }
+
+
+    }
+    else if(STR_EQUAL(argv[0], "get"))
+    {
+        if(argc < 2) return false;
+
+        int o = 1;
+        char* get_str = argv[o++];
+        int get_type = 0;
+
+        if(STR_EQUAL(get_str, "id"))
+        {
+            get_type = 0;
+        }
+        else
+        {
+            return false;
+        }
+
+        if(get_type == 0)
+        {
+            for(int i = 0; i < MAX_CLIENTS; ++i)
+            {
+                Player* p = &players[i];
+                if(p->active)
+                {
+                    server_send_message(TO_ALL, FROM_SERVER, "[%s] id: %d", p->settings.name, i);
+                }
+            }
+        }
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
 }
 
 // =========
