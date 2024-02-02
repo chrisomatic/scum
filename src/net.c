@@ -1144,6 +1144,23 @@ bool net_server_add_event(NetEvent* event)
 
 void server_send_message(uint8_t to, uint8_t from, char* fmt, ...)
 {
+
+    va_list args, args2;
+    va_start(args, fmt);
+    va_copy(args2, args);
+    int size = vsnprintf(NULL, 0, fmt, args);
+    char* msg = calloc(size+1, sizeof(char));
+    if(!msg) return;
+    vsnprintf(msg, size+1, fmt, args2);
+    va_end(args);
+    va_end(args2);
+
+    if(role == ROLE_LOCAL)
+    {
+        // text_list_add(text_lst, player->settings.color, 10.0, "%s: %s", player->settings.name, chat_text);
+        text_list_add(text_lst, COLOR_WHITE, 10.0, "Server: %s", msg);
+    }
+
     if(role != ROLE_SERVER)
     {
         return;
@@ -1155,16 +1172,6 @@ void server_send_message(uint8_t to, uint8_t from, char* fmt, ...)
         // .hdr.ack = cli->remote_latest_packet_id,
         .hdr.type = PACKET_TYPE_MESSAGE
     };
-
-    va_list args, args2;
-    va_start(args, fmt);
-    va_copy(args2, args);
-    int size = vsnprintf(NULL, 0, fmt, args);
-    char* msg = calloc(size+1, sizeof(char));
-    if(!msg) return;
-    vsnprintf(msg, size+1, fmt, args2);
-    va_end(args);
-    va_end(args2);
 
     pack_u8(&pkt, from);
     pack_string(&pkt, msg, 255);
@@ -1196,6 +1203,7 @@ void server_send_message(uint8_t to, uint8_t from, char* fmt, ...)
 }
 
 /*
+
 add xp <amount> <target>
     cmd add xp 100 all
     cmd add xp 20 3

@@ -1450,7 +1450,39 @@ void draw_chat_box()
                 }
                 else if(role == ROLE_LOCAL)
                 {
-                    text_list_add(text_lst, player->settings.color, 10.0, "%s: %s", player->settings.name, chat_text);
+
+                    if(memcmp("cmd ", chat_text, 4) == 0)
+                    {
+                        char* argv[20] = {0};
+                        int argc = 0;
+
+                        for(int i = 0; i < 20; ++i)
+                        {
+                            char* s = string_split_index_copy(chat_text+4, " ", i, true);
+                            if(!s) break;
+                            argv[argc++] = s;
+                        }
+
+                        bool ret = server_process_command(argv, argc, player->index);
+
+                        if(!ret)
+                        {
+                            server_send_message(player->index, FROM_SERVER, "Invalid command or command syntax");
+                        }
+
+                        // free
+                        for(int i = 0; i < argc; ++i)
+                        {
+                            free(argv[i]);
+                        }
+
+                    }
+                    else
+                    {
+                        text_list_add(text_lst, player->settings.color, 10.0, "%s: %s", player->settings.name, chat_text);
+                    }
+
+
                 }
                 memset(chat_text, 0, 128);
                 client_chat_enabled = false;
@@ -1619,6 +1651,7 @@ void draw()
 
     }
 
+    draw_all_other_player_info();
     draw_minimap();
     draw_hearts();
     draw_xp_bar();
@@ -1723,6 +1756,26 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
             }
 
         }
+    }
+    else if(kmode == KEY_MODE_TEXT)
+    {
+        //TODO
+        // if(key == GLFW_KEY_UP || key == GLFW_KEY_DOWN)
+        // {
+        //     // printf("console_text_hist_selection: %d  -> ", console_text_hist_selection);
+        //     console_text_hist_selection = console_text_hist_get(key == GLFW_KEY_UP ? -1: 1);
+        //     // printf("%d\n", console_text_hist_selection);
+        //     if(console_text_hist_selection != -1)
+        //     {
+        //         // memset(console_text, 0, CONSOLE_TEXT_MAX*sizeof(console_text[0]));
+        //         memcpy(console_text, console_text_hist[console_text_hist_selection], CONSOLE_TEXT_MAX);
+        //     }
+        // }
+        // else
+        // {
+        //     // reset selection on any other key press
+        //     console_text_hist_selection = -1;
+        // }
     }
 }
 

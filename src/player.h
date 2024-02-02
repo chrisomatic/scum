@@ -230,6 +230,7 @@ void player_handle_collision(Player* p, Entity* e);
 bool is_any_player_room(uint8_t curr_room);
 int player_get_count_in_room(uint8_t curr_room);
 
+void draw_all_other_player_info();
 void draw_hearts();
 void draw_xp_bar();
 void draw_gauntlet();
