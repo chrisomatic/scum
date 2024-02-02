@@ -298,6 +298,7 @@ int player_get_active_count()
 
 void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i tile)
 {
+    // printf("player_send_to_room: %u\n");
     p->transition_room = p->curr_room;
     p->curr_room = room_index;
     if(instant)
@@ -312,11 +313,11 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
         return;
     }
 
-    // printf("player send to room %u (%d, %d)\n", room_index, tile.x, tile.y);
     Vector2f pos = {0};
     level_get_safe_floor_tile(room, tile, NULL, &pos);
     // printf("pos: %.2f, %.2f\n", pos.x, pos.y);
     phys_set_collision_pos(&p->phys, pos.x, pos.y);
+    // printf("player send to room %u (%d, %d)\n", player->curr_room, tile.x, tile.y);
 
     p->ignore_player_collision = true;
 

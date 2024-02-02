@@ -112,7 +112,6 @@ static bool item_timed_func_consumable_start(Item* pu, Player* p)
         if(p->timed_items[i] == pu->type)
         {
             p->timed_items_ttl[i] += ttl;
-            printf("same type\n");
             existing = true;
             effect_added = true;
             break;
@@ -148,7 +147,6 @@ static bool item_timed_func_consumable_start(Item* pu, Player* p)
 
         case ITEM_DRAGON_EGG:
         {
-            printf("dragon egg: %d\n", existing);
             if(!existing)
             {
                 p->phys.hp_max += 4;

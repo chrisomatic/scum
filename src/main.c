@@ -1335,7 +1335,6 @@ void draw_map(DrawLevelParams* params)
                 gfx_draw_string(tlx, tly+size.y, COLOR_BLACK, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, room_rect.w, "%s", room_files[room_list[room->layout].file_index]);
             }
 
-            //TEMP
             if(!IS_RECT_EMPTY(&send_to_room_rect) && params->show_all && room->index != player->curr_room)
             {
                 if(rectangles_colliding(&room_rect, &send_to_room_rect))
@@ -1613,8 +1612,6 @@ void draw()
 
     gfx_clear_buffer(background_color);
 
-    uint8_t room_index = player->curr_room;
-
     if(player->curr_room != player->transition_room)
     {
         lighting_point_light_clear_all();
@@ -1681,7 +1678,6 @@ void draw()
         gfx_draw_rect(&cr, COLOR_BLACK, NOT_SCALED, NO_ROTATION, level_transition_opacity, true, IN_WORLD);
     }
 
-    player->curr_room = room_index;
 }
 
 
