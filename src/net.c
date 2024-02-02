@@ -1314,7 +1314,7 @@ bool server_process_command(char* argv[20], int argc, int client_id)
                 for(int i = 0; i < MAX_CLIENTS; ++i)
                 {
                     if(!players[i].active) continue;
-                    if(!players[i].phys.dead) continue;
+                    if(players[i].phys.dead) continue;
                     player_die(&players[i]);
                 }
             }
