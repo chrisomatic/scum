@@ -62,7 +62,8 @@ static void branch_room(Level* level, int x, int y, int depth)
 
     int tries = 0;
 
-try_again:
+try_again: ;
+
     bool random_doors[4] = {0};
 
     random_doors[DIR_UP]    = can_go_up && flip_coin();
@@ -281,7 +282,7 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
         room->color = COLOR(200,200,200);
     }
 
-exit_conditions:
+exit_conditions: ;
 
     RoomFileData* rfd = &room_list[room->layout];
 

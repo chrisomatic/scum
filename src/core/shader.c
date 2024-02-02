@@ -62,6 +62,7 @@ void shader_build_program(GLuint* p, const char* vert_shader_path, const char* f
         exit(1);
 	}
 
+#if 0
     glValidateProgram(*p);
     glGetProgramiv(*p, GL_VALIDATE_STATUS, &success);
     if (!success) {
@@ -70,6 +71,7 @@ void shader_build_program(GLuint* p, const char* vert_shader_path, const char* f
         fprintf(stderr, "Invalid shader program: '%s'\n", info);
         exit(1);
     }
+#endif
 
 }
 
