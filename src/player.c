@@ -628,7 +628,7 @@ void player_draw_room_transition()
 
 void player_start_room_transition(Player* p)
 {
-    printf("start room transition\n");
+    // printf("start room transition\n");
     Vector2i roomxy = level_get_room_coords((int)p->curr_room);
 
     if(role == ROLE_SERVER || role == ROLE_LOCAL)
@@ -1021,9 +1021,10 @@ void player_update(Player* p, float dt)
                         if(item_props[type].func) item_props[type].func(pu, p);
                     }
 
-
                     if(pu->picked_up)
+                    {
                         item_remove(pu);
+                    }
                 }
             }
         }
@@ -1033,10 +1034,12 @@ void player_update(Player* p, float dt)
             Item* it = &p->gauntlet[p->gauntlet_selection];
             if(it->type != ITEM_NONE)
             {
-                if(item_props[it->type].func) item_props[it->type].func(it, p);
+                if(item_props[it->type].func)
+                {
+                    bool ret = item_props[it->type].func(it, p);
+                    if(ret) it->type = ITEM_NONE;
+                }
             }
-
-            it->type = ITEM_NONE;
         }
 
         if(action_drop)

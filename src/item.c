@@ -29,7 +29,7 @@ static uint16_t get_id()
 }
 
 
-static void item_func_chest(Item* pu, Player* p)
+static bool item_func_chest(Item* pu, Player* p)
 {
     float x = pu->phys.pos.x;
     float y = pu->phys.pos.y;
@@ -64,28 +64,11 @@ static void item_func_chest(Item* pu, Player* p)
         }
     }
 
-}
-
-static void item_func_new_level(Item* pu, Player* p)
-{
-    printf("you shouldn't be here!!!  >:(\n");
-    return;
-
-    // pu->picked_up = true;
-    // // item_remove(pu);
-
-    // int seed = time(0)+rand()%1000;
-    // trigger_generate_level(seed, level_rank+1, 2);
-
-    // if(role == ROLE_SERVER)
-    // {
-    //     NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
-    //     net_server_add_event(&ev);
-    // }
+    return true;
 }
 
 // called when player consumes the item
-static void item_timed_func_consumable_start(Item* pu, Player* p)
+static bool item_timed_func_consumable_start(Item* pu, Player* p)
 {
     float ttl = 10.0;
     switch(pu->type)
@@ -101,13 +84,10 @@ static void item_timed_func_consumable_start(Item* pu, Player* p)
 
         case ITEM_SHAMROCK:
             ttl = 10.0;
-            p->invulnerable = true;
             break;
 
         case ITEM_DRAGON_EGG:
             ttl = 30.0;
-            p->phys.hp_max += 4;
-            p->phys.hp = p->phys.hp_max;
             break;
 
         case ITEM_RUBY_RING:
@@ -124,24 +104,63 @@ static void item_timed_func_consumable_start(Item* pu, Player* p)
         default: break;
     }
 
+    bool existing = false;
+    bool effect_added = false;
+
     for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
     {
         if(p->timed_items[i] == pu->type)
         {
             p->timed_items_ttl[i] += ttl;
-            return;
+            printf("same type\n");
+            existing = true;
+            effect_added = true;
+            break;
         }
     }
 
-    for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
+    if(!effect_added)
     {
-        if(p->timed_items[i] == ITEM_NONE)
+
+        for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
         {
-            p->timed_items[i] = pu->type;
-            p->timed_items_ttl[i] = ttl;
-            return;
+            if(p->timed_items[i] == ITEM_NONE)
+            {
+                p->timed_items[i] = pu->type;
+                p->timed_items_ttl[i] = ttl;
+                effect_added = true;
+                break;
+            }
         }
     }
+
+    if(!effect_added)
+    {
+        return false;
+    }
+
+    // have to handle these effects here
+    switch(pu->type)
+    {
+        case ITEM_SHAMROCK:
+            p->invulnerable = true;
+            break;
+
+        case ITEM_DRAGON_EGG:
+        {
+            printf("dragon egg: %d\n", existing);
+            if(!existing)
+            {
+                p->phys.hp_max += 4;
+                p->phys.hp = p->phys.hp_max;
+            }
+        } break;
+
+        default:
+            break;
+    }
+
+    return true;
 }
 
 // called after player consumes the item (every frame)
@@ -183,6 +202,7 @@ static void item_timed_func_consumable_periodic(ItemType type, Player* p)
 
         default: break;
     }
+
 }
 
 static void item_timed_func_consumable_end(ItemType type, Player* p)
@@ -206,7 +226,7 @@ static void item_timed_func_consumable_end(ItemType type, Player* p)
 }
 
 
-static void item_func_consumable(Item* pu, Player* p)
+static bool item_func_consumable(Item* pu, Player* p)
 {
     switch(pu->type)
     {
@@ -215,46 +235,58 @@ static void item_func_consumable(Item* pu, Player* p)
             if(p->phys.hp < p->phys.hp_max)
             {
                 player_add_hp(p, 2);
-                pu->picked_up = true;
+                // pu->picked_up = true;
             }
-        }   break;
+            else
+            {
+                return false;
+            }
+        } break;
         case ITEM_HEART_HALF:
         {
             if(p->phys.hp < p->phys.hp_max)
             {
                 player_add_hp(p, 1);
-                pu->picked_up = true;
+                // pu->picked_up = true;
+            }
+            else
+            {
+                return false;
             }
         } break;
         case ITEM_COSMIC_HEART_FULL:
         {
             p->phys.hp_max += 2;
-            pu->picked_up = true;
+            // pu->picked_up = true;
             player_add_hp(p,2);
             // printf("hp_max: %d\n",p->phys.hp_max);
         } break;
         case ITEM_COSMIC_HEART_HALF:
         {
             p->phys.hp_max += 1;
-            pu->picked_up = true;
+            // pu->picked_up = true;
             player_add_hp(p,1);
             // printf("hp_max: %d\n",p->phys.hp_max);
         } break;
         case ITEM_GLOWING_ORB:
+        {
             p->light_radius += 1.0;
-            pu->picked_up = true;
-            break;
+            // pu->picked_up = true;
+        } break;
         case ITEM_GAUNTLET_SLOT:
         {
             if(p->gauntlet_slots < PLAYER_GAUNTLET_MAX)
             {
                 p->gauntlet_slots++;
-                pu->picked_up = true;
+                // pu->picked_up = true;
             }
         } break;
         default:
-            break;
+        {
+            return false;
+        } break;
     }
+    return true;
 }
 
 void item_init()
@@ -327,7 +359,7 @@ void item_init()
             {
                 p->touchable = false;
                 p->socketable = false;
-                p->func = (void*)item_func_new_level;
+                p->func = NULL;
             } break;
         }
     }
