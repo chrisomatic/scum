@@ -19,6 +19,7 @@ xcopy %srcdir%\img %bindir%\src\img
 xcopy %srcdir%\effects %bindir%\src\effects
 xcopy %srcdir%\themes %bindir%\src\themes
 xcopy %srcdir%\rooms %bindir%\src\rooms
+xcopy ..\dlls\*.dll %bindir%
 
 xcopy %srcdir%\core\shaders %bindir%\src\core\shaders
 xcopy %srcdir%\core\fonts %bindir%\src\core\fonts
