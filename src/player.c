@@ -157,7 +157,7 @@ void player_init()
         shadow_image = gfx_load_image("src/img/shadow.png", false, true, 32, 32);
         card_image   = gfx_load_image("src/img/card.png", false, false, 200, 100);
 
-        ptext = text_list_init(5, 0, 0, 0.05, false, TEXT_ALIGN_LEFT, IN_WORLD, false);
+        ptext = text_list_init(5, 0, 0, 0.07, true, TEXT_ALIGN_LEFT, IN_WORLD, true);
 
         _initialized = true;
     }
@@ -298,6 +298,7 @@ int player_get_active_count()
 
 void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i tile)
 {
+    // printf("player_send_to_room: %u\n");
     p->transition_room = p->curr_room;
     p->curr_room = room_index;
     if(instant)
@@ -312,11 +313,11 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
         return;
     }
 
-    // printf("player send to room %u (%d, %d)\n", room_index, tile.x, tile.y);
     Vector2f pos = {0};
     level_get_safe_floor_tile(room, tile, NULL, &pos);
     // printf("pos: %.2f, %.2f\n", pos.x, pos.y);
     phys_set_collision_pos(&p->phys, pos.x, pos.y);
+    // printf("player send to room %u (%d, %d)\n", player->curr_room, tile.x, tile.y);
 
     p->ignore_player_collision = true;
 
@@ -628,7 +629,7 @@ void player_draw_room_transition()
 
 void player_start_room_transition(Player* p)
 {
-    printf("start room transition\n");
+    // printf("start room transition\n");
     Vector2i roomxy = level_get_room_coords((int)p->curr_room);
 
     if(role == ROLE_SERVER || role == ROLE_LOCAL)
@@ -1021,9 +1022,10 @@ void player_update(Player* p, float dt)
                         if(item_props[type].func) item_props[type].func(pu, p);
                     }
 
-
                     if(pu->picked_up)
+                    {
                         item_remove(pu);
+                    }
                 }
             }
         }
@@ -1033,10 +1035,12 @@ void player_update(Player* p, float dt)
             Item* it = &p->gauntlet[p->gauntlet_selection];
             if(it->type != ITEM_NONE)
             {
-                if(item_props[it->type].func) item_props[it->type].func(it, p);
+                if(item_props[it->type].func)
+                {
+                    bool ret = item_props[it->type].func(it, p);
+                    if(ret) it->type = ITEM_NONE;
+                }
             }
-
-            it->type = ITEM_NONE;
         }
 
         if(action_drop)
@@ -1107,18 +1111,6 @@ void player_update(Player* p, float dt)
 
     // copy stats/attributes
     PlayerAttributes att = copy_attributes(p);
-
-    // PlayerAttributes att = {0};
-    // att.speed = p->phys.speed;
-    // att.speed_factor = p->phys.speed_factor;
-    // att.max_velocity = p->phys.max_velocity;
-    // att.base_friction = p->phys.base_friction;
-    // att.mass = p->phys.mass;
-    // att.elasticity = p->phys.elasticity;
-    // att.proj_cooldown_max = p->proj_cooldown_max;
-    // att.projdef = p->proj_def;
-    // att.projspawn = p->proj_spawn;
-
 
     // apply timed items
     for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
@@ -1520,7 +1512,7 @@ void player_update(Player* p, float dt)
     }
 
     ptext->x = p->phys.pos.x - p->phys.radius/2.0 - 3.0;
-    ptext->y = (p->phys.pos.y - p->phys.pos.z/2.0) - p->phys.height - ptext->text_height;
+    ptext->y = (p->phys.pos.y - p->phys.pos.z/2.0) - p->phys.vr.h - ptext->text_height - 3.0;
     text_list_update(ptext, dt);
 
     if(role == ROLE_LOCAL)
@@ -1541,18 +1533,6 @@ void player_update(Player* p, float dt)
     }
 
     apply_attributes(p, att);
-
-    // p->phys.speed = att.speed;
-    // p->phys.speed_factor = att.speed_factor;
-    // p->phys.max_velocity = att.max_velocity;
-    // p->phys.base_friction = att.base_friction;
-    // p->phys.mass = att.mass;
-    // p->phys.elasticity = att.elasticity;
-    // p->proj_cooldown_max = att.proj_cooldown_max;
-    // p->proj_def = att.projdef;
-    // p->proj_spawn = att.projspawn;
-
-    // printf("z: %.2f\n", p->phys.pos.z);
 }
 
 void player_ai_move_to_target(Player* p, Player* target)
@@ -1615,7 +1595,7 @@ void player_ai_move_to_target(Player* p, Player* target)
 
 }
 
-void draw_hearts_other_player(Player* p)
+void draw_other_player_info(Player* p)
 {
     int num = p->phys.hp / 2;
     int rem = p->phys.hp % 2;
@@ -1624,17 +1604,8 @@ void draw_hearts_other_player(Player* p)
     float ph = gfx_images[p->image].visible_rects[sprite_index].h;
     float pw = gfx_images[p->image].visible_rects[sprite_index].w;
 
-    // float x = p->phys.pos.x;
-    // float y = p->phys.pos.y - (0.5*p->phys.pos.z);//-p->phys.width/1.5;  // see player draw
-
-    // y += ph/2.0;
-
-    //TODO: maybe make this a property on the player (y location of their feet)
     float x = p->phys.pos.x;
     float y = p->phys.pos.y;
-
-    // Rect r = RECT(x, y, 1, 1);
-    // gfx_draw_rect(&r, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
 
     y += 4.0*ascale;
 
@@ -1656,13 +1627,16 @@ void draw_hearts_other_player(Player* p)
     x -= (num+rem)*l/2.0;
     x -= (num+rem-1)*pad/2.0;
 
-    float name_x = x;
+    // float name_x = x;
+    float name_scale = 0.06*ascale;
+    Vector2f text_size = gfx_string_get_size(name_scale, p->settings.name);
+
+    float name_x = p->phys.pos.x - text_size.x/2.0;
     float name_y = y + l;
 
     // draw image from center
     x += l/2.0;
     y += l/2.0;
-
 
     float opacity = 0.5;
 
@@ -1678,7 +1652,22 @@ void draw_hearts_other_player(Player* p)
         x += (l+pad);
     }
 
-    gfx_draw_string(name_x, name_y, COLOR_WHITE, 0.06*ascale, NO_ROTATION, 0.7, IN_WORLD, DROP_SHADOW, 0, "%s", p->settings.name);
+    gfx_draw_string(name_x, name_y, COLOR_WHITE, name_scale, NO_ROTATION, 0.7, IN_WORLD, DROP_SHADOW, 0, "%s", p->settings.name);
+}
+
+void draw_all_other_player_info()
+{
+    gfx_sprite_batch_begin(true);
+
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        Player* p = &players[i];
+        if(p == player) continue;
+        if(!p->active) continue;
+        draw_other_player_info(p);
+    }
+
+    gfx_sprite_batch_draw();
 }
 
 
@@ -2174,10 +2163,10 @@ void player_draw(Player* p)
         text_list_draw(ptext);
 
     }
-    else
-    {
-        draw_hearts_other_player(p);
-    }
+    // else
+    // {
+    //     draw_hearts_other_player(p);
+    // }
 }
 
 void player_lerp(Player* p, float dt)

@@ -37,7 +37,7 @@ typedef enum
     ITEM_MAX
 } ItemType;
 
-typedef void (*item_func)(void* item, void* player);
+typedef bool (*item_func)(void* item, void* player);
 typedef void (*item_timed_func)(ItemType type, void* player);
 
 typedef struct
