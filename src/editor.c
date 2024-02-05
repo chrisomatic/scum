@@ -14,6 +14,7 @@
 #include "editor.h"
 #include "main.h"
 #include "level.h"
+#include "lighting.h"
 #include "camera.h"
 
 #define ASCII_NUMS {"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"}
@@ -133,6 +134,18 @@ void editor_draw()
             case 1: // level
             {
 
+                imgui_color_picker("Ambient Light", &ambient_light);
+
+                static char* dungeon_images[] = {"1", "2", "3"};
+                int dungeon_set_select = imgui_button_select(IM_ARRAYSIZE(dungeon_images), dungeon_images, "Dungeon Set");
+
+                switch(dungeon_set_select)
+                {
+                    case 0: dungeon_image = dungeon_set_image1; break;
+                    case 1: dungeon_image = dungeon_set_image2; break;
+                    case 2: dungeon_image = dungeon_set_image3; break;
+                    default: dungeon_image = dungeon_set_image1; break;
+                }
 
                 imgui_text("Current Seed: %u", level_seed);
                 imgui_text("Current Rank: %u", level_rank);

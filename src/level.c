@@ -11,6 +11,9 @@
 #include "player.h"
 
 int dungeon_image = -1;
+int dungeon_set_image1 = -1;
+int dungeon_set_image2 = -1;
+int dungeon_set_image3 = -1;
 float level_grace_time = 0.0;
 
 static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth);
@@ -825,7 +828,11 @@ void level_init()
 {
     if(dungeon_image > 0) return;
 
-    dungeon_image = gfx_load_image("src/img/dungeon_set.png", false, false, TILE_SIZE, TILE_SIZE);
+    dungeon_set_image1 = gfx_load_image("src/img/dungeon_set1.png", false, false, TILE_SIZE, TILE_SIZE);
+    dungeon_set_image2 = gfx_load_image("src/img/dungeon_set2.png", false, false, TILE_SIZE, TILE_SIZE);
+    dungeon_set_image3 = gfx_load_image("src/img/dungeon_set3.png", false, false, TILE_SIZE, TILE_SIZE);
+
+    dungeon_image = dungeon_set_image2;
 
     room_file_load_all(false);
     printf("Done with room files\n");

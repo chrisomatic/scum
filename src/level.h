@@ -138,6 +138,10 @@ typedef struct
 } Level;
 
 extern int dungeon_image;
+extern int dungeon_set_image1;
+extern int dungeon_set_image2;
+extern int dungeon_set_image3;
+
 extern float level_grace_time;
 
 void level_init();

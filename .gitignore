@@ -1,6 +1,8 @@
 **/.vscode
 bin/
-win/x64/
+output/
+win/build/
+win/bin/
 win/.vs/
 *.settings
 release/
