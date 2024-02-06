@@ -21,6 +21,7 @@ static int creature_image_slug;
 static int creature_image_clinger;
 static int creature_image_geizer;
 static int creature_image_floater;
+static int creature_image_floater_big;
 static int creature_image_buzzer;
 static int creature_image_totem_red;
 static int creature_image_totem_blue;
@@ -33,6 +34,7 @@ static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
 static void creature_update_geizer(Creature* c, float dt);
 static void creature_update_floater(Creature* c, float dt);
+static void creature_update_floater_big(Creature* c, float dt);
 static void creature_update_buzzer(Creature* c, float dt);
 static void creature_update_totem_red(Creature* c, float dt);
 static void creature_update_totem_blue(Creature* c, float dt);
@@ -58,6 +60,7 @@ void creature_init()
     creature_image_clinger = gfx_load_image("src/img/creature_clinger.png", false, false, 32, 32);
     creature_image_geizer = gfx_load_image("src/img/creature_geizer.png", false, false, 32, 64);
     creature_image_floater = gfx_load_image("src/img/creature_floater.png", false, false, 16, 16);
+    creature_image_floater_big = gfx_load_image("src/img/creature_floater_big.png", false, false, 64, 64);
     creature_image_buzzer  = gfx_load_image("src/img/creature_buzzer.png", false, false, 32, 32);
     creature_image_totem_red  = gfx_load_image("src/img/creature_totem_red.png", false, false, 32, 64);
     creature_image_totem_blue  = gfx_load_image("src/img/creature_totem_blue.png", false, false, 32, 64);
@@ -67,7 +70,7 @@ void creature_init()
     creature_image_infected = gfx_load_image("src/img/creature_infected.png", false, false, 32, 32);
 }
 
-const char* creature_type_name(CreatureType type)
+char* creature_type_name(CreatureType type)
 {
     switch(type)
     {
@@ -79,6 +82,8 @@ const char* creature_type_name(CreatureType type)
             return "Geizer";
         case CREATURE_TYPE_FLOATER:
             return "Floater";
+        case CREATURE_TYPE_FLOATER_BIG:
+            return "Big Floater";
         case CREATURE_TYPE_BUZZER:
             return "Buzzer";
         case CREATURE_TYPE_TOTEM_RED:
@@ -110,6 +115,8 @@ int creature_get_image(CreatureType type)
             return creature_image_geizer;
         case CREATURE_TYPE_FLOATER:
             return creature_image_floater;
+        case CREATURE_TYPE_FLOATER_BIG:
+            return creature_image_floater_big;
         case CREATURE_TYPE_BUZZER:
             return creature_image_buzzer;
         case CREATURE_TYPE_TOTEM_RED:
@@ -227,6 +234,19 @@ void creature_init_props(Creature* c)
             c->painful_touch = true;
             c->xp = 10;
         } break;
+        case CREATURE_TYPE_FLOATER_BIG:
+        {
+            c->phys.speed = 80.0;
+            c->act_time_min = 0.2;
+            c->act_time_max = 0.5;
+            c->phys.mass = 1000.0;
+            c->phys.hp_max = 15.0;
+            c->phys.base_friction = 0.0;
+            c->phys.elasticity = 1.0;
+            c->phys.floating = true;
+            c->painful_touch = true;
+            c->xp = 20;
+        } break;
         case CREATURE_TYPE_BUZZER:
         {
             c->phys.speed = 30.0;
@@ -245,7 +265,7 @@ void creature_init_props(Creature* c)
             c->phys.speed = 0.0;
             c->act_time_min = 2.00;
             c->act_time_max = 3.00;
-            c->phys.mass = 1000.0;
+            c->phys.mass = 100000.0;
             c->phys.base_friction = 50.0;
             c->phys.hp_max = 127;
             c->phys.floating = false;
@@ -259,7 +279,7 @@ void creature_init_props(Creature* c)
             c->phys.speed = 0.0;
             c->act_time_min = 4.00;
             c->act_time_max = 6.00;
-            c->phys.mass = 1000.0;
+            c->phys.mass = 100000.0;
             c->phys.base_friction = 50.0;
             c->phys.hp_max = 127;
             c->phys.floating = false;
@@ -274,7 +294,7 @@ void creature_init_props(Creature* c)
             c->phys.speed = 0.0;
             c->act_time_min = 0.80;
             c->act_time_max = 0.80;
-            c->phys.mass = 1000.0;
+            c->phys.mass = 100000.0;
             c->phys.base_friction = 50.0;
             c->phys.hp_max = 127;
             c->phys.floating = false;
@@ -589,6 +609,9 @@ void creature_update(Creature* c, float dt)
             break;
         case CREATURE_TYPE_FLOATER:
             creature_update_floater(c,dt);
+            break;
+        case CREATURE_TYPE_FLOATER_BIG:
+            creature_update_floater_big(c,dt);
             break;
         case CREATURE_TYPE_BUZZER:
             creature_update_buzzer(c,dt);
@@ -1095,6 +1118,40 @@ static void creature_update_floater(Creature* c, float dt)
         {
             ai_random_walk(c);
         }
+    }
+}
+
+static void creature_update_floater_big(Creature* c, float dt)
+{
+    c->phys.pos.z = 16.0 + 3*sinf(5*c->phys.circular_dt);
+
+    if(c->ai_state == 0)
+    {
+        // initialize direction
+        Vector2f v = {0.0,0.0};
+
+        int r = rand() % 4;
+        switch(r)
+        {
+            case 0: v.x = 1.0;  v.y = -1.0; break;
+            case 1: v.x = 1.0;  v.y = 1.0; break;
+            case 2: v.x = -1.0; v.y = 1.0; break;
+            case 3: v.x = -1.0; v.y = -1.0; break;
+        }
+        c->phys.vel.x = c->phys.speed * v.x;
+        c->phys.vel.y = c->phys.speed * v.y;
+
+        c->ai_state = 1;
+    }
+
+    if(c->ai_state == 1 && c->phys.hp < 0.25*c->phys.hp_max)
+    {
+        c->phys.speed *= 2.0;
+        c->phys.vel.x *= 2.0;
+        c->phys.vel.y *= 2.0;
+
+        c->base_color = 0x00FF9090;
+        c->ai_state = 2;
     }
 }
 

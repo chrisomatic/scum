@@ -1488,7 +1488,6 @@ void player_update(Player* p, float dt)
         }
 
         room->discovered = true;
-
     }
 
     // update animation

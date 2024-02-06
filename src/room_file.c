@@ -148,10 +148,9 @@ bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path
     }
 #endif
 
-    printf("loading file: %s\n", filename);
+    //printf("loading file: %s\n", filename);
 
     io_replace_char(filename, '\\', '/');
-    printf("after replace: %s\n", filename);
 
 
     FILE* fp = fopen(filename,"r");

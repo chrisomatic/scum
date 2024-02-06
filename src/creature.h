@@ -16,6 +16,7 @@ typedef enum
     CREATURE_TYPE_CLINGER,
     CREATURE_TYPE_GEIZER,
     CREATURE_TYPE_FLOATER,
+    CREATURE_TYPE_FLOATER_BIG,
     CREATURE_TYPE_BUZZER,
     CREATURE_TYPE_TOTEM_RED,
     CREATURE_TYPE_TOTEM_BLUE,
@@ -87,7 +88,7 @@ extern Creature prior_creatures[MAX_CREATURES];
 extern Creature creatures[MAX_CREATURES];
 
 void creature_init();
-const char* creature_type_name(CreatureType type);
+char* creature_type_name(CreatureType type);
 int creature_get_image(CreatureType type);
 ProjectileType creature_get_projectile_type(Creature* c);
 void creature_init_props(Creature* c);
