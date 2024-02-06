@@ -113,7 +113,7 @@ static void ui_message_draw_title()
     if(strlen(message_title) == 0)
         return;
 
-    float scale = 2.00 * ascale;
+    float scale = 1.20 * ascale;
 
     Vector2f size = gfx_string_get_size(scale, message_title);
 

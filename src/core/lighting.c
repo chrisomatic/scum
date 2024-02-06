@@ -7,8 +7,8 @@
 PointLight point_lights[MAX_POINT_LIGHTS] = {0};
 glist* lighting_list = NULL;
 
-uint32_t ambient_light_default = 0x00B0B0B0;
-uint32_t ambient_light = 0x00B0B0B0;
+uint32_t ambient_light_default = 0x00909090;
+uint32_t ambient_light = 0x00909090;
 
 void lighting_init()
 {

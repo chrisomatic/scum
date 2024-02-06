@@ -1482,7 +1482,9 @@ void player_update(Player* p, float dt)
 
         if(room->type == ROOM_TYPE_BOSS && !room->discovered)
         {
-            ui_message_set_title(2.0, 0x00880000, "Boss");
+            RoomFileData* rfd = &room_list[room->layout];
+            int ctype = rfd->creature_types[0];
+            ui_message_set_title(2.0, 0x00880000, creature_type_name(ctype));
         }
 
         room->discovered = true;

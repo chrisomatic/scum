@@ -1021,7 +1021,7 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
 
     Rect r = {(x+w/2.0), (y+h/2.0), w,h};   // top left wall corner
 
-    uint32_t color = room->color;
+    uint32_t color = COLOR_TINT_NONE; //room->color;
 
     gfx_sprite_batch_begin(true);
 
