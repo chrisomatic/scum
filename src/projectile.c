@@ -110,6 +110,7 @@ ProjectileSpawn projectile_spawn[] = {
         .homing_chance = 0.0,
         .poison_chance = 0.0,
         .cold_chance = 0.0,
+        .fire_chance = 0.0,
     },
     {
         // player - kinetic discharge skill
@@ -119,6 +120,7 @@ ProjectileSpawn projectile_spawn[] = {
         .homing_chance = 0.0,
         .poison_chance = 0.0,
         .cold_chance = 0.0,
+        .fire_chance = 0.0,
     },
     {
         // creature generic
@@ -129,6 +131,7 @@ ProjectileSpawn projectile_spawn[] = {
         .homing_chance = 0.0,
         .poison_chance = 0.0,
         .cold_chance = 0.0,
+        .fire_chance = 0.0,
     },
     {
         // geizer
@@ -138,6 +141,7 @@ ProjectileSpawn projectile_spawn[] = {
         .homing_chance = 0.0,
         .poison_chance = 0.0,
         .cold_chance = 0.0,
+        .fire_chance = 0.0,
     },
     {
         // clinger
@@ -147,6 +151,7 @@ ProjectileSpawn projectile_spawn[] = {
         .homing_chance = 0.0,
         .poison_chance = 0.0,
         .cold_chance = 0.0,
+        .fire_chance = 0.0,
     },
     {
         // clinger
@@ -156,6 +161,7 @@ ProjectileSpawn projectile_spawn[] = {
         .homing_chance = 0.0,
         .poison_chance = 0.0,
         .cold_chance = 1.0,
+        .fire_chance = 0.0,
     },
 };
 
@@ -225,6 +231,7 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, Projec
         p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= spawn->ghost_chance;
         p.poison = RAND_FLOAT(0.0,1.0) <= spawn->poison_chance;
         p.cold = RAND_FLOAT(0.0,1.0) <= spawn->cold_chance;
+        p.fire = RAND_FLOAT(0.0,1.0) <= spawn->fire_chance;
         bool homing = RAND_FLOAT(0.0,1.0) <= spawn->homing_chance;
 
         if(!FEQ0(spread) && i > 0)
@@ -496,12 +503,17 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 
             if(proj->cold)
             {
-                status_effects_add_type(phys,STATUS_EFFECT_COLD);
+                status_effects_add_type(phys,proj->curr_room, STATUS_EFFECT_COLD);
             }
             
-            if(proj->poison > 0.0)
+            if(proj->poison)
             {
-                status_effects_add_type(phys,STATUS_EFFECT_POISON);
+                status_effects_add_type(phys,proj->curr_room, STATUS_EFFECT_POISON);
+            }
+
+            if(proj->fire)
+            {
+                status_effects_add_type(phys,proj->curr_room, STATUS_EFFECT_FIRE);
             }
 
             switch(e->type)

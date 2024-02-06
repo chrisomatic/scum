@@ -112,7 +112,16 @@ void delete_spawner_index(int index)
     list_remove(spawner_list, index);
 }
 
-void particles_delete_spawner(int id)
+void particles_delete_spawner(ParticleSpawner* ps)
+{
+    if(ps != NULL)
+    {
+        list_delete(ps->particle_list);
+        list_remove_by_item(spawner_list, (void*)ps);
+    }
+}
+
+void particles_delete_spawner_by_id(int id)
 {
     for(int i = 0; i < spawner_list->count; ++i)
     {

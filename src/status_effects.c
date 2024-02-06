@@ -3,6 +3,7 @@
 #include "player.h"
 #include "creature.h"
 #include "gfx.h"
+#include "effects.h"
 #include "main.h"
 
 #include "status_effects.h"
@@ -34,6 +35,28 @@ static void status_effect_poison(void* entity, bool end)
     }
 }
 
+static void status_effect_fire(void* entity, bool end)
+{
+    Entity* e = (Entity*)entity;
+
+    if(!end && e->phys->hp > 1)
+    {
+        switch(e->type)
+        {
+            case ENTITY_TYPE_PLAYER:
+                player_hurt_no_inv((Player*)e->ptr,1);
+                break;
+            case ENTITY_TYPE_CREATURE:
+                creature_hurt((Creature*)e->ptr,1);
+                break;
+        }
+    }
+}
+
+//
+// ---------------------------------------
+//
+
 void status_effects_init()
 {
     status_effects_image = gfx_load_image("src/img/status_effects.png", false, false, 8, 8);
@@ -54,17 +77,48 @@ void status_effects_draw(void* physics)
         float y = phys->pos.y-(phys->height+8)/2.0 - sin(2.0*effect->lifetime);
 
         gfx_sprite_batch_add(status_effects_image, effect->type, x, y, COLOR_TINT_NONE, false, 1.0, 0.0, 0.5, false, false, false);
+
     }
+}
+
+bool status_effect_remove(void* physics, int index)
+{
+    Physics* phys = (Physics*)physics;
+
+    if(phys == NULL)
+        return false;
+
+    if(index >= MAX_STATUS_EFFECTS)
+        return false;
+
+    if(phys->status_effects[index].particles)
+        particles_delete_spawner(phys->status_effects[index].particles);
+
+    uint8_t* p = (uint8_t*)phys->status_effects;
+
+    int item_size = sizeof(StatusEffect);
+    memcpy(p + index*item_size, p+(phys->status_effects_count-1)*item_size, item_size);
+    phys->status_effects_count--;
 }
 
 void status_effects_clear(void* physics)
 {
     Physics* phys = (Physics*)physics;
+
+    // remove all particle effects
+    for(int i = 0; i < phys->status_effects_count; ++i)
+    {
+        if(phys->status_effects[i].particles)
+        {
+            particles_delete_spawner(phys->status_effects[i].particles);
+        }
+    }
+
     phys->status_effects_count = 0;
     memset(&phys->status_effects, 0, sizeof(StatusEffect)*MAX_STATUS_EFFECTS);
 }
 
-void status_effects_add_type(void* physics, StatusEffectType type)
+void status_effects_add_type(void* physics, uint8_t curr_room, StatusEffectType type)
 {
     Physics* phys = (Physics*)physics;
 
@@ -108,6 +162,15 @@ void status_effects_add_type(void* physics, StatusEffectType type)
             effect->period = 3.0;
             effect->lifetime_max = 9.0;
             effect->func = status_effect_poison;
+            break;
+        case STATUS_EFFECT_FIRE:
+            effect->periodic = true;
+            effect->period = 1.0;
+            effect->lifetime_max = 5.0;
+            effect->func = status_effect_fire;
+            effect->particles = particles_spawn_effect(phys->pos.x,phys->pos.y, 0.0, &particle_effects[EFFECT_FIRE], 0.0, true, false);
+
+            effect->particles->userdata = curr_room;
             break;
     }
 }

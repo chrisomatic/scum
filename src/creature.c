@@ -792,6 +792,8 @@ void creature_die(Creature* c)
         if(ps != NULL) ps->userdata = (int)c->curr_room;
     }
 
+    status_effects_clear(&c->phys);
+
     // player_add_xp(player, c->xp);
     Room* room = level_get_room_by_index(&level, c->curr_room);
     if(room == NULL)

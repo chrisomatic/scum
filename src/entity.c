@@ -132,20 +132,6 @@ void entity_build_all()
     }
 }
 
-static bool remove_status_effect(Physics* phys, int index)
-{
-    if(phys == NULL)
-        return false;
-
-    if(index >= MAX_STATUS_EFFECTS)
-        return false;
-
-    uint8_t* p = (uint8_t*)phys->status_effects;
-
-    int item_size = sizeof(StatusEffect);
-    memcpy(p + index*item_size, p+(phys->status_effects_count-1)*item_size, item_size);
-    phys->status_effects_count--;
-}
 
 void entity_handle_status_effects(float dt)
 {
@@ -164,11 +150,17 @@ void entity_handle_status_effects(float dt)
 
             effect->lifetime += dt;
 
+            if(effect->particles)
+            {
+                effect->particles->pos.x = phys->pos.x;
+                effect->particles->pos.y = phys->pos.y;
+            }
+
             if(effect->lifetime_max > 0.0 && effect->lifetime >= effect->lifetime_max)
             {
                 // status effect is done, remove
                 effect->func((void*)e, true);
-                remove_status_effect(phys, i);
+                status_effect_remove(phys, i);
                 continue;
             }
 

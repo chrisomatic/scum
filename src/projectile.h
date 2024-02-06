@@ -46,6 +46,7 @@ typedef struct
     float homing_chance;
     float poison_chance;
     float cold_chance;
+    float fire_chance;
 
     int cluster_stage;
 } ProjectileSpawn;
@@ -66,6 +67,7 @@ typedef struct
     // effects
     bool poison;
     bool cold;
+    bool fire;
 
     float radius;
     float angle_deg;
