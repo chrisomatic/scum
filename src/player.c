@@ -2361,6 +2361,11 @@ void player_handle_collision(Player* p, Entity* e)
                     player_hurt(p,c->damage);
                 }
             }
+
+            // check for weapon collision here?
+            // it may be better to add weapons to the entity list
+            // so they can be used by creatures too, or thrown or something
+
         } break;
         case ENTITY_TYPE_PLAYER:
         {

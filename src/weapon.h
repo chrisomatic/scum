@@ -20,7 +20,7 @@ typedef struct
     WeaponType type;
     WeaponState state;
     Physics* phys;
-    Vector2f offset;
+    Vector3f pos;
     int image;
     float damage;
     float time;

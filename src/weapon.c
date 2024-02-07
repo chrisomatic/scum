@@ -85,27 +85,29 @@ void weapon_update(Weapon* w, float dt)
     GFXImage* img = &gfx_images[w->image];
     Rect* vr = &img->visible_rects[0];
 
-    w->offset.x = 0.0;
-    w->offset.y = 0.0;
+    Vector2f offset = {0.0, 0.0};
 
     if(w->phys->rotation_deg == 90.0) // up
     {
-        w->offset.y -= vr->h;
-        w->offset.y -= w->phys->vr.h/2.0;
+        offset.y -= vr->h;
+        offset.y -= w->phys->vr.h/2.0;
     }
     else if(w->phys->rotation_deg == 0.0) // right
     {
-        w->offset.x += vr->w/2.0;
+        offset.x += vr->w/2.0;
     }
     else if(w->phys->rotation_deg == 270.0) // down
     {
-        w->offset.y += vr->h;
-        w->offset.y += w->phys->vr.h/2.0;
+        offset.y += vr->h;
+        offset.y += w->phys->vr.h/2.0;
     }
     else if(w->phys->rotation_deg == 180.0) // left
     {
-        w->offset.x -= vr->w/2.0;
+        offset.x -= vr->w/2.0;
     }
+
+    w->pos.x = w->phys->pos.x + offset.x;
+    w->pos.y = w->phys->pos.y - (w->phys->vr.h + w->phys->pos.z)/2.0 + offset.y;
 }
 
 void weapon_draw(Weapon* w)
@@ -113,9 +115,6 @@ void weapon_draw(Weapon* w)
     if(w->state == WEAPON_STATE_NONE)
         return;
 
-    float x = w->phys->pos.x + w->offset.x;
-    float y = w->phys->pos.y - (w->phys->vr.h + w->phys->pos.z)/2.0 + w->offset.y;
-
-    gfx_sprite_batch_add(w->image, 0, x, y, w->color, false, 1.0, w->phys->rotation_deg, 1.0, false, false, false);
+    gfx_sprite_batch_add(w->image, 0, w->pos.x, w->pos.y, w->color, false, 1.0, w->phys->rotation_deg, 1.0, false, false, false);
 
 }
