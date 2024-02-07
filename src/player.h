@@ -7,8 +7,8 @@
 #include "item.h"
 #include "skills.h"
 #include "projectile.h"
+#include "weapon.h"
 #include "settings.h"
-
 
 #define MAX_PLAYERS 4
 
@@ -109,8 +109,6 @@ typedef struct
     float aim_deg;
     float scale;
 
-    PlayerClass class;
-
     uint16_t xp;
     uint8_t level;
     uint8_t new_levels;
@@ -141,6 +139,8 @@ typedef struct
 
     ProjectileDef proj_def;
     ProjectileSpawn proj_spawn;
+
+    Weapon weapon;
 
     GFXAnimation anim;
 

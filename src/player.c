@@ -9,6 +9,7 @@
 #include "lighting.h"
 #include "status_effects.h"
 #include "ui.h"
+#include "weapon.h"
 #include "player.h"
 
 void player_ai_move_to_target(Player* p, Player* target);
@@ -877,6 +878,116 @@ static void apply_attributes(Player* p, PlayerAttributes att)
     p->proj_spawn = att.projspawn;
 }
 
+static void player_handle_melee(Player* p, float dt)
+{
+
+    bool attacked = false;
+
+    if(p->actions[PLAYER_ACTION_SHOOT_UP].toggled_on)
+    {
+        player_set_sprite_index(p, SPRITE_UP);
+        p->phys.rotation_deg = 90.0;
+        attacked = true;
+    }
+    else if(p->actions[PLAYER_ACTION_SHOOT_RIGHT].toggled_on)
+    {
+        player_set_sprite_index(p, SPRITE_RIGHT);
+        p->phys.rotation_deg = 0.0;
+        attacked = true;
+    }
+    else if(p->actions[PLAYER_ACTION_SHOOT_DOWN].toggled_on)
+    {
+        player_set_sprite_index(p, SPRITE_DOWN);
+        p->phys.rotation_deg = 270.0;
+        attacked = true;
+    }
+    else if(p->actions[PLAYER_ACTION_SHOOT_LEFT].toggled_on)
+    {
+        player_set_sprite_index(p, SPRITE_LEFT);
+        p->phys.rotation_deg = 180.0;
+        attacked = true;
+    }
+
+    if(attacked)
+    {
+        if(p->weapon.state == WEAPON_STATE_NONE)
+            p->weapon.state = WEAPON_STATE_WINDUP;
+    }
+
+    weapon_update(&p->weapon, dt);
+}
+
+static void player_handle_shooting(Player* p, float dt)
+{
+    if(p->proj_cooldown > 0.0)
+    {
+        p->proj_cooldown -= dt;
+        p->proj_cooldown = MAX(p->proj_cooldown,0.0);
+    }
+
+    p->shoot_sprite_cooldown = MAX(p->shoot_sprite_cooldown - dt, 0.0);
+
+    for(int i = 0; i < 4; ++i)
+    {
+        if(p->actions[PLAYER_ACTION_SHOOT_UP+i].toggled_on)
+        {
+            p->last_shoot_action = PLAYER_ACTION_SHOOT_UP+i;
+            break;
+        }
+    }
+
+    if(p->last_shoot_action >= PLAYER_ACTION_SHOOT_UP && p->last_shoot_action <= PLAYER_ACTION_SHOOT_RIGHT)
+    {
+        if(p->actions[p->last_shoot_action].toggled_off)
+        {
+            for(int i = 0; i < 4; ++i)
+            {
+                if(p->actions[PLAYER_ACTION_SHOOT_UP+i].state)
+                {
+                    p->last_shoot_action = PLAYER_ACTION_SHOOT_UP+i;
+                    break;
+                }
+            }
+        }
+
+        int sprite_index = 0;
+        if(p->last_shoot_action == PLAYER_ACTION_SHOOT_UP)
+        {
+            sprite_index = SPRITE_UP;
+        }
+        else if(p->last_shoot_action == PLAYER_ACTION_SHOOT_DOWN)
+        {
+            sprite_index = SPRITE_DOWN;
+        }
+        else if(p->last_shoot_action == PLAYER_ACTION_SHOOT_LEFT)
+        {
+            sprite_index = SPRITE_LEFT;
+        }
+        else if(p->last_shoot_action == PLAYER_ACTION_SHOOT_RIGHT)
+        {
+            sprite_index = SPRITE_RIGHT;
+        }
+
+        if(p->shoot_sprite_cooldown > 0)
+        {
+            player_set_sprite_index(p, sprite_index);
+        }
+
+        if(p->actions[p->last_shoot_action].state && p->proj_cooldown == 0.0)
+        {
+            player_set_sprite_index(p, sprite_index);
+
+            if(!p->phys.dead)
+            {
+                projectile_add(&p->phys, p->curr_room, &p->proj_def, &p->proj_spawn, 0x0050A0FF, p->aim_deg, true);
+            }
+            // text_list_add(text_lst, 5.0, "projectile");
+            p->proj_cooldown = p->proj_cooldown_max;
+            p->shoot_sprite_cooldown = 1.0;
+        }
+    }
+}
+
 void player_update(Player* p, float dt)
 {
     if(!p->active) return;
@@ -1403,73 +1514,15 @@ void player_update(Player* p, float dt)
     GFXImage* img = &gfx_images[p->image];
     Rect* vr = &img->visible_rects[p->sprite_index];
 
-    if(p->proj_cooldown > 0.0)
+    if(p->settings.class == PLAYER_CLASS_ROBOT)
     {
-        p->proj_cooldown -= dt;
-        p->proj_cooldown = MAX(p->proj_cooldown,0.0);
+        player_handle_melee(p, dt);
     }
-
-    p->shoot_sprite_cooldown = MAX(p->shoot_sprite_cooldown - dt, 0.0);
-
-    for(int i = 0; i < 4; ++i)
+    else
     {
-        if(p->actions[PLAYER_ACTION_SHOOT_UP+i].toggled_on)
-        {
-            p->last_shoot_action = PLAYER_ACTION_SHOOT_UP+i;
-            break;
-        }
+        player_handle_shooting(p, dt);
     }
-
-    if(p->last_shoot_action >= PLAYER_ACTION_SHOOT_UP && p->last_shoot_action <= PLAYER_ACTION_SHOOT_RIGHT)
-    {
-        if(p->actions[p->last_shoot_action].toggled_off)
-        {
-            for(int i = 0; i < 4; ++i)
-            {
-                if(p->actions[PLAYER_ACTION_SHOOT_UP+i].state)
-                {
-                    p->last_shoot_action = PLAYER_ACTION_SHOOT_UP+i;
-                    break;
-                }
-            }
-        }
-
-        int sprite_index = 0;
-        if(p->last_shoot_action == PLAYER_ACTION_SHOOT_UP)
-        {
-            sprite_index = SPRITE_UP;
-        }
-        else if(p->last_shoot_action == PLAYER_ACTION_SHOOT_DOWN)
-        {
-            sprite_index = SPRITE_DOWN;
-        }
-        else if(p->last_shoot_action == PLAYER_ACTION_SHOOT_LEFT)
-        {
-            sprite_index = SPRITE_LEFT;
-        }
-        else if(p->last_shoot_action == PLAYER_ACTION_SHOOT_RIGHT)
-        {
-            sprite_index = SPRITE_RIGHT;
-        }
-
-        if(p->shoot_sprite_cooldown > 0)
-        {
-            player_set_sprite_index(p, sprite_index);
-        }
-
-        if(p->actions[p->last_shoot_action].state && p->proj_cooldown == 0.0)
-        {
-            player_set_sprite_index(p, sprite_index);
-
-            if(!p->phys.dead)
-            {
-                projectile_add(&p->phys, p->curr_room, &p->proj_def, &p->proj_spawn, 0x0050A0FF, p->aim_deg, true);
-            }
-            // text_list_add(text_lst, 5.0, "projectile");
-            p->proj_cooldown = p->proj_cooldown_max;
-            p->shoot_sprite_cooldown = 1.0;
-        }
-    }
+    
 
     // check tiles around player
     handle_room_collision(p);
@@ -2108,6 +2161,7 @@ void player_set_class(Player* p, PlayerClass class)
             break;
         case PLAYER_CLASS_ROBOT:
             p->image = class_image_robot;
+            weapon_add(WEAPON_TYPE_SPEAR,&p->phys, &p->weapon, (p->weapon.type == WEAPON_TYPE_NONE ? true : false));
             break;
         default:
             LOGE("Invalid class: %d", class);
@@ -2119,7 +2173,6 @@ void player_set_class(Player* p, PlayerClass class)
     p->phys.vr = *vr;
     phys_calc_collision_rect(&p->phys);
     p->phys.radius = calc_radius_from_rect(&p->phys.collision_rect);
-
 }
 
 void player_draw(Player* p)
@@ -2134,10 +2187,20 @@ void player_draw(Player* p)
 
     opacity = blink ? 0.3 : opacity;
 
+    if(p->weapon.type != WEAPON_TYPE_NONE && p->phys.rotation_deg == 90.0)
+    {
+        weapon_draw(&p->weapon);
+    }
+
     //uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
     float y = p->phys.pos.y - (p->phys.vr.h + p->phys.pos.z)/2.0;
     bool ret = gfx_sprite_batch_add(p->image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, p->settings.color, true, p->scale, 0.0, opacity, false, false, false);
     if(!ret) printf("Failed to add player to batch!\n");
+
+    if(p->weapon.type != WEAPON_TYPE_NONE && p->phys.rotation_deg != 90.0)
+    {
+        weapon_draw(&p->weapon);
+    }
 
     if(p == player)
     {
@@ -2151,6 +2214,7 @@ void player_draw(Player* p)
         {
             const char* desc = item_get_description(highlighted_item->type);
             const char* name = item_get_name(highlighted_item->type);
+
             if(strlen(desc) > 0)
             {
                 ui_message_set_small(0.1, "Item: %s (%s)", name, desc);

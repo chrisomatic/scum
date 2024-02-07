@@ -34,6 +34,7 @@ gcc core/gfx.c \
     skills.c \
     settings.c \
     ui.c \
+    weapon.c \
     main.c \
     -Icore \
     -lglfw -lGLU -lGLEW -lGL -lm \

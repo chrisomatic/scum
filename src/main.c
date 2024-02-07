@@ -25,6 +25,7 @@
 #include "text_list.h"
 #include "skills.h"
 #include "ui.h"
+#include "weapon.h"
 #include "settings.h"
 
 // =========================
@@ -776,6 +777,9 @@ void init()
     {
         memcpy(menu_settings.name, arg_name, PLAYER_NAME_MAX);
     }
+
+    LOGI(" - Weapon.");
+    weapon_init();
 
     LOGI(" - Player.");
     player = &players[0];
