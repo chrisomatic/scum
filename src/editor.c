@@ -237,7 +237,15 @@ void editor_draw()
 
                     if(p != player)
                     {
-                        imgui_toggle_button(&p->active, "Active");
+                        // imgui_toggle_button(&p->active, "Active");
+
+                        bool active = p->active;
+                        imgui_toggle_button(&active, "Active");
+                        if(active && !p->active)
+                        {
+                            p->curr_room = player->curr_room;
+                        }
+                        p->active = active;
                     }
 
                     int selected_class = p->settings.class;

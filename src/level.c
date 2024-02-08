@@ -1100,13 +1100,13 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
             float draw_y = r.y + (_y+1)*h;
 
             uint32_t tcolor = color;
-            if(debug_enabled)
-            {
-                if(player->curr_tile.x == _x && player->curr_tile.y == _y)
-                {
-                    tcolor = COLOR_RED;
-                }
-            }
+            // if(debug_enabled)
+            // {
+            //     if(player->curr_tile.x == _x && player->curr_tile.y == _y)
+            //     {
+            //         tcolor = COLOR_RED;
+            //     }
+            // }
 
             gfx_sprite_batch_add(dungeon_image, sprite, draw_x, draw_y, tcolor, false, 1.0, 0.0, 1.0, false, false, false);
 

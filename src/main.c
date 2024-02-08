@@ -1632,6 +1632,15 @@ void draw()
         if(!room) LOGW("room is null");
         level_draw_room(room, NULL, 0, 0);
 
+        if(debug_enabled)
+        {
+            Rect lst = level_get_tile_rect(player->last_safe_tile.x, player->last_safe_tile.y);
+            gfx_draw_rect(&lst, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
+
+            Rect ct = level_get_tile_rect(player->curr_tile.x, player->curr_tile.y);
+            gfx_draw_rect(&ct, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 0.1, true, IN_WORLD);
+        }
+
         // Vector2i c = level_get_room_coords(player->curr_room);
         // for(int d = 0; d < 4; ++d)
         // {
@@ -1647,16 +1656,16 @@ void draw()
         entity_draw_all();
         explosion_draw_all();
         particles_draw_all();
-
+        draw_all_other_player_info();
 
         if(debug_enabled)
         {
             if(show_walls) room_draw_walls(room);
+            gfx_draw_rect(&tile_pit_rect, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
+            gfx_draw_rect(&player_pit_rect, COLOR_ORANGE, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
         }
-
     }
 
-    draw_all_other_player_info();
     draw_minimap();
     draw_hearts();
     draw_xp_bar();
@@ -1668,9 +1677,6 @@ void draw()
     {
         Rect mr = RECT(mouse_x, mouse_y, 10, 10);
         gfx_draw_rect(&mr, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
-
-        gfx_draw_rect(&tile_pit_rect, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
-
     }
 
     draw_bigmap();

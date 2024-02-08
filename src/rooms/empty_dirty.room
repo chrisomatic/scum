@@ -15,6 +15,9 @@ Floor
 Pit
 Boulder
 Mud
+Ice
+Spikes
+Timed Spikes
 
 ; Tile Data
 1,1,1,1,1,1,1,1,1,1,1,1,1
@@ -30,6 +33,14 @@ Slug
 Clinger
 Geizer
 Floater
+Big Floater
+Buzzer
+Totem Red
+Totem Blue
+Totem Yellow
+Shambler
+Spiked Slug
+Infected
 
 ; Creatures
 
@@ -42,9 +53,9 @@ Yellow Gem
 Purple Gem
 Full Heart
 Half Heart
+Empty Heart
 Cosmic Full Heart
 Cosmic Half Heart
-Glowing Orb
 Dragon Egg
 Shamrock
 Ruby Ring
@@ -54,6 +65,7 @@ Potion of Range
 Potion of Purple
 +1 Gauntlet Slot
 New Level
+Glowing Orb
 Chest
 
 ; Items

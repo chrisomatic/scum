@@ -47,6 +47,7 @@ Player* player2 = NULL;
 text_list_t* ptext = NULL;
 
 Rect tile_pit_rect = {0};
+Rect player_pit_rect = {0};
 
 void player_set_defaults(Player* p)
 {
@@ -1264,7 +1265,10 @@ void player_update(Player* p, float dt)
     }
     else
     {
-        p->curr_tile = level_get_room_coords_by_pos(cx, cy);
+        Vector2i c_tile = level_get_room_coords_by_pos(cx, cy);
+        p->curr_tile.x = RANGE(c_tile.x, 0, ROOM_TILE_SIZE_X-1);
+        p->curr_tile.y = RANGE(c_tile.y, 0, ROOM_TILE_SIZE_Y-1);
+
         TileType tt = level_get_tile_type(room, p->curr_tile.x, p->curr_tile.y);
         if(IS_SAFE_TILE(tt))
         {
@@ -1288,27 +1292,46 @@ void player_update(Player* p, float dt)
             }
         }
 
+
+        bool on_edge = memcmp(&p->curr_tile, &c_tile, sizeof(Vector2i)) != 0;
+        bool dir_edge[4] = {0};
+        if(on_edge)
+        {
+            dir_edge[DIR_UP] = c_tile.y < p->curr_tile.y;
+            dir_edge[DIR_DOWN] = c_tile.y > p->curr_tile.y;
+            dir_edge[DIR_LEFT] = c_tile.x < p->curr_tile.x;
+            dir_edge[DIR_RIGHT] = c_tile.x > p->curr_tile.x;
+        }
+
         TileType check_tile = tt;
         int _curr_tile_x = p->curr_tile.x;
         int _curr_tile_y = p->curr_tile.y;
-        bool on_edge = p->curr_tile.x < 0 || p->curr_tile.y < 0 || p->curr_tile.x > ROOM_TILE_SIZE_X-1 || p->curr_tile.y > ROOM_TILE_SIZE_Y-1;
-        if(on_edge)
-        {
-            _curr_tile_x = RANGE(p->curr_tile.x, 0, ROOM_TILE_SIZE_X-1);
-            _curr_tile_y = RANGE(p->curr_tile.y, 0, ROOM_TILE_SIZE_Y-1);
-            check_tile = level_get_tile_type(room, _curr_tile_x, _curr_tile_y);
-        }
 
         if(check_tile == TILE_PIT && p->phys.pos.z == 0.0 && !p->phys.falling)
         {
-            // if(on_edge) printf("on_edge!\n");
 
-            Rect p_rect = RECT(cx, cy, 1, 1);
+#if 0
             if(on_edge)
             {
-                p_rect.w = 3;
-                p_rect.h = 3;
+                printf("on_edge!\n");
+                for(int dir = 0; dir < 4; ++dir)
+                {
+                    if(!dir_edge[dir]) continue;
+                    printf(" %s\n", get_dir_name(dir));
+                }
             }
+#endif
+
+            player_pit_rect.x = cx;
+            player_pit_rect.y = cy;
+            player_pit_rect.w = 1;
+            player_pit_rect.h = 1;
+
+            if(dir_edge[DIR_UP] || dir_edge[DIR_DOWN])
+                player_pit_rect.h = 5;
+
+            if(dir_edge[DIR_LEFT] || dir_edge[DIR_RIGHT])
+                player_pit_rect.w = 5;
 
             Rect pit_rect = level_get_tile_rect(_curr_tile_x, _curr_tile_y);
 
@@ -1329,7 +1352,7 @@ void player_update(Player* p, float dt)
                 float xadj = 0;
                 float yadj = 0;
 
-                if(_tt == TILE_PIT || _tt == TILE_BOULDER || _curr_tile_x <= 0 || _curr_tile_y <= 0 || _curr_tile_x >= ROOM_TILE_SIZE_X-1 || _curr_tile_y >= ROOM_TILE_SIZE_Y-1 && on_edge)
+                if(_tt == TILE_PIT || _tt == TILE_BOULDER || _tt == TILE_NONE)  //TILE_NONE means it's against the wall
                 {
                     if(dir == DIR_LEFT)
                     {
@@ -1360,7 +1383,7 @@ void player_update(Player* p, float dt)
             }
             // printf("\n");
 
-            if(rectangles_colliding(&p_rect, &tile_pit_rect))
+            if(rectangles_colliding(&tile_pit_rect, &player_pit_rect))
             {
                 p->phys.falling = true;
                 player_hurt(p, 1);
@@ -1737,6 +1760,7 @@ void draw_all_other_player_info()
         Player* p = &players[i];
         if(p == player) continue;
         if(!p->active) continue;
+        if(p->curr_room != player->curr_room) continue;
         draw_other_player_info(p);
     }
 
