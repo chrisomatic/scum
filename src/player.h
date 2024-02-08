@@ -192,7 +192,7 @@ extern Player* player2;
 extern int xp_levels[];
 extern char* class_strs[];
 
-
+extern Rect tile_pit_rect;
 extern float jump_vel_z;
 extern int shadow_image;
 

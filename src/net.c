@@ -725,6 +725,8 @@ static void server_send(PacketType type, ClientInfo* cli)
 
 static void server_simulate()
 {
+    if(paused) return;
+
     game_generate_level();
 
     float dt = 1.0/TARGET_FPS;
@@ -1230,8 +1232,11 @@ bool server_process_command(char* argv[20], int argc, int client_id)
     }
 
     bool err = false;
-
-    if(STR_EQUAL(argv[0], "add"))
+    if(STR_EQUAL(argv[0], "pause"))
+    {
+        paused = !paused;
+    }
+    else if(STR_EQUAL(argv[0], "add"))
     {
         if(argc != 4) return false;
         int o = 1;
@@ -2920,17 +2925,16 @@ static void pack_other_bp(Packet* pkt, ClientInfo* cli)
 {
     Room* room = level_get_room_by_index(&level, (int)players[cli->client_id].curr_room);
 
-    // doors locked
-
     BPW(&server.bp, 1,  (uint32_t)(room->doors_locked ? 0x01 : 0x00));
+    BPW(&server.bp, 1,  (uint32_t)(paused ? 0x01 : 0x00));
 }
 
 static void unpack_other_bp(Packet* pkt, int* offset)
 {
     Room* room = level_get_room_by_index(&level, (int)player->curr_room);
 
-    // doors locked
     room->doors_locked = bitpack_read(&client.bp, 1) == 0x01 ? true : false;
+    paused = bitpack_read(&client.bp, 1) == 0x01 ? true : false;
 }
 
 static void pack_events_bp(Packet* pkt, ClientInfo* cli)

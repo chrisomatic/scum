@@ -46,7 +46,6 @@ Player* player2 = NULL;
 
 text_list_t* ptext = NULL;
 
-// tile pit rect
 Rect tile_pit_rect = {0};
 
 void player_set_defaults(Player* p)
@@ -69,7 +68,7 @@ void player_set_defaults(Player* p)
     p->phys.vr = *vr;
 
     phys_calc_collision_rect(&p->phys);
-    p->phys.radius = calc_radius_from_rect(&p->phys.collision_rect);
+    p->phys.radius = calc_radius_from_rect(&p->phys.collision_rect)*0.8;
 
     p->phys.hp_max = 6;
     p->phys.hp = p->phys.hp_max;
@@ -1290,11 +1289,29 @@ void player_update(Player* p, float dt)
             }
         }
 
-        if(tt == TILE_PIT && p->phys.pos.z == 0.0 && !p->phys.falling)
+        TileType check_tile = tt;
+        int _curr_tile_x = p->curr_tile.x;
+        int _curr_tile_y = p->curr_tile.y;
+        bool on_edge = p->curr_tile.x < 0 || p->curr_tile.y < 0 || p->curr_tile.x > ROOM_TILE_SIZE_X-1 || p->curr_tile.y > ROOM_TILE_SIZE_Y-1;
+        if(on_edge)
         {
+            _curr_tile_x = RANGE(p->curr_tile.x, 0, ROOM_TILE_SIZE_X-1);
+            _curr_tile_y = RANGE(p->curr_tile.y, 0, ROOM_TILE_SIZE_Y-1);
+            check_tile = level_get_tile_type(room, _curr_tile_x, _curr_tile_y);
+        }
+
+        if(check_tile == TILE_PIT && p->phys.pos.z == 0.0 && !p->phys.falling)
+        {
+            // if(on_edge) printf("on_edge!\n");
 
             Rect p_rect = RECT(cx, cy, 1, 1);
-            Rect pit_rect = level_get_tile_rect(p->curr_tile.x, p->curr_tile.y);
+            if(on_edge)
+            {
+                p_rect.w = 3;
+                p_rect.h = 3;
+            }
+
+            Rect pit_rect = level_get_tile_rect(_curr_tile_x, _curr_tile_y);
 
             float shrink_fac = 0.7;
             float adj_fac = (1.0 - shrink_fac) / 2.0;
@@ -1306,11 +1323,14 @@ void player_update(Player* p, float dt)
             for(int dir = 0; dir < 4; ++dir)
             {
                 Vector2i o = get_dir_offsets(dir);
-                TileType _tt = level_get_tile_type(room, p->curr_tile.x + o.x, p->curr_tile.y + o.y);
+                int nx = _curr_tile_x + o.x;
+                int ny = _curr_tile_y + o.y;
+                TileType _tt = level_get_tile_type(room, nx, ny);
 
                 float xadj = 0;
                 float yadj = 0;
-                if(_tt == TILE_PIT || _tt == TILE_BOULDER || p->curr_tile.x == 0 || p->curr_tile.y == 0 || p->curr_tile.x == ROOM_TILE_SIZE_X-1 || p->curr_tile.y == ROOM_TILE_SIZE_Y-1)
+
+                if(_tt == TILE_PIT || _tt == TILE_BOULDER || _curr_tile_x <= 0 || _curr_tile_y <= 0 || _curr_tile_x >= ROOM_TILE_SIZE_X-1 || _curr_tile_y >= ROOM_TILE_SIZE_Y-1 && on_edge)
                 {
                     if(dir == DIR_LEFT)
                     {
@@ -2172,7 +2192,7 @@ void player_set_class(Player* p, PlayerClass class)
     Rect* vr = &gfx_images[p->image].visible_rects[0];
     p->phys.vr = *vr;
     phys_calc_collision_rect(&p->phys);
-    p->phys.radius = calc_radius_from_rect(&p->phys.collision_rect);
+    p->phys.radius = calc_radius_from_rect(&p->phys.collision_rect)*0.8;
 }
 
 void player_draw(Player* p)

@@ -1162,6 +1162,10 @@ void update(float dt)
 
         update_level_transition(dt);
     }
+    else
+    {
+        ui_message_set_title(0.2, COLOR_WHITE, "PAUSED");
+    }
 
     camera_set(false);
 }
@@ -1664,6 +1668,9 @@ void draw()
     {
         Rect mr = RECT(mouse_x, mouse_y, 10, 10);
         gfx_draw_rect(&mr, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
+
+        gfx_draw_rect(&tile_pit_rect, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
+
     }
 
     draw_bigmap();
