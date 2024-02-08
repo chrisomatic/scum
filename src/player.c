@@ -95,7 +95,7 @@ void player_set_defaults(Player* p)
 
     // p->temp_room = -1;
     p->door = DIR_NONE;
-    p->light_radius = 1.0;
+    p->light_radius = 2.0;
 
     p->last_shoot_action = PLAYER_ACTION_SHOOT_UP;
     p->shoot_sprite_cooldown = 0.0;
@@ -879,38 +879,37 @@ static void apply_attributes(Player* p, PlayerAttributes att)
 
 static void player_handle_melee(Player* p, float dt)
 {
-
     bool attacked = false;
 
-    if(p->actions[PLAYER_ACTION_SHOOT_UP].toggled_on)
+    if(p->actions[PLAYER_ACTION_SHOOT_UP].state)
     {
         player_set_sprite_index(p, SPRITE_UP);
         p->phys.rotation_deg = 90.0;
         attacked = true;
     }
-    else if(p->actions[PLAYER_ACTION_SHOOT_RIGHT].toggled_on)
+    else if(p->actions[PLAYER_ACTION_SHOOT_RIGHT].state)
     {
         player_set_sprite_index(p, SPRITE_RIGHT);
         p->phys.rotation_deg = 0.0;
         attacked = true;
     }
-    else if(p->actions[PLAYER_ACTION_SHOOT_DOWN].toggled_on)
+    else if(p->actions[PLAYER_ACTION_SHOOT_DOWN].state)
     {
         player_set_sprite_index(p, SPRITE_DOWN);
         p->phys.rotation_deg = 270.0;
         attacked = true;
     }
-    else if(p->actions[PLAYER_ACTION_SHOOT_LEFT].toggled_on)
+    else if(p->actions[PLAYER_ACTION_SHOOT_LEFT].state)
     {
         player_set_sprite_index(p, SPRITE_LEFT);
         p->phys.rotation_deg = 180.0;
         attacked = true;
     }
 
-    if(attacked)
+    if(attacked && p->weapon.state == WEAPON_STATE_NONE)
     {
-        if(p->weapon.state == WEAPON_STATE_NONE)
-            p->weapon.state = WEAPON_STATE_WINDUP;
+        p->weapon.state = WEAPON_STATE_WINDUP;
+        weapon_clear_hit_list(&p->weapon);
     }
 
     weapon_update(&p->weapon, dt);
@@ -2175,12 +2174,18 @@ void player_set_class(Player* p, PlayerClass class)
     {
         case PLAYER_CLASS_SPACEMAN:
             p->image = class_image_spaceman;
+            p->phys.speed = 700.0;
+            p->phys.max_velocity = 120.0;
             break;
         case PLAYER_CLASS_PHYSICIST:
             p->image = class_image_spaceman;
+            p->phys.speed = 700.0;
+            p->phys.max_velocity = 120.0;
             break;
         case PLAYER_CLASS_ROBOT:
             p->image = class_image_robot;
+            p->phys.speed = 400.0;
+            p->phys.max_velocity = 100.0;
             weapon_add(WEAPON_TYPE_SPEAR,&p->phys, &p->weapon, (p->weapon.type == WEAPON_TYPE_NONE ? true : false));
             break;
         default:
@@ -2221,6 +2226,23 @@ void player_draw(Player* p)
     {
         weapon_draw(&p->weapon);
     }
+
+
+    if(debug_enabled)
+    {
+        if(p->weapon.state == WEAPON_STATE_RELEASE)
+        {
+            GFXImage* img = &gfx_images[p->weapon.image];
+            Rect* vr = &img->visible_rects[0];
+
+            bool vertical = (p->phys.rotation_deg == 90.0 || p->phys.rotation_deg == 270.0);
+            float w = vertical ? vr->h : vr->w;
+            float h = vertical ? vr->w : vr->h;
+
+            gfx_draw_rect_xywh(p->weapon.pos.x, p->weapon.pos.y, w,h, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+        }
+    }
+
 
     if(p == player)
     {
@@ -2385,6 +2407,46 @@ void player_handle_collision(Player* p, Entity* e)
             // check for weapon collision here?
             // it may be better to add weapons to the entity list
             // so they can be used by creatures too, or thrown or something
+
+            if(p->weapon.state == WEAPON_STATE_RELEASE)
+            {
+                GFXImage* img = &gfx_images[p->weapon.image];
+                Rect* vr = &img->visible_rects[0];
+
+                bool vertical = (p->phys.rotation_deg == 90.0 || p->phys.rotation_deg == 270.0);
+
+                float w = vertical ? vr->h : vr->w;
+                float h = vertical ? vr->w : vr->h;
+
+                Box weap_box = {
+                    p->weapon.pos.x,
+                    p->weapon.pos.y,
+                    p->weapon.pos.z,
+                    w,
+                    h,
+                    32,
+                };
+                
+                Box check = {
+                    c->phys.collision_rect.x,
+                    c->phys.collision_rect.y,
+                    c->phys.pos.z + p->phys.height/2.0,
+                    c->phys.collision_rect.w,
+                    c->phys.collision_rect.h,
+                    c->phys.height*2,
+                };
+
+                bool hit = boxes_colliding(&weap_box, &check);
+
+                if(hit)
+                {
+                    if(!weapon_is_in_hit_list(&p->weapon, c->id))
+                    {
+                        weapon_add_hit_id(&p->weapon, c->id);
+                        creature_hurt(c, p->weapon.damage);
+                    }
+                }
+            }
 
         } break;
         case ENTITY_TYPE_PLAYER:
