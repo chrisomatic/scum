@@ -89,6 +89,8 @@ void player_set_defaults(Player* p)
         phys_print_dimensions(&p->phys);
     }
 
+    weapon_add(WEAPON_TYPE_SPEAR,&p->phys, &p->weapon, (p->weapon.type == WEAPON_TYPE_NONE ? true : false));
+
     memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
     memcpy(&p->proj_spawn,&projectile_spawn[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileSpawn));
 
@@ -2210,7 +2212,6 @@ void player_set_class(Player* p, PlayerClass class)
             p->image = class_image_robot;
             p->phys.speed = 400.0;
             p->phys.max_velocity = 100.0;
-            weapon_add(WEAPON_TYPE_SPEAR,&p->phys, &p->weapon, (p->weapon.type == WEAPON_TYPE_NONE ? true : false));
             break;
         default:
             LOGE("Invalid class: %d", class);

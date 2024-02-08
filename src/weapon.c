@@ -35,10 +35,10 @@ void weapon_add(WeaponType type, Physics* phys, Weapon* w, bool _new)
     {
         case WEAPON_TYPE_SPEAR:
             w->image = weapon_image;
-            w->damage = 1.0;
-            w->windup_time  = 0.1;
+            w->damage = 3.0;
+            w->windup_time  = 0.2;
             w->release_time = 0.3;
-            w->retract_time = 0.1;
+            w->retract_time = 0.2;
             break;
         default:
             w->image = weapon_image;
