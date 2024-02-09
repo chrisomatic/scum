@@ -90,6 +90,7 @@ typedef struct
 {
     Vector3f pos;
     float invulnerable_temp_time;
+    float weapon_scale;
 } PlayerNetLerp;
 
 

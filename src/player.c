@@ -2320,6 +2320,7 @@ void player_lerp(Player* p, float dt)
     // printf("[lerping player] t: %.2f, x: %.2f -> %.2f = %.2f\n", t, p->server_state_prior.pos.x, p->server_state_target.pos.x, lp.x);
 
     p->invulnerable_temp_time = lerp(p->server_state_prior.invulnerable_temp_time, p->server_state_target.invulnerable_temp_time, t);
+    p->weapon.scale = lerp(p->server_state_prior.weapon_scale, p->server_state_target.weapon_scale, t);
 }
 
 void player_handle_net_inputs(Player* p, double dt)

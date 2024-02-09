@@ -568,6 +568,7 @@ void start_server()
 
     gfx_image_init();
     skills_init();
+    weapon_init();
     player_init();
     creature_init();
     effects_load_all();

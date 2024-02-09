@@ -35,10 +35,10 @@ void weapon_add(WeaponType type, Physics* phys, Weapon* w, bool _new)
     {
         case WEAPON_TYPE_SPEAR:
             w->image = weapon_image;
-            w->damage = 3.0;
-            w->windup_time  = 0.2;
-            w->release_time = 0.3;
-            w->retract_time = 0.2;
+            w->damage = 2.0;
+            w->windup_time  = 0.1;
+            w->release_time = 0.25;
+            w->retract_time = 0.1;
             break;
         default:
             w->image = weapon_image;
@@ -92,12 +92,17 @@ void weapon_update(Weapon* w, float dt)
     {
         w->scale = 1.0;
     }
+}
+
+void weapon_draw(Weapon* w)
+{
+    if(w->state == WEAPON_STATE_NONE)
+        return;
 
     // update position offset
 
     GFXImage* img = &gfx_images[w->image];
     Rect* vr = &img->visible_rects[0];
-
     Vector2f offset = {0.0, 0.0};
 
     if(w->phys->rotation_deg == 90.0) // up
@@ -121,15 +126,9 @@ void weapon_update(Weapon* w, float dt)
 
     w->pos.x = w->phys->pos.x + offset.x;
     w->pos.y = w->phys->pos.y - (w->phys->vr.h + w->phys->pos.z)/2.0 + offset.y;
-}
-
-void weapon_draw(Weapon* w)
-{
-    if(w->state == WEAPON_STATE_NONE)
-        return;
+    w->pos.z = 0.0;
 
     gfx_sprite_batch_add(w->image, 0, w->pos.x, w->pos.y, w->color, false, w->scale, w->phys->rotation_deg, w->scale, false, false, false);
-
 }
 
 

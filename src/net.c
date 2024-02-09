@@ -151,20 +151,20 @@ static inline Vector2f unpack_vec2(Packet* pkt, int* offset);
 static inline Vector3f unpack_vec3(Packet* pkt, int* offset);
 static inline ItemType unpack_itemtype(Packet* pkt, int* offset);
 
-static void pack_players_bp(Packet* pkt, ClientInfo* cli); // temp
-static void unpack_players_bp(Packet* pkt, int* offset);
-static void pack_creatures_bp(Packet* pkt, ClientInfo* cli);
-static void unpack_creatures_bp(Packet* pkt, int* offset);
-static void pack_projectiles_bp(Packet* pkt, ClientInfo* cli);
-static void unpack_projectiles_bp(Packet* pkt, int* offset);
-static void pack_items_bp(Packet* pkt, ClientInfo* cli);
-static void unpack_items_bp(Packet* pkt, int* offset);
-static void pack_decals_bp(Packet* pkt, ClientInfo* cli);
-static void unpack_decals_bp(Packet* pkt, int* offset);
-static void pack_other_bp(Packet* pkt, ClientInfo* cli);
-static void unpack_other_bp(Packet* pkt, int* offset);
-static void pack_events_bp(Packet* pkt, ClientInfo* cli);
-static void unpack_events_bp(Packet* pkt, int* offset);
+static void pack_players(Packet* pkt, ClientInfo* cli); // temp
+static void unpack_players(Packet* pkt, int* offset);
+static void pack_creatures(Packet* pkt, ClientInfo* cli);
+static void unpack_creatures(Packet* pkt, int* offset);
+static void pack_projectiles(Packet* pkt, ClientInfo* cli);
+static void unpack_projectiles(Packet* pkt, int* offset);
+static void pack_items(Packet* pkt, ClientInfo* cli);
+static void unpack_items(Packet* pkt, int* offset);
+static void pack_decals(Packet* pkt, ClientInfo* cli);
+static void unpack_decals(Packet* pkt, int* offset);
+static void pack_other(Packet* pkt, ClientInfo* cli);
+static void unpack_other(Packet* pkt, int* offset);
+static void pack_events(Packet* pkt, ClientInfo* cli);
+static void unpack_events(Packet* pkt, int* offset);
 
 static uint64_t rand64(void)
 {
@@ -677,13 +677,13 @@ static void server_send(PacketType type, ClientInfo* cli)
 
             bitpack_clear(&server.bp);
 
-            pack_events_bp(&pkt,cli);
-            pack_players_bp(&pkt, cli);
-            pack_creatures_bp(&pkt, cli);
-            pack_projectiles_bp(&pkt, cli);
-            pack_items_bp(&pkt,cli);
-            pack_decals_bp(&pkt, cli);
-            pack_other_bp(&pkt, cli);
+            pack_events(&pkt,cli);
+            pack_players(&pkt, cli);
+            pack_creatures(&pkt, cli);
+            pack_projectiles(&pkt, cli);
+            pack_items(&pkt,cli);
+            pack_decals(&pkt, cli);
+            pack_other(&pkt, cli);
 
             bitpack_flush(&server.bp);
             bitpack_seek_begin(&server.bp);
@@ -1828,13 +1828,13 @@ void net_client_update()
                     bitpack_seek_begin(&client.bp);
                     //bitpack_print(&client.bp);
 
-                    unpack_events_bp(&srvpkt,&offset);
-                    unpack_players_bp(&srvpkt, &offset);
-                    unpack_creatures_bp(&srvpkt, &offset);
-                    unpack_projectiles_bp(&srvpkt, &offset);
-                    unpack_items_bp(&srvpkt,&offset);
-                    unpack_decals_bp(&srvpkt, &offset);
-                    unpack_other_bp(&srvpkt,&offset);
+                    unpack_events(&srvpkt,&offset);
+                    unpack_players(&srvpkt, &offset);
+                    unpack_creatures(&srvpkt, &offset);
+                    unpack_projectiles(&srvpkt, &offset);
+                    unpack_items(&srvpkt,&offset);
+                    unpack_decals(&srvpkt, &offset);
+                    unpack_other(&srvpkt,&offset);
 
                     int bytes_read = 4*(client.bp.word_index+1);
                     offset += bytes_read;
@@ -2325,7 +2325,7 @@ void test_packing()
 
 #define BPW(a,b,c) {if(!bitpack_write(a,b,c)) printf("ERROR: %d\n", __LINE__);}
 
-static void pack_players_bp(Packet* pkt, ClientInfo* cli)
+static void pack_players(Packet* pkt, ClientInfo* cli)
 {
     uint8_t player_count = 0;
     for(int i = 0; i < MAX_CLIENTS; ++i)
@@ -2396,11 +2396,30 @@ static void pack_players_bp(Packet* pkt, ClientInfo* cli)
                 BPW(&server.bp, 6,  (uint32_t)(p->timed_items[t] + 1));
                 BPW(&server.bp, 8,  (uint32_t)(p->timed_items_ttl[t] * 10.0));
             }
+
+            BPW(&server.bp, 2,  (uint32_t)p->weapon.state);
+            if(p->weapon.state > WEAPON_STATE_NONE)
+            {
+                //BPW(&server.bp, 10,  (uint32_t)p->weapon.pos.x);
+                //BPW(&server.bp, 10,  (uint32_t)p->weapon.pos.y);
+                //BPW(&server.bp, 6,   (uint32_t)p->weapon.pos.z);
+                BPW(&server.bp, 8,   (uint32_t)(p->weapon.scale * 255.0));
+
+                uint32_t dir = 0;
+                if(p->phys.rotation_deg == 0.0)
+                    dir = 1;
+                else if(p->phys.rotation_deg == 270.0)
+                    dir = 2;
+                else if(p->phys.rotation_deg == 180.0)
+                    dir = 3;
+
+                BPW(&server.bp, 2, dir);
+            }
         }
     }
 }
 
-static void unpack_players_bp(Packet* pkt, int* offset)
+static void unpack_players(Packet* pkt, int* offset)
 {
     uint8_t player_count = (uint8_t)bitpack_read(&client.bp, 4);
     client.player_count = player_count;
@@ -2461,6 +2480,23 @@ static void unpack_players_bp(Packet* pkt, int* offset)
         {
             timed_items[t]     = bitpack_read(&client.bp, 6);
             timed_items_ttl[t] = bitpack_read(&client.bp, 8);
+        }
+
+        uint32_t weapon_state = bitpack_read(&client.bp, 2);
+
+        //uint32_t weapon_x = 0.0;
+        //uint32_t weapon_y = 0.0;
+        //uint32_t weapon_z = 0.0;
+        uint32_t weapon_scale = 0.0;
+        uint32_t weapon_dir = 0;
+
+        if(weapon_state > WEAPON_STATE_NONE)
+        {
+            //weapon_x = bitpack_read(&client.bp, 10);
+            //weapon_y = bitpack_read(&client.bp, 10);
+            //weapon_z = bitpack_read(&client.bp, 6);
+            weapon_scale = bitpack_read(&client.bp, 8);
+            weapon_dir = bitpack_read(&client.bp, 2);
         }
 
         uint8_t client_id = (uint8_t)id;
@@ -2524,6 +2560,20 @@ static void unpack_players_bp(Packet* pkt, int* offset)
             p->timed_items_ttl[t] = (ti_ttl/10.0f);
         }
 
+        p->weapon.state = (WeaponState)weapon_state;
+        //p->weapon.pos.x = (float)weapon_x;
+        //p->weapon.pos.y = (float)weapon_y;
+        //p->weapon.pos.z = (float)weapon_z;
+        p->weapon.color = COLOR_TINT_NONE;
+
+        switch(weapon_dir)
+        {
+            case 0: p->phys.rotation_deg =  90.0; break;
+            case 1: p->phys.rotation_deg =   0.0; break;
+            case 2: p->phys.rotation_deg = 270.0; break;
+            case 3: p->phys.rotation_deg = 180.0; break;
+        }
+
         if(!prior_active[client_id])
         {
             p->curr_room = curr_room;
@@ -2559,6 +2609,7 @@ static void unpack_players_bp(Packet* pkt, int* offset)
             p->phys.pos.x = pos.x;
             p->phys.pos.y = pos.y;
             p->phys.pos.z = pos.z;
+            p->weapon.scale = (float)(weapon_scale/255.0f);
         }
 
         p->lerp_t = 0.0;
@@ -2566,11 +2617,13 @@ static void unpack_players_bp(Packet* pkt, int* offset)
         p->server_state_prior.pos.x = p->phys.pos.x;
         p->server_state_prior.pos.y = p->phys.pos.y;
         p->server_state_prior.pos.z = p->phys.pos.z;
+        p->server_state_prior.weapon_scale = p->weapon.scale;
         p->server_state_prior.invulnerable_temp_time = p->invulnerable_temp_time;
 
         p->server_state_target.pos.x = pos.x;
         p->server_state_target.pos.y = pos.y;
         p->server_state_target.pos.z = pos.z;
+        p->server_state_target.weapon_scale = (float)(weapon_scale/255.0f);
         p->server_state_target.invulnerable_temp_time = invulnerable_temp_time;
 
         if(!prior_active[client_id])
@@ -2584,7 +2637,7 @@ static void unpack_players_bp(Packet* pkt, int* offset)
     }
 }
 
-static void pack_creatures_bp(Packet* pkt, ClientInfo* cli)
+static void pack_creatures(Packet* pkt, ClientInfo* cli)
 {
     uint16_t num_creatures = creature_get_count();
     uint16_t num_visible_creatures = 0;
@@ -2626,7 +2679,7 @@ static void pack_creatures_bp(Packet* pkt, ClientInfo* cli)
     }
 }
 
-static void unpack_creatures_bp(Packet* pkt, int* offset)
+static void unpack_creatures(Packet* pkt, int* offset)
 {
     memcpy(prior_creatures, creatures, sizeof(Creature)*MAX_CREATURES);
     creature_clear_all();
@@ -2688,7 +2741,7 @@ static void unpack_creatures_bp(Packet* pkt, int* offset)
 }
 
 
-static void pack_projectiles_bp(Packet* pkt, ClientInfo* cli)
+static void pack_projectiles(Packet* pkt, ClientInfo* cli)
 {
     uint16_t num_projectiles = (uint16_t)plist->count;
     uint16_t num_visible_projectiles = 0;
@@ -2728,7 +2781,7 @@ static void pack_projectiles_bp(Packet* pkt, ClientInfo* cli)
     }
 }
 
-static void unpack_projectiles_bp(Packet* pkt, int* offset)
+static void unpack_projectiles(Packet* pkt, int* offset)
 {
     memcpy(prior_projectiles, projectiles, sizeof(Projectile)*MAX_PROJECTILES);
 
@@ -2785,7 +2838,7 @@ static void unpack_projectiles_bp(Packet* pkt, int* offset)
     }
 }
 
-static void pack_items_bp(Packet* pkt, ClientInfo* cli)
+static void pack_items(Packet* pkt, ClientInfo* cli)
 {
     uint16_t num_items = (uint16_t)item_list->count;
     uint8_t num_visible_items = 0;
@@ -2824,7 +2877,7 @@ static void pack_items_bp(Packet* pkt, ClientInfo* cli)
     }
 }
 
-static void unpack_items_bp(Packet* pkt, int* offset)
+static void unpack_items(Packet* pkt, int* offset)
 {
     memcpy(prior_items, items, sizeof(Item)*MAX_ITEMS);
 
@@ -2897,7 +2950,7 @@ static void unpack_items_bp(Packet* pkt, int* offset)
     }
 }
 
-static void pack_decals_bp(Packet* pkt, ClientInfo* cli)
+static void pack_decals(Packet* pkt, ClientInfo* cli)
 {
     BPW(&server.bp, 7,  (uint32_t)decal_list->count);
 
@@ -2917,7 +2970,7 @@ static void pack_decals_bp(Packet* pkt, ClientInfo* cli)
     }
 }
 
-static void unpack_decals_bp(Packet* pkt, int* offset)
+static void unpack_decals(Packet* pkt, int* offset)
 {
     uint8_t count = (uint8_t)bitpack_read(&client.bp, 7);
 
@@ -2941,7 +2994,7 @@ static void unpack_decals_bp(Packet* pkt, int* offset)
     }
 }
 
-static void pack_other_bp(Packet* pkt, ClientInfo* cli)
+static void pack_other(Packet* pkt, ClientInfo* cli)
 {
     Room* room = level_get_room_by_index(&level, (int)players[cli->client_id].curr_room);
 
@@ -2949,7 +3002,7 @@ static void pack_other_bp(Packet* pkt, ClientInfo* cli)
     BPW(&server.bp, 1,  (uint32_t)(paused ? 0x01 : 0x00));
 }
 
-static void unpack_other_bp(Packet* pkt, int* offset)
+static void unpack_other(Packet* pkt, int* offset)
 {
     Room* room = level_get_room_by_index(&level, (int)player->curr_room);
 
@@ -2957,7 +3010,7 @@ static void unpack_other_bp(Packet* pkt, int* offset)
     paused = bitpack_read(&client.bp, 1) == 0x01 ? true : false;
 }
 
-static void pack_events_bp(Packet* pkt, ClientInfo* cli)
+static void pack_events(Packet* pkt, ClientInfo* cli)
 {
     BPW(&server.bp, 8,  (uint32_t)server.event_count);
 
@@ -2995,7 +3048,7 @@ static void pack_events_bp(Packet* pkt, ClientInfo* cli)
     }
 }
 
-static void unpack_events_bp(Packet* pkt, int* offset)
+static void unpack_events(Packet* pkt, int* offset)
 {
     uint8_t event_count = (uint8_t)bitpack_read(&client.bp,8);
 
