@@ -722,12 +722,19 @@ static void server_send(PacketType type, ClientInfo* cli)
     }
 }
 
+#define DBG() if(dbg) printf("%s(): %d\n", __func__, __LINE__)
 
 static void server_simulate()
 {
+    static bool dbg = false;
     if(paused) return;
 
-    game_generate_level();
+    if(level_generate_triggered)
+    {
+        game_generate_level();
+        dbg = true;
+        return;
+    }
 
     float dt = 1.0/TARGET_FPS;
 
@@ -743,6 +750,7 @@ static void server_simulate()
 
         if(cli->input_count == 0)
         {
+DBG();
             player_update(p,dt);
         }
         else
@@ -756,6 +764,7 @@ static void server_simulate()
                     p->actions[j].state = key_state;
                 }
 
+DBG();
                 player_update(p,cli->net_player_inputs[i].delta_t);
             }
 
@@ -763,16 +772,27 @@ static void server_simulate()
         }
     }
 
+DBG();
     level_update(dt);
+DBG();
     projectile_update_all(dt);
+DBG();
     creature_update_all(dt);
+DBG();
     item_update_all(dt);
+DBG();
     explosion_update_all(dt);
+DBG();
     decal_update_all(dt);
 
+DBG();
     entity_build_all();
+DBG();
     entity_handle_collisions();
+DBG();
     entity_handle_status_effects(dt);
+
+    dbg = false;
 }
 
 int net_server_start()
@@ -1738,7 +1758,7 @@ int net_client_connect()
                     {
                         uint8_t reason = unpack_u8(&srvpkt, &offset);
                         LOGN("Rejection Reason: %s (%02X)", connect_reject_reason_to_str(reason), reason);
-                        client.state = DISCONNECTED; // TODO: is this okay?
+                        client.state = DISCONNECTED;
                         client.id = -1;
                         client_clear();
                     } break;

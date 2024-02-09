@@ -19,7 +19,6 @@ static void handle_room_collision(Player* p);
 static void player_set_sprite_index(Player* p, int sprite_index);
 
 int xp_levels[] = {100,120,140,160,180,200};
-int skill_selection = 0;
 
 int player_ignore_input = 0;
 
@@ -2342,7 +2341,7 @@ void player_handle_net_inputs(Player* p, double dt)
         }
     }
 
-    if(p->curr_room != p->transition_room)
+    if(p->curr_room != p->transition_room || paused)
     {
         p->input.keys = 0;
     }

@@ -1214,7 +1214,7 @@ Level level_generate(unsigned int seed, int rank)
 
     generate_walls(&level);
     level_print(&level);
-
+    level_grace_time = 2.0;
     return level;
 }
 
