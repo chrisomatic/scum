@@ -53,6 +53,36 @@ void weapon_add(WeaponType type, Physics* phys, Weapon* w, bool _new)
     w->hit_id_count = 0;
 }
 
+static void update_weapon_pos(Weapon* w)
+{
+    GFXImage* img = &gfx_images[w->image];
+    Rect* vr = &img->visible_rects[0];
+    Vector2f offset = {0.0, 0.0};
+
+    if(w->phys->rotation_deg == 90.0) // up
+    {
+        offset.y -= vr->h*w->scale;
+        offset.y -= w->phys->vr.h/2.0;
+    }
+    else if(w->phys->rotation_deg == 0.0) // right
+    {
+        offset.x += vr->w*w->scale/2.0;
+    }
+    else if(w->phys->rotation_deg == 270.0) // down
+    {
+        offset.y += vr->h*w->scale;
+        offset.y += w->phys->vr.h/2.0;
+    }
+    else if(w->phys->rotation_deg == 180.0) // left
+    {
+        offset.x -= vr->w*w->scale/2.0;
+    }
+
+    w->pos.x = w->phys->pos.x + offset.x;
+    w->pos.y = w->phys->pos.y - (w->phys->vr.h + w->phys->pos.z)/2.0 + offset.y;
+    w->pos.z = 0.0;
+}
+
 void weapon_update(Weapon* w, float dt)
 {
     if(!w) return;
@@ -92,6 +122,11 @@ void weapon_update(Weapon* w, float dt)
     {
         w->scale = 1.0;
     }
+
+    if(role != ROLE_CLIENT)
+    {
+        update_weapon_pos(w);
+    }
 }
 
 void weapon_draw(Weapon* w)
@@ -99,34 +134,8 @@ void weapon_draw(Weapon* w)
     if(w->state == WEAPON_STATE_NONE)
         return;
 
-    // update position offset
-
-    GFXImage* img = &gfx_images[w->image];
-    Rect* vr = &img->visible_rects[0];
-    Vector2f offset = {0.0, 0.0};
-
-    if(w->phys->rotation_deg == 90.0) // up
-    {
-        offset.y -= vr->h*w->scale;
-        offset.y -= w->phys->vr.h/2.0;
-    }
-    else if(w->phys->rotation_deg == 0.0) // right
-    {
-        offset.x += vr->w*w->scale/2.0;
-    }
-    else if(w->phys->rotation_deg == 270.0) // down
-    {
-        offset.y += vr->h*w->scale;
-        offset.y += w->phys->vr.h/2.0;
-    }
-    else if(w->phys->rotation_deg == 180.0) // left
-    {
-        offset.x -= vr->w*w->scale/2.0;
-    }
-
-    w->pos.x = w->phys->pos.x + offset.x;
-    w->pos.y = w->phys->pos.y - (w->phys->vr.h + w->phys->pos.z)/2.0 + offset.y;
-    w->pos.z = 0.0;
+    if(role == ROLE_CLIENT)
+        update_weapon_pos(w);
 
     gfx_sprite_batch_add(w->image, 0, w->pos.x, w->pos.y, w->color, false, w->scale, w->phys->rotation_deg, w->scale, false, false, false);
 }
