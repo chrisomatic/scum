@@ -1,0 +1,80 @@
+[1] # version
+
+; Room Dimensions
+13,7
+
+; Room Type
+1   # Monster
+
+; Room Rank
+1
+
+; Tile Mapping
+None
+Floor
+Pit
+Boulder
+Mud
+Ice
+Spikes
+Timed Spikes
+
+; Tile Data
+1,1,1,1,1,1,1,1,1,1,1,1,1
+1,1,1,1,1,1,1,1,1,1,1,1,1
+1,1,1,1,1,1,1,1,1,1,1,1,1
+1,1,1,1,1,1,1,1,1,1,1,1,1
+1,1,1,1,1,1,1,1,1,1,1,1,1
+1,1,1,1,1,1,1,1,1,1,1,1,1
+1,1,1,1,1,1,1,1,1,1,1,1,1
+
+; Creature Mapping
+Slug
+Clinger
+Geizer
+Floater
+Big Floater
+Buzzer
+Totem Red
+Totem Blue
+Totem Yellow
+Shambler
+Spiked Slug
+Infected
+
+; Creatures
+11,1,1
+11,13,1
+5,7,4
+11,1,7
+11,13,7
+
+; Item Mapping
+Red Gem
+Green Gem
+Blue Gem
+White Gem
+Yellow Gem
+Purple Gem
+Full Heart
+Half Heart
+Empty Heart
+Cosmic Full Heart
+Cosmic Half Heart
+Dragon Egg
+Shamrock
+Ruby Ring
+Potion of Strength
+Potion of Speed
+Potion of Range
+Potion of Purple
++1 Gauntlet Slot
+New Level
+Glowing Orb
+Chest
+
+; Items
+
+; Doors
+0,1,0,1
+

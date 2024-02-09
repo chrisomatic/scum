@@ -74,7 +74,7 @@ void player_set_defaults(Player* p)
     p->phys.hp = p->phys.hp_max;
 
     p->invulnerable = false;
-    p->invulnerable_temp_time = false;
+    p->invulnerable_temp_time = 0.0;
 
     p->scale = 1.0;
     p->phys.falling = false;

@@ -1464,11 +1464,14 @@ static void creature_update_shambler(Creature* c, float dt)
             else if(c->ai_state == 2)
             {
                 // fire 4 orthogonal shots
-                float aoffset = c->ai_value*10.0;
-                creature_fire_projectile(c, 0.0 + aoffset, PROJ_COLOR);
-                creature_fire_projectile(c, 90.0 + aoffset, PROJ_COLOR);
-                creature_fire_projectile(c, 180.0 + aoffset, PROJ_COLOR);
-                creature_fire_projectile(c, 270.0 + aoffset, PROJ_COLOR);
+                if(c->ai_value % 2 == 0)
+                {
+                    float aoffset = c->ai_value*10.0;
+                    creature_fire_projectile(c, 0.0 + aoffset, PROJ_COLOR);
+                    creature_fire_projectile(c, 90.0 + aoffset, PROJ_COLOR);
+                    creature_fire_projectile(c, 180.0 + aoffset, PROJ_COLOR);
+                    creature_fire_projectile(c, 270.0 + aoffset, PROJ_COLOR);
+                }
 
                 c->ai_value++;
                 if(c->ai_value >= 18)
@@ -1505,7 +1508,7 @@ static void creature_update_shambler(Creature* c, float dt)
                 add_to_random_tile(c, room);
 
                 // explode projectiles
-                int num_projectiles = (rand() % 24) + 12;
+                int num_projectiles = (rand() % 5) + 5;
                 for(int i = 0; i < num_projectiles; ++i)
                 {
                     int angle = rand() % 360;
