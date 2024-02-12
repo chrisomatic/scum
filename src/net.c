@@ -51,6 +51,12 @@
 
 typedef struct
 {
+    uint16_t id;
+    double time;
+} PacketTimestamp;
+
+typedef struct
+{
     int socket;
     uint16_t local_latest_packet_id;
     uint16_t remote_latest_packet_id;
@@ -72,13 +78,11 @@ typedef struct
     Packet prior_state_pkt;
     NetPlayerInput net_player_inputs[INPUT_QUEUE_MAX];
     int input_count;
-} ClientInfo;
 
-typedef struct
-{
-    uint16_t id;
-    double time;
-} PacketTimestamp;
+    glist* timestamp_history_list;
+    PacketTimestamp timestamp_history[TIMESTAMP_HISTORY_MAX*MAX_CLIENTS];
+
+} ClientInfo;
 
 struct
 {
@@ -87,8 +91,6 @@ struct
     ClientInfo clients[MAX_CLIENTS];
     NetEvent events[MAX_NET_EVENTS];
     BitPack bp;
-    glist* timestamp_history_list;
-    PacketTimestamp timestamp_history[TIMESTAMP_HISTORY_MAX*MAX_CLIENTS];
     int event_count;
     int num_clients;
 } server = {0};
@@ -841,7 +843,8 @@ int net_server_start()
 
     bitpack_create(&server.bp, BITPACK_SIZE);
 
-    server.timestamp_history_list = list_create(server.timestamp_history, TIMESTAMP_HISTORY_MAX*MAX_CLIENTS,sizeof(PacketTimestamp), true);
+    for(int i = 0; i < MAX_CLIENTS; ++i)
+        server.clients[i].timestamp_history_list = list_create(server.clients[i].timestamp_history, TIMESTAMP_HISTORY_MAX,sizeof(PacketTimestamp), true);
 
     LOGN("Server Started with tick rate %f.", TICK_RATE);
 
@@ -1004,9 +1007,9 @@ int net_server_start()
                         // check if received input already
                         bool redundant = false;
 
-                        for(int i = 0; i < server.timestamp_history_list->count; ++i)
+                        for(int i = 0; i < cli->timestamp_history_list->count; ++i)
                         {
-                            PacketTimestamp* pts = (PacketTimestamp*)list_get(server.timestamp_history_list, i);
+                            PacketTimestamp* pts = (PacketTimestamp*)list_get(cli->timestamp_history_list, i);
                             if(pts->id == recv_pkt.hdr.id)
                             {
                                 redundant = true;
@@ -1019,7 +1022,7 @@ int net_server_start()
 
                         // add to packet timestamp history
                         PacketTimestamp pts = {.id = recv_pkt.hdr.id, .time = timer_get_time()};
-                        list_add(server.timestamp_history_list, &pts);
+                        list_add(cli->timestamp_history_list, &pts);
 #endif
 
                         uint8_t _input_count = unpack_u8(&recv_pkt, &offset);
