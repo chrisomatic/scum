@@ -696,10 +696,12 @@ void generate_walls(Level* level)
     }
 }
 
-void level_handle_room_collision(Room* room, Physics* phys, int entity_type)
+void level_handle_room_collision(Room* room, Physics* phys, int entity_type, void* entity)
 {
     if(!room)
         return;
+
+    Entity* e = (Entity*)entity;
 
     level_sort_walls(room->walls,room->wall_count, phys);
 
@@ -713,6 +715,18 @@ void level_handle_room_collision(Room* room, Physics* phys, int entity_type)
         float py = phys->pos.y;
 
         if(entity_type == ENTITY_TYPE_PROJECTILE && (wall->type == WALL_TYPE_PIT || wall->type == WALL_TYPE_INNER))
+            continue;
+
+        if(entity_type == ENTITY_TYPE_CREATURE && (wall->type == WALL_TYPE_INNER))
+        {
+            Creature* c = (Creature*)e->ptr;
+            if(c->type == CREATURE_TYPE_CLINGER)
+            {
+                continue;
+            }
+        }
+
+        if(entity_type == ENTITY_TYPE_PROJECTILE && wall->type == WALL_TYPE_BLOCK && phys->pos.z > 36.0)
             continue;
 
         if(entity_type == ENTITY_TYPE_PLAYER && wall->type == WALL_TYPE_PIT)

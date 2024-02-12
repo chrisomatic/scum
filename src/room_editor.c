@@ -466,7 +466,7 @@ bool room_editor_update(float dt)
     text_list_update(text_lst, dt);
 
     window_get_mouse_view_coords(&mouse_x, &mouse_y);
-    window_get_mouse_world_coords(&mouse_window_x, &mouse_window_y);
+    window_get_mouse_world_coords(&mouse_world_x, &mouse_world_y);
 
     if(window_mouse_left_went_down())
         lmouse_state = true;
@@ -551,7 +551,7 @@ void room_editor_draw()
 
     gfx_draw_rect(&room_area, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
 
-    tile_coords = level_get_room_coords_by_pos(mouse_window_x, mouse_window_y);
+    tile_coords = level_get_room_coords_by_pos(mouse_world_x, mouse_world_y);
     Rect tile_rect = level_get_tile_rect(tile_coords.x, tile_coords.y);
 
     obj_coords.x = tile_coords.x +1;

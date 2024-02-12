@@ -5,6 +5,9 @@
 
 #define FADE_TIME 0.4
 
+char message_mouse[UI_MESSAGE_MAX];
+uint32_t message_mouse_color;
+
 char message_small[UI_MESSAGE_MAX];
 float message_small_duration;
 
@@ -15,6 +18,7 @@ uint32_t message_title_color;
 
 static void ui_message_draw_small();
 static void ui_message_draw_title();
+static void ui_message_draw_mouse();
 
 void ui_message_set_small(float duration, char* fmt, ...)
 {
@@ -57,6 +61,32 @@ void ui_message_set_title(float duration, uint32_t color, char* fmt, ...)
     message_title_color = color;
 }
 
+void ui_message_set_mouse(uint32_t color, char* fmt, ...)
+{
+    static char temp[UI_MESSAGE_MAX] = {0};
+    memset(temp, 0, sizeof(char)*UI_MESSAGE_MAX);
+    va_list args;
+    va_start(args, fmt);
+    int ret = vsnprintf(temp, UI_MESSAGE_MAX, fmt, args);
+    va_end(args);
+
+    if(ret < 0 || ret >= UI_MESSAGE_MAX)
+    {
+        LOGE("Failed to format message_mouse (%d)", ret);
+        return;
+    }
+
+    memcpy(message_mouse, temp, sizeof(char)*UI_MESSAGE_MAX);
+
+    message_mouse_color = color;
+}
+
+void ui_message_clear_mouse()
+{
+    message_mouse[0] = 0;
+}
+
+
 void ui_update(float dt)
 {
     if(message_small_duration > 0.0)
@@ -70,6 +100,7 @@ void ui_draw()
 {
     ui_message_draw_small();
     ui_message_draw_title();
+    ui_message_draw_mouse();
 }
 
 static void ui_message_draw_small()
@@ -151,3 +182,28 @@ static void ui_message_draw_title()
     gfx_draw_string(tx, ty, message_title_color, scale, NO_ROTATION, opacity, NOT_IN_WORLD, DROP_SHADOW, 0, message_title);
 }
 
+static void ui_message_draw_mouse()
+{
+    if(!message_mouse)
+        return;
+
+    if(strlen(message_mouse) == 0)
+        return;
+
+    float scale = 0.09 * ascale;
+
+    Vector2f size = gfx_string_get_size(scale, message_mouse);
+
+    // float pad = 10.0;
+
+    // Rect bg = {0};
+    // bg.w = size.x + pad;
+    // bg.h = size.y + pad;
+    // bg.x = bg.w/2.0 + 1.0;
+    // bg.y = view_height - bg.h/2.0 - 1.0;
+    // gfx_draw_rect(&bg, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.6, true, NOT_IN_WORLD);
+
+    float tx = mouse_world_x+1.0;
+    float ty = mouse_world_y+1.0;
+    gfx_draw_string(tx, ty, message_mouse_color, scale, NO_ROTATION, 0.7, IN_WORLD, DROP_SHADOW, 0, message_mouse);
+}

@@ -411,6 +411,8 @@ void projectile_update_all(float dt)
 
         phys_apply_gravity(&proj->phys, 0.5, _dt);
 
+        // printf("proj->phys.pos.z: %.2f\n", proj->phys.pos.z);
+
         if(proj->phys.amorphous && proj->phys.pos.z <= 0.0)
         {
             projectile_kill(proj);

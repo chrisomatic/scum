@@ -184,6 +184,11 @@ void phys_calc_collision_rect(Physics* phys)
 
     phys->collision_rect.x = phys->pos.x;
     phys->collision_rect.y = phys->pos.y;
+
+    if(phys->crawling)
+    {
+        phys->collision_rect.y -= vrh/2.0;
+    }
 }
 
 void phys_set_collision_pos(Physics* phys, float new_x, float new_y)

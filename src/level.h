@@ -167,7 +167,7 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
 void room_draw_walls(Room* room);
 void level_print(Level* level);
 void level_sort_walls(Wall* walls, int wall_count, Physics* phys);
-void level_handle_room_collision(Room* room, Physics* phys, int entity_type);
+void level_handle_room_collision(Room* room, Physics* phys, int entity_type, void* entity);
 Room* level_get_room(Level* level, int x, int y);
 Room* level_get_room_by_index(Level* level, int index);
 uint8_t level_get_room_index(int x, int y);

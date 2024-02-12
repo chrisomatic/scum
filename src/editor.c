@@ -116,7 +116,7 @@ void editor_draw()
                 imgui_text("Current Zoom: %.2f", camera_get_zoom());
 
                 imgui_text("Mouse (view): %.1f, %.1f", mouse_x, mouse_y);
-                imgui_text("Mouse (world): %.1f, %.1f", mouse_window_x, mouse_window_y);
+                imgui_text("Mouse (world): %.1f, %.1f", mouse_world_x, mouse_world_y);
 
                 Rect cr = get_camera_rect();
                 imgui_text("Camera: %.1f, %.1f, %.1f, %.1f", cr.x, cr.y, cr.w, cr.h);
@@ -190,9 +190,9 @@ void editor_draw()
                     }
                 }
 
-                TileType tt = level_get_tile_type_by_pos(room, mouse_window_x, mouse_window_y);
+                TileType tt = level_get_tile_type_by_pos(room, mouse_world_x, mouse_world_y);
 
-                Vector2i tc = level_get_room_coords_by_pos(mouse_window_x, mouse_window_y);
+                Vector2i tc = level_get_room_coords_by_pos(mouse_world_x, mouse_world_y);
                 imgui_text("Mouse Tile: %d, %d", tc.x, tc.y);
 
                 Vector2f mc = level_get_pos_by_room_coords(tc.x, tc.y);

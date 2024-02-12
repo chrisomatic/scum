@@ -54,7 +54,7 @@ Settings menu_settings = {0};
 
 // mouse
 float mouse_x=0, mouse_y=0;
-float mouse_window_x=0, mouse_window_y=0;
+float mouse_world_x=0, mouse_world_y=0;
 
 // areas
 Rect room_area = {0};
@@ -84,7 +84,8 @@ Vector2f transition_offsets = {0};
 Vector2f transition_targets = {0};
 
 Level level;
-unsigned int level_seed = 0;
+// unsigned int level_seed = 0;
+unsigned int level_seed = 699877851;
 int level_rank = 0;
 int level_transition = 0;
 int level_transition_state = 0;
@@ -814,8 +815,7 @@ void init()
 
     if(role == ROLE_LOCAL)
     {
-        trigger_generate_level(0,5,0,__LINE__);
-        // trigger_generate_level(0, 5, 0);
+        trigger_generate_level(level_seed, level_rank, 0, __LINE__);
     }
 
     // camera_zoom(cam_zoom, true);
@@ -1100,7 +1100,7 @@ void update(float dt)
     // mouse stuff
     // ------------------------------
     window_get_mouse_view_coords(&mouse_x, &mouse_y);
-    window_get_mouse_world_coords(&mouse_window_x, &mouse_window_y);
+    window_get_mouse_world_coords(&mouse_world_x, &mouse_world_y);
 
     if(role == ROLE_LOCAL)
     {
@@ -1544,8 +1544,10 @@ void draw_main_menu()
 
     float total_height = num_opts * (text_size.y+margin);
 
-    float x = (view_width - 200)/2.0;
-    float y = CENTER_Y - total_height / 2.0 + 50;
+    // float x = (view_width - 200)/2.0;
+    float x = CENTER_X - 100.0*ascale;
+    float y = CENTER_Y - total_height/2.0 + 50;
+    float start_y = y;
 
     for(int i = 0; i < num_opts; ++i)
     {
@@ -1558,12 +1560,14 @@ void draw_main_menu()
     char* title = "SCUM";
     float title_scale = 2.5*ascale;
     Vector2f title_size = gfx_string_get_size(title_scale, title);
-    Rect title_r = RECT(margin_top.w/2.0, margin_top.h/2.0, title_size.x, title_size.y);
-    gfx_get_absolute_coords(&title_r, ALIGN_CENTER, &margin_top, ALIGN_TOP_LEFT);
-    gfx_draw_string(title_r.x, title_r.y+150, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, 0, title);
 
-    //gfx_draw_image(d->image, d->sprite_index, d->pos.x, d->pos.y, d->tint, d->scale, d->rotation, d->opacity*op, false, true);
+    Rect title_r = RECT(CENTER_X, start_y - title_size.y*2.0, title_size.x, title_size.y);
 
+    gfx_draw_string(CENTER_X - title_size.x/2.0, start_y - title_size.y - 50.0*ascale, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, 0, title);
+
+    // Rect title_r = RECT(margin_top.w/2.0, margin_top.h/2.0, title_size.x, title_size.y);
+    // gfx_get_absolute_coords(&title_r, ALIGN_CENTER, &margin_top, ALIGN_TOP_LEFT);
+    // gfx_draw_string(title_r.x, title_r.y+150, COLOR_WHITE, title_scale, NO_ROTATION, FULL_OPACITY, NOT_IN_WORLD, DROP_SHADOW, 0, title);
 
     text_list_draw(text_lst);
 }
@@ -1680,11 +1684,29 @@ void draw()
     draw_timed_items();
     draw_skill_selection();
 
+
     if(debug_enabled)
     {
-        Rect mr = RECT(mouse_x, mouse_y, 10, 10);
+        Rect mr = RECT(mouse_x, mouse_y, 10*ascale, 10*ascale);
         gfx_draw_rect(&mr, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
     }
+
+    ui_message_clear_mouse();
+    Rect mrw = RECT(mouse_world_x, mouse_world_y, 5, 5);
+    for(int i = 0; i < clist->count; ++i)
+    {
+        Creature* c = &creatures[i];
+        if(c->curr_room != player->curr_room) continue;
+
+        if(rectangles_colliding(&mrw, &c->phys.collision_rect))
+        {
+            if(debug_enabled) gfx_draw_rect(&mrw, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
+            ui_message_set_mouse(COLOR_RED, "%s (hp: %d)", creature_type_name(c->type), c->phys.hp);
+            break;
+        }
+
+    }
+
 
     draw_bigmap();
     editor_draw();
@@ -1694,7 +1716,6 @@ void draw()
     gfx_draw_lines();
 
     draw_chat_box();
-
 
     if(level_transition_state != 0)
     {

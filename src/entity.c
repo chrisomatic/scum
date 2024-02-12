@@ -251,7 +251,7 @@ void entity_handle_collisions()
         if(e->type == ENTITY_TYPE_EXPLOSION) continue;
 
         Room* room = level_get_room_by_index(&level, entities[i].curr_room);
-        level_handle_room_collision(room,entities[i].phys, e->type);
+        level_handle_room_collision(room,entities[i].phys, e->type, e);
 
         if(e->phys->dead && e->type == ENTITY_TYPE_PROJECTILE)
         {

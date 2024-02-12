@@ -208,6 +208,7 @@ void creature_init_props(Creature* c)
             c->phys.hp_max = 5.0;
             c->painful_touch = false;
             c->windup_max = 0.5;
+            c->phys.crawling = true;
             c->xp = 25;
         } break;
         case CREATURE_TYPE_GEIZER:
@@ -430,8 +431,7 @@ static void add_to_random_wall_tile(Creature* c)
 
     Rect rp = level_get_tile_rect(tile_x, tile_y);
 
-    c->phys.pos.x = rp.x;
-    c->phys.pos.y = rp.y;
+    phys_set_collision_pos(&c->phys, rp.x, rp.y);
     c->phys.pos.z = 0.0;
 
     c->spawn_tile_x = tile_x;
@@ -477,8 +477,7 @@ static void add_to_wall_tile(Creature* c, int tile_x, int tile_y)
 
     Rect rp = level_get_tile_rect(tile_x, tile_y);
 
-    c->phys.pos.x = rp.x;
-    c->phys.pos.y = rp.y;
+    phys_set_collision_pos(&c->phys, rp.x, rp.y);
 
     c->spawn_tile_x = tile_x;
     c->spawn_tile_y = tile_y;
@@ -494,25 +493,6 @@ static void add_to_random_tile(Creature* c, Room* room)
     c->phys.pos.y = tilep.y;
     c->spawn_tile_x = tilec.x;
     c->spawn_tile_y = tilec.y;
-
-    // int tile_x = 0;
-    // int tile_y = 0;
-    // for(;;)
-    // {
-    //     tile_x = (rand() % ROOM_TILE_SIZE_X);
-    //     tile_y = (rand() % ROOM_TILE_SIZE_Y);
-    //     if(level_get_tile_type(room, tile_x, tile_y) == TILE_FLOOR)
-    //     {
-    //         Rect rp = level_get_tile_rect(tile_x, tile_y);
-    //         c->phys.pos.x = rp.x;
-    //         c->phys.pos.y = rp.y;
-    //         // RectXY rxy = {0};
-    //         // rect_to_rectxy(&room_area, &rxy);
-    //         break;
-    //     }
-    // }
-    // c->spawn_tile_x = tile_x;
-    // c->spawn_tile_y = tile_y;
 }
 
 static void add_to_tile(Creature* c, int tile_x, int tile_y)
@@ -553,6 +533,8 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
         c.color = c.base_color;
 
         creature_set_sprite_index(&c, 0);
+
+        phys_calc_collision_rect(&c.phys);
 
         if(c.type == CREATURE_TYPE_CLINGER)
         {

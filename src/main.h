@@ -120,7 +120,7 @@ void decal_update_all(float dt);
 void decal_clear_all();
 
 extern float mouse_x, mouse_y;
-extern float mouse_window_x, mouse_window_y;
+extern float mouse_world_x, mouse_world_y;
 
 extern Rect room_area;
 extern Rect floor_area;
