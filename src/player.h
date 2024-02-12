@@ -39,6 +39,7 @@ typedef enum
     PLAYER_ACTION_SHOOT_RIGHT,
 
     PLAYER_ACTION_ACTIVATE,
+    PLAYER_ACTION_SELECT_SKILL, //show skill selection
 
     PLAYER_ACTION_USE_ITEM,
     PLAYER_ACTION_DROP_ITEM,
@@ -120,7 +121,6 @@ typedef struct
     PlayerActions last_shoot_action;
     float shoot_sprite_cooldown;
 
-
     // Item gauntlet_item;
     uint8_t gauntlet_selection;
     uint8_t gauntlet_slots;
@@ -133,6 +133,7 @@ typedef struct
     uint8_t skill_count;
     uint8_t num_skill_choices;
 
+    bool show_skill_selection;
     uint8_t skill_selection;
     uint8_t num_skill_selection_choices;
     uint16_t skill_choices[MAX_SKILL_CHOICES];

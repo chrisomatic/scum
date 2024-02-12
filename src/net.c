@@ -2408,6 +2408,7 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             BPW(&server.bp, 5, (uint32_t)(p->level));
             BPW(&server.bp, 5, (uint32_t)(p->new_levels));
 
+            BPW(&server.bp, 1, (uint32_t)(p->show_skill_selection ? 1 : 0));
             BPW(&server.bp, 3, (uint32_t)(p->skill_selection));
             BPW(&server.bp, 3, (uint32_t)(p->num_skill_selection_choices));
             for(int j = 0; j < p->num_skill_selection_choices; ++j)
@@ -2496,6 +2497,7 @@ static void unpack_players(Packet* pkt, int* offset)
         uint32_t level               = bitpack_read(&client.bp, 5);
         uint32_t new_levels          = bitpack_read(&client.bp, 5);
 
+        uint32_t show_skill_selection= bitpack_read(&client.bp, 1);
         uint32_t skill_selection     = bitpack_read(&client.bp, 3);
         uint32_t num_skill_choices   = bitpack_read(&client.bp, 3);
 
@@ -2571,6 +2573,8 @@ static void unpack_players(Packet* pkt, int* offset)
         p->xp = (uint16_t)xp;
         p->level = (uint8_t)level;
         p->new_levels = (uint8_t)new_levels;
+
+        p->show_skill_selection = show_skill_selection == 1 ? true : false;
         p->skill_selection = (uint8_t)skill_selection;
         p->num_skill_selection_choices = (uint8_t)num_skill_choices;
 

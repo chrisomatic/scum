@@ -350,6 +350,8 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_ENTER);
     window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_E);
 
+    window_controls_add_key(&player->actions[PLAYER_ACTION_SELECT_SKILL].state, GLFW_KEY_T);
+
     window_controls_add_key(&player->actions[PLAYER_ACTION_USE_ITEM].state, GLFW_KEY_U);
     window_controls_add_key(&player->actions[PLAYER_ACTION_DROP_ITEM].state, GLFW_KEY_N);
 
@@ -433,7 +435,9 @@ void player_add_xp(Player* p, int xp)
     if(p->new_levels > 0)
     {
         randomize_skill_choices(p);
+        p->show_skill_selection = true;
     }
+
 }
 
 void player_add_hp(Player* p, int hp)
@@ -803,7 +807,7 @@ static void handle_room_collision(Player* p)
         float d = dist(p->phys.collision_rect.x, p->phys.collision_rect.y, door_point.x, door_point.y);
 
         bool colliding_with_door = (d < p->phys.radius);
-        if(colliding_with_door && !room->doors_locked && p->new_levels == 0 && (p->phys.pos.z == 0.0 || p->phys.floating) && !p->phys.dead)
+        if(colliding_with_door && !room->doors_locked && (p->phys.pos.z == 0.0 || p->phys.floating) && !p->phys.dead)
         {
             bool k = false;
             k |= i == DIR_UP && p->actions[PLAYER_ACTION_UP].state;
@@ -1037,6 +1041,7 @@ void player_update(Player* p, float dt)
     bool action_drop = p->actions[PLAYER_ACTION_DROP_ITEM].toggled_on;
     bool tabbed = p->actions[PLAYER_ACTION_TAB_CYCLE].toggled_on;
     bool rshift = p->actions[PLAYER_ACTION_RSHIFT].state;
+    bool show_skill = p->actions[PLAYER_ACTION_SELECT_SKILL].toggled_on;
 
     for(int i = 0; i < PLAYER_GAUNTLET_MAX; ++i)
     {
@@ -1051,7 +1056,13 @@ void player_update(Player* p, float dt)
         }
     }
 
-    if(p->new_levels == 0)
+    if(show_skill)
+    {
+        p->show_skill_selection = !p->show_skill_selection;
+        if(p->new_levels == 0) p->show_skill_selection = false;
+    }
+
+    if(!p->show_skill_selection)
     {
 
         Item* highlighted_item = NULL;
@@ -2119,6 +2130,7 @@ void randomize_skill_choices(Player* p)
 void draw_skill_selection()
 {
     if(player->new_levels == 0) return;
+    if(!player->show_skill_selection) return;
 
     float scale = 0.30 * ascale;
     float small_scale = 0.18 * ascale;
