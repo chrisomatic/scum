@@ -84,8 +84,8 @@ Vector2f transition_offsets = {0};
 Vector2f transition_targets = {0};
 
 Level level;
-// unsigned int level_seed = 0;
-unsigned int level_seed = 699877851;
+unsigned int level_seed = 0;
+// unsigned int level_seed = 699877851;
 int level_rank = 0;
 int level_transition = 0;
 int level_transition_state = 0;

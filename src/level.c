@@ -28,6 +28,9 @@ static int room_count_empty    = 0;
 static int room_count_treasure = 0;
 static int room_count_boss     = 0;
 
+static int used_room_list_monster[MAX_ROOM_LIST_COUNT] = {0};
+static int used_room_count_monster = 0;
+
 static bool min_depth_reached = false;
 
 // rand
@@ -126,6 +129,9 @@ static int get_rand_room_index(RoomType type, Dir came_from)
     int* list;
     int index = 0;
 
+    int temp_monster_list[MAX_ROOM_LIST_COUNT] = {0};
+
+
     switch(type)
     {
         case ROOM_TYPE_BOSS:
@@ -139,10 +145,27 @@ static int get_rand_room_index(RoomType type, Dir came_from)
             list = room_list_treasure;
             break;
         case ROOM_TYPE_MONSTER:
-            index = room_list_monster[lrand() % room_count_monster];
-            list_count = room_count_monster;
-            list = room_list_monster;
-            break;
+        {
+            for(int i = 0; i < room_count_monster; ++i)
+            {
+                bool add = true;
+                for(int j = 0; j < used_room_count_monster; ++j)
+                {
+                    if(room_list_monster[i] == used_room_list_monster[j])
+                    {
+                        add = false;
+                        break;
+                    }
+                }
+                if(add)
+                {
+                    temp_monster_list[list_count++] = room_list_monster[i];
+                }
+
+            }
+            index = temp_monster_list[lrand() % list_count];
+            list = temp_monster_list;
+        } break;
         case ROOM_TYPE_EMPTY:
             index = room_list_empty[lrand() % room_count_empty];
             list_count = room_count_empty;
@@ -255,13 +278,14 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
     }
 
     bool is_monster_room = (lrand() % 100 < MONSTER_ROOM_PERCENTAGE);
+    is_monster_room &= (used_room_count_monster < room_count_monster);
 
     if(is_monster_room)
     {
         room->type = ROOM_TYPE_MONSTER;
         room->layout = get_rand_room_index(ROOM_TYPE_MONSTER, came_from);
         room->color = COLOR(200,100,100);
-
+        used_room_list_monster[used_room_count_monster++] = room->layout;
 
         // add monsters
         if(role != ROLE_CLIENT)
@@ -1178,6 +1202,8 @@ Level level_generate(unsigned int seed, int rank)
     // start in center of grid
     level.start.x = floor(MAX_ROOMS_GRID_X/2);
     level.start.y = floor(MAX_ROOMS_GRID_Y/2);
+
+    used_room_count_monster = 0;
 
     // fill out helpful room information
     room_count_monster = 0;
