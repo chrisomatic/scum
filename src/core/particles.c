@@ -144,7 +144,7 @@ void particles_show_spawner(int id, bool show)
 
 void particles_init()
 {
-    spawner_list = list_create(spawners,MAX_PARTICLE_SPAWNERS,sizeof(ParticleSpawner));
+    spawner_list = list_create(spawners,MAX_PARTICLE_SPAWNERS,sizeof(ParticleSpawner), false);
     particles_image = gfx_load_image("src/img/particles.png", false, true, 32, 32);
 }
 
@@ -166,7 +166,7 @@ ParticleSpawner* particles_spawn_effect(float x, float y, int z, ParticleEffect*
 
     memset(spawner,0,sizeof(ParticleSpawner));
 
-    spawner->particle_list = list_create(spawner->particles,MAX_PARTICLES_PER_SPAWNER,sizeof(Particle));
+    spawner->particle_list = list_create(spawner->particles,MAX_PARTICLES_PER_SPAWNER,sizeof(Particle), false);
 
     if(effect)
     {

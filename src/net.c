@@ -22,6 +22,7 @@
 #include "projectile.h"
 #include "explosion.h"
 #include "settings.h"
+#include "glist.h"
 
 #define COOL_SERVER_PLAYER_LOGIC 1
 
@@ -44,6 +45,7 @@
 #define PING_PERIOD 3.0f
 #define DISCONNECTION_TIMEOUT 7.0f // seconds
 #define INPUT_QUEUE_MAX 16
+#define RTT_HISTORY_MAX 32
 #define MAX_NET_EVENTS 255
 
 typedef struct
@@ -71,6 +73,12 @@ typedef struct
     int input_count;
 } ClientInfo;
 
+typedef struct
+{
+    uint16_t id;
+    double time;
+} PacketTimestamp;
+
 struct
 {
     Address address;
@@ -97,6 +105,10 @@ struct
     double time_of_latest_sent_packet;
     double time_of_last_ping;
     double time_of_last_received_ping;
+
+    glist* rtt_history_list;
+    PacketTimestamp rtt_history[RTT_HISTORY_MAX];
+
     double rtt;
 
     uint32_t bytes_received;
@@ -1493,6 +1505,8 @@ bool net_client_init()
     client.info.socket = sock;
     circbuf_create(&client.input_packets,10, sizeof(Packet));
 
+    client.rtt_history_list = list_create(client.rtt_history, RTT_HISTORY_MAX,sizeof(PacketTimestamp), true);
+
     bitpack_create(&client.bp, BITPACK_SIZE);
 
     return true;
@@ -1526,6 +1540,13 @@ static void client_send(PacketType type)
     };
 
     memset(pkt.data, 0, MAX_PACKET_DATA_SIZE);
+
+    PacketTimestamp pts = {
+        .id = pkt.hdr.id,
+        .time = timer_get_time()
+    };
+
+    list_add(client.rtt_history_list, &pts);
 
     LOGNV("%s() : %s", __func__, packet_type_to_str(type));
 
@@ -1805,10 +1826,28 @@ void net_client_update()
 
         int recv_bytes = net_client_recv(&srvpkt);
 
-        bool is_latest = is_packet_id_greater(srvpkt.hdr.id, client.info.remote_latest_packet_id);
-
-        if(recv_bytes > 0 && is_latest)
+        if(recv_bytes > 0)
         {
+            for(int i = 0; i < client.rtt_history_list->count; ++i)
+            {
+                PacketTimestamp* pts = (PacketTimestamp*)list_get(client.rtt_history_list, i);
+
+                if(pts->id == srvpkt.hdr.ack)
+                {
+                    double rtt = timer_get_time() - pts->time;
+
+                    if(client.rtt == 0.0)
+                        client.rtt = rtt;
+                    else
+                        client.rtt += 0.10*(rtt - client.rtt); // exponential smoothing
+
+                    printf("rtt: %f\n", rtt);
+
+                    list_remove(client.rtt_history_list, i);
+                    break;
+                }
+            }
+
             switch(srvpkt.hdr.type)
             {
                 case PACKET_TYPE_INIT:
@@ -1821,6 +1860,11 @@ void net_client_update()
                 } break;
                 case PACKET_TYPE_STATE:
                 {
+                    bool is_latest = is_packet_id_greater(srvpkt.hdr.id, client.info.remote_latest_packet_id);
+
+                    if(!is_latest)
+                        break;
+
                     //print_packet(&srvpkt, true);
 
                     bitpack_clear(&client.bp);
@@ -1845,7 +1889,7 @@ void net_client_update()
                 case PACKET_TYPE_PING:
                 {
                     client.time_of_last_received_ping = timer_get_time();
-                    client.rtt = 1000.0f*(client.time_of_last_received_ping - client.time_of_last_ping);
+                    //client.rtt = 1000.0f*(client.time_of_last_received_ping - client.time_of_last_ping);
                 } break;
 
                 case PACKET_TYPE_MESSAGE:
@@ -1940,7 +1984,7 @@ bool net_client_is_connected()
 
 double net_client_get_rtt()
 {
-    return client.rtt;
+    return (1000.0*client.rtt);
 }
 
 uint32_t net_client_get_sent_bytes()

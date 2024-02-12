@@ -54,7 +54,7 @@ static uint16_t get_id()
 
 void creature_init()
 {
-    clist = list_create((void*)creatures, MAX_CREATURES, sizeof(Creature));
+    clist = list_create((void*)creatures, MAX_CREATURES, sizeof(Creature), false);
 
     creature_image_slug = gfx_load_image("src/img/creature_slug.png", false, false, 17, 17);
     creature_image_clinger = gfx_load_image("src/img/creature_clinger.png", false, false, 32, 32);

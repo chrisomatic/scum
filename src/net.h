@@ -3,7 +3,7 @@
 #include "socket.h"
 #include "math2d.h"
 
-#define TICK_RATE 20.0f
+#define TICK_RATE 30.0f
 #define LOCAL_SERVER_IP "127.0.0.1"
 #define ONLINE_SERVER_IP "66.228.36.123"
 #define BITPACK_SIZE 32768

@@ -292,7 +292,7 @@ void item_init()
     if(item_list)
         return;
 
-    item_list = list_create((void*)items, MAX_ITEMS, sizeof(Item));
+    item_list = list_create((void*)items, MAX_ITEMS, sizeof(Item), false);
 
     items_image = gfx_load_image("src/img/items.png", false, false, 16, 16);
     chest_image = gfx_load_image("src/img/chest.png", false, false, 32, 32);

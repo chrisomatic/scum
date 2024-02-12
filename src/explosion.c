@@ -18,7 +18,7 @@ void explosion_init()
     if(explosion_list)
         return;
 
-    explosion_list = list_create((void*)explosions, MAX_EXPLOSIONS, sizeof(Explosion));
+    explosion_list = list_create((void*)explosions, MAX_EXPLOSIONS, sizeof(Explosion), false);
 }
 
 void explosion_add(float x, float y, float max_radius, float rate, uint8_t curr_room, bool from_player)

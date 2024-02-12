@@ -1806,7 +1806,7 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
 
 void decal_init()
 {
-    decal_list = list_create((void*)decals, MAX_DECALS, sizeof(Decal));
+    decal_list = list_create((void*)decals, MAX_DECALS, sizeof(Decal), false);
 }
 
 void decal_add(Decal d)

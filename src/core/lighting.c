@@ -12,7 +12,7 @@ uint32_t ambient_light = 0x00909090;
 
 void lighting_init()
 {
-    lighting_list = list_create((void*)point_lights,MAX_POINT_LIGHTS,sizeof(PointLight));
+    lighting_list = list_create((void*)point_lights,MAX_POINT_LIGHTS,sizeof(PointLight), false);
     if(lighting_list == NULL)
     {
         LOGE("point light list failed to create");

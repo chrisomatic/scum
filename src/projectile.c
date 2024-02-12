@@ -181,7 +181,7 @@ static void projectile_remove(int index)
 
 void projectile_init()
 {
-    plist = list_create((void*)projectiles, MAX_PROJECTILES, sizeof(Projectile));
+    plist = list_create((void*)projectiles, MAX_PROJECTILES, sizeof(Projectile), false);
     projectile_image = gfx_load_image("src/img/projectiles.png", false, false, 16, 16);
 }
 
