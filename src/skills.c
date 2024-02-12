@@ -458,7 +458,7 @@ static void skills_multishot(void* skill, void* player, float dt)
     else if(s->rank == 2)
         n = 2;
     else if(s->rank == 3)
-        n = 4;
+        n = 3;
 
     p->proj_spawn.num += n;
     p->proj_spawn.num = MIN(10, p->proj_spawn.num);

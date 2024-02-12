@@ -2967,6 +2967,7 @@ static void pack_decals(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 10, (uint32_t)d->pos.x);
         BPW(&server.bp, 10, (uint32_t)d->pos.y);
         BPW(&server.bp, 7, (uint32_t)d->room);
+        BPW(&server.bp, 2, (uint32_t)d->fade_pattern);
     }
 }
 
@@ -2989,6 +2990,7 @@ static void unpack_decals(Packet* pkt, int* offset)
         d.pos.x        = (float)bitpack_read(&client.bp,10);
         d.pos.y        = (float)bitpack_read(&client.bp,10);
         d.room         = (uint8_t)bitpack_read(&client.bp,7);
+        d.fade_pattern = (uint8_t)bitpack_read(&client.bp,2);
 
         decal_add(d);
     }

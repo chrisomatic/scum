@@ -1350,7 +1350,13 @@ void draw_map(DrawLevelParams* params)
                 {
                     // printf("room->index: %u\n", room->index);
                     // printf("player->curr_room: %u\n", player->curr_room);
-                    player_send_to_room(player, room->index, true, level_get_door_tile_coords(DIR_NONE));
+                    for(int d = 0; d < MAX_DOORS; ++d)
+                    {
+                        if(!room->doors[d]) continue;
+                        player_send_to_room(player, room->index, true, level_get_door_tile_coords(d));
+                        break;
+                    }
+
 
                 }
             }
@@ -1805,6 +1811,7 @@ void decal_init()
 
 void decal_add(Decal d)
 {
+    d.ttl_start = d.ttl;
     list_add(decal_list, (void*)&d);
 }
 
@@ -1825,9 +1832,21 @@ void decal_draw_all()
         // printf("%.1f\n", d->rotation);
         // printf("%.1f\n", d->opacity);
         float op = 1.0;
-        if(d->ttl <= 1.0)
+
+        if(d->fade_pattern == 0)
         {
-            op = MAX(0.0, d->ttl);
+            if(d->ttl <= 1.0)
+            {
+                op = MAX(0.0, d->ttl);
+            }
+        }
+        else if(d->fade_pattern == 1)
+        {
+            float dt = d->ttl_start - d->ttl;
+            if(dt <= 1.0)
+            {
+                op = dt;
+            }
         }
         gfx_draw_image(d->image, d->sprite_index, d->pos.x, d->pos.y, d->tint, d->scale, d->rotation, d->opacity*op, false, true);
     }

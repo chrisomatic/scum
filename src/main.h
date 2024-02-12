@@ -92,6 +92,10 @@ typedef struct
     float opacity_border;
 } DrawLevelParams;
 
+// fade_pattern
+//   0: fade out
+//   1: fade in
+//   2: no fade
 typedef struct
 {
     int image;
@@ -100,7 +104,9 @@ typedef struct
     float scale;
     float rotation;
     float opacity;
+    uint8_t fade_pattern;
     float ttl;
+    float ttl_start;
     Vector2f pos;
     uint8_t room;
 } Decal;

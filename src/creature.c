@@ -486,28 +486,33 @@ static void add_to_wall_tile(Creature* c, int tile_x, int tile_y)
 
 static void add_to_random_tile(Creature* c, Room* room)
 {
-    int tile_x = 0;
-    int tile_y = 0;
+    Vector2i tilec = {0};
+    Vector2f tilep = {0};
+    level_get_rand_floor_tile(room, &tilec, &tilep);
 
-    for(;;)
-    {
-        tile_x = (rand() % ROOM_TILE_SIZE_X);
-        tile_y = (rand() % ROOM_TILE_SIZE_Y);
+    c->phys.pos.x = tilep.x;
+    c->phys.pos.y = tilep.y;
+    c->spawn_tile_x = tilec.x;
+    c->spawn_tile_y = tilec.y;
 
-        if(level_get_tile_type(room, tile_x, tile_y) == TILE_FLOOR)
-        {
-            Rect rp = level_get_tile_rect(tile_x, tile_y);
-            c->phys.pos.x = rp.x;
-            c->phys.pos.y = rp.y;
-
-            RectXY rxy = {0};
-            rect_to_rectxy(&room_area, &rxy);
-            break;
-        }
-    }
-
-    c->spawn_tile_x = tile_x;
-    c->spawn_tile_y = tile_y;
+    // int tile_x = 0;
+    // int tile_y = 0;
+    // for(;;)
+    // {
+    //     tile_x = (rand() % ROOM_TILE_SIZE_X);
+    //     tile_y = (rand() % ROOM_TILE_SIZE_Y);
+    //     if(level_get_tile_type(room, tile_x, tile_y) == TILE_FLOOR)
+    //     {
+    //         Rect rp = level_get_tile_rect(tile_x, tile_y);
+    //         c->phys.pos.x = rp.x;
+    //         c->phys.pos.y = rp.y;
+    //         // RectXY rxy = {0};
+    //         // rect_to_rectxy(&room_area, &rxy);
+    //         break;
+    //     }
+    // }
+    // c->spawn_tile_x = tile_x;
+    // c->spawn_tile_y = tile_y;
 }
 
 static void add_to_tile(Creature* c, int tile_x, int tile_y)
@@ -808,7 +813,8 @@ void creature_die(Creature* c)
 
     Decal d = {0};
     d.image = particles_image;
-    creature_set_sprite_index(c, 0);
+    d.sprite_index = 0;
+    // creature_set_sprite_index(c, 0);
     d.tint = COLOR_RED;
     d.scale = 1.0;
     d.rotation = rand() % 360;
@@ -910,7 +916,7 @@ bool creature_is_on_tile(Room* room, int tile_x, int tile_y)
     return false;
 }
 
-static Player* get_nearest_player(float x, float y)
+static Player* get_nearest_player(uint8_t room_index, float x, float y)
 {
     float min_dist = 100000.0;
     int min_index = 0;
@@ -921,6 +927,7 @@ static Player* get_nearest_player(float x, float y)
         Player* p = &players[i];
         if(!p->active) continue;
         if(p->phys.dead) continue;
+        if(p->curr_room != room_index) continue;
 
         float d = dist(x,y, p->phys.pos.x, p->phys.pos.y);
         if(d < min_dist)
@@ -951,7 +958,7 @@ static void creature_update_slug(Creature* c, float dt)
 static void creature_update_spiked_slug(Creature* c, float dt)
 {
 
-    Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+    Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
     Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
     normalize(&v);
 
@@ -985,8 +992,8 @@ static void creature_update_spiked_slug(Creature* c, float dt)
     if(d >= 0.95 && d <= 1.00)
     {
         // in line of sight, charge
-        c->h = dir.x * 10.0*c->phys.speed;
-        c->v = dir.y * 10.0*c->phys.speed;
+        c->h = dir.x * 6.0*c->phys.speed;
+        c->v = dir.y * 6.0*c->phys.speed;
     }
     else
     {
@@ -1017,7 +1024,7 @@ static void creature_update_clinger(Creature* c, float dt)
 {
     bool act = ai_update_action(c, dt);
 
-    Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+    Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
 
     float d = dist(p->phys.pos.x, p->phys.pos.y, c->phys.pos.x, c->phys.pos.y);
     bool horiz = (c->spawn_tile_y == -1 || c->spawn_tile_y == ROOM_TILE_SIZE_Y);
@@ -1194,7 +1201,7 @@ static void creature_update_buzzer(Creature* c, float dt)
             c->ai_counter = 0.0;
 
             // fire shots
-            Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+            Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
             float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y) + RAND_FLOAT(-10.0,10.0);
             creature_fire_projectile(c, angle, PROJ_COLOR);
 
@@ -1263,7 +1270,7 @@ static void creature_update_totem_red(Creature* c, float dt)
                 c->ai_counter = 0.0;
 
                 // fire shots
-                Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+                Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
                 creature_fire_projectile(c, angle, PROJ_COLOR);
 
@@ -1332,7 +1339,7 @@ static void creature_update_totem_blue(Creature* c, float dt)
                 c->ai_counter = 0.0;
 
                 // fire shots
-                Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+                Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
 
                 uint32_t color = 0x003030FF;
@@ -1451,9 +1458,9 @@ static void creature_update_shambler(Creature* c, float dt)
             if(c->ai_state == 1)
             {
                 // fire 5 shots
-                Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+                Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
-                creature_fire_projectile(c, angle, PROJ_COLOR);
+                creature_fire_projectile(c, angle + RAND_FLOAT(-2.0,2.0), PROJ_COLOR);
 
                 c->ai_value++;
                 if(c->ai_value >= 5)
@@ -1478,7 +1485,25 @@ static void creature_update_shambler(Creature* c, float dt)
                 {
                     c->ai_state = 0;
                 }
+            }
+            else if(c->ai_state == 3)
+            {
+                // printf("teleport complete\n");
+                c->ai_state = 0;
 
+                Vector2f pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
+                c->phys.pos.x = pos.x;
+                c->phys.pos.y = pos.y;
+
+                // explode projectiles
+                int num_projectiles = low_health ? 12 : 6;
+                float a = 0.0;
+                float aplus = 360.0 / num_projectiles;
+                for(int i = 0; i < num_projectiles; ++i)
+                {
+                    creature_fire_projectile(c, a, PROJ_COLOR);
+                    a += aplus;
+                }
             }
         }
         return;
@@ -1503,17 +1528,38 @@ static void creature_update_shambler(Creature* c, float dt)
 
             if(choice == 0)
             {
+                // printf("teleport start\n");
                 // teleport
                 Room* room = level_get_room_by_index(&level, c->curr_room);
-                add_to_random_tile(c, room);
+                Vector2i tilec = {0};
+                Vector2f tilep = {0};
+                level_get_rand_floor_tile(room, &tilec, &tilep);
 
-                // explode projectiles
-                int num_projectiles = (rand() % 5) + 5;
-                for(int i = 0; i < num_projectiles; ++i)
-                {
-                    int angle = rand() % 360;
-                    creature_fire_projectile(c, angle, PROJ_COLOR);
-                }
+                float duration = low_health ? 1.0 : 2.0;
+
+                Decal d = {0};
+                d.image = particles_image;
+                d.sprite_index = 42;
+                d.tint = COLOR_PURPLE;
+                d.scale = 1.0;
+                d.rotation = 0.0;
+                d.opacity = 1.0;
+                d.ttl = duration;
+                d.pos.x = tilep.x;
+                d.pos.y = tilep.y;
+                d.room = c->curr_room;
+                d.fade_pattern = 1;
+                decal_add(d);
+
+                c->target_tile.x = tilec.x;
+                c->target_tile.y = tilec.y;
+
+                c->ai_state = 3;
+                c->ai_value = 0;
+                c->ai_counter = 0;
+                c->ai_counter_max = duration;
+
+                ai_random_walk(c);
             }
             else if(choice == 1)
             {
@@ -1522,16 +1568,18 @@ static void creature_update_shambler(Creature* c, float dt)
                 c->ai_counter = 0;
                 c->ai_counter_max = 0.2;
             }
-            else if(choice == 2)
+            else if(choice == 3)    //insane-mode
             {
                 c->ai_state = 2;
                 c->ai_value = 0;
                 c->ai_counter = 0;
                 c->ai_counter_max = 0.1;
             }
+
         }
         else
         {
+            // printf("random walk\n");
             ai_random_walk(c);
         }
 
@@ -1540,7 +1588,7 @@ static void creature_update_shambler(Creature* c, float dt)
 
 static void creature_update_infected(Creature* c, float dt)
 {
-    Player* p = get_nearest_player(c->phys.pos.x, c->phys.pos.y);
+    Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
 
     Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
     normalize(&v);
