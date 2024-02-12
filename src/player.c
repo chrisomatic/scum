@@ -1059,8 +1059,8 @@ void player_update(Player* p, float dt)
     if(show_skill)
     {
         p->show_skill_selection = !p->show_skill_selection;
-        if(p->new_levels == 0) p->show_skill_selection = false;
     }
+    if(p->new_levels == 0) p->show_skill_selection = false;
 
     if(!p->show_skill_selection)
     {
@@ -1227,6 +1227,10 @@ void player_update(Player* p, float dt)
             if(p->new_levels > 0)
             {
                 randomize_skill_choices(p);
+            }
+            else
+            {
+                p->show_skill_selection = false;
             }
         }
     }
