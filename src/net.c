@@ -25,6 +25,7 @@
 #include "glist.h"
 
 #define COOL_SERVER_PLAYER_LOGIC 1
+#define REDUNDANT_INPUTS 1
 
 //#define SERVER_PRINT_SIMPLE 1
 //#define SERVER_PRINT_VERBOSE 1
@@ -45,7 +46,7 @@
 #define PING_PERIOD 3.0f
 #define DISCONNECTION_TIMEOUT 7.0f // seconds
 #define INPUT_QUEUE_MAX 16
-#define RTT_HISTORY_MAX 32
+#define TIMESTAMP_HISTORY_MAX 32
 #define MAX_NET_EVENTS 255
 
 typedef struct
@@ -86,6 +87,8 @@ struct
     ClientInfo clients[MAX_CLIENTS];
     NetEvent events[MAX_NET_EVENTS];
     BitPack bp;
+    glist* timestamp_history_list;
+    PacketTimestamp timestamp_history[TIMESTAMP_HISTORY_MAX*MAX_CLIENTS];
     int event_count;
     int num_clients;
 } server = {0};
@@ -106,8 +109,8 @@ struct
     double time_of_last_ping;
     double time_of_last_received_ping;
 
-    glist* rtt_history_list;
-    PacketTimestamp rtt_history[RTT_HISTORY_MAX];
+    glist* timestamp_history_list;
+    PacketTimestamp timestamp_history[TIMESTAMP_HISTORY_MAX];
 
     double rtt;
 
@@ -351,10 +354,13 @@ static bool has_data_waiting(int socket)
     return has_data;
 }
 
-static int net_send(NodeInfo* node_info, Address* to, Packet* pkt)
+static int net_send(NodeInfo* node_info, Address* to, Packet* pkt, int count)
 {
     int pkt_len = get_packet_size(pkt);
-    int sent_bytes = socket_sendto(node_info->socket, to, (uint8_t*)pkt, pkt_len);
+    int sent_bytes = 0;
+
+    for(int i = 0; i < count; ++i)
+        sent_bytes += socket_sendto(node_info->socket, to, (uint8_t*)pkt, pkt_len);
 
 #if SERVER_PRINT_SIMPLE==1
     print_packet_simple(pkt,"SEND");
@@ -617,7 +623,7 @@ static void server_send(PacketType type, ClientInfo* cli)
         {
             pack_u32(&pkt,level_seed);
             pack_u8(&pkt,(uint8_t)level_rank);
-            net_send(&server.info,&cli->address,&pkt);
+            net_send(&server.info,&cli->address,&pkt, 1);
         } break;
 
         case PACKET_TYPE_CONNECT_CHALLENGE:
@@ -632,14 +638,14 @@ static void server_send(PacketType type, ClientInfo* cli)
             pack_bytes(&pkt, cli->client_salt, 8);
             pack_bytes(&pkt, cli->server_salt, 8);
 
-            net_send(&server.info,&cli->address,&pkt);
+            net_send(&server.info,&cli->address,&pkt, 1);
         } break;
 
         case PACKET_TYPE_CONNECT_ACCEPTED:
         {
             cli->state = CONNECTED;
             pack_u8(&pkt, (uint8_t)cli->client_id);
-            net_send(&server.info,&cli->address,&pkt);
+            net_send(&server.info,&cli->address,&pkt, 1);
 
             server_send_message(TO_ALL, FROM_SERVER, "client added %u", cli->client_id);
         } break;
@@ -647,12 +653,12 @@ static void server_send(PacketType type, ClientInfo* cli)
         case PACKET_TYPE_CONNECT_REJECTED:
         {
             pack_u8(&pkt, (uint8_t)cli->last_reject_reason);
-            net_send(&server.info,&cli->address,&pkt);
+            net_send(&server.info,&cli->address,&pkt, 1);
         } break;
 
         case PACKET_TYPE_PING:
             pkt.data_len = 0;
-            net_send(&server.info,&cli->address,&pkt);
+            net_send(&server.info,&cli->address,&pkt, 1);
             break;
 
         case PACKET_TYPE_SETTINGS:
@@ -681,7 +687,7 @@ static void server_send(PacketType type, ClientInfo* cli)
 
             pkt.data[0] = num_clients;
 
-            net_send(&server.info, &cli->address, &pkt);
+            net_send(&server.info, &cli->address, &pkt, 1);
         } break;
 
         case PACKET_TYPE_STATE:
@@ -709,7 +715,7 @@ static void server_send(PacketType type, ClientInfo* cli)
             if(memcmp(&cli->prior_state_pkt.data, &pkt.data, pkt.data_len) == 0)
                 break;
 
-            net_send(&server.info,&cli->address,&pkt);
+            net_send(&server.info,&cli->address,&pkt, 1);
             memcpy(&cli->prior_state_pkt, &pkt, get_packet_size(&pkt));
 
         } break;
@@ -717,7 +723,7 @@ static void server_send(PacketType type, ClientInfo* cli)
         case PACKET_TYPE_ERROR:
         {
             pack_u8(&pkt, (uint8_t)cli->last_packet_error);
-            net_send(&server.info,&cli->address,&pkt);
+            net_send(&server.info,&cli->address,&pkt, 1);
         } break;
 
         case PACKET_TYPE_DISCONNECT:
@@ -726,7 +732,7 @@ static void server_send(PacketType type, ClientInfo* cli)
             pkt.data_len = 0;
             // redundantly send so packet is guaranteed to get through
             for(int i = 0; i < 3; ++i)
-                net_send(&server.info,&cli->address,&pkt);
+                net_send(&server.info,&cli->address,&pkt, 1);
         } break;
 
         default:
@@ -835,6 +841,8 @@ int net_server_start()
 
     bitpack_create(&server.bp, BITPACK_SIZE);
 
+    server.timestamp_history_list = list_create(server.timestamp_history, TIMESTAMP_HISTORY_MAX*MAX_CLIENTS,sizeof(PacketTimestamp), true);
+
     LOGN("Server Started with tick rate %f.", TICK_RATE);
 
     double t0=timer_get_time();
@@ -940,7 +948,6 @@ int net_server_start()
             }
             else
             {
-
                int client_id = server_get_client(&from, &cli);
                if(client_id == -1) break;
 
@@ -961,13 +968,15 @@ int net_server_start()
                     break;
                 }
 
+#if 0
                 bool is_latest = is_packet_id_greater(recv_pkt.hdr.id, cli->remote_latest_packet_id);
                 if(!is_latest)
                 {
                     LOGN("Not latest packet from client. Ignoring...");
-                    timer_delay_us(1000); // delay 1ms
+                    //timer_delay_us(1000); // delay 1ms
                     break;
                 }
+#endif
 
                 cli->remote_latest_packet_id = recv_pkt.hdr.id;
                 cli->time_of_latest_packet = timer_get_time();
@@ -991,6 +1000,28 @@ int net_server_start()
 
                     case PACKET_TYPE_INPUT:
                     {
+#if REDUNDANT_INPUTS
+                        // check if received input already
+                        bool redundant = false;
+
+                        for(int i = 0; i < server.timestamp_history_list->count; ++i)
+                        {
+                            PacketTimestamp* pts = (PacketTimestamp*)list_get(server.timestamp_history_list, i);
+                            if(pts->id == recv_pkt.hdr.id)
+                            {
+                                redundant = true;
+                                break;
+                            }
+                        }
+
+                        if(redundant)
+                            break;
+
+                        // add to packet timestamp history
+                        PacketTimestamp pts = {.id = recv_pkt.hdr.id, .time = timer_get_time()};
+                        list_add(server.timestamp_history_list, &pts);
+#endif
+
                         uint8_t _input_count = unpack_u8(&recv_pkt, &offset);
                         for(int i = 0; i < _input_count; ++i)
                         {
@@ -1221,7 +1252,7 @@ void server_send_message(uint8_t to, uint8_t from, char* fmt, ...)
             if(cli->state != CONNECTED) continue;
 
             pkt.hdr.ack = cli->remote_latest_packet_id;
-            net_send(&server.info,&cli->address,&pkt);
+            net_send(&server.info,&cli->address,&pkt, 1);
         }
     }
     else
@@ -1232,7 +1263,7 @@ void server_send_message(uint8_t to, uint8_t from, char* fmt, ...)
         if(cli->state != CONNECTED) return;
 
         pkt.hdr.ack = cli->remote_latest_packet_id;
-        net_send(&server.info,&cli->address,&pkt);
+        net_send(&server.info,&cli->address,&pkt, 1);
     }
 }
 
@@ -1505,7 +1536,7 @@ bool net_client_init()
     client.info.socket = sock;
     circbuf_create(&client.input_packets,10, sizeof(Packet));
 
-    client.rtt_history_list = list_create(client.rtt_history, RTT_HISTORY_MAX,sizeof(PacketTimestamp), true);
+    client.timestamp_history_list = list_create(client.timestamp_history, TIMESTAMP_HISTORY_MAX,sizeof(PacketTimestamp), true);
 
     bitpack_create(&client.bp, BITPACK_SIZE);
 
@@ -1541,12 +1572,8 @@ static void client_send(PacketType type)
 
     memset(pkt.data, 0, MAX_PACKET_DATA_SIZE);
 
-    PacketTimestamp pts = {
-        .id = pkt.hdr.id,
-        .time = timer_get_time()
-    };
-
-    list_add(client.rtt_history_list, &pts);
+    PacketTimestamp pts = {.id = pkt.hdr.id, .time = timer_get_time()};
+    list_add(client.timestamp_history_list, &pts);
 
     LOGNV("%s() : %s", __func__, packet_type_to_str(type));
 
@@ -1562,7 +1589,7 @@ static void client_send(PacketType type)
             pack_string(&pkt, player->settings.name, PLAYER_NAME_MAX);
             pkt.data_len = 1024; // pad to 1024
 
-            net_send(&client.info,&server.address,&pkt);
+            net_send(&client.info,&server.address,&pkt, 1);
         } break;
 
         case PACKET_TYPE_CONNECT_CHALLENGE_RESP:
@@ -1572,7 +1599,7 @@ static void client_send(PacketType type)
             pack_bytes(&pkt, (uint8_t*)client.xor_salts, 8);
             pkt.data_len = 1024; // pad to 1024
 
-            net_send(&client.info,&server.address,&pkt);
+            net_send(&client.info,&server.address,&pkt, 1);
         } break;
 
         case PACKET_TYPE_SETTINGS:
@@ -1587,13 +1614,13 @@ static void client_send(PacketType type)
             // LOGN("  sprite index: %u", player->settings.sprite_index);
             // LOGN("  name (%d): %s", strlen(player->settings.name), player->settings.name);
 
-            net_send(&client.info,&server.address,&pkt);
+            net_send(&client.info,&server.address,&pkt, 1);
         } break;
 
         case PACKET_TYPE_PING:
         {
             pack_bytes(&pkt, (uint8_t*)client.xor_salts, 8);
-            net_send(&client.info,&server.address,&pkt);
+            net_send(&client.info,&server.address,&pkt, 1);
         } break;
 
         case PACKET_TYPE_INPUT:
@@ -1606,7 +1633,11 @@ static void client_send(PacketType type)
             }
 
             circbuf_add(&client.input_packets,&pkt);
-            net_send(&client.info,&server.address,&pkt);
+#if REDUNDANT_INPUTS
+            net_send(&client.info,&server.address,&pkt, 3);
+#else
+            net_send(&client.info,&server.address,&pkt, 1);
+#endif
         } break;
 
         case PACKET_TYPE_DISCONNECT:
@@ -1616,7 +1647,7 @@ static void client_send(PacketType type)
             // redundantly send so packet is guaranteed to get through
             for(int i = 0; i < 3; ++i)
             {
-                net_send(&client.info,&server.address,&pkt);
+                net_send(&client.info,&server.address,&pkt, 1);
                 pkt.hdr.id = client.info.local_latest_packet_id;
             }
         } break;
@@ -1828,9 +1859,9 @@ void net_client_update()
 
         if(recv_bytes > 0)
         {
-            for(int i = 0; i < client.rtt_history_list->count; ++i)
+            for(int i = 0; i < client.timestamp_history_list->count; ++i)
             {
-                PacketTimestamp* pts = (PacketTimestamp*)list_get(client.rtt_history_list, i);
+                PacketTimestamp* pts = (PacketTimestamp*)list_get(client.timestamp_history_list, i);
 
                 if(pts->id == srvpkt.hdr.ack)
                 {
@@ -1841,9 +1872,7 @@ void net_client_update()
                     else
                         client.rtt += 0.10*(rtt - client.rtt); // exponential smoothing
 
-                    printf("rtt: %f\n", rtt);
-
-                    list_remove(client.rtt_history_list, i);
+                    list_remove(client.timestamp_history_list, i);
                     break;
                 }
             }
@@ -2062,7 +2091,7 @@ void net_client_send_message(char* fmt, ...)
 
     free(msg);
 
-    net_send(&client.info,&server.address,&pkt);
+    net_send(&client.info,&server.address,&pkt, 1);
 }
 
 
@@ -2076,7 +2105,7 @@ int net_client_send(uint8_t* data, uint32_t len)
     memcpy(pkt.data,data,len);
     pkt.data_len = len;
 
-    int sent_bytes = net_send(&client.info, &server.address, &pkt);
+    int sent_bytes = net_send(&client.info, &server.address, &pkt, 1);
     return sent_bytes;
 }
 
