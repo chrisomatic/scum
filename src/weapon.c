@@ -78,9 +78,10 @@ static void update_weapon_pos(Weapon* w)
         offset.x -= vr->w*w->scale/2.0;
     }
 
+    // for drawing
     w->pos.x = w->phys->pos.x + offset.x;
     w->pos.y = w->phys->pos.y - (w->phys->vr.h + w->phys->pos.z)/2.0 + offset.y;
-    w->pos.z = 0.0;
+    w->pos.z = w->phys->height / 2.0;
 }
 
 void weapon_update(Weapon* w, float dt)

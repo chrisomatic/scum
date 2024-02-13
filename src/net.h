@@ -67,6 +67,7 @@ typedef enum
     PACKET_ERROR_INVALID,
 } PacketError;
 
+// 16 bytes
 PACK(struct PacketHeader
 {
     uint32_t game_id;
@@ -98,7 +99,6 @@ PACK(struct NetPlayerInput
 typedef struct NetPlayerInput NetPlayerInput;
 
 extern char* server_ip_address;
-
 
 //
 // Net Events

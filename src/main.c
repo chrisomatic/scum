@@ -1674,6 +1674,22 @@ void draw()
             if(show_walls) room_draw_walls(room);
             gfx_draw_rect(&tile_pit_rect, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
             gfx_draw_rect(&player_pit_rect, COLOR_ORANGE, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
+            const float text_scale = 0.2;
+            gfx_draw_string(view_width - 50, view_height - 20, COLOR_WHITE, text_scale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "FPS: %.0f", game_timer.frame_fps_avg);
+            if(role == ROLE_CLIENT)
+            {
+                int x0 = room_area.x - room_area.w/2.0;
+                int y0 = room_area.y - room_area.h/2.0;
+
+                double rtt = net_client_get_rtt();
+
+                uint32_t color = COLOR_GREEN;
+                if(rtt > 90)  color = COLOR_YELLOW;
+                if(rtt > 180) color = COLOR_RED;
+
+                gfx_draw_string(view_width - 150, view_height - 20, color, text_scale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "Ping: %.0f ms", rtt);
+
+            }
         }
     }
 

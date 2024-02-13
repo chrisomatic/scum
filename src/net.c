@@ -114,6 +114,9 @@ struct
     glist* timestamp_history_list;
     PacketTimestamp timestamp_history[TIMESTAMP_HISTORY_MAX];
 
+    Packet state_packets[2]; // for jitter compensation
+    int state_packet_count;
+
     double rtt;
 
     uint32_t bytes_received;
@@ -718,6 +721,8 @@ static void server_send(PacketType type, ClientInfo* cli)
                 break;
 
             net_send(&server.info,&cli->address,&pkt, 1);
+
+            // copy state packet to prior state packet
             memcpy(&cli->prior_state_pkt, &pkt, get_packet_size(&pkt));
 
         } break;
@@ -971,7 +976,7 @@ int net_server_start()
                     break;
                 }
 
-#if 0
+#if 1
                 bool is_latest = is_packet_id_greater(recv_pkt.hdr.id, cli->remote_latest_packet_id);
                 if(!is_latest)
                 {
@@ -1024,7 +1029,6 @@ int net_server_start()
                         PacketTimestamp pts = {.id = recv_pkt.hdr.id, .time = timer_get_time()};
                         list_add(cli->timestamp_history_list, &pts);
 #endif
-
                         uint8_t _input_count = unpack_u8(&recv_pkt, &offset);
                         for(int i = 0; i < _input_count; ++i)
                         {
@@ -1851,136 +1855,165 @@ int net_client_data_waiting()
 
 void net_client_update()
 {
-    bool data_waiting = _client_data_waiting(); // non-blocking
-
-    if(data_waiting)
+    for(;;)
     {
+        bool data_waiting = _client_data_waiting(); // non-blocking
+        if(!data_waiting)
+            break;
+
         Packet srvpkt = {0};
-        int offset = 0;
 
         int recv_bytes = net_client_recv(&srvpkt);
 
-        if(recv_bytes > 0)
+        if(recv_bytes == 0)
+            break;
+
+        for(int i = 0; i < client.timestamp_history_list->count; ++i)
         {
-            for(int i = 0; i < client.timestamp_history_list->count; ++i)
+            PacketTimestamp* pts = (PacketTimestamp*)list_get(client.timestamp_history_list, i);
+
+            if(pts->id == srvpkt.hdr.ack)
             {
-                PacketTimestamp* pts = (PacketTimestamp*)list_get(client.timestamp_history_list, i);
+                double rtt = timer_get_time() - pts->time;
 
-                if(pts->id == srvpkt.hdr.ack)
-                {
-                    double rtt = timer_get_time() - pts->time;
+                if(client.rtt == 0.0)
+                    client.rtt = rtt;
+                else
+                    client.rtt += 0.10*(rtt - client.rtt); // exponential smoothing
 
-                    if(client.rtt == 0.0)
-                        client.rtt = rtt;
-                    else
-                        client.rtt += 0.10*(rtt - client.rtt); // exponential smoothing
-
-                    list_remove(client.timestamp_history_list, i);
-                    break;
-                }
-            }
-
-            switch(srvpkt.hdr.type)
-            {
-                case PACKET_TYPE_INIT:
-                {
-                    int seed = unpack_u32(&srvpkt,&offset);
-                    uint8_t rank = unpack_u8(&srvpkt,&offset);
-                    trigger_generate_level(seed,rank,0, __LINE__);
-
-                    client.received_init_packet = true;
-                } break;
-                case PACKET_TYPE_STATE:
-                {
-                    bool is_latest = is_packet_id_greater(srvpkt.hdr.id, client.info.remote_latest_packet_id);
-
-                    if(!is_latest)
-                        break;
-
-                    //print_packet(&srvpkt, true);
-
-                    bitpack_clear(&client.bp);
-                    bitpack_memcpy(&client.bp, &srvpkt.data[offset], srvpkt.data_len);
-                    bitpack_seek_begin(&client.bp);
-                    //bitpack_print(&client.bp);
-
-                    unpack_events(&srvpkt,&offset);
-                    unpack_players(&srvpkt, &offset);
-                    unpack_creatures(&srvpkt, &offset);
-                    unpack_projectiles(&srvpkt, &offset);
-                    unpack_items(&srvpkt,&offset);
-                    unpack_decals(&srvpkt, &offset);
-                    unpack_other(&srvpkt,&offset);
-
-                    int bytes_read = 4*(client.bp.word_index+1);
-                    offset += bytes_read;
-
-                    client.player_count = player_get_active_count();
-                } break;
-
-                case PACKET_TYPE_PING:
-                {
-                    client.time_of_last_received_ping = timer_get_time();
-                    //client.rtt = 1000.0f*(client.time_of_last_received_ping - client.time_of_last_ping);
-                } break;
-
-                case PACKET_TYPE_MESSAGE:
-                {
-                    uint8_t from = unpack_u8(&srvpkt, &offset);
-
-                    char msg[255+1] = {0};
-                    uint8_t msg_len = unpack_string(&srvpkt, msg, 255, &offset);
-
-                    if(from < MAX_PLAYERS)
-                    {
-                        text_list_add(text_lst, players[from].settings.color, 10.0, "%s: %s", players[from].settings.name, msg);
-                    }
-                    else
-                    {
-                        text_list_add(text_lst, COLOR_WHITE, 10.0, "Server: %s", msg);
-                    }
-
-                } break;
-
-                case PACKET_TYPE_SETTINGS:
-                {
-                    uint8_t num_players = unpack_u8(&srvpkt, &offset);
-
-                    for(int i = 0; i < num_players; ++i)
-                    {
-                        uint8_t client_id = unpack_u8(&srvpkt, &offset);
-
-                        //LOGN("  %d: Client ID %d", i, client_id);
-
-                        if(client_id >= MAX_CLIENTS)
-                        {
-                            LOGE("Client ID is too large: %d", client_id);
-                            break;
-                        }
-
-                        Player* p = &players[client_id];
-                        p->settings.class = unpack_u8(&srvpkt, &offset);
-                        p->settings.color = unpack_u32(&srvpkt, &offset);
-                        uint8_t namelen = unpack_string(&srvpkt, p->settings.name, PLAYER_NAME_MAX, &offset);
-
-                        player_set_class(p, p->settings.class);
-
-                        LOGN("Client Received Settings, Client ID: %d", client_id);
-                        LOGN("  class: %u", p->settings.class);
-                        LOGN("  color: 0x%08x", p->settings.color);
-                        LOGN("  name (%u): %s", namelen, p->settings.name);
-
-                    }
-
-                } break;
-
-                case PACKET_TYPE_DISCONNECT:
-                    client.state = DISCONNECTED;
-                    client.id = -1;
-                    break;
+                list_remove(client.timestamp_history_list, i);
+                break;
             }
         }
+
+        int offset = 0;
+
+        switch(srvpkt.hdr.type)
+        {
+            case PACKET_TYPE_INIT:
+            {
+                int seed = unpack_u32(&srvpkt,&offset);
+                uint8_t rank = unpack_u8(&srvpkt,&offset);
+                trigger_generate_level(seed,rank,0, __LINE__);
+
+                client.received_init_packet = true;
+            } break;
+            case PACKET_TYPE_STATE:
+            {
+                bool is_latest = is_packet_id_greater(srvpkt.hdr.id, client.info.remote_latest_packet_id);
+                if(!is_latest)
+                    break;
+
+                // copy received state into small queue
+                if(client.state_packet_count == 0)
+                    memcpy(&client.state_packets[0], &srvpkt, sizeof(Packet));
+                else if(client.state_packet_count == 1)
+                    memcpy(&client.state_packets[1], &srvpkt, sizeof(Packet));
+                else
+                {
+                    memcpy(&client.state_packets[0], &client.state_packets[1], sizeof(Packet)); // move old state to index 0
+                    memcpy(&client.state_packets[1], &srvpkt, sizeof(Packet));
+                }
+
+                if(client.state_packet_count < 2)
+                    client.state_packet_count++;
+
+                //print_packet(&srvpkt, true);
+
+            } break;
+
+            case PACKET_TYPE_PING:
+            {
+                client.time_of_last_received_ping = timer_get_time();
+                //client.rtt = 1000.0f*(client.time_of_last_received_ping - client.time_of_last_ping);
+            } break;
+
+            case PACKET_TYPE_MESSAGE:
+            {
+                uint8_t from = unpack_u8(&srvpkt, &offset);
+
+                char msg[255+1] = {0};
+                uint8_t msg_len = unpack_string(&srvpkt, msg, 255, &offset);
+
+                if(from < MAX_PLAYERS)
+                {
+                    text_list_add(text_lst, players[from].settings.color, 10.0, "%s: %s", players[from].settings.name, msg);
+                }
+                else
+                {
+                    text_list_add(text_lst, COLOR_WHITE, 10.0, "Server: %s", msg);
+                }
+
+            } break;
+
+            case PACKET_TYPE_SETTINGS:
+            {
+                uint8_t num_players = unpack_u8(&srvpkt, &offset);
+
+                for(int i = 0; i < num_players; ++i)
+                {
+                    uint8_t client_id = unpack_u8(&srvpkt, &offset);
+
+                    //LOGN("  %d: Client ID %d", i, client_id);
+
+                    if(client_id >= MAX_CLIENTS)
+                    {
+                        LOGE("Client ID is too large: %d", client_id);
+                        break;
+                    }
+
+                    Player* p = &players[client_id];
+                    p->settings.class = unpack_u8(&srvpkt, &offset);
+                    p->settings.color = unpack_u32(&srvpkt, &offset);
+                    uint8_t namelen = unpack_string(&srvpkt, p->settings.name, PLAYER_NAME_MAX, &offset);
+
+                    player_set_class(p, p->settings.class);
+
+                    LOGN("Client Received Settings, Client ID: %d", client_id);
+                    LOGN("  class: %u", p->settings.class);
+                    LOGN("  color: 0x%08x", p->settings.color);
+                    LOGN("  name (%u): %s", namelen, p->settings.name);
+
+                }
+
+            } break;
+
+            case PACKET_TYPE_DISCONNECT:
+                client.state = DISCONNECTED;
+                client.id = -1;
+                break;
+        }
     }
+
+    // apply state to client
+    if(client.state_packet_count > 0)
+    {
+        int offset = 0;
+
+        Packet* pkt = &client.state_packets[client.state_packet_count-1];
+
+        // apply state to client
+        bitpack_clear(&client.bp);
+        bitpack_memcpy(&client.bp, &pkt->data[offset], pkt->data_len);
+        bitpack_seek_begin(&client.bp);
+        //bitpack_print(&client.bp);
+
+        unpack_events(pkt,&offset);
+        unpack_players(pkt, &offset);
+        unpack_creatures(pkt, &offset);
+        unpack_projectiles(pkt, &offset);
+        unpack_items(pkt, &offset);
+        unpack_decals(pkt, &offset);
+        unpack_other(pkt, &offset);
+
+        int bytes_read = 4*(client.bp.word_index+1);
+        offset += bytes_read;
+
+        client.player_count = player_get_active_count();
+
+        client.state_packet_count--;
+    }
+
 
     // handle pinging server
     double time_elapsed = timer_get_time() - client.time_of_last_ping;
@@ -3088,7 +3121,16 @@ static void unpack_other(Packet* pkt, int* offset)
 {
     Room* room = level_get_room_by_index(&level, (int)player->curr_room);
 
-    room->doors_locked = bitpack_read(&client.bp, 1) == 0x01 ? true : false;
+    if(!room)
+    {
+        LOGW("room is null!");
+        bitpack_read(&client.bp, 1);
+    }
+    else
+    {
+        room->doors_locked = bitpack_read(&client.bp, 1) == 0x01 ? true : false;
+    }
+
     paused = bitpack_read(&client.bp, 1) == 0x01 ? true : false;
 }
 

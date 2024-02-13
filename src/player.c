@@ -2462,10 +2462,10 @@ void player_handle_collision(Player* p, Entity* e)
                 Box weap_box = {
                     p->weapon.pos.x,
                     p->weapon.pos.y,
-                    p->weapon.pos.z,
+                    p->weapon.pos.z + 32,
                     w,
                     h,
-                    32,
+                    64,
                 };
                 
                 Box check = {

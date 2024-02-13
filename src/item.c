@@ -554,6 +554,10 @@ void item_add(ItemType type, float x, float y, uint8_t curr_room)
         pu.phys.vel.z = 200.0;
     }
 
+    pu.phys.width  = 1.6f*pu.phys.radius;
+    pu.phys.length = 1.6f*pu.phys.radius;
+    pu.phys.height = 1.6f*pu.phys.radius;
+
     list_add(item_list,&pu);
 }
 
