@@ -2,7 +2,9 @@
 bin/
 output/
 win/build/
+win/build/*
 win/bin/
 win/.vs/
+win/*.zip
 *.settings
 release/

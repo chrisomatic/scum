@@ -113,7 +113,7 @@ bool list_remove_by_item(glist* list, void* item)
         int index = -1;
         for(int i = 0; i < list->count; ++i)
         {
-            if(list->buf+(i*list->item_size) == item)
+            if(p+(i*list->item_size) == item)
             {
                 return list_remove(list, i);
             }
