@@ -56,7 +56,7 @@ static inline bool flip_coin()
 
 static void branch_room(Level* level, int x, int y, int depth)
 {
-    //printf("branching room!\n");
+    printf("%s\n", __func__);
 
     Room* room = &level->rooms[x][y];
     RoomFileData* rfd = &room_list[room->layout];
@@ -131,7 +131,6 @@ static int get_rand_room_index(RoomType type, Dir came_from)
 
     int temp_monster_list[MAX_ROOM_LIST_COUNT] = {0};
 
-
     switch(type)
     {
         case ROOM_TYPE_BOSS:
@@ -200,6 +199,8 @@ static int get_rand_room_index(RoomType type, Dir came_from)
 
 static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
 {
+    // printf("%s\n", __func__);
+
     Room* room = &level->rooms[x][y];
 
     if(room->valid)
@@ -325,6 +326,8 @@ exit_conditions: ;
         }
 
     }
+
+    // printf("  %s\n", get_room_type_name(room->type));
 
     if(level->num_rooms >= MAX_ROOMS)
         return;
@@ -1184,20 +1187,38 @@ void room_draw_walls(Room* room)
     }
 }
 
+#define GENERATE_ROOMS_TEST 0
+#define TEST_COUNT          1000
+#define START_SEED          0
+
 Level level_generate(unsigned int seed, int rank)
 {
+    // printf("%s\n", __func__);
     Level level = {0};
+
+#if GENERATE_ROOMS_TEST
+    seed = START_SEED-1;
+    for(int t = 0; t < TEST_COUNT; ++t)
+    {
+        memset(&level, 0, sizeof(Level));
+        seed += 1;
+#endif
+
     // seed PRNG
     slrand(seed);
 
     if(rank != 5)
     {
+#if !GENERATE_ROOMS_TEST
         LOGW("Overriding rank!");
+#endif
         rank = 5;
         level_rank = rank;
     }
 
+#if !GENERATE_ROOMS_TEST
     LOGI("Generating level, seed: %u, rank: %d", seed, rank);
+#endif
 
     // start in center of grid
     level.start.x = floor(MAX_ROOMS_GRID_X/2);
@@ -1228,11 +1249,13 @@ Level level_generate(unsigned int seed, int rank)
         }
     }
 
+#if !GENERATE_ROOMS_TEST
     printf("Total Rooms: %d\n", room_list_count);
     printf("   # monster rooms: %d\n",room_count_monster);
     printf("   # empty rooms: %d\n",room_count_empty);
     printf("   # treasure rooms: %d\n",room_count_treasure);
     printf("   # boss rooms: %d\n",room_count_boss);
+#endif
 
     item_clear_all();
     creature_clear_all();
@@ -1251,6 +1274,18 @@ Level level_generate(unsigned int seed, int rank)
             level.rooms[x][y].xp = 0;
         }
     }
+
+    if(!level.has_treasure_room || !level.has_boss_room)
+    {
+        LOGE("Level Generation Error (seed: %u, rank: %d)", seed, rank);
+        if(!level.has_treasure_room) LOGE("No treasure room");
+        if(!level.has_boss_room) LOGE("No boss room");
+    }
+
+#if GENERATE_ROOMS_TEST
+    }
+#endif
+
 
     generate_walls(&level);
     level_print(&level);

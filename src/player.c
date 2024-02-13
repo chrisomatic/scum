@@ -1120,12 +1120,12 @@ void player_update(Player* p, float dt)
                 }
                 else
                 {
-                    LOGI("Using item type: %d", type);
 
                     if(type == ITEM_NEW_LEVEL)
                     {
                         if(level_grace_time <= 0.0)
                         {
+                            LOGI("Using item type: %d (%s)", type, item_get_name(type));
                             item_remove(pu);
                             trigger_generate_level(rand(), level_rank+1, 2, __LINE__);
 
@@ -1141,6 +1141,7 @@ void player_update(Player* p, float dt)
                     }
                     else
                     {
+                        LOGI("Using item type: %d", type);
                         if(item_props[type].func) item_props[type].func(pu, p);
                     }
 

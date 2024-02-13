@@ -131,6 +131,7 @@ typedef struct
 typedef struct
 {
     Room rooms[MAX_ROOMS_GRID_X][MAX_ROOMS_GRID_Y];
+    // Room* rooms_ptr[MAX_ROOMS_GRID]; //TODO
     int num_rooms;
     bool has_boss_room;
     bool has_treasure_room;
@@ -147,10 +148,7 @@ extern float level_grace_time;
 void level_init();
 void level_update(float dt);
 void level_load_rooms();
-
-// void level_generate(Level* level, unsigned int seed, int rank);
 Level level_generate(unsigned int seed, int rank);
-
 uint8_t level_get_tile_sprite(TileType tt);
 Rect level_get_tile_rect(int x, int y);
 Rect level_get_rect_by_pos(float x, float y);

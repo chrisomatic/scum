@@ -167,8 +167,8 @@ void print_creature_dimensions(Creature* c)
     if(!_prnt[c->type])
     {
         _prnt[c->type] = true;
-        printf("[%s Phys Dimensions]\n", creature_type_name(c->type));
-        phys_print_dimensions(&c->phys);
+        // printf("[%s Phys Dimensions]\n", creature_type_name(c->type));
+        // phys_print_dimensions(&c->phys);
     }
 }
 
