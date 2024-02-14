@@ -84,8 +84,8 @@ Vector2f transition_offsets = {0};
 Vector2f transition_targets = {0};
 
 Level level;
-unsigned int level_seed = 3;
-// unsigned int level_seed = 699877851;
+// unsigned int level_seed = 95;
+unsigned int level_seed = 0;
 int level_rank = 0;
 int level_transition = 0;
 int level_transition_state = 0;
@@ -138,7 +138,7 @@ void draw();
 void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods);
 void start_server();
 
-void kam_test();
+// void kam_test();
 
 // =========================
 // Main Loop
@@ -147,7 +147,7 @@ void kam_test();
 int main(int argc, char* argv[])
 {
 
-    kam_test();
+    // kam_test();
 
     init_timer();
     log_init(0);
@@ -1974,6 +1974,9 @@ char* string_split_index_copy(char* str, const char* delim, int index, bool spli
     return ret;
 }
 
+
+#if 0
+
 #define _MIN_ROOMS        7
 #define _MAX_ROOMS_GRID_X 7
 #define _MAX_ROOMS_GRID_Y 7
@@ -2311,10 +2314,10 @@ void _generate_level(int _seed)
 
 void kam_test()
 {
-    // return;
+    return;
     _generate_level(10000000);
 
     exit(1);
 }
 
-
+#endif

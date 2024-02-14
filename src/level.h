@@ -120,23 +120,34 @@ typedef struct
     bool doors[MAX_DOORS];
     bool doors_locked;
     uint32_t color;
+
     Wall walls[MAX_WALLS_PER_ROOM];
     int wall_count;
     int layout; // rfd room_list index
-    uint8_t index;
+
     bool discovered;
     int xp;
+
+    uint8_t index;
+    Vector2i grid;
 } Room;
 
 typedef struct
 {
     Room rooms[MAX_ROOMS_GRID_X][MAX_ROOMS_GRID_Y];
-    // Room* rooms_ptr[MAX_ROOMS_GRID]; //TODO
+    Room* rooms_ptr[MAX_ROOMS_GRID];
     int num_rooms;
     bool has_boss_room;
     bool has_treasure_room;
     Vector2i start;
 } Level;
+
+typedef struct
+{
+    Room* rooms[MAX_ROOMS_GRID];
+    Dir directions[MAX_ROOMS_GRID];
+    int length;
+} LevelPath;
 
 extern int dungeon_image;
 extern int dungeon_set_image1;
@@ -179,6 +190,7 @@ bool level_is_room_discovered_index(Level* level, int index);
 
 float dir_to_angle_deg(Dir dir);
 Dir angle_to_dir_cardinal(float angle_deg);
+Dir get_opposite_dir(Dir dir);
 Vector2i get_dir_offsets(Dir door);
 void level_generate_room_outer_walls(Room* room);
 void generate_walls(Level* level);
