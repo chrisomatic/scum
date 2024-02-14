@@ -193,6 +193,9 @@ void projectile_clear_all()
 void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player)
 {
 
+    if(role == ROLE_CLIENT)
+        return;
+
     Projectile proj = {0};
 
     proj.def = *def;
@@ -273,6 +276,9 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, Projec
 
 void projectile_kill(Projectile* proj)
 {
+    if(role == ROLE_CLIENT)
+        return;
+
     proj->phys.dead = true;
 
     const float scale_particle_thresh = 0.2;

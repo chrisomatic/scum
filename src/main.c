@@ -1148,8 +1148,6 @@ void update(float dt)
         return;
     }
 
-    player_handle_net_inputs(player, dt);
-
     if(!paused)
     {
         lighting_point_light_clear_all();
@@ -1167,6 +1165,9 @@ void update(float dt)
         entity_handle_status_effects(dt);
 
         update_level_transition(dt);
+
+        player_handle_net_inputs(player, dt);
+
     }
     else
     {

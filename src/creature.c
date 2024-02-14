@@ -816,6 +816,9 @@ void creature_hurt(Creature* c, float damage)
     if(c->invincible)
         return;
 
+    if(role == ROLE_CLIENT)
+        return;
+
     float hp = (float)c->phys.hp;
 
     // printf("damage: %.2f, hp: %.2f -> ", damage, hp);

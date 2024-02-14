@@ -98,7 +98,18 @@ PACK(struct NetPlayerInput
 
 typedef struct NetPlayerInput NetPlayerInput;
 
-extern char* server_ip_address;
+
+typedef struct
+{
+    Vector3f pos;
+} ClientState;
+
+typedef struct
+{
+    uint16_t       id;
+    NetPlayerInput input;
+    ClientState    state;
+} ClientMove;
 
 //
 // Net Events
@@ -145,7 +156,6 @@ typedef struct
 
 extern char* server_ip_address;
 
-
 // Server
 int net_server_start();
 bool net_server_add_event(NetEvent* event);
@@ -164,7 +174,7 @@ int net_client_get_id();
 ConnectionState net_client_get_state();
 int net_client_get_input_count();
 uint16_t net_client_get_latest_local_packet_id();
-bool net_client_add_player_input(NetPlayerInput* input);
+bool net_client_add_player_input(NetPlayerInput* input, ClientState* state);
 bool net_client_received_init_packet();
 bool net_client_is_connected();
 void net_client_disconnect();

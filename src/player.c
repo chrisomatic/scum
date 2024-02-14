@@ -477,6 +477,9 @@ void player_hurt(Player* p, int damage)
     if(p->invulnerable_temp)
         return;
 
+    if(role == ROLE_CLIENT)
+        return;
+
     player_add_hp(p,-damage);
 
     if(p->phys.hp == 0)
@@ -1004,6 +1007,24 @@ void player_update(Player* p, float dt)
 
     if(role == ROLE_CLIENT)
     {
+        if(p != player)
+        {
+            player_lerp(p, dt);
+            return;
+        }
+
+        player_lerp(p, dt);
+
+        Room* room = level_get_room_by_index(&level, (int)p->curr_room);
+        if(!room)
+            return;
+
+        room->discovered = true;
+    }
+
+#if 0
+    if(role == ROLE_CLIENT)
+    {
         player_lerp(p, dt);
         if(p->curr_room == player->curr_room)
         {
@@ -1026,6 +1047,7 @@ void player_update(Player* p, float dt)
 
         return;
     }
+#endif
 
     float prior_x = p->phys.pos.x;
     float prior_y = p->phys.pos.y;
@@ -1628,7 +1650,7 @@ void player_update(Player* p, float dt)
     ptext->y = (p->phys.pos.y - p->phys.pos.z/2.0) - p->phys.vr.h - ptext->text_height - 3.0;
     text_list_update(ptext, dt);
 
-    if(role == ROLE_LOCAL)
+    if(role != ROLE_SERVER)
     {
         if(p->curr_room == player->curr_room)
         {
@@ -2321,6 +2343,19 @@ void player_lerp(Player* p, float dt)
 {
     if(!p->active) return;
 
+#if 0
+    Vector3f delta = {
+        p->server_state_target.pos.x - p->phys.pos.x,
+        p->server_state_target.pos.y - p->phys.pos.y,
+        p->server_state_target.pos.z - p->phys.pos.z
+    };
+
+    if(delta.x < 1.0 && delta.y < 1.0 && delta.z < 1.0)
+    {
+        return;
+    }
+#endif
+
     p->lerp_t += dt;
 
     float tick_time = 1.0/TICK_RATE;
@@ -2368,7 +2403,10 @@ void player_handle_net_inputs(Player* p, double dt)
     {
         // printf("enter state: %d\n", p->actions[PLAYER_ACTION_ACTIVATE].state);
         // printf("add player input: %d\n", player_ignore_input);
-        net_client_add_player_input(&p->input);
+        ClientState s = {
+            .pos = p->phys.pos
+        };
+        net_client_add_player_input(&p->input, &s);
     }
 
     if(player_ignore_input > 0)

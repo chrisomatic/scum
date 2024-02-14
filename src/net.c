@@ -103,7 +103,8 @@ struct
     Address address;
     NodeInfo info;
     ConnectionState state;
-    CircBuf input_packets;
+    NetPlayerInput net_player_inputs[INPUT_QUEUE_MAX];
+    CircBuf client_moves;
     BitPack bp;
 
     double time_of_connection;
@@ -139,7 +140,6 @@ struct
 
 // ---
 
-static NetPlayerInput net_player_inputs[INPUT_QUEUE_MAX]; // shared
 static int input_count = 0;
 static int inputs_per_packet = 1.0; //(TARGET_FPS/TICK_RATE);
 
@@ -1448,7 +1448,7 @@ bool server_process_command(char* argv[20], int argc, int client_id)
 // @CLIENT
 // =========
 
-bool net_client_add_player_input(NetPlayerInput* input)
+bool net_client_add_player_input(NetPlayerInput* input, ClientState* state)
 {
     if(input_count >= INPUT_QUEUE_MAX)
     {
@@ -1456,7 +1456,20 @@ bool net_client_add_player_input(NetPlayerInput* input)
         return false;
     }
 
-    memcpy(&net_player_inputs[input_count], input, sizeof(NetPlayerInput));
+    memcpy(&client.net_player_inputs[input_count], input, sizeof(NetPlayerInput));
+
+    if(state)
+    {
+        ClientMove m = {0};
+        
+        m.id            = client.info.local_latest_packet_id + input_count;
+        m.input.delta_t = input->delta_t;
+        m.input.keys    = input->keys;
+        memcpy(&m.state, state, sizeof(ClientState));
+
+        circbuf_add(&client.client_moves,&m);
+    }
+
     input_count++;
 
     return true;
@@ -1541,7 +1554,7 @@ bool net_client_init()
 
     client.id = -1;
     client.info.socket = sock;
-    circbuf_create(&client.input_packets,10, sizeof(Packet));
+    circbuf_create(&client.client_moves, 32, sizeof(ClientMove));
 
     client.timestamp_history_list = list_create(client.timestamp_history, TIMESTAMP_HISTORY_MAX,sizeof(PacketTimestamp), true);
 
@@ -1558,7 +1571,7 @@ static bool _client_data_waiting()
 
 static void client_clear()
 {
-    circbuf_clear_items(&client.input_packets);
+    circbuf_clear_items(&client.client_moves);
     client.received_init_packet = false;
     client.time_of_latest_sent_packet = 0.0;
     client.time_of_last_ping = 0.0;
@@ -1636,10 +1649,9 @@ static void client_send(PacketType type)
             pack_u8(&pkt, input_count);
             for(int i = 0; i < input_count; ++i)
             {
-                pack_bytes(&pkt, (uint8_t*)&net_player_inputs[i], sizeof(NetPlayerInput));
+                pack_bytes(&pkt, (uint8_t*)&client.net_player_inputs[i], sizeof(NetPlayerInput));
             }
 
-            circbuf_add(&client.input_packets,&pkt);
 #if REDUNDANT_INPUTS
             net_send(&client.info,&server.address,&pkt, 3);
 #else
@@ -1666,24 +1678,6 @@ static void client_send(PacketType type)
     client.time_of_latest_sent_packet = timer_get_time();
 }
 
-
-static bool client_get_input_packet(Packet* input, int packet_id)
-{
-    for(int i = client.input_packets.count -1; i >= 0; --i)
-    {
-        Packet* pkt = (Packet*)circbuf_get_item(&client.input_packets,i);
-
-        if(pkt)
-        {
-            if(pkt->hdr.id == packet_id)
-            {
-                input = pkt;
-                return true;
-            }
-        }
-    }
-    return false;
-}
 
 bool net_client_connect_update()
 {
@@ -2723,6 +2717,16 @@ static void unpack_players(Packet* pkt, int* offset)
             p->phys.pos.y = pos.y;
             p->phys.pos.z = pos.z;
             p->weapon.scale = (float)(weapon_scale/255.0f);
+        }
+
+        for(int i = 0; i < 32; ++i)
+        {
+            ClientMove* move = (ClientMove*)circbuf_get_item(&client.client_moves, i);
+            if(move->id == pkt->hdr.ack)
+            {
+                //printf("IDs match! (%u). Client Pos: %f %f %f, Server Pos: %f %f %f\n", move->id, p->phys.pos.x, p->phys.pos.y, p->phys.pos.z, pos.x, pos.y, pos.z);
+                break;
+            }
         }
 
         p->lerp_t = 0.0;

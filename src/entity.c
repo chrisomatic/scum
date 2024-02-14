@@ -189,7 +189,7 @@ void entity_handle_status_effects(float dt)
 
 void entity_handle_collisions()
 {
-    if(role == ROLE_CLIENT) return;
+    //if(role == ROLE_CLIENT) return;
     //printf("num entities: %d\n",num_entities);
 
     for(int i = 0; i < num_entities; ++i)
@@ -264,31 +264,6 @@ void entity_handle_collisions()
             // }
         }
     }
-
-    // // double check for players getting stuck inside walls
-    // for(int i = 0; i < MAX_PLAYERS; ++i)
-    // {
-    //     Player* p = &players[i];
-    //     if(!p->active) continue;
-
-    // }
-    // if(!p->phys.dead)
-    // {
-    //     float cx = p->phys.pos.x;
-    //     float cy = p->phys.pos.y;
-    //     Vector2i coords = level_get_room_coords_by_pos(cx, cy);
-    //     TileType tt = level_get_tile_type(room, coords.x, coords.y);
-    //     if(tt == TILE_BOULDER)
-    //     {
-    //         TileType tt = level_get_tile_type(room, p->last_safe_tile.x, p->last_safe_tile.y);
-    //         if(IS_SAFE_TILE(tt))
-    //         {
-    //             Vector2f position = level_get_pos_by_room_coords(p->last_safe_tile.x, p->last_safe_tile.y);
-    //             phys_set_collision_pos(&p->phys, position.x, position.y);
-    //         }
-    //     }
-    // }
-
 }
 
 void entity_draw_all()

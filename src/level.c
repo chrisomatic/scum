@@ -857,12 +857,13 @@ static void generate_rooms(Level* level, int x, int y, Dir came_from, int depth)
 
     bool is_start_room = (x == level->start.x && y == level->start.y);
 
-
+#if 0 
     if(role != ROLE_CLIENT)
     {
         if(is_start_room)
             item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, room->index);
     }
+#endif
 
     if(is_start_room)
     {
