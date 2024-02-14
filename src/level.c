@@ -56,7 +56,7 @@ static inline bool flip_coin()
 
 static void branch_room(Level* level, int x, int y, int depth)
 {
-    printf("%s\n", __func__);
+    // printf("%s\n", __func__);
 
     Room* room = &level->rooms[x][y];
     RoomFileData* rfd = &room_list[room->layout];

@@ -110,7 +110,7 @@ typedef enum
     ROOM_TYPE_MONSTER,
     ROOM_TYPE_TREASURE,
     ROOM_TYPE_BOSS,
-    ROOM_TYPE_MAX,
+    ROOM_TYPE_MAX
 } RoomType;
 
 typedef struct
