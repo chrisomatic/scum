@@ -74,6 +74,7 @@ PACK(struct PacketHeader
     uint16_t id;
     uint16_t ack;
     uint32_t ack_bitfield;
+    //double  time;
     uint8_t type;
     uint8_t pad[3]; // pad to be 4-byte aligned
 });
@@ -182,6 +183,7 @@ void net_client_send_settings();
 bool net_client_set_server_ip(char* address);
 void net_client_get_server_ip_str(char* ip_str);
 int net_client_data_waiting();
+double net_client_get_server_time();
 double net_client_get_rtt();
 double net_client_get_connected_time();
 uint32_t net_client_get_sent_bytes();

@@ -77,6 +77,9 @@ static void draw_entity_shadow(Physics* phys)
     if(phys->height < 24.0 && phys->pos.z == 0.0) return;
 
     // float scale = (phys->collision_rect.w/32.0);
+
+    if(phys->vr.w == 0) phys->vr.w = 8; // @HACK: To address projectiles without shadows
+
     float scale = (phys->vr.w/32.0 * 0.80);
     float opacity = RANGE(0.5*(1.0 - (phys->pos.z / 128.0)),0.1,0.5);
 
@@ -189,7 +192,7 @@ void entity_handle_status_effects(float dt)
 
 void entity_handle_collisions()
 {
-    //if(role == ROLE_CLIENT) return;
+    if(role == ROLE_CLIENT) return;
     //printf("num entities: %d\n",num_entities);
 
     for(int i = 0; i < num_entities; ++i)

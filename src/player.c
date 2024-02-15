@@ -1007,19 +1007,25 @@ void player_update(Player* p, float dt)
 
     if(role == ROLE_CLIENT)
     {
+        /*
         if(p != player)
         {
             player_lerp(p, dt);
             return;
         }
+        */
+        if(p == player)
+        {
+            p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
+        }
 
         player_lerp(p, dt);
 
         Room* room = level_get_room_by_index(&level, (int)p->curr_room);
-        if(!room)
-            return;
+        if(!room) return;
 
         room->discovered = true;
+        return;
     }
 
 #if 0

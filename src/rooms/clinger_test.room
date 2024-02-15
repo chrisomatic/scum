@@ -33,10 +33,19 @@ Slug
 Clinger
 Geizer
 Floater
+Big Floater
+Buzzer
+Totem Red
+Totem Blue
+Totem Yellow
 Shambler
+Spiked Slug
+Infected
 
 ; Creatures
+1,14,2
 1,0,4
+1,10,8
 
 ; Item Mapping
 Red Gem

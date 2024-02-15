@@ -187,7 +187,7 @@ void creature_init_props(Creature* c)
     {
         case CREATURE_TYPE_SLUG:
         {
-            c->phys.speed = 30.0;
+            c->phys.speed = 40.0;
             c->act_time_min = 1.5;
             c->act_time_max = 3.0;
             c->phys.mass = 0.5;
@@ -200,9 +200,9 @@ void creature_init_props(Creature* c)
         } break;
         case CREATURE_TYPE_CLINGER:
         {
-            c->phys.speed = 50.0;
-            c->act_time_min = 0.2;
-            c->act_time_max = 0.4;
+            c->phys.speed = 40.0;
+            c->act_time_min = 0.1;
+            c->act_time_max = 0.3;
             c->phys.mass = 1000.0;
             c->phys.base_friction = 0.0;
             c->phys.hp_max = 5.0;
@@ -1007,66 +1007,77 @@ static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
 
 static void creature_update_clinger(Creature* c, float dt)
 {
-    bool act = ai_update_action(c, dt);
-
     Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
 
     float d = dist(p->phys.pos.x, p->phys.pos.y, c->phys.pos.x, c->phys.pos.y);
     bool horiz = (c->spawn_tile_y == -1 || c->spawn_tile_y == ROOM_TILE_SIZE_Y);
 
-    if(d > 160.0)
+    if(c->ai_state == 1)
     {
-        if(act)
-        {
-            // far from player, slow movement, move randomly
-            c->phys.speed = 10.0;
-            c->act_time_min = 0.5;
-            c->act_time_max = 1.0;
+        // firing state
+        
+        if(c->ai_counter == 0.0)
+            c->ai_counter_max = 0.3; // time between shots
 
-            if(ai_flip_coin())
+        c->ai_counter += dt;
+        if(c->ai_counter >= c->ai_counter_max)
+        {
+            if(c->ai_value >= 3) // total number of shots
             {
-                //ai_walk_dir(c,horiz ? DIR_LEFT : DIR_UP);
-                ai_move_imm(c, horiz ? DIR_LEFT : DIR_UP, c->phys.speed);
+                c->ai_state = 0;
+                return;
             }
-            else
-            {
-                ai_move_imm(c, horiz ? DIR_RIGHT : DIR_DOWN, c->phys.speed);
-            }
+
+            c->ai_counter = 0.0;
+
+            // fire
+            if(horiz) creature_fire_projectile(c, dir_to_angle_deg(c->spawn_tile_y == -1 ? DIR_DOWN : DIR_UP), PROJ_COLOR);
+            else      creature_fire_projectile(c, dir_to_angle_deg(c->spawn_tile_x == -1 ? DIR_RIGHT : DIR_LEFT), PROJ_COLOR);
+
+            c->ai_value++;
         }
         return;
     }
 
-    // player is close
+    bool player_far = (d > 200.0);
 
-    // fast movement
-    c->phys.speed = 100.0;
-
-    float delta_x = p->phys.pos.x - c->phys.pos.x;
-    float delta_y = p->phys.pos.y - c->phys.pos.y;
-
-    if((horiz && ABS(delta_x) < 16.0) || (!horiz && ABS(delta_y) < 16.0))
+    if(player_far)
     {
-        c->act_time_min = 1.00;
-        c->act_time_max = 1.00;
+        c->phys.speed = 40.0;
 
-        c->phys.vel.x = 0.0;
-        c->phys.vel.y = 0.0;
-
+        // random direction to move
+        bool act = ai_update_action(c, dt);
         if(act)
         {
-            // fire
-            if(horiz)
-                creature_fire_projectile(c, dir_to_angle_deg(c->spawn_tile_y == -1 ? DIR_DOWN : DIR_UP), PROJ_COLOR);
+            if(ai_flip_coin())
+                ai_move_imm(c, horiz ? DIR_LEFT : DIR_UP, c->phys.speed);
             else
-                creature_fire_projectile(c, dir_to_angle_deg(c->spawn_tile_x == -1 ? DIR_RIGHT : DIR_LEFT), PROJ_COLOR);
+                ai_move_imm(c, horiz ? DIR_RIGHT : DIR_DOWN, c->phys.speed);
         }
     }
     else
     {
-        c->act_time_min = 0.05;
-        c->act_time_max = 0.10;
+        // player is close
+        c->phys.speed = 80.0; // speed up
 
-        if(act)
+        float delta_x = p->phys.pos.x - c->phys.pos.x;
+        float delta_y = p->phys.pos.y - c->phys.pos.y;
+
+        bool shooting_distance = (horiz && ABS(delta_x) < 1.0) || (!horiz && ABS(delta_y) < 1.0);
+
+        if(shooting_distance)
+        {
+            ai_stop_imm(c);
+
+            if(c->ai_state == 0)
+            {
+                // go to firing state
+                c->ai_counter = 0.0;
+                c->ai_state = 1;
+                c->ai_value = 0;
+            }
+        }
+        else
         {
             // move
             if(horiz)
@@ -1079,8 +1090,6 @@ static void creature_update_clinger(Creature* c, float dt)
             }
         }
     }
-
-    return;
 }
 
 static void creature_update_geizer(Creature* c, float dt)

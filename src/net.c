@@ -91,6 +91,7 @@ struct
     ClientInfo clients[MAX_CLIENTS];
     NetEvent events[MAX_NET_EVENTS];
     BitPack bp;
+    double start_time;
     int event_count;
     int num_clients;
 } server = {0};
@@ -111,6 +112,7 @@ struct
     double time_of_latest_sent_packet;
     double time_of_last_ping;
     double time_of_last_received_ping;
+    double server_connect_time;
 
     glist* timestamp_history_list;
     PacketTimestamp timestamp_history[TIMESTAMP_HISTORY_MAX];
@@ -152,6 +154,7 @@ static inline void pack_u32(Packet* pkt, uint32_t d);
 static inline void pack_i32(Packet* pkt, int32_t d);
 static inline void pack_u64(Packet* pkt, uint64_t d);
 static inline void pack_float(Packet* pkt, float d);
+static inline void pack_double(Packet* pkt, double d);
 static inline void pack_bytes(Packet* pkt, uint8_t* d, uint32_t len);
 static inline void pack_string(Packet* pkt, char* s, uint8_t max_len);
 static inline void pack_vec2(Packet* pkt, Vector2f d);
@@ -165,6 +168,7 @@ static inline uint32_t unpack_u32(Packet* pkt, int* offset);
 static inline int32_t unpack_i32(Packet* pkt, int* offset);
 static inline uint64_t unpack_u64(Packet* pkt, int* offset);
 static inline float    unpack_float(Packet* pkt, int* offset);
+static inline double   unpack_double(Packet* pkt, int* offset);
 static inline void unpack_bytes(Packet* pkt, uint8_t* d, int len, int* offset);
 static inline uint8_t unpack_string(Packet* pkt, char* s, int maxlen, int* offset);
 static inline Vector2f unpack_vec2(Packet* pkt, int* offset);
@@ -615,6 +619,7 @@ static void server_send(PacketType type, ClientInfo* cli)
 {
     Packet pkt = {
         .hdr.game_id = GAME_ID,
+        //.hdr.time = timer_get_time() - server.start_time,
         .hdr.id = server.info.local_latest_packet_id,
         .hdr.ack = cli->remote_latest_packet_id,
         .hdr.type = type
@@ -628,6 +633,7 @@ static void server_send(PacketType type, ClientInfo* cli)
         {
             pack_u32(&pkt,level_seed);
             pack_u8(&pkt,(uint8_t)level_rank);
+            pack_double(&pkt,timer_get_time() - server.start_time); // client connect time
             net_send(&server.info,&cli->address,&pkt, 1);
         } break;
 
@@ -857,6 +863,8 @@ int net_server_start()
     double t1=0.0;
     double accum = 0.0;
 
+    server.start_time = t0;
+
     double t0_g=timer_get_time();
     double t1_g=0.0;
     double accum_g = 0.0;
@@ -956,6 +964,7 @@ int net_server_start()
             }
             else
             {
+
                int client_id = server_get_client(&from, &cli);
                if(client_id == -1) break;
 
@@ -1197,9 +1206,7 @@ int net_server_start()
             decal_clear_all();
         }
 
-        // don't wait, just proceed to handling packets
-        //timer_wait_for_frame(&server_timer);
-        timer_delay_us(1000);
+        timer_delay_us(1000); // 1ms delay to prevent cpu % from going nuts
     }
 }
 
@@ -1463,6 +1470,7 @@ bool net_client_add_player_input(NetPlayerInput* input, ClientState* state)
         ClientMove m = {0};
         
         m.id            = client.info.local_latest_packet_id + input_count;
+        //m.time          = net_client_get_server_time();
         m.input.delta_t = input->delta_t;
         m.input.keys    = input->keys;
         memcpy(&m.state, state, sizeof(ClientState));
@@ -1507,6 +1515,11 @@ void net_client_get_server_ip_str(char* ip_str)
 
     sprintf(ip_str,"%u.%u.%u.%u:%u",server.address.a,server.address.b, server.address.c, server.address.d, server.address.port);
     return;
+}
+
+double net_client_get_server_time()
+{
+    return (timer_get_time() - client.server_connect_time);
 }
 
 bool net_client_set_server_ip(char* address)
@@ -1888,6 +1901,10 @@ void net_client_update()
             {
                 int seed = unpack_u32(&srvpkt,&offset);
                 uint8_t rank = unpack_u8(&srvpkt,&offset);
+                client.server_connect_time = unpack_double(&srvpkt,&offset);
+
+                printf("Server start time: %.3f\n", client.server_connect_time);
+
                 trigger_generate_level(seed,rank,0, __LINE__);
 
                 client.received_init_packet = true;
@@ -2222,6 +2239,12 @@ static inline void pack_float(Packet* pkt, float d)
     pkt->data_len+=sizeof(float);
 }
 
+static inline void pack_double(Packet* pkt, double d)
+{
+    memcpy(&pkt->data[pkt->data_len],&d,sizeof(double));
+    pkt->data_len+=sizeof(double);
+}
+
 static inline void pack_bytes(Packet* pkt, uint8_t* d, uint32_t len)
 {
     memcpy(&pkt->data[pkt->data_len],d,sizeof(uint8_t)*len);
@@ -2311,6 +2334,14 @@ static inline float unpack_float(Packet* pkt, int* offset)
     float r;
     memcpy(&r, &pkt->data[*offset], sizeof(float));
     (*offset) += sizeof(float);
+    return r;
+}
+
+static inline double unpack_double(Packet* pkt, int* offset)
+{
+    double r;
+    memcpy(&r, &pkt->data[*offset], sizeof(double));
+    (*offset) += sizeof(double);
     return r;
 }
 
@@ -2722,9 +2753,12 @@ static void unpack_players(Packet* pkt, int* offset)
         for(int i = 0; i < 32; ++i)
         {
             ClientMove* move = (ClientMove*)circbuf_get_item(&client.client_moves, i);
-            if(move->id == pkt->hdr.ack)
+
+            //if(move->time > pkt->hdr.time && i > 0)
+            if(move->id != pkt->hdr.ack)
             {
-                //printf("IDs match! (%u). Client Pos: %f %f %f, Server Pos: %f %f %f\n", move->id, p->phys.pos.x, p->phys.pos.y, p->phys.pos.z, pos.x, pos.y, pos.z);
+                //move = (ClientMove*)circbuf_get_item(&client.client_moves, i-1);
+                //printf("Found move! (time %f, server %f). Client Pos: %f %f %f, Server Pos: %f %f %f\n", move->time, pkt->hdr.time, p->phys.pos.x, p->phys.pos.y, p->phys.pos.z, pos.x, pos.y, pos.z);
                 break;
             }
         }
