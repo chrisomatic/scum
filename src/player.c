@@ -12,12 +12,14 @@
 #include "weapon.h"
 #include "player.h"
 
+
 void player_ai_move_to_target(Player* p, Player* target);
 
 static float sprite_index_to_angle(Player* p);
 static void handle_room_collision(Player* p);
 static void player_set_sprite_index(Player* p, int sprite_index);
 
+#define XP_REQ_MULT (3.0)
 int xp_levels[] = {100,120,140,160,180,200};
 
 int player_ignore_input = 0;
@@ -398,7 +400,7 @@ int get_xp_req(int level)
         xp_req = xp_levels[num-1];
     else
         xp_req = xp_levels[level];
-    return xp_req;
+    return xp_req*XP_REQ_MULT;
 }
 
 void player_add_xp(Player* p, int xp)
