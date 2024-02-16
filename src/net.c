@@ -3110,7 +3110,7 @@ static void pack_decals(Packet* pkt, ClientInfo* cli)
     {
         Decal* d = &decals[i];
 
-        BPW(&server.bp, 5,  (uint32_t)d->sprite_index);
+        BPW(&server.bp, 7,  (uint32_t)d->sprite_index);
         BPW(&server.bp, 32, (uint32_t)d->tint);
         BPW(&server.bp, 8,  (uint32_t)(d->scale*255.0f));
         BPW(&server.bp, 9,  (uint32_t)(d->rotation));
@@ -3133,7 +3133,7 @@ static void unpack_decals(Packet* pkt, int* offset, WorldState* ws)
 
         d.image = particles_image;
 
-        d.sprite_index = (uint8_t)bitpack_read(&client.bp,5);
+        d.sprite_index = (uint8_t)bitpack_read(&client.bp,7);
         d.tint         = (uint32_t)bitpack_read(&client.bp,32);
         d.scale        = (float)(bitpack_read(&client.bp,8)/255.0f);
         d.rotation     = (float)(bitpack_read(&client.bp,9));
