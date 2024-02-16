@@ -2323,6 +2323,8 @@ void player_draw(Player* p)
         }
         if(highlighted_item)
         {
+            highlighted_item->highlighted = true;
+
             const char* desc = item_get_description(highlighted_item->type);
             const char* name = item_get_name(highlighted_item->type);
 
@@ -2409,8 +2411,8 @@ void player_handle_net_inputs(Player* p, double dt)
     {
         // printf("enter state: %d\n", p->actions[PLAYER_ACTION_ACTIVATE].state);
         // printf("add player input: %d\n", player_ignore_input);
-        ClientState s = {
-            .pos = p->phys.pos
+        WorldState s = {
+            .players[0].pos = p->phys.pos
         };
         net_client_add_player_input(&p->input, &s);
     }

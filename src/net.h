@@ -102,14 +102,129 @@ typedef struct NetPlayerInput NetPlayerInput;
 
 typedef struct
 {
+    uint8_t  id;
     Vector3f pos;
-} ClientState;
+    uint8_t  sprite_index;
+    uint8_t  curr_room;
+    int8_t   hp;
+    int8_t   hp_max;
+    int32_t  highlighted_item_id;
+    uint8_t  skill_count;
+    uint16_t skills[20];
+    uint16_t xp;
+    uint8_t  level;
+    uint8_t  new_levels;
+    bool     show_skill_selection;
+    uint8_t  skill_selection;
+    uint8_t  num_skill_selection_choices;
+    uint16_t skill_choices[6];
+    uint8_t  gauntlet_selection;
+    uint8_t  gauntlet_slots;
+    int8_t   gauntlet_types[8];
+    bool     invulnerable_temp;
+    float    invulnerable_temp_time;
+    uint8_t  door;
+    bool     dead;
+    int      timed_items[10];
+    float    timed_items_ttl[10];
+
+    // @TODO
+
+} PlayerState;
+
+typedef struct
+{
+    uint8_t  id;
+    uint8_t  type;
+    Vector3f pos;
+    float    width;
+    uint8_t  sprite_index;
+    uint8_t  curr_room;
+    int8_t   hp;
+    uint32_t color;
+} CreatureState;
+
+typedef struct
+{
+    uint8_t  id;
+    Vector3f pos;
+    uint32_t color;
+    uint8_t  player_id;
+    uint8_t  curr_room;
+    float    scale;
+    bool     from_player;
+} ProjectileState;
+
+typedef struct
+{
+    uint8_t  id;
+    uint8_t  type;
+    Vector3f pos;
+    uint8_t  curr_room;
+    float    angle;
+    bool     used;
+} ItemState;
+
+typedef struct
+{
+    Vector2f pos;
+    uint8_t  sprite_index;
+    uint32_t tint;
+    float scale;
+    float rotation;
+    float opacity;
+    float ttl;
+    uint8_t curr_room;
+    uint8_t fade_pattern;
+} DecalState;
+
+typedef struct
+{
+    Vector2f pos;
+    uint8_t effect_index;
+    float scale;
+    uint32_t color1;
+    uint32_t color2;
+    uint32_t color3;
+    float lifetime;
+    uint8_t curr_room;
+} EventState;
+
+typedef struct
+{
+    bool doors_locked;
+    bool paused;
+} OtherState;
+
+typedef struct
+{
+    int             player_count;
+    PlayerState     players[4];
+
+    int             creature_count;
+    CreatureState   creatures[1024];
+
+    int             projectile_count;
+    ProjectileState projectiles[4096];
+
+    int             item_count;
+    ItemState       items[500];
+
+    int             decal_count;
+    DecalState      decals[100];
+
+    int             event_count;
+    EventState      events[255];
+
+    OtherState      other;
+
+} WorldState;
 
 typedef struct
 {
     uint16_t       id;
     NetPlayerInput input;
-    ClientState    state;
+    WorldState     state;
 } ClientMove;
 
 //
@@ -175,7 +290,7 @@ int net_client_get_id();
 ConnectionState net_client_get_state();
 int net_client_get_input_count();
 uint16_t net_client_get_latest_local_packet_id();
-bool net_client_add_player_input(NetPlayerInput* input, ClientState* state);
+bool net_client_add_player_input(NetPlayerInput* input, WorldState* state);
 bool net_client_received_init_packet();
 bool net_client_is_connected();
 void net_client_disconnect();

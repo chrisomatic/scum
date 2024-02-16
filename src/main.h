@@ -110,6 +110,7 @@ typedef struct
     Vector2f pos;
     uint8_t room;
 } Decal;
+
 #define MAX_DECALS  100
 extern Decal decals[MAX_DECALS];
 extern glist* decal_list;
