@@ -84,8 +84,8 @@ Vector2f transition_offsets = {0};
 Vector2f transition_targets = {0};
 
 Level level;
-// unsigned int level_seed = 95;
-unsigned int level_seed = 0;
+unsigned int level_seed = 942;
+// unsigned int level_seed = 0;
 int level_rank = 0;
 int level_transition = 0;
 int level_transition_state = 0;
@@ -138,16 +138,40 @@ void draw();
 void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods);
 void start_server();
 
-// void kam_test();
 
 // =========================
 // Main Loop
 // =========================
 
+// #include <sys/resource.h>
+
 int main(int argc, char* argv[])
 {
 
-    // kam_test();
+    // const rlim_t kStackSize = 64 * 1024 * 1024;   // min stack size = 16 MB
+    // struct rlimit rl;
+    // int result;
+    // result = getrlimit(RLIMIT_STACK, &rl);
+    // if (result == 0)
+    // {
+    //     printf("%d\n", rl.rlim_cur);
+    //     if (rl.rlim_cur < kStackSize)
+    //     {
+    //         rl.rlim_cur = kStackSize;
+    //         result = setrlimit(RLIMIT_STACK, &rl);
+    //         if (result != 0)
+    //         {
+    //             fprintf(stderr, "setrlimit returned result = %d\n", result);
+    //         }
+    //     }
+    // }
+    // result = getrlimit(RLIMIT_STACK, &rl);
+    // if (result == 0)
+    // {
+    //     printf("%d\n", rl.rlim_cur);
+    // }
+    // // exit(1);
+
 
     init_timer();
     log_init(0);
@@ -1974,351 +1998,3 @@ char* string_split_index_copy(char* str, const char* delim, int index, bool spli
     memcpy(ret, s, len);
     return ret;
 }
-
-
-#if 0
-
-#define _MIN_ROOMS        7
-#define _MAX_ROOMS_GRID_X 7
-#define _MAX_ROOMS_GRID_Y 7
-#define _MAX_ROOMS_GRID (_MAX_ROOMS_GRID_X*_MAX_ROOMS_GRID_Y)
-
-typedef struct
-{
-    bool valid;
-    RoomType type;
-    bool doors[MAX_DOORS];
-    uint8_t index;
-    Vector2i grid;
-} _Room;
-
-typedef struct
-{
-    _Room rooms[_MAX_ROOMS_GRID_X][_MAX_ROOMS_GRID_Y];
-    _Room* rooms_ptr[_MAX_ROOMS_GRID];
-    int num_rooms;
-    Vector2i start;
-} _Level;
-
-typedef struct
-{
-    _Room* rooms[_MAX_ROOMS_GRID];
-    Dir directions[_MAX_ROOMS_GRID];
-    int length;
-} _LevelPath;
-
-_Level _level = {0};
-
-static bool _flip_coin()
-{
-    return (rand()%2==0);
-}
-
-int _get_dist(int x0, int y0, int x1, int y1)
-{
-    return ABS(x0-x1) + ABS(y0-y1);
-}
-
-_Room* _place_room(RoomType type, int min_dist, int max_dist)
-{
-    for(;;)
-    {
-        int _x = rand()%_MAX_ROOMS_GRID_X;
-        int _y = rand()%_MAX_ROOMS_GRID_Y;
-        _Room* room = &_level.rooms[_x][_y];
-        if(room->valid) continue;
-        int d = _get_dist(_x, _y, _level.start.x, _level.start.y);
-        if(d >= min_dist && d <= max_dist)
-        {
-            room->valid = true;
-            room->type = type;
-            return room;
-        }
-    }
-}
-
-int _get_room_count()
-{
-    int count = 0;
-    for(int i = 0; i < _MAX_ROOMS_GRID; ++i)
-    {
-        if(_level.rooms_ptr[i]->valid) count++;
-    }
-    return count;
-}
-
-void _print_room(_Room* room)
-{
-    printf("%-8s room: %d, %d (%2u) (dist: %d)\n", get_room_type_name(room->type), room->grid.x, room->grid.y, room->index, _get_dist(room->grid.x, room->grid.y, _level.start.x, _level.start.y));
-}
-
-// weights: {10,50,90,100}
-int rand_from_weights(int weights[], int num)
-{
-    int r = (rand() % weights[num-1]) + 1;
-    for(int i = 0; i < num; ++i)
-    {
-        if(r <= weights[i])
-        {
-            return i;
-        }
-    }
-    return num-1;
-}
-
-void _print_level()
-{
-    for(int j = 0; j < _MAX_ROOMS_GRID_Y; ++j)
-    {
-        for(int i = 0; i < _MAX_ROOMS_GRID_X; ++i)
-        {
-            _Room* room = &_level.rooms[i][j];
-            printf("%c", room->valid ? '#' : '.');
-        }
-        printf("\n");
-    }
-    printf("\n");
-}
-
-void _print_path(_LevelPath* path)
-{
-    _Room* start = path->rooms[0];
-    _Room* end = path->rooms[path->length-1];
-    printf("START: %d, %d\n", start->grid.x, start->grid.y);
-    for(int i = 1; i < path->length-1; ++i)
-    {
-        printf("       %d, %d\n", path->rooms[i]->grid.x, path->rooms[i]->grid.y);
-    }
-    printf("END:   %d, %d\n", end->grid.x, end->grid.y);
-
-
-    for(int _y = 0; _y < _MAX_ROOMS_GRID_Y; ++_y)
-    {
-        for(int _x = 0; _x < _MAX_ROOMS_GRID_X; ++_x)
-        {
-            if(_x == start->grid.x && _y == start->grid.y)
-                printf("S");
-            else if(_x == end->grid.x && _y == end->grid.y)
-                printf("E");
-            else
-            {
-                bool p = false;
-                for(int i = 1; i < path->length-1; ++i)
-                {
-                    if(_x == path->rooms[i]->grid.x && _y == path->rooms[i]->grid.y)
-                    {
-                        // int idx = i+1;  // dirs length is actually length+1
-                        int idx = i;  // dirs length is actually length+1
-                        p = true;
-                        // printf("#");
-                        if(path->directions[idx] == DIR_LEFT)
-                            printf("<");
-                        else if(path->directions[idx] == DIR_RIGHT)
-                            printf(">");
-                        else if(path->directions[idx] == DIR_UP)
-                            printf("^");
-                        else if(path->directions[idx] == DIR_DOWN)
-                            printf("v");
-                        break;
-                    }
-                }
-                if(!p) printf(".");
-            }
-        }
-        printf("\n");
-    }
-    printf("\n");
-}
-
-
-bool _generate_path(_Room* start, _Room* end, _LevelPath* path)
-{
-    int x = start->grid.x;
-    int y = start->grid.y;
-
-    int total_dist = _get_dist(start->grid.x, start->grid.y, end->grid.x, end->grid.y);
-
-    path->rooms[0] = start;
-    path->length++;
-
-    for(;;)
-    {
-        Dir directions[4] = {0};
-        int dcount = 0;
-        int weights[4] = {0};
-        int dists[4] = {0}; // distance from end room
-
-
-        Dir end_dir_x = DIR_NONE;
-        if(end->grid.x > x) end_dir_x = DIR_RIGHT;
-        else if(end->grid.x < x) end_dir_x = DIR_LEFT;
-
-        Dir end_dir_y = DIR_NONE;
-        if(end->grid.y > y) end_dir_y = DIR_DOWN;
-        else if(end->grid.y < y) end_dir_y = DIR_UP;
-
-        for(int dir = 0; dir < 4; ++dir)
-        {
-            // printf("(%d, %d) dir: %s\n", x, y, get_dir_name(dir));
-            Vector2i o = get_dir_offsets(dir);
-            int _x = x+o.x;
-            int _y = y+o.y;
-
-            if(_x == end->grid.x && _y == end->grid.y)
-            {
-                path->directions[path->length-1] = dir;
-                path->directions[path->length] = DIR_NONE;
-                path->rooms[path->length] = end;
-                path->length++;
-                return true;
-            }
-
-            if(_x == start->grid.x && _y == start->grid.y) continue;
-            // if(_x == _level.start.x && _y == _level.start.y) continue;
-            if(_x < 0 || _y < 0) continue;
-            if(_x >= _MAX_ROOMS_GRID_X || _y >= _MAX_ROOMS_GRID_Y) continue;
-            if(_level.rooms[_x][_y].type == ROOM_TYPE_TREASURE) continue;
-            if(_level.rooms[_x][_y].type == ROOM_TYPE_BOSS) continue;
-
-            // part of the path already
-            bool in_path = false;
-            for(int i = 0; i < path->length; ++i)
-            {
-                if(_x == path->rooms[i]->grid.x && _y == path->rooms[i]->grid.y)
-                {
-                    in_path = true;
-                    break;
-                }
-            }
-            if(in_path) continue;
-
-            directions[dcount] = dir;
-
-            int prior_weight = 0;
-            if(dcount > 0) prior_weight = weights[dcount-1];
-
-            if(dir == end_dir_x || dir == end_dir_y)
-            {
-                if(path->length >= 1.5*total_dist)
-                {
-                    weights[dcount] = prior_weight+100;
-                }
-                else
-                {
-                    weights[dcount] = prior_weight+10;
-                }
-            }
-            else
-            {
-                weights[dcount] = prior_weight+1;
-            }
-
-            dists[dcount] = _get_dist(_x, _y, end->grid.x, end->grid.y);
-
-            dcount++;
-        }
-
-        if(dcount == 0)
-        {
-            printf("no path!\n");
-            return false;
-        }
-
-
-        Dir choose_directions[4] = {0};
-        int ccount = 0;
-        for(int d = 0; d < dcount; ++d)
-        {
-            if(dists[d] == 1)
-            {
-                choose_directions[ccount++] = directions[d];
-            }
-        }
-
-        Dir dir = DIR_NONE;
-        if(ccount >= 1)
-        {
-            dir = choose_directions[rand()%ccount];
-        }
-        else
-        {
-            // same as function in player.c
-            int choice = rand_from_weights(weights, dcount);
-            dir = directions[choice];
-        }
-
-        Vector2i o = get_dir_offsets(dir);
-        x = x+o.x;
-        y = y+o.y;
-
-        path->directions[path->length-1] = dir;
-
-        _Room* proom = &_level.rooms[x][y];
-        path->rooms[path->length] = proom;
-        proom->valid = true;
-        path->length++;
-
-    }
-
-}
-
-
-void _generate_level(int _seed)
-{
-    srand(_seed);
-
-    memset(&_level,0,sizeof(_Level));
-
-    for(int _x = 0; _x < _MAX_ROOMS_GRID_X; ++_x)
-    {
-        for(int _y = 0; _y < _MAX_ROOMS_GRID_Y; ++_y)
-        {
-            int idx = level_get_room_index(_x, _y);
-            _level.rooms_ptr[idx] = &_level.rooms[_x][_y];
-            _level.rooms[_x][_y].index = idx;
-            _level.rooms[_x][_y].grid.x = _x;
-            _level.rooms[_x][_y].grid.y = _y;
-        }
-    }
-
-    _level.start.x = (rand()%(_MAX_ROOMS_GRID_X-2))+1;
-    _level.start.y = (rand()%(_MAX_ROOMS_GRID_Y-2))+1;
-    _Room* sroom = &_level.rooms[_level.start.x][_level.start.y];
-    sroom->valid = true;
-    sroom->type = ROOM_TYPE_EMPTY;
-    _print_room(sroom);
-
-    _Room* broom = _place_room(ROOM_TYPE_BOSS, 4,6);
-    _Room* troom = _place_room(ROOM_TYPE_TREASURE, 4,6);
-
-    _print_room(broom);
-    _LevelPath bpath = {0};
-    _generate_path(sroom, broom, &bpath);
-    _print_path(&bpath);
-
-    // _Room* troom = _place_room(ROOM_TYPE_TREASURE, 4,4);
-    _print_room(troom);
-    _LevelPath tpath = {0};
-    _generate_path(sroom, troom, &tpath);
-    _print_path(&tpath);
-
-    _Room* eroom = _place_room(ROOM_TYPE_EMPTY, 2,6);
-    _print_room(eroom);
-    _LevelPath epath = {0};
-    _generate_path(sroom, eroom, &epath);
-    _print_path(&epath);
-
-    int room_count = _get_room_count();
-    printf("Total Room Count: %d\n", room_count);
-    _print_level();
-}
-
-void kam_test()
-{
-    return;
-    _generate_level(10000000);
-
-    exit(1);
-}
-
-#endif

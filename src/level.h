@@ -5,6 +5,8 @@
 
 #define MAX_ROOMS_GRID_X 7
 #define MAX_ROOMS_GRID_Y 7
+// #define MAX_ROOMS_GRID_X 3
+// #define MAX_ROOMS_GRID_Y 3
 #define MAX_ROOMS_GRID (MAX_ROOMS_GRID_X*MAX_ROOMS_GRID_Y)
 
 #define MONSTER_ROOM_PERCENTAGE 80
@@ -179,7 +181,7 @@ void level_sort_walls(Wall* walls, int wall_count, Physics* phys);
 void level_handle_room_collision(Room* room, Physics* phys, int entity_type, void* entity);
 Room* level_get_room(Level* level, int x, int y);
 Room* level_get_room_by_index(Level* level, int index);
-uint8_t level_get_room_index(int x, int y);
+int level_get_room_index(int x, int y);
 Vector2i level_get_room_coords(int index);
 Vector2i level_get_room_coords_by_pos(float x, float y);
 Vector2f level_get_pos_by_room_coords(int x, int y);
