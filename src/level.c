@@ -79,7 +79,7 @@ int get_room_dist(int x0, int y0, int x1, int y1)
 #if NEW_LEVEL_GENERATION
 
 #define GENERATE_ROOMS_TEST 0
-#define TEST_COUNT          1000
+#define TEST_COUNT          10000
 #define START_SEED          0
 
 Level level_generate(unsigned int seed, int rank)
@@ -212,35 +212,96 @@ Level level_generate(unsigned int seed, int rank)
     LevelPath bpath = {0};
     LevelPath tpath = {0};
     LevelPath epath = {0};
+    LevelPath epath2 = {0};
 
     bool ret = true;
     bool tret = true;
 
-    ret = generate_room_path(&level, sroom, broom, &bpath, 5);
-    tret &= ret;
-    if(!ret) LOGE("boss");
+    // boss room path
+    for(;;)
+    {
+        ret = generate_room_path(&level, sroom, broom, &bpath, 5);
+        if(ret)
+            break;
+        else
+        {
+            broom->valid = false;
+            broom->type = ROOM_TYPE_EMPTY;
+            broom = place_room(&level, ROOM_TYPE_BOSS, 4,6);
+        }
+    }
 
-    ret = generate_room_path(&level, sroom, troom, &tpath, 5);
-    tret &= ret;
-    if(!ret) LOGE("treasure");
 
-    //TODO: need to add in check for place_room
-    Room* eroom = place_room(&level, ROOM_TYPE_EMPTY, 2,6);
-    ret = generate_room_path(&level, sroom, eroom, &epath, 5);
-    tret &= ret;
-    if(!ret) LOGE("extra");
+    // treasure room path
+    for(;;)
+    {
+        ret = generate_room_path(&level, sroom, troom, &tpath, 5);
+        if(ret)
+            break;
+        else
+        {
+            troom->valid = false;
+            troom->type = ROOM_TYPE_EMPTY;
+            troom = place_room(&level, ROOM_TYPE_TREASURE, 4,6);
+        }
+    }
+
+    // extra room path
+    Room* eroom = place_room(&level, ROOM_TYPE_EMPTY, 3,5);
+    for(int i = 0; i < 5; ++i)
+    {
+        ret = generate_room_path(&level, sroom, eroom, &epath, 5);
+        if(ret)
+            break;
+        else
+        {
+            eroom->valid = false;
+            eroom->type = ROOM_TYPE_EMPTY;
+            eroom = place_room(&level, ROOM_TYPE_EMPTY, 3,5);
+        }
+    }
+
+    // extra room path
+    Room* eroom2 = place_room(&level, ROOM_TYPE_EMPTY, 3,5);
+    for(int i = 0; i < 5; ++i)
+    {
+        ret = generate_room_path(&level, sroom, eroom2, &epath2, 5);
+        if(ret)
+            break;
+        else
+        {
+            eroom2->valid = false;
+            eroom2->type = ROOM_TYPE_EMPTY;
+            eroom2 = place_room(&level, ROOM_TYPE_EMPTY, 3,5);
+        }
+    }
+
+    // ret = generate_room_path(&level, sroom, troom, &bpath, 5);
+    // tret &= ret;
+    // if(!ret) LOGE("boss");
+
+    // ret = generate_room_path(&level, sroom, troom, &tpath, 5);
+    // tret &= ret;
+    // if(!ret) LOGE("treasure");
+
+    // //TODO: need to add in check for place_room
+    // Room* eroom = place_room(&level, ROOM_TYPE_EMPTY, 2,6);
+    // ret = generate_room_path(&level, sroom, eroom, &epath, 5);
+    // tret &= ret;
+    // if(!ret) LOGE("extra");
 
     set_doors_from_path(&level, &bpath);
     set_doors_from_path(&level, &tpath);
     set_doors_from_path(&level, &epath);
+    set_doors_from_path(&level, &epath2);
 
-    if(!tret)
-    {
-        LOGE("Level Generation Error (seed: %u, rank: %d)", seed, rank);
-#if GENERATE_ROOMS_TEST
-        continue;
-#endif
-    }
+//     if(!tret)
+//     {
+//         LOGE("Level Generation Error (seed: %u, rank: %d)", seed, rank);
+// #if GENERATE_ROOMS_TEST
+//         continue;
+// #endif
+//     }
 
 #if !GENERATE_ROOMS_TEST
     print_room(&level, broom);
@@ -249,6 +310,8 @@ Level level_generate(unsigned int seed, int rank)
     // print_path(&tpath);
     print_room(&level, eroom);
     // print_path(&epath);
+    print_room(&level, eroom2);
+    // print_path(&epath2);
 #endif
 
 
@@ -275,7 +338,7 @@ Level level_generate(unsigned int seed, int rank)
 
                 if(!level_is_room_valid(&level, _x, _y)) continue;
                 Room* aroom = &level.rooms[_x][_y];
-                if(lrand()%100 <= 15)
+                if(lrand()%100 <= 10)
                 {
                     room->doors[d] = true;
                     aroom->doors[get_opposite_dir(d)] = true;
@@ -772,7 +835,7 @@ static bool generate_room_path(Level* level, Room* start, Room* end, LevelPath* 
             if(dcount == 0)
             {
                 // print_path(path);
-                LOGW("trying again");
+                // LOGW("trying again");
                 memcpy(level, &level_copy, sizeof(Level));
                 break;
             }
@@ -814,7 +877,7 @@ static bool generate_room_path(Level* level, Room* start, Room* end, LevelPath* 
         }
     }
 
-    printf("no path!\n");
+    // printf("no path!\n");
     return false;
 
 }
