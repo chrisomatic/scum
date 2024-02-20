@@ -1,57 +1,80 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <limits.h>
+#include <string.h>
+#include <math.h>
+
+#include "astar.h"
 
 #define ASINDEX(x,y,w) ((y)*(w)+x)
 
 // openset queue handling functions
-static void         openset_add(AStar_t* asd, AStarNode* n);
+static void         openset_add(AStar_t* asd, AStarNode_t* n);
 static AStarNode_t* openset_get(AStar_t* asd);
-static bool         openset_in(AStar_t* asd, AStarNode* n);
+static bool         openset_in(AStar_t* asd, AStarNode_t* n);
 
-// heuristic functions
-static int h_manhatten_distance(AStarNode_t* a, AStarNode_t* b);
+// default functions
+static int   manhatten_distance(AStarNode_t* a, AStarNode_t* b);
+static float default_traversable(int x, int y);
 
 // helpers
 static int get_neighbors(AStar_t* asd, AStarNode_t* n, AStarNode_t* neighbors[]);
+static void reconstruct_path(AStar_t* asd, AStarNode_t* start, AStarNode_t* goal);
 
 // -----------------------
 // Global functions
 // -----------------------
 
-void astar_create(AStar_t* asd, int width, int height, int node_size)
+void astar_create(AStar_t* asd, int width, int height)
 {
     asd->width = width;
     asd->height = height;
-    asd->node_size = node_size;
-    asd->heuristic = h_manhatten_distance; // default
+    asd->traversable = default_traversable;
+    asd->heuristic = manhatten_distance;
+
+    for(int j = 0; j < asd->height; ++j)
+    {
+        for(int i = 0; i < asd->width; ++i)
+        {
+            asd->nodemap[i][j].x = i;
+            asd->nodemap[i][j].y = j;
+        }
+    }
 }
 
-bool astar_traverse(AStarData* asd, int start_x, int start_y, int goal_x, int goal_y)
+bool astar_traverse(AStar_t* asd, int start_x, int start_y, int goal_x, int goal_y)
 {
     // initialize variables for traversal
     asd->openset_count = 0;
-    asd->camefrom_count = 0;
     asd->pathlen = 0;
 
+    AStarNode_t* start = &asd->nodemap[start_x][start_y];
+    AStarNode_t* goal  = &asd->nodemap[goal_x][goal_y];
+
     // begin with start node
-    openset_add(asd, &asd->nodemap[start_x][start_y]);
+    openset_add(asd, start);
 
     // map gscores and fscores with infinity, except starting node
-    memset(asd->gscores, INT_MAX, ASTAR_MAX_NODES*sizeof(int));
-    memset(asd->fscores, INT_MAX, ASTAR_MAX_NODES*sizeof(int));
+    for(int j = 0; j < asd->height; ++j)
+    {
+        for(int i = 0; i < asd->width; ++i)
+        {
+            asd->gscores[i][j] = INT_MAX;
+            asd->fscores[i][j] = INT_MAX;
+        }
+    }
 
     asd->gscores[start_x][start_y] = 0;
     asd->fscores[start_x][start_y] = 0;
 
-    AStarNode_t* goal = &asd->nodemap[goal_x][goal_y];
-
     while(asd->openset_count > 0)
     {
-        AStarNode_t* curr = openset_get(asd);
+        AStarNode_t* curr = openset_get(asd); // gets lowest fscore node
 
         if(curr == goal)
         {
-            // @TODO reconstruct path
+            reconstruct_path(asd, start, goal);
             return true;
         }
 
@@ -60,21 +83,26 @@ bool astar_traverse(AStarData* asd, int start_x, int start_y, int goal_x, int go
 
         for(int i = 0; i < neighbor_count; ++i)
         {
-            if(!asd->traversable(n[i]))
+            float traversability = asd->traversable(n[i]->x, n[i]->y);
+
+            if(traversability == 0.0)
                 continue; // can't travel on this neighbor
 
-            int tentative_gscore = asd->gscores[curr->x][curr->y] + 1; // using 1 as the distance between neighbors
+            float d = 1.0; // using 1 since manhatten distance
+            int tentative_gscore = asd->gscores[curr->x][curr->y] + d*traversability;
 
             if(tentative_gscore < asd->gscores[n[i]->x][n[i]->y])
             {
                 // this path is better to the neighbor than previous
-                asd->camefrom[(n[i]->x, n[i]->y, asd->width)] = curr;
+                asd->camefrom[ASINDEX(n[i]->x, n[i]->y, asd->width)] = curr;
 
                 asd->gscores[n[i]->x][n[i]->y] = tentative_gscore;
                 asd->fscores[n[i]->x][n[i]->y] = tentative_gscore + asd->heuristic(n[i], goal);
 
-                if(!openset_in(n[i]))
+                if(!openset_in(asd, n[i]))
+                {
                     openset_add(asd,n[i]);
+                }
             }
         }
     }
@@ -82,31 +110,71 @@ bool astar_traverse(AStarData* asd, int start_x, int start_y, int goal_x, int go
     return false;
 }
 
+void astar_print_path_graph(AStar_t* asd)
+{
+    for(int j = 0; j < asd->height; ++j)
+    {
+        for(int i = 0; i < asd->pathlen; ++i)
+        {
+            bool in_path = false;
+            for(int n = 0; n < asd->pathlen; ++n)
+            {
+                if(asd->path[n].x == i && asd->path[n].y == j)
+                {
+                    in_path = true;
+                    break;
+                }
+            }
+
+            float traversability = asd->traversable(i, j);
+            printf("%c", in_path ? '*' : (traversability == 0.0 ? 'x' : '_'));
+        }
+        printf("\n");
+    }
+}
+
+void astar_set_traversable_func(AStar_t* asd, astar_tfunc_t func)
+{
+    asd->traversable = func;
+}
+
+void astar_set_heuristic_func(AStar_t* asd, astar_hfunc_t func)
+{
+    asd->heuristic = func;
+}
+
+static float _test_traversable_func(int x, int y)
+{
+    if(x == 1 && y == 0) return 0.0;
+    if(x == 1 && y == 1) return 0.0;
+    if(x == 1 && y == 2) return 0.0;
+    if(x == 1 && y == 3) return 0.0;
+    if(x == 1 && y == 5) return 0.0;
+    return 1.0;
+}
+
 void astar_test()
 {
     AStar_t asd;
 
-    astar_create(&as, 7, 7, sizeof(int));
-    astar_set_traversible_func(NULL);
+    astar_create(&asd, 7, 7);
+    astar_set_traversable_func(&asd, _test_traversable_func);
 
-    if(!astar_traverse(&asd,0,0,4,5))
+    if(!astar_traverse(&asd,0,0,5,0))
     {
         printf("Failed to find a path!\n");
-            return 1;
+        return;
     }
 
     printf("Found a path!\n");
-    for(int i = 0; i < asd->pathlen; ++i)
-    {
-        printf("%d: [%d, %d]\n", i, asd->path[i].x, asd->path[i].y);
-    }
+    astar_print_path_graph(&asd);
 }
 
 // -----------------------
 // Static functions
 // -----------------------
 
-static bool openset_in(AStar_t* asd, AStarNode* n)
+static bool openset_in(AStar_t* asd, AStarNode_t* n)
 {
     for(int i = 0; i < asd->openset_count; ++i)
     {
@@ -116,7 +184,7 @@ static bool openset_in(AStar_t* asd, AStarNode* n)
     return false;
 }
 
-static void openset_add(AStar_t* asd, AStarNode* n)
+static void openset_add(AStar_t* asd, AStarNode_t* n)
 {
     if(asd->openset_count >= (asd->width*asd->height))
     {
@@ -134,12 +202,12 @@ static AStarNode_t* openset_get(AStar_t* asd)
     int fscore_min = INT_MAX;
     int min_index = -1;
     
-    for(int i = 0; i < asd->open_set_count; ++i)
+    for(int i = 0; i < asd->openset_count; ++i)
     {
         AStarNode_t* n = asd->openset[i];
-        if(n->fscore < fscore_min)
+        if(asd->fscores[n->x][n->y] < fscore_min)
         {
-            fscore_min = n->fscore;
+            fscore_min = asd->fscores[n->x][n->y];
             min_index = i;
         }
     }
@@ -155,12 +223,17 @@ static AStarNode_t* openset_get(AStar_t* asd)
     return min;
 }
 
-static int h_manhatten_distance(AStarNode_t* a, AStarNode_t* b)
+static int manhatten_distance(AStarNode_t* a, AStarNode_t* b)
 {
-    int dx = ABS(a->x - b->x);
-    int dy = ABS(a->y - b->y);
+    int dx = abs(a->x - b->x);
+    int dy = abs(a->y - b->y);
 
     return (dx+dy);
+}
+
+static float default_traversable(int x, int y)
+{
+    return 1.0;
 }
 
 static int get_neighbors(AStar_t* asd, AStarNode_t* n, AStarNode_t* neighbors[])
@@ -187,4 +260,24 @@ static int get_neighbors(AStar_t* asd, AStarNode_t* n, AStarNode_t* neighbors[])
     }
 
     return neighbor_count;
+}
+
+static void reconstruct_path(AStar_t* asd, AStarNode_t* start, AStarNode_t* goal)
+{
+    AStarNode_t* n = goal;
+
+    for(;;)
+    {
+        // add to path
+        memcpy(&asd->path[1],&asd->path[0],asd->pathlen*sizeof(AStarNode_t*));
+        asd->path[0].x = n->x;
+        asd->path[0].y = n->y;
+        asd->pathlen++;
+
+        if(n == start)
+            break;
+
+        int index = ASINDEX(n->x, n->y, asd->width);
+        n = asd->camefrom[index];
+    }
 }

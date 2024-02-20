@@ -26,6 +26,7 @@
 #include "skills.h"
 #include "ui.h"
 #include "weapon.h"
+#include "astar.h"
 #include "settings.h"
 
 // =========================
@@ -884,6 +885,9 @@ void init()
         net_client_init();
         set_game_state(GAME_STATE_PLAYING);
     }
+
+    // @TEMP
+    astar_test();
 }
 
 void deinit()
