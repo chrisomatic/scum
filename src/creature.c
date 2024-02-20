@@ -670,6 +670,8 @@ void creature_update(Creature* c, float dt)
     Vector2f adj = limit_rect_pos(&room_area, &r);
     c->phys.pos.x += adj.x;
     c->phys.pos.y += adj.y;
+
+    c->curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
 }
 
 void creature_lerp(Creature* c, float dt)
