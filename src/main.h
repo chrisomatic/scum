@@ -161,6 +161,9 @@ extern bool dynamic_zoom;
 extern int cam_zoom;
 extern int cam_min_zoom;
 
+extern uint16_t creature_clicked_id;
+extern Vector2i creature_clicked_target;
+
 extern char* tile_names[];
 extern char* creature_names[];
 extern char* item_names[];

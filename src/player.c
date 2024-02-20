@@ -310,6 +310,13 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
         p->transition_room = p->curr_room;
     }
 
+    if(p == player)
+    {
+        creature_clicked_target.x = -1;
+        creature_clicked_target.y = -1;
+        creature_clicked_id = 0;
+    }
+
     Room* room = level_get_room_by_index(&level, room_index);
     if(!room)
     {
