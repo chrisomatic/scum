@@ -9,8 +9,8 @@ typedef struct
     int y;
 } AStarNode_t;
 
-typedef float (*astar_tfunc_t)(int x, int y);
-typedef int   (*astar_hfunc_t)(AStarNode_t* a, AStarNode_t* b);
+typedef int (*astar_tfunc_t)(int x, int y);
+typedef int (*astar_hfunc_t)(AStarNode_t* a, AStarNode_t* b);
 
 typedef struct
 {

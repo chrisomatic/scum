@@ -46,7 +46,7 @@ static void print_path(LevelPath* path);
 static bool generate_room_path(Level* level, Room* start, Room* end, LevelPath* path, int tries);
 static bool find_direct_room_path(Level* level, Room* start, Room* end, LevelPath* path);
 static int get_viable_rooms(RoomType type, bool doors[4], int* ret_list);
-static float level_traversable_func(int x, int y);
+static int level_traversable_func(int x, int y);
 
 #endif
 
@@ -1901,18 +1901,18 @@ void level_print(Level* level)
     printf("\n");
 }
 
-static float level_traversable_func(int x, int y)
+static int level_traversable_func(int x, int y)
 {
     Room* room  = level_get_room_by_index(&level, player->curr_room);
     TileType tt = level_get_tile_type(room, x, y);
 
-    if(tt == TILE_BOULDER) return 0.0;
-    if(tt == TILE_PIT)     return 0.0;
-    if(tt == TILE_MUD)     return 0.5;
-    if(tt == TILE_ICE)     return 0.5;
-    if(tt == TILE_SPIKES)  return 0.3;
+    if(tt == TILE_BOULDER) return 0;
+    if(tt == TILE_PIT)     return 0;
+    if(tt == TILE_SPIKES)  return 1;
+    if(tt == TILE_MUD)     return 2;
+    if(tt == TILE_ICE)     return 2;
 
-    return 1.0;
+    return 3;
 }
 
 Rect level_get_tile_rect(int x, int y)

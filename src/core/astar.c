@@ -15,8 +15,8 @@ static AStarNode_t* openset_get(AStar_t* asd);
 static bool         openset_in(AStar_t* asd, AStarNode_t* n);
 
 // default functions
-static int   manhatten_distance(AStarNode_t* a, AStarNode_t* b);
-static float default_traversable(int x, int y);
+static int manhatten_distance(AStarNode_t* a, AStarNode_t* b);
+static int default_traversable(int x, int y);
 
 // helpers
 static int get_neighbors(AStar_t* asd, AStarNode_t* n, AStarNode_t* neighbors[]);
@@ -83,9 +83,9 @@ bool astar_traverse(AStar_t* asd, int start_x, int start_y, int goal_x, int goal
 
         for(int i = 0; i < neighbor_count; ++i)
         {
-            float traversability = asd->traversable(n[i]->x, n[i]->y);
+            int traversability = asd->traversable(n[i]->x, n[i]->y);
 
-            if(traversability == 0.0)
+            if(traversability == 0)
                 continue; // can't travel on this neighbor
 
             float d = 1.0; // using 1 since manhatten distance
@@ -126,8 +126,8 @@ void astar_print_path_graph(AStar_t* asd)
                 }
             }
 
-            float traversability = asd->traversable(i, j);
-            printf("%c", in_path ? '*' : (traversability == 0.0 ? 'x' : '_'));
+            int traversability = asd->traversable(i, j);
+            printf("%c", in_path ? '*' : (traversability > 0 ? 'x' : '_'));
         }
         printf("\n");
     }
@@ -143,14 +143,15 @@ void astar_set_heuristic_func(AStar_t* asd, astar_hfunc_t func)
     asd->heuristic = func;
 }
 
-static float _test_traversable_func(int x, int y)
+static int _test_traversable_func(int x, int y)
 {
-    if(x == 1 && y == 0) return 0.0;
-    if(x == 1 && y == 1) return 0.0;
-    if(x == 1 && y == 2) return 0.0;
-    if(x == 1 && y == 3) return 0.0;
-    if(x == 1 && y == 5) return 0.0;
-    return 1.0;
+    if(x == 1 && y == 0) return 0;
+    if(x == 1 && y == 1) return 0;
+    if(x == 1 && y == 2) return 0;
+    if(x == 1 && y == 3) return 0;
+    if(x == 1 && y == 5) return 0;
+
+    return 1;
 }
 
 void astar_test()
@@ -231,9 +232,9 @@ static int manhatten_distance(AStarNode_t* a, AStarNode_t* b)
     return (dx+dy);
 }
 
-static float default_traversable(int x, int y)
+static int default_traversable(int x, int y)
 {
-    return 1.0;
+    return 1;
 }
 
 static int get_neighbors(AStar_t* asd, AStarNode_t* n, AStarNode_t* neighbors[])
