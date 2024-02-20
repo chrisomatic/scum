@@ -2,6 +2,7 @@
 
 #include "physics.h"
 #include "room_file.h"
+#include "astar.h"
 
 #define MAX_ROOMS_GRID_X 7
 #define MAX_ROOMS_GRID_Y 7
@@ -142,6 +143,7 @@ typedef struct
     bool has_boss_room;
     bool has_treasure_room;
     Vector2i start;
+    AStar_t asd;
 } Level;
 
 typedef struct

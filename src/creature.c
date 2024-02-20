@@ -934,13 +934,16 @@ static bool creature_do_astar_click(Creature* c, float dt)
 {
     if(c->id == creature_clicked_id && creature_clicked_target.x >= 0 && creature_clicked_target.y >= 0)
     {
-
         if(c->curr_tile.x == creature_clicked_target.x && c->curr_tile.y == creature_clicked_target.y)
         {
-            return false;
+            return true;
         }
 
         // move along path
+        bool traversable = astar_traverse(&level.asd, c->curr_tile.x, c->curr_tile.y, creature_clicked_target.x, creature_clicked_target.y);
+
+        AStarNode_t* n = &level.asd.path[1];
+        ai_move_to_tile(c, n->x, n->y);
 
         return true;
     }

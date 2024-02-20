@@ -125,6 +125,25 @@ void ai_move_imm(Creature* c, Dir dir, float speed)
     }
 }
 
+bool ai_move_to_tile(Creature* c, int x, int y)
+{
+    Rect r = level_get_tile_rect(x, y);
+
+    Vector2f v = {r.x - c->phys.pos.x, r.y - c->phys.pos.y};
+
+    if(ABS(v.x) < 1.0 && ABS(v.y) < 1.0)
+    {
+        // reached tile
+        return true;
+    }
+
+    // set velocity to move toward tile
+    c->phys.vel.x = c->phys.speed*v.x;
+    c->phys.vel.y = c->phys.speed*v.y;
+
+    return false;
+}
+
 void ai_walk_dir(Creature* c, Dir dir)
 {
     Vector2i o = get_dir_offsets(dir);

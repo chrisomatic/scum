@@ -1,6 +1,6 @@
 #pragma once
 
-#define ASTAR_MAX_X      256 // maximum grid dimension
+#define ASTAR_MAX_X      32 // maximum grid dimension
 #define ASTAR_MAX_NODES  (ASTAR_MAX_X*ASTAR_MAX_X)
 
 typedef struct
