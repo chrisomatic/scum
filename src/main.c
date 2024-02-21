@@ -1261,8 +1261,45 @@ void handle_room_completion(Room* room)
     }
 }
 
+//TODO
+Vector2i mouse_map_room = {0};
+AStar_t map_asd = {0};
+int room_traversable_doors(int x, int y)
+{
+    if(!level.rooms[x][y].valid) return 0;
+
+    AStarNode_t* prev = map_asd.camefrom[ASINDEX(x,y,map_asd.width)];
+    if(!prev) return 0;
+    // printf("prev is not null!\n");
+
+    printf("%d, %d -> %d, %d\n", prev->x, prev->y, x, y);
+    Dir dir = get_dir_from_coords(prev->x, prev->y, x, y);
+    if(!level.rooms[prev->x][prev->y].doors[dir]) return 0;
+    getchar();
+
+    return 1;
+}
+
 void draw_map(DrawLevelParams* params)
 {
+    bool astar = false;
+    if(debug_enabled && params->show_all)
+    {
+        if(mouse_map_room.x != -1 && mouse_map_room.y != -1)
+        {
+            astar_create(&map_asd, MAX_ROOMS_GRID_X, MAX_ROOMS_GRID_Y);
+            astar_set_traversable_func(&map_asd, room_traversable_doors);
+            printf("target: %d, %d\n", mouse_map_room.x, mouse_map_room.y);
+            astar = astar_traverse(&map_asd, level.start.x, level.start.y, mouse_map_room.x, mouse_map_room.y);
+        }
+    }
+
+    Rect mouse_rect = {0};
+    mouse_rect.x = mouse_x;
+    mouse_rect.y = mouse_y;
+    mouse_rect.w = 1;
+    mouse_rect.h = 1;
+
     // could also add this bool to Room struct
     bool _near[MAX_ROOMS_GRID_X][MAX_ROOMS_GRID_Y] = {0};
     for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
@@ -1369,7 +1406,27 @@ void draw_map(DrawLevelParams* params)
                 _color = room->color;
             }
 
+            if(astar)
+            {
+                for(int i = 0; i < map_asd.pathlen; ++i)
+                {
+                    if(x == map_asd.path[i].x && y == map_asd.path[i].y)
+                    {
+                        _color = COLOR_GREEN;
+                    }
+                }
+            }
+
             gfx_draw_rect(&room_rect, _color, NOT_SCALED, NO_ROTATION, _opacity, true, NOT_IN_WORLD);
+
+            if(params->show_all)
+            {
+                if(rectangles_colliding(&room_rect, &mouse_rect))
+                {
+                    mouse_map_room.x = x;
+                    mouse_map_room.y = y;
+                }
+            }
 
             if(dbg)
             {

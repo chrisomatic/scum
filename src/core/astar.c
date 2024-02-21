@@ -7,8 +7,6 @@
 
 #include "astar.h"
 
-#define ASINDEX(x,y,w) ((y)*(w)+x)
-
 // openset queue handling functions
 static void         openset_add(AStar_t* asd, AStarNode_t* n);
 static AStarNode_t* openset_get(AStar_t* asd);
@@ -84,6 +82,7 @@ bool astar_traverse(AStar_t* asd, int start_x, int start_y, int goal_x, int goal
         for(int i = 0; i < neighbor_count; ++i)
         {
             int traversability = asd->traversable(n[i]->x, n[i]->y);
+            // if(n[i] == goal) traversability = 1;
 
             if(traversability == 0)
                 continue; // can't travel on this neighbor

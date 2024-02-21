@@ -3,6 +3,8 @@
 #define ASTAR_MAX_X      32 // maximum grid dimension
 #define ASTAR_MAX_NODES  (ASTAR_MAX_X*ASTAR_MAX_X)
 
+#define ASINDEX(x,y,w) ((y)*(w)+x)
+
 typedef struct
 {
     int x;
@@ -31,7 +33,7 @@ typedef struct
     // function pointers
     astar_tfunc_t traversable;
     astar_hfunc_t heuristic;
-    
+
     // result
     int pathlen;
     AStarNode_t path[ASTAR_MAX_NODES];
