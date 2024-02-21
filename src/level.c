@@ -1933,6 +1933,34 @@ Rect level_get_rect_by_pos(float x, float y)
     return level_get_tile_rect(tile_coords.x, tile_coords.y);
 }
 
+static uint8_t get_pit_tile_sprite(RoomFileData* rdata, int x, int y)
+{
+    bool pit_up    = (rdata->tiles[x][y-1] == TILE_PIT);
+    bool pit_right = (rdata->tiles[x+1][y] == TILE_PIT);
+    bool pit_down  = (rdata->tiles[x][y+1] == TILE_PIT);
+    bool pit_left  = (rdata->tiles[x-1][y] == TILE_PIT);
+
+    uint8_t sprite = SPRITE_TILE_PIT;
+
+    if( pit_up &&  pit_right &&  pit_down &&  pit_left) return sprite+0;
+    if(!pit_up &&  pit_right &&  pit_down &&  pit_left) return sprite+8;
+    if( pit_up && !pit_right &&  pit_down &&  pit_left) return sprite+9;
+    if( pit_up &&  pit_right && !pit_down &&  pit_left) return sprite+10;
+    if( pit_up &&  pit_right &&  pit_down && !pit_left) return sprite+11;
+    if(!pit_up &&  pit_right &&  pit_down && !pit_left) return sprite+12;
+    if(!pit_up && !pit_right &&  pit_down &&  pit_left) return sprite+13;
+    if(!pit_up &&  pit_right && !pit_down &&  pit_left) return sprite+14;
+    if( pit_up && !pit_right && !pit_down &&  pit_left) return sprite+15;
+    if( pit_up && !pit_right &&  pit_down && !pit_left) return sprite+16;
+    if( pit_up &&  pit_right && !pit_down && !pit_left) return sprite+17;
+    if(!pit_up && !pit_right &&  pit_down && !pit_left) return sprite+18;
+    if(!pit_up && !pit_right && !pit_down &&  pit_left) return sprite+19;
+    if( pit_up && !pit_right && !pit_down && !pit_left) return sprite+20;
+    if(!pit_up &&  pit_right && !pit_down && !pit_left) return sprite+21;
+
+    return sprite+22;
+}
+
 uint8_t level_get_tile_sprite(TileType tt)
 {
     SpriteTileType sprite = SPRITE_TILE_MAX;
@@ -2149,6 +2177,9 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
         {
             TileType tt = rdata->tiles[_x][_y];
             uint8_t sprite = level_get_tile_sprite(tt);
+
+            if(tt == TILE_PIT)
+                sprite = get_pit_tile_sprite(rdata,_x,_y);
 
             // +1 for walls
             float draw_x = r.x + (_x+1)*w;
