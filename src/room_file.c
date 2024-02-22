@@ -330,6 +330,8 @@ bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path
                 char* check = fgets(line,sizeof(line),fp); __line_num++;
                 line[strcspn(line, "\r\n")] = 0; // remove newline
 
+                //printf("item mapping. filename: %s\n", filename);
+
                 if(!check || STR_EMPTY(line))
                     break;
 

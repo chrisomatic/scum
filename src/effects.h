@@ -25,6 +25,7 @@ typedef enum
     EFFECT_JETS,
     EFFECT_EXPLOSION,
     EFFECT_PLAYER_ACTIVATE,
+    EFFECT_SHRINE,
     EFFECT_MAX,
 } Effect;
 

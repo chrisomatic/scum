@@ -6,6 +6,7 @@
 #include "core/text_list.h"
 #include "log.h"
 #include "net.h"
+#include "effects.h"
 
 #include "player.h"
 #include "item.h"
@@ -76,6 +77,9 @@ static bool item_func_shrine(Item* pu, Player* p)
     printf("%d\n", pu->used);
     if(pu->used) return false;
     pu->used = true;
+
+    ParticleSpawner* ps = particles_spawn_effect(pu->phys.pos.x,pu->phys.pos.y, 0.0, &particle_effects[EFFECT_SHRINE], 2.0, true, false);
+    if(ps != NULL) ps->userdata = (int)pu->curr_room;
 
     float x = pu->phys.pos.x;
     float y = pu->phys.pos.y;

@@ -113,6 +113,7 @@ typedef enum
     ROOM_TYPE_MONSTER,
     ROOM_TYPE_TREASURE,
     ROOM_TYPE_BOSS,
+    ROOM_TYPE_SHRINE,
     ROOM_TYPE_MAX
 } RoomType;
 
@@ -142,6 +143,7 @@ typedef struct
     int num_rooms;
     bool has_boss_room;
     bool has_treasure_room;
+    bool has_shrine_room;
     Vector2i start;
     AStar_t asd;
 } Level;

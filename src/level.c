@@ -20,11 +20,13 @@ float level_grace_time = 0.0;
 static int room_list_monster[MAX_ROOM_LIST_COUNT] = {0};
 static int room_list_empty[MAX_ROOM_LIST_COUNT] = {0};
 static int room_list_treasure[MAX_ROOM_LIST_COUNT] = {0};
+static int room_list_shrine[MAX_ROOM_LIST_COUNT] = {0};
 static int room_list_boss[MAX_ROOM_LIST_COUNT] = {0};
 
 static int room_count_monster  = 0;
 static int room_count_empty    = 0;
 static int room_count_treasure = 0;
+static int room_count_shrine   = 0;
 static int room_count_boss     = 0;
 
 static int used_room_list_monster[MAX_ROOM_LIST_COUNT] = {0};
@@ -115,6 +117,7 @@ Level level_generate(unsigned int seed, int rank)
     room_count_monster = 0;
     room_count_empty = 0;
     room_count_treasure = 0;
+    room_count_shrine = 0;
     room_count_boss = 0;
 
     for(int i = 0; i < room_list_count; ++i)
@@ -127,6 +130,7 @@ Level level_generate(unsigned int seed, int rank)
             case ROOM_TYPE_MONSTER:  room_list_monster[room_count_monster++]   = i; break;
             case ROOM_TYPE_EMPTY:    room_list_empty[room_count_empty++]       = i; break;
             case ROOM_TYPE_TREASURE: room_list_treasure[room_count_treasure++] = i; break;
+            case ROOM_TYPE_SHRINE:   room_list_shrine[room_count_shrine++]     = i; break;
             case ROOM_TYPE_BOSS:     room_list_boss[room_count_boss++]         = i; break;
             default: break;
         }
@@ -137,6 +141,7 @@ Level level_generate(unsigned int seed, int rank)
     printf("   # monster rooms: %d\n",room_count_monster);
     printf("   # empty rooms: %d\n",room_count_empty);
     printf("   # treasure rooms: %d\n",room_count_treasure);
+    printf("   # shrine rooms: %d\n",room_count_shrine);
     printf("   # boss rooms: %d\n",room_count_boss);
 #endif
 
@@ -155,7 +160,7 @@ Level level_generate(unsigned int seed, int rank)
     {
         //TEMP
         item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, sroom->index);
-        item_add(ITEM_SHRINE, CENTER_X+TILE_SIZE*2, CENTER_Y, sroom->index);
+        //item_add(ITEM_SHRINE, CENTER_X+TILE_SIZE*2, CENTER_Y, sroom->index);
     }
 
     LevelPath bpath = {0};
@@ -168,6 +173,14 @@ Level level_generate(unsigned int seed, int rank)
     troom = place_room_and_path(&glevel, NULL, ROOM_TYPE_TREASURE, sroom, 4, 6, &tpath, false);
     set_doors_from_path(&glevel, &tpath);
 
+    if(lrand() % 2 == 0)
+    {
+        LevelPath shpath = {0};
+        Room* shroom = NULL;
+        shroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_SHRINE, sroom, 4, 6, &shpath, false);
+        if(shroom) set_doors_from_path(&glevel, &shpath);
+    }
+        
     for(;;)
     {
         int room_count = get_room_count(&glevel);
@@ -191,7 +204,8 @@ Level level_generate(unsigned int seed, int rank)
             bool start = x == glevel.start.x && y == glevel.start.y;
             bool boss = room->type == ROOM_TYPE_BOSS;
             bool treasure = room->type == ROOM_TYPE_TREASURE;
-            if(start || boss || treasure) continue;
+            bool shrine = room->type == ROOM_TYPE_SHRINE;
+            if(start || boss || treasure || shrine) continue;
 
             // check surrounding rooms
             for(int d = 0; d < 4; ++d)
@@ -225,6 +239,7 @@ Level level_generate(unsigned int seed, int rank)
             bool start = x == glevel.start.x && y == glevel.start.y;
             bool boss = room->type == ROOM_TYPE_BOSS;
             bool treasure = room->type == ROOM_TYPE_TREASURE;
+            bool shrine = room->type == ROOM_TYPE_SHRINE;
 
             if(!start)
             {
@@ -239,6 +254,11 @@ Level level_generate(unsigned int seed, int rank)
                 {
                     rfd_count = get_usable_rooms(room->type, room->doors, rfd_list);
                     glevel.has_treasure_room = rfd_count > 0;
+                }
+                else if(shrine)
+                {
+                    rfd_count = get_usable_rooms(room->type, room->doors, rfd_list);
+                    glevel.has_shrine_room = rfd_count > 0;
                 }
                 else
                 {
@@ -261,6 +281,8 @@ Level level_generate(unsigned int seed, int rank)
                 room->color = COLOR(100,100,200);
             else if(room->type == ROOM_TYPE_TREASURE)
                 room->color = COLOR(200,200,100);
+            else if(room->type == ROOM_TYPE_SHRINE)
+                room->color = COLOR(200,100,200);
             else if(room->type == ROOM_TYPE_MONSTER)
                 room->color = COLOR(200,100,100);
             else
@@ -277,7 +299,7 @@ Level level_generate(unsigned int seed, int rank)
                 for(int i = 0; i < rfd->item_count; ++i)
                 {
                     Vector2f pos = level_get_pos_by_room_coords(rfd->item_locations_x[i]-1, rfd->item_locations_y[i]-1); // @convert room objects to tile grid coordinates
-                    // printf("Adding item of type: %s to (%f %f)\n", item_get_name(rfd->item_types[i]), pos.x, pos.y);
+                    LOGI("Adding item of type: %s to (%f %f)", item_get_name(rfd->item_types[i]), pos.x, pos.y);
                     item_add(rfd->item_types[i], pos.x, pos.y, room->index);
                 }
 
@@ -295,10 +317,11 @@ Level level_generate(unsigned int seed, int rank)
         }
     }
 
-    if(!glevel.has_treasure_room || !glevel.has_boss_room)
+    if(!glevel.has_treasure_room || !glevel.has_shrine_room || !glevel.has_boss_room)
     {
         LOGE("Level Generation Error (seed: %u, rank: %d)", seed, rank);
         if(!glevel.has_treasure_room) LOGE("No treasure room");
+        if(!glevel.has_shrine_room) LOGE("No shrine room");
         if(!glevel.has_boss_room) LOGE("No boss room");
     }
 
@@ -744,6 +767,7 @@ static int room_traversable_func(int x, int y)
     if(x >= MAX_ROOMS_GRID_X || y >= MAX_ROOMS_GRID_Y) return 0;
     if(x == asd_target.x && y == asd_target.y) return 1;
     if(glevel.rooms[x][y].type == ROOM_TYPE_TREASURE) return 0;
+    if(glevel.rooms[x][y].type == ROOM_TYPE_SHRINE) return 0;
     if(glevel.rooms[x][y].type == ROOM_TYPE_BOSS) return 0;
 
     for(int i = 0; i < gpath.length; ++i)
@@ -772,6 +796,10 @@ static int get_usable_rooms(RoomType type, bool doors[4], int* ret_list)
         case ROOM_TYPE_TREASURE:
             list_count = room_count_treasure;
             list = room_list_treasure;
+            break;
+        case ROOM_TYPE_SHRINE:
+            list_count = room_count_shrine;
+            list = room_list_shrine;
             break;
         case ROOM_TYPE_MONSTER:
         {
@@ -1685,6 +1713,8 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
         {
             if(aroom->type == ROOM_TYPE_TREASURE)
                 dcolor = aroom->color;
+            if(aroom->type == ROOM_TYPE_SHRINE)
+                dcolor = aroom->color;
             else if(aroom->type == ROOM_TYPE_BOSS)
                 dcolor = aroom->color;
         }
@@ -2067,6 +2097,7 @@ const char* get_room_type_name(RoomType rt)
         case ROOM_TYPE_EMPTY: return "Empty";
         case ROOM_TYPE_MONSTER: return "Monster";
         case ROOM_TYPE_TREASURE: return "Treasure";
+        case ROOM_TYPE_SHRINE: return "Shrine";
         case ROOM_TYPE_BOSS: return "Boss";
     }
     return "?";
