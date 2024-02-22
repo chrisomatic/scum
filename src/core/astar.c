@@ -68,32 +68,32 @@ bool astar_traverse(AStar_t* asd, int start_x, int start_y, int goal_x, int goal
 
     while(asd->openset_count > 0)
     {
-        AStarNode_t* curr = openset_get(asd); // gets lowest fscore node
+        asd->prev = asd->curr;
+        asd->curr = openset_get(asd); // gets lowest fscore node
 
-        if(curr == goal)
+        if(asd->curr == goal)
         {
             reconstruct_path(asd, start, goal);
             return true;
         }
 
         AStarNode_t* n[4];
-        int neighbor_count = get_neighbors(asd, curr, n);
+        int neighbor_count = get_neighbors(asd, asd->curr, n);
 
         for(int i = 0; i < neighbor_count; ++i)
         {
             int traversability = asd->traversable(n[i]->x, n[i]->y);
-            // if(n[i] == goal) traversability = 1;
 
             if(traversability == 0)
                 continue; // can't travel on this neighbor
 
             float d = 1.0; // using 1 since manhatten distance
-            int tentative_gscore = asd->gscores[curr->x][curr->y] + d*traversability;
+            int tentative_gscore = asd->gscores[asd->curr->x][asd->curr->y] + d*traversability;
 
             if(tentative_gscore < asd->gscores[n[i]->x][n[i]->y])
             {
                 // this path is better to the neighbor than previous
-                asd->camefrom[ASINDEX(n[i]->x, n[i]->y, asd->width)] = curr;
+                asd->camefrom[ASINDEX(n[i]->x, n[i]->y, asd->width)] = asd->curr;
 
                 asd->gscores[n[i]->x][n[i]->y] = tentative_gscore;
                 asd->fscores[n[i]->x][n[i]->y] = tentative_gscore + asd->heuristic(n[i], goal);

@@ -23,6 +23,9 @@ typedef struct
     // intermediate use
     AStarNode_t nodemap[ASTAR_MAX_X][ASTAR_MAX_X];
 
+    AStarNode_t* prev; // for visibility of evaluation
+    AStarNode_t* curr;
+
     int openset_count;
     AStarNode_t* openset[ASTAR_MAX_NODES];
     AStarNode_t* camefrom[ASTAR_MAX_NODES];
