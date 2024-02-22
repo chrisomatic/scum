@@ -1261,21 +1261,24 @@ void handle_room_completion(Room* room)
     }
 }
 
-//TODO
 Vector2i mouse_map_room = {0};
 AStar_t map_asd = {0};
+LevelPath map_path = {0};
 int room_traversable_doors(int x, int y)
 {
     if(!level.rooms[x][y].valid) return 0;
 
-    AStarNode_t* prev = map_asd.camefrom[ASINDEX(x,y,map_asd.width)];
-    if(!prev) return 0;
-    // printf("prev is not null!\n");
+    int px = 0;
+    int py = 0;
 
-    printf("%d, %d -> %d, %d\n", prev->x, prev->y, x, y);
-    Dir dir = get_dir_from_coords(prev->x, prev->y, x, y);
-    if(!level.rooms[prev->x][prev->y].doors[dir]) return 0;
-    getchar();
+    AStarNode_t* from = map_asd.curr;
+    if(!from) return 0;
+    px = from->x;
+    py = from->y;
+
+    // printf("%d, %d -> %d, %d\n", px, py, x, y);
+    Dir dir = get_dir_from_coords(px, py, x, y);
+    if(!level.rooms[px][py].doors[dir]) return 0;
 
     return 1;
 }
@@ -1283,14 +1286,19 @@ int room_traversable_doors(int x, int y)
 void draw_map(DrawLevelParams* params)
 {
     bool astar = false;
-    if(debug_enabled && params->show_all)
+    if(params->show_all)
     {
         if(mouse_map_room.x != -1 && mouse_map_room.y != -1)
         {
             astar_create(&map_asd, MAX_ROOMS_GRID_X, MAX_ROOMS_GRID_Y);
             astar_set_traversable_func(&map_asd, room_traversable_doors);
-            printf("target: %d, %d\n", mouse_map_room.x, mouse_map_room.y);
+            // printf("target: %d, %d\n", mouse_map_room.x, mouse_map_room.y);
             astar = astar_traverse(&map_asd, level.start.x, level.start.y, mouse_map_room.x, mouse_map_room.y);
+            if(astar)
+            {
+                memset(&map_path, 0, sizeof(LevelPath));
+                level_astar_to_path(&level, &map_asd, &map_path);
+            }
         }
     }
 
@@ -1361,6 +1369,7 @@ void draw_map(DrawLevelParams* params)
     //         }
     //     }
     // }
+    bool mouse_on_room = false;
 
     for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
     {
@@ -1406,23 +1415,32 @@ void draw_map(DrawLevelParams* params)
                 _color = room->color;
             }
 
+            uint32_t __color = _color;
+            int path_idx = -1;
             if(astar)
             {
-                for(int i = 0; i < map_asd.pathlen; ++i)
+                for(int i = 0; i < map_path.length; ++i)
                 {
-                    if(x == map_asd.path[i].x && y == map_asd.path[i].y)
+                    // if(x == map_asd.path[i].x && y == map_asd.path[i].y)
+                    if(x == map_path.rooms[i]->grid.x && y == map_path.rooms[i]->grid.y)
                     {
+                        path_idx = i;
                         _color = COLOR_GREEN;
+                        break;
                     }
                 }
             }
 
             gfx_draw_rect(&room_rect, _color, NOT_SCALED, NO_ROTATION, _opacity, true, NOT_IN_WORLD);
 
+            // reset color (so it's not green)
+            _color = __color;
+
             if(params->show_all)
             {
                 if(rectangles_colliding(&room_rect, &mouse_rect))
                 {
+                    mouse_on_room = true;
                     mouse_map_room.x = x;
                     mouse_map_room.y = y;
                 }
@@ -1481,11 +1499,27 @@ void draw_map(DrawLevelParams* params)
                     _h = door_w;
                 }
 
+                if(astar && path_idx != -1)
+                {
+                    if(d == map_path.directions[path_idx])
+                    {
+                        _color = COLOR_GREEN;
+                    }
+                }
+
                 Rect door = RECT(draw_x+(r*o.x), draw_y+(r*o.y), _w, _h);
                 gfx_draw_rect(&door, _color, NOT_SCALED, NO_ROTATION, _opacity, true, NOT_IN_WORLD);
 
+                // reset color (so it's not green)
+                _color = __color;
             }
         }
+    }
+
+    if(!mouse_on_room && params->show_all)
+    {
+        mouse_map_room.x = -1;
+        mouse_map_room.y = -1;
     }
 
     for(int i = 0; i < MAX_PLAYERS; ++i)

@@ -163,14 +163,18 @@ extern float level_grace_time;
 void level_init();
 void level_update(float dt);
 void level_load_rooms();
+
 Level level_generate(unsigned int seed, int rank);
+
+void level_astar_to_path(Level* level, AStar_t* asd, LevelPath* path);
+void level_print_path(LevelPath* path);
+
 uint8_t level_get_tile_sprite(TileType tt);
 Rect level_get_tile_rect(int x, int y);
 Rect level_get_rect_by_pos(float x, float y);
 TileType level_get_tile_type(Room* room, int x, int y);
 TileType level_get_tile_type_by_pos(Room* room, float x, float y);
 void level_get_rand_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile_pos);
-
 void level_get_safe_floor_tile(Room* room, Vector2i start, Vector2i* tile_coords, Vector2f* tile_pos);
 
 // Note: DIR_NONE is center tile
