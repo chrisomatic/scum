@@ -176,7 +176,6 @@ int main(int argc, char* argv[])
     // }
     // // exit(1);
 
-
     init_timer();
     log_init(0);
 
@@ -1867,10 +1866,10 @@ void draw()
             creature_clicked_target.x = -1;
             creature_clicked_target.y = -1;
         }
-        if(creature_clicked_target.x >= 0 && creature_clicked_target.y >= 0)
+        if(creature_clicked_target.x >= 0 && creature_clicked_target.y >= 0 && debug_enabled)
         {
             Rect r = level_get_tile_rect(creature_clicked_target.x, creature_clicked_target.y);
-            gfx_draw_rect(&r, COLOR_BLUE, NOT_SCALED, NO_ROTATION, 0.4, true, IN_WORLD);
+            gfx_draw_rect(&r, COLOR_BLUE, NOT_SCALED, NO_ROTATION, 0.3, true, IN_WORLD);
         }
 
     }

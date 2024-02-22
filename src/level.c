@@ -326,7 +326,7 @@ Level level_generate(unsigned int seed, int rank)
     }
 
 #if GENERATE_ROOMS_TEST
-    // float monster_rooms_percentage = (float)used_room_count_monster / (float)get_room_count(&glevel);
+    // float monster_rooms_percentage = (float)used_room_count_monster / (float)get_room_count(&glevel)-2;
     // printf("%d\n",(int)(monster_rooms_percentage*100));
     }
 #endif
