@@ -34,6 +34,8 @@ typedef enum
 
     ITEM_CHEST,
 
+    ITEM_SHRINE,
+
     ITEM_MAX
 } ItemType;
 
@@ -97,6 +99,7 @@ Item* item_get_by_id(uint16_t id);
 bool item_is_gem(ItemType type);
 bool item_is_heart(ItemType type);
 bool item_is_chest(ItemType type);
+bool item_is_shrine(ItemType type);
 
 ItemType item_get_random_gem();
 ItemType item_get_random_heart();

@@ -85,7 +85,7 @@ Vector2f transition_offsets = {0};
 Vector2f transition_targets = {0};
 
 Level level;
-unsigned int level_seed = 942;
+unsigned int level_seed = 10000-1;
 // unsigned int level_seed = 0;
 int level_rank = 0;
 int level_transition = 0;
@@ -263,7 +263,6 @@ void set_game_state(GameState state)
             } break;
             case GAME_STATE_MENU:
             {
-                // menu_selected_option = 0;
                 show_tile_grid = false;
                 debug_enabled = false;
                 bool diff = room_file_load_all(false);
@@ -276,7 +275,6 @@ void set_game_state(GameState state)
             } break;
             case GAME_STATE_SETTINGS:
             {
-                // menu_selected_option = 0;
                 show_tile_grid = false;
                 debug_enabled = false;
                 net_client_disconnect();

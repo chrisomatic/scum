@@ -34,6 +34,10 @@ static Level glevel = {0};
 static LevelPath gpath = {0};
 Vector2i asd_target = {0};
 
+//TODO
+// // indexed by level_rank
+// static const int min_num_rooms[10] = {10,11,12,13,14,15};
+
 
 static void init_level_struct(Level* level);
 static Room* place_room(Level* level, RoomType type, Room* from_room, int min_dist, int max_dist, AStar_t* asd);
@@ -72,8 +76,9 @@ static inline bool flip_coin()
 // ------------------------------------------------------------------------
 
 #define GENERATE_ROOMS_TEST 0
-#define TEST_COUNT          10000
+#define TEST_COUNT          1000
 #define START_SEED          0
+
 
 Level level_generate(unsigned int seed, int rank)
 {
@@ -150,6 +155,7 @@ Level level_generate(unsigned int seed, int rank)
     {
         //TEMP
         item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, sroom->index);
+        item_add(ITEM_SHRINE, CENTER_X+TILE_SIZE*2, CENTER_Y, sroom->index);
     }
 
     LevelPath bpath = {0};
@@ -167,7 +173,7 @@ Level level_generate(unsigned int seed, int rank)
         int room_count = get_room_count(&glevel);
         if(room_count > 14) break;
 
-        printf("Extra room\n");
+        // printf("Extra room\n");
         LevelPath epath = {0};
         Room* eroom = NULL;
         eroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_MONSTER, sroom, 1, 3, &epath, false);
@@ -297,6 +303,8 @@ Level level_generate(unsigned int seed, int rank)
     }
 
 #if GENERATE_ROOMS_TEST
+    // float monster_rooms_percentage = (float)used_room_count_monster / (float)get_room_count(&glevel);
+    // printf("%d\n",(int)(monster_rooms_percentage*100));
     }
 #endif
 
@@ -527,11 +535,21 @@ static Room* place_room_and_path(Level* level, Vector2i* pos, RoomType type, Roo
     }
     else
     {
-        room = place_room(level, type, start, min_dist, max_dist, &asd);
+        // printf("%d, %d\n", min_dist, max_dist);
+        for(int i = 0; i < 10; ++i)
+        {
+            min_dist--;
+            max_dist++;
+            // printf("  %d, %d\n", min_dist, max_dist);
+            room = place_room(level, type, start, min_dist, max_dist, &asd);
+            if(room) break;
+        }
         if(!room)
         {
+            min_dist = 0;
             max_dist = MAX_ROOMS_GRID_X + MAX_ROOMS_GRID_Y;
-            room = place_room(level, type, start, 0, max_dist, &asd);
+            // printf("     %d, %d\n", min_dist, max_dist);
+            room = place_room(level, type, start, min_dist, max_dist, &asd);
         }
     }
 

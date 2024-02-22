@@ -1128,18 +1128,26 @@ void player_update(Player* p, float dt)
                 ItemType type = pu->type;
                 ItemProps* pr = &item_props[type];
 
-                if(type == ITEM_CHEST)
+                if(type == ITEM_NEW_LEVEL)
                 {
-                    if(!pu->used)
+                    if(level_grace_time <= 0.0)
                     {
-                        pu->used = true;
-                        if(item_props[type].func) item_props[type].func(pu, p);
+                        LOGI("Using item type: %s (%d)", item_get_name(type), type);
+                        item_remove(pu);
+                        trigger_generate_level(rand(), level_rank+1, 2, __LINE__);
+
+                        if(role == ROLE_SERVER)
+                        {
+                            NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
+                            net_server_add_event(&ev);
+                        }
+                        return;
                     }
                 }
                 else if(pr->socketable)
                 {
+                    LOGI("Socketing item type: %s (%d)", item_get_name(type), type);
                     int idx = p->gauntlet_selection;
-
                     for(int i = 0; i < p->gauntlet_slots; ++i)
                     {
                         Item* it = &p->gauntlet[i];
@@ -1157,36 +1165,15 @@ void player_update(Player* p, float dt)
                 }
                 else
                 {
-
-                    if(type == ITEM_NEW_LEVEL)
-                    {
-                        if(level_grace_time <= 0.0)
-                        {
-                            LOGI("Using item type: %d (%s)", type, item_get_name(type));
-                            item_remove(pu);
-                            trigger_generate_level(rand(), level_rank+1, 2, __LINE__);
-
-                            if(role == ROLE_SERVER)
-                            {
-                                NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
-                                net_server_add_event(&ev);
-                            }
-
-                            return;
-                        }
-
-                    }
-                    else
-                    {
-                        LOGI("Using item type: %d", type);
-                        if(item_props[type].func) item_props[type].func(pu, p);
-                    }
-
-                    if(pu->picked_up)
-                    {
-                        item_remove(pu);
-                    }
+                    LOGI("Using item type: %s (%d)", item_get_name(type), type);
+                    if(item_props[type].func) item_props[type].func(pu, p);
                 }
+
+                if(pu->picked_up)
+                {
+                    item_remove(pu);
+                }
+
             }
         }
 

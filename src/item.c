@@ -18,6 +18,7 @@ Item items[MAX_ITEMS] = {0};
 ItemProps item_props[ITEM_MAX] = {0};
 int items_image = -1;
 int chest_image = -1;
+int shrine_image = -1;
 
 static uint16_t id_counter = 1;
 static uint16_t get_id()
@@ -31,6 +32,9 @@ static uint16_t get_id()
 
 static bool item_func_chest(Item* pu, Player* p)
 {
+    if(pu->used) return false;
+    pu->used = true;
+
     float x = pu->phys.pos.x;
     float y = pu->phys.pos.y;
     int croom = pu->curr_room;
@@ -55,15 +59,28 @@ static bool item_func_chest(Item* pu, Player* p)
         {
             ItemType t = rand() % ITEM_MAX;
             if(item_is_gem(t)) continue;
-            if(t == ITEM_CHEST) continue;
+            if(item_is_chest(t)) continue;
+            if(item_is_shrine(t)) continue;
             if(t == ITEM_NEW_LEVEL) continue;
             if(t == ITEM_HEART_EMPTY) continue;
             item_add(t, x, y, croom);
             break;
-
         }
     }
 
+    return true;
+}
+
+static bool item_func_shrine(Item* pu, Player* p)
+{
+    printf("%d\n", pu->used);
+    if(pu->used) return false;
+    pu->used = true;
+
+    float x = pu->phys.pos.x;
+    float y = pu->phys.pos.y;
+    int croom = pu->curr_room;
+    item_add(item_get_random_heart(), x, y, croom);
     return true;
 }
 
@@ -296,14 +313,30 @@ void item_init()
 
     items_image = gfx_load_image("src/img/items.png", false, false, 16, 16);
     chest_image = gfx_load_image("src/img/chest.png", false, false, 32, 32);
+    shrine_image = gfx_load_image("src/img/shrine.png", false, false, 32, 48);
 
     for(int i = 0; i < ITEM_MAX; ++i)
     {
         ItemProps* p = &item_props[i];
 
         p->type = i;
-        p->image = p->type == ITEM_CHEST ? chest_image : items_image;
-        p->sprite_index = p->type == ITEM_CHEST ? 0 : i;
+
+        if(p->type == ITEM_CHEST)
+        {
+            p->image = chest_image;
+            p->sprite_index = 0;
+        }
+        else if(p->type == ITEM_SHRINE)
+        {
+            p->image = shrine_image;
+            p->sprite_index = 0;
+        }
+        else
+        {
+            p->image = items_image;
+            p->sprite_index = i;
+        }
+
         p->func = NULL;
 
         p->socketable = true;
@@ -353,6 +386,12 @@ void item_init()
                 p->socketable = false;
                 p->func = (void*)item_func_chest;
             } break;
+            case ITEM_SHRINE:
+            {
+                p->touchable = false;
+                p->socketable = false;
+                p->func = (void*)item_func_shrine;
+            } break;
             case ITEM_NEW_LEVEL:
             {
                 p->touchable = false;
@@ -360,6 +399,7 @@ void item_init()
                 p->func = NULL;
             } break;
         }
+
     }
 }
 
@@ -378,6 +418,11 @@ Item* item_get_by_id(uint16_t id)
         }
     }
     return NULL;
+}
+
+bool item_is_shrine(ItemType type)
+{
+    return (type == ITEM_SHRINE);
 }
 
 bool item_is_chest(ItemType type)
@@ -458,7 +503,8 @@ ItemType item_rand(bool include_chest)
     for(;;)
     {
         ItemType t = rand() % ITEM_MAX;
-        if(t == ITEM_CHEST && !include_chest) continue;
+        if(item_is_chest(t) && !include_chest) continue;
+        if(item_is_shrine(t)) continue;
         if(t == ITEM_NEW_LEVEL) continue;
         if(t == ITEM_HEART_EMPTY) continue;
         return t;
@@ -470,6 +516,7 @@ const char* item_get_name(ItemType type)
     switch(type)
     {
         case ITEM_NONE:       return "None";
+        case ITEM_SHRINE:     return "Shrine";
         case ITEM_CHEST:      return "Chest";
         case ITEM_GEM_RED:    return "Red Gem";
         case ITEM_GEM_GREEN:  return "Green Gem";
@@ -501,6 +548,7 @@ const char* item_get_description(ItemType type)
     switch(type)
     {
         case ITEM_NONE:       return "";
+        case ITEM_SHRINE:     return "hmmmmmm";
         case ITEM_CHEST:      return "contains loot";
         case ITEM_GEM_RED:    return "increase projectile damage";
         case ITEM_GEM_GREEN:  return "poison projectiles";
@@ -541,6 +589,13 @@ void item_add(ItemType type, float x, float y, uint8_t curr_room)
     if(type == ITEM_CHEST)
     {
         pu.phys.mass = 2.0;
+        pu.phys.base_friction = 30.0;
+        pu.phys.radius = 12*iscale; //TEMP
+        pu.phys.elasticity = 0.2;
+    }
+    else if(type == ITEM_SHRINE)
+    {
+        pu.phys.mass = 1000.0;
         pu.phys.base_friction = 30.0;
         pu.phys.radius = 12*iscale; //TEMP
         pu.phys.elasticity = 0.2;
@@ -732,7 +787,7 @@ void item_draw(Item* pu)
         return;
 
     uint32_t color = 0x88888888;
-    if(pu->highlighted && pu->id == player->highlighted_item_id)
+    if(pu->highlighted || pu->id == player->highlighted_item_id)
     {
         color = COLOR_TINT_NONE;
     }
