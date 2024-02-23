@@ -87,7 +87,6 @@ static bool item_func_shrine(Item* pu, Player* p)
     int croom = pu->curr_room;
 
     int r = rand() % 6;
-    r = 5;
 
     uint32_t message_color = 0x00CC00CC;
     float message_scale = 1.0;
