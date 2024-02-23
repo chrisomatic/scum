@@ -1603,7 +1603,7 @@ void level_get_rand_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile
     {
         int _x = rand() % ROOM_TILE_SIZE_X;
         int _y = rand() % ROOM_TILE_SIZE_Y;
-        if(level_get_tile_type(room, _x, _y) == TILE_FLOOR)
+        if(IS_SAFE_TILE(level_get_tile_type(room, _x, _y)))
         {
             if(tile_coords)
             {
