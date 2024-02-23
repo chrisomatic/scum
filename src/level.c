@@ -81,7 +81,6 @@ static inline bool flip_coin()
 #define TEST_COUNT          1000
 #define START_SEED          0
 
-
 Level level_generate(unsigned int seed, int rank)
 {
 
@@ -348,6 +347,18 @@ Level level_generate(unsigned int seed, int rank)
     astar_set_traversable_func(&glevel.asd, tile_traversable_func);
 
     return glevel;
+}
+
+void level_set_room_pointers(Level* level)
+{
+    for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
+    {
+        for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
+        {
+            uint8_t idx = level_get_room_index(x, y);
+            level->rooms_ptr[idx] = &level->rooms[x][y];
+        }
+    }
 }
 
 // assume asd path[0] is the same point as the end of path

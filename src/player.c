@@ -436,6 +436,8 @@ void player_add_xp(Player* p, int xp)
         if(num_new_levels > 0) text_list_add(ptext, COLOR_GREEN, 3.0, "+%d level%s", num_new_levels, num_new_levels > 1 ? "s" : "");
     }
 
+    bool had_new_levels = p->new_levels > 0;
+
     p->level += num_new_levels;
     p->new_levels += num_new_levels;
 
@@ -444,7 +446,8 @@ void player_add_xp(Player* p, int xp)
     if(p->new_levels > 0)
     {
         randomize_skill_choices(p);
-        p->show_skill_selection = true;
+        // if(!had_new_levels)
+            p->show_skill_selection = true;
     }
 
 }

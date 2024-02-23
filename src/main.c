@@ -671,6 +671,7 @@ void game_generate_level()
     // particles_delete_all_spawners(); //doesn't work properly
 
     level = level_generate(level_seed, level_rank);
+    level_set_room_pointers(&level);
     ui_message_set_title(2.0, 0x00CCCCCC, "Level %d", level_rank);
 
     if(role == ROLE_CLIENT)

@@ -167,6 +167,7 @@ void level_update(float dt);
 void level_load_rooms();
 
 Level level_generate(unsigned int seed, int rank);
+void level_set_room_pointers(Level* level);
 
 void level_astar_to_path(Level* level, AStar_t* asd, LevelPath* path);
 void level_print_path(LevelPath* path);
