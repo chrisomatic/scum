@@ -1248,12 +1248,15 @@ void handle_room_completion(Room* room)
         }
         else
         {
-            if(rand() % 5 == 0) //TODO: probability
+            if(room->type != ROOM_TYPE_SHRINE)
             {
-                Vector2f pos = {0};
-                Vector2i start = {.x = ROOM_TILE_SIZE_X/2, .y = ROOM_TILE_SIZE_Y/2};
-                level_get_safe_floor_tile(room, start, NULL, &pos);
-                item_add(item_get_random_heart(), pos.x, pos.y, room_index);
+                if(rand() % 5 == 0) //TODO: probability
+                {
+                    Vector2f pos = {0};
+                    Vector2i start = {.x = ROOM_TILE_SIZE_X/2, .y = ROOM_TILE_SIZE_Y/2};
+                    level_get_safe_floor_tile(room, start, NULL, &pos);
+                    item_add(item_get_random_heart(), pos.x, pos.y, room_index);
+                }
             }
         }
     }
@@ -1898,9 +1901,15 @@ void draw()
 
     draw_chat_box();
 
+    Rect cr = get_camera_rect();
+
+    if(level.darkness_curse)
+    {
+        gfx_draw_rect(&cr, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.70, true, IN_WORLD);
+    }
+
     if(level_transition_state != 0)
     {
-        Rect cr = get_camera_rect();
         gfx_draw_rect(&cr, COLOR_BLACK, NOT_SCALED, NO_ROTATION, level_transition_opacity, true, IN_WORLD);
     }
 

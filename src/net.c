@@ -3153,6 +3153,7 @@ static void pack_other(Packet* pkt, ClientInfo* cli)
     Room* room = level_get_room_by_index(&level, (int)players[cli->client_id].curr_room);
 
     BPW(&server.bp, 1,  (uint32_t)(room->doors_locked ? 0x01 : 0x00));
+    BPW(&server.bp, 1,  (uint32_t)(level.darkness_curse ? 0x01 : 0x00));
     BPW(&server.bp, 1,  (uint32_t)(paused ? 0x01 : 0x00));
 }
 
@@ -3169,6 +3170,8 @@ static void unpack_other(Packet* pkt, int* offset, WorldState* ws)
     {
         room->doors_locked = bitpack_read(&client.bp, 1) == 0x01 ? true : false;
     }
+
+    level.darkness_curse = bitpack_read(&client.bp, 1) == 0x01 ? true : false;
 
     paused = bitpack_read(&client.bp, 1) == 0x01 ? true : false;
 }

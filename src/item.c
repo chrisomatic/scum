@@ -76,7 +76,6 @@ static bool item_func_chest(Item* pu, Player* p)
 
 static bool item_func_shrine(Item* pu, Player* p)
 {
-    printf("%d\n", pu->used);
     if(pu->used) return false;
     pu->used = true;
 
@@ -87,7 +86,8 @@ static bool item_func_shrine(Item* pu, Player* p)
     float y = pu->phys.pos.y;
     int croom = pu->curr_room;
 
-    int r = rand() % 4;
+    int r = rand() % 6;
+    r = 5;
 
     uint32_t message_color = 0x00CC00CC;
     float message_scale = 1.0;
@@ -142,6 +142,11 @@ static bool item_func_shrine(Item* pu, Player* p)
             ItemType it = item_rand(true);
             item_add(it, x, y, croom);
             ui_message_set_title(2.0, message_color, message_scale, "A small treasure for your trouble");
+        } break;
+        case 5:
+        {
+            level.darkness_curse = true;
+            ui_message_set_title(2.0, message_color, message_scale, "Enjoy the darkness bitch");
         } break;
     }
 

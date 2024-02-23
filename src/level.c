@@ -172,7 +172,7 @@ Level level_generate(unsigned int seed, int rank)
     troom = place_room_and_path(&glevel, NULL, ROOM_TYPE_TREASURE, sroom, 4, 6, &tpath, false);
     set_doors_from_path(&glevel, &tpath);
 
-    if(lrand() % 2 == 0)
+    if(lrand() % 100 <= 75)
     {
         LevelPath shpath = {0};
         Room* shroom = NULL;

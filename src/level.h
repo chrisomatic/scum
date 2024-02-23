@@ -144,6 +144,7 @@ typedef struct
     bool has_boss_room;
     bool has_treasure_room;
     bool has_shrine_room;
+    bool darkness_curse;
     Vector2i start;
     AStar_t asd;
 } Level;
