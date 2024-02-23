@@ -672,7 +672,7 @@ void game_generate_level()
 
     level = level_generate(level_seed, level_rank);
     level_set_room_pointers(&level);
-    ui_message_set_title(2.0, 0x00CCCCCC, "Level %d", level_rank);
+    ui_message_set_title(2.0, 0x00CCCCCC, 1.2, "Level %d", level_rank);
 
     if(role == ROLE_CLIENT)
         return;
@@ -1200,7 +1200,7 @@ void update(float dt)
     }
     else
     {
-        ui_message_set_title(0.2, COLOR_WHITE, "PAUSED");
+        ui_message_set_title(0.2, COLOR_WHITE, 1.2, "PAUSED");
     }
 
     camera_set(false);

@@ -1702,6 +1702,7 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
     gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_DL, r.x,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, false, 1.0, 0.0, 1.0, false, false, false);
 
     uint8_t door_sprites[4] = {SPRITE_TILE_DOOR_UP, SPRITE_TILE_DOOR_RIGHT, SPRITE_TILE_DOOR_DOWN, SPRITE_TILE_DOOR_LEFT};
+
     if(room->doors_locked)
     {
         door_sprites[0] = SPRITE_TILE_DOOR_UP_CLOSED;

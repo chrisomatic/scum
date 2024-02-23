@@ -7,6 +7,8 @@
 #include "log.h"
 #include "net.h"
 #include "effects.h"
+#include "creature.h"
+#include "ui.h"
 
 #include "player.h"
 #include "item.h"
@@ -84,7 +86,65 @@ static bool item_func_shrine(Item* pu, Player* p)
     float x = pu->phys.pos.x;
     float y = pu->phys.pos.y;
     int croom = pu->curr_room;
-    item_add(item_get_random_heart(), x, y, croom);
+
+    int r = rand() % 4;
+
+    uint32_t message_color = 0x00CC00CC;
+    float message_scale = 1.0;
+
+    switch(r)
+    {
+        case 0:
+        {
+            // heart
+            item_add(item_get_random_heart(), x, y, croom);
+            ui_message_set_title(2.0, message_color, message_scale, "To lose thee were to lose myself");
+        }   break;
+        case 1:
+        {
+            // random creature
+            Room* room = level_get_room_by_index(&level, croom);
+            creature_add(room, creature_get_random(), NULL, NULL);
+            room->doors_locked = true;
+            ui_message_set_title(2.0, message_color, message_scale, "Death");
+        }   break;
+        case 2:
+        {
+            // poison everyone
+            int num = player_get_active_count();
+            for(int i = 0; i < num; ++i)
+            {
+                Player* x = &players[i];
+                if(x->curr_room != pu->curr_room)
+                    continue;
+
+                status_effects_add_type(&x->phys, pu->curr_room, STATUS_EFFECT_POISON);
+            }
+
+            ui_message_set_title(2.0, message_color, message_scale, "Pestilence");
+        }   break;
+        case 3:
+        {
+            int num = player_get_active_count();
+            for(int i = 0; i < num; ++i)
+            {
+                Player* x = &players[i];
+                if(x->curr_room != pu->curr_room)
+                    continue;
+
+                player_add_xp(x, 300);
+            }
+
+            ui_message_set_title(2.0, message_color, message_scale, "The best gift is that of experience");
+        }   break;
+        case 4:
+        {
+            ItemType it = item_rand(true);
+            item_add(it, x, y, croom);
+            ui_message_set_title(2.0, message_color, message_scale, "A small treasure for your trouble");
+        } break;
+    }
+
     return true;
 }
 

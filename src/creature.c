@@ -930,6 +930,22 @@ static Player* get_nearest_player(uint8_t room_index, float x, float y)
     return &players[min_index];
 }
 
+CreatureType creature_get_random()
+{
+    int r = rand() % 6;
+    switch(r)
+    {
+        case 0: return CREATURE_TYPE_SLUG;
+        case 1: return CREATURE_TYPE_GEIZER;
+        case 2: return CREATURE_TYPE_FLOATER;
+        case 3: return CREATURE_TYPE_BUZZER;
+        case 4: return CREATURE_TYPE_SPIKED_SLUG;
+        case 5: return CREATURE_TYPE_INFECTED;
+    }
+
+    return CREATURE_TYPE_SHAMBLER; // should never happen
+}
+
 static bool creature_do_astar_click(Creature* c, float dt)
 {
     if(c->id == creature_clicked_id && creature_clicked_target.x >= 0 && creature_clicked_target.y >= 0)

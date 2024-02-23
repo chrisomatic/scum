@@ -14,6 +14,7 @@ float message_small_duration;
 char message_title[UI_MESSAGE_MAX];
 float message_title_duration;
 float message_title_duration_max;
+float message_title_scale;
 uint32_t message_title_color;
 
 static void ui_message_draw_small();
@@ -39,7 +40,7 @@ void ui_message_set_small(float duration, char* fmt, ...)
     message_small_duration = duration;
 }
 
-void ui_message_set_title(float duration, uint32_t color, char* fmt, ...)
+void ui_message_set_title(float duration, uint32_t color, float scale, char* fmt, ...)
 {
     static char temp[UI_MESSAGE_MAX] = {0};
     memset(temp, 0, sizeof(char)*UI_MESSAGE_MAX);
@@ -58,6 +59,7 @@ void ui_message_set_title(float duration, uint32_t color, char* fmt, ...)
 
     message_title_duration = duration;
     message_title_duration_max = duration;
+    message_title_scale = scale;
     message_title_color = color;
 }
 
@@ -144,7 +146,7 @@ static void ui_message_draw_title()
     if(strlen(message_title) == 0)
         return;
 
-    float scale = 1.20 * ascale;
+    float scale = message_title_scale * ascale;
 
     Vector2f size = gfx_string_get_size(scale, message_title);
 
