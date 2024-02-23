@@ -159,31 +159,32 @@ Level level_generate(unsigned int seed, int rank)
     {
         //TEMP
         item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, sroom->index);
+        // item_add(ITEM_REVIVE, CENTER_X, CENTER_Y+TILE_SIZE*2, sroom->index);
         //item_add(ITEM_SHRINE, CENTER_X+TILE_SIZE*2, CENTER_Y, sroom->index);
     }
 
     LevelPath bpath = {0};
     Room* broom = NULL;
-    broom = place_room_and_path(&glevel, NULL, ROOM_TYPE_BOSS, sroom, 3, 7, &bpath, false);
+    broom = place_room_and_path(&glevel, NULL, ROOM_TYPE_BOSS, sroom, 2, 4, &bpath, false);
     set_doors_from_path(&glevel, &bpath);
 
     LevelPath tpath = {0};
     Room* troom = NULL;
-    troom = place_room_and_path(&glevel, NULL, ROOM_TYPE_TREASURE, sroom, 4, 6, &tpath, false);
+    troom = place_room_and_path(&glevel, NULL, ROOM_TYPE_TREASURE, sroom, 2, 4, &tpath, false);
     set_doors_from_path(&glevel, &tpath);
 
     if(lrand() % 100 <= 75)
     {
         LevelPath shpath = {0};
         Room* shroom = NULL;
-        shroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_SHRINE, sroom, 4, 6, &shpath, false);
+        shroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_SHRINE, sroom, 2, 4, &shpath, false);
         if(shroom) set_doors_from_path(&glevel, &shpath);
     }
         
     for(;;)
     {
         int room_count = get_room_count(&glevel);
-        if(room_count > 14) break;
+        if(room_count > 10) break;
 
         // printf("Extra room\n");
         LevelPath epath = {0};

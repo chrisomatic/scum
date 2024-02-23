@@ -1755,6 +1755,8 @@ void draw()
         return;
     }
 
+    uint32_t _ambient_light = ambient_light;
+    if(level.darkness_curse) ambient_light = 0x00404040;
 
     // draw game
 
@@ -1901,18 +1903,19 @@ void draw()
 
     draw_chat_box();
 
-    Rect cr = get_camera_rect();
 
-    if(level.darkness_curse)
-    {
-        gfx_draw_rect(&cr, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.70, true, IN_WORLD);
-    }
+    // if(level.darkness_curse)
+    // {
+    //     gfx_draw_rect(&cr, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.70, true, IN_WORLD);
+    // }
 
     if(level_transition_state != 0)
     {
+        Rect cr = get_camera_rect();
         gfx_draw_rect(&cr, COLOR_BLACK, NOT_SCALED, NO_ROTATION, level_transition_opacity, true, IN_WORLD);
     }
 
+    ambient_light = _ambient_light;
 }
 
 

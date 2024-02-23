@@ -1179,6 +1179,11 @@ void player_update(Player* p, float dt)
                 {
                     LOGI("Using item type: %s (%d)", item_get_name(type), type);
                     if(item_props[type].func) item_props[type].func(pu, p);
+
+                    if(type == ITEM_REVIVE && pu->used)
+                    {
+                        item_remove(pu);
+                    }
                 }
 
                 if(pu->picked_up)

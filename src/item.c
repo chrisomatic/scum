@@ -74,6 +74,33 @@ static bool item_func_chest(Item* pu, Player* p)
     return true;
 }
 
+static bool item_func_revive(Item* pu, Player* p)
+{
+    if(pu->used) return false;
+
+    int others[MAX_PLAYERS] = {0};
+    int count = 0;
+
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        Player* p2 = &players[i];
+        if(p == p2) continue;
+        if(!p2->active) continue;
+        if(p2->phys.dead) others[count++] = i;
+    }
+
+    if(count > 0)
+    {
+        pu->used = true;
+        Player* p2 = &players[others[rand()%count]];
+        p2->phys.dead = false;
+        p2->phys.hp = 2;
+        p2->phys.floating = false; //TODO
+    }
+
+    return pu->used;
+}
+
 static bool item_func_shrine(Item* pu, Player* p)
 {
     if(pu->used) return false;
@@ -86,7 +113,7 @@ static bool item_func_shrine(Item* pu, Player* p)
     float y = pu->phys.pos.y;
     int croom = pu->curr_room;
 
-    int r = rand() % 6;
+    int r = rand() % 7;
 
     uint32_t message_color = 0x00CC00CC;
     float message_scale = 1.0;
@@ -146,6 +173,11 @@ static bool item_func_shrine(Item* pu, Player* p)
         {
             level.darkness_curse = true;
             ui_message_set_title(2.0, message_color, message_scale, "Enjoy the darkness bitch");
+        } break;
+        case 6:
+        {
+            item_add(ITEM_REVIVE, x, y, croom);
+            ui_message_set_title(2.0, message_color, message_scale, "Revival item");
         } break;
     }
 
@@ -407,7 +439,7 @@ void item_init()
 
         p->func = NULL;
 
-        p->socketable = true;
+        p->socketable = false;
 
         switch(p->type)
         {
@@ -418,6 +450,7 @@ void item_init()
             case ITEM_GEM_YELLOW:
             case ITEM_GEM_PURPLE:
             {
+                p->socketable = true;
                 p->touchable = false;
                 p->func = (void*)item_timed_func_consumable_start;
                 p->timed_func = (void*)item_timed_func_consumable_periodic;
@@ -432,6 +465,7 @@ void item_init()
             case ITEM_POTION_RANGE:
             case ITEM_POTION_PURPLE:
             {
+                p->socketable = true;
                 p->touchable = false;
                 p->func = (void*)item_timed_func_consumable_start;
                 p->timed_func = (void*)item_timed_func_consumable_periodic;
@@ -445,6 +479,7 @@ void item_init()
             case ITEM_GLOWING_ORB:
             case ITEM_GAUNTLET_SLOT:
             {
+                p->socketable = true;
                 p->touchable = false;
                 p->func = (void*)item_func_consumable;
             } break;
@@ -465,6 +500,12 @@ void item_init()
                 p->touchable = false;
                 p->socketable = false;
                 p->func = NULL;
+            } break;
+            case ITEM_REVIVE:
+            {
+                p->touchable = false;
+                p->socketable = false;
+                p->func = (void*)item_func_revive;
             } break;
         }
 
@@ -547,7 +588,7 @@ void item_apply_gauntlet(void* _proj_def, void* _proj_spawn, Item* gauntlet, uin
 
 ItemType item_get_random_gem()
 {
-    // kinda inefficent but no big deal
+    // kinda inefficient but no big deal
     for(;;)
     {
         ItemType it = rand() % ITEM_MAX;
@@ -575,6 +616,12 @@ ItemType item_rand(bool include_chest)
         if(item_is_shrine(t)) continue;
         if(t == ITEM_NEW_LEVEL) continue;
         if(t == ITEM_HEART_EMPTY) continue;
+
+        //TEMP
+        if(t == ITEM_SILVER_STAR) continue;
+        if(t == ITEM_GOLD_STAR) continue;
+        if(t == ITEM_PURPLE_STAR) continue;
+
         return t;
     }
 }
@@ -584,6 +631,7 @@ const char* item_get_name(ItemType type)
     switch(type)
     {
         case ITEM_NONE:       return "None";
+        case ITEM_REVIVE:     return "Revive";
         case ITEM_SHRINE:     return "Shrine";
         case ITEM_CHEST:      return "Chest";
         case ITEM_GEM_RED:    return "Red Gem";
@@ -616,6 +664,7 @@ const char* item_get_description(ItemType type)
     switch(type)
     {
         case ITEM_NONE:       return "";
+        case ITEM_REVIVE:     return "cheat death";
         case ITEM_SHRINE:     return "hmmmmmm";
         case ITEM_CHEST:      return "contains loot";
         case ITEM_GEM_RED:    return "increase projectile damage";
