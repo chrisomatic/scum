@@ -515,6 +515,15 @@ void player_die(Player* p)
     p->phys.floating = true;
     status_effects_clear(&p->phys);
 
+    for(int i = 0; i < PLAYER_GAUNTLET_MAX; ++i)
+    {
+        if(p->gauntlet[i].type == ITEM_NONE)
+            continue;
+
+        player_drop_item(p, &p->gauntlet[i]);
+        p->gauntlet[i].type = ITEM_NONE;
+    }
+
     p->phys.falling = false;
     p->scale = 1.0;
 
