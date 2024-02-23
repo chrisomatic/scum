@@ -374,7 +374,7 @@ static Physics* get_physics_from_type(int index, uint8_t curr_room, EntityType t
     switch(type)
     {
         case ENTITY_TYPE_PLAYER:
-            if(!players[index].phys.dead && players[index].curr_room == curr_room)
+            if(!players[index].phys.dead && players[index].curr_room == curr_room && players[index].active)
                 return &players[index].phys;
             break;
         case ENTITY_TYPE_CREATURE:
@@ -391,7 +391,7 @@ Physics* entity_get_closest_to(Physics* phys, uint8_t curr_room, EntityType type
     switch(type)
     {
         case ENTITY_TYPE_PLAYER:
-            count = player_get_active_count(); //TODO: could be empty spots in player list
+            count = MAX_PLAYERS;
             break;
         case ENTITY_TYPE_CREATURE:
             count = creature_get_count();
