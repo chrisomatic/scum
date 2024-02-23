@@ -1184,8 +1184,26 @@ void player_update(Player* p, float dt)
             {
                 if(item_props[it->type].func)
                 {
+
                     bool ret = item_props[it->type].func(it, p);
-                    if(ret) it->type = ITEM_NONE;
+                    if(ret)
+                    {
+                        it->type = ITEM_NONE;
+
+                        // cycle selection to next item
+                        int idx = p->gauntlet_selection;
+                        for(int i = 1; i < p->gauntlet_slots; ++i)
+                        {
+                            idx++;
+                            if(idx >= p->gauntlet_slots) idx = 0;
+                            if(p->gauntlet[idx].type != ITEM_NONE)
+                            {
+                                p->gauntlet_selection = idx;
+                                break;
+                            }
+                        }
+                    }
+
                 }
             }
         }

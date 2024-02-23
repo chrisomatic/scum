@@ -317,11 +317,11 @@ Level level_generate(unsigned int seed, int rank)
         }
     }
 
-    if(!glevel.has_treasure_room || !glevel.has_shrine_room || !glevel.has_boss_room)
+    if(!glevel.has_treasure_room || !glevel.has_boss_room)
     {
         LOGE("Level Generation Error (seed: %u, rank: %d)", seed, rank);
         if(!glevel.has_treasure_room) LOGE("No treasure room");
-        if(!glevel.has_shrine_room) LOGE("No shrine room");
+        // if(!glevel.has_shrine_room) LOGE("No shrine room");
         if(!glevel.has_boss_room) LOGE("No boss room");
     }
 
