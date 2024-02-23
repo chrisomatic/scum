@@ -37,7 +37,7 @@ static LevelPath gpath = {0};
 Vector2i asd_target = {0};
 
 //TODO
-// // indexed by level_rank
+// indexed by level_rank
 // static const int min_num_rooms[10] = {10,11,12,13,14,15};
 
 
@@ -217,6 +217,12 @@ Level level_generate(unsigned int seed, int rank)
 
                 if(!level_is_room_valid(&glevel, _x, _y)) continue;
                 Room* aroom = &glevel.rooms[_x][_y];
+
+                bool _boss = aroom->type == ROOM_TYPE_BOSS;
+                bool _treasure = aroom->type == ROOM_TYPE_TREASURE;
+                bool _shrine = aroom->type == ROOM_TYPE_SHRINE;
+                if(_boss || _treasure || _shrine) continue;
+
                 if(lrand()%100 <= 10)
                 {
                     room->doors[d] = true;
