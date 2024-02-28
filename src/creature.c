@@ -29,6 +29,7 @@ static int creature_image_totem_yellow;
 static int creature_image_shambler;
 static int creature_image_spiked_slug;
 static int creature_image_infected;
+static int creature_image_gravity_crystal;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -42,6 +43,7 @@ static void creature_update_totem_yellow(Creature* c, float dt);
 static void creature_update_shambler(Creature* c, float dt);
 static void creature_update_spiked_slug(Creature* c, float dt);
 static void creature_update_infected(Creature* c, float dt);
+static void creature_update_gravity_crystal(Creature* c, float dt);
 
 static uint16_t id_counter = 1;
 static uint16_t get_id()
@@ -68,6 +70,7 @@ void creature_init()
     creature_image_shambler = gfx_load_image("src/img/creature_shambler.png", false, false, 32, 64);
     creature_image_spiked_slug = gfx_load_image("src/img/creature_spiked_slug.png", false, false, 32, 32);
     creature_image_infected = gfx_load_image("src/img/creature_infected.png", false, false, 32, 32);
+    creature_image_gravity_crystal = gfx_load_image("src/img/creature_gravity_crystal.png", false, false, 48, 48);
 }
 
 char* creature_type_name(CreatureType type)
@@ -98,6 +101,8 @@ char* creature_type_name(CreatureType type)
             return "Spiked Slug";
         case CREATURE_TYPE_INFECTED:
             return "Infected";
+        case CREATURE_TYPE_GRAVITY_CRYSTAL:
+            return "Gravity Crystal";
         default:
             return "???";
     }
@@ -131,6 +136,8 @@ int creature_get_image(CreatureType type)
             return creature_image_spiked_slug;
         case CREATURE_TYPE_INFECTED:
             return creature_image_infected;
+        case CREATURE_TYPE_GRAVITY_CRYSTAL:
+            return creature_image_gravity_crystal;
         default:
             return -1;
     }
@@ -341,6 +348,19 @@ void creature_init_props(Creature* c)
             c->phys.hp_max = 10.0;
             c->painful_touch = true;
             c->xp = 20;
+        } break;
+        case CREATURE_TYPE_GRAVITY_CRYSTAL:
+        {
+            c->phys.speed = 0.0;
+            c->act_time_min = 1.0;
+            c->act_time_max = 1.0;
+            c->phys.mass = 400000.0;
+            c->phys.base_friction = 50.0;
+            c->phys.hp_max = 127;
+            c->painful_touch = false;
+            c->phys.elasticity = 0.0;
+            c->passive = true;
+            c->xp = 0;
         } break;
     }
 
@@ -621,6 +641,9 @@ void creature_update(Creature* c, float dt)
         case CREATURE_TYPE_INFECTED:
             creature_update_infected(c,dt);
             break;
+        case CREATURE_TYPE_GRAVITY_CRYSTAL:
+            creature_update_gravity_crystal(c,dt);
+            break;
     }
 
     float speed = c->phys.speed*c->phys.speed_factor;
@@ -862,7 +885,7 @@ uint16_t creature_get_room_count(uint8_t room_index)
     uint16_t count = 0;
     for(int i = 0; i < clist->count; ++i)
     {
-        if(creatures[i].curr_room == room_index && !creatures[i].phys.dead)
+        if(creatures[i].curr_room == room_index && !creatures[i].phys.dead && !creatures[i].passive)
             count++;
     }
     return count;
@@ -1674,4 +1697,38 @@ static void creature_update_infected(Creature* c, float dt)
         }
     }
     */
+}
+
+static void creature_update_gravity_crystal(Creature* c, float dt)
+{
+    // F = (G*m1*m2)/(r^2)
+
+    const double G = 10.67;
+
+    float m1 = c->phys.mass;
+
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        Player* p = &players[i];
+
+        if(!p->active) continue;
+        if(p->phys.dead) continue;
+        if(p->curr_room != c->curr_room) continue;
+
+        double m2 = p->phys.mass;
+        double r2 = dist_squared(c->phys.pos.x,c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
+        double f = (G*m1*m2)/(r2*5.0);
+
+        printf("f: %f\n", f);
+
+        // apply gravitational pull
+        Vector2f v = {c->phys.pos.x - p->phys.pos.x, c->phys.pos.y - p->phys.pos.y};
+        normalize(&v);
+
+        v.x *= f;
+        v.y *= f;
+
+        p->phys.vel.x += dt*v.x;
+        p->phys.vel.y += dt*v.y;
+    }
 }

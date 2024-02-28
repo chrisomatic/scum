@@ -40,15 +40,6 @@ bool ai_update_action(Creature* c, float dt)
     return false;
 }
 
-static void update_creature_sprite_index(Creature* c)
-{
-    /*
-    Dir dir = get_dir_from_offsets(c);
-    if(c->type == CREATURE_TYPE_SLUG) // do this for any standard crawler creature
-        c->sprite_index = dir % 4;
-        */
-}
-
 static void _update_sprite_index(Creature* c, Dir dir)
 {
     switch(dir)

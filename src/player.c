@@ -1597,8 +1597,8 @@ void player_update(Player* p, float dt)
         }
     }
 
-    if(ABS(p->phys.vel.x) < 1.0) p->phys.vel.x = 0.0;
-    if(ABS(p->phys.vel.y) < 1.0) p->phys.vel.y = 0.0;
+    if(ABS(p->phys.vel.x) < 0.1) p->phys.vel.x = 0.0;
+    if(ABS(p->phys.vel.y) < 0.1) p->phys.vel.y = 0.0;
 
     float m1 = magn2f(p->phys.vel.x,p->phys.vel.y);
     float m2 = magn2f(vel_max.x, vel_max.y);

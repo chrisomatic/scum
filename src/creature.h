@@ -24,6 +24,7 @@ typedef enum
     CREATURE_TYPE_SHAMBLER,
     CREATURE_TYPE_SPIKED_SLUG,
     CREATURE_TYPE_INFECTED,
+    CREATURE_TYPE_GRAVITY_CRYSTAL,
     CREATURE_TYPE_MAX,
 } CreatureType;
 
@@ -54,6 +55,7 @@ typedef struct
     float damaged_time;
 
     bool invincible;
+    bool passive;  // doesn't count toward creature total
 
     // AI
     float action_counter;
