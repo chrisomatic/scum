@@ -186,9 +186,12 @@ static bool openset_in(AStar_t* asd, AStarNode_t* n)
 
 static void openset_add(AStar_t* asd, AStarNode_t* n)
 {
-    if(asd->openset_count >= (asd->width*asd->height))
+    int open_count = asd->openset_count;
+    int total_count = asd->width*asd->height;
+
+    if(open_count >= total_count)
     {
-        printf("Failed to add to openset, exceeded max count");
+        printf("Failed to add to openset, exceeded max count (%d >= %d)\n", open_count, total_count);
         return;
     }
 

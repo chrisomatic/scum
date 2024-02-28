@@ -344,7 +344,7 @@ Level level_generate(unsigned int seed, int rank)
     level_print(&glevel);
     level_grace_time = 2.0;
 
-    astar_create(&level.asd, ROOM_TILE_SIZE_X, ROOM_TILE_SIZE_Y);
+    astar_create(&glevel.asd, ROOM_TILE_SIZE_X, ROOM_TILE_SIZE_Y);
     astar_set_traversable_func(&glevel.asd, tile_traversable_func);
 
     return glevel;
