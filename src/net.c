@@ -27,8 +27,12 @@
 #define COOL_SERVER_PLAYER_LOGIC 1
 #define REDUNDANT_INPUTS 1
 
+
+#define ADDR_FMT "%u.%u.%u.%u:%u"
+#define ADDR_LST(addr) (addr)->a,(addr)->b,(addr)->c,(addr)->d,(addr)->port
+
 //#define SERVER_PRINT_SIMPLE 1
-//#define SERVER_PRINT_VERBOSE 1
+// #define SERVER_PRINT_VERBOSE 1
 
 #if SERVER_PRINT_VERBOSE
     #define LOGNV(format, ...) LOGN(format, ##__VA_ARGS__)
@@ -274,7 +278,8 @@ static bool is_empty_address(Address* addr)
 static void print_address(Address* addr)
 {
     // printf( "is local: %d\n", is_local_address(addr));
-    LOGN("[ADDR] %u.%u.%u.%u:%u",addr->a,addr->b,addr->c,addr->d,addr->port);
+    // LOGN("[ADDR] %u.%u.%u.%u:%u",addr->a,addr->b,addr->c,addr->d,addr->port);
+    LOGN("[ADDR] " ADDR_FMT, ADDR_LST(addr));
 }
 
 static bool compare_address(Address* addr1, Address* addr2, bool incl_port)
@@ -499,8 +504,12 @@ static int server_assign_new_client(Address* addr, ClientInfo** cli, char* name)
     {
         // print_address(&server.clients[i].address);
 
+
         bool addr_check = compare_address(&server.clients[i].address, addr, false);
         bool name_check = memcmp(name, players[i].settings.name, PLAYER_NAME_MAX*sizeof(char)) == 0;
+        LOGNV("[%d] addr: %s, name: %s", i, BOOLSTR(addr_check), BOOLSTR(name_check));
+        LOGNV("    " ADDR_FMT " | " ADDR_FMT "", ADDR_LST(&server.clients[i].address), ADDR_LST(addr));
+        LOGNV("    '%s' | '%s'", players[i].settings.name, name);
 
         if(addr_check && name_check)
         {
@@ -605,9 +614,13 @@ static void remove_client(ClientInfo* cli)
 
 #if COOL_SERVER_PLAYER_LOGIC
     Address addr = cli->address;
-    // clear everything but address
+    glist* thl = cli->timestamp_history_list;
+    thl->count = 0;
+
+    // clear everything but address and pointers
     memset(cli,0, sizeof(ClientInfo));
     memcpy(&cli->address, &addr, sizeof(Address));
+    cli->timestamp_history_list = thl;
 #else
     memset(cli,0, sizeof(ClientInfo));
 #endif
@@ -920,6 +933,9 @@ int net_server_start()
                     cli->state = SENDING_CONNECTION_REQUEST;
                     memcpy(&cli->address,&from,sizeof(Address));
                     update_server_num_clients();
+
+                    if(!cli->timestamp_history_list) printf("history list is null\n");
+                    else cli->timestamp_history_list->count = 0;
 
                     LOGN("Welcome New Client! (%d/%d)", server.num_clients, MAX_CLIENTS);
                     print_address(&cli->address);
@@ -1618,6 +1634,7 @@ static void client_send(PacketType type)
 
             pack_bytes(&pkt, (uint8_t*)client.client_salt, 8);
             // pack_string(&pkt, (uint8_t*)client.client_salt, 8);
+            // printf("packing name: '%s'\n", player->settings.name);
             pack_string(&pkt, player->settings.name, PLAYER_NAME_MAX);
             pkt.data_len = 1024; // pad to 1024
 

@@ -178,7 +178,7 @@ void player_init()
 
         player_set_defaults(p);
 
-        if(strlen(p->settings.name) == 0)
+        if(strlen(p->settings.name) == 0 && role == ROLE_LOCAL)
         {
             char* nms[] = {"Randy","Jenger","Peepa","The Hammer"};
             strcpy(p->settings.name, nms[rand()%4]);

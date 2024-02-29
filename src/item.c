@@ -748,8 +748,11 @@ void item_update(Item* pu, float dt)
 
     if(pu->type == ITEM_NEW_LEVEL)
     {
-        pu->angle += 80.0 * dt;
-        pu->angle = fmod(pu->angle,360.0f);
+        if(role != ROLE_SERVER)
+        {
+            pu->angle += 80.0 * dt;
+            pu->angle = fmod(pu->angle,360.0f);
+        }
     }
 
     pu->highlighted = false;
@@ -929,9 +932,17 @@ void item_lerp(Item* it, double dt)
     it->phys.pos.x = lp.x;
     it->phys.pos.y = lp.y;
     it->phys.pos.z = lp.z;
-
-    it->angle = lerp_angle_deg(it->server_state_prior.angle, it->server_state_target.angle, t);
     //printf("prior_pos: %f %f, target_pos: %f %f, pos: %f %f, t: %f\n",p->server_state_prior.pos.x, p->server_state_prior.pos.y, p->server_state_target.pos.x, p->server_state_target.pos.y, p->phys.pos.x, p->phys.pos.y, t);
+
+#if 1
+    if(it->type == ITEM_NEW_LEVEL)
+    {
+        it->angle += 80.0 * dt;
+        it->angle = fmod(it->angle,360.0f);
+    }
+#else
+    it->angle = lerp_angle_deg(it->server_state_prior.angle, it->server_state_target.angle, t);
+#endif
 }
 
 void item_handle_collision(Item* p, Entity* e)

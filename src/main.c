@@ -289,9 +289,9 @@ void set_game_state(GameState state)
                 if(role == ROLE_LOCAL)
                 {
                     player_set_active(player, true);
-                    memcpy(&player->settings, &menu_settings,sizeof(Settings));
-                    player_set_class(player, player->settings.class);
                 }
+                memcpy(&player->settings, &menu_settings,sizeof(Settings));
+                player_set_class(player, player->settings.class);
                 // player_set_active(&players[1], true);
                 player_init_keys();
             } break;
@@ -1841,132 +1841,71 @@ void draw()
     else
     {
 
-        Room* room = level_get_room_by_index(&level, player->curr_room);
-        if(!room) LOGW("room is null");
-        level_draw_room(room, NULL, 0, 0);
+        bool connected = true;
+        if(role == ROLE_CLIENT) connected = (net_client_get_state() == CONNECTED);
 
-        if(debug_enabled)
+        if(connected)
         {
-            Rect lst = level_get_tile_rect(player->last_safe_tile.x, player->last_safe_tile.y);
-            gfx_draw_rect(&lst, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
 
-            Rect ct = level_get_tile_rect(player->curr_tile.x, player->curr_tile.y);
-            gfx_draw_rect(&ct, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 0.1, true, IN_WORLD);
-        }
+            Room* room = level_get_room_by_index(&level, player->curr_room);
+            if(!room) LOGW("room is null");
+            level_draw_room(room, NULL, 0, 0);
 
-        // Vector2i c = level_get_room_coords(player->curr_room);
-        // for(int d = 0; d < 4; ++d)
-        // {
-        //     if(!room->doors[d]) continue;
-        //     Vector2i o = get_dir_offsets(d);
-        //     Room* r = level_get_room(&level, c.x+o.x, c.y+o.y);
-        //     if(!r) continue;
-        //     if(!r->valid) continue;
-        //     level_draw_room(r, NULL, room_area.w*o.x, room_area.h*o.y);
-        // }
-
-        decal_draw_all();
-        entity_draw_all();
-        explosion_draw_all();
-        particles_draw_all();
-        draw_all_other_player_info();
-
-        if(debug_enabled)
-        {
-            if(show_walls) room_draw_walls(room);
-            gfx_draw_rect(&tile_pit_rect, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
-            gfx_draw_rect(&player_pit_rect, COLOR_ORANGE, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
-            const float text_scale = 0.2;
-            gfx_draw_string(view_width - 50, view_height - 20, COLOR_WHITE, text_scale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "FPS: %.0f", game_timer.frame_fps_avg);
-            if(role == ROLE_CLIENT)
+            if(debug_enabled)
             {
-                int x0 = room_area.x - room_area.w/2.0;
-                int y0 = room_area.y - room_area.h/2.0;
+                Rect lst = level_get_tile_rect(player->last_safe_tile.x, player->last_safe_tile.y);
+                gfx_draw_rect(&lst, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
 
-                double rtt = net_client_get_rtt();
-
-                uint32_t color = COLOR_GREEN;
-                if(rtt > 90)  color = COLOR_YELLOW;
-                if(rtt > 180) color = COLOR_RED;
-
-                gfx_draw_string(view_width - 150, view_height - 20, color, text_scale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "Ping: %.0f ms", rtt);
+                Rect ct = level_get_tile_rect(player->curr_tile.x, player->curr_tile.y);
+                gfx_draw_rect(&ct, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 0.1, true, IN_WORLD);
             }
 
-            if(creature_clicked_target.x >= 0 && creature_clicked_target.y >= 0)
+            // Vector2i c = level_get_room_coords(player->curr_room);
+            // for(int d = 0; d < 4; ++d)
+            // {
+            //     if(!room->doors[d]) continue;
+            //     Vector2i o = get_dir_offsets(d);
+            //     Room* r = level_get_room(&level, c.x+o.x, c.y+o.y);
+            //     if(!r) continue;
+            //     if(!r->valid) continue;
+            //     level_draw_room(r, NULL, room_area.w*o.x, room_area.h*o.y);
+            // }
+
+            decal_draw_all();
+            entity_draw_all();
+            explosion_draw_all();
+            particles_draw_all();
+            draw_all_other_player_info();
+
+            if(debug_enabled)
             {
-                Rect r = level_get_tile_rect(creature_clicked_target.x, creature_clicked_target.y);
-                gfx_draw_rect(&r, COLOR_BLUE, NOT_SCALED, NO_ROTATION, 0.3, true, IN_WORLD);
+                if(show_walls) room_draw_walls(room);
+                gfx_draw_rect(&tile_pit_rect, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
+                gfx_draw_rect(&player_pit_rect, COLOR_ORANGE, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
+                const float text_scale = 0.2;
+                gfx_draw_string(view_width - 50, view_height - 20, COLOR_WHITE, text_scale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "FPS: %.0f", game_timer.frame_fps_avg);
+                if(role == ROLE_CLIENT)
+                {
+                    int x0 = room_area.x - room_area.w/2.0;
+                    int y0 = room_area.y - room_area.h/2.0;
+
+                    double rtt = net_client_get_rtt();
+
+                    uint32_t color = COLOR_GREEN;
+                    if(rtt > 90)  color = COLOR_YELLOW;
+                    if(rtt > 180) color = COLOR_RED;
+
+                    gfx_draw_string(view_width - 150, view_height - 20, color, text_scale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "Ping: %.0f ms", rtt);
+                }
+
+                if(creature_clicked_target.x >= 0 && creature_clicked_target.y >= 0)
+                {
+                    Rect r = level_get_tile_rect(creature_clicked_target.x, creature_clicked_target.y);
+                    gfx_draw_rect(&r, COLOR_BLUE, NOT_SCALED, NO_ROTATION, 0.3, true, IN_WORLD);
+                }
             }
+
         }
-
-
-        // bool clicked_creature = false;
-
-        // ui_message_clear_mouse();
-        // Rect mrw = RECT(mouse_world_x, mouse_world_y, 5, 5);
-        // for(int i = 0; i < clist->count; ++i)
-        // {
-        //     Creature* c = &creatures[i];
-        //     if(c->curr_room != player->curr_room) continue;
-
-        //     if(rectangles_colliding(&mrw, &c->phys.collision_rect))
-        //     {
-        //         if(window_mouse_left_went_up() && role == ROLE_LOCAL)
-        //         {
-        //             bool check = (c->type == CREATURE_TYPE_CLINGER);
-        //             check |= (c->type == CREATURE_TYPE_GEIZER);
-        //             check |= (c->type == CREATURE_TYPE_TOTEM_RED);
-        //             check |= (c->type == CREATURE_TYPE_TOTEM_BLUE);
-        //             check |= (c->type == CREATURE_TYPE_TOTEM_YELLOW);
-
-        //             if(!check)
-        //             {
-        //                 clicked_creature = true;
-        //                 creature_clicked_id = c->id;
-        //                 creature_clicked_target.x = -1;
-        //                 creature_clicked_target.y = -1;
-        //             }
-        //         }
-
-        //         if(debug_enabled) gfx_draw_rect(&mrw, COLOR_CYAN, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
-        //         ui_message_set_mouse(COLOR_RED, "%s (hp: %d)", creature_type_name(c->type), c->phys.hp);
-        //         break;
-        //     }
-        // }
-
-        // if(window_mouse_left_went_up() && !clicked_creature && creature_clicked_id != 0)
-        // {
-        //     creature_clicked_target = level_get_room_coords_by_pos(mouse_world_x, mouse_world_y);
-        //     TileType tt = level_get_tile_type(room, creature_clicked_target.x, creature_clicked_target.y);
-        //     if(!IS_SAFE_TILE(tt))
-        //     {
-        //         creature_clicked_target.x = -1;
-        //         creature_clicked_target.y = -1;
-        //     }
-        // }
-        // if(creature_clicked_target.x >= ROOM_TILE_SIZE_X || creature_clicked_target.y >= ROOM_TILE_SIZE_Y)
-        // {
-        //     creature_clicked_target.x = -1;
-        //     creature_clicked_target.y = -1;
-        // }
-        // if(creature_clicked_target.x >= 0 && creature_clicked_target.y >= 0 && debug_enabled)
-        // {
-        //     Rect r = level_get_tile_rect(creature_clicked_target.x, creature_clicked_target.y);
-        //     gfx_draw_rect(&r, COLOR_BLUE, NOT_SCALED, NO_ROTATION, 0.3, true, IN_WORLD);
-        // }
-
-
-        // if(window_mouse_right_went_up() && debug_enabled && role == ROLE_LOCAL)
-        // {
-        //     Vector2i clicked_tile = level_get_room_coords_by_pos(mouse_world_x, mouse_world_y);
-        //     TileType tt = level_get_tile_type(room, clicked_tile.x, clicked_tile.y);
-        //     if(IS_SAFE_TILE(tt))
-        //     {
-        //         Vector2f pos = level_get_pos_by_room_coords(clicked_tile.x, clicked_tile.y);
-        //         phys_set_collision_pos(&player->phys, pos.x, pos.y);
-        //         player->ignore_player_collision = true;
-        //     }
-        // }
 
 
     }
