@@ -1248,7 +1248,7 @@ static void creature_update_buzzer(Creature* c, float dt)
 
         if(act)
         {
-            if(ai_rand(4) < 3)
+            if(ai_rand(5) < 4)
             {
                 ai_random_walk(c);
             }
@@ -1273,13 +1273,16 @@ static void creature_update_buzzer(Creature* c, float dt)
         {
             c->ai_counter = 0.0;
 
-            // fire shots
-            Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
-            float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y) + RAND_FLOAT(-10.0,10.0);
-            creature_fire_projectile(c, angle, PROJ_COLOR);
+            if(c->ai_value % 2 == 0)
+            {
+                // fire shots
+                Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+                float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y) + RAND_FLOAT(-10.0,10.0);
+                creature_fire_projectile(c, angle, PROJ_COLOR);
+            }
 
             c->ai_value++;
-            if(c->ai_value >= 3)
+            if(c->ai_value >= 6)
             {
                 c->ai_state = 0;
             }
