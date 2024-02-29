@@ -46,6 +46,7 @@ bool show_big_map = false;
 bool show_walls = false;
 bool show_tile_grid = false;
 bool players_invincible = false;
+bool all_players_dead = false;
 
 // Settings
 uint32_t background_color = COLOR(30,30,30);
@@ -754,6 +755,7 @@ void game_generate_level()
         }
     }
 
+    all_players_dead = false;
 }
 
 void init()

@@ -512,6 +512,7 @@ void player_die(Player* p)
 {
     text_list_add(text_lst, COLOR_WHITE, 3.0, "%s died.", p->settings.name);
 
+    p->phys.hp = 0;
     p->phys.dead = true;
     p->phys.floating = true;
     status_effects_clear(&p->phys);
@@ -566,6 +567,7 @@ void player_die(Player* p)
         player_reset(p2);
     }
 
+    all_players_dead = true;
     trigger_generate_level(rand(), level_rank, 2, __LINE__);
 
     if(role == ROLE_SERVER)
@@ -1041,6 +1043,8 @@ static void player_handle_shooting(Player* p, float dt)
 void player_update(Player* p, float dt)
 {
     if(!p->active) return;
+
+    if(all_players_dead) return;
 
     // has to be role local because server doesn't know about transition_room
     if(role == ROLE_LOCAL && p == player)
@@ -2327,6 +2331,9 @@ void player_draw(Player* p)
     if(!p->active) return;
     if(p->curr_room != player->curr_room) return;
 
+    if(all_players_dead)
+        return;
+
     // Room* room = level_get_room_by_index(&level, (int)p->curr_room);
 
     bool blink = p->invulnerable_temp ? ((int)(p->invulnerable_temp_time * 100)) % 2 == 0 : false;
@@ -2349,7 +2356,6 @@ void player_draw(Player* p)
         weapon_draw(&p->weapon);
     }
 
-
     if(debug_enabled)
     {
         if(p->weapon.state == WEAPON_STATE_RELEASE)
@@ -2364,7 +2370,6 @@ void player_draw(Player* p)
             gfx_draw_rect_xywh(p->weapon.pos.x, p->weapon.pos.y, w,h, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, true);
         }
     }
-
 
     if(p == player)
     {

@@ -254,7 +254,19 @@ void editor_draw()
 
                     int hp = p->phys.hp;
                     imgui_number_box("HP", 0, p->phys.hp_max, &hp);
-                    p->phys.hp = (uint8_t)hp;
+                    if(hp == 0 && p->phys.hp != 0)
+                    {
+                        if(!p->phys.dead && !all_players_dead)
+                            player_die(p);
+                    }
+                    else if(hp > 0 && p->phys.hp == 0)
+                    {
+                        player_reset(p);
+                    }
+                    else
+                    {
+                        p->phys.hp = (uint8_t)hp;
+                    }
 
                     imgui_slider_float("Jump Velocity", 0.0, 1000.0, &jump_vel_z);
                 }
