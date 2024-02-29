@@ -601,7 +601,7 @@ void creature_update(Creature* c, float dt)
 
     phys_add_circular_time(&c->phys, dt);
 
-    c->curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
+    c->phys.curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
 
     switch(c->type)
     {
@@ -694,7 +694,7 @@ void creature_update(Creature* c, float dt)
     c->phys.pos.x += adj.x;
     c->phys.pos.y += adj.y;
 
-    c->curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
+    c->phys.curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
 }
 
 void creature_lerp(Creature* c, float dt)
@@ -905,7 +905,7 @@ bool creature_is_on_tile(Room* room, int tile_x, int tile_y)
         // printf("  creature check (%d, %d)", tile_x, tile_y);
 
         // simple check
-        if(c->curr_tile.x == tile_x && c->curr_tile.y == tile_y)
+        if(c->phys.curr_tile.x == tile_x && c->phys.curr_tile.y == tile_y)
         {
             // printf("  on the tile!\n");
             return true;
@@ -973,13 +973,13 @@ static bool creature_do_astar_click(Creature* c, float dt)
 {
     if(c->id == creature_clicked_id && creature_clicked_target.x >= 0 && creature_clicked_target.y >= 0)
     {
-        if(c->curr_tile.x == creature_clicked_target.x && c->curr_tile.y == creature_clicked_target.y)
+        if(c->phys.curr_tile.x == creature_clicked_target.x && c->phys.curr_tile.y == creature_clicked_target.y)
         {
             return true;
         }
 
         // move along path
-        bool traversable = astar_traverse(&level.asd, c->curr_tile.x, c->curr_tile.y, creature_clicked_target.x, creature_clicked_target.y);
+        bool traversable = astar_traverse(&level.asd, c->phys.curr_tile.x, c->phys.curr_tile.y, creature_clicked_target.x, creature_clicked_target.y);
 
         AStarNode_t* n = &level.asd.path[1];
         ai_move_to_tile(c, n->x, n->y);

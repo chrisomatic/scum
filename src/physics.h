@@ -35,6 +35,8 @@ typedef struct
     float elasticity;
     float rotation_deg;
 
+    Vector2i curr_tile;
+
     Rect vr;
     Rect collision_rect_prior;
     Rect collision_rect;

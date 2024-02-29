@@ -1368,13 +1368,13 @@ void player_update(Player* p, float dt)
     else
     {
         Vector2i c_tile = level_get_room_coords_by_pos(cx, cy);
-        p->curr_tile.x = RANGE(c_tile.x, 0, ROOM_TILE_SIZE_X-1);
-        p->curr_tile.y = RANGE(c_tile.y, 0, ROOM_TILE_SIZE_Y-1);
+        p->phys.curr_tile.x = RANGE(c_tile.x, 0, ROOM_TILE_SIZE_X-1);
+        p->phys.curr_tile.y = RANGE(c_tile.y, 0, ROOM_TILE_SIZE_Y-1);
 
-        TileType tt = level_get_tile_type(room, p->curr_tile.x, p->curr_tile.y);
+        TileType tt = level_get_tile_type(room, p->phys.curr_tile.x, p->phys.curr_tile.y);
         if(IS_SAFE_TILE(tt))
         {
-            p->last_safe_tile = p->curr_tile;
+            p->last_safe_tile = p->phys.curr_tile;
         }
 
         if(p->phys.pos.z == 0.0)
@@ -1395,19 +1395,19 @@ void player_update(Player* p, float dt)
         }
 
 
-        bool on_edge = memcmp(&p->curr_tile, &c_tile, sizeof(Vector2i)) != 0;
+        bool on_edge = memcmp(&p->phys.curr_tile, &c_tile, sizeof(Vector2i)) != 0;
         bool dir_edge[4] = {0};
         if(on_edge)
         {
-            dir_edge[DIR_UP] = c_tile.y < p->curr_tile.y;
-            dir_edge[DIR_DOWN] = c_tile.y > p->curr_tile.y;
-            dir_edge[DIR_LEFT] = c_tile.x < p->curr_tile.x;
-            dir_edge[DIR_RIGHT] = c_tile.x > p->curr_tile.x;
+            dir_edge[DIR_UP] = c_tile.y < p->phys.curr_tile.y;
+            dir_edge[DIR_DOWN] = c_tile.y > p->phys.curr_tile.y;
+            dir_edge[DIR_LEFT] = c_tile.x < p->phys.curr_tile.x;
+            dir_edge[DIR_RIGHT] = c_tile.x > p->phys.curr_tile.x;
         }
 
         TileType check_tile = tt;
-        int _curr_tile_x = p->curr_tile.x;
-        int _curr_tile_y = p->curr_tile.y;
+        int _curr_tile_x = p->phys.curr_tile.x;
+        int _curr_tile_y = p->phys.curr_tile.y;
 
         if(check_tile == TILE_PIT && p->phys.pos.z == 0.0 && !p->phys.falling)
         {

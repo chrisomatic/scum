@@ -1858,7 +1858,7 @@ void draw()
                 Rect lst = level_get_tile_rect(player->last_safe_tile.x, player->last_safe_tile.y);
                 gfx_draw_rect(&lst, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
 
-                Rect ct = level_get_tile_rect(player->curr_tile.x, player->curr_tile.y);
+                Rect ct = level_get_tile_rect(player->phys.curr_tile.x, player->phys.curr_tile.y);
                 gfx_draw_rect(&ct, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 0.1, true, IN_WORLD);
             }
 

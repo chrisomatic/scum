@@ -72,7 +72,6 @@ typedef struct
     bool windup;
     float windup_max;
 
-    Vector2i curr_tile;
     Vector2i target_tile;
 
     int xp;

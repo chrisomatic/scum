@@ -31,8 +31,13 @@
 #define ADDR_FMT "%u.%u.%u.%u:%u"
 #define ADDR_LST(addr) (addr)->a,(addr)->b,(addr)->c,(addr)->d,(addr)->port
 
+<<<<<<< Updated upstream
 //#define SERVER_PRINT_SIMPLE 1
 // #define SERVER_PRINT_VERBOSE 1
+=======
+#define SERVER_PRINT_SIMPLE 1
+//#define SERVER_PRINT_VERBOSE 1
+>>>>>>> Stashed changes
 
 #if SERVER_PRINT_VERBOSE
     #define LOGNV(format, ...) LOGN(format, ##__VA_ARGS__)
@@ -2477,7 +2482,70 @@ void test_packing()
     LOGI("u64: %llu  =  %llu", u64_0, u64_1);
 }
 
+<<<<<<< Updated upstream
 #define BPW(a,b,c) {if(!bitpack_write(a,b,c)) printf("ERROR: %d\n", __LINE__);}
+=======
+
+static void pack_players_bp(Packet* pkt, ClientInfo* cli)
+{
+    printf("Pack players...\n");
+    uint8_t player_count = 0;
+    for(int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        if(server.clients[i].state == CONNECTED)
+            player_count++;
+    }
+
+    bitpack_write(&server.bp, 4,  (uint32_t)player_count);
+
+    for(int i = 0; i < MAX_CLIENTS; ++i)
+    {
+        if(server.clients[i].state == CONNECTED)
+        {
+            Player* p = &players[i];
+
+            // LOGN("Packing player %d (%d)", i, server.clients[i].client_id);
+
+            bitpack_write(&server.bp, 3,  (uint32_t)i);
+            bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.x);
+            bitpack_write(&server.bp, 10, (uint32_t)p->phys.pos.y);
+            bitpack_write(&server.bp, 6,  (uint32_t)p->phys.pos.z);
+            bitpack_write(&server.bp, 5,  (uint32_t)p->sprite_index+p->anim.curr_frame);
+            bitpack_write(&server.bp, 7,  (uint32_t)p->curr_room);
+            bitpack_write(&server.bp, 4,  (uint32_t)p->phys.hp);
+            bitpack_write(&server.bp, 16, (uint32_t)(p->highlighted_item_id+1));
+
+            bitpack_write(&server.bp, 5, (uint32_t)(p->skill_count));
+            for(int j = 0; j < p->skill_count; ++j)
+            {
+                bitpack_write(&server.bp, 8, (uint32_t)(p->skills[j]));
+            }
+
+            bitpack_write(&server.bp, 12, (uint32_t)(p->xp));
+            bitpack_write(&server.bp, 5, (uint32_t)(p->level));
+            bitpack_write(&server.bp, 5, (uint32_t)(p->new_levels));
+
+            bitpack_write(&server.bp, 3, (uint32_t)(p->skill_selection));
+            bitpack_write(&server.bp, 3, (uint32_t)(p->num_skill_selection_choices));
+            for(int j = 0; j < p->num_skill_selection_choices; ++j)
+            {
+                bitpack_write(&server.bp, 8, (uint32_t)(p->skill_choices[j]));
+            }
+
+            bitpack_write(&server.bp, 4,  (uint32_t)p->gauntlet_selection);
+            bitpack_write(&server.bp, 4,  (uint32_t)p->gauntlet_slots);
+
+            for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
+                bitpack_write(&server.bp, 6,  (uint32_t)(p->gauntlet[g].type + 1));
+
+            bitpack_write(&server.bp, 1, (uint32_t)(p->invulnerable_temp ? 1 : 0));
+            bitpack_write(&server.bp, 6, (uint32_t)p->invulnerable_temp_time);
+            bitpack_write(&server.bp, 4, (uint32_t)p->door);
+            bitpack_write(&server.bp, 1, (uint32_t)(p->phys.dead ? 1 : 0));
+        }
+    }
+}
+>>>>>>> Stashed changes
 
 static void pack_players(Packet* pkt, ClientInfo* cli)
 {
@@ -2810,6 +2878,39 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
 
 static void pack_creatures(Packet* pkt, ClientInfo* cli)
 {
+<<<<<<< Updated upstream
+=======
+    int index = pkt->data_len;
+    pkt->data_len += 2;
+
+    uint16_t num_creatures = creature_get_count();
+    uint16_t num_visible_creatures = 0;
+
+    for(int i = 0; i < num_creatures; ++i)
+    {
+        Creature* c = &creatures[i];
+
+        if(!is_any_player_room(c->curr_room))
+            continue;
+
+        pack_u16(pkt, c->id);
+        pack_u8(pkt, (uint8_t)c->type);
+        pack_vec3(pkt, vec3(c->phys.pos.x, c->phys.pos.y, c->phys.pos.z));
+        pack_float(pkt,c->phys.width);
+        pack_u8(pkt, c->sprite_index);
+        pack_u8(pkt, c->curr_room);
+        pack_float(pkt, c->phys.hp);
+        pack_u32(pkt, c->color);
+        num_visible_creatures++;
+    }
+
+    pack_u16_at(pkt, num_visible_creatures, index);
+}
+
+static void pack_creatures_bp(Packet* pkt, ClientInfo* cli)
+{
+    printf("Pack creatures...\n");
+>>>>>>> Stashed changes
     uint16_t num_creatures = creature_get_count();
     uint16_t num_visible_creatures = 0;
 
@@ -2834,6 +2935,7 @@ static void pack_creatures(Packet* pkt, ClientInfo* cli)
         uint8_t g = (c->color >>  8) & 0xFF;
         uint8_t b = (c->color >>  0) & 0xFF;
 
+<<<<<<< Updated upstream
         BPW(&server.bp, 16, (uint32_t)c->id);
         BPW(&server.bp, 6,  (uint32_t)c->type);
         BPW(&server.bp, 10, (uint32_t)c->phys.pos.x);
@@ -2843,6 +2945,17 @@ static void pack_creatures(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 6,  (uint32_t)c->sprite_index);
         BPW(&server.bp, 7,  (uint32_t)c->curr_room);
         BPW(&server.bp, 8,  (uint32_t)c->phys.hp);
+=======
+        bitpack_write(&server.bp, 16, (uint32_t)c->id);
+        bitpack_write(&server.bp, 6,  (uint32_t)c->type);
+        bitpack_write(&server.bp, 10, (uint32_t)c->phys.pos.x);
+        bitpack_write(&server.bp, 10, (uint32_t)c->phys.pos.y);
+        bitpack_write(&server.bp, 6,  (uint32_t)c->phys.pos.z);
+        bitpack_write(&server.bp, 8,  (uint32_t)c->phys.width);
+        bitpack_write(&server.bp, 6,  (uint32_t)c->sprite_index);
+        bitpack_write(&server.bp, 7,  (uint32_t)c->curr_room);
+        bitpack_write(&server.bp, 8,  (uint32_t)c->phys.hp);
+>>>>>>> Stashed changes
 
         BPW(&server.bp, 8,  (uint32_t)r);
         BPW(&server.bp, 8,  (uint32_t)g);
@@ -2914,6 +3027,38 @@ static void unpack_creatures(Packet* pkt, int* offset, WorldState* ws)
 
 static void pack_projectiles(Packet* pkt, ClientInfo* cli)
 {
+<<<<<<< Updated upstream
+=======
+    int index = pkt->data_len;
+    pkt->data_len += 2;
+
+    uint16_t num_projectiles = (uint16_t)plist->count;
+    uint16_t num_visible_projectiles = 0;
+
+    for(int i = 0; i < num_projectiles; ++i)
+    {
+        Projectile* p = &projectiles[i];
+
+        if(!is_any_player_room(p->curr_room))
+            continue;
+
+        pack_u16(pkt,p->id);
+        pack_vec3(pkt,vec3(p->phys.pos.x, p->phys.pos.y, p->phys.pos.z));
+        pack_u32(pkt,p->color);
+        pack_u8(pkt,p->player_id);
+        pack_u8(pkt,p->curr_room);
+        pack_float(pkt,p->def.scale);
+        pack_bool(pkt, p->from_player);
+        num_visible_projectiles++;
+    }
+
+    pack_u16_at(pkt, num_visible_projectiles, index);
+}
+
+static void pack_projectiles_bp(Packet* pkt, ClientInfo* cli)
+{
+    printf("Packing projectiles...\n");
+>>>>>>> Stashed changes
     uint16_t num_projectiles = (uint16_t)plist->count;
     uint16_t num_visible_projectiles = 0;
 
@@ -3011,6 +3156,112 @@ static void unpack_projectiles(Packet* pkt, int* offset, WorldState* ws)
 
 static void pack_items(Packet* pkt, ClientInfo* cli)
 {
+<<<<<<< Updated upstream
+=======
+    int index = pkt->data_len;
+    pkt->data_len += 1;
+
+    uint16_t num_items = (uint16_t)item_list->count;
+    uint8_t num_visible_items = 0;
+
+    for(int i = 0; i < num_items; ++i)
+    {
+        Item* it = &items[i];
+
+        if(!is_any_player_room(it->curr_room))
+            continue;
+
+        if(it->picked_up)
+            continue;
+
+        pack_u16(pkt,it->id);
+        pack_u8(pkt,(uint8_t)it->type);
+        pack_vec3(pkt,vec3(it->phys.pos.x, it->phys.pos.y, it->phys.pos.z));
+        pack_u8(pkt,it->curr_room);
+        pack_float(pkt,it->angle);
+        pack_bool(pkt, it->highlighted);
+        pack_bool(pkt, it->used);
+        num_visible_items++;
+    }
+
+    pack_u8_at(pkt, num_visible_items, index);
+
+}
+
+static void unpack_items(Packet* pkt, int* offset)
+{
+    memcpy(prior_items, items, sizeof(Item)*MAX_ITEMS);
+
+    // load items
+    uint8_t num_items = unpack_u8(pkt, offset);
+
+    list_clear(item_list);
+    item_list->count = num_items;
+
+    for(int i = 0; i < num_items; ++i)
+    {
+        Item* it = &items[i];
+
+        uint16_t id = unpack_u16(pkt, offset);
+        int8_t _type = (int8_t)unpack_u8(pkt, offset);
+        ItemType type = (ItemType)_type;
+        Vector3f pos = unpack_vec3(pkt, offset);
+        uint8_t room_id = unpack_u8(pkt, offset);
+        float angle = unpack_float(pkt, offset);
+        bool highlighted = unpack_bool(pkt, offset);
+        bool used = unpack_bool(pkt, offset);
+
+        it->id = id;
+        it->type = type;
+        it->curr_room = room_id;
+        it->highlighted = highlighted;
+        it->used = used;
+        it->lerp_t = 0.0;
+
+        it->server_state_prior.pos.x = pos.x;
+        it->server_state_prior.pos.y = pos.y;
+        it->server_state_prior.pos.z = pos.z;
+        it->server_state_prior.angle = angle;
+
+        bool found_prior = false;
+
+        //find the prior
+        for(int j = i; j < MAX_ITEMS; ++j)
+        {
+            Item* itj = &prior_items[j];
+            if(itj->type == ITEM_NONE) break;
+            if(itj->id == it->id)
+            {
+                // printf("found prior: %d\n", itj->id);
+                found_prior = true;
+                it->server_state_prior.pos.x = itj->phys.pos.x;
+                it->server_state_prior.pos.y = itj->phys.pos.y;
+                it->server_state_prior.pos.z = itj->phys.pos.z;
+                it->server_state_prior.angle = itj->angle;
+                break;
+            }
+        }
+
+        it->server_state_target.pos.x = pos.x;
+        it->server_state_target.pos.y = pos.y;
+        it->server_state_target.pos.z = pos.z;
+        it->server_state_target.angle = angle;
+
+        if(!found_prior)
+        {
+            // printf("didn't find prior\n");
+            it->server_state_prior.pos.x = it->server_state_target.pos.x;
+            it->server_state_prior.pos.y = it->server_state_target.pos.y;
+            it->server_state_prior.pos.z = it->server_state_target.pos.z;
+            it->server_state_prior.angle = it->server_state_target.angle;
+        }
+    }
+}
+
+static void pack_items_bp(Packet* pkt, ClientInfo* cli)
+{
+    printf("Packing items...\n");
+>>>>>>> Stashed changes
     uint16_t num_items = (uint16_t)item_list->count;
     uint8_t num_visible_items = 0;
 
@@ -3121,12 +3372,37 @@ static void unpack_items(Packet* pkt, int* offset, WorldState* ws)
 
 static void pack_decals(Packet* pkt, ClientInfo* cli)
 {
+<<<<<<< Updated upstream
     BPW(&server.bp, 7,  (uint32_t)decal_list->count);
+=======
+    uint8_t count = (uint8_t)decal_list->count;
+    pack_u8(pkt, count);
+    for(int i = 0; i < count; ++i)
+    {
+        Decal* d = &decals[i];
+        // pack_u8(pkt, (uint8_t)d->image);
+        pack_u8(pkt, d->sprite_index);
+        pack_u32(pkt, d->tint);
+        pack_float(pkt, d->scale);
+        pack_float(pkt, d->rotation);
+        pack_float(pkt, d->opacity);
+        pack_float(pkt, d->ttl);
+        pack_vec2(pkt, vec2(d->pos.x,d->pos.y));
+        pack_u8(pkt, d->room);
+    }
+}
+
+static void pack_decals_bp(Packet* pkt, ClientInfo* cli)
+{
+    printf("Packing decals...\n");
+    bitpack_write(&server.bp, 7,  (uint32_t)decal_list->count);
+>>>>>>> Stashed changes
 
     for(int i = 0; i < decal_list->count; ++i)
     {
         Decal* d = &decals[i];
 
+<<<<<<< Updated upstream
         BPW(&server.bp, 7,  (uint32_t)d->sprite_index);
         BPW(&server.bp, 32, (uint32_t)d->tint);
         BPW(&server.bp, 8,  (uint32_t)(d->scale*255.0f));
@@ -3137,6 +3413,17 @@ static void pack_decals(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 10, (uint32_t)d->pos.y);
         BPW(&server.bp, 7, (uint32_t)d->room);
         BPW(&server.bp, 2, (uint32_t)d->fade_pattern);
+=======
+        bitpack_write(&server.bp, 5,  (uint32_t)d->sprite_index);
+        bitpack_write(&server.bp, 32, (uint32_t)d->tint);
+        bitpack_write(&server.bp, 8,  (uint32_t)(d->scale*255.0f));
+        bitpack_write(&server.bp, 9,  (uint32_t)(d->rotation));
+        bitpack_write(&server.bp, 8,  (uint32_t)(d->opacity*255.0f));
+        bitpack_write(&server.bp, 8,  (uint32_t)(d->ttl*10.0f));
+        bitpack_write(&server.bp, 10, (uint32_t)d->pos.x);
+        bitpack_write(&server.bp, 10, (uint32_t)d->pos.y);
+        bitpack_write(&server.bp, 7, (uint32_t)d->room);
+>>>>>>> Stashed changes
     }
 }
 
@@ -3188,7 +3475,14 @@ static void unpack_other(Packet* pkt, int* offset, WorldState* ws)
         room->doors_locked = bitpack_read(&client.bp, 1) == 0x01 ? true : false;
     }
 
+<<<<<<< Updated upstream
     level.darkness_curse = bitpack_read(&client.bp, 1) == 0x01 ? true : false;
+=======
+static void pack_other_bp(Packet* pkt, ClientInfo* cli)
+{
+    printf("Packing other...\n");
+    Room* room = level_get_room_by_index(&level, (int)players[cli->client_id].curr_room);
+>>>>>>> Stashed changes
 
     paused = bitpack_read(&client.bp, 1) == 0x01 ? true : false;
 }
@@ -3231,7 +3525,107 @@ static void pack_events(Packet* pkt, ClientInfo* cli)
     }
 }
 
+<<<<<<< Updated upstream
 static void unpack_events(Packet* pkt, int* offset, WorldState* ws)
+=======
+static void pack_events_bp(Packet* pkt, ClientInfo* cli)
+{
+
+    printf("Packing events...\n");
+    bitpack_write(&server.bp, 8,  (uint32_t)server.event_count);
+
+    for(int i = server.event_count-1; i >= 0; --i)
+    {
+        NetEvent* ev = &server.events[i];
+
+        bitpack_write(&server.bp, 4,  (uint32_t)ev->type);
+
+        switch(ev->type)
+        {
+            case EVENT_TYPE_PARTICLES:
+            {
+                bitpack_write(&server.bp, 5,  (uint32_t)ev->data.particles.effect_index);
+                bitpack_write(&server.bp, 10, (uint32_t)ev->data.particles.pos.x);
+                bitpack_write(&server.bp, 10, (uint32_t)ev->data.particles.pos.y);
+                bitpack_write(&server.bp, 8,  (uint32_t)(255.0f * ev->data.particles.scale));
+                bitpack_write(&server.bp, 32, (uint32_t)ev->data.particles.color1);
+                bitpack_write(&server.bp, 32, (uint32_t)ev->data.particles.color2);
+                bitpack_write(&server.bp, 32, (uint32_t)ev->data.particles.color3);
+                bitpack_write(&server.bp, 8,  (uint32_t)(10.0f * ev->data.particles.lifetime));
+                bitpack_write(&server.bp, 7,  (uint32_t)(ev->data.particles.room_index));
+
+            } break;
+
+            case EVENT_TYPE_NEW_LEVEL:
+            {
+                bitpack_write(&server.bp, 32,  (uint32_t)level_seed);
+                bitpack_write(&server.bp,  8,  (uint32_t)level_rank);
+            }
+
+            default:
+                break;
+        }
+    }
+}
+
+static void unpack_events(Packet* pkt, int* offset)
+{
+    uint8_t event_count = unpack_u8(pkt, offset);
+
+    for(int i = 0; i < event_count; ++i)
+    {
+        NetEventType type = (NetEventType)unpack_u8(pkt, offset);
+
+        switch(type)
+        {
+            case EVENT_TYPE_PARTICLES:
+            {
+                uint8_t effect_index = unpack_u8(pkt, offset);
+                Vector2f pos = unpack_vec2(pkt, offset);
+                float scale  = unpack_float(pkt, offset);
+                uint32_t color1  = unpack_u32(pkt, offset);
+                uint32_t color2  = unpack_u32(pkt, offset);
+                uint32_t color3  = unpack_u32(pkt, offset);
+                float lifetime  = unpack_float(pkt, offset);
+                uint8_t room_index  = unpack_u8(pkt, offset);
+
+                if(room_index != player->curr_room)
+                {
+                    // printf("%u != %u\n", room_index, player->curr_room);
+                    continue;
+                }
+
+                ParticleEffect effect = {0};
+                memcpy(&effect, &particle_effects[effect_index], sizeof(ParticleEffect));
+
+                effect.scale.init_min *= scale;
+                effect.scale.init_max *= scale;
+
+                effect.color1 = color1;
+                effect.color2 = color2;
+                effect.color3 = color3;
+
+                ParticleSpawner* ps = particles_spawn_effect(pos.x, pos.y, 0.0, &effect, lifetime, true, false);
+                if(ps != NULL) ps->userdata = (int)room_index;
+
+            } break;
+
+            case EVENT_TYPE_NEW_LEVEL:
+            {
+                level_seed = unpack_u32(pkt,offset);
+                level_rank = unpack_u8(pkt,offset);
+
+                game_generate_level(level_seed, level_rank, 2);
+            }
+
+            default:
+                break;
+        }
+    }
+}
+
+static void unpack_events_bp(Packet* pkt, int* offset)
+>>>>>>> Stashed changes
 {
     uint8_t event_count = (uint8_t)bitpack_read(&client.bp,8);
 
