@@ -507,6 +507,12 @@ void item_init()
                 p->socketable = false;
                 p->func = (void*)item_func_revive;
             } break;
+            case ITEM_SKULL:
+            {
+                p->touchable = false;
+                p->socketable = false;
+                p->func = (void*)NULL;
+            } break;
         }
 
     }
@@ -632,6 +638,7 @@ const char* item_get_name(ItemType type)
     {
         case ITEM_NONE:       return "None";
         case ITEM_REVIVE:     return "Revive";
+        case ITEM_SKULL:      return "Skull";
         case ITEM_SHRINE:     return "Shrine";
         case ITEM_CHEST:      return "Chest";
         case ITEM_GEM_RED:    return "Red Gem";
@@ -665,6 +672,7 @@ const char* item_get_description(ItemType type)
     {
         case ITEM_NONE:       return "";
         case ITEM_REVIVE:     return "cheat death";
+        case ITEM_SKULL:      return "Probably a good sign";
         case ITEM_SHRINE:     return "hmmmmmm";
         case ITEM_CHEST:      return "contains loot";
         case ITEM_GEM_RED:    return "increase projectile damage";

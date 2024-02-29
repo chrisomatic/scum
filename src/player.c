@@ -8,6 +8,7 @@
 #include "camera.h"
 #include "lighting.h"
 #include "status_effects.h"
+#include "effects.h"
 #include "ui.h"
 #include "weapon.h"
 #include "player.h"
@@ -509,12 +510,13 @@ void player_hurt(Player* p, int damage)
 
 void player_die(Player* p)
 {
-    text_list_add(text_lst, COLOR_WHITE, 3.0, "%s died. Miraculously you awake, reborn...", p->settings.name);
+    text_list_add(text_lst, COLOR_WHITE, 3.0, "%s died.", p->settings.name);
 
     p->phys.dead = true;
     p->phys.floating = true;
     status_effects_clear(&p->phys);
 
+    // drop all items
     for(int i = 0; i < PLAYER_GAUNTLET_MAX; ++i)
     {
         if(p->gauntlet[i].type == ITEM_NONE)
@@ -523,6 +525,26 @@ void player_die(Player* p)
         player_drop_item(p, &p->gauntlet[i]);
         p->gauntlet[i].type = ITEM_NONE;
     }
+
+    ParticleEffect* eff = &particle_effects[EFFECT_BLOOD2];
+    ParticleSpawner* ps = particles_spawn_effect(p->phys.pos.x,p->phys.pos.y, 0.0, eff, 0.5, true, false);
+    if(ps != NULL) ps->userdata = (int)p->curr_room;
+
+    Decal d = {0};
+    d.image = particles_image;
+    d.sprite_index = 0;
+    d.tint = COLOR_RED;
+    d.scale = 1.0;
+    d.rotation = rand() % 360;
+    d.opacity = 0.6;
+    d.ttl = 10.0;
+    d.pos.x = p->phys.pos.x;
+    d.pos.y = p->phys.pos.y;
+    d.room = p->curr_room;
+    decal_add(d);
+
+    Item skull = {.type = ITEM_SKULL, .phys.pos.x = p->phys.pos.x, .phys.pos.y = p->phys.pos.y};
+    player_drop_item(p, &skull);
 
     p->phys.falling = false;
     p->scale = 1.0;

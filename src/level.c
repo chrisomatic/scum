@@ -155,12 +155,15 @@ Level level_generate(unsigned int seed, int rank)
     sroom->valid = true;
     sroom->type = ROOM_TYPE_EMPTY;
     sroom->layout = 0;
+
     if(role != ROLE_CLIENT)
     {
         //TEMP
-        item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, sroom->index);
+        for(int i = 0; i < 5; ++i)
+            item_add(ITEM_SKULL, CENTER_X, CENTER_Y, sroom->index);
+        // item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, sroom->index);
         // item_add(ITEM_REVIVE, CENTER_X, CENTER_Y+TILE_SIZE*2, sroom->index);
-        //item_add(ITEM_SHRINE, CENTER_X+TILE_SIZE*2, CENTER_Y, sroom->index);
+        // item_add(ITEM_SHRINE, CENTER_X+TILE_SIZE*2, CENTER_Y, sroom->index);
     }
 
     LevelPath bpath = {0};

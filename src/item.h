@@ -35,6 +35,7 @@ typedef enum
     ITEM_GOLD_STAR,
     ITEM_PURPLE_STAR,
     ITEM_REVIVE,
+    ITEM_SKULL,
 
     ITEM_CHEST,
 
