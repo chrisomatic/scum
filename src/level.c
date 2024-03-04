@@ -91,6 +91,8 @@ Level level_generate(unsigned int seed, int rank)
         seed += 1;
 #endif
 
+    seed = 1383155466;
+
     memset(&glevel, 0, sizeof(Level));
     memset(&gpath, 0, sizeof(LevelPath));
 
@@ -582,12 +584,13 @@ static Room* place_room_and_path(Level* level, Vector2i* pos, RoomType type, Roo
         // printf("%d, %d\n", min_dist, max_dist);
         for(int i = 0; i < 10; ++i)
         {
-            min_dist--;
-            max_dist++;
             // printf("  %d, %d\n", min_dist, max_dist);
             room = place_room(level, type, start, min_dist, max_dist, &asd);
             if(room) break;
+            min_dist--;
+            max_dist++;
         }
+
         if(!room)
         {
             min_dist = 0;

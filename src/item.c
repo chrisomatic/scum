@@ -510,7 +510,7 @@ void item_init()
             case ITEM_SKULL:
             {
                 p->touchable = false;
-                p->socketable = false;
+                p->socketable = true;
                 p->func = (void*)NULL;
             } break;
         }
