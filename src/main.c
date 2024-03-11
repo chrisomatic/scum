@@ -1367,7 +1367,9 @@ void draw_map(DrawLevelParams* params)
             astar_create(&map_asd, MAX_ROOMS_GRID_X, MAX_ROOMS_GRID_Y);
             astar_set_traversable_func(&map_asd, room_traversable_doors);
             // printf("target: %d, %d\n", mouse_map_room.x, mouse_map_room.y);
-            astar = astar_traverse(&map_asd, level.start.x, level.start.y, mouse_map_room.x, mouse_map_room.y);
+            // astar = astar_traverse(&map_asd, level.start.x, level.start.y, mouse_map_room.x, mouse_map_room.y);
+            Vector2i roomxy = level_get_room_coords(player->curr_room);
+            astar = astar_traverse(&map_asd, roomxy.x, roomxy.y, mouse_map_room.x, mouse_map_room.y);
             if(astar)
             {
                 memset(&map_path, 0, sizeof(LevelPath));
