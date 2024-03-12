@@ -91,7 +91,7 @@ Level level_generate(unsigned int seed, int rank)
         seed += 1;
 #endif
 
-    seed = 1383155466;
+    // seed = 1383155466;
 
     memset(&glevel, 0, sizeof(Level));
     memset(&gpath, 0, sizeof(LevelPath));
