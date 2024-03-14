@@ -86,7 +86,7 @@ Vector2f transition_offsets = {0};
 Vector2f transition_targets = {0};
 
 Level level;
-unsigned int level_seed = 715079961;//10000-1;
+unsigned int level_seed = 1383155466;
 // unsigned int level_seed = 0;
 int level_rank = 0;
 int level_transition = 0;
@@ -1318,6 +1318,9 @@ void handle_room_completion(Room* room)
 
             level_get_safe_floor_tile(room, start, NULL, &pos);
             item_add(ITEM_NEW_LEVEL, pos.x, pos.y, room_index);
+
+            level_get_safe_floor_tile(room, start, NULL, &pos);
+            item_add(ITEM_REVIVE, pos.x, pos.y, room_index);
         }
         else
         {

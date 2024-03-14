@@ -1444,10 +1444,10 @@ void level_handle_room_collision(Room* room, Physics* phys, int entity_type, voi
         }
     }
 
-    if(phys->pos.z == 0.0 && phys->curr_tile.x == 5 && phys->curr_tile.y == 1)
-    {
-        phys->vel.z = 300.0;
-    }
+    // if(phys->pos.z == 0.0 && phys->curr_tile.x == 5 && phys->curr_tile.y == 1)
+    // {
+    //     phys->vel.z = 300.0;
+    // }
 
 }
 
