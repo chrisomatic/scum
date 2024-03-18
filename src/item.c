@@ -101,6 +101,20 @@ static bool item_func_revive(Item* pu, Player* p)
     return pu->used;
 }
 
+static bool item_func_skull(Item* pu, Player* p)
+{
+    if(pu->used) return false;
+
+    const float s = 4.0;
+
+    p->phys.vel.z += 50.0*s;
+    p->phys.vel.x += RAND_FLOAT(-100.0,100.0)*s;
+    p->phys.vel.y += RAND_FLOAT(-100.0,100.0)*s;
+
+    pu->used = true;
+    return pu->used;
+}
+
 static bool item_func_shrine(Item* pu, Player* p)
 {
     if(pu->used) return false;
@@ -511,7 +525,7 @@ void item_init()
             {
                 p->touchable = false;
                 p->socketable = true;
-                p->func = (void*)NULL;
+                p->func = (void*)item_func_skull;
             } break;
         }
 
