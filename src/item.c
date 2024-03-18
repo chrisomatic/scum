@@ -105,11 +105,13 @@ static bool item_func_skull(Item* pu, Player* p)
 {
     if(pu->used) return false;
 
-    const float s = 4.0;
+    const float s = 5.0;
 
     p->phys.vel.z += 50.0*s;
     p->phys.vel.x += RAND_FLOAT(-100.0,100.0)*s;
     p->phys.vel.y += RAND_FLOAT(-100.0,100.0)*s;
+
+    status_effects_add_type(&p->phys, pu->curr_room, STATUS_EFFECT_POISON);
 
     pu->used = true;
     return pu->used;
@@ -186,7 +188,7 @@ static bool item_func_shrine(Item* pu, Player* p)
         case 5:
         {
             level.darkness_curse = true;
-            ui_message_set_title(2.0, message_color, message_scale, "Enjoy the darkness bitch");
+            ui_message_set_title(2.0, message_color, message_scale, "It is dark");
         } break;
         case 6:
         {
