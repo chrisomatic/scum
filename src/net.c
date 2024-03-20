@@ -1076,9 +1076,9 @@ int net_server_start()
 #endif
 
                         bool is_cmd = false;
-                        if(msg_len > 4)
+                        if(msg_len > 1)
                         {
-                            if(memcmp("cmd ", msg, 4) == 0)
+                            if(memcmp("$", msg, 1) == 0)
                             {
                                 is_cmd = true;
                                 char* argv[20] = {0};
@@ -1086,7 +1086,7 @@ int net_server_start()
 
                                 for(int i = 0; i < 20; ++i)
                                 {
-                                    char* s = string_split_index_copy(msg+4, " ", i, true);
+                                    char* s = string_split_index_copy(msg+1, " ", i, true);
                                     if(!s) break;
                                     argv[argc++] = s;
                                 }

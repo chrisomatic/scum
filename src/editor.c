@@ -387,6 +387,9 @@ void editor_draw()
                     }
 
                     imgui_slider_float("Speed",10.0,100.0,&creature_speed);
+
+                    imgui_toggle_button(&creatures_can_move, "AI");
+
                     imgui_toggle_button(&creature_painful_touch, "Painful Touch");
 
                     for(int i = 0; i < creature_get_count(); ++i)

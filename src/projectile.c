@@ -472,7 +472,8 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         Box proj_curr = {
             proj->phys.pos.x,
             proj->phys.pos.y,
-            proj->phys.pos.z + proj->phys.height/2.0,
+            0,
+            // proj->phys.pos.z + proj->phys.height/2.0,
             proj->phys.width,
             proj->phys.width,
             proj->phys.height*2,
@@ -490,7 +491,8 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         Box check = {
             phys->collision_rect.x,
             phys->collision_rect.y,
-            phys->pos.z + phys->height/2.0,
+            0,
+            // phys->pos.z + phys->height/2.0,
             phys->collision_rect.w,
             phys->collision_rect.h,
             phys->height*2,

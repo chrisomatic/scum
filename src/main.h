@@ -153,6 +153,7 @@ extern bool paused;
 extern bool show_big_map;
 extern bool show_walls;
 extern bool show_tile_grid;
+extern bool creatures_can_move;
 extern bool players_invincible;
 extern bool all_players_dead;
 extern uint32_t background_color;

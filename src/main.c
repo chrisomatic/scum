@@ -45,6 +45,7 @@ bool paused = false;
 bool show_big_map = false;
 bool show_walls = false;
 bool show_tile_grid = false;
+bool creatures_can_move = true;
 bool players_invincible = false;
 bool all_players_dead = false;
 

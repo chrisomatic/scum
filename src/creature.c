@@ -603,48 +603,56 @@ void creature_update(Creature* c, float dt)
 
     c->phys.curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
 
-    switch(c->type)
+    if(creatures_can_move)
     {
-        case CREATURE_TYPE_SLUG:
-            creature_update_slug(c,dt);
-            break;
-        case CREATURE_TYPE_CLINGER:
-            creature_update_clinger(c,dt);
-            break;
-        case CREATURE_TYPE_GEIZER:
-            creature_update_geizer(c,dt);
-            break;
-        case CREATURE_TYPE_FLOATER:
-            creature_update_floater(c,dt);
-            break;
-        case CREATURE_TYPE_FLOATER_BIG:
-            creature_update_floater_big(c,dt);
-            break;
-        case CREATURE_TYPE_BUZZER:
-            creature_update_buzzer(c,dt);
-            break;
-        case CREATURE_TYPE_TOTEM_RED:
-            creature_update_totem_red(c,dt);
-            break;
-        case CREATURE_TYPE_TOTEM_BLUE:
-            creature_update_totem_blue(c,dt);
-            break;
-        case CREATURE_TYPE_TOTEM_YELLOW:
-            creature_update_totem_yellow(c,dt);
-            break;
-        case CREATURE_TYPE_SHAMBLER:
-            creature_update_shambler(c,dt);
-            break;
-        case CREATURE_TYPE_SPIKED_SLUG:
-            creature_update_spiked_slug(c,dt);
-            break;
-        case CREATURE_TYPE_INFECTED:
-            creature_update_infected(c,dt);
-            break;
-        case CREATURE_TYPE_GRAVITY_CRYSTAL:
-            creature_update_gravity_crystal(c,dt);
-            break;
+        switch(c->type)
+        {
+            case CREATURE_TYPE_SLUG:
+                creature_update_slug(c,dt);
+                break;
+            case CREATURE_TYPE_CLINGER:
+                creature_update_clinger(c,dt);
+                break;
+            case CREATURE_TYPE_GEIZER:
+                creature_update_geizer(c,dt);
+                break;
+            case CREATURE_TYPE_FLOATER:
+                creature_update_floater(c,dt);
+                break;
+            case CREATURE_TYPE_FLOATER_BIG:
+                creature_update_floater_big(c,dt);
+                break;
+            case CREATURE_TYPE_BUZZER:
+                creature_update_buzzer(c,dt);
+                break;
+            case CREATURE_TYPE_TOTEM_RED:
+                creature_update_totem_red(c,dt);
+                break;
+            case CREATURE_TYPE_TOTEM_BLUE:
+                creature_update_totem_blue(c,dt);
+                break;
+            case CREATURE_TYPE_TOTEM_YELLOW:
+                creature_update_totem_yellow(c,dt);
+                break;
+            case CREATURE_TYPE_SHAMBLER:
+                creature_update_shambler(c,dt);
+                break;
+            case CREATURE_TYPE_SPIKED_SLUG:
+                creature_update_spiked_slug(c,dt);
+                break;
+            case CREATURE_TYPE_INFECTED:
+                creature_update_infected(c,dt);
+                break;
+            case CREATURE_TYPE_GRAVITY_CRYSTAL:
+                creature_update_gravity_crystal(c,dt);
+                break;
+        }
     }
+    else
+    {
+        ai_stop_imm(c);
+    }
+
 
     float speed = c->phys.speed*c->phys.speed_factor;
 
