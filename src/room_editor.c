@@ -332,6 +332,20 @@ static void draw_room_file_gui()
 
         imgui_text_box("Filename##file_name_room",room_file_name,IM_ARRAYSIZE(room_file_name));
 
+        imgui_horizontal_line(1);
+        imgui_text("Commentary");
+        static char* star_labels[] = {"*", "**", "***", "****", "*****"};
+        imgui_newline();
+        imgui_horizontal_begin();
+            int selected_rating = imgui_button_select(5, star_labels, "Rating");
+            imgui_text("(%d Stars)", selected_rating+1);
+        imgui_horizontal_end();
+
+        static char comment[100] = {0};
+        imgui_text_box("Comment", comment, IM_ARRAYSIZE(comment));
+
+        imgui_horizontal_line(2);
+
         char file_path[64] = {0};
         snprintf(file_path,63,"src/rooms/%s.room",room_file_name);
 
@@ -340,6 +354,8 @@ static void draw_room_file_gui()
         if(!STR_EMPTY(room_file_name))
         {
             if(file_exists) imgui_horizontal_begin();
+
+
             if(imgui_button("Save##room"))
             {
                 // fill out room file data structure
@@ -765,6 +781,7 @@ void room_editor_draw()
                 {
                     obj_sel = 3;
                 }
+
 
                 imgui_horizontal_line(2);
 
