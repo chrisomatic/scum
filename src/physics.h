@@ -51,6 +51,7 @@ typedef struct
     bool ethereal;  // can pass through walls
 
     bool falling; // falling down a pit
+
     bool floating;
     bool crawling;
 

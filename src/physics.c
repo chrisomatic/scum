@@ -175,7 +175,7 @@ void phys_calc_collision_rect(Physics* phys)
 {
     memcpy(&phys->collision_rect_prior, &phys->collision_rect, sizeof(Rect));
 
-    bool horizontal = (phys->rotation_deg == 0.0 || phys->rotation_deg == 180.0);
+    bool horizontal = (phys->rotation_deg == 0.0 || phys->rotation_deg == 180.0) && phys->crawling;
 
     phys->collision_rect.w = horizontal ? phys->length : phys->width;
     phys->collision_rect.h = horizontal ? phys->width  : phys->length;
@@ -183,11 +183,16 @@ void phys_calc_collision_rect(Physics* phys)
     float vrh = horizontal ? phys->vr.w : phys->vr.h;
 
     phys->collision_rect.x = phys->pos.x;
-    phys->collision_rect.y = phys->pos.y;
+    phys->collision_rect.y = phys->pos.y - vrh*0.10;
+
+    if(phys->floating)
+    {
+        phys->collision_rect.y -= phys->pos.z/2.0;
+    }
 
     if(phys->crawling)
     {
-        phys->collision_rect.y -= vrh/2.0;
+        phys->collision_rect.y = phys->pos.y - vrh/2.0;
     }
 }
 

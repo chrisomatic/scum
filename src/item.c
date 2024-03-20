@@ -726,6 +726,7 @@ void item_add(ItemType type, float x, float y, uint8_t curr_room)
     pu.phys.pos.x = x;
     pu.phys.pos.y = y;
     pu.phys.speed = 1.0;
+    pu.phys.crawling = true;
 
     if(type == ITEM_CHEST)
     {
@@ -753,6 +754,7 @@ void item_add(ItemType type, float x, float y, uint8_t curr_room)
     pu.phys.width  = 1.6f*pu.phys.radius;
     pu.phys.length = 1.6f*pu.phys.radius;
     pu.phys.height = 1.6f*pu.phys.radius;
+    pu.phys.vr = gfx_images[ item_props[pu.type].image ].visible_rects[0];
 
     list_add(item_list,&pu);
 }
@@ -941,7 +943,9 @@ void item_draw(Item* pu)
     if(pu->used)
         sprite_index++;
 
-    float y = pu->phys.pos.y - 0.5*pu->phys.pos.z;
+    // float y = pu->phys.pos.y - 0.5*pu->phys.pos.z;
+    float y = pu->phys.pos.y - (pu->phys.vr.h + pu->phys.pos.z)/2.0;
+
     gfx_sprite_batch_add(item_props[pu->type].image, sprite_index, pu->phys.pos.x, y, color, false, iscale, pu->angle, 1.0, true, false, false);
 }
 
