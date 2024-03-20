@@ -1318,6 +1318,15 @@ static void creature_update_totem_red(Creature* c, float dt)
 
     if(creature_count == 0)
     {
+
+        float a = rand()%360;
+        float aplus = 360.0 / 6;
+        for(int i = 0; i < 6; ++i)
+        {
+            creature_fire_projectile(c, a, PROJ_COLOR);
+            a += aplus;
+        }
+
         // deactivate totem
         creature_die(c);
     }
@@ -1374,6 +1383,8 @@ static void creature_update_totem_blue(Creature* c, float dt)
 {
     if(creature_do_astar_click(c,dt)) return;
 
+    uint32_t color = 0x003030FF;
+
     int creature_count = 0;
     for(int i = 0; i < clist->count; ++i)
     {
@@ -1389,6 +1400,14 @@ static void creature_update_totem_blue(Creature* c, float dt)
 
     if(creature_count == 0)
     {
+        float a = rand()%360;
+        float aplus = 360.0 / 6;
+        for(int i = 0; i < 6; ++i)
+        {
+            creature_fire_projectile(c, a, color);
+            a += aplus;
+        }
+
         // deactivate totem
         creature_die(c);
     }
@@ -1430,7 +1449,6 @@ static void creature_update_totem_blue(Creature* c, float dt)
                 Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
 
-                uint32_t color = 0x003030FF;
                 creature_fire_projectile(c, angle, color);
                 creature_fire_projectile(c, angle-30, color);
                 creature_fire_projectile(c, angle-60, color);
@@ -1464,6 +1482,20 @@ static void creature_update_totem_yellow(Creature* c, float dt)
 
     if(creature_count == 0)
     {
+
+        float a = rand()%360;
+        float aplus = 360.0 / 6;
+        for(int i = 0; i < 6; ++i)
+        {
+            creature_fire_projectile(c, a, PROJ_COLOR);
+            a += aplus;
+        }
+
+        // creature_fire_projectile(c, 0.0, PROJ_COLOR);
+        // creature_fire_projectile(c, 90.0, PROJ_COLOR);
+        // creature_fire_projectile(c, 180.0, PROJ_COLOR);
+        // creature_fire_projectile(c, 270.0, PROJ_COLOR);
+
         // deactivate totem
         creature_die(c);
     }
