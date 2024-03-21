@@ -30,6 +30,7 @@ static int creature_image_shambler;
 static int creature_image_spiked_slug;
 static int creature_image_infected;
 static int creature_image_gravity_crystal;
+static int creature_image_peeper;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -44,6 +45,7 @@ static void creature_update_shambler(Creature* c, float dt);
 static void creature_update_spiked_slug(Creature* c, float dt);
 static void creature_update_infected(Creature* c, float dt);
 static void creature_update_gravity_crystal(Creature* c, float dt);
+static void creature_update_peeper(Creature* c, float dt);
 
 static uint16_t id_counter = 1;
 static uint16_t get_id()
@@ -71,6 +73,7 @@ void creature_init()
     creature_image_spiked_slug = gfx_load_image("src/img/creature_spiked_slug.png", false, false, 32, 32);
     creature_image_infected = gfx_load_image("src/img/creature_infected.png", false, false, 32, 32);
     creature_image_gravity_crystal = gfx_load_image("src/img/creature_gravity_crystal.png", false, false, 48, 48);
+    creature_image_peeper = gfx_load_image("src/img/creature_peeper.png", false, false, 32, 32);
 }
 
 char* creature_type_name(CreatureType type)
@@ -103,6 +106,8 @@ char* creature_type_name(CreatureType type)
             return "Infected";
         case CREATURE_TYPE_GRAVITY_CRYSTAL:
             return "Gravity Crystal";
+        case CREATURE_TYPE_PEEPER:
+            return "Peeper";
         default:
             return "???";
     }
@@ -138,6 +143,8 @@ int creature_get_image(CreatureType type)
             return creature_image_infected;
         case CREATURE_TYPE_GRAVITY_CRYSTAL:
             return creature_image_gravity_crystal;
+        case CREATURE_TYPE_PEEPER:
+            return creature_image_peeper;
         default:
             return -1;
     }
@@ -361,6 +368,19 @@ void creature_init_props(Creature* c)
             c->phys.elasticity = 0.0;
             c->passive = true;
             c->xp = 0;
+        } break;
+        case CREATURE_TYPE_PEEPER:
+        {
+            c->phys.speed = 0.0;
+            c->act_time_min = 1.5;
+            c->act_time_max = 3.0;
+            c->phys.mass = 0.5;
+            c->phys.base_friction = 20.0;
+            c->phys.hp_max = 3.0;
+            c->painful_touch = true;
+            c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
+            c->phys.crawling = false;
+            c->xp = 15;
         } break;
     }
 
@@ -645,6 +665,9 @@ void creature_update(Creature* c, float dt)
                 break;
             case CREATURE_TYPE_GRAVITY_CRYSTAL:
                 creature_update_gravity_crystal(c,dt);
+                break;
+            case CREATURE_TYPE_PEEPER:
+                creature_update_peeper(c,dt);
                 break;
         }
     }
@@ -1773,5 +1796,68 @@ static void creature_update_gravity_crystal(Creature* c, float dt)
 
         p->phys.vel.x += dt*v.x;
         p->phys.vel.y += dt*v.y;
+    }
+}
+
+static void creature_update_peeper(Creature* c, float dt)
+{
+    // states
+    // 0: Underground
+    // 1: Above Ground
+    // 2: Shooting
+
+    if(c->ai_state == 0)
+    {
+        if(c->target_tile.x < 0 || c->target_tile.y < -1)
+        {
+            // choose a random tile to peep from
+
+            Room* room = level_get_room_by_index(&level, c->curr_room);
+            Vector2i tilec = {0};
+            Vector2f tilep = {0};
+            level_get_rand_floor_tile(room, &tilec, &tilep);
+
+            Decal d = {0};
+            d.image = particles_image;
+            d.sprite_index = 42;
+            d.tint = COLOR_RED;
+            d.scale = 1.0;
+            d.rotation = 0.0;
+            d.opacity = 1.0;
+            d.ttl = 3.0;
+            d.pos.x = tilep.x;
+            d.pos.y = tilep.y;
+            d.room = c->curr_room;
+            d.fade_pattern = 1;
+            decal_add(d);
+
+            c->act_time_min = 3.0;
+            c->act_time_max = 3.0;
+            c->target_tile.x = tilec.x;
+            c->target_tile.y = tilec.y;
+        }
+        else
+        {
+            // already picked tile to peep from, wait to peep
+            bool act = ai_update_action(c, dt);
+
+            if(act)
+            {
+                // peep
+                c->ai_state = 1;
+
+                // set position
+                Vector2f pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
+                c->phys.pos.x = pos.x;
+                c->phys.pos.y = pos.y;
+            }
+        }
+        return;
+    }
+
+    if(c->ai_state == 1)
+    {
+        // above ground
+
     }
 }
