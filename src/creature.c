@@ -849,7 +849,8 @@ void creature_die(Creature* c)
     }
 
     // printf("room xp %d -> ", room->xp);
-    room->xp += c->xp;
+    level_room_xp += c->xp;
+    // room->xp += c->xp;
     // printf("%d\n", room->xp);
 
     Decal d = {0};

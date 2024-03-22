@@ -112,7 +112,7 @@ ItemType item_rand(bool include_chest);
 
 const char* item_get_name(ItemType type);
 const char* item_get_description(ItemType type);
-void item_add(ItemType type, float x, float y, uint8_t curr_room);
+Item* item_add(ItemType type, float x, float y, uint8_t curr_room);
 bool item_remove(Item* pu);
 void item_update(Item* pu, float dt);
 void item_update_all(float dt);

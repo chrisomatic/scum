@@ -1296,18 +1296,20 @@ void handle_room_completion(Room* room)
     if(!room->doors_locked && prior_locked)
     {
 
-        if(room->xp > 0)
+        level_room_in_progress = false;
+
+        if(level_room_xp > 0)
         {
             for(int j = 0; j < MAX_CLIENTS; ++j)
             {
                 Player* p = &players[j];
                 if(p->active && p->curr_room == room->index && !p->phys.dead)
                 {
-                    player_add_xp(p, room->xp);
+                    player_add_xp(p, level_room_xp);
                 }
             }
         }
-        room->xp = 0;
+        level_room_xp = 0;
 
         if(room->type == ROOM_TYPE_BOSS)
         {
@@ -1925,6 +1927,10 @@ void draw()
     draw_timed_items();
     draw_skill_selection();
 
+    if(level_room_time > 0)
+    {
+        gfx_draw_string(view_width - 50, view_height - 50, COLOR_WHITE, 0.2, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "%.0f", level_room_time);
+    }
 
     if(debug_enabled)
     {

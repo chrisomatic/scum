@@ -716,7 +716,7 @@ const char* item_get_description(ItemType type)
     return "???";
 }
 
-void item_add(ItemType type, float x, float y, uint8_t curr_room)
+Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
 {
     Item pu = {0};
     pu.type = type;
@@ -756,7 +756,11 @@ void item_add(ItemType type, float x, float y, uint8_t curr_room)
     pu.phys.height = 1.6f*pu.phys.radius;
     pu.phys.vr = gfx_images[ item_props[pu.type].image ].visible_rects[0];
 
-    list_add(item_list,&pu);
+    bool ret = list_add(item_list,&pu);
+
+    if(!ret) return NULL;
+
+    return &items[item_list->count];
 }
 
 bool item_remove(Item* pu)

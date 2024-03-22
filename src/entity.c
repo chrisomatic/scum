@@ -69,9 +69,10 @@ static void sort_entities()
     }
 }
 
-static void draw_entity_shadow(Physics* phys)
+static void draw_entity_shadow(Physics* phys, EntityType type)
 {
     if(phys->falling) return;
+    if(type == ENTITY_TYPE_ITEM) return;
 
     // bool horizontal = (phys->rotation_deg == 0.0 || phys->rotation_deg == 180.0);
     if(phys->height < 24.0 && phys->pos.z == 0.0) return;
@@ -292,7 +293,7 @@ void entity_draw_all()
         // if(role == ROLE_CLIENT)
         //     phys_calc_collision_rect(e->phys);
 
-        draw_entity_shadow(e->phys);
+        draw_entity_shadow(e->phys, e->type);
 
     }
 

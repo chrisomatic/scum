@@ -358,7 +358,7 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_LEFT].state, GLFW_KEY_J);
     window_controls_add_key(&player->actions[PLAYER_ACTION_SHOOT_RIGHT].state, GLFW_KEY_L);
 
-    window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_ENTER);
+    // window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_ENTER);
     window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_E);
 
     window_controls_add_key(&player->actions[PLAYER_ACTION_SELECT_SKILL].state, GLFW_KEY_T);
@@ -740,6 +740,20 @@ void player_start_room_transition(Player* p)
         }
 
         // printf("start room transition: %d -> %d\n", p->transition_room, p->curr_room);
+
+        level_grace_time = ROOM_GRACE_TIME;
+        level_room_time = 0.0;
+        level_room_xp = 0;
+
+        if(level.rooms_ptr[room_index]->doors_locked)
+        {
+            level_room_in_progress = true;
+        }
+        else
+        {
+            level_room_in_progress = false;
+        }
+
     }
 
     if(role == ROLE_SERVER)
@@ -869,7 +883,6 @@ static void handle_room_collision(Player* p)
                 p->phys.vel.y = 0;
                 p->door = i;
                 player_start_room_transition(p);
-                level_grace_time = ROOM_GRACE_TIME;
             }
             break;
         }

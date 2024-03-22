@@ -16,6 +16,9 @@ int dungeon_set_image1 = -1;
 int dungeon_set_image2 = -1;
 int dungeon_set_image3 = -1;
 float level_grace_time = 0.0;
+float level_room_time = 0;
+int level_room_xp = 0;
+bool level_room_in_progress = false;
 
 static int room_list_monster[MAX_ROOM_LIST_COUNT] = {0};
 static int room_list_empty[MAX_ROOM_LIST_COUNT] = {0};
@@ -185,7 +188,7 @@ Level level_generate(unsigned int seed, int rank)
         shroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_SHRINE, sroom, 2, 4, &shpath, false);
         if(shroom) set_doors_from_path(&glevel, &shpath);
     }
-        
+
     for(;;)
     {
         int room_count = get_room_count(&glevel);
@@ -349,6 +352,11 @@ Level level_generate(unsigned int seed, int rank)
     level_print(&glevel);
     level_grace_time = 2.0;
 
+    for(int i = 0; i < item_list->count; ++i)
+    {
+        items[i].phys.vel.z = 0.0;
+    }
+
     astar_create(&glevel.asd, ROOM_TILE_SIZE_X, ROOM_TILE_SIZE_Y);
     astar_set_traversable_func(&glevel.asd, tile_traversable_func);
 
@@ -479,7 +487,6 @@ static void init_level_struct(Level* level)
             level->rooms[x][y].index = idx;
             level->rooms[x][y].grid.x = x;
             level->rooms[x][y].grid.y = y;
-            level->rooms[x][y].xp = 0;
             level->rooms[x][y].doors_locked = false;
         }
     }
@@ -1469,6 +1476,11 @@ void level_update(float dt)
 {
     level_grace_time -= dt;
     level_grace_time = MAX(0.0, level_grace_time);
+
+    if(level_room_in_progress)
+    {
+        level_room_time += dt;
+    }
 }
 
 void level_print(Level* level)

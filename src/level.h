@@ -130,7 +130,6 @@ typedef struct
     int layout; // rfd room_list index
 
     bool discovered;
-    int xp;
 
     uint8_t index;
     Vector2i grid;
@@ -162,6 +161,9 @@ extern int dungeon_set_image2;
 extern int dungeon_set_image3;
 
 extern float level_grace_time;
+extern float level_room_time;   // time spent in room (until completed)
+extern int level_room_xp;
+extern bool level_room_in_progress;
 
 void level_init();
 void level_update(float dt);
