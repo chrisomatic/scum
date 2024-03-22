@@ -302,6 +302,30 @@ int player_get_active_count()
     return num;
 }
 
+Player* player_get_nearest(uint8_t room_index, float x, float y)
+{
+    float min_dist = 100000.0;
+    int min_index = 0;
+
+    // int num_players = player_get_active_count();
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        Player* p = &players[i];
+        if(!p->active) continue;
+        if(p->phys.dead) continue;
+        if(p->curr_room != room_index) continue;
+
+        float d = dist(x,y, p->phys.pos.x, p->phys.pos.y);
+        if(d < min_dist)
+        {
+            min_dist = d;
+            min_index = i;
+        }
+    }
+
+    return &players[min_index];
+}
+
 void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i tile)
 {
     // printf("player_send_to_room: %u\n");

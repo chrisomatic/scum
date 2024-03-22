@@ -64,7 +64,7 @@ void creature_init()
     creature_image_clinger = gfx_load_image("src/img/creature_clinger.png", false, false, 32, 32);
     creature_image_geizer = gfx_load_image("src/img/creature_geizer.png", false, false, 32, 64);
     creature_image_floater = gfx_load_image("src/img/creature_floater.png", false, false, 16, 16);
-    creature_image_floater_big = gfx_load_image("src/img/creature_floater_big.png", false, false, 64, 64);
+    creature_image_floater_big = gfx_load_image("src/img/creature_floater_big.png", false, false, 48, 48);
     creature_image_buzzer  = gfx_load_image("src/img/creature_buzzer.png", false, false, 32, 32);
     creature_image_totem_red  = gfx_load_image("src/img/creature_totem_red.png", false, false, 32, 64);
     creature_image_totem_blue  = gfx_load_image("src/img/creature_totem_blue.png", false, false, 32, 64);
@@ -371,16 +371,17 @@ void creature_init_props(Creature* c)
         } break;
         case CREATURE_TYPE_PEEPER:
         {
-            c->phys.speed = 0.0;
-            c->act_time_min = 1.5;
-            c->act_time_max = 3.0;
+            c->phys.speed = 80.0;
+            c->act_time_min = 1.0;
+            c->act_time_max = 2.0;
             c->phys.mass = 0.5;
             c->phys.base_friction = 20.0;
-            c->phys.hp_max = 3.0;
+            c->phys.hp_max = 8.0;
             c->painful_touch = true;
             c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
             c->phys.crawling = false;
-            c->xp = 15;
+            c->phys.underground = true;
+            c->xp = 20;
         } break;
     }
 
@@ -718,10 +719,12 @@ void creature_update(Creature* c, float dt)
 
     c->phys.pos.x += dt*c->phys.vel.x;
     c->phys.pos.y += dt*c->phys.vel.y;
+
     phys_apply_gravity(&c->phys, 1.0, dt);
 
     Rect r = RECT(c->phys.pos.x, c->phys.pos.y, 1, 1);
     Vector2f adj = limit_rect_pos(&room_area, &r);
+
     c->phys.pos.x += adj.x;
     c->phys.pos.y += adj.y;
 
@@ -804,7 +807,11 @@ void creature_draw(Creature* c)
 
     uint32_t color = c->color;
     if(c->id == creature_clicked_id) color = COLOR_BLUE;
-    gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, color, false, 1.0, 0.0, 1.0, false, false, false);
+
+    if(!c->phys.underground)
+    {
+        gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, color, false, 1.0, 0.0, 1.0, false, false, false);
+    }
 }
 
 
@@ -961,30 +968,6 @@ bool creature_is_on_tile(Room* room, int tile_x, int tile_y)
     return false;
 }
 
-static Player* get_nearest_player(uint8_t room_index, float x, float y)
-{
-    float min_dist = 100000.0;
-    int min_index = 0;
-
-    // int num_players = player_get_active_count();
-    for(int i = 0; i < MAX_PLAYERS; ++i)
-    {
-        Player* p = &players[i];
-        if(!p->active) continue;
-        if(p->phys.dead) continue;
-        if(p->curr_room != room_index) continue;
-
-        float d = dist(x,y, p->phys.pos.x, p->phys.pos.y);
-        if(d < min_dist)
-        {
-            min_dist = d;
-            min_index = i;
-        }
-    }
-
-    return &players[min_index];
-}
-
 CreatureType creature_get_random()
 {
     int r = rand() % 6;
@@ -1022,7 +1005,6 @@ static bool creature_do_astar_click(Creature* c, float dt)
     return false;
 }
 
-
 static void creature_update_slug(Creature* c, float dt)
 {
     if(creature_do_astar_click(c,dt)) return;
@@ -1044,7 +1026,7 @@ static void creature_update_spiked_slug(Creature* c, float dt)
 {
     if(creature_do_astar_click(c,dt)) return;
 
-    Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+    Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
     Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
     normalize(&v);
 
@@ -1110,7 +1092,7 @@ static void creature_update_clinger(Creature* c, float dt)
 {
     if(creature_do_astar_click(c,dt)) return;
 
-    Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+    Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
 
     float d = dist(p->phys.pos.x, p->phys.pos.y, c->phys.pos.x, c->phys.pos.y);
     bool horiz = (c->spawn_tile_y == -1 || c->spawn_tile_y == ROOM_TILE_SIZE_Y);
@@ -1308,7 +1290,7 @@ static void creature_update_buzzer(Creature* c, float dt)
             if(c->ai_value % 2 == 0)
             {
                 // fire shots
-                Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+                Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y) + RAND_FLOAT(-10.0,10.0);
                 creature_fire_projectile(c, angle, PROJ_COLOR);
             }
@@ -1389,7 +1371,7 @@ static void creature_update_totem_red(Creature* c, float dt)
                 c->ai_counter = 0.0;
 
                 // fire shots
-                Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+                Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
                 creature_fire_projectile(c, angle, PROJ_COLOR);
 
@@ -1470,7 +1452,7 @@ static void creature_update_totem_blue(Creature* c, float dt)
                 c->ai_counter = 0.0;
 
                 // fire shots
-                Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+                Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
 
                 creature_fire_projectile(c, angle, color);
@@ -1606,7 +1588,7 @@ static void creature_update_shambler(Creature* c, float dt)
             if(c->ai_state == 1)
             {
                 // fire 5 shots
-                Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+                Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
                 creature_fire_projectile(c, angle + RAND_FLOAT(-2.0,2.0), PROJ_COLOR);
 
@@ -1738,7 +1720,7 @@ static void creature_update_infected(Creature* c, float dt)
 {
     if(creature_do_astar_click(c,dt)) return;
 
-    Player* p = get_nearest_player(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+    Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
 
     Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
     normalize(&v);
@@ -1804,61 +1786,58 @@ static void creature_update_peeper(Creature* c, float dt)
 {
     // states
     // 0: Underground
-    // 1: Above Ground
-    // 2: Shooting
+    // 1: Above Ground, Shoot
+    // 2: After shooting
 
     if(c->ai_state == 0)
     {
-        if(c->target_tile.x < 0 || c->target_tile.y < -1)
+        // underground
+        c->phys.underground = true;
+
+        if(ai_has_target(c))
         {
-            // choose a random tile to peep from
-
-            Room* room = level_get_room_by_index(&level, c->curr_room);
-            Vector2i tilec = {0};
-            Vector2f tilep = {0};
-            level_get_rand_floor_tile(room, &tilec, &tilep);
-
-            Decal d = {0};
-            d.image = particles_image;
-            d.sprite_index = 42;
-            d.tint = COLOR_RED;
-            d.scale = 1.0;
-            d.rotation = 0.0;
-            d.opacity = 1.0;
-            d.ttl = 3.0;
-            d.pos.x = tilep.x;
-            d.pos.y = tilep.y;
-            d.room = c->curr_room;
-            d.fade_pattern = 1;
-            decal_add(d);
-
-            c->act_time_min = 3.0;
-            c->act_time_max = 3.0;
-            c->target_tile.x = tilec.x;
-            c->target_tile.y = tilec.y;
+            // path find to tile
+            if(ai_path_find_to_target_tile(c))
+            {
+                ai_clear_target(c);
+                c->ai_state = 1;
+            }
         }
         else
         {
-            // already picked tile to peep from, wait to peep
-            bool act = ai_update_action(c, dt);
-
-            if(act)
-            {
-                // peep
-                c->ai_state = 1;
-
-                // set position
-                Vector2f pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
-                c->phys.pos.x = pos.x;
-                c->phys.pos.y = pos.y;
-            }
+            // choose a random tile
+            ai_target_rand_tile(c);
         }
+
         return;
     }
 
     if(c->ai_state == 1)
     {
         // above ground
+        c->phys.underground = false;
 
+        bool act = ai_update_action(c, dt);
+
+        if(act)
+        {
+            ai_shoot_nearest_player(c);
+            c->act_time_min = 1.0;
+            c->act_time_max = 1.0;
+            c->ai_state = 2;
+        }
+        return;
     }
+
+    if(c->ai_state == 2)
+    {
+        // wait to return to underground
+        if(ai_update_action(c, dt))
+        {
+            c->act_time_min = 1.0;
+            c->act_time_max = 2.0;
+            c->ai_state = 0;
+        }
+    }
+
 }

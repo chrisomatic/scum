@@ -232,6 +232,7 @@ bool player_check_other_player_collision(Player* p);
 void player_handle_collision(Player* p, Entity* e);
 bool is_any_player_room(uint8_t curr_room);
 int player_get_count_in_room(uint8_t curr_room);
+Player* player_get_nearest(uint8_t room_index, float x, float y);
 
 void draw_all_other_player_info();
 void draw_hearts();

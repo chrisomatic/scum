@@ -54,6 +54,7 @@ typedef struct
 
     bool floating;
     bool crawling;
+    bool underground; // doesn't interact
 
     StatusEffect status_effects[MAX_STATUS_EFFECTS];
     int status_effects_count;

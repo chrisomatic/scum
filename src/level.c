@@ -57,8 +57,6 @@ static void print_room(Level* level, Room* room);
 static int rand_from_probs(int probs[], int num);
 static void shuffle_vector2i_list(Vector2i list[], int count);
 
-static int tile_traversable_func(int x, int y);
-
 // rand
 // ------------------------------------------------------------------------
 static unsigned long int lrand_next = 1;
@@ -358,7 +356,7 @@ Level level_generate(unsigned int seed, int rank)
     }
 
     astar_create(&glevel.asd, ROOM_TILE_SIZE_X, ROOM_TILE_SIZE_Y);
-    astar_set_traversable_func(&glevel.asd, tile_traversable_func);
+    astar_set_traversable_func(&glevel.asd, level_tile_traversable_func);
 
     return glevel;
 }
@@ -1499,7 +1497,7 @@ void level_print(Level* level)
 }
 
 //TODO: add in check for geizers and totems on tiles
-static int tile_traversable_func(int x, int y)
+int level_tile_traversable_func(int x, int y)
 {
     Room* room  = level_get_room_by_index(&level, player->curr_room);
     TileType tt = level_get_tile_type(room, x, y);

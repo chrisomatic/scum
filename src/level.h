@@ -202,6 +202,8 @@ bool level_is_room_valid_index(Level* level, int index);
 bool level_is_room_discovered(Level* level, int x, int y);
 bool level_is_room_discovered_index(Level* level, int index);
 
+int level_tile_traversable_func(int x, int y);
+
 float dir_to_angle_deg(Dir dir);
 Dir angle_to_dir_cardinal(float angle_deg);
 Dir get_opposite_dir(Dir dir);

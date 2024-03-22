@@ -439,6 +439,9 @@ bool room_editor_update(float dt)
 
         printf("level start: %d %d\n",level.start.x, level.start.y);
 
+        astar_create(&level.asd, ROOM_TILE_SIZE_X, ROOM_TILE_SIZE_Y);
+        astar_set_traversable_func(&level.asd, level_tile_traversable_func);
+
         Room* room = &level.rooms[level.start.x][level.start.y];
 
         room->valid = true;

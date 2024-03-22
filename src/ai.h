@@ -122,7 +122,7 @@ bool ai_move_to_tile(Creature* c, int x, int y)
 
     Vector2f v = {r.x - c->phys.pos.x, r.y - c->phys.pos.y};
 
-    if(ABS(v.x) < 1.0 && ABS(v.y) < 1.0)
+    if(ABS(v.x) < 3.0 && ABS(v.y) < 3.0)
     {
         // reached tile
         return true;
@@ -172,12 +172,20 @@ bool ai_has_target(Creature* c)
     return (c->target_tile.x >= 0 && c->target_tile.y >= 0);
 }
 
+bool ai_on_target(Creature* c)
+{
+    Vector2f target_pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
+    Vector2f v = {target_pos.x - c->phys.pos.x, target_pos.y - c->phys.pos.y};
+
+    return (ABS(v.x) < 3.0 && ABS(v.y) < 3.0);
+}
+
 bool ai_move_to_target(Creature* c,float dt)
 {
     Vector2f target_pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
     Vector2f v = {target_pos.x - c->phys.pos.x, target_pos.y - c->phys.pos.y};
 
-    bool at_target = (ABS(v.x) < 3.0 && ABS(v.y) < 3.0);
+    bool at_target =  (ABS(v.x) < 3.0 && ABS(v.y) < 3.0);
 
     if(at_target)
     {
@@ -207,6 +215,42 @@ void ai_clear_target(Creature* c)
 int ai_rand(int max)
 {
     return rand() % max;
+}
+
+void ai_target_rand_tile(Creature* c)
+{
+    Room* room = level_get_room_by_index(&level, c->curr_room);
+
+    Vector2i tilec = {0};
+    Vector2f tilep = {0};
+
+    level_get_rand_floor_tile(room, &tilec, &tilep);
+
+    c->target_tile.x = tilec.x;
+    c->target_tile.y = tilec.y;
+}
+
+void ai_shoot_nearest_player(Creature* c)
+{
+    Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+    float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y) + RAND_FLOAT(-10.0,10.0);
+
+    ProjectileType pt = creature_get_projectile_type(c);
+    ProjectileDef def = projectile_lookup[pt];
+    ProjectileSpawn spawn = projectile_spawn[pt];
+
+    projectile_add(&c->phys, c->curr_room, &def, &spawn, COLOR_RED, angle, false);
+}
+
+bool ai_path_find_to_target_tile(Creature* c)
+{
+    bool traversable = astar_traverse(&level.asd, c->phys.curr_tile.x, c->phys.curr_tile.y, c->target_tile.x, c->target_tile.y);
+
+    if(!traversable)
+        return false;
+
+    AStarNode_t* n = &level.asd.path[1];
+    return ai_move_to_tile(c, n->x, n->y);
 }
 
 bool ai_flip_coin()

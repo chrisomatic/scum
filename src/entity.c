@@ -75,7 +75,7 @@ static void draw_entity_shadow(Physics* phys, EntityType type)
     if(type == ENTITY_TYPE_ITEM) return;
 
     // bool horizontal = (phys->rotation_deg == 0.0 || phys->rotation_deg == 180.0);
-    if(phys->height < 24.0 && phys->pos.z == 0.0) return;
+    if(phys->crawling && phys->height < 24.0 && phys->pos.z == 0.0) return;
 
     // float scale = (phys->collision_rect.w/32.0);
 
@@ -213,6 +213,7 @@ void entity_handle_collisions()
     {
         Entity* e1 = &entities[i];
         if(e1->phys->dead) continue;
+        if(e1->phys->underground) continue;
 
         Physics* p1 = e1->phys;
 
@@ -220,8 +221,9 @@ void entity_handle_collisions()
         {
             Entity* e2 = &entities[j];
 
-            if(e2->phys->dead) continue;
             if(e1 == e2) continue;
+            if(e2->phys->dead) continue;
+            if(e2->phys->underground) continue;
             if(e1->curr_room != e2->curr_room) continue;
             if(!is_any_player_room(e1->curr_room)) continue;
 
