@@ -130,6 +130,8 @@ bool ai_move_to_tile(Creature* c, int x, int y)
 
     // printf("[%u] %.1f, %.1f moving to %d, %d (%.0f, %.0f)\n", c->id, c->phys.pos.x, c->phys.pos.y, x, y, r.x, r.y);
 
+    normalize(&v);
+
     // set velocity to move toward tile
     c->phys.vel.x = c->phys.speed*v.x;
     c->phys.vel.y = c->phys.speed*v.y;
