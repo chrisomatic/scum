@@ -159,6 +159,12 @@ Level level_generate(unsigned int seed, int rank)
     sroom->type = ROOM_TYPE_EMPTY;
     sroom->layout = 0;
 
+    // for(int i = 0; i < 3; ++i)
+    // {
+    //     Vector2i t = {.x=i,.y=i};
+    //     Creature* c = creature_add(sroom, CREATURE_TYPE_PEEPER, &t, NULL);
+    // }
+
     if(role != ROLE_CLIENT)
     {
         //TEMP

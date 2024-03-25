@@ -128,6 +128,8 @@ bool ai_move_to_tile(Creature* c, int x, int y)
         return true;
     }
 
+    // printf("[%u] %.1f, %.1f moving to %d, %d (%.0f, %.0f)\n", c->id, c->phys.pos.x, c->phys.pos.y, x, y, r.x, r.y);
+
     // set velocity to move toward tile
     c->phys.vel.x = c->phys.speed*v.x;
     c->phys.vel.y = c->phys.speed*v.y;
@@ -242,15 +244,37 @@ void ai_shoot_nearest_player(Creature* c)
     projectile_add(&c->phys, c->curr_room, &def, &spawn, COLOR_RED, angle, false);
 }
 
+bool ai_on_target_tile(Creature* c)
+{
+    if(c->phys.curr_tile.x == c->target_tile.x && c->phys.curr_tile.y == c->target_tile.y)
+    {
+        return true;
+    }
+    return false;
+}
+
 bool ai_path_find_to_target_tile(Creature* c)
 {
-    bool traversable = astar_traverse(&level.asd, c->phys.curr_tile.x, c->phys.curr_tile.y, c->target_tile.x, c->target_tile.y);
 
-    if(!traversable)
-        return false;
+    if(!ai_on_target_tile(c))
+    {
+        bool traversable = astar_traverse(&level.asd, c->phys.curr_tile.x, c->phys.curr_tile.y, c->target_tile.x, c->target_tile.y);
+        if(!traversable)
+        {
+            // printf("%u not traversable\n", c->id);
+            return false;
+        }
 
-    AStarNode_t* n = &level.asd.path[1];
-    return ai_move_to_tile(c, n->x, n->y);
+        if(level.asd.pathlen == 1)
+        {
+            return true;
+        }
+
+        AStarNode_t* n = &level.asd.path[1];
+        return ai_move_to_tile(c, n->x, n->y);
+    }
+
+    return ai_move_to_tile(c, c->phys.curr_tile.x, c->phys.curr_tile.y);
 }
 
 bool ai_flip_coin()

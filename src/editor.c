@@ -198,6 +198,9 @@ void editor_draw()
                 Vector2f mc = level_get_pos_by_room_coords(tc.x, tc.y);
                 imgui_text("Back to Mouse coords: %.1f, %.1f", mc.x,mc.y);
 
+                Rect tcr = level_get_tile_rect(tc.x, tc.y);
+                imgui_text("Back to Mouse coords (rect): %.1f, %.1f", tcr.x,tcr.y);
+
                 // int xd = (tc.x+1) * TILE_SIZE;
                 // int yd = (tc.y+1) * TILE_SIZE;
                 // float _x = xd - (TILE_SIZE/2.0);
