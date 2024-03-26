@@ -488,10 +488,16 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         //     phys->height*2,
         // };
 
+        float zb = phys->pos.z/2.0;
+        if(phys->floating)
+        {
+            zb = 0.0;
+        }
+
         Box check = {
             phys->collision_rect.x,
             phys->collision_rect.y,
-            0,
+            zb,
             // phys->pos.z + phys->height/2.0,
             phys->collision_rect.w,
             phys->collision_rect.h,

@@ -32,6 +32,8 @@ static int creature_image_infected;
 static int creature_image_gravity_crystal;
 static int creature_image_peeper;
 static int creature_image_leeper;
+static int creature_image_spawn_egg;
+static int creature_image_spawn_spider;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -48,6 +50,8 @@ static void creature_update_infected(Creature* c, float dt);
 static void creature_update_gravity_crystal(Creature* c, float dt);
 static void creature_update_peeper(Creature* c, float dt);
 static void creature_update_leeper(Creature* c, float dt);
+static void creature_update_spawn_egg(Creature* c, float dt);
+static void creature_update_spawn_spider(Creature* c, float dt);
 
 static uint16_t id_counter = 1;
 static uint16_t get_id()
@@ -77,6 +81,8 @@ void creature_init()
     creature_image_gravity_crystal = gfx_load_image("src/img/creature_gravity_crystal.png", false, false, 48, 48);
     creature_image_peeper = gfx_load_image("src/img/creature_peeper.png", false, false, 32, 32);
     creature_image_leeper = gfx_load_image("src/img/creature_leeper.png", false, false, 48, 48);
+    creature_image_spawn_egg = gfx_load_image("src/img/creature_spawn_egg.png", false, false, 32, 32);
+    creature_image_spawn_spider = gfx_load_image("src/img/creature_spawn_spider.png", false, false, 16, 16);
 }
 
 char* creature_type_name(CreatureType type)
@@ -113,6 +119,10 @@ char* creature_type_name(CreatureType type)
             return "Peeper";
         case CREATURE_TYPE_LEEPER:
             return "Leeper";
+        case CREATURE_TYPE_SPAWN_EGG:
+            return "Spawn Egg";
+        case CREATURE_TYPE_SPAWN_SPIDER:
+            return "Spawn Spider";
         default:
             return "???";
     }
@@ -152,6 +162,10 @@ int creature_get_image(CreatureType type)
             return creature_image_peeper;
         case CREATURE_TYPE_LEEPER:
             return creature_image_leeper;
+        case CREATURE_TYPE_SPAWN_EGG:
+            return creature_image_spawn_egg;
+        case CREATURE_TYPE_SPAWN_SPIDER:
+            return creature_image_spawn_spider;
         default:
             return -1;
     }
@@ -393,15 +407,41 @@ void creature_init_props(Creature* c)
         case CREATURE_TYPE_LEEPER:
         {
             c->phys.speed = 120.0;
-            c->act_time_min = 1.0;
-            c->act_time_max = 2.0;
+            c->act_time_min = 0.5;
+            c->act_time_max = 1.5;
             c->phys.mass = 0.5;
             c->phys.base_friction = 20.0;
             c->phys.hp_max = 8.0;
             c->painful_touch = true;
-            c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
+            c->phys.radius = 0.4*MAX(c->phys.width,c->phys.height);
             c->phys.crawling = false;
             c->xp = 20;
+        } break;
+        case CREATURE_TYPE_SPAWN_EGG:
+        {
+            c->phys.speed = 0.0;
+            c->act_time_min = 1.0;
+            c->act_time_max = 3.0;
+            c->phys.mass = 0.5;
+            c->phys.base_friction = 20.0;
+            c->phys.hp_max = 4.0;
+            c->painful_touch = true;
+            c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
+            c->phys.crawling = true;
+            c->xp = 50;
+        } break;
+        case CREATURE_TYPE_SPAWN_SPIDER:
+        {
+            c->phys.speed = 30.0;
+            c->act_time_min = 0.5;
+            c->act_time_max = 1.5;
+            c->phys.mass = 0.5;
+            c->phys.base_friction = 20.0;
+            c->phys.hp_max = 4.0;
+            c->painful_touch = true;
+            c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
+            c->phys.crawling = true;
+            c->xp = 10;
         } break;
     }
 
@@ -692,6 +732,12 @@ void creature_update(Creature* c, float dt)
                 break;
             case CREATURE_TYPE_LEEPER:
                 creature_update_leeper(c,dt);
+                break;
+            case CREATURE_TYPE_SPAWN_EGG:
+                creature_update_spawn_egg(c,dt);
+                break;
+            case CREATURE_TYPE_SPAWN_SPIDER:
+                creature_update_spawn_spider(c,dt);
                 break;
         }
     }
@@ -1803,7 +1849,7 @@ static void creature_update_gravity_crystal(Creature* c, float dt)
         double r2 = dist_squared(c->phys.pos.x,c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
         double f = (G*m1*m2)/(r2*5.0);
 
-        printf("f: %f\n", f);
+        // printf("f: %f\n", f);
 
         // apply gravitational pull
         Vector2f v = {c->phys.pos.x - p->phys.pos.x, c->phys.pos.y - p->phys.pos.y};
@@ -1885,8 +1931,8 @@ static void creature_update_leeper(Creature* c, float dt)
         Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
         if(p)
         {
-            c->target_tile.x = p->phys.curr_tile.x;
-            c->target_tile.y = p->phys.curr_tile.y;
+            c->target_pos.x = p->phys.pos.x;
+            c->target_pos.y = p->phys.pos.y;
             c->phys.vel.z = 300.0;
             c->ai_state = 1;
         }
@@ -1900,8 +1946,7 @@ static void creature_update_leeper(Creature* c, float dt)
         if(c->phys.pos.z > 0.0)
         {
             c->sprite_index = 1;
-            Rect rp = level_get_tile_rect(c->target_tile.x, c->target_tile.y);
-            Vector2f v = {rp.x - c->phys.pos.x, rp.y - c->phys.pos.y};
+            Vector2f v = {c->target_pos.x - c->phys.pos.x, c->target_pos.y - c->phys.pos.y};
             normalize(&v);
             c->phys.vel.x = c->phys.speed*v.x;
             c->phys.vel.y = c->phys.speed*v.y;
@@ -1927,4 +1972,47 @@ static void creature_update_leeper(Creature* c, float dt)
         return;
     }
 
+}
+
+static void creature_update_spawn_egg(Creature* c, float dt)
+{
+
+    bool act = ai_update_action(c, dt);
+    if(!act) return;
+
+    c->ai_state++;
+
+    if(c->ai_state == 3)
+    {
+        Vector2i t = {.x=c->phys.curr_tile.x, .y=c->phys.curr_tile.y};
+        Room* room = level.rooms_ptr[c->curr_room];
+
+        for(int i = 0; i < 3+rand()%3; ++i)
+        {
+            creature_add(room, CREATURE_TYPE_SPAWN_SPIDER, &t, NULL);
+        }
+
+        creature_die(c);
+        return;
+    }
+
+    c->sprite_index = c->ai_state;
+}
+
+static void creature_update_spawn_spider(Creature* c, float dt)
+{
+
+    bool act = ai_update_action(c, dt);
+
+    if(act)
+    {
+        ai_stop_imm(c);
+
+        if(ai_flip_coin())
+        {
+            ai_random_walk(c);
+        }
+    }
+
+    return;
 }

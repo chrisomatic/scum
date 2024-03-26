@@ -27,6 +27,8 @@ typedef enum
     CREATURE_TYPE_GRAVITY_CRYSTAL,
     CREATURE_TYPE_PEEPER,
     CREATURE_TYPE_LEEPER,
+    CREATURE_TYPE_SPAWN_EGG,
+    CREATURE_TYPE_SPAWN_SPIDER,
     CREATURE_TYPE_MAX,
 } CreatureType;
 
@@ -75,6 +77,7 @@ typedef struct
     float windup_max;
 
     Vector2i target_tile;
+    Vector2f target_pos;
 
     int xp;
 
