@@ -768,6 +768,8 @@ void player_start_room_transition(Player* p)
         level_room_time = 0.0;
         level_room_xp = 0;
 
+        printf("moving to room %s\n", room_files[room_list[level.rooms_ptr[room_index]->layout].file_index]);
+
         if(level.rooms_ptr[room_index]->doors_locked)
         {
             level_room_in_progress = true;

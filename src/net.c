@@ -1458,6 +1458,19 @@ bool server_process_command(char* argv[20], int argc, int client_id)
             }
         }
     }
+    else if(STR_EQUAL(argv[0], "seed"))
+    {
+        if(argc != 2) return false;
+
+        int _seed = atoi(argv[1]);
+        trigger_generate_level(_seed, level_rank+1, 2, __LINE__);
+        if(role == ROLE_SERVER)
+        {
+            NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
+            net_server_add_event(&ev);
+        }
+
+    }
     else
     {
         return false;
