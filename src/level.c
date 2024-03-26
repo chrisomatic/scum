@@ -1508,7 +1508,21 @@ void level_print(Level* level)
 //TODO: add in check for geizers and totems on tiles
 int level_tile_traversable_func(int x, int y)
 {
-    Room* room  = level_get_room_by_index(&level, player->curr_room);
+    Player* p = NULL;
+    if(role == ROLER_SERVER)
+    {
+        for(int i = 0; i < MAX_PLAYERS; ++i)
+        {
+            p = &players[i];
+            if(p->active) break;
+        }
+    }
+    else
+    {
+        p = player;
+    }
+
+    Room* room  = level_get_room_by_index(&level, p->curr_room);
     TileType tt = level_get_tile_type(room, x, y);
 
     if(tt == TILE_BOULDER) return 0;
