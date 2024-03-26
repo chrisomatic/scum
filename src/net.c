@@ -2902,7 +2902,7 @@ static void unpack_creatures(Packet* pkt, int* offset, WorldState* ws)
 
         Creature* c = creature_add(NULL, 0, NULL, &creature);
 
-        creature.phys.underground = (bool)(underground == 0x01);
+        c->phys.underground = (bool)(underground == 0x01);
 
         c->server_state_prior.pos.x = x;
         c->server_state_prior.pos.y = y;
