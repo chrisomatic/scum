@@ -74,7 +74,7 @@ void creature_init()
     creature_image_buzzer  = gfx_load_image("src/img/creature_buzzer.png", false, false, 32, 32);
     creature_image_totem_red  = gfx_load_image("src/img/creature_totem_red.png", false, false, 32, 64);
     creature_image_totem_blue  = gfx_load_image("src/img/creature_totem_blue.png", false, false, 32, 64);
-    creature_image_totem_yellow  = gfx_load_image("src/img/creature_totem_yellow.png", false, false, 32, 64);
+    creature_image_totem_yellow  = gfx_load_image("src/img/creature_totem_yellow.png", false, false, 32, 48);
     creature_image_shambler = gfx_load_image("src/img/creature_shambler.png", false, false, 32, 64);
     creature_image_spiked_slug = gfx_load_image("src/img/creature_spiked_slug.png", false, false, 32, 32);
     creature_image_infected = gfx_load_image("src/img/creature_infected.png", false, false, 32, 32);
@@ -368,7 +368,7 @@ void creature_init_props(Creature* c)
         } break;
         case CREATURE_TYPE_INFECTED:
         {
-            c->phys.speed = 70.0;
+            c->phys.speed = 75.0;
             c->act_time_min = 0.3;
             c->act_time_max = 1.0;
             c->phys.mass = 1.0;
@@ -1569,7 +1569,6 @@ static void creature_update_totem_yellow(Creature* c, float dt)
 
     if(creature_count == 0)
     {
-
         float a = rand()%360;
         float aplus = 360.0 / 6;
         for(int i = 0; i < 6; ++i)
@@ -1595,8 +1594,12 @@ static void creature_update_totem_yellow(Creature* c, float dt)
         {
             c->ai_counter = 0.0;
             c->ai_state = 1;
+            c->sprite_index = 1;
             if(c->ai_value > 1)
+            {
                 c->ai_value = 0;
+                c->sprite_index = 0;
+            }
             c->windup = true;
         }
     }
@@ -1799,20 +1802,28 @@ static void creature_update_shambler(Creature* c, float dt)
 
 static void creature_update_infected(Creature* c, float dt)
 {
-    if(creature_do_astar_click(c,dt)) return;
-
+    // target closest player
     Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
 
-    Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
-    normalize(&v);
+    if(p)
+    {
+        c->target_tile.x = p->phys.curr_tile.x;
+        c->target_tile.y = p->phys.curr_tile.y;
 
-    float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
-
-    Dir dir = angle_to_dir_cardinal(angle);
-    creature_set_sprite_index(c, dir);
-
-    c->phys.vel.x = c->phys.speed*v.x;
-    c->phys.vel.y = c->phys.speed*v.y;
+        // path find to tile
+        if(ai_on_target_tile(c))
+        {
+            // on player tile move to player
+            Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
+            normalize(&v);
+            c->phys.vel.x = c->phys.speed*v.x;
+            c->phys.vel.y = c->phys.speed*v.y;
+        }
+        else
+        {
+            ai_path_find_to_target_tile(c);
+        }
+    }
 }
 
 static void creature_update_gravity_crystal(Creature* c, float dt)
