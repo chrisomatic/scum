@@ -137,6 +137,12 @@ void editor_draw()
                 imgui_color_picker("Ambient Light", &ambient_light);
 
                 static char* dungeon_images[] = {"1", "2", "3"};
+                static int first = true;
+                if(first)
+                {
+                    imgui_set_button_select(1, IM_ARRAYSIZE(dungeon_images), dungeon_images, "Dungeon Set");
+                    first = false;
+                }
                 int dungeon_set_select = imgui_button_select(IM_ARRAYSIZE(dungeon_images), dungeon_images, "Dungeon Set");
 
                 switch(dungeon_set_select)

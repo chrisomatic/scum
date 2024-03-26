@@ -630,6 +630,39 @@ void imgui_toggle_button(bool* toggle, char* label, ...)
     progress_pos();
 }
 
+void imgui_set_button_select(int index, int num_buttons, char* button_labels[], char* label)
+{
+    char _str[100] = {0};
+    snprintf(_str,99,"%s_%s##select%d",label,button_labels[0],num_buttons);
+
+    uint32_t hash = hash_str(_str,strlen(_str),0x0);
+    IntLookup* lookup = get_int_lookup(hash);
+    if (!lookup)
+        return;
+
+    int* val = &lookup->val;
+    *val = index;
+
+    // bool results[32] = {false};
+    // int selection = 0;
+
+    // int prior_spacing = theme.spacing;
+
+    // for(int i = 0; i < num_buttons; ++i)
+    // {
+    //     if(i == *val)
+    //     {
+    //         results[i] = true;
+    //     }
+
+    //     if(results[i])
+    //     {
+    //         selection = i;
+    //         *val = i;
+    //     }
+    // }
+}
+
 int imgui_button_select(int num_buttons, char* button_labels[], char* label)
 {
     if(num_buttons < 0 || num_buttons >= 32)

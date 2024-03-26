@@ -188,7 +188,7 @@ static void draw_room_file_gui()
         imgui_horizontal_end();
 
         imgui_horizontal_begin();
-        char* buttons2[] = {"All", "Empty", "Monster", "Treasure", "Boss"};
+        char* buttons2[] = {"All", "Empty", "Monster", "Treasure", "Boss", "Shrine"};
         selected_room_type = imgui_button_select(IM_ARRAYSIZE(buttons2), buttons2, "Room Type");
         imgui_horizontal_end();
 
@@ -746,6 +746,25 @@ void room_editor_draw()
                 }
 
                 bool interacted = false;
+
+                bool is_monster_room = false;
+                for(int y = 0; y < OBJECTS_MAX_Y; ++y)
+                {
+                    for(int x = 0; x < OBJECTS_MAX_X; ++x)
+                    {
+                        PlacedObject* o = &objects[x][y];
+                        if(o->type == TYPE_CREATURE)
+                        {
+                            is_monster_room = true;
+                            break;
+                        }
+                    }
+                    if(is_monster_room) break;
+                }
+                if(is_monster_room)
+                {
+                    room_type_sel = 1;
+                }
 
                 const float big = 16.0;
 
