@@ -432,7 +432,7 @@ void creature_init_props(Creature* c)
         } break;
         case CREATURE_TYPE_SPAWN_SPIDER:
         {
-            c->phys.speed = 30.0;
+            c->phys.speed = 90.0;
             c->act_time_min = 0.5;
             c->act_time_max = 1.5;
             c->phys.mass = 0.5;
@@ -1813,20 +1813,6 @@ static void creature_update_infected(Creature* c, float dt)
 
     c->phys.vel.x = c->phys.speed*v.x;
     c->phys.vel.y = c->phys.speed*v.y;
-
-    /*
-    bool act = ai_update_action(c, dt);
-
-    if(act)
-    {
-        ai_stop_imm(c);
-
-        if(ai_flip_coin())
-        {
-            ai_random_walk(c);
-        }
-    }
-    */
 }
 
 static void creature_update_gravity_crystal(Creature* c, float dt)
@@ -1985,7 +1971,7 @@ static void creature_update_spawn_egg(Creature* c, float dt)
     if(c->ai_state == 3)
     {
         Vector2i t = {.x=c->phys.curr_tile.x, .y=c->phys.curr_tile.y};
-        Room* room = level.rooms_ptr[c->curr_room];
+        Room* room = level_get_room_by_index(&level, c->curr_room);
 
         for(int i = 0; i < 3+rand()%3; ++i)
         {
@@ -2001,17 +1987,53 @@ static void creature_update_spawn_egg(Creature* c, float dt)
 
 static void creature_update_spawn_spider(Creature* c, float dt)
 {
-
     bool act = ai_update_action(c, dt);
 
     if(act)
     {
-        ai_stop_imm(c);
+        int r = ai_rand(2);
 
-        if(ai_flip_coin())
+        if(r == 0)
         {
-            ai_random_walk(c);
+            // move toward player
+            c->ai_state = 1;
+            c->act_time_min = 1.5;
+            c->act_time_min = 2.5;
         }
+        else
+        {
+            // random movement
+            c->ai_state = 0;
+            c->ai_value = rand() % 8;
+            c->act_time_min = 0.2;
+            c->act_time_min = 0.3;
+            ai_stop_imm(c);
+        }
+    }
+
+
+    if(c->ai_state == 0)
+    {
+        ai_walk_dir(c,c->ai_value);
+        return;
+    }
+
+    if(c->ai_state == 1)
+    {
+        // move toward nearest player
+        Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+
+        Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
+        normalize(&v);
+
+        float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
+
+        Dir dir = angle_to_dir_cardinal(angle);
+        creature_set_sprite_index(c, dir);
+
+        c->phys.vel.x = c->phys.speed*v.x;
+        c->phys.vel.y = c->phys.speed*v.y;
+        return;
     }
 
     return;

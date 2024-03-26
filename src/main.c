@@ -1200,7 +1200,7 @@ void update(float dt)
 
         player_handle_net_inputs(player, dt);
 
-       // TODO: make this into a function
+        // TODO: make this into a function
         if(player->curr_room == player->transition_room)
         {
 
