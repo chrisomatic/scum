@@ -773,7 +773,8 @@ void room_editor_draw()
                 }
                 if(is_monster_room)
                 {
-                    room_type_sel = ROOM_TYPE_MONSTER;
+                    if(room_type_sel != ROOM_TYPE_MONSTER && room_type_sel != ROOM_TYPE_BOSS)
+                        room_type_sel = ROOM_TYPE_MONSTER;
                 }
                 else if(room_type_sel == ROOM_TYPE_MONSTER)
                 {
