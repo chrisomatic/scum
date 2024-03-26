@@ -2856,6 +2856,7 @@ static void pack_creatures(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 6,  (uint32_t)c->sprite_index);
         BPW(&server.bp, 7,  (uint32_t)c->curr_room);
         BPW(&server.bp, 8,  (uint32_t)c->phys.hp);
+        BPW(&server.bp, 1,  (uint32_t)(c->phys.underground ? 0x01 : 0x00));
 
         BPW(&server.bp, 8,  (uint32_t)r);
         BPW(&server.bp, 8,  (uint32_t)g);
@@ -2881,6 +2882,7 @@ static void unpack_creatures(Packet* pkt, int* offset, WorldState* ws)
         uint32_t sprite_index = bitpack_read(&client.bp, 6);
         uint32_t curr_room    = bitpack_read(&client.bp, 7);
         uint32_t hp           = bitpack_read(&client.bp, 8);
+        uint32_t underground  = bitpack_read(&client.bp, 1);
         uint32_t r            = bitpack_read(&client.bp, 8);
         uint32_t g            = bitpack_read(&client.bp, 8);
         uint32_t b            = bitpack_read(&client.bp, 8);
@@ -2899,6 +2901,8 @@ static void unpack_creatures(Packet* pkt, int* offset, WorldState* ws)
         creature.color = COLOR(r,g,b);
 
         Creature* c = creature_add(NULL, 0, NULL, &creature);
+
+        creature.phys.underground = (bool)(underground == 0x01);
 
         c->server_state_prior.pos.x = x;
         c->server_state_prior.pos.y = y;

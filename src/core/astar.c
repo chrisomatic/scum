@@ -43,6 +43,7 @@ void astar_create(AStar_t* asd, int width, int height)
 
 bool astar_traverse(AStar_t* asd, int start_x, int start_y, int goal_x, int goal_y)
 {
+
     // initialize variables for traversal
     asd->openset_count = 0;
     asd->pathlen = 0;
