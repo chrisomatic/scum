@@ -31,6 +31,7 @@ static int creature_image_spiked_slug;
 static int creature_image_infected;
 static int creature_image_gravity_crystal;
 static int creature_image_peeper;
+static int creature_image_leeper;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -46,6 +47,7 @@ static void creature_update_spiked_slug(Creature* c, float dt);
 static void creature_update_infected(Creature* c, float dt);
 static void creature_update_gravity_crystal(Creature* c, float dt);
 static void creature_update_peeper(Creature* c, float dt);
+static void creature_update_leeper(Creature* c, float dt);
 
 static uint16_t id_counter = 1;
 static uint16_t get_id()
@@ -74,6 +76,7 @@ void creature_init()
     creature_image_infected = gfx_load_image("src/img/creature_infected.png", false, false, 32, 32);
     creature_image_gravity_crystal = gfx_load_image("src/img/creature_gravity_crystal.png", false, false, 48, 48);
     creature_image_peeper = gfx_load_image("src/img/creature_peeper.png", false, false, 32, 32);
+    creature_image_leeper = gfx_load_image("src/img/creature_leeper.png", false, false, 48, 48);
 }
 
 char* creature_type_name(CreatureType type)
@@ -108,6 +111,8 @@ char* creature_type_name(CreatureType type)
             return "Gravity Crystal";
         case CREATURE_TYPE_PEEPER:
             return "Peeper";
+        case CREATURE_TYPE_LEEPER:
+            return "Leeper";
         default:
             return "???";
     }
@@ -145,6 +150,8 @@ int creature_get_image(CreatureType type)
             return creature_image_gravity_crystal;
         case CREATURE_TYPE_PEEPER:
             return creature_image_peeper;
+        case CREATURE_TYPE_LEEPER:
+            return creature_image_leeper;
         default:
             return -1;
     }
@@ -381,6 +388,19 @@ void creature_init_props(Creature* c)
             c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
             c->phys.crawling = false;
             c->phys.underground = true;
+            c->xp = 20;
+        } break;
+        case CREATURE_TYPE_LEEPER:
+        {
+            c->phys.speed = 120.0;
+            c->act_time_min = 1.0;
+            c->act_time_max = 2.0;
+            c->phys.mass = 0.5;
+            c->phys.base_friction = 20.0;
+            c->phys.hp_max = 8.0;
+            c->painful_touch = true;
+            c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
+            c->phys.crawling = false;
             c->xp = 20;
         } break;
     }
@@ -670,6 +690,9 @@ void creature_update(Creature* c, float dt)
             case CREATURE_TYPE_PEEPER:
                 creature_update_peeper(c,dt);
                 break;
+            case CREATURE_TYPE_LEEPER:
+                creature_update_leeper(c,dt);
+                break;
         }
     }
     else
@@ -695,9 +718,10 @@ void creature_update(Creature* c, float dt)
     else
     {
         // cap at speed
-        normalize3f(&c->phys.vel);
-        c->phys.vel.x *= speed;
-        c->phys.vel.y *= speed;
+        Vector2f tv = {.x=c->phys.vel.x, .y=c->phys.vel.y};
+        normalize(&tv);
+        c->phys.vel.x = speed*tv.x;
+        c->phys.vel.y = speed*tv.y;
     }
 
     // determine color
@@ -712,6 +736,11 @@ void creature_update(Creature* c, float dt)
             c->damaged = false;
     }
 
+    // if(c->type == CREATURE_TYPE_LEEPER)
+    // {
+    //     printf("  %.2f, %.2f, %.2f\n", c->phys.vel.x, c->phys.vel.y, c->phys.vel.z);
+    // }
+
     if(!moving)
     {
         phys_apply_friction(&c->phys,c->phys.base_friction,dt);
@@ -720,13 +749,19 @@ void creature_update(Creature* c, float dt)
     c->phys.pos.x += dt*c->phys.vel.x;
     c->phys.pos.y += dt*c->phys.vel.y;
 
-    phys_apply_gravity(&c->phys, 1.0, dt);
+    phys_apply_gravity(&c->phys, GRAVITY_EARTH, dt);
 
     Rect r = RECT(c->phys.pos.x, c->phys.pos.y, 1, 1);
     Vector2f adj = limit_rect_pos(&room_area, &r);
 
     c->phys.pos.x += adj.x;
     c->phys.pos.y += adj.y;
+
+    // if(c->type == CREATURE_TYPE_LEEPER)
+    // {
+    //     printf("%.2f, %.2f, %.2f\n", c->phys.pos.x, c->phys.pos.y, c->phys.pos.z);
+    // }
+
 
     c->phys.curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
 }
@@ -1838,6 +1873,58 @@ static void creature_update_peeper(Creature* c, float dt)
             c->act_time_max = 2.0;
             c->ai_state = 0;
         }
+    }
+
+}
+
+static void creature_update_leeper(Creature* c, float dt)
+{
+    if(c->ai_state == 0)
+    {
+
+        Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+        if(p)
+        {
+            c->target_tile.x = p->phys.curr_tile.x;
+            c->target_tile.y = p->phys.curr_tile.y;
+            c->phys.vel.z = 300.0;
+            c->ai_state = 1;
+        }
+
+        return;
+    }
+
+    if(c->ai_state == 1)
+    {
+
+        if(c->phys.pos.z > 0.0)
+        {
+            c->sprite_index = 1;
+            Rect rp = level_get_tile_rect(c->target_tile.x, c->target_tile.y);
+            Vector2f v = {rp.x - c->phys.pos.x, rp.y - c->phys.pos.y};
+            normalize(&v);
+            c->phys.vel.x = c->phys.speed*v.x;
+            c->phys.vel.y = c->phys.speed*v.y;
+        }
+        else
+        {
+            c->sprite_index = 0;
+            ai_stop_moving(c);
+            c->ai_state = 2;
+        }
+        return;
+    }
+
+    if(c->ai_state == 2)
+    {
+
+        bool act = ai_update_action(c, dt);
+
+        if(act)
+        {
+            c->ai_state = 0;
+        }
+        return;
     }
 
 }

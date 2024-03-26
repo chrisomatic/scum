@@ -164,6 +164,9 @@ Level level_generate(unsigned int seed, int rank)
     //     Vector2i t = {.x=i,.y=i};
     //     Creature* c = creature_add(sroom, CREATURE_TYPE_PEEPER, &t, NULL);
     // }
+    Vector2i t = {.x=5,.y=5};
+    creature_add(sroom, CREATURE_TYPE_LEEPER, &t, NULL);
+
 
     if(role != ROLE_CLIENT)
     {
