@@ -1509,7 +1509,7 @@ void level_print(Level* level)
 int level_tile_traversable_func(int x, int y)
 {
     Player* p = NULL;
-    if(role == ROLER_SERVER)
+    if(role == ROLE_SERVER)
     {
         for(int i = 0; i < MAX_PLAYERS; ++i)
         {
