@@ -246,7 +246,7 @@ static void draw_room_file_gui()
         }
 
         prior_room_file_sel = room_file_sel;
-        imgui_listbox(filtered_room_files, filtered_room_files_count, "##files_listbox", &room_file_sel);
+        imgui_listbox(filtered_room_files, filtered_room_files_count, "##files_listbox", &room_file_sel, 15);
 
         if(filtered_room_files[room_file_sel])
             snprintf(selected_room_name_str,100,"Selected: %s",filtered_room_files[room_file_sel]);
@@ -432,6 +432,7 @@ bool room_editor_update(float dt)
         memset(&level,0,sizeof(Level));
         memcpy(&room_list[0],&loaded_rfd,sizeof(RoomFileData));
         room_list_count = 1;
+        level_set_room_pointers(&level);
 
         level.num_rooms = 1;
         level.start.x = floor(MAX_ROOMS_GRID_X/2);
@@ -457,6 +458,15 @@ bool room_editor_update(float dt)
 
         player->curr_room = room->index;
         player->transition_room = player->curr_room;
+
+        for(int i = 0; i < 4; ++i)
+        {
+            if(loaded_rfd.doors[i])
+            {
+                player_send_to_room(player, room->index, true, level_get_door_tile_coords(i));
+                break;
+            }
+        }
 
         generate_walls(&level);
 
@@ -763,7 +773,11 @@ void room_editor_draw()
                 }
                 if(is_monster_room)
                 {
-                    room_type_sel = 1;
+                    room_type_sel = ROOM_TYPE_MONSTER;
+                }
+                else if(room_type_sel == ROOM_TYPE_MONSTER)
+                {
+                    room_type_sel = ROOM_TYPE_EMPTY;
                 }
 
                 const float big = 16.0;
@@ -798,8 +812,9 @@ void room_editor_draw()
                 }
 
                 int _item_sel = item_sel;
-                imgui_dropdown(item_names, ITEM_MAX, "Select Item", &item_sel, &interacted);
-                if(item_sel != _item_sel || interacted)
+                imgui_listbox(item_names, ITEM_MAX, "Selected Item", &item_sel, 10);
+                // imgui_dropdown(item_names, ITEM_MAX, "Select Item", &item_sel, &interacted);
+                if(item_sel != _item_sel)
                 {
                     obj_sel = 3;
                 }

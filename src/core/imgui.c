@@ -198,7 +198,7 @@ static void draw_label(int x, int y, uint32_t color, char* label);
 static void draw_number_box(uint32_t hash, char* label, Rect* r, int val, int max, char* format);
 static void draw_text_box(uint32_t hash, char* label, Rect* r, char* text);
 static void draw_dropdown(uint32_t hash, char* str, char* options[], int num_options, int selected_index, Rect* r);
-static void draw_listbox(uint32_t hash, char* str, char* options[], int num_options, int selected_index, float scrollbar_offset, Rect* r);
+static void draw_listbox(uint32_t hash, char* str, char* options[], int num_options, int selected_index, float scrollbar_offset, Rect* r, int max_display);
 static void draw_panel(uint32_t hash, bool moveable);
 static void draw_tooltip();
 
@@ -811,7 +811,7 @@ void imgui_dropdown(char* options[], int num_options, char* label, int* selected
     //return ctx->dropdown_props.selected_index;
 }
 
-void imgui_listbox(char* options[], int num_options, char* label, int* selected_index)
+void imgui_listbox(char* options[], int num_options, char* label, int* selected_index, int max_display)
 {
     if(!options)
         return;
@@ -856,10 +856,11 @@ void imgui_listbox(char* options[], int num_options, char* label, int* selected_
     ctx->scroll_props.in_gutter = (mouse_dist_from_right_edge > 0.0 && mouse_dist_from_right_edge < theme.listbox_gutter_width);
 
     float box_height = NOMINAL_FONT_SIZE*theme.text_scale + 2*theme.text_padding;
-    int scrollbar_height = theme.listbox_height*(theme.listbox_height / (num_options*box_height));
-    int scrollbar_height_space = theme.listbox_height - scrollbar_height;
+    float listbox_height = box_height * max_display;
+    int scrollbar_height = listbox_height*(listbox_height / (num_options*box_height));
+    int scrollbar_height_space = listbox_height - scrollbar_height;
     float y_diff = ctx->mouse_y - (ctx->curr.y+label_size.y+theme.text_padding);
-    bool show_scrollbar = num_options*box_height > theme.listbox_height;
+    bool show_scrollbar = num_options*box_height > listbox_height;
 
     if(ctx->scroll_props.scrollbar_held)
     {
@@ -906,7 +907,7 @@ void imgui_listbox(char* options[], int num_options, char* label, int* selected_
             if(!ctx->scroll_props.scrollbar_held && window_mouse_left_went_down())
             {
                 // make new selection
-                float ratio = (num_options*box_height) / theme.listbox_height;
+                float ratio = (num_options*box_height) / listbox_height;
                 float offset = ratio*(*val);
 
                 int index = floor(num_options*((offset + y_diff)/(box_height*num_options)));
@@ -920,11 +921,11 @@ void imgui_listbox(char* options[], int num_options, char* label, int* selected_
 
     }
 
-    Rect interactive = {ctx->curr.x, ctx->curr.y + label_size.y + theme.text_padding, MAX(max_width+2*theme.text_padding, theme.listbox_width), theme.listbox_height};
+    Rect interactive = {ctx->curr.x, ctx->curr.y + label_size.y + theme.text_padding, MAX(max_width+2*theme.text_padding, theme.listbox_width), listbox_height};
 
     handle_highlighting(hash, &interactive);
 
-    draw_listbox(hash, new_label, options, num_options, *selected_index, *val, &interactive);
+    draw_listbox(hash, new_label, options, num_options, *selected_index, *val, &interactive, max_display);
 
     ctx->curr.w = interactive.w + 2*theme.text_padding + theme.spacing;
     ctx->curr.h = label_size.y + theme.text_padding + interactive.h + box_height + theme.spacing;
@@ -1339,7 +1340,7 @@ Rect imgui_draw_demo(int x, int y)
 
         imgui_text_box("Filter",color_filter_str,IM_ARRAYSIZE(color_filter_str));
 
-        imgui_listbox(colors, IM_ARRAYSIZE(colors), "Colors", &color_list_select);
+        imgui_listbox(colors, IM_ARRAYSIZE(colors), "Colors", &color_list_select, 4);
 
    return imgui_end();
 }
@@ -2069,15 +2070,16 @@ static void draw_text_box(uint32_t hash, char* label, Rect* r, char* text)
     draw_label(r->x + r->w+theme.text_padding, r->y-(label_size.y-r->h)/2.0, theme.color_text, label);
 }
 
-static void draw_listbox(uint32_t hash, char* str, char* options[], int num_options, int selected_index, float scrollbar_offset, Rect* r)
+static void draw_listbox(uint32_t hash, char* str, char* options[], int num_options, int selected_index, float scrollbar_offset, Rect* r, int max_display)
 {
     if(!options)
         return;
 
     float box_height = NOMINAL_FONT_SIZE*theme.text_scale + 2*theme.text_padding;
+    float listbox_height = box_height*max_display;
 
     // box
-    bool show_scrollbar = num_options*box_height > theme.listbox_height;
+    bool show_scrollbar = num_options*box_height > listbox_height;
     int scrollbar_width = show_scrollbar ? theme.listbox_gutter_width : 0;
 
     int width = r->w - scrollbar_width;
@@ -2090,12 +2092,12 @@ static void draw_listbox(uint32_t hash, char* str, char* options[], int num_opti
         gfx_draw_rect_xywh(r->w+r->x-(theme.listbox_gutter_width/2.0), r->y + r->h/2.0, theme.listbox_gutter_width, r->h, theme.color_highlight_subtle, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
 
         // scrollbar
-        int scrollbar_height = theme.listbox_height*(theme.listbox_height / (num_options*box_height));
+        int scrollbar_height = listbox_height*(listbox_height / (num_options*box_height));
         gfx_draw_rect_xywh(r->w+r->x-(theme.listbox_gutter_width/2.0), r->y + scrollbar_offset + scrollbar_height/2.0, theme.listbox_gutter_width, scrollbar_height, ctx->scroll_props.in_gutter ? theme.color_highlight : theme.color_slider, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
 
     }
 
-    float ratio = (num_options*box_height) / theme.listbox_height;
+    float ratio = (num_options*box_height) / listbox_height;
     float offset = ratio*scrollbar_offset;
 
     float y_diff = ctx->mouse_y + offset - r->y;
@@ -2112,7 +2114,7 @@ static void draw_listbox(uint32_t hash, char* str, char* options[], int num_opti
             continue;
         }
 
-        if(i*box_height - offset >= theme.listbox_height)
+        if(i*box_height - offset >= listbox_height)
             break;
 
         if(i == selected_index)
@@ -2133,7 +2135,7 @@ static void draw_listbox(uint32_t hash, char* str, char* options[], int num_opti
     // masking rects
 
     gfx_draw_rect_xywh_tl(r->x, r->y-box_height, r->w, box_height, theme.color_panel, 1.0, 0.0, theme.panel_opacity*ctx->global_opacity_scale,true,false);
-    gfx_draw_rect_xywh_tl(r->x, r->y+theme.listbox_height, r->w, box_height, theme.color_panel, 1.0, 0.0, theme.panel_opacity*ctx->global_opacity_scale,true,false);
+    gfx_draw_rect_xywh_tl(r->x, r->y+listbox_height, r->w, box_height, theme.color_panel, 1.0, 0.0, theme.panel_opacity*ctx->global_opacity_scale,true,false);
 
     // label
     int label_height = (NOMINAL_FONT_SIZE*theme.text_scale+theme.text_padding);

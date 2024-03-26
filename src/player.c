@@ -357,7 +357,6 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
     // printf("player send to room %u (%d, %d)\n", player->curr_room, tile.x, tile.y);
 
     p->ignore_player_collision = true;
-
 }
 
 void player_send_to_level_start(Player* p)
