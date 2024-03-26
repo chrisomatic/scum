@@ -684,7 +684,7 @@ void creature_update(Creature* c, float dt)
 
     c->phys.curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
 
-    if(creatures_can_move)
+    if(level_grace_time <= 0.0 || creatures_can_move)
     {
         switch(c->type)
         {
@@ -1924,7 +1924,6 @@ static void creature_update_leeper(Creature* c, float dt)
 {
     if(c->ai_state == 0)
     {
-
         Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
         if(p)
         {

@@ -1674,15 +1674,15 @@ void draw_chat_box()
                 }
                 else if(role == ROLE_LOCAL)
                 {
-
-                    if(memcmp("cmd ", chat_text, 4) == 0)
+                    if(memcmp("$", chat_text, 1) == 0)
                     {
+                        is_cmd = true;
                         char* argv[20] = {0};
                         int argc = 0;
 
                         for(int i = 0; i < 20; ++i)
                         {
-                            char* s = string_split_index_copy(chat_text+4, " ", i, true);
+                            char* s = string_split_index_copy(msg+1, " ", i, true);
                             if(!s) break;
                             argv[argc++] = s;
                         }
