@@ -335,7 +335,7 @@ void editor_draw()
             {
 
                 imgui_text("Total Count: %u", creature_get_count());
-                imgui_text("Room Count: %u", creature_get_room_count(player->curr_room));
+                imgui_text("Room Count: %u", creature_get_room_count(player->curr_room, true));
 
                 if(role == ROLE_LOCAL)
                 {

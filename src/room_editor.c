@@ -334,7 +334,7 @@ static void draw_room_file_gui()
 
         imgui_horizontal_line(1);
         imgui_text("Commentary");
-        static char* star_labels[] = {"*", "**", "***", "****", "*****"};
+        static char* star_labels[] = {" *", "**", "***", "****", "*****"};
         imgui_newline();
         imgui_horizontal_begin();
             int selected_rating = imgui_button_select(5, star_labels, "Rating");

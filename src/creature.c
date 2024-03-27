@@ -1000,13 +1000,19 @@ uint16_t creature_get_count()
     return (uint16_t)clist->count;
 }
 
-uint16_t creature_get_room_count(uint8_t room_index)
+uint16_t creature_get_room_count(uint8_t room_index, bool count_passive)
 {
     uint16_t count = 0;
     for(int i = 0; i < clist->count; ++i)
     {
-        if(creatures[i].curr_room == room_index && !creatures[i].phys.dead && !creatures[i].passive)
-            count++;
+        // if(creatures[i].curr_room == room_index && !creatures[i].phys.dead && !creatures[i].passive)
+        if(creatures[i].curr_room == room_index && !creatures[i].phys.dead)
+        {
+            if(count_passive)
+                count++;
+            else if(!creatures[i].passive)
+                count++;
+        }
     }
     return count;
 }

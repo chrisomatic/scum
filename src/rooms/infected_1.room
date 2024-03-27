@@ -41,9 +41,14 @@ Totem Yellow
 Shambler
 Spiked Slug
 Infected
+Gravity Crystal
+Peeper
+Leeper
+Spawn Egg
+Spawn Spider
 
 ; Creatures
-11,7,4
+11,10,4
 
 ; Item Mapping
 Red Gem
@@ -67,7 +72,13 @@ Potion of Purple
 +1 Gauntlet Slot
 New Level
 Glowing Orb
+???
+???
+???
+Revive
+Skull
 Chest
+Shrine
 
 ; Items
 

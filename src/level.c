@@ -100,14 +100,23 @@ Level level_generate(unsigned int seed, int rank)
     // seed PRNG
     slrand(seed);
 
-    if(rank != 5)
+    if(rank > 2)
     {
 #if !GENERATE_ROOMS_TEST
         LOGW("Overriding rank!");
 #endif
-        rank = 5;
+        rank = 2;
         level_rank = rank;
     }
+
+//     if(rank != 5)
+//     {
+// #if !GENERATE_ROOMS_TEST
+//         LOGW("Overriding rank!");
+// #endif
+//         rank = 5;
+//         level_rank = rank;
+//     }
 
 #if !GENERATE_ROOMS_TEST
     LOGI("Generating level, seed: %u, rank: %d", seed, rank);
@@ -125,8 +134,18 @@ Level level_generate(unsigned int seed, int rank)
     for(int i = 0; i < room_list_count; ++i)
     {
         RoomFileData* rfd = &room_list[i];
-        if(rfd->rank > rank)
-            continue;
+
+        if(rfd->type == ROOM_TYPE_MONSTER)
+        {
+            if(rfd->rank > rank) continue;
+            if(rfd->rank < rank-1) continue;
+        }
+
+        if(rfd->type == ROOM_TYPE_BOSS)
+        {
+            if(rfd->rank != rank) continue;
+        }
+
         switch(rfd->type)
         {
             case ROOM_TYPE_MONSTER:  room_list_monster[room_count_monster++]   = i; break;
@@ -168,15 +187,15 @@ Level level_generate(unsigned int seed, int rank)
     // creature_add(sroom, CREATURE_TYPE_SPAWN_EGG, &t, NULL);
 
 
-    if(role != ROLE_CLIENT)
-    {
-        //TEMP
-        for(int i = 0; i < 5; ++i)
-            item_add(ITEM_SKULL, CENTER_X, CENTER_Y, sroom->index);
-        // item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, sroom->index);
-        // item_add(ITEM_REVIVE, CENTER_X, CENTER_Y+TILE_SIZE*2, sroom->index);
-        // item_add(ITEM_SHRINE, CENTER_X+TILE_SIZE*2, CENTER_Y, sroom->index);
-    }
+    // // TEMP
+    // if(role != ROLE_CLIENT)
+    // {
+    //     for(int i = 0; i < 5; ++i)
+    //         item_add(ITEM_SKULL, CENTER_X, CENTER_Y, sroom->index);
+    //     // item_add(ITEM_NEW_LEVEL, CENTER_X, CENTER_Y, sroom->index);
+    //     // item_add(ITEM_REVIVE, CENTER_X, CENTER_Y+TILE_SIZE*2, sroom->index);
+    //     // item_add(ITEM_SHRINE, CENTER_X+TILE_SIZE*2, CENTER_Y, sroom->index);
+    // }
 
     LevelPath bpath = {0};
     Room* broom = NULL;
@@ -334,7 +353,7 @@ Level level_generate(unsigned int seed, int rank)
                     }
                 }
             }
-            room->doors_locked = (creature_get_room_count(room->index) != 0);
+            room->doors_locked = (creature_get_room_count(room->index, false) != 0);
         }
     }
 

@@ -115,6 +115,6 @@ void creature_hurt(Creature* c, float damage);
 void creature_die(Creature* c);
 CreatureType creature_get_random();
 uint16_t creature_get_count();
-uint16_t creature_get_room_count(uint8_t room_index);
+uint16_t creature_get_room_count(uint8_t room_index, bool count_passive);
 bool creature_is_on_tile(Room* room, int tile_x, int tile_y);
 

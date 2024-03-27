@@ -507,12 +507,6 @@ void run()
     double accum = 0.0;
     const double dt = 1.0/TARGET_FPS;
 
-    // for(;;)
-    // {
-    //     trigger_generate_level(rand(), 5);
-    //     if(got_bad_seed) break;
-    // }
-
     // loop
     for(;;)
     {
@@ -634,7 +628,7 @@ void trigger_generate_level(unsigned int _seed, int _rank, int transition, int l
     if(role == ROLE_SERVER) transition = 0;
 
     level_seed = _seed;
-    level_rank = _rank;
+    level_rank = MAX(1,_rank);
     level_transition = transition;
 
     level_grace_time = ROOM_GRACE_TIME;
@@ -710,7 +704,11 @@ void game_generate_level()
         Room* room = level_get_room_by_index(&level, c->curr_room);
         if(!room)
         {
-            LOGE("Creature %d has invalid room: %u", c->curr_room);
+            LOGE("Creature %d has NULL room: %u", i, c->curr_room);
+        }
+        else if(!room->valid)
+        {
+            LOGE("Creature %d has invalid room: %u", i, c->curr_room);
         }
     }
 
@@ -722,7 +720,7 @@ void game_generate_level()
             Room* room = &level.rooms[x][y];
 
             if(room == NULL) LOGE("Room is NULL %d,%d", x, y);
-            uint16_t c = creature_get_room_count(room->index);
+            uint16_t c = creature_get_room_count(room->index, true);
             ccount2 += c;
             if(c > 0)
             {
@@ -740,10 +738,26 @@ void game_generate_level()
         for(int i = 0; i < ccount; ++i)
         {
             Room* room = level_get_room_by_index(&level, creatures[i].curr_room);
-            if(!room->valid)
+            if(!room)
             {
-                LOGE("Creature index %u, room %u is invalid", i, room->index);
+                LOGE("Creature %d has NULL room: %u", i, creatures[i].curr_room);
             }
+            else
+            {
+                if(room->type == ROOM_TYPE_MONSTER || room->type == ROOM_TYPE_BOSS)
+                {
+                    LOGI("Creature %d is in %s room: %u (%d,%d)", i, get_room_type_name(room->type), room->index, room->grid.x, room->grid.y);
+                }
+                else
+                {
+                    LOGE("Creature %d is in %s room: %u (%d,%d)", i, get_room_type_name(room->type), room->index, room->grid.x, room->grid.y);
+                }
+            }
+
+            // if(!room->valid)
+            // {
+            //     LOGE("Creature index %u, room %u is invalid", i, room->index);
+            // }
         }
     }
 
@@ -1291,7 +1305,7 @@ void handle_room_completion(Room* room)
     uint8_t room_index = room->index;
 
     bool prior_locked = room->doors_locked;
-    room->doors_locked = (creature_get_room_count(room_index) != 0);
+    room->doors_locked = (creature_get_room_count(room_index, false) != 0);
 
     if(!room->doors_locked && prior_locked)
     {
@@ -1532,7 +1546,7 @@ void draw_map(DrawLevelParams* params)
             {
                 float tlx = room_rect.x - room_rect.w/2.0 + 1.0;
                 float tly = room_rect.y - room_rect.h/2.0;
-                gfx_draw_string(tlx, tly, COLOR_BLACK, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "creatures: %d", creature_get_room_count(room->index));
+                gfx_draw_string(tlx, tly, COLOR_BLACK, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "creatures: %d", creature_get_room_count(room->index, true));
 
                 Vector2f size = gfx_string_get_size(tscale, "|");
                 gfx_draw_string(tlx, tly+size.y, COLOR_BLACK, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, room_rect.w, "%s", room_files[room_list[room->layout].file_index]);

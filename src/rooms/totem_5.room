@@ -7,7 +7,7 @@
 1   # Monster
 
 ; Room Rank
-1
+2
 
 ; Tile Mapping
 None
@@ -33,6 +33,7 @@ Slug
 Clinger
 Geizer
 Floater
+Big Floater
 Buzzer
 Totem Red
 Totem Blue
@@ -40,13 +41,18 @@ Totem Yellow
 Shambler
 Spiked Slug
 Infected
+Gravity Crystal
+Peeper
+Leeper
+Spawn Egg
+Spawn Spider
 
 ; Creatures
-9,3,2
-9,11,2
-7,7,4
-9,3,6
-9,11,6
+10,3,2
+10,11,2
+8,7,4
+10,3,6
+10,11,6
 
 ; Item Mapping
 Red Gem
@@ -70,7 +76,13 @@ Potion of Purple
 +1 Gauntlet Slot
 New Level
 Glowing Orb
+???
+???
+???
+Revive
+Skull
 Chest
+Shrine
 
 ; Items
 

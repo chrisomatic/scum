@@ -7,7 +7,7 @@
 1   # Monster
 
 ; Room Rank
-1
+2
 
 ; Tile Mapping
 None
@@ -43,6 +43,9 @@ Spiked Slug
 Infected
 Gravity Crystal
 Peeper
+Leeper
+Spawn Egg
+Spawn Spider
 
 ; Creatures
 13,4,2

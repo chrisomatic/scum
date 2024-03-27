@@ -4,7 +4,7 @@
 13,7
 
 ; Room Type
-0   # Empty
+1   # Monster
 
 ; Room Rank
 1
@@ -42,6 +42,10 @@ Shambler
 Spiked Slug
 Infected
 Gravity Crystal
+Peeper
+Leeper
+Spawn Egg
+Spawn Spider
 
 ; Creatures
 12,7,4
@@ -72,6 +76,7 @@ Glowing Orb
 ???
 ???
 Revive
+Skull
 Chest
 Shrine
 

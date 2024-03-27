@@ -7,7 +7,7 @@
 1   # Monster
 
 ; Room Rank
-1
+2
 
 ; Tile Mapping
 None
@@ -41,6 +41,11 @@ Totem Yellow
 Shambler
 Spiked Slug
 Infected
+Gravity Crystal
+Peeper
+Leeper
+Spawn Egg
+Spawn Spider
 
 ; Creatures
 3,2,2
@@ -73,7 +78,13 @@ Potion of Purple
 +1 Gauntlet Slot
 New Level
 Glowing Orb
+???
+???
+???
+Revive
+Skull
 Chest
+Shrine
 
 ; Items
 

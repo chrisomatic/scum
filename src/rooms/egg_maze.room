@@ -7,7 +7,7 @@
 1   # Monster
 
 ; Room Rank
-1
+2
 
 ; Tile Mapping
 None
@@ -50,6 +50,7 @@ Spawn Spider
 ; Creatures
 15,11,1
 15,5,4
+3,7,4
 15,10,5
 15,4,7
 
