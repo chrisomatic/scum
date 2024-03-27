@@ -48,6 +48,7 @@ bool show_tile_grid = false;
 bool creatures_can_move = true;
 bool players_invincible = false;
 bool all_players_dead = false;
+double g_timer = 0.0;
 
 // Settings
 uint32_t background_color = COLOR(30,30,30);
@@ -521,6 +522,7 @@ void run()
 
         while(accum >= dt)
         {
+            g_timer += dt;
             update(dt);
             accum -= dt;
         }

@@ -158,6 +158,7 @@ extern bool players_invincible;
 extern bool all_players_dead;
 extern uint32_t background_color;
 extern float ascale;
+extern double g_timer;
 
 extern bool dynamic_zoom;
 extern int cam_zoom;

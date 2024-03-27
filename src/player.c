@@ -60,14 +60,14 @@ void player_set_defaults(Player* p)
     p->phys.speed = 700.0;
     p->phys.speed_factor = 1.0;
     p->phys.max_velocity = 120.0;
-    p->phys.base_friction = 15.0;
+    p->phys.base_friction = 8.0;
     p->phys.vel.x = 0.0;
     p->phys.vel.y = 0.0;
     p->phys.height = vr->h * 0.80;
     p->phys.width  = vr->w * 0.60;
     p->phys.length = vr->w * 0.60;
     p->phys.mass = 1.0;
-    p->phys.elasticity = 0.0;
+    p->phys.elasticity = 0.1;
     p->phys.vr = *vr;
 
     phys_calc_collision_rect(&p->phys);
@@ -1430,6 +1430,11 @@ void player_update(Player* p, float dt)
                 case TILE_SPIKES:
                     player_hurt(p,1);
                     break;
+                case TILE_TIMED_SPIKES1:
+                case TILE_TIMED_SPIKES2:
+                    if(level_get_tile_sprite(tt) == SPRITE_TILE_SPIKES)
+                        player_hurt(p,1);
+                    break;
             }
         }
 
@@ -1640,25 +1645,23 @@ void player_update(Player* p, float dt)
     if(!p->phys.falling)
     {
         // handle friction
-        Vector2f f = {-p->phys.vel.x, -p->phys.vel.y};
-        normalize(&f);
+        int vel_x_dir = (p->phys.vel.x >= 0) ? 1 : -1;
+        int vel_y_dir = (p->phys.vel.y >= 0) ? 1 : -1;
 
         float vel_magn_x = ABS(p->phys.vel.x);
         float vel_magn_y = ABS(p->phys.vel.y);
 
-        float applied_friction_x = MIN(vel_magn_x,p->phys.base_friction*friction_factor);
-        float applied_friction_y = MIN(vel_magn_y,p->phys.base_friction*friction_factor);
+        float applied_friction_x = vel_x_dir*MIN(vel_magn_x,p->phys.base_friction*friction_factor);
+        float applied_friction_y = vel_y_dir*MIN(vel_magn_y,p->phys.base_friction*friction_factor);
 
         if(!left && !right)
         {
-            f.x *= applied_friction_x;
-            p->phys.vel.x += f.x;
+            p->phys.vel.x -= applied_friction_x;
         }
 
         if(!up && !down)
         {
-            f.y *= applied_friction_y;
-            p->phys.vel.y += f.y;
+            p->phys.vel.y -= applied_friction_y;
         }
     }
 

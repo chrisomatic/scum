@@ -183,8 +183,8 @@ Level level_generate(unsigned int seed, int rank)
     //     Vector2i t = {.x=i,.y=i};
     //     Creature* c = creature_add(sroom, CREATURE_TYPE_PEEPER, &t, NULL);
     // }
-    // Vector2i t = {.x=5,.y=5};
-    // creature_add(sroom, CREATURE_TYPE_SPAWN_EGG, &t, NULL);
+    Vector2i t = {5,5};
+    creature_add(sroom, CREATURE_TYPE_GRAVITY_CRYSTAL, &t, NULL);
 
 
     // // TEMP
@@ -1581,22 +1581,22 @@ static uint8_t get_pit_tile_sprite(RoomFileData* rdata, int x, int y)
     uint8_t sprite = SPRITE_TILE_PIT;
 
     if( pit_up &&  pit_right &&  pit_down &&  pit_left) return sprite+0;
-    if(!pit_up &&  pit_right &&  pit_down &&  pit_left) return sprite+8;
-    if( pit_up && !pit_right &&  pit_down &&  pit_left) return sprite+9;
-    if( pit_up &&  pit_right && !pit_down &&  pit_left) return sprite+10;
-    if( pit_up &&  pit_right &&  pit_down && !pit_left) return sprite+11;
-    if(!pit_up &&  pit_right &&  pit_down && !pit_left) return sprite+12;
-    if(!pit_up && !pit_right &&  pit_down &&  pit_left) return sprite+13;
-    if(!pit_up &&  pit_right && !pit_down &&  pit_left) return sprite+14;
-    if( pit_up && !pit_right && !pit_down &&  pit_left) return sprite+15;
-    if( pit_up && !pit_right &&  pit_down && !pit_left) return sprite+16;
-    if( pit_up &&  pit_right && !pit_down && !pit_left) return sprite+17;
-    if(!pit_up && !pit_right &&  pit_down && !pit_left) return sprite+18;
-    if(!pit_up && !pit_right && !pit_down &&  pit_left) return sprite+19;
-    if( pit_up && !pit_right && !pit_down && !pit_left) return sprite+20;
-    if(!pit_up &&  pit_right && !pit_down && !pit_left) return sprite+21;
+    if(!pit_up &&  pit_right &&  pit_down &&  pit_left) return sprite+9;
+    if( pit_up && !pit_right &&  pit_down &&  pit_left) return sprite+10;
+    if( pit_up &&  pit_right && !pit_down &&  pit_left) return sprite+11;
+    if( pit_up &&  pit_right &&  pit_down && !pit_left) return sprite+12;
+    if(!pit_up &&  pit_right &&  pit_down && !pit_left) return sprite+13;
+    if(!pit_up && !pit_right &&  pit_down &&  pit_left) return sprite+14;
+    if(!pit_up &&  pit_right && !pit_down &&  pit_left) return sprite+15;
+    if( pit_up && !pit_right && !pit_down &&  pit_left) return sprite+16;
+    if( pit_up && !pit_right &&  pit_down && !pit_left) return sprite+17;
+    if( pit_up &&  pit_right && !pit_down && !pit_left) return sprite+18;
+    if(!pit_up && !pit_right &&  pit_down && !pit_left) return sprite+19;
+    if(!pit_up && !pit_right && !pit_down &&  pit_left) return sprite+20;
+    if( pit_up && !pit_right && !pit_down && !pit_left) return sprite+21;
+    if(!pit_up &&  pit_right && !pit_down && !pit_left) return sprite+22;
 
-    return sprite+22;
+    return sprite+23;
 }
 
 uint8_t level_get_tile_sprite(TileType tt)
@@ -1609,8 +1609,9 @@ uint8_t level_get_tile_sprite(TileType tt)
         case TILE_BOULDER:       sprite = SPRITE_TILE_BLOCK;  break;
         case TILE_MUD:           sprite = SPRITE_TILE_MUD;    break;
         case TILE_ICE:           sprite = SPRITE_TILE_ICE;    break;
-        case TILE_SPIKES:        sprite = SPRITE_TILE_SPIKES; break;
-        case TILE_TIMED_SPIKES:  sprite = SPRITE_TILE_SPIKES; break;
+        case TILE_SPIKES:        sprite = SPRITE_TILE_SPIKES; break; 
+        case TILE_TIMED_SPIKES1:  sprite = (((int)g_timer) % 2 == 0) ? SPRITE_TILE_SPIKES : SPRITE_TILE_SPIKES_DOWN; break;
+        case TILE_TIMED_SPIKES2:  sprite = (((int)g_timer) % 2 == 0) ? SPRITE_TILE_SPIKES_DOWN : SPRITE_TILE_SPIKES; break;
         default: break;
     }
     return (uint8_t)sprite;
@@ -2167,7 +2168,8 @@ const char* get_tile_name(TileType tt)
         case TILE_MUD: return "Mud";
         case TILE_ICE: return "Ice";
         case TILE_SPIKES: return "Spikes";
-        case TILE_TIMED_SPIKES: return "Timed Spikes";
+        case TILE_TIMED_SPIKES1: return "Timed Spikes 1";
+        case TILE_TIMED_SPIKES2: return "Timed Spikes 2";
     }
     return "?";
 }

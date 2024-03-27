@@ -387,6 +387,7 @@ void creature_init_props(Creature* c)
             c->phys.hp_max = 127;
             c->painful_touch = false;
             c->phys.elasticity = 0.0;
+            c->phys.crawling = true;
             c->passive = true;
             c->xp = 0;
         } break;
@@ -442,6 +443,8 @@ void creature_init_props(Creature* c)
             c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
             c->phys.crawling = true;
             c->xp = 10;
+            c->ai_state = 0;
+            c->ai_value = rand() % 8;
         } break;
     }
 
@@ -684,7 +687,7 @@ void creature_update(Creature* c, float dt)
 
     c->phys.curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
 
-    if(level_grace_time <= 0.0 || creatures_can_move)
+    if(level_grace_time <= 0.0 && creatures_can_move)
     {
         switch(c->type)
         {
@@ -1836,7 +1839,7 @@ static void creature_update_gravity_crystal(Creature* c, float dt)
 {
     // F = (G*m1*m2)/(r^2)
 
-    const double G = 10.67;
+    const double G = 1.50;
 
     float m1 = c->phys.mass;
 
@@ -1849,8 +1852,9 @@ static void creature_update_gravity_crystal(Creature* c, float dt)
         if(p->curr_room != c->curr_room) continue;
 
         double m2 = p->phys.mass;
-        double r2 = dist_squared(c->phys.pos.x,c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
-        double f = (G*m1*m2)/(r2*5.0);
+        double r = dist(c->phys.pos.x,c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
+        double f_n = (G*m1*m2);
+        double f = (f_n)/(20.0*r);
 
         // printf("f: %f\n", f);
 
