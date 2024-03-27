@@ -183,8 +183,8 @@ Level level_generate(unsigned int seed, int rank)
     //     Vector2i t = {.x=i,.y=i};
     //     Creature* c = creature_add(sroom, CREATURE_TYPE_PEEPER, &t, NULL);
     // }
-    Vector2i t = {5,5};
-    creature_add(sroom, CREATURE_TYPE_GRAVITY_CRYSTAL, &t, NULL);
+    //Vector2i t = {5,5};
+    //creature_add(sroom, CREATURE_TYPE_GRAVITY_CRYSTAL, &t, NULL);
 
 
     // // TEMP
@@ -1610,8 +1610,14 @@ uint8_t level_get_tile_sprite(TileType tt)
         case TILE_MUD:           sprite = SPRITE_TILE_MUD;    break;
         case TILE_ICE:           sprite = SPRITE_TILE_ICE;    break;
         case TILE_SPIKES:        sprite = SPRITE_TILE_SPIKES; break; 
-        case TILE_TIMED_SPIKES1:  sprite = (((int)g_timer) % 2 == 0) ? SPRITE_TILE_SPIKES : SPRITE_TILE_SPIKES_DOWN; break;
-        case TILE_TIMED_SPIKES2:  sprite = (((int)g_timer) % 2 == 0) ? SPRITE_TILE_SPIKES_DOWN : SPRITE_TILE_SPIKES; break;
+        case TILE_TIMED_SPIKES1:  {
+            double timer =  (role == ROLE_CLIENT) ? net_client_get_server_time() : g_timer;
+            sprite = (((int)timer) % 2 == 0) ? SPRITE_TILE_SPIKES : SPRITE_TILE_SPIKES_DOWN;
+        } break;
+        case TILE_TIMED_SPIKES2:  {
+            double timer = (role == ROLE_CLIENT) ? net_client_get_server_time() : g_timer;
+            sprite = (((int)timer) % 2 == 0) ? SPRITE_TILE_SPIKES_DOWN : SPRITE_TILE_SPIKES;
+        } break;
         default: break;
     }
     return (uint8_t)sprite;

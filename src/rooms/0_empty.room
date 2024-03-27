@@ -17,15 +17,16 @@ Boulder
 Mud
 Ice
 Spikes
-Timed Spikes
+Timed Spikes 1
+Timed Spikes 2
 
 ; Tile Data
 1,1,1,1,1,1,1,1,1,1,1,1,1
+1,1,1,7,1,1,1,1,1,8,1,1,1
 1,1,1,1,1,1,1,1,1,1,1,1,1
 1,1,1,1,1,1,1,1,1,1,1,1,1
 1,1,1,1,1,1,1,1,1,1,1,1,1
-1,1,1,1,1,1,1,1,1,1,1,1,1
-1,1,1,1,1,1,1,1,1,1,1,1,1
+1,1,1,7,1,1,1,1,1,8,1,1,1
 1,1,1,1,1,1,1,1,1,1,1,1,1
 
 ; Creature Mapping
@@ -33,8 +34,19 @@ Slug
 Clinger
 Geizer
 Floater
+Big Floater
 Buzzer
+Totem Red
+Totem Blue
+Totem Yellow
 Shambler
+Spiked Slug
+Infected
+Gravity Crystal
+Peeper
+Leeper
+Spawn Egg
+Spawn Spider
 
 ; Creatures
 
@@ -60,7 +72,13 @@ Potion of Purple
 +1 Gauntlet Slot
 New Level
 Glowing Orb
+???
+???
+???
+Revive
+Skull
 Chest
+Shrine
 
 ; Items
 

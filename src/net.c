@@ -2928,7 +2928,6 @@ static void unpack_creatures(Packet* pkt, int* offset, WorldState* ws)
     }
 }
 
-
 static void pack_projectiles(Packet* pkt, ClientInfo* cli)
 {
     uint16_t num_projectiles = (uint16_t)plist->count;
