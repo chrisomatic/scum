@@ -98,6 +98,7 @@ extern glist* plist;
 void projectile_init();
 void projectile_clear_all();
 void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player);
+void projectile_drop(Vector3f pos, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, bool from_player);
 void projectile_update_hit_box(Projectile* proj);
 void projectile_update_all(float dt);
 void projectile_kill(Projectile* proj);

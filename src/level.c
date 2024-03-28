@@ -1603,6 +1603,9 @@ static uint8_t get_pit_tile_sprite(RoomFileData* rdata, int x, int y)
 uint8_t level_get_tile_sprite(TileType tt)
 {
     SpriteTileType sprite = SPRITE_TILE_MAX;
+
+    bool spikes = (role == ROLE_CLIENT) ? g_spikes : ((int)g_timer) % 2 == 0;
+
     switch(tt)
     {
         case TILE_FLOOR:         sprite = SPRITE_TILE_FLOOR;  break;
@@ -1612,12 +1615,10 @@ uint8_t level_get_tile_sprite(TileType tt)
         case TILE_ICE:           sprite = SPRITE_TILE_ICE;    break;
         case TILE_SPIKES:        sprite = SPRITE_TILE_SPIKES; break; 
         case TILE_TIMED_SPIKES1:  {
-            double timer =  (role == ROLE_CLIENT) ? net_client_get_server_time() : g_timer;
-            sprite = (((int)timer) % 2 == 0) ? SPRITE_TILE_SPIKES : SPRITE_TILE_SPIKES_DOWN;
+            sprite = spikes ? SPRITE_TILE_SPIKES : SPRITE_TILE_SPIKES_DOWN;
         } break;
         case TILE_TIMED_SPIKES2:  {
-            double timer = (role == ROLE_CLIENT) ? net_client_get_server_time() : g_timer;
-            sprite = (((int)timer) % 2 == 0) ? SPRITE_TILE_SPIKES_DOWN : SPRITE_TILE_SPIKES;
+            sprite = spikes ? SPRITE_TILE_SPIKES_DOWN : SPRITE_TILE_SPIKES;
         } break;
         default: break;
     }

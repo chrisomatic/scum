@@ -34,6 +34,7 @@ static int creature_image_peeper;
 static int creature_image_leeper;
 static int creature_image_spawn_egg;
 static int creature_image_spawn_spider;
+static int creature_image_behemoth;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -52,6 +53,7 @@ static void creature_update_peeper(Creature* c, float dt);
 static void creature_update_leeper(Creature* c, float dt);
 static void creature_update_spawn_egg(Creature* c, float dt);
 static void creature_update_spawn_spider(Creature* c, float dt);
+static void creature_update_behemoth(Creature* c, float dt);
 
 static uint16_t id_counter = 1;
 static uint16_t get_id()
@@ -83,6 +85,7 @@ void creature_init()
     creature_image_leeper = gfx_load_image("src/img/creature_leeper.png", false, false, 48, 48);
     creature_image_spawn_egg = gfx_load_image("src/img/creature_spawn_egg.png", false, false, 32, 32);
     creature_image_spawn_spider = gfx_load_image("src/img/creature_spawn_spider.png", false, false, 16, 16);
+    creature_image_behemoth = gfx_load_image("src/img/creature_behemoth.png", false, false, 96, 128);
 }
 
 char* creature_type_name(CreatureType type)
@@ -123,6 +126,8 @@ char* creature_type_name(CreatureType type)
             return "Spawn Egg";
         case CREATURE_TYPE_SPAWN_SPIDER:
             return "Spawn Spider";
+        case CREATURE_TYPE_BEHEMOTH:
+            return "Behemoth";
         default:
             return "???";
     }
@@ -166,6 +171,8 @@ int creature_get_image(CreatureType type)
             return creature_image_spawn_egg;
         case CREATURE_TYPE_SPAWN_SPIDER:
             return creature_image_spawn_spider;
+        case CREATURE_TYPE_BEHEMOTH:
+            return creature_image_behemoth;
         default:
             return -1;
     }
@@ -445,6 +452,19 @@ void creature_init_props(Creature* c)
             c->xp = 10;
             c->ai_state = 0;
             c->ai_value = rand() % 8;
+        } break;
+        case CREATURE_TYPE_BEHEMOTH:
+        {
+            c->phys.speed = 50.0;
+            c->act_time_min = 3.00;
+            c->act_time_max = 5.00;
+            c->phys.mass = 3.0;
+            c->phys.base_friction = 15.0;
+            c->phys.hp_max = 126.0;
+            c->phys.floating = false;
+            c->painful_touch = true;
+            c->windup_max = 0.5;
+            c->xp = 500;
         } break;
     }
 
@@ -741,6 +761,9 @@ void creature_update(Creature* c, float dt)
                 break;
             case CREATURE_TYPE_SPAWN_SPIDER:
                 creature_update_spawn_spider(c,dt);
+                break;
+            case CREATURE_TYPE_BEHEMOTH:
+                creature_update_behemoth(c,dt);
                 break;
         }
     }
@@ -1176,6 +1199,18 @@ static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
     ProjectileSpawn spawn = projectile_spawn[pt];
 
     projectile_add(&c->phys, c->curr_room, &def, &spawn, color, angle, false);
+}
+
+static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, uint32_t color)
+{
+    ProjectileType pt = creature_get_projectile_type(c);
+    ProjectileDef def = projectile_lookup[pt];
+    ProjectileSpawn spawn = projectile_spawn[pt];
+
+    Rect r = level_get_tile_rect(tile_x, tile_y);
+    Vector3f pos = {r.x, r.y, 400.0};
+
+    projectile_drop(pos, c->curr_room, &def, &spawn, color, false);
 }
 
 static void creature_update_clinger(Creature* c, float dt)
@@ -2052,4 +2087,40 @@ static void creature_update_spawn_spider(Creature* c, float dt)
     }
 
     return;
+}
+
+static void creature_update_behemoth(Creature* c, float dt)
+{
+    bool act = ai_update_action(c, dt);
+
+    if(act)
+    {
+        ai_stop_imm(c);
+
+        Room* room = level_get_room_by_index(&level, c->curr_room);
+
+        Vector2i rand_tile;
+        Vector2f rand_pos;
+
+        if(ai_flip_coin())
+        {
+            int n = ai_rand(10) + 5;
+            for(int i = 0; i < n; ++i)
+            {
+                level_get_rand_floor_tile(room, &rand_tile, &rand_pos);
+                creature_drop_projectile(c, rand_tile.x, rand_tile.y, COLOR_RED);
+            }
+        }
+        else
+        {
+            int n = ai_rand(2) + 1;
+            for(int i = 0; i < n; ++i)
+            {
+                level_get_rand_floor_tile(room, &rand_tile, &rand_pos);
+                creature_add(room, CREATURE_TYPE_PEEPER, &rand_tile, NULL);
+                ParticleSpawner* ps = particles_spawn_effect(rand_pos.x,rand_pos.y, 0.0, &particle_effects[EFFECT_SMOKE], 0.3, true, false);
+                if(ps != NULL) ps->userdata = (int)c->curr_room;
+            }
+        }
+    }
 }

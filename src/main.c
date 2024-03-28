@@ -49,6 +49,7 @@ bool creatures_can_move = true;
 bool players_invincible = false;
 bool all_players_dead = false;
 double g_timer = 0.0;
+bool g_spikes = false;
 
 // Settings
 uint32_t background_color = COLOR(30,30,30);

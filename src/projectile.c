@@ -190,9 +190,8 @@ void projectile_clear_all()
     list_clear(plist);
 }
 
-void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player)
+static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player, bool standard_lob)
 {
-
     if(role == ROLE_CLIENT)
         return;
 
@@ -210,9 +209,9 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, Projec
     proj.phys.width =  vr.w;
     proj.phys.length = vr.w;
     proj.phys.vr = vr;
-    proj.phys.pos.x = phys->pos.x;
-    proj.phys.pos.y = phys->pos.y;
-    proj.phys.pos.z = phys->height/2.0 + phys->pos.z;
+    proj.phys.pos.x = pos.x;
+    proj.phys.pos.y = pos.y;
+    proj.phys.pos.z = pos.z;
     proj.phys.mass = 1.0;
     proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * proj.def.scale;
     proj.phys.amorphous = proj.def.bouncy ? false : true;
@@ -243,9 +242,19 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, Projec
         }
 
         float angle = RAD(p.angle_deg);
-        p.phys.vel.x = +(p.def.speed)*cosf(angle) + phys->vel.x;
-        p.phys.vel.y = -(p.def.speed)*sinf(angle) + phys->vel.y;
-        p.phys.vel.z = 80.0;
+
+        if(standard_lob)
+        {
+            p.phys.vel.x = +(p.def.speed)*cosf(angle) + vel->x;
+            p.phys.vel.y = -(p.def.speed)*sinf(angle) + vel->y;
+            p.phys.vel.z = 80.0;
+        }
+        else
+        {
+            p.phys.vel.x = vel->x;
+            p.phys.vel.y = vel->y;
+            p.phys.vel.z = vel->z;
+        }
 
         if(homing)
         {
@@ -259,6 +268,7 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, Projec
             {
                 float tx = target->pos.x;
                 float ty = target->pos.y;
+
                 Vector2f v = {tx - p.phys.pos.x, ty - p.phys.pos.y};
                 normalize(&v);
                 p.angle_deg = calc_angle_deg(p.phys.pos.x, p.phys.pos.y, tx, ty);
@@ -276,7 +286,20 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, Projec
 
         list_add(plist, (void*)&p);
     }
+}
 
+void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player)
+{
+    Vector3f pos = {phys->pos.x, phys->pos.y, phys->height/2.0 + phys->pos.z};
+    Vector3f vel = {phys->vel.x, phys->vel.y, 0.0};
+
+    projectile_add_internal(pos, &vel, curr_room, def, spawn, color, angle_deg, from_player, true);
+}
+
+void projectile_drop(Vector3f pos, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, bool from_player)
+{
+    Vector3f vel = {0.0, 0.0, 0.0};
+    projectile_add_internal(pos, &vel, curr_room, def, spawn, color, 0.0, from_player, false);
 }
 
 void projectile_kill(Projectile* proj)

@@ -1169,10 +1169,12 @@ int net_server_start()
         t0_g = t1_g;
 
         accum_g += elapsed_time_g;
-        while(accum_g >= 1.0/TARGET_FPS)
+        double _dt = 1.0/TARGET_FPS;
+        while(accum_g >= _dt)
         {
+            g_timer += _dt;
             server_simulate();
-            accum_g -= 1.0/TARGET_FPS;
+            accum_g -= _dt;
         }
 
         t1 = timer_get_time();
@@ -3188,6 +3190,7 @@ static void pack_other(Packet* pkt, ClientInfo* cli)
     BPW(&server.bp, 1,  (uint32_t)(room->doors_locked ? 0x01 : 0x00));
     BPW(&server.bp, 1,  (uint32_t)(level.darkness_curse ? 0x01 : 0x00));
     BPW(&server.bp, 1,  (uint32_t)(paused ? 0x01 : 0x00));
+    BPW(&server.bp, 1,  (uint32_t)((int)(g_timer) % 2 == 0 ? 0x01 : 0x00));
 }
 
 static void unpack_other(Packet* pkt, int* offset, WorldState* ws)
@@ -3207,6 +3210,7 @@ static void unpack_other(Packet* pkt, int* offset, WorldState* ws)
     level.darkness_curse = bitpack_read(&client.bp, 1) == 0x01 ? true : false;
 
     paused = bitpack_read(&client.bp, 1) == 0x01 ? true : false;
+    g_spikes = bitpack_read(&client.bp, 1) == 0x01 ? true : false;
 }
 
 static void pack_events(Packet* pkt, ClientInfo* cli)
