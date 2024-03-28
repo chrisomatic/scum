@@ -186,6 +186,7 @@ Level level_generate(unsigned int seed, int rank)
     //Vector2i t = {5,5};
     //creature_add(sroom, CREATURE_TYPE_GRAVITY_CRYSTAL, &t, NULL);
 
+    // item_add(ITEM_REVIVE, CENTER_X, CENTER_Y, sroom->index);
 
     // // TEMP
     // if(role != ROLE_CLIENT)

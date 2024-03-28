@@ -408,8 +408,8 @@ void creature_init_props(Creature* c)
         case CREATURE_TYPE_LEEPER:
         {
             c->phys.speed = 120.0;
-            c->act_time_min = 0.5;
-            c->act_time_max = 1.5;
+            c->act_time_min = 0.2;
+            c->act_time_max = 0.8;
             c->phys.mass = 0.5;
             c->phys.base_friction = 20.0;
             c->phys.hp_max = 8.0;
@@ -1932,17 +1932,23 @@ static void creature_update_peeper(Creature* c, float dt)
 
 static void creature_update_leeper(Creature* c, float dt)
 {
+
     if(c->ai_state == 0)
     {
-        Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
-        if(p)
-        {
-            c->target_pos.x = p->phys.pos.x;
-            c->target_pos.y = p->phys.pos.y;
-            c->phys.vel.z = 300.0;
-            c->ai_state = 1;
-        }
 
+        bool act = ai_update_action(c, dt);
+
+        if(act)
+        {
+            Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+            if(p)
+            {
+                c->target_pos.x = p->phys.pos.x;
+                c->target_pos.y = p->phys.pos.y;
+                c->phys.vel.z = 300.0;
+                c->ai_state = 1;
+            }
+        }
         return;
     }
 
@@ -1961,18 +1967,6 @@ static void creature_update_leeper(Creature* c, float dt)
         {
             c->sprite_index = 0;
             ai_stop_moving(c);
-            c->ai_state = 2;
-        }
-        return;
-    }
-
-    if(c->ai_state == 2)
-    {
-
-        bool act = ai_update_action(c, dt);
-
-        if(act)
-        {
             c->ai_state = 0;
         }
         return;
@@ -1998,6 +1992,7 @@ static void creature_update_spawn_egg(Creature* c, float dt)
             creature_add(room, CREATURE_TYPE_SPAWN_SPIDER, &t, NULL);
         }
 
+        c->xp = 0;
         creature_die(c);
         return;
     }

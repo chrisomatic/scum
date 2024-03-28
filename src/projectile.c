@@ -269,6 +269,11 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, Projec
 
         // printf("%s damage: %.2f\n", __func__, p.def.damage);
 
+        // p.phys.pos.z = 400.0;
+        // p.phys.vel.x = 0;
+        // p.phys.vel.y = 0;
+        // p.angle_deg = 0.0;
+
         list_add(plist, (void*)&p);
     }
 
@@ -558,9 +563,11 @@ void projectile_draw(Projectile* proj)
 
     float opacity = proj->phys.ethereal ? 0.3 : 1.0;
 
-    //float y = proj->phys.pos.y - 0.5*proj->phys.pos.z;
     float y = proj->phys.pos.y - (proj->phys.vr.h + proj->phys.pos.z)/2.0;
-    gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, y, proj->color, false, proj->def.scale, 0.0, opacity, false, true, false);
+    float scale = RANGE(pow(proj->phys.pos.z/20.0, 0.6), 0.90, 1.10);
+
+    // printf("z: %.2f, scale: %.2f\n", proj->phys.pos.z, scale);
+    gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, y, proj->color, false, scale, 0.0, opacity, false, true, false);
 }
 
 void projectile_lerp(Projectile* p, double dt)

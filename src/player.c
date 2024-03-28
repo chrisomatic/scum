@@ -75,6 +75,7 @@ void player_set_defaults(Player* p)
 
     p->phys.hp_max = 6;
     p->phys.hp = p->phys.hp_max;
+    // p->phys.hp = 1;
 
     p->invulnerable = false;
     p->invulnerable_temp_time = 0.0;
@@ -534,6 +535,23 @@ void player_hurt(Player* p, int damage)
 
 void player_die(Player* p)
 {
+
+    for(int i = 0; i < PLAYER_GAUNTLET_MAX; ++i)
+    {
+        if(i < p->gauntlet_slots)
+        {
+            if(p->gauntlet[i].type == ITEM_REVIVE)
+            {
+                p->phys.dead = true;
+                Item* it = &p->gauntlet[i];
+                if(item_props[it->type].func) item_props[it->type].func(it, p);
+                it->type = ITEM_NONE;
+                text_list_add(text_lst, COLOR_WHITE, 3.0, "Revived!");
+                return;
+            }
+        }
+    }
+
     text_list_add(text_lst, COLOR_WHITE, 3.0, "%s died.", p->settings.name);
 
     p->phys.hp = 0;
@@ -1168,7 +1186,21 @@ void player_update(Player* p, float dt)
             }
             break;
         }
+
+        if(i < p->gauntlet_slots)
+        {
+            if(p->gauntlet[i].type == ITEM_REVIVE)
+            {
+                int num_players = player_get_active_count();
+                if(num_players > 1)
+                {
+                    Item* it = &p->gauntlet[i];
+                    player_drop_item(p, it);
+                }
+            }
+        }
     }
+
 
     if(show_skill)
     {
@@ -1205,6 +1237,13 @@ void player_update(Player* p, float dt)
                 ItemType type = pu->type;
                 ItemProps* pr = &item_props[type];
 
+                int num_players = player_get_active_count();
+                bool socketable = pr->socketable;
+                if(num_players > 1 && type == ITEM_REVIVE)
+                {
+                    socketable = false;
+                }
+
                 if(type == ITEM_NEW_LEVEL)
                 {
                     if(level_grace_time <= 0.0)
@@ -1221,7 +1260,7 @@ void player_update(Player* p, float dt)
                         return;
                     }
                 }
-                else if(pr->socketable)
+                else if(socketable)
                 {
                     LOGI("Socketing item type: %s (%d)", item_get_name(type), type);
                     int idx = p->gauntlet_selection;

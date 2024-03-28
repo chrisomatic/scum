@@ -84,7 +84,7 @@ static bool item_func_revive(Item* pu, Player* p)
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         Player* p2 = &players[i];
-        if(p == p2) continue;
+        // if(p == p2) continue;
         if(!p2->active) continue;
         if(p2->phys.dead) others[count++] = i;
     }
@@ -520,7 +520,7 @@ void item_init()
             case ITEM_REVIVE:
             {
                 p->touchable = false;
-                p->socketable = false;
+                p->socketable = true;
                 p->func = (void*)item_func_revive;
             } break;
             case ITEM_SKULL:
