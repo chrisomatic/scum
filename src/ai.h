@@ -24,6 +24,10 @@ void ai_init_action(Creature* c)
     c->action_counter_max = RAND_FLOAT(0.5, 1.0);
 }
 
+void ai_choose_new_action_max(Creature* c)
+{
+    c->action_counter_max = RAND_FLOAT(c->act_time_min, c->act_time_max);
+}
 bool ai_update_action(Creature* c, float dt)
 {
     if(level_grace_time > 0.0)
@@ -34,7 +38,7 @@ bool ai_update_action(Creature* c, float dt)
     if(c->action_counter >= c->action_counter_max)
     {
         c->action_counter -= c->action_counter_max;
-        c->action_counter_max = RAND_FLOAT(c->act_time_min, c->act_time_max);
+        ai_choose_new_action_max(c);
         return true;
     }
     return false;

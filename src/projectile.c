@@ -13,6 +13,7 @@
 #include "status_effects.h"
 #include "projectile.h"
 #include "effects.h"
+#include "decal.h"
 
 Projectile projectiles[MAX_PROJECTILES];
 Projectile prior_projectiles[MAX_PROJECTILES];
@@ -296,9 +297,9 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, Projec
     projectile_add_internal(pos, &vel, curr_room, def, spawn, color, angle_deg, from_player, true);
 }
 
-void projectile_drop(Vector3f pos, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, bool from_player)
+void projectile_drop(Vector3f pos, float vel0_z, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, bool from_player)
 {
-    Vector3f vel = {0.0, 0.0, 0.0};
+    Vector3f vel = {0.0, 0.0, vel0_z};
     projectile_add_internal(pos, &vel, curr_room, def, spawn, color, 0.0, from_player, false);
 }
 
@@ -500,8 +501,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         Box proj_curr = {
             proj->phys.pos.x,
             proj->phys.pos.y,
-            0,
-            // proj->phys.pos.z + proj->phys.height/2.0,
+            proj->phys.pos.z + proj->phys.height/2.0,
             proj->phys.width,
             proj->phys.width,
             proj->phys.height*2,
@@ -525,8 +525,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         Box check = {
             phys->collision_rect.x,
             phys->collision_rect.y,
-            zb,
-            // phys->pos.z + phys->height/2.0,
+            phys->pos.z + phys->height/2.0,
             phys->collision_rect.w,
             phys->collision_rect.h,
             phys->height*2,

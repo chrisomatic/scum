@@ -12,6 +12,7 @@ typedef enum
     ENTITY_TYPE_ITEM,
     ENTITY_TYPE_EXPLOSION,
     ENTITY_TYPE_WEAPON,
+    ENTITY_TYPE_WALL,
     ENTITY_TYPE_MAX,
 } EntityType;
 

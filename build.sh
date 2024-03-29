@@ -36,6 +36,7 @@ gcc core/gfx.c \
     settings.c \
     ui.c \
     weapon.c \
+    decal.c \
     main.c \
     -Icore \
     -lglfw -lGLU -lGLEW -lGL -lm \

@@ -11,6 +11,7 @@
 #include "effects.h"
 #include "ui.h"
 #include "weapon.h"
+#include "decal.h"
 #include "player.h"
 
 

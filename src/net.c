@@ -23,6 +23,7 @@
 #include "explosion.h"
 #include "settings.h"
 #include "glist.h"
+#include "decal.h"
 
 #define COOL_SERVER_PLAYER_LOGIC 1
 #define REDUNDANT_INPUTS 1

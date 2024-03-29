@@ -10,6 +10,7 @@
 #include "creature.h"
 #include "effects.h"
 #include "ai.h"
+#include "decal.h"
 
 Creature prior_creatures[MAX_CREATURES] = {0};
 Creature creatures[MAX_CREATURES] = {0};
@@ -456,9 +457,9 @@ void creature_init_props(Creature* c)
         case CREATURE_TYPE_BEHEMOTH:
         {
             c->phys.speed = 50.0;
-            c->act_time_min = 3.00;
-            c->act_time_max = 5.00;
-            c->phys.mass = 3.0;
+            c->act_time_min = 1.00;
+            c->act_time_max = 2.00;
+            c->phys.mass = 1000.0;
             c->phys.base_friction = 15.0;
             c->phys.hp_max = 126.0;
             c->phys.floating = false;
@@ -1201,7 +1202,7 @@ static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
     projectile_add(&c->phys, c->curr_room, &def, &spawn, color, angle, false);
 }
 
-static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, uint32_t color)
+static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float vel0_z, uint32_t color)
 {
     ProjectileType pt = creature_get_projectile_type(c);
     ProjectileDef def = projectile_lookup[pt];
@@ -1210,7 +1211,7 @@ static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, uint32
     Rect r = level_get_tile_rect(tile_x, tile_y);
     Vector3f pos = {r.x, r.y, 400.0};
 
-    projectile_drop(pos, c->curr_room, &def, &spawn, color, false);
+    projectile_drop(pos, vel0_z, c->curr_room, &def, &spawn, color, false);
 }
 
 static void creature_update_clinger(Creature* c, float dt)
@@ -2091,36 +2092,119 @@ static void creature_update_spawn_spider(Creature* c, float dt)
 
 static void creature_update_behemoth(Creature* c, float dt)
 {
-    bool act = ai_update_action(c, dt);
-
-    if(act)
+    bool angry = (c->phys.hp < 0.3*c->phys.hp_max);
+    if(angry)
     {
-        ai_stop_imm(c);
+        c->base_color = COLOR_RED;
+    }
 
-        Room* room = level_get_room_by_index(&level, c->curr_room);
+    if(c->ai_state == 0)
+    {
+        bool act = ai_update_action(c, dt);
+        if(!act) return;
 
-        Vector2i rand_tile;
-        Vector2f rand_pos;
+        // choose the next state
 
-        if(ai_flip_coin())
+        int r = angry ? ai_rand(3) : ai_rand(2);
+
+        if(r == 0)
         {
-            int n = ai_rand(10) + 5;
-            for(int i = 0; i < n; ++i)
-            {
-                level_get_rand_floor_tile(room, &rand_tile, &rand_pos);
-                creature_drop_projectile(c, rand_tile.x, rand_tile.y, COLOR_RED);
-            }
+            // go underground and spawn creatures
+            c->phys.underground = true;
+            c->ai_state = 1;
+            c->act_time_min = 0.5;
+            c->act_time_max = 1.0;
+            ai_choose_new_action_max(c);
         }
         else
         {
-            int n = ai_rand(2) + 1;
-            for(int i = 0; i < n; ++i)
-            {
-                level_get_rand_floor_tile(room, &rand_tile, &rand_pos);
-                creature_add(room, CREATURE_TYPE_PEEPER, &rand_tile, NULL);
-                ParticleSpawner* ps = particles_spawn_effect(rand_pos.x,rand_pos.y, 0.0, &particle_effects[EFFECT_SMOKE], 0.3, true, false);
-                if(ps != NULL) ps->userdata = (int)c->curr_room;
-            }
+            // rain fire
+            c->phys.underground = false;
+            c->ai_state = 2;
+            c->ai_value = 0;
+            c->act_time_min = angry ? 0.2 : 0.5;
+            c->act_time_max = angry ? 0.5 : 1.0;
+            ai_choose_new_action_max(c);
         }
+        return;
+    }
+
+    bool act = ai_update_action(c, dt);
+    if(!act) return;
+
+    Room* room = level_get_room_by_index(&level, c->curr_room);
+
+    Vector2i rand_tile;
+    Vector2f rand_pos;
+
+    if(c->ai_state == 1)
+    {
+        // spawn creatures
+        int n = angry ? ai_rand(4) + 2 : ai_rand(2) + 1;
+        for(int i = 0; i < n; ++i)
+        {
+            level_get_rand_floor_tile(room, &rand_tile, &rand_pos);
+            creature_add(room, CREATURE_TYPE_PEEPER, &rand_tile, NULL);
+            ParticleSpawner* ps = particles_spawn_effect(rand_pos.x,rand_pos.y, 0.0, &particle_effects[EFFECT_SMOKE], 0.3, true, false);
+            if(ps != NULL) ps->userdata = (int)c->curr_room;
+        }
+
+        c->phys.underground = true;
+        if(angry)
+        {
+            // wait longer underground
+            c->act_time_min = 12.0;
+            c->act_time_max = 15.0;
+        }
+        else
+        {
+            c->act_time_min = 8.0;
+            c->act_time_max = 10.0;
+        }
+        ai_choose_new_action_max(c);
+        c->ai_state = 0;
+
+        return;
+    }
+
+    if(c->ai_state == 2)
+    {
+        if(c->ai_value >= (angry ? 12 : 10))
+        {
+            // return to randomly choosing state
+            c->act_time_min = 1.00;
+            c->act_time_max = 2.00;
+            ai_choose_new_action_max(c);
+            c->ai_state = 0;
+            c->phys.underground = false;
+            return;
+        }
+
+        // rain fire
+        int n = (angry ? ai_rand(20) + 10: ai_rand(15) + 5);
+
+        for(int i = 0; i < n; ++i)
+        {
+            level_get_rand_floor_tile(room, &rand_tile, &rand_pos);
+            creature_drop_projectile(c, rand_tile.x, rand_tile.y, (angry ? -400.0 : 0.0), COLOR_RED);
+
+            // add decal to show where projectile is going
+            Decal d = {0};
+            d.image = particles_image;
+            d.sprite_index = 42;
+            d.tint = COLOR_RED;
+            d.scale = 1.0;
+            d.rotation = rand() % 360;
+            d.opacity = 0.6;
+            d.ttl = 2.0;
+            d.pos.x = rand_pos.x;
+            d.pos.y = rand_pos.y;
+            d.room = c->curr_room;
+            d.fade_pattern = 1;
+            decal_add(d);
+        }
+
+        c->ai_value++;
+        return;
     }
 }

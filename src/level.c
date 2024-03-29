@@ -12,6 +12,7 @@
 
 
 int dungeon_image = -1;
+int dungeon_image_wall = -1;
 int dungeon_set_image1 = -1;
 int dungeon_set_image2 = -1;
 int dungeon_set_image3 = -1;
@@ -1493,6 +1494,7 @@ void level_init()
     dungeon_set_image2 = gfx_load_image("src/img/dungeon_set2.png", false, false, TILE_SIZE, TILE_SIZE);
     dungeon_set_image3 = gfx_load_image("src/img/dungeon_set3.png", false, false, TILE_SIZE, TILE_SIZE);
 
+    dungeon_image_wall = gfx_load_image("src/img/dungeon_wall.png", false, false, 32, 56);
     dungeon_image = dungeon_set_image2;
 
     room_file_load_all(false);

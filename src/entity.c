@@ -214,6 +214,7 @@ void entity_handle_collisions()
         Entity* e1 = &entities[i];
         if(e1->phys->dead) continue;
         if(e1->phys->underground) continue;
+        if(e1->type == ENTITY_TYPE_WALL) continue; // underlying tile block will handle
 
         Physics* p1 = e1->phys;
 
@@ -285,6 +286,9 @@ void entity_draw_all()
         if(e->curr_room != player->curr_room)
             continue;
 
+        if(e->type == ENTITY_TYPE_WALL)
+            continue;
+
         entity_update_tile(e);
         if(e->tile == TILE_PIT || e->tile == TILE_BOULDER)
             continue;
@@ -296,7 +300,6 @@ void entity_draw_all()
         //     phys_calc_collision_rect(e->phys);
 
         draw_entity_shadow(e->phys, e->type);
-
     }
 
     gfx_sprite_batch_draw();
@@ -324,9 +327,13 @@ void entity_draw_all()
             {
                 item_draw((Item*)e->ptr);
             }   break;
+            case ENTITY_TYPE_WALL:
+            {
+                // @TODO
+                //level_draw_block();
+            }
             default:
                 break;
-
         }
 
         // draw any status effects
@@ -348,7 +355,7 @@ void entity_draw_all()
             float vx = e->phys->pos.x;
             float vy = e->phys->pos.y - e->phys->pos.z/2.0;
             float cx = e->phys->collision_rect.x;
-            float cy = e->phys->collision_rect.y;
+            float cy = e->phys->collision_rect.y - e->phys->pos.z/2.0;
 
             // draw collision circle
             gfx_draw_circle(cx, cy, e->phys->radius, COLOR_PURPLE, 1.0, false, IN_WORLD);
