@@ -36,6 +36,7 @@ static int creature_image_leeper;
 static int creature_image_spawn_egg;
 static int creature_image_spawn_spider;
 static int creature_image_behemoth;
+static int creature_image_beacon_red;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -55,6 +56,7 @@ static void creature_update_leeper(Creature* c, float dt);
 static void creature_update_spawn_egg(Creature* c, float dt);
 static void creature_update_spawn_spider(Creature* c, float dt);
 static void creature_update_behemoth(Creature* c, float dt);
+static void creature_update_beacon_red(Creature* c, float dt);
 
 static uint16_t id_counter = 1;
 static uint16_t get_id()
@@ -87,6 +89,7 @@ void creature_init()
     creature_image_spawn_egg = gfx_load_image("src/img/creature_spawn_egg.png", false, false, 32, 32);
     creature_image_spawn_spider = gfx_load_image("src/img/creature_spawn_spider.png", false, false, 16, 16);
     creature_image_behemoth = gfx_load_image("src/img/creature_behemoth.png", false, false, 96, 128);
+    creature_image_beacon_red = gfx_load_image("src/img/creature_beacon_red.png", false, false, 32, 32);
 }
 
 char* creature_type_name(CreatureType type)
@@ -129,6 +132,8 @@ char* creature_type_name(CreatureType type)
             return "Spawn Spider";
         case CREATURE_TYPE_BEHEMOTH:
             return "Behemoth";
+        case CREATURE_TYPE_BEACON_RED:
+            return "Beacon Red";
         default:
             return "???";
     }
@@ -174,6 +179,8 @@ int creature_get_image(CreatureType type)
             return creature_image_spawn_spider;
         case CREATURE_TYPE_BEHEMOTH:
             return creature_image_behemoth;
+        case CREATURE_TYPE_BEACON_RED:
+            return creature_image_beacon_red;
         default:
             return -1;
     }
@@ -466,6 +473,19 @@ void creature_init_props(Creature* c)
             c->painful_touch = true;
             c->windup_max = 0.5;
             c->xp = 500;
+        } break;
+        case CREATURE_TYPE_BEACON_RED:
+        {
+            c->phys.speed = 50.0;
+            c->act_time_min = 2.00;
+            c->act_time_max = 5.00;
+            c->phys.mass = 1000.0;
+            c->phys.base_friction = 15.0;
+            c->phys.hp_max = 20.0;
+            c->phys.floating = false;
+            c->painful_touch = false;
+            c->windup_max = 0.5;
+            c->xp = 50;
         } break;
     }
 
@@ -765,6 +785,9 @@ void creature_update(Creature* c, float dt)
                 break;
             case CREATURE_TYPE_BEHEMOTH:
                 creature_update_behemoth(c,dt);
+                break;
+            case CREATURE_TYPE_BEACON_RED:
+                creature_update_beacon_red(c,dt);
                 break;
         }
     }
@@ -2207,4 +2230,84 @@ static void creature_update_behemoth(Creature* c, float dt)
         c->ai_value++;
         return;
     }
+}
+
+static void creature_update_beacon_red(Creature* c, float dt)
+{
+    if(c->ai_state == 0)
+    {
+        bool act = ai_update_action(c, dt);
+        if(!act) return;
+
+        c->ai_state = 1; // start raining fire
+        c->act_time_min = 0.5;
+        c->act_time_max = 0.5;
+
+        Decal d = {
+            .image = particles_image,
+            .sprite_index = 42,
+            .tint = COLOR_RED,
+            .scale = 1.0,
+            .rotation = 0.0,
+            .opacity = 0.6,
+            .ttl = 5.0,
+            .pos.x = c->phys.pos.x,
+            .pos.y = c->phys.pos.y,
+            .room = c->curr_room,
+            .fade_pattern = 0
+        };
+        
+        decal_add(d);
+
+        ai_choose_new_action_max(c);
+        return;
+    }
+
+    bool act = ai_update_action(c, dt);
+    if(!act) return;
+
+    Room* room = level_get_room_by_index(&level, c->curr_room);
+
+    Vector2i rand_tile;
+    Vector2f rand_pos;
+
+    if(c->ai_value >=  10)
+    {
+        // return to waiting state
+        c->act_time_min = 2.0;
+        c->act_time_max = 5.0;
+        ai_choose_new_action_max(c);
+        c->ai_value = 0;
+        c->ai_state = 0;
+        return;
+    }
+
+    // rain fire
+    int n = ai_rand(15) + 5;
+
+    for(int i = 0; i < n; ++i)
+    {
+        level_get_rand_floor_tile(room, &rand_tile, &rand_pos);
+        creature_drop_projectile(c, rand_tile.x, rand_tile.y, 0.0, COLOR_RED);
+
+        // add decal to show where projectile is going
+        Decal d = {
+            .image = particles_image,
+            .sprite_index = 42,
+            .tint = COLOR_RED,
+            .scale = 1.0,
+            .rotation = rand() % 360,
+            .opacity = 0.6,
+            .ttl = 2.0,
+            .pos.x = rand_pos.x,
+            .pos.y = rand_pos.y,
+            .room = c->curr_room,
+            .fade_pattern = 1
+        };
+
+        decal_add(d);
+    }
+
+    c->ai_value++;
+    return;
 }
