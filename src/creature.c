@@ -1662,11 +1662,15 @@ static void creature_update_totem_yellow(Creature* c, float dt)
         {
             c->ai_counter = 0.0;
             c->ai_state = 1;
-            c->sprite_index = 1;
+            c->sprite_index = 0;
             if(c->ai_value > 1)
             {
                 c->ai_value = 0;
                 c->sprite_index = 0;
+            }
+            else if(c->ai_value == 1)
+            {
+                c->sprite_index = 1;
             }
             c->windup = true;
         }

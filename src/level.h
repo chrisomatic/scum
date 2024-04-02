@@ -66,6 +66,11 @@ typedef enum
 typedef enum
 {
     SPRITE_TILE_FLOOR = 0,
+    SPRITE_TILE_FLOOR_ALT1,
+    SPRITE_TILE_FLOOR_ALT2,
+    SPRITE_TILE_FLOOR_ALT3,
+    SPRITE_TILE_FLOOR_ALT4,
+    SPRITE_TILE_FLOOR_ALT5,
     SPRITE_TILE_BLOCK,
     SPRITE_TILE_WALL_UP,
     SPRITE_TILE_WALL_RIGHT,
@@ -123,6 +128,7 @@ typedef struct
 {
     bool valid;
     RoomType type;
+    uint32_t rand_seed; // calculated at start, used for generating variation in room
     bool doors[MAX_DOORS];
     bool doors_locked;
     uint32_t color;

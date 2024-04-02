@@ -2,6 +2,7 @@
 #include "core/files.h"
 #include "core/gfx.h"
 #include "core/window.h"
+#include "core/math2d.h"
 #include "main.h"
 #include "creature.h"
 #include "item.h"
@@ -58,25 +59,9 @@ static void print_room(Level* level, Room* room);
 static int rand_from_probs(int probs[], int num);
 static void shuffle_vector2i_list(Vector2i list[], int count);
 
-// rand
-// ------------------------------------------------------------------------
-static unsigned long int lrand_next = 1;
+static RndGen rg_level = {1}; // level randomness
+static RndGen rg_room  = {1}; // used for creating variance in a single room
 
-static int lrand()
-{
-    lrand_next = lrand_next * 1103515245 + 12345;
-    return (unsigned int)(lrand_next / 65536) % 32768;
-}
-
-static void slrand(unsigned int seed)
-{
-    lrand_next = seed;
-}
-
-static inline bool flip_coin()
-{
-    return (lrand()%2==0);
-}
 // ------------------------------------------------------------------------
 
 #define GENERATE_ROOMS_TEST 0
@@ -99,7 +84,7 @@ Level level_generate(unsigned int seed, int rank)
     memset(&gpath, 0, sizeof(LevelPath));
 
     // seed PRNG
-    slrand(seed);
+    slrand(&rg_level, seed);
 
     if(rank > 2)
     {
@@ -172,8 +157,8 @@ Level level_generate(unsigned int seed, int rank)
 
     init_level_struct(&glevel);
 
-    glevel.start.x = (lrand()%(MAX_ROOMS_GRID_X-2))+1;
-    glevel.start.y = (lrand()%(MAX_ROOMS_GRID_Y-2))+1;
+    glevel.start.x = (lrand(&rg_level)%(MAX_ROOMS_GRID_X-2))+1;
+    glevel.start.y = (lrand(&rg_level)%(MAX_ROOMS_GRID_Y-2))+1;
     Room* sroom = &glevel.rooms[glevel.start.x][glevel.start.y];
     sroom->valid = true;
     sroom->type = ROOM_TYPE_EMPTY;
@@ -209,7 +194,7 @@ Level level_generate(unsigned int seed, int rank)
     troom = place_room_and_path(&glevel, NULL, ROOM_TYPE_TREASURE, sroom, 2, 4, &tpath, false);
     set_doors_from_path(&glevel, &tpath);
 
-    if(lrand() % 100 <= 75)
+    if(lrand(&rg_level) % 100 <= 75)
     {
         LevelPath shpath = {0};
         Room* shroom = NULL;
@@ -259,7 +244,7 @@ Level level_generate(unsigned int seed, int rank)
                 bool _shrine = aroom->type == ROOM_TYPE_SHRINE;
                 if(_boss || _treasure || _shrine) continue;
 
-                if(lrand()%100 <= 10)
+                if(lrand(&rg_level)%100 <= 10)
                 {
                     room->doors[d] = true;
                     aroom->doors[get_opposite_dir(d)] = true;
@@ -305,7 +290,7 @@ Level level_generate(unsigned int seed, int rank)
                 else
                 {
                     room->type = ROOM_TYPE_EMPTY;
-                    if(lrand() % 100 < MONSTER_ROOM_PERCENTAGE)
+                    if(lrand(&rg_level) % 100 < MONSTER_ROOM_PERCENTAGE)
                         room->type = ROOM_TYPE_MONSTER;
                     rfd_count = get_usable_rooms(room->type, room->doors, rfd_list);
                 }
@@ -316,7 +301,7 @@ Level level_generate(unsigned int seed, int rank)
                     room->type = ROOM_TYPE_EMPTY;
                     rfd_count = get_usable_rooms(ROOM_TYPE_EMPTY, room->doors, rfd_list);
                 }
-                room->layout = rfd_list[lrand()%rfd_count];
+                room->layout = rfd_list[lrand(&rg_level)%rfd_count];
             }
 
             if(room->type == ROOM_TYPE_BOSS)
@@ -641,6 +626,9 @@ static Room* place_room_and_path(Level* level, Vector2i* pos, RoomType type, Roo
         return NULL;
     }
 
+    // set room rand number
+    room->rand_seed = rand();
+
     if(direct)
     {
         level_astar_to_path(level, &asd, &gpath);
@@ -782,7 +770,7 @@ static bool generate_room_path(Level* level, Room* start, Room* end, LevelPath* 
             Dir dir = DIR_NONE;
             if(ccount >= 1)
             {
-                dir = choose_directions[lrand()%ccount];
+                dir = choose_directions[lrand(&rg_level)%ccount];
             }
             else
             {
@@ -933,7 +921,7 @@ static void print_room(Level* level, Room* room)
 
 static int rand_from_probs(int probs[], int num)
 {
-    int r = (lrand() % probs[num-1]) + 1;
+    int r = (lrand(&rg_level) % probs[num-1]) + 1;
     for(int i = 0; i < num; ++i)
     {
         if(r <= probs[i])
@@ -948,7 +936,7 @@ static void shuffle_vector2i_list(Vector2i list[], int count)
 {
     for(int i = 0; i < count; ++i)
     {
-        int idx = lrand()%count;
+        int idx = lrand(&rg_level)%count;
         Vector2i cpy = list[idx];
         list[idx].x = list[i].x;
         list[idx].y = list[i].y;
@@ -1610,7 +1598,18 @@ uint8_t level_get_tile_sprite(TileType tt)
 
     switch(tt)
     {
-        case TILE_FLOOR:         sprite = SPRITE_TILE_FLOOR;  break;
+        case TILE_FLOOR: {
+
+             int r = lrand(&rg_room) % 100;
+
+             if(r < 70)      sprite = SPRITE_TILE_FLOOR;
+             else if(r < 80) sprite = SPRITE_TILE_FLOOR_ALT1;
+             else if(r < 88) sprite = SPRITE_TILE_FLOOR_ALT2;
+             else if(r < 92) sprite = SPRITE_TILE_FLOOR_ALT3;
+             else if(r < 95) sprite = SPRITE_TILE_FLOOR_ALT4;
+             else            sprite = SPRITE_TILE_FLOOR_ALT5;
+                 
+        } break;
         case TILE_PIT:           sprite = SPRITE_TILE_PIT;    break;
         case TILE_BOULDER:       sprite = SPRITE_TILE_BLOCK;  break;
         case TILE_MUD:           sprite = SPRITE_TILE_MUD;    break;
@@ -1823,6 +1822,9 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
         rdata = &room_list[room->layout];
 
     // draw room
+
+    slrand(&rg_room, room->rand_seed);
+
     for(int _y = 0; _y < ROOM_TILE_SIZE_Y; ++_y)
     {
         for(int _x = 0; _x < ROOM_TILE_SIZE_X; ++_x)

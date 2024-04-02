@@ -34,7 +34,6 @@ typedef struct
     time_t mtime;
     size_t fsize;
 
-
 } RoomFileData;
 
 extern char room_files[256][32];

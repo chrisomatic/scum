@@ -98,6 +98,11 @@ typedef enum
     BL
 } RXYpoint;
 
+typedef struct
+{
+    uint64_t lrand_next;
+} RndGen;
+
 extern Matrix IDENTITY_MATRIX;
 
 void get_model_transform(Vector3f* pos, Vector3f* rotation, Vector3f* scale, Matrix* model);
@@ -164,3 +169,7 @@ Vector2f lerp2f(Vector2f* a, Vector2f* b, float t);
 Vector3f lerp3f(Vector3f* a, Vector3f* b, float t);
 
 float rand_float_between(float lower, float upper);
+
+// random numbers
+void slrand(RndGen* rg, uint32_t seed);
+uint32_t lrand(RndGen* rg);

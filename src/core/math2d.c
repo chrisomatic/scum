@@ -848,3 +848,14 @@ bool boxes_colliding(Box* b1, Box* b2)
     return colliding;
 
 }
+
+void slrand(RndGen* rg, uint32_t seed)
+{
+    rg->lrand_next = seed;
+}
+
+uint32_t lrand(RndGen* rg)
+{
+    rg->lrand_next = rg->lrand_next * 1103515245 + 12345;
+    return (uint32_t)(rg->lrand_next / 65536) % 32768;
+}
