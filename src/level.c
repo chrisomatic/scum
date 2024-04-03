@@ -191,8 +191,24 @@ Level level_generate(unsigned int seed, int rank)
 
     LevelPath tpath = {0};
     Room* troom = NULL;
+#if 1
+
     troom = place_room_and_path(&glevel, NULL, ROOM_TYPE_TREASURE, sroom, 2, 4, &tpath, false);
     set_doors_from_path(&glevel, &tpath);
+
+#else
+
+    for(;;)
+    {
+        Vector2i pos = {.x=broom->grid.x, .y=broom->grid.y};
+        pos.x += (lrand() % 2 == 0 ? -1 : 1) * (lrand()%1+1);
+        pos.y += (lrand() % 2 == 0 ? -1 : 1) * (lrand()%1+1);
+        troom = place_room_and_path(&glevel, &pos, ROOM_TYPE_TREASURE, sroom, 2, 4, &tpath, false);
+        if(troom) break;
+    }
+    set_doors_from_path(&glevel, &tpath);
+
+#endif
 
     if(lrand(&rg_level) % 100 <= 75)
     {
@@ -582,7 +598,13 @@ static Room* place_room_and_path(Level* level, Vector2i* pos, RoomType type, Roo
 
     if(pos)
     {
+        if(pos->x < 0 || pos->x >= MAX_ROOMS_GRID_X || pos->y < 0 || pos->y >= MAX_ROOMS_GRID_Y)
+            return NULL;
+
         room = &level->rooms[pos->x][pos->y];
+
+        if(room->valid)
+            return NULL;
 
         astar_create(&asd, MAX_ROOMS_GRID_X, MAX_ROOMS_GRID_Y);
         astar_set_traversable_func(&asd, room_traversable_func);

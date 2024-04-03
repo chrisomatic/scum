@@ -338,13 +338,6 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
         p->transition_room = p->curr_room;
     }
 
-    if(p == player)
-    {
-        creature_clicked_target.x = -1;
-        creature_clicked_target.y = -1;
-        creature_clicked_id = 0;
-    }
-
     Room* room = level_get_room_by_index(&level, room_index);
     if(!room)
     {
@@ -1726,6 +1719,19 @@ void player_update(Player* p, float dt)
     // update position
     p->phys.pos.x += p->phys.vel.x*dt;
     p->phys.pos.y += p->phys.vel.y*dt;
+
+
+    if(debug_enabled)
+    {
+        Rect tr = RECT(p->phys.pos.x, p->phys.pos.y, 2, 2);
+        if(rectangles_colliding(&tr, &moving_tile))
+        {
+            // printf("colliding, %.2f, %.2f\n", (moving_tile_prior.x - moving_tile.x), (moving_tile_prior.y - moving_tile.y));
+            p->phys.pos.x += -(moving_tile_prior.x - moving_tile.x);
+            p->phys.pos.y += -(moving_tile_prior.y - moving_tile.y);
+        }
+    }
+
 
     /*
     Vector2f adj = limit_rect_pos(&player_area, &p->hitbox);

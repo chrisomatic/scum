@@ -937,7 +937,6 @@ void creature_draw(Creature* c)
     float y = c->phys.pos.y - (dim + c->phys.pos.z)/2.0;
 
     uint32_t color = c->color;
-    if(c->id == creature_clicked_id) color = COLOR_BLUE;
 
     if(!c->phys.underground)
     {
@@ -1121,30 +1120,8 @@ CreatureType creature_get_random()
     return CREATURE_TYPE_SHAMBLER; // should never happen
 }
 
-static bool creature_do_astar_click(Creature* c, float dt)
-{
-    if(c->id == creature_clicked_id && creature_clicked_target.x >= 0 && creature_clicked_target.y >= 0)
-    {
-        if(c->phys.curr_tile.x == creature_clicked_target.x && c->phys.curr_tile.y == creature_clicked_target.y)
-        {
-            return true;
-        }
-
-        // move along path
-        bool traversable = astar_traverse(&level.asd, c->phys.curr_tile.x, c->phys.curr_tile.y, creature_clicked_target.x, creature_clicked_target.y);
-
-        AStarNode_t* n = &level.asd.path[1];
-        ai_move_to_tile(c, n->x, n->y);
-
-        return true;
-    }
-
-    return false;
-}
-
 static void creature_update_slug(Creature* c, float dt)
 {
-    if(creature_do_astar_click(c,dt)) return;
 
     bool act = ai_update_action(c, dt);
 
@@ -1161,7 +1138,6 @@ static void creature_update_slug(Creature* c, float dt)
 
 static void creature_update_spiked_slug(Creature* c, float dt)
 {
-    if(creature_do_astar_click(c,dt)) return;
 
     Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
     Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
@@ -1239,7 +1215,7 @@ static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float 
 
 static void creature_update_clinger(Creature* c, float dt)
 {
-    if(creature_do_astar_click(c,dt)) return;
+
 
     Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
 
@@ -1328,7 +1304,7 @@ static void creature_update_clinger(Creature* c, float dt)
 
 static void creature_update_geizer(Creature* c, float dt)
 {
-    if(creature_do_astar_click(c,dt)) return;
+
 
     bool act = ai_update_action(c, dt);
 
@@ -1347,7 +1323,7 @@ static void creature_update_geizer(Creature* c, float dt)
 
 static void creature_update_floater(Creature* c, float dt)
 {
-    if(creature_do_astar_click(c,dt)) return;
+
 
     bool act = ai_update_action(c, dt);
 
@@ -1364,7 +1340,7 @@ static void creature_update_floater(Creature* c, float dt)
 
 static void creature_update_floater_big(Creature* c, float dt)
 {
-    if(creature_do_astar_click(c,dt)) return;
+
 
     c->phys.pos.z = 16.0 + 3*sinf(5*c->phys.circular_dt);
 
@@ -1400,7 +1376,7 @@ static void creature_update_floater_big(Creature* c, float dt)
 
 static void creature_update_buzzer(Creature* c, float dt)
 {
-    if(creature_do_astar_click(c,dt)) return;
+
 
     c->phys.pos.z = c->phys.height/2.0 + 10.0 + 3*sinf(5*c->phys.circular_dt);
 
@@ -1456,7 +1432,7 @@ static void creature_update_buzzer(Creature* c, float dt)
 
 static void creature_update_totem_red(Creature* c, float dt)
 {
-    if(creature_do_astar_click(c,dt)) return;
+
 
     int creature_count = 0;
     for(int i = 0; i < clist->count; ++i)
@@ -1536,7 +1512,7 @@ static void creature_update_totem_red(Creature* c, float dt)
 
 static void creature_update_totem_blue(Creature* c, float dt)
 {
-    if(creature_do_astar_click(c,dt)) return;
+
 
     uint32_t color = 0x003030FF;
 
@@ -1620,7 +1596,7 @@ static void creature_update_totem_blue(Creature* c, float dt)
 
 static void creature_update_totem_yellow(Creature* c, float dt)
 {
-    if(creature_do_astar_click(c,dt)) return;
+
 
     int creature_count = 0;
     for(int i = 0; i < clist->count; ++i)
@@ -1722,7 +1698,7 @@ static void creature_update_totem_yellow(Creature* c, float dt)
 
 static void creature_update_shambler(Creature* c, float dt)
 {
-    if(creature_do_astar_click(c,dt)) return;
+
 
     c->phys.pos.z = 10.0 + 3*sinf(5*c->phys.circular_dt);
 
