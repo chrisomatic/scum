@@ -376,8 +376,9 @@ static void skills_kinetic_discharge(void* skill, void* player, float dt)
         {
             def.damage *= 2.0;
             def.speed *= 1.05;
-            def.scale += 0.10;
+            def.scale += 0.20;
             spawn.num += 1;
+            def.homing_chance *= 2.0;
 
             // projectile_add(&p->phys, p->curr_room, &p->proj_discharge, angle_deg, 1.0, 1.0, true);
             // projectile_add(&p->phys, p->curr_room, &p->proj_discharge, angle_deg+90, 1.0, 1.0, true);

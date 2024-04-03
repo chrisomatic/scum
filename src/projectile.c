@@ -118,7 +118,7 @@ ProjectileSpawn projectile_spawn[] = {
         .num = 1,
         .spread = 360.0,
         .ghost_chance = 0.0,
-        .homing_chance = 0.0,
+        .homing_chance = 0.20,
         .poison_chance = 0.0,
         .cold_chance = 0.0,
         .fire_chance = 0.0,
@@ -586,7 +586,7 @@ void projectile_draw(Projectile* proj)
     float opacity = proj->phys.ethereal ? 0.3 : 1.0;
 
     float y = proj->phys.pos.y - (proj->phys.vr.h + proj->phys.pos.z)/2.0;
-    float scale = RANGE(pow(proj->phys.pos.z/20.0, 0.6), 0.90, 1.10);
+    float scale = RANGE(pow(proj->phys.pos.z/20.0, 0.6), 0.90, 1.10) * proj->def.scale;
 
     // printf("z: %.2f, scale: %.2f\n", proj->phys.pos.z, scale);
     gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, y, proj->color, false, scale, 0.0, opacity, false, true, false);
