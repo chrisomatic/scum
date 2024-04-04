@@ -67,6 +67,17 @@ typedef enum
     PLAYER_CLASS_MAX,
 } PlayerClass;
 
+typedef enum
+{
+    STRENGTH,
+    DEFENSE,
+    MOVEMENT_SPEED,
+    ATTACK_SPEED,
+    ATTACK_RANGE,
+    LUCK,
+    MAX_STAT_TYPE,
+} StatType;
+
 #define MAX_TIMED_ITEMS 10
 
 
@@ -116,6 +127,8 @@ typedef struct
     uint16_t xp;
     uint8_t level;
     uint8_t new_levels;
+
+    uint8_t stats[MAX_STAT_TYPE];
 
     Settings settings;
     PlayerInput actions[PLAYER_ACTION_MAX];
@@ -218,7 +231,9 @@ void player_handle_net_inputs(Player* p, double dt);
 void player_add_xp(Player* p, int xp);
 void player_hurt_no_inv(Player* p, int damage);
 void player_hurt(Player* p, int damage);
-void player_add_hp(Player* p, int hp);
+bool player_add_hp(Player* p, int hp);
+bool player_add_mp(Player* p, int mp);
+bool player_add_stat(Player* p, StatType stat, int val);
 void player_die(Player* p);
 void player_reset(Player* p);
 void player_draw_room_transition();

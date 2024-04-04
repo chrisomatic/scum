@@ -187,91 +187,76 @@ static bool internal_item_use(Item* pu, void* player)
     {
         case ITEM_HEART_FULL:
         {
-            if(p->phys.hp < p->phys.hp_max)
-            {
-                player_add_hp(p, 2);
-            }
-            else
-            {
-                return false;
-            }
+            return player_add_hp(p, 2);
         } break;
 
         case ITEM_HEART_HALF:
         {
-            if(p->phys.hp < p->phys.hp_max)
-            {
-                player_add_hp(p, 1);
-            }
-            else
-            {
-                return false;
-            }
+            return player_add_hp(p, 1);
         } break;
 
         case ITEM_POTION_MANA:
         {
-
+            return player_add_mp(p, 5);
         } break;
 
         case ITEM_POTION_GREAT_MANA:
         {
-
+            return player_add_mp(p, 20);
         } break;
 
         case ITEM_COSMIC_HEART_FULL:
         {
             p->phys.hp_max += 2;
             player_add_hp(p,2);
-            // printf("hp_max: %d\n",p->phys.hp_max);
         } break;
 
         case ITEM_COSMIC_HEART_HALF:
         {
             p->phys.hp_max += 1;
             player_add_hp(p,1);
-            // printf("hp_max: %d\n",p->phys.hp_max);
         } break;
 
         case ITEM_GALAXY_PENDANT:
         {
-
+            p->phys.mp_max += 5;
+            player_add_mp(p,5);
         } break;
 
         // [STAT] Strength
         case ITEM_POTION_STRENGTH:
         {
-
+            return player_add_stat(p, STRENGTH, 1);
         } break;
 
         // [STAT] Defense
         case ITEM_SHIELD:
         {
-
+            return player_add_stat(p, DEFENSE, 1);
         } break;
 
         // [STAT] Movement Speed
         case ITEM_FEATHER:
         {
-
+            return player_add_stat(p, MOVEMENT_SPEED, 1);
         } break;
 
         // [STAT] Attack Speed
         case ITEM_WING:
         {
-
+            return player_add_stat(p, ATTACK_SPEED, 1);
         } break;
 
         // [STAT] Range
         case ITEM_LOOKING_GLASS:
         {
-
+            return player_add_stat(p, ATTACK_RANGE, 1);
         } break;
 
         // [STAT] Luck
         case ITEM_SHAMROCK:
         {
-
+            return player_add_stat(p, LUCK, 1);
         } break;
 
         case ITEM_UPGRADE_ORB:

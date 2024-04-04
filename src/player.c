@@ -14,7 +14,6 @@
 #include "decal.h"
 #include "player.h"
 
-
 void player_ai_move_to_target(Player* p, Player* target);
 
 static float sprite_index_to_angle(Player* p);
@@ -23,6 +22,15 @@ static void player_set_sprite_index(Player* p, int sprite_index);
 
 #define XP_REQ_MULT (3.0)
 int xp_levels[] = {100,120,140,160,180,200};
+
+float lookup_strength[] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+float lookup_defense[]  = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+float lookup_movement_speed[] = { 620.0, 705.0, 800.0, 900.0, 1000.0, 1100.0, 1200.0 };
+float lookup_movement_speed_max_vel[] = { 110.0, 135.0, 160.0, 190.0, 220.0, 250.0, 280.0 };
+float lookup_movement_speed_base_friction[] = { 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0 };
+float lookup_attack_speed[] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+float lookup_attack_range[] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+float lookup_luck[] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
 
 int player_ignore_input = 0;
 
@@ -70,6 +78,8 @@ void player_set_defaults(Player* p)
     p->phys.mass = 1.0;
     p->phys.elasticity = 0.1;
     p->phys.vr = *vr;
+
+    memset(p->stats,0,sizeof(uint8_t)*MAX_STAT_TYPE);
 
     phys_calc_collision_rect(&p->phys);
     p->phys.radius = calc_radius_from_rect(&p->phys.collision_rect)*0.8;
@@ -476,10 +486,40 @@ void player_add_xp(Player* p, int xp)
 
 }
 
-void player_add_hp(Player* p, int hp)
+bool player_add_stat(Player* p, StatType stat, int val)
 {
+    uint8_t prev_stat_val = p->stats[stat];
+    p->stats[stat] += val;
+    p->stats[stat] = RANGE(p->stats[stat],0,6);
+
+    if(prev_stat_val - p->stats[stat] == 0) // no change
+        return false;
+
+    return true;
+}
+
+bool player_add_mp(Player* p, int mp)
+{
+    uint8_t prev_mp = p->phys.mp;
+    p->phys.mp += mp;
+    p->phys.mp = RANGE(p->phys.mp,0,p->phys.mp);
+
+    if(prev_mp - p->phys.mp == 0) // no change
+        return false;
+
+    return true;
+}
+
+bool player_add_hp(Player* p, int hp)
+{
+    uint8_t prev_hp = p->phys.hp;
     p->phys.hp += hp;
     p->phys.hp = RANGE(p->phys.hp,0,p->phys.hp_max);
+
+    if(prev_hp - p->phys.hp == 0) // no change
+        return false;
+
+    return true;
 }
 
 // ignores temp invulnerability
@@ -1626,7 +1666,6 @@ void player_update(Player* p, float dt)
 
     if(!p->phys.falling)
     {
-
         if(up)
         {
             player_set_sprite_index(p, SPRITE_UP);
@@ -1657,6 +1696,10 @@ void player_update(Player* p, float dt)
             vel_dir.x *= 0.7071f;
             vel_dir.y *= 0.7071f;
         }
+
+        p->phys.speed = lookup_movement_speed[p->stats[MOVEMENT_SPEED]];
+        p->phys.max_velocity  = lookup_movement_speed_max_vel[p->stats[MOVEMENT_SPEED]];
+        p->phys.base_friction  = lookup_movement_speed_base_friction[p->stats[MOVEMENT_SPEED]];
 
         vel_max.x = p->phys.max_velocity*p->phys.speed_factor*vel_dir.x*mud_factor;
         vel_max.y = p->phys.max_velocity*p->phys.speed_factor*vel_dir.y*mud_factor;
