@@ -3,8 +3,6 @@
 
 bool phys_collision_circles(Physics* phys1, Physics* phys2, CollisionInfo* ci)
 {
-    // Vector2f p1 = {phys1->pos.x, phys1->pos.y};
-    // Vector2f p2 = {phys2->pos.x, phys2->pos.y};
     Vector2f p1 = {phys1->collision_rect.x, phys1->collision_rect.y};
     Vector2f p2 = {phys2->collision_rect.x, phys2->collision_rect.y};
 
@@ -15,6 +13,7 @@ bool phys_collision_circles(Physics* phys1, Physics* phys2, CollisionInfo* ci)
 
     if(colliding)
     {
+
         // get overlap
         float overlap = (r - d);
 
@@ -32,7 +31,10 @@ bool phys_collision_circles(Physics* phys1, Physics* phys2, CollisionInfo* ci)
 
         ci->overlap.x = o1.x;
         ci->overlap.y = o1.y;
+
+        //printf("Colliding! Overlap: %f %f\n", o1.x, o1.y);
     }
+
     return colliding;
 }
 
@@ -44,11 +46,14 @@ void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci)
     if(phys2->mass > 100.0*phys1->mass)
         cratio = 1.0; // mass is sufficiently large to not move at all
 
-    phys1->pos.x -= ci->overlap.x*cratio;
-    phys1->pos.y -= ci->overlap.y*cratio;
+    float c1x = phys1->collision_rect.x - ci->overlap.x*cratio;
+    float c1y = phys1->collision_rect.y - ci->overlap.y*cratio;
 
-    phys2->pos.x += ci->overlap.x*(1.0-cratio);
-    phys2->pos.y += ci->overlap.y*(1.0-cratio);
+    float c2x = phys2->collision_rect.x + ci->overlap.x*(1.01 - cratio);
+    float c2y = phys2->collision_rect.y + ci->overlap.y*(1.01 - cratio);
+
+    phys_set_collision_pos(phys1,c1x, c1y);
+    phys_set_collision_pos(phys2,c2x, c2y);
 
     // collision response
     // update velocities based on elastic collision
@@ -56,8 +61,8 @@ void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci)
     float m1 = phys1->mass;
     float m2 = phys2->mass;
 
-    Vector2f x1 = {phys1->pos.x, phys1->pos.y};
-    Vector2f x2 = {phys2->pos.x, phys2->pos.y};
+    Vector2f x1 = {phys1->collision_rect.x, phys1->collision_rect.y};
+    Vector2f x2 = {phys2->collision_rect.x, phys2->collision_rect.y};
 
     Vector2f v1 = {phys1->vel.x, phys1->vel.y};
     Vector2f v2 = {phys2->vel.x, phys2->vel.y};
