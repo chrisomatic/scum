@@ -23,12 +23,12 @@ static void player_set_sprite_index(Player* p, int sprite_index);
 #define XP_REQ_MULT (3.0)
 int xp_levels[] = {100,120,140,160,180,200};
 
-float lookup_strength[] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+float lookup_strength[] = { 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0 };
 float lookup_defense[]  = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
 float lookup_movement_speed[] = { 620.0, 705.0, 800.0, 900.0, 1000.0, 1100.0, 1200.0 };
 float lookup_movement_speed_max_vel[] = { 110.0, 135.0, 160.0, 190.0, 220.0, 250.0, 280.0 };
 float lookup_movement_speed_base_friction[] = { 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0 };
-float lookup_attack_speed[] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+float lookup_attack_speed[] = { 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3 };
 float lookup_attack_range[] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
 float lookup_luck[] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
 
@@ -1128,7 +1128,9 @@ static void player_handle_shooting(Player* p, float dt)
 
             if(!p->phys.dead)
             {
-                projectile_add(&p->phys, p->curr_room, &p->proj_def, &p->proj_spawn, 0x0050A0FF, p->aim_deg, true);
+                ProjectileDef temp = p->proj_def;
+                temp.damage += lookup_strength[p->stats[STRENGTH]];
+                projectile_add(&p->phys, p->curr_room, &temp, &p->proj_spawn, 0x0050A0FF, p->aim_deg, true);
             }
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;
@@ -1804,6 +1806,8 @@ void player_update(Player* p, float dt)
     // update player current tile
     GFXImage* img = &gfx_images[p->image];
     Rect* vr = &img->visible_rects[p->sprite_index];
+
+    p->proj_cooldown_max = lookup_attack_speed[p->stats[ATTACK_SPEED]];
 
     if(p->settings.class == PLAYER_CLASS_ROBOT)
     {
@@ -2766,14 +2770,14 @@ void player_handle_collision(Player* p, Entity* e)
         {
             Item* p2 = (Item*)e->ptr;
 
-            if(p2->phys.pos.z > 0) break;
 
             CollisionInfo ci = {0};
             bool collided = phys_collision_circles(&p->phys,&p2->phys, &ci);
 
             if(collided)
             {
-                if(item_props[p2->type].touchable)
+
+                if(item_props[p2->type].touchable && p2->phys.pos.z <= 0)
                 {
                     item_use(p2, (void*)p);
                 }
@@ -2815,4 +2819,18 @@ int player_get_count_in_room(uint8_t curr_room)
         }
     }
     return count;
+}
+
+const char* stats_get_name(StatType stat)
+{
+    switch(stat)
+    {
+        case STRENGTH: return "Strength";
+        case DEFENSE: return "Defense";
+        case MOVEMENT_SPEED: return "Movement Speed";
+        case ATTACK_SPEED: return "Attack Speed";
+        case ATTACK_RANGE: return "Attack Range";
+        case LUCK: return "Luck";
+    }
+    return "???";
 }

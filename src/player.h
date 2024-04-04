@@ -260,3 +260,5 @@ void randomize_skill_choices(Player* p);
 void draw_skill_selection();
 
 int get_xp_req(int level);
+
+const char* stats_get_name(StatType stat);

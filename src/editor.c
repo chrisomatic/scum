@@ -259,7 +259,7 @@ void editor_draw()
                     if(p != player)
                     {
                         // imgui_toggle_button(&p->active, "Active");
-
+;
                         bool active = p->active;
                         imgui_toggle_button(&active, "Active");
                         if(active && !p->active)
@@ -267,6 +267,16 @@ void editor_draw()
                             p->curr_room = player->curr_room;
                         }
                         p->active = active;
+                    }
+
+                    if(p == player)
+                    {
+                        for(int i = 0; i < MAX_STAT_TYPE; ++i)
+                        {
+                            int stat_val = p->stats[i];
+                            imgui_number_box((char*)stats_get_name(i), 0, 6, &stat_val);
+                            p->stats[i] = stat_val;
+                        }
                     }
 
                     int selected_class = p->settings.class;
