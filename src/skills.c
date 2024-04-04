@@ -313,8 +313,8 @@ int skill_rarity_weight(SkillRarity rarity)
 
 static void skills_more_choices(void* skill, void* player, float dt)
 {
-    Player* p = (Player*)player;
-    p->num_skill_choices = MIN(p->num_skill_choices+1,MAX_SKILL_CHOICES);
+    // Player* p = (Player*)player;
+    // p->num_skill_choices = MIN(p->num_skill_choices+1,MAX_SKILL_CHOICES);
 }
 
 

@@ -129,14 +129,14 @@ typedef struct
     ItemType timed_items[MAX_TIMED_ITEMS];
     float timed_items_ttl[MAX_TIMED_ITEMS];
 
-    uint16_t skills[PLAYER_MAX_SKILLS];
-    uint8_t skill_count;
-    uint8_t num_skill_choices;
+    // uint16_t skills[PLAYER_MAX_SKILLS];
+    // uint8_t skill_count;
+    // uint8_t num_skill_choices;
 
-    bool show_skill_selection;
-    uint8_t skill_selection;
-    uint8_t num_skill_selection_choices;
-    uint16_t skill_choices[MAX_SKILL_CHOICES];
+    // bool show_skill_selection;
+    // uint8_t skill_selection;
+    // uint8_t num_skill_selection_choices;
+    // uint16_t skill_choices[MAX_SKILL_CHOICES];
 
 
     ProjectileDef proj_def;

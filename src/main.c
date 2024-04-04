@@ -1939,7 +1939,7 @@ void draw()
     draw_xp_bar();
     draw_gauntlet();
     draw_timed_items();
-    draw_skill_selection();
+    // draw_skill_selection();
 
     if(level_room_time > 0)
     {

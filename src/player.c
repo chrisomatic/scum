@@ -138,12 +138,13 @@ void player_set_defaults(Player* p)
     p->highlighted_item_id = -1;
     p->highlighted_index = 0;
 
-    for(int j = 0; j < PLAYER_MAX_SKILLS; ++j)
-    {
-        p->skills[j] = -1;
-    }
-    p->skill_count = 0;
-    p->num_skill_choices = MIN(3,MAX_SKILL_CHOICES);
+    // for(int j = 0; j < PLAYER_MAX_SKILLS; ++j)
+    // {
+    //     p->skills[j] = -1;
+    // }
+    // p->skill_count = 0;
+    // p->num_skill_choices = MIN(3,MAX_SKILL_CHOICES);
+
     p->periodic_shot_counter = 0.0;
 
     for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
@@ -208,7 +209,7 @@ void player_print(Player* p)
     printf("    new_levels: %d\n", p->new_levels);
     printf("    gauntlet_selection: %u\n", p->gauntlet_selection);
     printf("    gauntlet_slots:     %u\n", p->gauntlet_slots);
-    printf("    skill_count:      %d\n", p->skill_count);
+    // printf("    skill_count:      %d\n", p->skill_count);
     printf("    sprite_index:    %u\n", p->sprite_index);
     printf("    curr_room:       %u\n", p->curr_room);
     printf("    transition_room: %u\n", p->transition_room);
@@ -463,12 +464,12 @@ void player_add_xp(Player* p, int xp)
 
     LOGI("Level: %u, new: %u", p->level, p->new_levels);
 
-    if(p->new_levels > 0)
-    {
-        randomize_skill_choices(p);
-        // if(!had_new_levels)
-            p->show_skill_selection = true;
-    }
+    // if(p->new_levels > 0)
+    // {
+    //     randomize_skill_choices(p);
+    //     // if(!had_new_levels)
+    //         p->show_skill_selection = true;
+    // }
 
 }
 
@@ -928,21 +929,21 @@ static void handle_room_collision(Player* p)
 
 void player_handle_skills(Player* p, float dt)
 {
-    for(int i = 0; i < p->skill_count; ++i)
-    {
-        Skill* s = &skill_list[p->skills[i]];
+    // for(int i = 0; i < p->skill_count; ++i)
+    // {
+    //     Skill* s = &skill_list[p->skills[i]];
 
-        if(!s)
-        {
-            LOGW("Skill is nill!");
-            continue;
-        }
+    //     if(!s)
+    //     {
+    //         LOGW("Skill is nill!");
+    //         continue;
+    //     }
 
-        if(s->periodic)
-        {
-            s->func(s,p,dt);
-        }
-    }
+    //     if(s->periodic)
+    //     {
+    //         s->func(s,p,dt);
+    //     }
+    // }
 }
 
 void player_update_all(float dt)
@@ -1196,13 +1197,14 @@ void player_update(Player* p, float dt)
     }
 
 
-    if(show_skill)
-    {
-        p->show_skill_selection = !p->show_skill_selection;
-    }
-    if(p->new_levels == 0) p->show_skill_selection = false;
+    // if(show_skill)
+    // {
+    //     p->show_skill_selection = !p->show_skill_selection;
+    // }
+    // if(p->new_levels == 0) p->show_skill_selection = false;
 
-    if(!p->show_skill_selection)
+    // if(!p->show_skill_selection)
+    if(true)
     {
 
         Item* highlighted_item = NULL;
@@ -1329,69 +1331,69 @@ void player_update(Player* p, float dt)
         }
 
     }
-    else
-    {
-        if(tabbed)
-        {
-            if(rshift)
-            {
-                if(p->skill_selection == 0)
-                    p->skill_selection = (p->num_skill_selection_choices-1);
-                else
-                    p->skill_selection--;
-            }
-            else
-            {
-                p->skill_selection++;
-                if(p->skill_selection >= p->num_skill_selection_choices)
-                   p->skill_selection = 0;
-            }
+    // else
+    // {
+    //     if(tabbed)
+    //     {
+    //         if(rshift)
+    //         {
+    //             if(p->skill_selection == 0)
+    //                 p->skill_selection = (p->num_skill_selection_choices-1);
+    //             else
+    //                 p->skill_selection--;
+    //         }
+    //         else
+    //         {
+    //             p->skill_selection++;
+    //             if(p->skill_selection >= p->num_skill_selection_choices)
+    //                p->skill_selection = 0;
+    //         }
 
-        }
+    //     }
 
-        if(p->actions[PLAYER_ACTION_ACTIVATE].toggled_on)
-        {
+    //     if(p->actions[PLAYER_ACTION_ACTIVATE].toggled_on)
+    //     {
 
-            Skill* choose_skill = &skill_list[p->skill_choices[p->skill_selection]];
+    //         Skill* choose_skill = &skill_list[p->skill_choices[p->skill_selection]];
 
-            int index = p->skill_count;
+    //         int index = p->skill_count;
 
-            for(int i = 0; i < p->skill_count; ++i)
-            {
-                Skill* s = &skill_list[p->skills[i]];
-                if(choose_skill->type == s->type)
-                {
-                    index = i;
-                }
-            }
+    //         for(int i = 0; i < p->skill_count; ++i)
+    //         {
+    //             Skill* s = &skill_list[p->skills[i]];
+    //             if(choose_skill->type == s->type)
+    //             {
+    //                 index = i;
+    //             }
+    //         }
 
-            bool new_skill = (index == p->skill_count);
+    //         bool new_skill = (index == p->skill_count);
 
-            if(index < PLAYER_MAX_SKILLS)
-            {
-                p->skills[index] = p->skill_choices[p->skill_selection];
-                Skill* skill = &skill_list[p->skills[index]];
+    //         if(index < PLAYER_MAX_SKILLS)
+    //         {
+    //             p->skills[index] = p->skill_choices[p->skill_selection];
+    //             Skill* skill = &skill_list[p->skills[index]];
 
-                if(!skill->periodic)
-                {
-                    skill->func(skill, p, dt);
-                }
+    //             if(!skill->periodic)
+    //             {
+    //                 skill->func(skill, p, dt);
+    //             }
 
-                if(new_skill)
-                    p->skill_count++;
-            }
+    //             if(new_skill)
+    //                 p->skill_count++;
+    //         }
 
-            p->new_levels--;
-            if(p->new_levels > 0)
-            {
-                randomize_skill_choices(p);
-            }
-            else
-            {
-                p->show_skill_selection = false;
-            }
-        }
-    }
+    //         p->new_levels--;
+    //         if(p->new_levels > 0)
+    //         {
+    //             randomize_skill_choices(p);
+    //         }
+    //         else
+    //         {
+    //             p->show_skill_selection = false;
+    //         }
+    //     }
+    // }
 
     // copy stats/attributes
     PlayerAttributes att = copy_attributes(p);
@@ -2139,247 +2141,247 @@ void draw_timed_items()
 // skills
 // --------------------------------------------------------------------------------------------------
 
-int select_random_skill_choice(int weights[], int num, int max_weight)
-{
-    int r = (rand() % max_weight) + 1;
-    for(int i = 0; i < num; ++i)
-    {
-        if(r <= weights[i])
-        {
-            return i;
-        }
-    }
-    return num-1;
-}
+// int select_random_skill_choice(int weights[], int num, int max_weight)
+// {
+//     int r = (rand() % max_weight) + 1;
+//     for(int i = 0; i < num; ++i)
+//     {
+//         if(r <= weights[i])
+//         {
+//             return i;
+//         }
+//     }
+//     return num-1;
+// }
 
-int remove_skill_choice(int available_skills[], int num, int remove_index)
-{
-    if(num == 1) return 0;
+// int remove_skill_choice(int available_skills[], int num, int remove_index)
+// {
+//     if(num == 1) return 0;
 
-    if(remove_index >= num)
-    {
-        LOGE("remove_index (%d) >= num (%d)", remove_index, num);
-        return num;
-    }
+//     if(remove_index >= num)
+//     {
+//         LOGE("remove_index (%d) >= num (%d)", remove_index, num);
+//         return num;
+//     }
 
-    available_skills[remove_index] = available_skills[num-1];
-    return num-1;
-}
+//     available_skills[remove_index] = available_skills[num-1];
+//     return num-1;
+// }
 
-int calc_skill_weights(int available_skills[], int num, int ret_weights[])
-{
-    int w = 0;
-    for(int i = 0; i < num; ++i)
-    {
-        w += skill_rarity_weight(skill_list[available_skills[i]].rarity);
-        ret_weights[i] = w;
-    }
-    return w;
-}
+// int calc_skill_weights(int available_skills[], int num, int ret_weights[])
+// {
+//     int w = 0;
+//     for(int i = 0; i < num; ++i)
+//     {
+//         w += skill_rarity_weight(skill_list[available_skills[i]].rarity);
+//         ret_weights[i] = w;
+//     }
+//     return w;
+// }
 
-int determine_available_skills(Player* p, int ret_skills[SKILL_LIST_MAX])
-{
-#if 0
-#define s_print(fmt,...) printf(fmt, __VA_ARGS__)
-#else
-#define s_print(fmt,...)
-#endif
+// int determine_available_skills(Player* p, int ret_skills[SKILL_LIST_MAX])
+// {
+// #if 0
+// #define s_print(fmt,...) printf(fmt, __VA_ARGS__)
+// #else
+// #define s_print(fmt,...)
+// #endif
 
-    int a_num = 0;
+//     int a_num = 0;
 
-    for(int i = 0; i < skill_list_count; ++i)
-    {
+//     for(int i = 0; i < skill_list_count; ++i)
+//     {
 
-        Skill* s = &skill_list[i];
+//         Skill* s = &skill_list[i];
 
-        if(p->level < s->min_level)
-        {
-            s_print("[%d] level %d < %d\n", i, p->level, s->min_level);
-            continue;
-        }
+//         if(p->level < s->min_level)
+//         {
+//             s_print("[%d] level %d < %d\n", i, p->level, s->min_level);
+//             continue;
+//         }
 
-        bool cont = false;
+//         bool cont = false;
 
-        // make sure there aren't repeated types
-        for(int j = 0; j < a_num; ++j)
-        {
-            Skill* js = &skill_list[ret_skills[j]];
-            if(js->type == s->type)
-            {
-                s_print("[%d] repeated skill type %d\n", i, js->type);
-                cont = true;
-                break;
-            }
-        }
+//         // make sure there aren't repeated types
+//         for(int j = 0; j < a_num; ++j)
+//         {
+//             Skill* js = &skill_list[ret_skills[j]];
+//             if(js->type == s->type)
+//             {
+//                 s_print("[%d] repeated skill type %d\n", i, js->type);
+//                 cont = true;
+//                 break;
+//             }
+//         }
 
-        if(cont) continue;
+//         if(cont) continue;
 
-        // check player skills
-        for(int j = 0; j < p->skill_count; ++j)
-        {
-            Skill* js = &skill_list[p->skills[j]];
+//         // check player skills
+//         for(int j = 0; j < p->skill_count; ++j)
+//         {
+//             Skill* js = &skill_list[p->skills[j]];
 
-            if(s->type == js->type)
-            {
-                if((s->rank - js->rank) == 1)
-                {
-                    ret_skills[a_num] = i;
-                    a_num++;
-                }
-                else
-                {
-                    s_print("[%d] s->rank: %d, js->rank: %d\n", i, s->rank, js->rank);
-                }
+//             if(s->type == js->type)
+//             {
+//                 if((s->rank - js->rank) == 1)
+//                 {
+//                     ret_skills[a_num] = i;
+//                     a_num++;
+//                 }
+//                 else
+//                 {
+//                     s_print("[%d] s->rank: %d, js->rank: %d\n", i, s->rank, js->rank);
+//                 }
 
-                cont = true;
-                break;
-            }
-        }
+//                 cont = true;
+//                 break;
+//             }
+//         }
 
-        if(cont) continue;
+//         if(cont) continue;
 
-        // player doesn't have the skill
-        if(s->rank != 1)
-        {
-            s_print("[%d] new skill rank: %d != 1\n", i, s->rank);
-            continue;
-        }
+//         // player doesn't have the skill
+//         if(s->rank != 1)
+//         {
+//             s_print("[%d] new skill rank: %d != 1\n", i, s->rank);
+//             continue;
+//         }
 
-        ret_skills[a_num] = i;
-        a_num++;
-    }
+//         ret_skills[a_num] = i;
+//         a_num++;
+//     }
 
-    return a_num;
-}
+//     return a_num;
+// }
 
-void randomize_skill_choices(Player* p)
-{
-    int a_skills[SKILL_LIST_MAX] = {0};
-    int a_num = determine_available_skills(p, a_skills);
+// void randomize_skill_choices(Player* p)
+// {
+//     int a_skills[SKILL_LIST_MAX] = {0};
+//     int a_num = determine_available_skills(p, a_skills);
 
-    if(a_num == 0)
-    {
-        LOGW("No available skills!");
-        p->new_levels = 0;
-        return;
-    }
+//     if(a_num == 0)
+//     {
+//         LOGW("No available skills!");
+//         p->new_levels = 0;
+//         return;
+//     }
 
 
-    p->skill_selection = 0;
-    p->num_skill_selection_choices = MIN(p->num_skill_choices, a_num);
-    // printf("num_skill_choices: %d\n", num_skill_choices);
+//     p->skill_selection = 0;
+//     p->num_skill_selection_choices = MIN(p->num_skill_choices, a_num);
+//     // printf("num_skill_choices: %d\n", num_skill_choices);
 
-    // for(int i = 0; i < a_num; ++i)
-    // {
-    //     printf("   [%d] %d\n",i, a_skills[i]);
-    // }
+//     // for(int i = 0; i < a_num; ++i)
+//     // {
+//     //     printf("   [%d] %d\n",i, a_skills[i]);
+//     // }
 
-    for(int i = 0; i < p->num_skill_selection_choices; ++i)
-    {
-        int weights[SKILL_LIST_MAX] = {0};
-        int max_weight = calc_skill_weights(a_skills, a_num, weights);
+//     for(int i = 0; i < p->num_skill_selection_choices; ++i)
+//     {
+//         int weights[SKILL_LIST_MAX] = {0};
+//         int max_weight = calc_skill_weights(a_skills, a_num, weights);
 
-        // printf("%d ------------------------------\n", p->num_skill_selection_choices);
-        // for(int j = 0; j < a_num; ++j)
-        // {
-        //     printf("(%d)   [%d] %d\n",i, j,a_skills[j]);
-        // }
+//         // printf("%d ------------------------------\n", p->num_skill_selection_choices);
+//         // for(int j = 0; j < a_num; ++j)
+//         // {
+//         //     printf("(%d)   [%d] %d\n",i, j,a_skills[j]);
+//         // }
 
-        int idx = select_random_skill_choice(weights, a_num, max_weight);
+//         int idx = select_random_skill_choice(weights, a_num, max_weight);
 
-        // printf("(%d) chose idx: %d\n", i,idx);
-        // printf("num_skill_choices: %d\n", p->num_skill_selection_choices);
+//         // printf("(%d) chose idx: %d\n", i,idx);
+//         // printf("num_skill_choices: %d\n", p->num_skill_selection_choices);
 
-        // // printf("skill choices")
-        p->skill_choices[i] = a_skills[idx];
+//         // // printf("skill choices")
+//         p->skill_choices[i] = a_skills[idx];
 
-        // printf("num_skill_choices: %d\n", p->num_skill_selection_choices);
-        a_num = remove_skill_choice(a_skills, a_num, idx);
-        // printf("num_skill_choices: %d\n", p->num_skill_selection_choices);
+//         // printf("num_skill_choices: %d\n", p->num_skill_selection_choices);
+//         a_num = remove_skill_choice(a_skills, a_num, idx);
+//         // printf("num_skill_choices: %d\n", p->num_skill_selection_choices);
 
-        if(a_num <= 0)
-        {
-            if(i != p->num_skill_selection_choices-1) LOGE("Error!");
-            break;
-        }
-    }
-}
+//         if(a_num <= 0)
+//         {
+//             if(i != p->num_skill_selection_choices-1) LOGE("Error!");
+//             break;
+//         }
+//     }
+// }
 
-void draw_skill_selection()
-{
-    if(player->new_levels == 0) return;
-    if(!player->show_skill_selection) return;
+// void draw_skill_selection()
+// {
+//     if(player->new_levels == 0) return;
+//     if(!player->show_skill_selection) return;
 
-    float scale = 0.30 * ascale;
-    float small_scale = 0.18 * ascale;
-    Vector2f size = gfx_string_get_size(scale, "|");
+//     float scale = 0.30 * ascale;
+//     float small_scale = 0.18 * ascale;
+//     Vector2f size = gfx_string_get_size(scale, "|");
 
-    float pad = 5.0 * ascale;
+//     float pad = 5.0 * ascale;
 
-    Rect* vr = &gfx_images[card_image].visible_rects[0];
+//     Rect* vr = &gfx_images[card_image].visible_rects[0];
 
-    float w = 220;
-    // float h = 100;
-    float image_scale = w / vr->w;
-    float h = vr->h * image_scale;
+//     float w = 220;
+//     // float h = 100;
+//     float image_scale = w / vr->w;
+//     float h = vr->h * image_scale;
 
-    int max_per_row = 4;
-    int num_rows = player->num_skill_selection_choices / max_per_row;
-    if(player->num_skill_selection_choices % 4 != 0) num_rows++;
+//     int max_per_row = 4;
+//     int num_rows = player->num_skill_selection_choices / max_per_row;
+//     if(player->num_skill_selection_choices % 4 != 0) num_rows++;
 
-    int total_h = num_rows*h + (num_rows-1)*pad;
+//     int total_h = num_rows*h + (num_rows-1)*pad;
 
-    float y = view_height/2.0 - total_h/2.0;
+//     float y = view_height/2.0 - total_h/2.0;
 
-    int idx = 0;
-    for(int i = 0; i < num_rows; ++i)
-    {
-        int num_skills_row = MIN(player->num_skill_selection_choices - idx, max_per_row);
+//     int idx = 0;
+//     for(int i = 0; i < num_rows; ++i)
+//     {
+//         int num_skills_row = MIN(player->num_skill_selection_choices - idx, max_per_row);
 
-        float total_w = w*num_skills_row + pad*(num_skills_row-1);
-        float x = view_width/2.0 - total_w/2.0;
+//         float total_w = w*num_skills_row + pad*(num_skills_row-1);
+//         float x = view_width/2.0 - total_w/2.0;
 
-        if(i == 0)
-        {
-            gfx_draw_string(x, y-size.y-2*pad, COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "Level Up! (Choose a Skill)");
-        }
+//         if(i == 0)
+//         {
+//             gfx_draw_string(x, y-size.y-2*pad, COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "Level Up! (Choose a Skill)");
+//         }
 
-        for(int j = 0; j < num_skills_row; ++j)
-        {
-            Skill* skill = &skill_list[player->skill_choices[idx]];
+//         for(int j = 0; j < num_skills_row; ++j)
+//         {
+//             Skill* skill = &skill_list[player->skill_choices[idx]];
 
-            uint32_t color;
-            switch(skill->rarity)
-            {
-                case SKILL_RARITY_COMMON: color = COLOR_TINT_NONE; break;
-                case SKILL_RARITY_RARE: color = 0x008888FF; break;
-                case SKILL_RARITY_EPIC: color = 0x00FFD755; break;
-                case SKILL_RARITY_LEGENDARY: color = 0x00FF88FF; break;
-                default: break;
-            }
+//             uint32_t color;
+//             switch(skill->rarity)
+//             {
+//                 case SKILL_RARITY_COMMON: color = COLOR_TINT_NONE; break;
+//                 case SKILL_RARITY_RARE: color = 0x008888FF; break;
+//                 case SKILL_RARITY_EPIC: color = 0x00FFD755; break;
+//                 case SKILL_RARITY_LEGENDARY: color = 0x00FF88FF; break;
+//                 default: break;
+//             }
 
-            bool selected = (idx == player->skill_selection);
-            gfx_draw_image_ignore_light(card_image, 0, x+w/2.0, y+h/2.0, gfx_blend_colors(color, selected ? COLOR_BLUE : COLOR_TINT_NONE, 0.5), image_scale, 0.0, 0.95, true, NOT_IN_WORLD);
+//             bool selected = (idx == player->skill_selection);
+//             gfx_draw_image_ignore_light(card_image, 0, x+w/2.0, y+h/2.0, gfx_blend_colors(color, selected ? COLOR_BLUE : COLOR_TINT_NONE, 0.5), image_scale, 0.0, 0.95, true, NOT_IN_WORLD);
 
-            // if(skill->rarity > SKILL_RARITY_COMMON)
-            // {
-            //     // draw star
-            //     gfx_draw_image(items_image,20+skill->rarity,x+w-5, y+5, COLOR_TINT_NONE, 1.0, 0.0, 1.0, true, NOT_IN_WORLD);
-            // }
+//             // if(skill->rarity > SKILL_RARITY_COMMON)
+//             // {
+//             //     // draw star
+//             //     gfx_draw_image(items_image,20+skill->rarity,x+w-5, y+5, COLOR_TINT_NONE, 1.0, 0.0, 1.0, true, NOT_IN_WORLD);
+//             // }
 
-            float xadj = 5;
+//             float xadj = 5;
 
-            gfx_draw_string(x+xadj, y, selected ? COLOR_YELLOW : COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, w-xadj, "%s", skill->name);
-            gfx_draw_string(x+xadj, y+size.y+2*pad, COLOR_GRAY, small_scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, w-xadj, "%s", skill->desc);
+//             gfx_draw_string(x+xadj, y, selected ? COLOR_YELLOW : COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, w-xadj, "%s", skill->name);
+//             gfx_draw_string(x+xadj, y+size.y+2*pad, COLOR_GRAY, small_scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, w-xadj, "%s", skill->desc);
 
-            x += w + pad;
-            idx++;
-        }
-        y += h + pad;
-    }
+//             x += w + pad;
+//             idx++;
+//         }
+//         y += h + pad;
+//     }
 
-    ui_message_set_small(0.1, "Press e to select skill (skill points: %d)", player->new_levels);
-}
+//     ui_message_set_small(0.1, "Press e to select skill (skill points: %d)", player->new_levels);
+// }
 
 void player_set_class(Player* p, PlayerClass class)
 {

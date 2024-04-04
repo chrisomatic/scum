@@ -322,12 +322,12 @@ void editor_draw()
                     }
                 }
 
-                imgui_text("Skills: %d", p->skill_count);
-                for(int i = 0; i < p->skill_count; ++i)
-                {
-                    Skill* s = &skill_list[p->skills[i]];
-                    imgui_text(" [%d] %s (rank: %d)", i, s->name, s->rank);
-                }
+                // imgui_text("Skills: %d", p->skill_count);
+                // for(int i = 0; i < p->skill_count; ++i)
+                // {
+                //     Skill* s = &skill_list[p->skills[i]];
+                //     imgui_text(" [%d] %s (rank: %d)", i, s->name, s->rank);
+                // }
 
             } break;
 
