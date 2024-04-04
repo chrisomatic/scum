@@ -236,7 +236,7 @@ Player* player_get_nearest(uint8_t room_index, float x, float y);
 
 void draw_all_other_player_info();
 void draw_hearts();
-void draw_xp_bar();
+void draw_mp_bar();
 void draw_gauntlet();
 void draw_timed_items();
 void randomize_skill_choices(Player* p);

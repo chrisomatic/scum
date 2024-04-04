@@ -19,9 +19,13 @@ glist* item_list = NULL;
 Item prior_items[MAX_ITEMS] = {0};
 Item items[MAX_ITEMS] = {0};
 ItemProps item_props[ITEM_MAX] = {0};
+
 int items_image = -1;
 int chest_image = -1;
 int shrine_image = -1;
+
+static int chestables_index[ITEM_MAX] = {0};
+static int num_chestables = 0;
 
 static uint16_t id_counter = 1;
 static uint16_t get_id()
@@ -42,34 +46,8 @@ static bool item_func_chest(Item* pu, Player* p)
     float y = pu->phys.pos.y;
     int croom = pu->curr_room;
 
-    // always one gem
-    item_add(item_get_random_gem(), x, y, croom);
-
-    int r = rand()%100;
-
-    if(r < 50)
-    {
-        item_add(item_get_random_gem(), x, y, croom);
-    }
-    else if(r < 55)
-    {
-        item_add(ITEM_CHEST, x, y, croom);
-    }
-    else
-    {
-
-        for(;;)
-        {
-            ItemType t = rand() % ITEM_MAX;
-            if(item_is_gem(t)) continue;
-            if(item_is_chest(t)) continue;
-            if(item_is_shrine(t)) continue;
-            if(t == ITEM_NEW_LEVEL) continue;
-            if(t == ITEM_HEART_EMPTY) continue;
-            item_add(t, x, y, croom);
-            break;
-        }
-    }
+    item_add(item_get_random_chestable(), x, y, croom);
+    item_add(item_get_random_chestable(), x, y, croom);
 
     return true;
 }
@@ -200,165 +178,11 @@ static bool item_func_shrine(Item* pu, Player* p)
     return true;
 }
 
-// called when player consumes the item
-static bool item_timed_func_consumable_start(Item* pu, Player* p)
+bool item_use(Item* pu, void* player)
 {
-    float ttl = 10.0;
-    switch(pu->type)
-    {
-        case ITEM_GEM_RED:
-        case ITEM_GEM_GREEN:
-        case ITEM_GEM_BLUE:
-        case ITEM_GEM_WHITE:
-        case ITEM_GEM_YELLOW:
-        case ITEM_GEM_PURPLE:
-            ttl = 20.0;
-            break;
 
-        case ITEM_SHAMROCK:
-            ttl = 10.0;
-            break;
+    Player* p = (Player*)player;
 
-        case ITEM_DRAGON_EGG:
-            ttl = 30.0;
-            break;
-
-        case ITEM_RUBY_RING:
-            ttl = 30.0;
-            break;
-
-        case ITEM_POTION_STRENGTH:
-        case ITEM_POTION_SPEED:
-        case ITEM_POTION_RANGE:
-        case ITEM_POTION_PURPLE:
-            ttl = 15.0;
-            break;
-
-        default: break;
-    }
-
-    bool existing = false;
-    bool effect_added = false;
-
-    for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
-    {
-        if(p->timed_items[i] == pu->type)
-        {
-            p->timed_items_ttl[i] += ttl;
-            existing = true;
-            effect_added = true;
-            break;
-        }
-    }
-
-    if(!effect_added)
-    {
-
-        for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
-        {
-            if(p->timed_items[i] == ITEM_NONE)
-            {
-                p->timed_items[i] = pu->type;
-                p->timed_items_ttl[i] = ttl;
-                effect_added = true;
-                break;
-            }
-        }
-    }
-
-    if(!effect_added)
-    {
-        return false;
-    }
-
-    // have to handle these effects here
-    switch(pu->type)
-    {
-        case ITEM_SHAMROCK:
-            p->invulnerable = true;
-            break;
-
-        case ITEM_DRAGON_EGG:
-        {
-            if(!existing)
-            {
-                p->phys.hp_max += 4;
-                p->phys.hp = p->phys.hp_max;
-            }
-        } break;
-
-        default:
-            break;
-    }
-
-    return true;
-}
-
-// called after player consumes the item (every frame)
-static void item_timed_func_consumable_periodic(ItemType type, Player* p)
-{
-    switch(type)
-    {
-        case ITEM_GEM_RED:
-            p->proj_def.damage += 1.0;
-            break;
-        case ITEM_GEM_GREEN:
-            p->proj_spawn.poison_chance = 1.0;
-            break;
-        case ITEM_GEM_BLUE:
-            p->proj_spawn.cold_chance = 1.0;
-            break;
-        case ITEM_GEM_WHITE:
-            p->proj_spawn.num += 1;
-            break;
-        case ITEM_GEM_YELLOW:
-            p->proj_def.bouncy = true;
-            break;
-        case ITEM_GEM_PURPLE:
-            p->proj_spawn.ghost_chance = 1.0;
-            break;
-
-
-        case ITEM_RUBY_RING:
-            p->proj_cooldown_max -= 0.08;
-            break;
-
-        case ITEM_POTION_STRENGTH:
-        case ITEM_POTION_SPEED:
-        case ITEM_POTION_RANGE:
-        case ITEM_POTION_PURPLE:
-            p->phys.speed += 100.0;
-            p->phys.max_velocity += 100.0;
-            break;
-
-        default: break;
-    }
-
-}
-
-static void item_timed_func_consumable_end(ItemType type, Player* p)
-{
-    switch(type)
-    {
-
-        case ITEM_DRAGON_EGG:
-        {
-            p->phys.hp_max -= 4;
-            if(p->phys.hp > p->phys.hp_max)
-                p->phys.hp = p->phys.hp_max;
-        } break;
-    
-        case ITEM_SHAMROCK:
-            p->invulnerable = false;
-            break;
-
-        default: break;
-    }
-}
-
-
-static bool item_func_consumable(Item* pu, Player* p)
-{
     switch(pu->type)
     {
         case ITEM_HEART_FULL:
@@ -366,7 +190,6 @@ static bool item_func_consumable(Item* pu, Player* p)
             if(p->phys.hp < p->phys.hp_max)
             {
                 player_add_hp(p, 2);
-                // pu->picked_up = true;
             }
             else
             {
@@ -378,7 +201,6 @@ static bool item_func_consumable(Item* pu, Player* p)
             if(p->phys.hp < p->phys.hp_max)
             {
                 player_add_hp(p, 1);
-                // pu->picked_up = true;
             }
             else
             {
@@ -388,29 +210,37 @@ static bool item_func_consumable(Item* pu, Player* p)
         case ITEM_COSMIC_HEART_FULL:
         {
             p->phys.hp_max += 2;
-            // pu->picked_up = true;
             player_add_hp(p,2);
             // printf("hp_max: %d\n",p->phys.hp_max);
         } break;
         case ITEM_COSMIC_HEART_HALF:
         {
             p->phys.hp_max += 1;
-            // pu->picked_up = true;
             player_add_hp(p,1);
             // printf("hp_max: %d\n",p->phys.hp_max);
         } break;
         case ITEM_GLOWING_ORB:
         {
             p->light_radius += 1.0;
-            // pu->picked_up = true;
         } break;
         case ITEM_GAUNTLET_SLOT:
         {
             if(p->gauntlet_slots < PLAYER_GAUNTLET_MAX)
             {
                 p->gauntlet_slots++;
-                // pu->picked_up = true;
             }
+        } break;
+        case ITEM_CHEST:
+        {
+            item_func_chest(pu, p);
+        } break;
+        case ITEM_REVIVE:
+        {
+            item_func_revive(pu, p);
+        } break;
+        case ITEM_SHRINE:
+        {
+            item_func_shrine(pu, p);
         } break;
         default:
         {
@@ -453,84 +283,39 @@ void item_init()
             p->sprite_index = i;
         }
 
-        p->func = NULL;
-
         p->socketable = false;
+        p->touchable = false;
+        p->chestable = false;
 
         switch(p->type)
         {
-            case ITEM_GEM_RED:
-            case ITEM_GEM_GREEN:
-            case ITEM_GEM_BLUE:
-            case ITEM_GEM_WHITE:
-            case ITEM_GEM_YELLOW:
-            case ITEM_GEM_PURPLE:
-            {
-                p->socketable = true;
-                p->touchable = false;
-                p->func = (void*)item_timed_func_consumable_start;
-                p->timed_func = (void*)item_timed_func_consumable_periodic;
-                // p->timed_func_end = (void*)item_timed_func_consumable_end;
-
-            } break;
-            case ITEM_DRAGON_EGG:
-            case ITEM_SHAMROCK:
-            case ITEM_RUBY_RING:
-            case ITEM_POTION_STRENGTH:
-            case ITEM_POTION_SPEED:
-            case ITEM_POTION_RANGE:
-            case ITEM_POTION_PURPLE:
-            {
-                p->socketable = true;
-                p->touchable = false;
-                p->func = (void*)item_timed_func_consumable_start;
-                p->timed_func = (void*)item_timed_func_consumable_periodic;
-                p->timed_func_end = (void*)item_timed_func_consumable_end;
-            } break;
-            case ITEM_HEART_FULL:
             case ITEM_HEART_HALF:
-            case ITEM_HEART_EMPTY:
-            case ITEM_COSMIC_HEART_FULL:
+            case ITEM_HEART_FULL:
+            case ITEM_POTION_MANA:
+            case ITEM_POTION_GREAT_MANA:
             case ITEM_COSMIC_HEART_HALF:
+            case ITEM_COSMIC_HEART_FULL:
+            case ITEM_GALAXY_PENDANT:
+            case ITEM_POTION_STRENGTH:
+            case ITEM_SHIELD:
+            case ITEM_FEATHER:
+            case ITEM_WING:
+            case ITEM_LOOKING_GLASS:
+            case ITEM_SHAMROCK:
             case ITEM_GLOWING_ORB:
-            case ITEM_GAUNTLET_SLOT:
             {
+                p->chestable = true;
                 p->socketable = true;
                 p->touchable = false;
-                p->func = (void*)item_func_consumable;
-            } break;
-            case ITEM_CHEST:
-            {
-                p->touchable = false;
-                p->socketable = false;
-                p->func = (void*)item_func_chest;
-            } break;
-            case ITEM_SHRINE:
-            {
-                p->touchable = false;
-                p->socketable = false;
-                p->func = (void*)item_func_shrine;
-            } break;
-            case ITEM_NEW_LEVEL:
-            {
-                p->touchable = false;
-                p->socketable = false;
-                p->func = NULL;
-            } break;
-            case ITEM_REVIVE:
-            {
-                p->touchable = false;
-                p->socketable = true;
-                p->func = (void*)item_func_revive;
-            } break;
-            case ITEM_SKULL:
-            {
-                p->touchable = false;
-                p->socketable = true;
-                p->func = (void*)item_func_skull;
             } break;
         }
+    }
 
+    // create index of chestables
+    for(int i = 0; i < ITEM_MAX; ++i)
+    {
+        if(item_props[i].chestable)
+            chestables_index[num_chestables++] = i;
     }
 }
 
@@ -608,6 +393,12 @@ void item_apply_gauntlet(void* _proj_def, void* _proj_spawn, Item* gauntlet, uin
     }
 }
 
+ItemType item_get_random_chestable()
+{
+    int r = rand() % num_chestables;
+    return item_props[chestables_index[r]].type;
+}
+
 ItemType item_get_random_gem()
 {
     // kinda inefficient but no big deal
@@ -673,8 +464,8 @@ const char* item_get_name(ItemType type)
         case ITEM_SHAMROCK: return "Shamrock";
         case ITEM_RUBY_RING: return "Ruby Ring";
         case ITEM_POTION_STRENGTH: return "Potion of Strength";
-        case ITEM_POTION_SPEED: return "Potion of Speed";
-        case ITEM_POTION_RANGE: return "Potion of Range";
+        case ITEM_POTION_MANA: return "Potion of Mana";
+        case ITEM_POTION_GREAT_MANA: return "Potion of Great Mana";
         case ITEM_POTION_PURPLE: return "Potion of Purple";
         case ITEM_NEW_LEVEL:  return "New Level";
         case ITEM_GAUNTLET_SLOT: return "+1 Gauntlet Slot";
@@ -707,8 +498,8 @@ const char* item_get_description(ItemType type)
         case ITEM_SHAMROCK: return "";
         case ITEM_RUBY_RING: return "";
         case ITEM_POTION_STRENGTH: return "";
-        case ITEM_POTION_SPEED: return "";
-        case ITEM_POTION_RANGE: return "";
+        case ITEM_POTION_MANA: return "";
+        case ITEM_POTION_GREAT_MANA: return "";
         case ITEM_POTION_PURPLE: return "";
         case ITEM_NEW_LEVEL:  return "enter new level";
         case ITEM_GAUNTLET_SLOT: return "+1 gauntlet slot";
@@ -721,7 +512,6 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
     Item pu = {0};
     pu.type = type;
     pu.id = get_id();
-    pu.picked_up = false;
     pu.curr_room = curr_room;
     pu.phys.pos.x = x;
     pu.phys.pos.y = y;
@@ -797,12 +587,6 @@ void item_update_all(float dt)
         if(role == ROLE_CLIENT)
         {
             item_lerp(pu, dt);
-            continue;
-        }
-
-        if(pu->picked_up)
-        {
-            list_remove(item_list, i);
             continue;
         }
 

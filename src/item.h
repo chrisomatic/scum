@@ -25,8 +25,8 @@ typedef enum
     ITEM_SHAMROCK,
     ITEM_RUBY_RING,
     ITEM_POTION_STRENGTH,
-    ITEM_POTION_SPEED,
-    ITEM_POTION_RANGE,
+    ITEM_POTION_MANA,
+    ITEM_POTION_GREAT_MANA,
     ITEM_POTION_PURPLE,
     ITEM_GAUNTLET_SLOT,
     ITEM_NEW_LEVEL,
@@ -36,9 +36,16 @@ typedef enum
     ITEM_PURPLE_STAR,
     ITEM_REVIVE,
     ITEM_SKULL,
+    ITEM_GALAXY_PENDANT,
+    ITEM_FEATHER,
+    ITEM_SHIELD,
+    ITEM_WING,
+    ITEM_LOOKING_GLASS,
+    ITEM_COIN_COPPER,
+    ITEM_COIN_SILVER,
+    ITEM_COIN_GOLD,
 
     ITEM_CHEST,
-
     ITEM_SHRINE,
 
     ITEM_MAX
@@ -54,9 +61,7 @@ typedef struct
     uint8_t sprite_index;
     bool touchable;
     bool socketable;
-    item_func func; //start
-    item_timed_func timed_func; // called every frame
-    item_timed_func timed_func_end; //end
+    bool chestable;
 } ItemProps;
 
 typedef struct
@@ -69,7 +74,6 @@ typedef struct
 {
     ItemType type;
     uint16_t id;
-    bool picked_up;
     uint8_t curr_room;
     Physics phys;
     bool highlighted;
@@ -109,10 +113,12 @@ bool item_is_shrine(ItemType type);
 ItemType item_get_random_gem();
 ItemType item_get_random_heart();
 ItemType item_rand(bool include_chest);
+ItemType item_get_random_chestable();
 
 const char* item_get_name(ItemType type);
 const char* item_get_description(ItemType type);
 Item* item_add(ItemType type, float x, float y, uint8_t curr_room);
+bool item_use(Item* pu, void* player);
 bool item_remove(Item* pu);
 void item_update(Item* pu, float dt);
 void item_update_all(float dt);

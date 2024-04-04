@@ -44,6 +44,9 @@ typedef struct
     int8_t hp;
     int8_t hp_max;
 
+    int16_t mp;
+    int16_t mp_max;
+
     float circular_dt; // cumulative time mod 2*PI
 
     bool dead;

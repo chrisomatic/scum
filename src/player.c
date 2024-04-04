@@ -76,7 +76,8 @@ void player_set_defaults(Player* p)
 
     p->phys.hp_max = 6;
     p->phys.hp = p->phys.hp_max;
-    // p->phys.hp = 1;
+    p->phys.mp_max = 10;
+    p->phys.mp = p->phys.mp_max;
 
     p->invulnerable = false;
     p->invulnerable_temp_time = 0.0;
@@ -531,6 +532,7 @@ void player_hurt(Player* p, int damage)
 void player_die(Player* p)
 {
 
+    /*
     for(int i = 0; i < PLAYER_GAUNTLET_MAX; ++i)
     {
         if(i < p->gauntlet_slots)
@@ -546,6 +548,7 @@ void player_die(Player* p)
             }
         }
     }
+    */
 
     text_list_add(text_lst, COLOR_WHITE, 3.0, "%s died.", p->settings.name);
 
@@ -1273,27 +1276,21 @@ void player_update(Player* p, float dt)
                     Item* it = &p->gauntlet[idx];
                     player_drop_item(p, it);
                     memcpy(it, pu, sizeof(Item));
-                    pu->picked_up = true;
                 }
                 else
                 {
                     LOGI("Using item type: %s (%d)", item_get_name(type), type);
-                    if(item_props[type].func) item_props[type].func(pu, p);
+                    item_use(pu, p);
 
                     if(type == ITEM_REVIVE && pu->used)
                     {
                         item_remove(pu);
                     }
                 }
-
-                if(pu->picked_up)
-                {
-                    item_remove(pu);
-                }
-
             }
         }
 
+        /*
         if(action_use)
         {
             Item* it = &p->gauntlet[p->gauntlet_selection];
@@ -1301,7 +1298,6 @@ void player_update(Player* p, float dt)
             {
                 if(item_props[it->type].func)
                 {
-
                     bool ret = item_props[it->type].func(it, p);
                     if(ret)
                     {
@@ -1324,11 +1320,14 @@ void player_update(Player* p, float dt)
                 }
             }
         }
+        */
 
+        /*
         if(action_drop)
         {
             player_drop_item(p, &p->gauntlet[p->gauntlet_selection]);
         }
+        */
 
     }
     // else
@@ -1399,6 +1398,7 @@ void player_update(Player* p, float dt)
     PlayerAttributes att = copy_attributes(p);
 
     // apply timed items
+    /*
     for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
     {
         if(p->timed_items[i] == ITEM_NONE)
@@ -1423,6 +1423,7 @@ void player_update(Player* p, float dt)
             pr->timed_func(p->timed_items[i], (void*)p);
         }
     }
+    */
 
     // printf("-->  %.2f\n", p->phys.speed);
 
@@ -2026,7 +2027,7 @@ void draw_hearts()
 
 }
 
-void draw_xp_bar()
+void draw_mp_bar()
 {
     float h = 10.0;
     float w = 33.0 * 3.0 * ascale;
@@ -2035,21 +2036,24 @@ void draw_xp_bar()
     float y = xp_bar_y + 5.0;
 
     Rect in_r = {0};
-    in_r.w = w * (float)player->xp / (float)get_xp_req(player->level);
+
+    in_r.w = w * ((float)player->phys.mp / (float)player->phys.mp_max);
     in_r.h = h;
-    in_r.x = x + in_r.w/2.0;
-    in_r.y = y + in_r.h/2.0;
-    gfx_draw_rect(&in_r, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 0.6, true, NOT_IN_WORLD);
+    in_r.x = x;
+    in_r.y = y;
+
+    gfx_draw_rect_tl(&in_r, 0x000055CC, NOT_SCALED, NO_ROTATION, 0.6, true, NOT_IN_WORLD);
 
     Rect out_r = {0};
+
     out_r.w = w + 1.0;
     out_r.h = h + 1.0;
-    out_r.x = x + out_r.w/2.0;
-    out_r.y = y + out_r.h/2.0;
-    gfx_draw_rect(&out_r, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
+    out_r.x = x;
+    out_r.y = y;
 
-    gfx_draw_string(x+1, y+h+2, COLOR_WHITE, 0.15*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "Level %d", player->level);
-    // gfx_draw_string(x + w + 5.0, y-1.0, COLOR_WHITE, 0.15*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "%d", player->level);
+    gfx_draw_rect_tl(&out_r, 0x00CCCCCC, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
+
+    gfx_draw_string(x+1, y+h+2, COLOR_WHITE, 0.15*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "MP: %02d/%02d", player->phys.mp, player->phys.mp_max);
 }
 
 void draw_gauntlet()
@@ -2712,7 +2716,7 @@ void player_handle_collision(Player* p, Entity* e)
             if(collided)
             {
                 if(item_props[p2->type].touchable)
-                    item_props[p2->type].func(p2, p);
+                    item_use(p2, (void*)p);
 
                 phys_collision_correct(&p->phys, &p2->phys,&ci);
                 //phys_collision_correct_no_bounce(&p->phys, &p2->phys, &ci);

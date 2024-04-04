@@ -1936,7 +1936,7 @@ void draw()
 
     draw_minimap();
     draw_hearts();
-    draw_xp_bar();
+    draw_mp_bar();
     draw_gauntlet();
     draw_timed_items();
     // draw_skill_selection();

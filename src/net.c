@@ -3038,8 +3038,6 @@ static void pack_items(Packet* pkt, ClientInfo* cli)
         Item* it = &items[i];
         if(!is_any_player_room(it->curr_room))
             continue;
-        if(it->picked_up)
-            continue;
         num_visible_items++;
     }
 
@@ -3050,9 +3048,6 @@ static void pack_items(Packet* pkt, ClientInfo* cli)
         Item* it = &items[i];
 
         if(!is_any_player_room(it->curr_room))
-            continue;
-
-        if(it->picked_up)
             continue;
 
         BPW(&server.bp, 16, (uint32_t)it->id);
