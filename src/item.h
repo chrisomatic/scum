@@ -30,7 +30,7 @@ typedef enum
     ITEM_POTION_PURPLE,
     ITEM_GAUNTLET_SLOT,
     ITEM_NEW_LEVEL,
-    ITEM_GLOWING_ORB,
+    ITEM_UPGRADE_ORB,
     ITEM_SILVER_STAR,
     ITEM_GOLD_STAR,
     ITEM_PURPLE_STAR,
@@ -60,7 +60,6 @@ typedef struct
     int image;
     uint8_t sprite_index;
     bool touchable;
-    bool socketable;
     bool chestable;
 } ItemProps;
 
@@ -110,7 +109,6 @@ bool item_is_heart(ItemType type);
 bool item_is_chest(ItemType type);
 bool item_is_shrine(ItemType type);
 
-ItemType item_get_random_gem();
 ItemType item_get_random_heart();
 ItemType item_rand(bool include_chest);
 ItemType item_get_random_chestable();

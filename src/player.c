@@ -132,6 +132,8 @@ void player_set_defaults(Player* p)
     }
     // p->gauntlet_item.type = ITEM_NONE;
 
+    p->coins = 0;
+
     p->xp = 0;
     p->level = 0;
     p->new_levels = 0;
@@ -148,10 +150,10 @@ void player_set_defaults(Player* p)
 
     p->periodic_shot_counter = 0.0;
 
-    for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
-    {
-        p->timed_items[i] = ITEM_NONE;
-    }
+    // for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
+    // {
+    //     p->timed_items[i] = ITEM_NONE;
+    // }
 }
 
 void player_init()
@@ -1236,57 +1238,68 @@ void player_update(Player* p, float dt)
                 ItemType type = pu->type;
                 ItemProps* pr = &item_props[type];
 
-                int num_players = player_get_active_count();
-                bool socketable = pr->socketable;
-                if(num_players > 1 && type == ITEM_REVIVE)
-                {
-                    socketable = false;
-                }
+                // bool socketable = pr->socketable;
+                // int num_players = player_get_active_count();
+                // if(num_players > 1 && type == ITEM_REVIVE)
+                // {
+                //     socketable = false;
+                // }
 
-                if(type == ITEM_NEW_LEVEL)
-                {
-                    if(level_grace_time <= 0.0)
-                    {
-                        LOGI("Using item type: %s (%d)", item_get_name(type), type);
-                        item_remove(pu);
-                        trigger_generate_level(rand(), level_rank+1, 2, __LINE__);
+                // if(type == ITEM_NEW_LEVEL)
+                // {
+                //     // if(level_grace_time <= 0.0)
+                //     // {
+                //     //     LOGI("Using item type: %s (%d)", item_get_name(type), type);
+                //     //     item_remove(pu);
+                //     //     trigger_generate_level(rand(), level_rank+1, 2, __LINE__);
 
-                        if(role == ROLE_SERVER)
-                        {
-                            NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
-                            net_server_add_event(&ev);
-                        }
-                        return;
-                    }
-                }
-                else if(socketable)
+                //     //     if(role == ROLE_SERVER)
+                //     //     {
+                //     //         NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
+                //     //         net_server_add_event(&ev);
+                //     //     }
+                //     //     return;
+                //     // }
+                // }
+                // else
                 {
-                    LOGI("Socketing item type: %s (%d)", item_get_name(type), type);
-                    int idx = p->gauntlet_selection;
-                    for(int i = 0; i < p->gauntlet_slots; ++i)
-                    {
-                        Item* it = &p->gauntlet[i];
-                        if(it->type == ITEM_NONE)
-                        {
-                            idx = i;
-                            break;
-                        }
-                    }
 
-                    Item* it = &p->gauntlet[idx];
-                    player_drop_item(p, it);
-                    memcpy(it, pu, sizeof(Item));
-                }
-                else
-                {
                     LOGI("Using item type: %s (%d)", item_get_name(type), type);
-                    item_use(pu, p);
+                    bool used = item_use(pu, p);
 
-                    if(type == ITEM_REVIVE && pu->used)
-                    {
-                        item_remove(pu);
-                    }
+                    // if(type == ITEM_REVIVE && pu->used)
+                    // {
+                    //     item_remove(pu);
+                    // }
                 }
+                // else if(socketable)
+                // {
+                //     LOGI("Socketing item type: %s (%d)", item_get_name(type), type);
+                //     int idx = p->gauntlet_selection;
+                //     for(int i = 0; i < p->gauntlet_slots; ++i)
+                //     {
+                //         Item* it = &p->gauntlet[i];
+                //         if(it->type == ITEM_NONE)
+                //         {
+                //             idx = i;
+                //             break;
+                //         }
+                //     }
+
+                //     Item* it = &p->gauntlet[idx];
+                //     player_drop_item(p, it);
+                //     memcpy(it, pu, sizeof(Item));
+                // }
+                // else
+                // {
+                //     LOGI("Using item type: %s (%d)", item_get_name(type), type);
+                //     item_use(pu, p);
+
+                //     if(type == ITEM_REVIVE && pu->used)
+                //     {
+                //         item_remove(pu);
+                //     }
+                // }
             }
         }
 
@@ -2115,32 +2128,32 @@ void draw_gauntlet()
     }
 }
 
-void draw_timed_items()
-{
-    float len = 20.0 * ascale;
-    float margin = 5.0 * ascale;
+// void draw_timed_items()
+// {
+//     float len = 20.0 * ascale;
+//     float margin = 5.0 * ascale;
 
-    int w = gfx_images[items_image].element_width;
-    float scale = len / (float)w;
+//     int w = gfx_images[items_image].element_width;
+//     float scale = len / (float)w;
 
-    float _x = 10.0;
-    float _y = 100.0;
-    for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
-    {
-        ItemType type = player->timed_items[i];
-        if(type != ITEM_NONE)
-        {
-            gfx_draw_image_ignore_light(item_props[type].image, item_props[type].sprite_index, _x, _y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+//     float _x = 10.0;
+//     float _y = 100.0;
+//     for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
+//     {
+//         ItemType type = player->timed_items[i];
+//         if(type != ITEM_NONE)
+//         {
+//             gfx_draw_image_ignore_light(item_props[type].image, item_props[type].sprite_index, _x, _y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
 
-            float tscale = 0.17 * ascale;
-            // Vector2f size = gfx_string_get_size(scale, (char*)desc);
-            gfx_draw_string(_x+len*0.75, _y-len*0.5, COLOR_WHITE, tscale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%.1f", player->timed_items_ttl[i]);
+//             float tscale = 0.17 * ascale;
+//             // Vector2f size = gfx_string_get_size(scale, (char*)desc);
+//             gfx_draw_string(_x+len*0.75, _y-len*0.5, COLOR_WHITE, tscale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%.1f", player->timed_items_ttl[i]);
 
-            _y += len + margin;
-        }
-    }
+//             _y += len + margin;
+//         }
+//     }
 
-}
+// }
 
 // skills
 // --------------------------------------------------------------------------------------------------
@@ -2710,16 +2723,23 @@ void player_handle_collision(Player* p, Entity* e)
         {
             Item* p2 = (Item*)e->ptr;
 
+            if(p2->phys.pos.z > 0) break;
+
             CollisionInfo ci = {0};
             bool collided = phys_collision_circles(&p->phys,&p2->phys, &ci);
 
             if(collided)
             {
                 if(item_props[p2->type].touchable)
+                {
                     item_use(p2, (void*)p);
+                }
+                else
+                {
+                    phys_collision_correct(&p->phys, &p2->phys,&ci);
+                    //phys_collision_correct_no_bounce(&p->phys, &p2->phys, &ci);
+                }
 
-                phys_collision_correct(&p->phys, &p2->phys,&ci);
-                //phys_collision_correct_no_bounce(&p->phys, &p2->phys, &ci);
             }
 
         } break;

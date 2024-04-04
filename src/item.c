@@ -178,7 +178,7 @@ static bool item_func_shrine(Item* pu, Player* p)
     return true;
 }
 
-bool item_use(Item* pu, void* player)
+static bool internal_item_use(Item* pu, void* player)
 {
 
     Player* p = (Player*)player;
@@ -196,6 +196,7 @@ bool item_use(Item* pu, void* player)
                 return false;
             }
         } break;
+
         case ITEM_HEART_HALF:
         {
             if(p->phys.hp < p->phys.hp_max)
@@ -207,47 +208,152 @@ bool item_use(Item* pu, void* player)
                 return false;
             }
         } break;
+
+        case ITEM_POTION_MANA:
+        {
+
+        } break;
+
+        case ITEM_POTION_GREAT_MANA:
+        {
+
+        } break;
+
         case ITEM_COSMIC_HEART_FULL:
         {
             p->phys.hp_max += 2;
             player_add_hp(p,2);
             // printf("hp_max: %d\n",p->phys.hp_max);
         } break;
+
         case ITEM_COSMIC_HEART_HALF:
         {
             p->phys.hp_max += 1;
             player_add_hp(p,1);
             // printf("hp_max: %d\n",p->phys.hp_max);
         } break;
-        case ITEM_GLOWING_ORB:
+
+        case ITEM_GALAXY_PENDANT:
         {
-            p->light_radius += 1.0;
+
         } break;
+
+        // [STAT] Strength
+        case ITEM_POTION_STRENGTH:
+        {
+
+        } break;
+
+        // [STAT] Defense
+        case ITEM_SHIELD:
+        {
+
+        } break;
+
+        // [STAT] Movement Speed
+        case ITEM_FEATHER:
+        {
+
+        } break;
+
+        // [STAT] Attack Speed
+        case ITEM_WING:
+        {
+
+        } break;
+
+        // [STAT] Range
+        case ITEM_LOOKING_GLASS:
+        {
+
+        } break;
+
+        // [STAT] Luck
+        case ITEM_SHAMROCK:
+        {
+
+        } break;
+
+        case ITEM_UPGRADE_ORB:
+        {
+
+        } break;
+
+        case ITEM_COIN_COPPER:
+        {
+            p->coins += 1;
+        } break;
+        case ITEM_COIN_SILVER:
+        {
+            p->coins += 5;
+        } break;
+        case ITEM_COIN_GOLD:
+        {
+            p->coins += 10;
+        } break;
+
         case ITEM_GAUNTLET_SLOT:
         {
-            if(p->gauntlet_slots < PLAYER_GAUNTLET_MAX)
+            // if(p->gauntlet_slots < PLAYER_GAUNTLET_MAX)
+            // {
+            //     p->gauntlet_slots++;
+            // }
+        } break;
+
+        case ITEM_NEW_LEVEL:
+        {
+            if(level_grace_time > 0) return false;
+
+            trigger_generate_level(rand(), level_rank+1, 2, __LINE__);
+            if(role == ROLE_SERVER)
             {
-                p->gauntlet_slots++;
+                NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
+                net_server_add_event(&ev);
             }
         } break;
+
+        case ITEM_REVIVE:
+        {
+            return item_func_revive(pu, p);
+        } break;
+
         case ITEM_CHEST:
         {
             item_func_chest(pu, p);
         } break;
-        case ITEM_REVIVE:
-        {
-            item_func_revive(pu, p);
-        } break;
+
         case ITEM_SHRINE:
         {
             item_func_shrine(pu, p);
         } break;
+
         default:
         {
             return false;
         } break;
     }
     return true;
+}
+
+bool item_use(Item* pu, void* player)
+{
+    if(pu->used) return false;
+
+    bool ret = internal_item_use(pu, player);
+
+    if(ret)
+    {
+        pu->used = true;
+
+        // if(pu->type == ITEM_CHEST || pu->type == ITEM_SHRINE)
+        // {
+        //     // don't remove item
+        //     return true;
+        // }
+        // item_remove(pu);
+    }
+
+    return ret;
 }
 
 void item_init()
@@ -283,7 +389,6 @@ void item_init()
             p->sprite_index = i;
         }
 
-        p->socketable = false;
         p->touchable = false;
         p->chestable = false;
 
@@ -302,11 +407,18 @@ void item_init()
             case ITEM_WING:
             case ITEM_LOOKING_GLASS:
             case ITEM_SHAMROCK:
-            case ITEM_GLOWING_ORB:
+            case ITEM_UPGRADE_ORB:
             {
                 p->chestable = true;
-                p->socketable = true;
                 p->touchable = false;
+            } break;
+
+            case ITEM_COIN_COPPER:
+            case ITEM_COIN_SILVER:
+            case ITEM_COIN_GOLD:
+            {
+                p->chestable = true;
+                p->touchable = true;
             } break;
         }
     }
@@ -399,17 +511,6 @@ ItemType item_get_random_chestable()
     return item_props[chestables_index[r]].type;
 }
 
-ItemType item_get_random_gem()
-{
-    // kinda inefficient but no big deal
-    for(;;)
-    {
-        ItemType it = rand() % ITEM_MAX;
-        if(item_is_gem(it))
-            return it;
-    }
-}
-
 ItemType item_get_random_heart()
 {
     for(;;)
@@ -420,6 +521,7 @@ ItemType item_get_random_heart()
     }
 }
 
+// junk
 ItemType item_rand(bool include_chest)
 {
     for(;;)
@@ -445,30 +547,42 @@ const char* item_get_name(ItemType type)
     {
         case ITEM_NONE:       return "None";
         case ITEM_REVIVE:     return "Revive";
-        case ITEM_SKULL:      return "Skull";
         case ITEM_SHRINE:     return "Shrine";
         case ITEM_CHEST:      return "Chest";
+        case ITEM_NEW_LEVEL:  return "New Level";
+
+        case ITEM_SKULL:      return "Skull";
         case ITEM_GEM_RED:    return "Red Gem";
         case ITEM_GEM_GREEN:  return "Green Gem";
         case ITEM_GEM_BLUE:   return "Blue Gem";
         case ITEM_GEM_WHITE:  return "White Gem";
         case ITEM_GEM_YELLOW: return "Yellow Gem";
         case ITEM_GEM_PURPLE: return "Purple Gem";
+        case ITEM_HEART_EMPTY: return "Empty Heart";
+        case ITEM_DRAGON_EGG: return "Dragon Egg";
+        case ITEM_RUBY_RING: return "Ruby Ring";
+        case ITEM_POTION_PURPLE: return "Potion of Purple";
+        case ITEM_GAUNTLET_SLOT: return "+1 Gauntlet Slot";
+
         case ITEM_HEART_FULL: return "Full Heart";
         case ITEM_HEART_HALF: return "Half Heart";
-        case ITEM_HEART_EMPTY: return "Empty Heart";
-        case ITEM_COSMIC_HEART_FULL: return "Cosmic Full Heart";
-        case ITEM_COSMIC_HEART_HALF: return "Cosmic Half Heart";
-        case ITEM_GLOWING_ORB: return "Glowing Orb";
-        case ITEM_DRAGON_EGG: return "Dragon Egg";
-        case ITEM_SHAMROCK: return "Shamrock";
-        case ITEM_RUBY_RING: return "Ruby Ring";
-        case ITEM_POTION_STRENGTH: return "Potion of Strength";
         case ITEM_POTION_MANA: return "Potion of Mana";
         case ITEM_POTION_GREAT_MANA: return "Potion of Great Mana";
-        case ITEM_POTION_PURPLE: return "Potion of Purple";
-        case ITEM_NEW_LEVEL:  return "New Level";
-        case ITEM_GAUNTLET_SLOT: return "+1 Gauntlet Slot";
+        case ITEM_COSMIC_HEART_FULL: return "Cosmic Full Heart";
+        case ITEM_COSMIC_HEART_HALF: return "Cosmic Half Heart";
+
+        case ITEM_GALAXY_PENDANT: return "Galaxy Pendant";
+        case ITEM_POTION_STRENGTH: return "Potion of Strength";
+        case ITEM_SHIELD: return "Shield";
+        case ITEM_FEATHER: return "Feather";
+        case ITEM_WING: return "Wing";
+        case ITEM_LOOKING_GLASS: return "Looking Glass";
+        case ITEM_SHAMROCK: return "Shamrock";
+        case ITEM_UPGRADE_ORB: return "Upgrade Orb";
+
+        case ITEM_COIN_COPPER: return "Copper Coin";
+        case ITEM_COIN_SILVER: return "Silver Coin";
+        case ITEM_COIN_GOLD: return "Gold Coin";
     }
     return "???";
 }
@@ -478,31 +592,43 @@ const char* item_get_description(ItemType type)
     switch(type)
     {
         case ITEM_NONE:       return "";
-        case ITEM_REVIVE:     return "cheat death";
-        case ITEM_SKULL:      return "Probably a good sign";
-        case ITEM_SHRINE:     return "hmmmmmm";
+        case ITEM_REVIVE:     return "cheat deat";
+        case ITEM_SHRINE:     return "hmmmm";
         case ITEM_CHEST:      return "contains loot";
-        case ITEM_GEM_RED:    return "increase projectile damage";
-        case ITEM_GEM_GREEN:  return "poison projectiles";
-        case ITEM_GEM_BLUE:   return "cold projectiles";
-        case ITEM_GEM_WHITE:  return "+1 projectile";
-        case ITEM_GEM_YELLOW: return "bouncy projectiles";
-        case ITEM_GEM_PURPLE: return "ghost projectiles";
+        case ITEM_NEW_LEVEL:  return "enter new level";
+
+        case ITEM_SKULL:      return "Chris Rose";
+        case ITEM_GEM_RED:    return "";
+        case ITEM_GEM_GREEN:  return "";
+        case ITEM_GEM_BLUE:   return "";
+        case ITEM_GEM_WHITE:  return "";
+        case ITEM_GEM_YELLOW: return "";
+        case ITEM_GEM_PURPLE: return "";
+        case ITEM_HEART_EMPTY: return "";
+        case ITEM_DRAGON_EGG: return "";
+        case ITEM_RUBY_RING: return "";
+        case ITEM_POTION_PURPLE: return "";
+        case ITEM_GAUNTLET_SLOT: return "";
+
         case ITEM_HEART_FULL: return "heal 1 heart";
         case ITEM_HEART_HALF: return "heal 1/2 heart";
-        case ITEM_HEART_EMPTY: return "heal 0 heart";
-        case ITEM_COSMIC_HEART_FULL: return "increase max health by 1 heart";
-        case ITEM_COSMIC_HEART_HALF: return "increase max health by 1/2 heart";
-        case ITEM_GLOWING_ORB: return "increase light radius";
-        case ITEM_DRAGON_EGG: return "";
-        case ITEM_SHAMROCK: return "";
-        case ITEM_RUBY_RING: return "";
-        case ITEM_POTION_STRENGTH: return "";
-        case ITEM_POTION_MANA: return "";
-        case ITEM_POTION_GREAT_MANA: return "";
-        case ITEM_POTION_PURPLE: return "";
-        case ITEM_NEW_LEVEL:  return "enter new level";
-        case ITEM_GAUNTLET_SLOT: return "+1 gauntlet slot";
+        case ITEM_POTION_MANA: return "replenish mana";
+        case ITEM_POTION_GREAT_MANA: return "greatly replenish mana";
+        case ITEM_COSMIC_HEART_FULL: return "increase hp by 1 heart";
+        case ITEM_COSMIC_HEART_HALF: return "increase hp by 1/2 heart";
+
+        case ITEM_GALAXY_PENDANT: return "increase mana";
+        case ITEM_POTION_STRENGTH: return "+1 strength";
+        case ITEM_SHIELD: return "+1 defense";
+        case ITEM_FEATHER: return "+1 movement speed";
+        case ITEM_WING: return "+1 attack speed";
+        case ITEM_LOOKING_GLASS: return "+1 range";
+        case ITEM_SHAMROCK: return "+1 luck";
+        case ITEM_UPGRADE_ORB: return "upgrade stuff";
+
+        case ITEM_COIN_COPPER: return "+1 coin";
+        case ITEM_COIN_SILVER: return "+5 coins";
+        case ITEM_COIN_GOLD: return "+10 coins";
     }
     return "???";
 }
@@ -541,6 +667,7 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
         pu.phys.vel.z = 200.0;
     }
 
+    //TODO
     pu.phys.width  = 1.6f*pu.phys.radius;
     pu.phys.length = 1.6f*pu.phys.radius;
     pu.phys.height = 1.6f*pu.phys.radius;
@@ -580,9 +707,20 @@ void item_update(Item* pu, float dt)
 
 void item_update_all(float dt)
 {
+
     for(int i = item_list->count-1; i >= 0; --i)
     {
         Item* pu = &items[i];
+
+        // remove previously used items
+        if(pu->used)
+        {
+            if(!(pu->type == ITEM_CHEST || pu->type == ITEM_SHRINE))
+            {
+                item_remove(pu);
+                continue;
+            }
+        }
 
         if(role == ROLE_CLIENT)
         {

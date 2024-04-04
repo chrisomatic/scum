@@ -177,10 +177,22 @@ void editor_draw()
                         _rank = level_rank;
                     }
 
-                    if(imgui_button("Add Item 'New Level'"))
+                    static int item_sel = 0;
+                    imgui_listbox(item_names, ITEM_MAX, "Item", &item_sel, 4);
+                    if(imgui_button("Add Item '%s'", item_names[item_sel]))
                     {
-                        item_add(ITEM_NEW_LEVEL, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+                        item_add(item_sel, player->phys.pos.x, player->phys.pos.y, player->curr_room);
                     }
+
+                    // if(imgui_button("Add Item 'New Level'"))
+                    // {
+                    //     item_add(ITEM_NEW_LEVEL, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+                    // }
+
+                    // if(imgui_button("Add Item 'Chest'"))
+                    // {
+                    //     item_add(ITEM_CHEST, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+                    // }
 
                     if(imgui_button("Add Random Item"))
                     {

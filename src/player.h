@@ -111,6 +111,8 @@ typedef struct
     float aim_deg;
     float scale;
 
+    uint16_t coins;
+
     uint16_t xp;
     uint8_t level;
     uint8_t new_levels;
@@ -126,8 +128,8 @@ typedef struct
     uint8_t gauntlet_slots;
     Item gauntlet[PLAYER_GAUNTLET_MAX];
 
-    ItemType timed_items[MAX_TIMED_ITEMS];
-    float timed_items_ttl[MAX_TIMED_ITEMS];
+    // ItemType timed_items[MAX_TIMED_ITEMS];
+    // float timed_items_ttl[MAX_TIMED_ITEMS];
 
     // uint16_t skills[PLAYER_MAX_SKILLS];
     // uint8_t skill_count;

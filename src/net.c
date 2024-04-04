@@ -2553,20 +2553,20 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             BPW(&server.bp, 4, (uint32_t)p->door);
             BPW(&server.bp, 1, (uint32_t)(p->phys.dead ? 1 : 0));
 
-            uint32_t timed_items_count = 0;
-            for(int t = 0; t < MAX_TIMED_ITEMS; ++t)
-                if(p->timed_items[t] != ITEM_NONE)
-                    timed_items_count++;
+            // uint32_t timed_items_count = 0;
+            // for(int t = 0; t < MAX_TIMED_ITEMS; ++t)
+            //     if(p->timed_items[t] != ITEM_NONE)
+            //         timed_items_count++;
 
-            BPW(&server.bp, 4,  (uint32_t)timed_items_count);
-            for(int t = 0; t < MAX_TIMED_ITEMS; ++t)
-            {
-                if(p->timed_items[t] == ITEM_NONE)
-                    continue;
+            // BPW(&server.bp, 4,  (uint32_t)timed_items_count);
+            // for(int t = 0; t < MAX_TIMED_ITEMS; ++t)
+            // {
+            //     if(p->timed_items[t] == ITEM_NONE)
+            //         continue;
 
-                BPW(&server.bp, 6,  (uint32_t)(p->timed_items[t] + 1));
-                BPW(&server.bp, 8,  (uint32_t)(p->timed_items_ttl[t] * 10.0));
-            }
+            //     BPW(&server.bp, 6,  (uint32_t)(p->timed_items[t] + 1));
+            //     BPW(&server.bp, 8,  (uint32_t)(p->timed_items_ttl[t] * 10.0));
+            // }
 
             BPW(&server.bp, 2,  (uint32_t)p->weapon.state);
             if(p->weapon.state > WEAPON_STATE_NONE)
@@ -2643,16 +2643,16 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         uint32_t door             = bitpack_read(&client.bp, 4);
         uint32_t dead             = bitpack_read(&client.bp, 1);
 
-        uint32_t timed_items_count = bitpack_read(&client.bp, 4);
+        // uint32_t timed_items_count = bitpack_read(&client.bp, 4);
 
-        uint32_t timed_items[MAX_TIMED_ITEMS] = {0};
-        uint32_t timed_items_ttl[MAX_TIMED_ITEMS] = {0};
+        // uint32_t timed_items[MAX_TIMED_ITEMS] = {0};
+        // uint32_t timed_items_ttl[MAX_TIMED_ITEMS] = {0};
 
-        for(int t = 0; t < timed_items_count; ++t)
-        {
-            timed_items[t]     = bitpack_read(&client.bp, 6);
-            timed_items_ttl[t] = bitpack_read(&client.bp, 8);
-        }
+        // for(int t = 0; t < timed_items_count; ++t)
+        // {
+        //     timed_items[t]     = bitpack_read(&client.bp, 6);
+        //     timed_items_ttl[t] = bitpack_read(&client.bp, 8);
+        // }
 
         uint32_t weapon_state = bitpack_read(&client.bp, 2);
 
@@ -2722,17 +2722,17 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         p->door  = (Dir)door;
         p->phys.dead  = dead == 1 ? true: false;
 
-        for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
-            p->timed_items[i] = ITEM_NONE;
+        // for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
+        //     p->timed_items[i] = ITEM_NONE;
 
-        for(int t = 0; t < timed_items_count; ++t)
-        {
-            int   ti     = (int)timed_items[t];
-            float ti_ttl = (float)timed_items_ttl[t];
+        // for(int t = 0; t < timed_items_count; ++t)
+        // {
+        //     int   ti     = (int)timed_items[t];
+        //     float ti_ttl = (float)timed_items_ttl[t];
 
-            p->timed_items[t]     = (ItemType)(ti-1);
-            p->timed_items_ttl[t] = (ti_ttl/10.0f);
-        }
+        //     p->timed_items[t]     = (ItemType)(ti-1);
+        //     p->timed_items_ttl[t] = (ti_ttl/10.0f);
+        // }
 
         p->weapon.state = (WeaponState)weapon_state;
         //p->weapon.pos.x = (float)weapon_x;
