@@ -106,9 +106,17 @@ static bool item_func_podium(Item* pu, Player* p)
     float y = pu->phys.pos.y;
     int croom = pu->curr_room;
 
-    Item* a = item_add(ITEM_SKILL_BOOK, x, y, croom);
-    a->user_data = rand() % 5;
-    item_set_description(a, "skill %d", a->user_data); //TODO
+    for(int i = 0; i < SKILL_TYPE_MAX; ++i)
+    {
+        Item* a = item_add(ITEM_SKILL_BOOK, x, y, croom);
+        a->user_data = i;
+        // a->user_data = rand() % SKILL_TYPE_MAX;
+        item_set_description(a, "skill: %s", skills_get_name(a->user_data));
+    }
+    // Item* a = item_add(ITEM_SKILL_BOOK, x, y, croom);
+    // a->user_data = SKILL_TYPE_MAGIC_MISSILE;
+    // // a->user_data = rand() % SKILL_TYPE_MAX;
+    // item_set_description(a, "skill: %s", skills_get_name(a->user_data));
 }
 
 

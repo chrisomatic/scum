@@ -150,10 +150,15 @@ void player_set_defaults(Player* p)
 
     p->highlighted_item_id = -1;
     p->highlighted_index = 0;
-    
-    memset(p->skills,0,sizeof(Skill)*PLAYER_MAX_SKILLS);
 
-    skills_add_skill(p, SKILL_TYPE_MAGIC_MISSILE);
+    memset(p->skills,0,sizeof(Skill)*PLAYER_MAX_SKILLS);
+    p->skill_count = 0;
+    for(int j = 0; j < PLAYER_MAX_SKILLS; ++j)
+    {
+        p->skills[j].type = SKILL_TYPE_NONE;
+    }
+
+    // skills_add_skill(p, SKILL_TYPE_MAGIC_MISSILE); //TEMP
 
     // for(int j = 0; j < PLAYER_MAX_SKILLS; ++j)
     // {
@@ -1229,25 +1234,26 @@ void player_update(Player* p, float dt)
         bool _pressed = p->actions[PLAYER_ACTION_ITEM_1+i].toggled_on;
         if(_pressed)
         {
-            if(i < p->gauntlet_slots)
+            // if(i < p->gauntlet_slots)
+            if(i < PLAYER_MAX_SKILLS)
             {
                 p->gauntlet_selection = i;
             }
             break;
         }
 
-        if(i < p->gauntlet_slots)
-        {
-            if(p->gauntlet[i].type == ITEM_REVIVE)
-            {
-                int num_players = player_get_active_count();
-                if(num_players > 1)
-                {
-                    Item* it = &p->gauntlet[i];
-                    player_drop_item(p, it);
-                }
-            }
-        }
+        // if(i < p->gauntlet_slots)
+        // {
+        //     if(p->gauntlet[i].type == ITEM_REVIVE)
+        //     {
+        //         int num_players = player_get_active_count();
+        //         if(num_players > 1)
+        //         {
+        //             Item* it = &p->gauntlet[i];
+        //             player_drop_item(p, it);
+        //         }
+        //     }
+        // }
     }
 
 
@@ -2138,10 +2144,10 @@ void draw_gauntlet()
     float len = 50.0 * ascale;
     float margin = 5.0 * ascale;
 
-    int w = gfx_images[items_image].element_width;
+    int w = gfx_images[skills_image].element_width;
     float scale = len / (float)w;
 
-    float total_len = (player->gauntlet_slots * len) + ((player->gauntlet_slots-1) * margin);
+    float total_len = (PLAYER_MAX_SKILLS * len) + ((PLAYER_MAX_SKILLS-1) * margin);
 
     float x = (view_width - total_len) / 2.0;   // left side of first rect
     x += len/2.0;   // centered
@@ -2150,47 +2156,103 @@ void draw_gauntlet()
     float y = view_height - len/2.0 - margin - 10.0;
 
     Rect r = {0};
-    r.w = len;
-    r.h = len;
+    r.w = len+1;
+    r.h = len+1;
     r.y = y;
     r.x = x;
 
-    for(int i = 0; i < player->gauntlet_slots; ++i)
+    // for(int i = 0; i < player->skill_count; ++i)
+    for(int i = 0; i < PLAYER_MAX_SKILLS; ++i)
     {
         uint32_t color = COLOR_BLACK;
+        Skill skill = player->skills[i];
+
         if(i == player->gauntlet_selection)
         {
-            Item* it = &player->gauntlet[player->gauntlet_selection];
-            if(it->type != ITEM_NONE)
+            if(skill.type != SKILL_TYPE_NONE)
             {
-                const char* desc = item_get_description(it->type, it);
-                const char* name = item_get_name(it->type);
-
-                float scale = 0.16 * ascale;
-                Vector2f size = gfx_string_get_size(scale, (char*)desc);
-
+                const char* name = skills_get_name(skill.type);
+                float scale = 0.12 * ascale;
+                Vector2f size = gfx_string_get_size(scale, (char*)name);
 
                 float tlx = r.x - r.w/2.0;
                 // float tly = r.y - r.h/2.0 + size.y + 2.0;
                 float bly = r.y + r.h/2.0 + 2.0;
 
-                gfx_draw_string(tlx, bly, COLOR_WHITE, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%s", desc);
+                gfx_draw_string(tlx, bly, COLOR_WHITE, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%s (%d)", name, skill.rank);
             }
             color = 0x00b0b0b0;
         }
 
         gfx_draw_rect(&r, color, NOT_SCALED, NO_ROTATION, 0.3, true, NOT_IN_WORLD);
 
-        ItemType type = player->gauntlet[i].type;
-        if(type != ITEM_NONE)
+        if(skill.type != SKILL_TYPE_NONE)
         {
-            ItemProps* props = &item_props[type];
-            gfx_draw_image_ignore_light(props->image, props->sprite_index, r.x, r.y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+            gfx_draw_image_ignore_light(skills_image, skill.type, r.x, r.y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
         }
         r.x += len;
         r.x += margin;
     }
 }
+
+// void draw_gauntlet()
+// {
+//     float len = 50.0 * ascale;
+//     float margin = 5.0 * ascale;
+
+//     int w = gfx_images[items_image].element_width;
+//     float scale = len / (float)w;
+
+//     float total_len = (player->gauntlet_slots * len) + ((player->gauntlet_slots-1) * margin);
+
+//     float x = (view_width - total_len) / 2.0;   // left side of first rect
+//     x += len/2.0;   // centered
+
+//     // float y = (float)view_height * 0.75;
+//     float y = view_height - len/2.0 - margin - 10.0;
+
+//     Rect r = {0};
+//     r.w = len;
+//     r.h = len;
+//     r.y = y;
+//     r.x = x;
+
+//     for(int i = 0; i < player->gauntlet_slots; ++i)
+//     {
+//         uint32_t color = COLOR_BLACK;
+//         if(i == player->gauntlet_selection)
+//         {
+//             Item* it = &player->gauntlet[player->gauntlet_selection];
+//             if(it->type != ITEM_NONE)
+//             {
+//                 const char* desc = item_get_description(it->type, it);
+//                 const char* name = item_get_name(it->type);
+
+//                 float scale = 0.16 * ascale;
+//                 Vector2f size = gfx_string_get_size(scale, (char*)desc);
+
+
+//                 float tlx = r.x - r.w/2.0;
+//                 // float tly = r.y - r.h/2.0 + size.y + 2.0;
+//                 float bly = r.y + r.h/2.0 + 2.0;
+
+//                 gfx_draw_string(tlx, bly, COLOR_WHITE, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%s", desc);
+//             }
+//             color = 0x00b0b0b0;
+//         }
+
+//         gfx_draw_rect(&r, color, NOT_SCALED, NO_ROTATION, 0.3, true, NOT_IN_WORLD);
+
+//         ItemType type = player->gauntlet[i].type;
+//         if(type != ITEM_NONE)
+//         {
+//             ItemProps* props = &item_props[type];
+//             gfx_draw_image_ignore_light(props->image, props->sprite_index, r.x, r.y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+//         }
+//         r.x += len;
+//         r.x += margin;
+//     }
+// }
 
 void draw_stats()
 {

@@ -6,7 +6,7 @@
 int skills_image = -1;
 
 int lookup_mp_cost[SKILL_TYPE_MAX][3] = {
-    {0,   0,  0}, // NONE
+    // {0,   0,  0}, // NONE
     {5,  10, 20}, // MAGIC MISSLE
     {10, 15, 30}, // ROCK SHOWER
     {20, 35, 50}, // SENTIENCE
@@ -14,19 +14,19 @@ int lookup_mp_cost[SKILL_TYPE_MAX][3] = {
     {5,  15, 25}, // PHASE SHOT
     {5,  15, 25}, // HEAL
     {5,  15, 25}, // DEFLECTOR
-    {5,  15, 25}, // PHASE SHIFT
     {5,  15, 25}, // CROWN OF THORNS
+    {5,  15, 25}, // FEAR
+    {5,  15, 25}, // PHASE SHIFT
     {5,  15, 25}, // RABBITS FOOT
     {5,  15, 25}, // PORCUPINE
     {5,  15, 25}, // RESURRECTION
     {5,  15, 25}, // RAISE GOLEM
-    {5,  15, 25}, // FEAR
     {5,  15, 25}, // INVISIBILITY
     {5,  15, 25}, // HOLOGRAM
 };
 
 float lookup_cooldown[SKILL_TYPE_MAX][3] = {
-    {0.0, 0.0, 0.0}, // NONE
+    // {0.0, 0.0, 0.0}, // NONE
     {0.0, 0.0, 0.0}, // MAGIC MISSLE
     {0.0, 0.0, 0.0}, // ROCK SHOWER
     {0.0, 0.0, 0.0}, // SENTIENCE
@@ -34,13 +34,13 @@ float lookup_cooldown[SKILL_TYPE_MAX][3] = {
     {0.0, 0.0, 0.0}, // PHASE SHOT
     {0.0, 0.0, 0.0}, // HEAL
     {0.0, 0.0, 0.0}, // DEFLECTOR
-    {0.0, 0.0, 0.0}, // PHASE SHIFT
     {0.0, 0.0, 0.0}, // CROWN OF THORNS
+    {0.0, 0.0, 0.0}, // FEAR
+    {0.0, 0.0, 0.0}, // PHASE SHIFT
     {0.0, 0.0, 0.0}, // RABBITS FOOT
     {0.0, 0.0, 0.0}, // PORCUPINE
     {0.0, 0.0, 0.0}, // RESURRECTION
     {0.0, 0.0, 0.0}, // RAISE GOLEM
-    {0.0, 0.0, 0.0}, // FEAR
     {0.0, 0.0, 0.0}, // INVISIBILITY
     {0.0, 0.0, 0.0}, // HOLOGRAM
 };
@@ -91,6 +91,31 @@ bool skills_add_skill(void* player, SkillType type)
     p->skills[n].rank = 1;
     p->skills[n].mp_cost  = lookup_mp_cost[type][0];
     p->skills[n].cooldown = lookup_cooldown[type][0];
+    p->skill_count++;
 
     return true;
+}
+
+const char* skills_get_name(SkillType type)
+{
+    switch(type)
+    {
+        case SKILL_TYPE_MAGIC_MISSILE:   return "Magic Missile";
+        case SKILL_TYPE_ROCK_SHOWER:     return "Rock Shower";
+        case SKILL_TYPE_SENTIENCE:       return "Sentience";
+        case SKILL_TYPE_MULTI_SHOT:      return "Multi-shot";
+        case SKILL_TYPE_PHASE_SHOT:      return "Phase-shot";
+        case SKILL_TYPE_HEAL:            return "Heal";
+        case SKILL_TYPE_DEFLECTOR:       return "Deflect";
+        case SKILL_TYPE_PHASE_SHIFT:     return "Phase Shift";
+        case SKILL_TYPE_CROWN_OF_THORNS: return "Crown of Thorns";
+        case SKILL_TYPE_RABBITS_FOOT:    return "Rabbit's Foot";
+        case SKILL_TYPE_PORCUPINE:       return "Porcupine";
+        case SKILL_TYPE_RESURRECTION:    return "Resurrection";
+        case SKILL_TYPE_RAISE_GOLEM:     return "Raise Golem";
+        case SKILL_TYPE_FEAR:            return "Fear";
+        case SKILL_TYPE_INVISIBILITY:    return "Invisibility";
+        case SKILL_TYPE_HOLOGRAM:        return "Hologram";
+    }
+    return "???";
 }
