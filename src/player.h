@@ -261,4 +261,7 @@ void draw_skill_selection();
 
 int get_xp_req(int level);
 
+void draw_stats();
 const char* stats_get_name(StatType stat);
+ItemType stats_get_item(StatType stat);
+Vector2i stats_get_img(StatType stat);

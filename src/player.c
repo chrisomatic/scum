@@ -2188,6 +2188,61 @@ void draw_gauntlet()
     }
 }
 
+void draw_stats()
+{
+    float x = 10.0;
+    float y = 180.0;
+
+    float margin = 5.0;
+    float len = 15.0;
+
+    Vector2i im = stats_get_img(0);
+    GFXImage* img = &gfx_images[im.x];
+    float scale = len / img->element_width;
+    
+
+    for(int i = 0; i < MAX_STAT_TYPE; ++i)
+    {
+        Vector2i im = stats_get_img(i);
+        GFXImage* img = &gfx_images[im.x];
+
+        float _w = scale * img->visible_rects[im.y].w;
+        float _h = scale * img->visible_rects[im.y].h;
+
+        gfx_draw_image_ignore_light(im.x, im.y, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+
+        float _x = x + len + 1.0;
+
+        for(int j = 0; j < 7; ++j)
+        {
+            // border
+            Rect r = {0};
+            r.x = _x;
+            r.y = y - len/2.0;
+            r.w = 3.0;
+            r.h = len;
+
+            if(player->stats[i] >= j)
+            {
+                float adj = 0.2;
+                Rect r2 = r;
+                r2.w -= adj*2;
+                r2.h -= adj*2;
+                r2.x += adj;
+                r2.y += adj;
+                gfx_draw_rect_tl(&r2, COLOR_WHITE, NOT_SCALED, NO_ROTATION, 0.8, true, NOT_IN_WORLD);
+            }
+
+            gfx_draw_rect_tl(&r, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
+
+            _x += 6.0;
+        }
+
+        y += len + margin;
+    }
+
+}
+
 // void draw_timed_items()
 // {
 //     float len = 20.0 * ascale;
@@ -2846,4 +2901,27 @@ const char* stats_get_name(StatType stat)
         case LUCK: return "Luck";
     }
     return "???";
+}
+
+ItemType stats_get_item(StatType stat)
+{
+    switch(stat)
+    {
+        case STRENGTH: return ITEM_POTION_STRENGTH;
+        case DEFENSE: return ITEM_SHIELD;
+        case MOVEMENT_SPEED: return ITEM_FEATHER;
+        case ATTACK_SPEED: return ITEM_WING;
+        case ATTACK_RANGE: return ITEM_LOOKING_GLASS;
+        case LUCK: return ITEM_SHAMROCK;
+    }
+    return ITEM_NONE;
+}
+
+Vector2i stats_get_img(StatType stat)
+{
+    ItemProps* p = &item_props[stats_get_item(stat)];
+    Vector2i ret = {0};
+    ret.x = p->image;
+    ret.y = p->sprite_index;
+    return ret;
 }
