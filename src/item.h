@@ -82,6 +82,7 @@ typedef struct
     float angle;
 
     char desc[32];
+    uint8_t user_data;
 
     // Networking
     float lerp_t;

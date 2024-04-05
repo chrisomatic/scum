@@ -432,7 +432,10 @@ void player2_init_keys()
         memset(&player2->actions[i], 0, sizeof(PlayerInput));
 }
 
-
+bool player_add_skill(Player* p, uint8_t skill)
+{
+    return true;
+}
 
 int get_xp_req(int level)
 {

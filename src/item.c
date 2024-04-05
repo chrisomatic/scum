@@ -104,8 +104,10 @@ static bool item_func_podium(Item* pu, Player* p)
     float x = pu->phys.pos.x;
     float y = pu->phys.pos.y;
     int croom = pu->curr_room;
+
     Item* a = item_add(ITEM_SKILL_BOOK, x, y, croom);
-    item_set_description(a, "skill %d", rand() % 100); //TODO
+    a->user_data = rand() % 5;
+    item_set_description(a, "skill %d", a->user_data); //TODO
 }
 
 
@@ -293,6 +295,8 @@ static bool internal_item_use(Item* pu, void* player)
 
         case ITEM_SKILL_BOOK:
         {
+            printf("player add skill %d\n", pu->user_data);
+            return player_add_skill(p, pu->user_data);
         } break;
 
         case ITEM_GAUNTLET_SLOT:

@@ -228,6 +228,7 @@ void player_draw(Player* p);
 void player_draw_debug(Player* p);
 void player_lerp(Player* p, float dt);
 void player_handle_net_inputs(Player* p, double dt);
+bool player_add_skill(Player* p, uint8_t skill);
 void player_add_xp(Player* p, int xp);
 void player_hurt_no_inv(Player* p, int damage);
 void player_hurt(Player* p, int damage);
