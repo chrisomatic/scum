@@ -3058,6 +3058,21 @@ static void pack_items(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 7,  (uint32_t)it->curr_room);
         BPW(&server.bp, 9,  (uint32_t)(it->angle));
         BPW(&server.bp, 1,  (uint32_t)(it->used ? 0x01 : 0x00));
+        BPW(&server.bp, 8,  (uint32_t)(it->user_data));
+
+        uint8_t dlen = strlen(it->desc);
+        if(dlen > 0)
+        {
+            BPW(&server.bp, 1, 0x01);
+            BPW(&server.bp, 8, dlen);
+            for(int j = 0; j < dlen; ++j)
+            {
+                BPW(&server.bp, 8, (uint8_t)it->desc[j]);
+            }
+        }
+        else
+            BPW(&server.bp, 1, 0x00);
+
     }
 }
 
@@ -3081,6 +3096,18 @@ static void unpack_items(Packet* pkt, int* offset, WorldState* ws)
         uint32_t c_room      = bitpack_read(&client.bp, 7);
         uint32_t _angle      = bitpack_read(&client.bp, 9);
         uint32_t used        = bitpack_read(&client.bp, 1);
+        uint8_t user_data    = bitpack_read(&client.bp, 8);
+        bool has_desc        = bitpack_read(&client.bp, 1);
+
+        if(has_desc)
+        {
+            char desc[32] = {0};
+            uint8_t dlen = bitpack_read(&client.bp, 8);
+            for(int j = 0; j < dlen; ++j)
+            {
+                it->desc[j] = (char)bitpack_read(&client.bp, 8);
+            }
+        }
 
         it->id = id;
         it->type = (int32_t)type-1;
@@ -3089,6 +3116,7 @@ static void unpack_items(Packet* pkt, int* offset, WorldState* ws)
         it->used = used == 1 ? true : false;
         float angle = (float)_angle;
         Vector3f pos = {(float)x,(float)y,(float)z};
+        it->user_data = user_data;
 
         it->lerp_t = 0.0;
 

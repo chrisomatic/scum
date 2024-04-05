@@ -510,7 +510,7 @@ bool player_add_mp(Player* p, int mp)
 {
     uint8_t prev_mp = p->phys.mp;
     p->phys.mp += mp;
-    p->phys.mp = RANGE(p->phys.mp,0,p->phys.mp);
+    p->phys.mp = RANGE(p->phys.mp,0,p->phys.mp_max);
 
     if(prev_mp - p->phys.mp == 0) // no change
         return false;
@@ -1238,6 +1238,11 @@ void player_update(Player* p, float dt)
             if(i < PLAYER_MAX_SKILLS)
             {
                 p->gauntlet_selection = i;
+
+                if(p->skills[i].type != SKILL_TYPE_NONE)
+                {
+                    skills_use(p, &p->skills[i]);
+                }
             }
             break;
         }
