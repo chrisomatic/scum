@@ -23,13 +23,13 @@ static void player_set_sprite_index(Player* p, int sprite_index);
 #define XP_REQ_MULT (3.0)
 int xp_levels[] = {100,120,140,160,180,200};
 
-float lookup_strength[] = { 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0 };
-float lookup_defense[]  = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+float lookup_strength[] = { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
+float lookup_defense[]  = { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 };
 float lookup_movement_speed[] = { 620.0, 705.0, 800.0, 900.0, 1000.0, 1100.0, 1200.0 };
 float lookup_movement_speed_max_vel[] = { 110.0, 135.0, 160.0, 190.0, 220.0, 250.0, 280.0 };
 float lookup_movement_speed_base_friction[] = { 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0 };
 float lookup_attack_speed[] = { 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3 };
-float lookup_attack_range[] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+float lookup_attack_range[] = { 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0 };
 float lookup_luck[] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
 
 int player_ignore_input = 0;
@@ -123,7 +123,7 @@ void player_set_defaults(Player* p)
     p->anim.curr_frame = 0;
     p->anim.max_frames = 4;
     p->anim.curr_frame_time = 0.0f;
-    p->anim.max_frame_time = 0.07f;
+    p->anim.max_frame_time = 0.10f;
     p->anim.finite = false;
     p->anim.curr_loop = 0;
     p->anim.max_loops = 0;
@@ -556,7 +556,9 @@ void player_hurt(Player* p, int damage)
     if(role == ROLE_CLIENT)
         return;
 
-    player_add_hp(p,-damage);
+    float actual_damage = MAX(1.0, damage * (1.0 - lookup_defense[p->stats[DEFENSE]]));
+        
+    player_add_hp(p,-actual_damage);
 
     if(p->phys.hp == 0)
     {
@@ -1130,6 +1132,7 @@ static void player_handle_shooting(Player* p, float dt)
             {
                 ProjectileDef temp = p->proj_def;
                 temp.damage += lookup_strength[p->stats[STRENGTH]];
+                temp.speed  += lookup_attack_range[p->stats[ATTACK_RANGE]];
                 projectile_add(&p->phys, p->curr_room, &temp, &p->proj_spawn, 0x0050A0FF, p->aim_deg, true);
             }
             // text_list_add(text_lst, 5.0, "projectile");
@@ -1765,7 +1768,15 @@ void player_update(Player* p, float dt)
     float m1 = magn2f(p->phys.vel.x,p->phys.vel.y);
     float m2 = magn2f(vel_max.x, vel_max.y);
 
-    p->vel_factor = RANGE(m1/m2,0.4,1.0);
+    // for animation speed
+    float additional_vel_factor = (lookup_movement_speed_max_vel[p->stats[MOVEMENT_SPEED]] / lookup_movement_speed_max_vel[0]) - 1.0;
+
+    p->vel_factor = RANGE(m1/m2,0.3,1.0) + additional_vel_factor;
+    if(p->phys.pos.z > 0.0)
+    {
+        p->vel_factor = RANGE(p->vel_factor, 0.1,0.4);
+    }
+    //printf("vel_factor: %f\n",p->vel_factor);
 
     if(p->phys.falling)
     {
@@ -1844,7 +1855,9 @@ void player_update(Player* p, float dt)
         gfx_anim_update(&p->anim, p->vel_factor*dt);
     }
     else
+    {
         p->anim.curr_frame = 0;
+    }
 
 
     if(p->phys.floating)
