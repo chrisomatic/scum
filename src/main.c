@@ -52,6 +52,9 @@ bool all_players_dead = false;
 double g_timer = 0.0;
 bool g_spikes = false;
 
+int esc_state = 0;
+float esc_timer = 1.0;
+
 // Settings
 uint32_t background_color = COLOR(30,30,30);
 uint32_t margin_color = COLOR_BLACK;
@@ -1245,6 +1248,17 @@ void update(float dt)
         ui_message_set_title(0.2, COLOR_WHITE, 1.2, "PAUSED");
     }
 
+
+    if(esc_state == 1)
+    {
+        ui_message_set_small(0.1, "Press esc again to exit");
+        esc_timer -= dt;
+        if(esc_timer < 0)
+        {
+            esc_state = 0;
+        }
+    }
+
     camera_set(false);
 }
 
@@ -1977,7 +1991,6 @@ void draw()
     ambient_light = _ambient_light;
 }
 
-
 void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
 {
     // printf("key: %d, action: %d\n", key, action);
@@ -2019,33 +2032,50 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
                 }
                 else if(game_state != GAME_STATE_MENU)
                 {
-                    set_game_state(GAME_STATE_MENU);
+                    esc_state++;
+                    if(esc_state == 1)
+                    {
+                        esc_timer = 1.0;
+                    }
+                    else if(esc_state == 2)
+                    {
+                        esc_timer = 1.0;
+                        esc_state = 0;
+                        set_game_state(GAME_STATE_MENU);
+                    }
+
                 }
             }
-            else if(key == GLFW_KEY_F2)
+            else
             {
-                debug_enabled = !debug_enabled;
-            }
-            else if(key == GLFW_KEY_F3)
-            {
-                // if(role == ROLE_LOCAL)
+                esc_state = 0;
+
+                if(key == GLFW_KEY_F2)
                 {
-                    editor_enabled = !editor_enabled;
+                    debug_enabled = !debug_enabled;
                 }
-            }
-            else if(key == GLFW_KEY_P)
-            {
-                if(role == ROLE_LOCAL && game_state == GAME_STATE_PLAYING)
+                else if(key == GLFW_KEY_F3)
                 {
-                    paused = !paused;
+                    // if(role == ROLE_LOCAL)
+                    {
+                        editor_enabled = !editor_enabled;
+                    }
                 }
-            }
-            else if(key == GLFW_KEY_M)
-            {
-                if(role == ROLE_LOCAL && game_state == GAME_STATE_PLAYING)
+                else if(key == GLFW_KEY_P)
                 {
-                    show_big_map = !show_big_map;
+                    if(role == ROLE_LOCAL && game_state == GAME_STATE_PLAYING)
+                    {
+                        paused = !paused;
+                    }
                 }
+                else if(key == GLFW_KEY_M)
+                {
+                    if(role == ROLE_LOCAL && game_state == GAME_STATE_PLAYING)
+                    {
+                        show_big_map = !show_big_map;
+                    }
+                }
+
             }
 
         }
