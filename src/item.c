@@ -8,6 +8,7 @@
 #include "net.h"
 #include "effects.h"
 #include "creature.h"
+#include "skills.h"
 #include "ui.h"
 
 #include "player.h"
@@ -296,7 +297,7 @@ static bool internal_item_use(Item* pu, void* player)
         case ITEM_SKILL_BOOK:
         {
             printf("player add skill %d\n", pu->user_data);
-            return player_add_skill(p, pu->user_data);
+            return skills_add_skill(p, pu->user_data);
         } break;
 
         case ITEM_GAUNTLET_SLOT:

@@ -150,6 +150,10 @@ void player_set_defaults(Player* p)
 
     p->highlighted_item_id = -1;
     p->highlighted_index = 0;
+    
+    memset(p->skills,0,sizeof(Skill)*PLAYER_MAX_SKILLS);
+
+    skills_add_skill(p, SKILL_TYPE_MAGIC_MISSILE);
 
     // for(int j = 0; j < PLAYER_MAX_SKILLS; ++j)
     // {
@@ -430,11 +434,6 @@ void player2_init_keys()
 
     for(int i = 0;  i < PLAYER_ACTION_MAX; ++i)
         memset(&player2->actions[i], 0, sizeof(PlayerInput));
-}
-
-bool player_add_skill(Player* p, uint8_t skill)
-{
-    return true;
 }
 
 int get_xp_req(int level)

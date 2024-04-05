@@ -12,15 +12,13 @@
 
 #define MAX_PLAYERS 4
 
-#define MAX_SKILL_CHOICES  6
-
 #define SPRITE_UP    0
 #define SPRITE_DOWN  4
 #define SPRITE_LEFT  8
 #define SPRITE_RIGHT 12
 
 #define PLAYER_NAME_MAX 16
-#define PLAYER_MAX_SKILLS 20
+#define PLAYER_MAX_SKILLS 8
 
 
 #define PLAYER_GAUNTLET_MAX 8
@@ -144,7 +142,8 @@ typedef struct
     // ItemType timed_items[MAX_TIMED_ITEMS];
     // float timed_items_ttl[MAX_TIMED_ITEMS];
 
-    // uint16_t skills[PLAYER_MAX_SKILLS];
+    Skill skills[PLAYER_MAX_SKILLS];
+    int skill_count;
     // uint8_t skill_count;
     // uint8_t num_skill_choices;
 
@@ -228,7 +227,6 @@ void player_draw(Player* p);
 void player_draw_debug(Player* p);
 void player_lerp(Player* p, float dt);
 void player_handle_net_inputs(Player* p, double dt);
-bool player_add_skill(Player* p, uint8_t skill);
 void player_add_xp(Player* p, int xp);
 void player_hurt_no_inv(Player* p, int damage);
 void player_hurt(Player* p, int damage);
