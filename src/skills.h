@@ -36,3 +36,4 @@ extern int skills_image;
 void skills_init();
 bool skills_add_skill(void* player, SkillType type);
 const char* skills_get_name(SkillType type);
+bool skills_use(void* player, Skill* skill);

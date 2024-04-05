@@ -50,6 +50,36 @@ void skills_init()
     skills_image = gfx_load_image("src/img/skill_icons.png", false, false, 16, 16);
 }
 
+bool skills_use(void* player, Skill* skill)
+{
+
+    Player* p = (Player*)player;
+
+    if(p->phys.mp < skill->mp_cost)
+        return false;
+
+    p->phys.mp -= skill->mp_cost;
+
+    switch(skill->type)
+    {
+        case SKILL_TYPE_MULTI_SHOT:
+        {
+            ProjectileDef def = projectile_lookup[PROJECTILE_TYPE_PLAYER];
+            ProjectileSpawn spawn = projectile_spawn[PROJECTILE_TYPE_PLAYER];
+
+            def.scale += 0.20;
+            spawn.num = 2 + skill->rank;
+            spawn.spread = 30.0;
+
+            projectile_add(&p->phys, p->curr_room, &def, &spawn, COLOR_WHITE, p->aim_deg, true);
+            
+        } break;
+    }
+
+    return true;
+
+}
+
 bool skills_add_skill(void* player, SkillType type)
 {
     Player* p = (Player*)player;
