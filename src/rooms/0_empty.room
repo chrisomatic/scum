@@ -22,11 +22,11 @@ Timed Spikes 2
 
 ; Tile Data
 1,1,1,1,1,1,1,1,1,1,1,1,1
-1,1,1,7,1,1,1,1,1,8,1,1,1
 1,1,1,1,1,1,1,1,1,1,1,1,1
 1,1,1,1,1,1,1,1,1,1,1,1,1
 1,1,1,1,1,1,1,1,1,1,1,1,1
-1,1,1,7,1,1,1,1,1,8,1,1,1
+1,1,1,1,1,1,1,1,1,1,1,1,1
+1,1,1,1,1,1,1,1,1,1,1,1,1
 1,1,1,1,1,1,1,1,1,1,1,1,1
 
 ; Creature Mapping
@@ -47,6 +47,8 @@ Peeper
 Leeper
 Spawn Egg
 Spawn Spider
+Behemoth
+Beacon Red
 
 ; Creatures
 
@@ -66,21 +68,33 @@ Dragon Egg
 Shamrock
 Ruby Ring
 Potion of Strength
-Potion of Speed
-Potion of Range
+Potion of Mana
+Potion of Great Mana
 Potion of Purple
 +1 Gauntlet Slot
 New Level
-Glowing Orb
+Upgrade Orb
 ???
 ???
 ???
 Revive
 Skull
+Galaxy Pendant
+Feather
+Shield
+Wing
+Looking Glass
+Copper Coin
+Silver Coin
+Gold Coin
+???
 Chest
 Shrine
+Podium
 
 ; Items
+37,9,3
+37,4,4
 
 ; Doors
 1,1,1,1

@@ -44,9 +44,11 @@ typedef enum
     ITEM_COIN_COPPER,
     ITEM_COIN_SILVER,
     ITEM_COIN_GOLD,
+    ITEM_SKILL_BOOK,
 
     ITEM_CHEST,
     ITEM_SHRINE,
+    ITEM_PODIUM,
 
     ITEM_MAX
 } ItemType;

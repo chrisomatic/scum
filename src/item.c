@@ -23,6 +23,7 @@ ItemProps item_props[ITEM_MAX] = {0};
 int items_image = -1;
 int chest_image = -1;
 int shrine_image = -1;
+int podium_image = -1;
 
 static int chestables_index[ITEM_MAX] = {0};
 static int num_chestables = 0;
@@ -94,6 +95,18 @@ static bool item_func_skull(Item* pu, Player* p)
     pu->used = true;
     return pu->used;
 }
+
+static bool item_func_podium(Item* pu, Player* p)
+{
+    if(pu->used) return false;
+    pu->used = true;
+
+    float x = pu->phys.pos.x;
+    float y = pu->phys.pos.y;
+    int croom = pu->curr_room;
+    item_add(ITEM_SKILL_BOOK, x, y, croom);
+}
+
 
 static bool item_func_shrine(Item* pu, Player* p)
 {
@@ -277,6 +290,10 @@ static bool internal_item_use(Item* pu, void* player)
             p->coins += 10;
         } break;
 
+        case ITEM_SKILL_BOOK:
+        {
+        } break;
+
         case ITEM_GAUNTLET_SLOT:
         {
             // if(p->gauntlet_slots < PLAYER_GAUNTLET_MAX)
@@ -310,6 +327,11 @@ static bool internal_item_use(Item* pu, void* player)
         case ITEM_SHRINE:
         {
             item_func_shrine(pu, p);
+        } break;
+
+        case ITEM_PODIUM:
+        {
+            item_func_podium(pu, p);
         } break;
 
         default:
@@ -351,6 +373,7 @@ void item_init()
     items_image = gfx_load_image("src/img/items.png", false, false, 16, 16);
     chest_image = gfx_load_image("src/img/chest.png", false, false, 32, 32);
     shrine_image = gfx_load_image("src/img/shrine.png", false, false, 32, 48);
+    podium_image = gfx_load_image("src/img/podium.png", false, false, 32, 48);
 
     for(int i = 0; i < ITEM_MAX; ++i)
     {
@@ -366,6 +389,11 @@ void item_init()
         else if(p->type == ITEM_SHRINE)
         {
             p->image = shrine_image;
+            p->sprite_index = 0;
+        }
+        else if(p->type == ITEM_PODIUM)
+        {
+            p->image = podium_image;
             p->sprite_index = 0;
         }
         else
@@ -534,8 +562,9 @@ const char* item_get_name(ItemType type)
         case ITEM_REVIVE:     return "Revive";
         case ITEM_SHRINE:     return "Shrine";
         case ITEM_CHEST:      return "Chest";
-        case ITEM_NEW_LEVEL:  return "New Level";
+        case ITEM_PODIUM:      return "Podium";
 
+        case ITEM_NEW_LEVEL:  return "New Level";
         case ITEM_SKULL:      return "Skull";
         case ITEM_GEM_RED:    return "Red Gem";
         case ITEM_GEM_GREEN:  return "Green Gem";
@@ -568,6 +597,7 @@ const char* item_get_name(ItemType type)
         case ITEM_COIN_COPPER: return "Copper Coin";
         case ITEM_COIN_SILVER: return "Silver Coin";
         case ITEM_COIN_GOLD: return "Gold Coin";
+        case ITEM_SKILL_BOOK: return "Skill Book";
     }
     return "???";
 }
@@ -580,8 +610,9 @@ const char* item_get_description(ItemType type)
         case ITEM_REVIVE:     return "cheat deat";
         case ITEM_SHRINE:     return "hmmmm";
         case ITEM_CHEST:      return "contains loot";
-        case ITEM_NEW_LEVEL:  return "enter new level";
+        case ITEM_PODIUM:     return "this looks interesting";
 
+        case ITEM_NEW_LEVEL:  return "enter new level";
         case ITEM_SKULL:      return "Chris Rose";
         case ITEM_GEM_RED:    return "";
         case ITEM_GEM_GREEN:  return "";
@@ -614,6 +645,7 @@ const char* item_get_description(ItemType type)
         case ITEM_COIN_COPPER: return "+1 coin";
         case ITEM_COIN_SILVER: return "+5 coins";
         case ITEM_COIN_GOLD: return "+10 coins";
+        case ITEM_SKILL_BOOK: return "todo";
     }
     return "???";
 }
@@ -637,6 +669,13 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
         pu.phys.elasticity = 0.2;
     }
     else if(type == ITEM_SHRINE)
+    {
+        pu.phys.mass = 1000.0;
+        pu.phys.base_friction = 30.0;
+        pu.phys.radius = 12*iscale; //TEMP
+        pu.phys.elasticity = 0.2;
+    }
+    else if(type == ITEM_PODIUM)
     {
         pu.phys.mass = 1000.0;
         pu.phys.base_friction = 30.0;
@@ -700,7 +739,7 @@ void item_update_all(float dt)
         // remove previously used items
         if(pu->used)
         {
-            if(!(pu->type == ITEM_CHEST || pu->type == ITEM_SHRINE))
+            if(!(pu->type == ITEM_CHEST || pu->type == ITEM_SHRINE || pu->type == ITEM_PODIUM))
             {
                 item_remove(pu);
                 continue;
