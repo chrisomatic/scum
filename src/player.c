@@ -281,7 +281,8 @@ void player_drop_item(Player* p, Item* it)
         // }
     }
     // printf("dropping item at %.2f, %.2f\n", nx, ny);
-    item_add(it->type, nx, ny, p->curr_room);
+    Item* a = item_add(it->type, nx, ny, p->curr_room);
+    item_set_description(a, "%s", it->desc);
     it->type = ITEM_NONE;
 }
 
@@ -629,6 +630,7 @@ void player_die(Player* p)
     decal_add(d);
 
     Item skull = {.type = ITEM_SKULL, .phys.pos.x = p->phys.pos.x, .phys.pos.y = p->phys.pos.y};
+    item_set_description(&skull, "%s", p->settings.name);
     player_drop_item(p, &skull);
 
     p->phys.falling = false;
@@ -2159,7 +2161,7 @@ void draw_gauntlet()
             Item* it = &player->gauntlet[player->gauntlet_selection];
             if(it->type != ITEM_NONE)
             {
-                const char* desc = item_get_description(it->type);
+                const char* desc = item_get_description(it->type, it);
                 const char* name = item_get_name(it->type);
 
                 float scale = 0.16 * ascale;
@@ -2606,7 +2608,7 @@ void player_draw(Player* p)
         {
             highlighted_item->highlighted = true;
 
-            const char* desc = item_get_description(highlighted_item->type);
+            const char* desc = item_get_description(highlighted_item->type, highlighted_item);
             const char* name = item_get_name(highlighted_item->type);
 
             if(strlen(desc) > 0)

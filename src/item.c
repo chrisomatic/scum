@@ -104,7 +104,8 @@ static bool item_func_podium(Item* pu, Player* p)
     float x = pu->phys.pos.x;
     float y = pu->phys.pos.y;
     int croom = pu->curr_room;
-    item_add(ITEM_SKILL_BOOK, x, y, croom);
+    Item* a = item_add(ITEM_SKILL_BOOK, x, y, croom);
+    item_set_description(a, "skill %d", rand() % 100); //TODO
 }
 
 
@@ -602,8 +603,14 @@ const char* item_get_name(ItemType type)
     return "???";
 }
 
-const char* item_get_description(ItemType type)
+const char* item_get_description(ItemType type, Item* pu)
 {
+    if(pu)
+    {
+        if(strlen(pu->desc) > 0)
+            return pu->desc;
+    }
+
     switch(type)
     {
         case ITEM_NONE:       return "";
@@ -613,7 +620,7 @@ const char* item_get_description(ItemType type)
         case ITEM_PODIUM:     return "this looks interesting";
 
         case ITEM_NEW_LEVEL:  return "enter new level";
-        case ITEM_SKULL:      return "Chris Rose";
+        case ITEM_SKULL:      return "unknown";
         case ITEM_GEM_RED:    return "";
         case ITEM_GEM_GREEN:  return "";
         case ITEM_GEM_BLUE:   return "";
@@ -701,8 +708,20 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
 
     if(!ret) return NULL;
 
-    return &items[item_list->count];
+    return &items[item_list->count-1];
 }
+
+void item_set_description(Item* pu, char* fmt, ...)
+{
+    if(!pu) return;
+    memset(pu->desc, 0, sizeof(char)*32);
+
+    va_list args;
+    va_start(args, fmt);
+    vsprintf(pu->desc, fmt, args);
+    va_end(args);
+}
+
 
 bool item_remove(Item* pu)
 {
