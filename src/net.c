@@ -3105,8 +3105,9 @@ static void unpack_items(Packet* pkt, int* offset, WorldState* ws)
             uint8_t dlen = bitpack_read(&client.bp, 8);
             for(int j = 0; j < dlen; ++j)
             {
-                it->desc[j] = (char)bitpack_read(&client.bp, 8);
+                desc[j] = (char)bitpack_read(&client.bp, 8);
             }
+            memcpy(it->desc, desc, 32*sizeof(char));
         }
 
         it->id = id;

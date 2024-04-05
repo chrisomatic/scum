@@ -632,7 +632,7 @@ const char* item_get_description(ItemType type, Item* pu)
     switch(type)
     {
         case ITEM_NONE:       return "";
-        case ITEM_REVIVE:     return "cheat deat";
+        case ITEM_REVIVE:     return "cheat death";
         case ITEM_SHRINE:     return "hmmmm";
         case ITEM_CHEST:      return "contains loot";
         case ITEM_PODIUM:     return "this looks interesting";
