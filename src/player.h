@@ -139,19 +139,8 @@ typedef struct
     uint8_t gauntlet_slots;
     Item gauntlet[PLAYER_GAUNTLET_MAX];
 
-    // ItemType timed_items[MAX_TIMED_ITEMS];
-    // float timed_items_ttl[MAX_TIMED_ITEMS];
-
     Skill skills[PLAYER_MAX_SKILLS];
     int skill_count;
-    // uint8_t skill_count;
-    // uint8_t num_skill_choices;
-
-    // bool show_skill_selection;
-    // uint8_t skill_selection;
-    // uint8_t num_skill_selection_choices;
-    // uint16_t skill_choices[MAX_SKILL_CHOICES];
-
 
     ProjectileDef proj_def;
     ProjectileSpawn proj_spawn;

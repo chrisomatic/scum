@@ -28,6 +28,8 @@ typedef struct
     int rank;
     int mp_cost;
     float cooldown;
+    float cooldown_timer;
+    float timer;    // duration
     int slot;
 } Skill;
 
@@ -38,3 +40,5 @@ bool skills_add_skill(void* player, SkillType type);
 const char* skills_get_name(SkillType type);
 bool skills_use(void* player, Skill* skill);
 bool skills_can_use(void* player, Skill* skill);
+void skills_update_timers(void* player, float dt);
+void skills_deactivate(void* player, Skill* skill);

@@ -34,7 +34,7 @@ float lookup_cooldown[SKILL_TYPE_MAX][3] = {
     {0.0, 0.0, 0.0}, // PHASE SHOT
     {0.0, 0.0, 0.0}, // HEAL
     {0.0, 0.0, 0.0}, // DEFLECTOR
-    {0.0, 0.0, 0.0}, // CROWN OF THORNS
+    {2.0, 0.0, 0.0}, // CROWN OF THORNS
     {0.0, 0.0, 0.0}, // FEAR
     {0.0, 0.0, 0.0}, // PHASE SHIFT
     {0.0, 0.0, 0.0}, // RABBITS FOOT
@@ -56,8 +56,53 @@ bool skills_can_use(void* player, Skill* skill)
         return false;
 
     Player* p = (Player*)player;
+
+    if(skill->cooldown_timer > 0 || skill->timer > 0)
+        return false;
+
     return (p->phys.mp >= skill->mp_cost);
 }
+
+void skills_deactivate(void* player, Skill* skill)
+{
+    Player* p = (Player*)player;
+    switch(skill->type)
+    {
+        case SKILL_TYPE_CROWN_OF_THORNS:
+        {
+            p->phys.floating = false;
+        } break;
+    }
+
+    skill->cooldown_timer = skill->cooldown;
+}
+
+void skills_update_timers(void* player, float dt)
+{
+    Player* p = (Player*)player;
+
+    for(int i = 0; i < PLAYER_MAX_SKILLS; ++i)
+    {
+        Skill* s = &p->skills[i];
+        // if(s->cooldown > 0 && s->cooldown_timer > 0)
+        if(s->cooldown_timer > 0)
+        {
+            s->cooldown_timer -= dt;
+            s->cooldown_timer = MAX(0, s->cooldown_timer);
+        }
+        if(s->timer > 0)
+        {
+            s->timer -= dt;
+            s->timer = MAX(0, s->timer);
+            if(s->timer == 0)
+            {
+                skills_deactivate(player, s);
+            }
+        }
+    }
+
+}
+
 
 bool skills_use(void* player, Skill* skill)
 {
@@ -148,7 +193,8 @@ bool skills_use(void* player, Skill* skill)
         } break;
         case SKILL_TYPE_CROWN_OF_THORNS:
         {
-
+            p->phys.floating = true;
+            skill->timer = 1.0;
         } break;
         case SKILL_TYPE_FEAR:
         {
@@ -183,6 +229,8 @@ bool skills_use(void* player, Skill* skill)
 
         } break;
     }
+
+    // skill->cooldown_timer = skill->cooldown;
 
     return true;
 

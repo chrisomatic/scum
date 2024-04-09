@@ -133,14 +133,14 @@ void player_set_defaults(Player* p)
     p->anim.frame_sequence[3] = 3;
 
     p->gauntlet_selection = 0;
-    p->gauntlet_slots = MIN(3,PLAYER_GAUNTLET_MAX);
-    for(int j = 0; j < PLAYER_GAUNTLET_MAX; ++j)
-    {
-        p->gauntlet[j].type = ITEM_NONE;
-        // p->gauntlet[j].type = item_rand(false);
-        // p->gauntlet[j].type = ITEM_CHEST;
-    }
-    // p->gauntlet_item.type = ITEM_NONE;
+    // p->gauntlet_slots = MIN(3,PLAYER_GAUNTLET_MAX);
+    // for(int j = 0; j < PLAYER_GAUNTLET_MAX; ++j)
+    // {
+    //     p->gauntlet[j].type = ITEM_NONE;
+    //     // p->gauntlet[j].type = item_rand(false);
+    //     // p->gauntlet[j].type = ITEM_CHEST;
+    // }
+    // // p->gauntlet_item.type = ITEM_NONE;
 
     p->coins = 0;
 
@@ -159,6 +159,7 @@ void player_set_defaults(Player* p)
     }
 
     // temp
+    skills_add_skill(p, SKILL_TYPE_CROWN_OF_THORNS);
     skills_add_skill(p, SKILL_TYPE_MAGIC_MISSILE);
     skills_add_skill(p, SKILL_TYPE_MAGIC_MISSILE);
     skills_add_skill(p, SKILL_TYPE_MULTI_SHOT);
@@ -237,7 +238,7 @@ void player_print(Player* p)
     printf("    level:      %d\n", p->level);
     printf("    new_levels: %d\n", p->new_levels);
     printf("    gauntlet_selection: %u\n", p->gauntlet_selection);
-    printf("    gauntlet_slots:     %u\n", p->gauntlet_slots);
+    // printf("    gauntlet_slots:     %u\n", p->gauntlet_slots);
     // printf("    skill_count:      %d\n", p->skill_count);
     printf("    sprite_index:    %u\n", p->sprite_index);
     printf("    curr_room:       %u\n", p->curr_room);
@@ -305,11 +306,11 @@ void player_drop_item(Player* p, Item* it)
 uint8_t player_get_gauntlet_count(Player* p)
 {
     uint8_t count = 0;
-    for(int i = 0; i < p->gauntlet_slots; ++i)
-    {
-        if(p->gauntlet[i].type != ITEM_NONE)
-            count++;
-    }
+    // for(int i = 0; i < p->gauntlet_slots; ++i)
+    // {
+    //     if(p->gauntlet[i].type != ITEM_NONE)
+    //         count++;
+    // }
     return count;
 }
 
@@ -616,15 +617,15 @@ void player_die(Player* p)
     p->phys.floating = true;
     status_effects_clear(&p->phys);
 
-    // drop all items
-    for(int i = 0; i < PLAYER_GAUNTLET_MAX; ++i)
-    {
-        if(p->gauntlet[i].type == ITEM_NONE)
-            continue;
+    // // drop all items
+    // for(int i = 0; i < PLAYER_GAUNTLET_MAX; ++i)
+    // {
+    //     if(p->gauntlet[i].type == ITEM_NONE)
+    //         continue;
 
-        player_drop_item(p, &p->gauntlet[i]);
-        p->gauntlet[i].type = ITEM_NONE;
-    }
+    //     player_drop_item(p, &p->gauntlet[i]);
+    //     p->gauntlet[i].type = ITEM_NONE;
+    // }
 
     ParticleEffect* eff = &particle_effects[EFFECT_BLOOD2];
     ParticleSpawner* ps = particles_spawn_effect(p->phys.pos.x,p->phys.pos.y, 0.0, eff, 0.5, true, false);
@@ -1262,6 +1263,8 @@ void player_update(Player* p, float dt)
         //     }
         // }
     }
+
+    skills_update_timers((void*)p, dt);
 
     if(action_use)
     {
