@@ -167,6 +167,7 @@ void player_set_defaults(Player* p)
     skills_add_skill(p, SKILL_TYPE_MULTI_SHOT);
     skills_add_skill(p, SKILL_TYPE_SENTIENCE);
     skills_add_skill(p, SKILL_TYPE_ROCK_SHOWER);
+    skills_add_skill(p, SKILL_TYPE_PHASE_SHOT);
 
     // for(int j = 0; j < PLAYER_MAX_SKILLS; ++j)
     // {

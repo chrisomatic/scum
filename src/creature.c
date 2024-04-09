@@ -1213,6 +1213,7 @@ static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float 
     ProjectileDef def = projectile_lookup[pt];
     ProjectileSpawn spawn = projectile_spawn[pt];
 
+    def.scale += 0.80;
     Rect r = level_get_tile_rect(tile_x, tile_y);
     Vector3f pos = {r.x, r.y, 400.0};
 
