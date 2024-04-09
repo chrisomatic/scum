@@ -2520,53 +2520,22 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             BPW(&server.bp, 6,  (uint32_t)p->phys.pos.z);
             BPW(&server.bp, 5,  (uint32_t)p->sprite_index+p->anim.curr_frame);
             BPW(&server.bp, 7,  (uint32_t)p->curr_room);
+            BPW(&server.bp, 8,  (uint32_t)p->phys.mp);
+            BPW(&server.bp, 8,  (uint32_t)p->phys.mp_max);
             BPW(&server.bp, 4,  (uint32_t)p->phys.hp);
             BPW(&server.bp, 4,  (uint32_t)p->phys.hp_max);
             BPW(&server.bp, 16, (uint32_t)(p->highlighted_item_id+1));
-
-            // BPW(&server.bp, 5, (uint32_t)(p->skill_count));
-            // for(int j = 0; j < p->skill_count; ++j)
-            // {
-            //     BPW(&server.bp, 8, (uint32_t)(p->skills[j]));
-            // }
 
             BPW(&server.bp, 12, (uint32_t)(p->xp));
             BPW(&server.bp, 5, (uint32_t)(p->level));
             BPW(&server.bp, 5, (uint32_t)(p->new_levels));
 
-            // BPW(&server.bp, 1, (uint32_t)(p->show_skill_selection ? 1 : 0));
-            // BPW(&server.bp, 3, (uint32_t)(p->skill_selection));
-            // BPW(&server.bp, 3, (uint32_t)(p->num_skill_selection_choices));
-            // for(int j = 0; j < p->num_skill_selection_choices; ++j)
-            // {
-            //     BPW(&server.bp, 8, (uint32_t)(p->skill_choices[j]));
-            // }
-
             BPW(&server.bp, 4,  (uint32_t)p->gauntlet_selection);
-            BPW(&server.bp, 4,  (uint32_t)p->gauntlet_slots);
-
-            for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
-                BPW(&server.bp, 6,  (uint32_t)(p->gauntlet[g].type + 1));
 
             BPW(&server.bp, 1, (uint32_t)(p->invulnerable_temp ? 1 : 0));
             BPW(&server.bp, 6, (uint32_t)p->invulnerable_temp_time);
             BPW(&server.bp, 4, (uint32_t)p->door);
             BPW(&server.bp, 1, (uint32_t)(p->phys.dead ? 1 : 0));
-
-            // uint32_t timed_items_count = 0;
-            // for(int t = 0; t < MAX_TIMED_ITEMS; ++t)
-            //     if(p->timed_items[t] != ITEM_NONE)
-            //         timed_items_count++;
-
-            // BPW(&server.bp, 4,  (uint32_t)timed_items_count);
-            // for(int t = 0; t < MAX_TIMED_ITEMS; ++t)
-            // {
-            //     if(p->timed_items[t] == ITEM_NONE)
-            //         continue;
-
-            //     BPW(&server.bp, 6,  (uint32_t)(p->timed_items[t] + 1));
-            //     BPW(&server.bp, 8,  (uint32_t)(p->timed_items_ttl[t] * 10.0));
-            // }
 
             BPW(&server.bp, 2,  (uint32_t)p->weapon.state);
             if(p->weapon.state > WEAPON_STATE_NONE)
@@ -2610,49 +2579,22 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         uint32_t z                   = bitpack_read(&client.bp, 6);
         uint32_t sprite_index        = bitpack_read(&client.bp, 5);
         uint32_t c_room              = bitpack_read(&client.bp, 7);
+        uint32_t mp                  = bitpack_read(&client.bp, 8);
+        uint32_t mp_max              = bitpack_read(&client.bp, 8);
         uint32_t hp                  = bitpack_read(&client.bp, 4);
         uint32_t hp_max              = bitpack_read(&client.bp, 4);
         uint32_t highlighted_item_id = bitpack_read(&client.bp, 16);
-        // uint32_t skill_count         = bitpack_read(&client.bp, 5);
-
-        // uint32_t skills[PLAYER_MAX_SKILLS] = {0};
-        // for(int j = 0; j < skill_count; ++j)
-        //     skills[j] =  bitpack_read(&client.bp, 8);
 
         uint32_t xp                  = bitpack_read(&client.bp, 12);
         uint32_t level               = bitpack_read(&client.bp, 5);
         uint32_t new_levels          = bitpack_read(&client.bp, 5);
 
-        // uint32_t show_skill_selection= bitpack_read(&client.bp, 1);
-        // uint32_t skill_selection     = bitpack_read(&client.bp, 3);
-        // uint32_t num_skill_choices   = bitpack_read(&client.bp, 3);
-
-        // uint32_t skill_choices[MAX_SKILL_CHOICES] = {0};
-        // for(int j = 0; j < num_skill_choices; ++j)
-        //     skill_choices[j] =  bitpack_read(&client.bp, 8);
-
         uint32_t gauntlet_selection  = bitpack_read(&client.bp, 4);
-        uint32_t gauntlet_slots      = bitpack_read(&client.bp, 4);
-
-        uint32_t gauntlet_types[PLAYER_GAUNTLET_MAX] = {0};
-        for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
-            gauntlet_types[g] = bitpack_read(&client.bp, 6);
 
         uint32_t invunerable_temp = bitpack_read(&client.bp, 1);
         uint32_t inv_temp_time    = bitpack_read(&client.bp, 6);
         uint32_t door             = bitpack_read(&client.bp, 4);
         uint32_t dead             = bitpack_read(&client.bp, 1);
-
-        // uint32_t timed_items_count = bitpack_read(&client.bp, 4);
-
-        // uint32_t timed_items[MAX_TIMED_ITEMS] = {0};
-        // uint32_t timed_items_ttl[MAX_TIMED_ITEMS] = {0};
-
-        // for(int t = 0; t < timed_items_count; ++t)
-        // {
-        //     timed_items[t]     = bitpack_read(&client.bp, 6);
-        //     timed_items_ttl[t] = bitpack_read(&client.bp, 8);
-        // }
 
         uint32_t weapon_state = bitpack_read(&client.bp, 2);
 
@@ -2685,54 +2627,23 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         Vector3f pos = {(float)x,(float)y,(float)z};
         p->sprite_index = (uint8_t)sprite_index;
         uint8_t curr_room  = (uint8_t)c_room;
+        p->phys.mp  = (uint8_t)mp;
+        p->phys.mp_max  = (uint8_t)mp_max;
         p->phys.hp  = (uint8_t)hp;
         p->phys.hp_max  = (uint8_t)hp_max;
 
         p->highlighted_item_id = ((int32_t)highlighted_item_id)-1;
 
-        // p->skill_count = (int)skill_count;
-        // for(int j = 0; j < p->skill_count; ++j)
-        // {
-        //     p->skills[j] = (int)skills[j];
-        // }
-
         p->xp = (uint16_t)xp;
         p->level = (uint8_t)level;
         p->new_levels = (uint8_t)new_levels;
 
-        // p->show_skill_selection = show_skill_selection == 1 ? true : false;
-        // p->skill_selection = (uint8_t)skill_selection;
-        // p->num_skill_selection_choices = (uint8_t)num_skill_choices;
-
-        // for(int j = 0; j < MAX_SKILL_CHOICES; ++j)
-        // {
-        //     p->skill_choices[j] = (uint16_t)skill_choices[j];
-        // }
-
         p->gauntlet_selection = (uint8_t)gauntlet_selection;
-        p->gauntlet_slots = (uint8_t)gauntlet_slots;
-        for(int g = 0; g < PLAYER_GAUNTLET_MAX; ++g)
-        {
-            int8_t type = ((int8_t)gauntlet_types[g]) - 1;
-            p->gauntlet[g].type = (ItemType)type;
-        }
 
         p->invulnerable_temp = invunerable_temp == 1 ? true : false;
         float invulnerable_temp_time = (float)inv_temp_time;
         p->door  = (Dir)door;
         p->phys.dead  = dead == 1 ? true: false;
-
-        // for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
-        //     p->timed_items[i] = ITEM_NONE;
-
-        // for(int t = 0; t < timed_items_count; ++t)
-        // {
-        //     int   ti     = (int)timed_items[t];
-        //     float ti_ttl = (float)timed_items_ttl[t];
-
-        //     p->timed_items[t]     = (ItemType)(ti-1);
-        //     p->timed_items_ttl[t] = (ti_ttl/10.0f);
-        // }
 
         p->weapon.state = (WeaponState)weapon_state;
         //p->weapon.pos.x = (float)weapon_x;
@@ -3056,7 +2967,7 @@ static void pack_items(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 10, (uint32_t)it->phys.pos.y);
         BPW(&server.bp, 6,  (uint32_t)it->phys.pos.z);
         BPW(&server.bp, 7,  (uint32_t)it->curr_room);
-        BPW(&server.bp, 9,  (uint32_t)(it->angle));
+        BPW(&server.bp, 10,  (uint32_t)(it->angle));
         BPW(&server.bp, 1,  (uint32_t)(it->used ? 0x01 : 0x00));
         BPW(&server.bp, 8,  (uint32_t)(it->user_data));
 
@@ -3094,7 +3005,7 @@ static void unpack_items(Packet* pkt, int* offset, WorldState* ws)
         uint32_t y           = bitpack_read(&client.bp, 10);
         uint32_t z           = bitpack_read(&client.bp, 6);
         uint32_t c_room      = bitpack_read(&client.bp, 7);
-        uint32_t _angle      = bitpack_read(&client.bp, 9);
+        uint32_t _angle      = bitpack_read(&client.bp, 10);
         uint32_t used        = bitpack_read(&client.bp, 1);
         uint8_t user_data    = bitpack_read(&client.bp, 8);
         bool has_desc        = bitpack_read(&client.bp, 1);
