@@ -60,6 +60,7 @@ bool skills_can_use(void* player, Skill* skill)
     return (p->phys.mp >= skill->mp_cost);
 }
 
+//TODO: store original deltas
 void skills_deactivate(void* player, Skill* skill)
 {
     Player* p = (Player*)player;
@@ -68,6 +69,12 @@ void skills_deactivate(void* player, Skill* skill)
         case SKILL_TYPE_CROWN_OF_THORNS:
         {
             p->phys.floating = false;
+        } break;
+        case SKILL_TYPE_RABBITS_FOOT:
+        {
+            p->phys.speed -= skill->delta1;
+            p->phys.max_velocity -= skill->delta2;
+            p->phys.base_friction -= skill->delta3;
         } break;
     }
 
@@ -219,7 +226,14 @@ bool skills_use(void* player, Skill* skill)
         } break;
         case SKILL_TYPE_RABBITS_FOOT:
         {
-
+            skill->delta1 = 100.0 * skill->rank;
+            skill->delta2 = 50.0 * skill->rank;
+            skill->delta3 = 4.0 * skill->rank;
+            p->phys.speed += skill->delta1;
+            p->phys.max_velocity += skill->delta2;
+            p->phys.base_friction += skill->delta3;
+            skill->duration = 5.0;
+            skill->duration_timer = skill->duration;
         } break;
         case SKILL_TYPE_PORCUPINE:
         {

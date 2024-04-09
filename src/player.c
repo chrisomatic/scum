@@ -86,7 +86,7 @@ void player_set_defaults(Player* p)
 
     p->phys.hp_max = 6;
     p->phys.hp = p->phys.hp_max;
-    p->phys.mp_max = 1000;
+    p->phys.mp_max = 50;
     p->phys.mp = p->phys.mp_max;
 
     p->invulnerable = false;
@@ -133,14 +133,6 @@ void player_set_defaults(Player* p)
     p->anim.frame_sequence[3] = 3;
 
     p->gauntlet_selection = 0;
-    // p->gauntlet_slots = MIN(3,PLAYER_GAUNTLET_MAX);
-    // for(int j = 0; j < PLAYER_GAUNTLET_MAX; ++j)
-    // {
-    //     p->gauntlet[j].type = ITEM_NONE;
-    //     // p->gauntlet[j].type = item_rand(false);
-    //     // p->gauntlet[j].type = ITEM_CHEST;
-    // }
-    // // p->gauntlet_item.type = ITEM_NONE;
 
     p->coins = 0;
 
@@ -159,29 +151,16 @@ void player_set_defaults(Player* p)
     }
 
     // temp
-    skills_add_skill(p, SKILL_TYPE_CROWN_OF_THORNS);
     skills_add_skill(p, SKILL_TYPE_MAGIC_MISSILE);
-    skills_add_skill(p, SKILL_TYPE_MAGIC_MISSILE);
-    skills_add_skill(p, SKILL_TYPE_MULTI_SHOT);
-    skills_add_skill(p, SKILL_TYPE_MULTI_SHOT);
-    skills_add_skill(p, SKILL_TYPE_MULTI_SHOT);
-    skills_add_skill(p, SKILL_TYPE_SENTIENCE);
-    skills_add_skill(p, SKILL_TYPE_ROCK_SHOWER);
-    skills_add_skill(p, SKILL_TYPE_PHASE_SHOT);
-
-    // for(int j = 0; j < PLAYER_MAX_SKILLS; ++j)
-    // {
-    //     p->skills[j] = -1;
-    // }
-    // p->skill_count = 0;
-    // p->num_skill_choices = MIN(3,MAX_SKILL_CHOICES);
+    // skills_add_skill(p, SKILL_TYPE_CROWN_OF_THORNS);
+    // skills_add_skill(p, SKILL_TYPE_MULTI_SHOT);
+    // skills_add_skill(p, SKILL_TYPE_RABBITS_FOOT);
+    // skills_add_skill(p, SKILL_TYPE_SENTIENCE);
+    // skills_add_skill(p, SKILL_TYPE_ROCK_SHOWER);
+    // skills_add_skill(p, SKILL_TYPE_PHASE_SHOT);
 
     p->periodic_shot_counter = 0.0;
 
-    // for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
-    // {
-    //     p->timed_items[i] = ITEM_NONE;
-    // }
 }
 
 void player_init()

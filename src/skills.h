@@ -34,6 +34,10 @@ typedef struct
     float duration;
     float duration_timer;
 
+    float delta1;
+    float delta2;
+    float delta3;
+
     int slot;
 } Skill;
 
