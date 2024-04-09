@@ -335,13 +335,19 @@ bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path
                 if(!check || STR_EMPTY(line))
                     break;
 
+                bool matched = false;
                 for(int i = 0; i < ITEM_MAX; ++i)
                 {
                     if(STR_EQUAL(line, item_names[i]))
                     {
+                        matched = true;
                         item_mapping[imi++] = i;
                         break;
                     }
+                }
+                if(!matched)
+                {
+                    item_mapping[imi++] = -1;
                 }
 
             }
@@ -378,11 +384,24 @@ bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path
 
                 ItemType type = item_mapping[index];
 
-                rfd->item_types[rfd->item_count] = type;
-                rfd->item_locations_x[rfd->item_count] = x;
-                rfd->item_locations_y[rfd->item_count] = y;
-                rfd->item_count++;
+                if(type >= 0)
+                {
+                    rfd->item_types[rfd->item_count] = type;
+                    rfd->item_locations_x[rfd->item_count] = x;
+                    rfd->item_locations_y[rfd->item_count] = y;
+                    rfd->item_count++;
+                }
             }
+
+            // if(STR_EQUAL("src/rooms/treasure1.room", filename))
+            // {
+            //     for(int i = 0; i < imi; ++i)
+            //     {
+            //         printf("item mapping %d: %d\n", i, item_mapping[i]);
+            //     }
+            // }
+            // printf("item mapping. filename: %s\n", filename);
+
         }
         else if(STR_EQUAL(section,"Doors"))
         {

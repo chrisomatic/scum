@@ -722,6 +722,10 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
     pu.phys.height = 1.6f*pu.phys.radius;
     pu.phys.vr = gfx_images[ item_props[pu.type].image ].visible_rects[0];
 
+    // x,y position passed in are meant to be the collision positions
+    phys_calc_collision_rect(&pu.phys);
+    phys_set_collision_pos(&pu.phys, x, y);
+
     bool ret = list_add(item_list,&pu);
 
     if(!ret) return NULL;
