@@ -197,7 +197,7 @@ bool skills_use(void* player, Skill* skill)
         } break;
         case SKILL_TYPE_HEAL:
         {
-            player_add_hp(p, 2+(2*skill->rank));
+            player_add_hp(p, (2*skill->rank));
         } break;
         case SKILL_TYPE_DEFLECTOR:
         {

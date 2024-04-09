@@ -249,8 +249,8 @@ static bool internal_item_use(Item* pu, void* player)
 
         case ITEM_GALAXY_PENDANT:
         {
-            p->phys.mp_max += 5;
-            player_add_mp(p,5);
+            p->phys.mp_max += 30;
+            player_add_mp(p,30);
         } break;
 
         // [STAT] Strength
