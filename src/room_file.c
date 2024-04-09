@@ -349,7 +349,6 @@ bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path
                 {
                     item_mapping[imi++] = -1;
                 }
-
             }
         }
         else if(STR_EQUAL(section,"Items"))

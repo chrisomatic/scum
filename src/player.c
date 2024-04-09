@@ -86,7 +86,7 @@ void player_set_defaults(Player* p)
 
     p->phys.hp_max = 6;
     p->phys.hp = p->phys.hp_max;
-    p->phys.mp_max = 10;
+    p->phys.mp_max = 1000;
     p->phys.mp = p->phys.mp_max;
 
     p->invulnerable = false;
@@ -158,7 +158,14 @@ void player_set_defaults(Player* p)
         p->skills[j].type = SKILL_TYPE_NONE;
     }
 
-    // skills_add_skill(p, SKILL_TYPE_MAGIC_MISSILE); //TEMP
+    // temp
+    skills_add_skill(p, SKILL_TYPE_MAGIC_MISSILE);
+    skills_add_skill(p, SKILL_TYPE_MAGIC_MISSILE);
+    skills_add_skill(p, SKILL_TYPE_MULTI_SHOT);
+    skills_add_skill(p, SKILL_TYPE_MULTI_SHOT);
+    skills_add_skill(p, SKILL_TYPE_MULTI_SHOT);
+    skills_add_skill(p, SKILL_TYPE_SENTIENCE);
+    skills_add_skill(p, SKILL_TYPE_ROCK_SHOWER);
 
     // for(int j = 0; j < PLAYER_MAX_SKILLS; ++j)
     // {
@@ -1238,11 +1245,6 @@ void player_update(Player* p, float dt)
             if(i < PLAYER_MAX_SKILLS)
             {
                 p->gauntlet_selection = i;
-
-                if(p->skills[i].type != SKILL_TYPE_NONE)
-                {
-                    skills_use(p, &p->skills[i]);
-                }
             }
             break;
         }
@@ -1261,6 +1263,13 @@ void player_update(Player* p, float dt)
         // }
     }
 
+    if(action_use)
+    {
+        if(p->skills[p->gauntlet_selection].type != SKILL_TYPE_NONE)
+        {
+            skills_use(p, &p->skills[p->gauntlet_selection]);
+        }
+    }
 
     // if(show_skill)
     // {
@@ -2172,7 +2181,8 @@ void draw_gauntlet()
         uint32_t color = COLOR_BLACK;
         Skill skill = player->skills[i];
 
-        if(i == player->gauntlet_selection)
+        bool selected_skill = (i == player->gauntlet_selection);
+        if(selected_skill)
         {
             if(skill.type != SKILL_TYPE_NONE)
             {
@@ -2185,7 +2195,9 @@ void draw_gauntlet()
                 float bly = r.y + r.h/2.0 + 2.0;
 
                 gfx_draw_string(tlx, bly, COLOR_WHITE, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%s (%d)", name, skill.rank);
+
             }
+
             color = 0x00b0b0b0;
         }
 
@@ -2193,8 +2205,21 @@ void draw_gauntlet()
 
         if(skill.type != SKILL_TYPE_NONE)
         {
-            gfx_draw_image_ignore_light(skills_image, skill.type, r.x, r.y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+            gfx_draw_image_ignore_light(skills_image, skill.type, r.x, r.y, COLOR_TINT_NONE, 0.8*scale, 0.0, 1.0, false, NOT_IN_WORLD);
+
+            if(!skills_can_use((void*)player, &skill))
+            {
+                gfx_draw_rect(&r, 0x00202020, 0.8, NO_ROTATION, 0.8, true, NOT_IN_WORLD);
+            }
+
         }
+
+        float tlx = r.x - r.w/2.0;
+        float tly = r.y - r.h/2.0;
+
+        gfx_draw_string(tlx, tly, COLOR_WHITE, 0.15 * ascale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%d", i+1);
+
+
         r.x += len;
         r.x += margin;
     }

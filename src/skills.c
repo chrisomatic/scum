@@ -50,18 +50,77 @@ void skills_init()
     skills_image = gfx_load_image("src/img/skill_icons.png", false, false, 16, 16);
 }
 
-bool skills_use(void* player, Skill* skill)
+bool skills_can_use(void* player, Skill* skill)
 {
-
-    Player* p = (Player*)player;
-
-    if(p->phys.mp < skill->mp_cost)
+    if(!player || !skill)
         return false;
 
+    Player* p = (Player*)player;
+    return (p->phys.mp >= skill->mp_cost);
+}
+
+bool skills_use(void* player, Skill* skill)
+{
+    if(!skills_can_use(player, skill))
+        return false;
+
+    Player* p = (Player*)player;
     p->phys.mp -= skill->mp_cost;
 
     switch(skill->type)
     {
+        case SKILL_TYPE_MAGIC_MISSILE:
+        {
+            ProjectileDef def = projectile_lookup[PROJECTILE_TYPE_PLAYER];
+            ProjectileSpawn spawn = projectile_spawn[PROJECTILE_TYPE_PLAYER];
+
+            def.scale += 0.20;
+            def.damage *= (1.0+skill->rank);
+            def.speed += (200.0*skill->rank);
+            spawn.num = 1;
+            spawn.spread = 0.0;
+
+            projectile_add(&p->phys, p->curr_room, &def, &spawn, 0x0000CCFF, p->aim_deg, true);
+
+        } break;
+
+        case SKILL_TYPE_ROCK_SHOWER:
+        {
+            ProjectileDef def = projectile_lookup[PROJECTILE_TYPE_PLAYER];
+            ProjectileSpawn spawn = projectile_spawn[PROJECTILE_TYPE_PLAYER];
+            
+            Room* room = level_get_room_by_index(&level, p->curr_room);
+
+            for(int i = 0; i < 10; ++i)
+            {
+                Vector2i rand_tile;
+                Vector2f rand_pos;
+
+                level_get_rand_floor_tile(room, &rand_tile, &rand_pos);
+
+                Rect r = level_get_tile_rect(rand_tile.x, rand_tile.y);
+                Vector3f pos = {r.x, r.y, 400.0};
+
+                projectile_drop(pos, 0.0, p->curr_room, &def, &spawn, 0x00553300, false);
+
+            }
+
+        } break;
+        case SKILL_TYPE_SENTIENCE:
+        {
+            ProjectileDef def = projectile_lookup[PROJECTILE_TYPE_PLAYER];
+            ProjectileSpawn spawn = projectile_spawn[PROJECTILE_TYPE_PLAYER];
+
+            def.scale += 0.00;
+            def.damage *= (1.0+skill->rank);
+            spawn.num = 3 + (2*skill->rank);
+            spawn.spread = 0.0;
+            spawn.homing_chance = 1.0;
+
+            projectile_add(&p->phys, p->curr_room, &def, &spawn, 0x00555555, p->aim_deg, true);
+
+        } break;
+
         case SKILL_TYPE_MULTI_SHOT:
         {
             ProjectileDef def = projectile_lookup[PROJECTILE_TYPE_PLAYER];
@@ -73,6 +132,55 @@ bool skills_use(void* player, Skill* skill)
 
             projectile_add(&p->phys, p->curr_room, &def, &spawn, COLOR_WHITE, p->aim_deg, true);
             
+        } break;
+
+        case SKILL_TYPE_PHASE_SHOT:
+        {
+
+        } break;
+        case SKILL_TYPE_HEAL:
+        {
+
+        } break;
+        case SKILL_TYPE_DEFLECTOR:
+        {
+
+        } break;
+        case SKILL_TYPE_CROWN_OF_THORNS:
+        {
+
+        } break;
+        case SKILL_TYPE_FEAR:
+        {
+
+        } break;
+        case SKILL_TYPE_PHASE_SHIFT:
+        {
+
+        } break;
+        case SKILL_TYPE_RABBITS_FOOT:
+        {
+
+        } break;
+        case SKILL_TYPE_PORCUPINE:
+        {
+
+        } break;
+        case SKILL_TYPE_RESURRECTION:
+        {
+
+        } break;
+        case SKILL_TYPE_RAISE_GOLEM:
+        {
+
+        } break;
+        case SKILL_TYPE_INVISIBILITY:
+        {
+
+        } break;
+        case SKILL_TYPE_HOLOGRAM:
+        {
+
         } break;
     }
 

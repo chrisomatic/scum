@@ -1004,6 +1004,12 @@ void creature_die(Creature* c)
     d.room = c->curr_room;
     decal_add(d);
 
+    if(rand() % 10 == 0)
+    {
+        // drop item
+        item_add(ITEM_POTION_MANA, c->phys.pos.x, c->phys.pos.y, c->curr_room);
+    }
+
     // handle_room_completion(c->curr_room);
     handle_room_completion(room);
 }
