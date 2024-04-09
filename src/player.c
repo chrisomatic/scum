@@ -2191,14 +2191,14 @@ void draw_gauntlet()
             if(skill.type != SKILL_TYPE_NONE)
             {
                 const char* name = skills_get_name(skill.type);
-                float scale = 0.12 * ascale;
-                Vector2f size = gfx_string_get_size(scale, (char*)name);
+                float tscale = 0.12 * ascale;
+                Vector2f size = gfx_string_get_size(tscale, (char*)name);
 
                 float tlx = r.x - r.w/2.0;
                 // float tly = r.y - r.h/2.0 + size.y + 2.0;
                 float bly = r.y + r.h/2.0 + 2.0;
 
-                gfx_draw_string(tlx, bly, COLOR_WHITE, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%s (%d)", name, skill.rank);
+                gfx_draw_string(tlx, bly, COLOR_WHITE, tscale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%s (%d)", name, skill.rank);
 
             }
 
@@ -2207,19 +2207,38 @@ void draw_gauntlet()
 
         gfx_draw_rect(&r, color, NOT_SCALED, NO_ROTATION, 0.3, true, NOT_IN_WORLD);
 
+        float tlx = r.x - r.w/2.0;
+        float tly = r.y - r.h/2.0;
+
         if(skill.type != SKILL_TYPE_NONE)
         {
             gfx_draw_image_ignore_light(skills_image, skill.type, r.x, r.y, COLOR_TINT_NONE, 0.8*scale, 0.0, 1.0, false, NOT_IN_WORLD);
 
-            if(!skills_can_use((void*)player, &skill))
+            if(skill.duration_timer > 0)
+            {
+                Rect tr = {0};
+                tr.h = r.h * (1.0 - skill.duration_timer / skill.duration);
+                tr.w = r.w;
+                tr.x =  tlx;
+                tr.y = tly + (r.h-tr.h);
+                gfx_draw_rect_tl(&tr, 0x0020f020, 1.0, NO_ROTATION, 0.4, true, NOT_IN_WORLD);
+            }
+            else if(skill.cooldown_timer > 0)
+            {
+                Rect tr = {0};
+                tr.h = r.h * (skill.cooldown_timer / skill.cooldown);
+                tr.w = r.w;
+                tr.x = tlx;
+                tr.y = tly + (r.h-tr.h);
+                gfx_draw_rect_tl(&tr, 0x00f02020, 1.0, NO_ROTATION, 0.4, true, NOT_IN_WORLD);
+            }
+            else if(!skills_can_use((void*)player, &skill))
             {
                 gfx_draw_rect(&r, 0x00202020, 0.8, NO_ROTATION, 0.8, true, NOT_IN_WORLD);
             }
 
         }
 
-        float tlx = r.x - r.w/2.0;
-        float tly = r.y - r.h/2.0;
 
         gfx_draw_string(tlx, tly, COLOR_WHITE, 0.15 * ascale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%d", i+1);
 

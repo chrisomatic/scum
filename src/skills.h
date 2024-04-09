@@ -27,9 +27,13 @@ typedef struct
     SkillType type;
     int rank;
     int mp_cost;
+
     float cooldown;
     float cooldown_timer;
-    float timer;    // duration
+
+    float duration;
+    float duration_timer;
+
     int slot;
 } Skill;
 

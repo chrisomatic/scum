@@ -57,9 +57,6 @@ bool skills_can_use(void* player, Skill* skill)
 
     Player* p = (Player*)player;
 
-    if(skill->cooldown_timer > 0 || skill->timer > 0)
-        return false;
-
     return (p->phys.mp >= skill->mp_cost);
 }
 
@@ -90,11 +87,11 @@ void skills_update_timers(void* player, float dt)
             s->cooldown_timer -= dt;
             s->cooldown_timer = MAX(0, s->cooldown_timer);
         }
-        if(s->timer > 0)
+        if(s->duration_timer > 0)
         {
-            s->timer -= dt;
-            s->timer = MAX(0, s->timer);
-            if(s->timer == 0)
+            s->duration_timer -= dt;
+            s->duration_timer = MAX(0, s->duration_timer);
+            if(s->duration_timer == 0)
             {
                 skills_deactivate(player, s);
             }
@@ -107,6 +104,9 @@ void skills_update_timers(void* player, float dt)
 bool skills_use(void* player, Skill* skill)
 {
     if(!skills_can_use(player, skill))
+        return false;
+
+    if(skill->cooldown_timer > 0 || skill->duration_timer > 0)
         return false;
 
     Player* p = (Player*)player;
@@ -206,7 +206,8 @@ bool skills_use(void* player, Skill* skill)
         case SKILL_TYPE_CROWN_OF_THORNS:
         {
             p->phys.floating = true;
-            skill->timer = 1.0;
+            skill->duration = 3.0;
+            skill->duration_timer = skill->duration;
         } break;
         case SKILL_TYPE_FEAR:
         {
