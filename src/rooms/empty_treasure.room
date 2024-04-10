@@ -17,7 +17,8 @@ Boulder
 Mud
 Ice
 Spikes
-Timed Spikes
+Timed Spikes 1
+Timed Spikes 2
 
 ; Tile Data
 1,1,1,1,1,1,1,1,1,1,1,1,1
@@ -41,6 +42,13 @@ Totem Yellow
 Shambler
 Spiked Slug
 Infected
+Gravity Crystal
+Peeper
+Leeper
+Spawn Egg
+Spawn Spider
+Behemoth
+Beacon Red
 
 ; Creatures
 
@@ -60,13 +68,29 @@ Dragon Egg
 Shamrock
 Ruby Ring
 Potion of Strength
-Potion of Speed
-Potion of Range
+Potion of Mana
+Potion of Great Mana
 Potion of Purple
 +1 Gauntlet Slot
 New Level
-Glowing Orb
+Upgrade Orb
+???
+???
+???
+Revive
+Skull
+Galaxy Pendant
+Feather
+Shield
+Wing
+Looking Glass
+Copper Coin
+Silver Coin
+Gold Coin
+Skill Book
 Chest
+Shrine
+Podium
 
 ; Items
 0,3,3
@@ -79,13 +103,13 @@ Chest
 6,10,3
 1,11,3
 9,3,4
-21,4,4
-21,5,4
-21,6,4
-21,7,4
-21,8,4
-21,9,4
-21,10,4
+35,4,4
+35,5,4
+35,6,4
+35,7,4
+35,8,4
+35,9,4
+35,10,4
 4,11,4
 5,3,5
 3,4,5
@@ -94,7 +118,7 @@ Chest
 5,7,5
 0,8,5
 9,9,5
-15,10,5
+16,10,5
 3,11,5
 
 ; Doors

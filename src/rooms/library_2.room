@@ -4,7 +4,7 @@
 13,7
 
 ; Room Type
-0   # Empty
+5   # Library
 
 ; Room Rank
 1
@@ -93,7 +93,9 @@ Shrine
 Podium
 
 ; Items
-20,7,4
+37,2,1
+25,1,2
+25,11,6
 
 ; Doors
 1,1,1,1

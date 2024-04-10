@@ -17,16 +17,17 @@ Boulder
 Mud
 Ice
 Spikes
-Timed Spikes
+Timed Spikes 1
+Timed Spikes 2
 
 ; Tile Data
+1,4,4,4,4,4,4,4,4,4,4,4,4
+4,4,4,4,4,1,4,4,4,4,4,4,4
+4,4,4,4,4,4,4,4,4,4,4,1,4
+4,4,4,4,1,4,4,4,4,4,4,4,4
+4,4,4,4,4,4,1,4,4,1,4,4,4
 4,4,4,4,4,4,4,4,4,4,4,4,4
-4,4,4,4,4,4,4,4,4,4,4,4,4
-4,4,4,4,4,4,4,4,4,4,4,4,4
-4,4,4,4,4,4,4,4,4,4,4,4,4
-4,4,4,4,4,4,4,4,4,4,4,4,4
-4,4,4,4,4,4,4,4,4,4,4,4,4
-4,4,4,4,4,4,4,4,4,4,4,4,4
+4,1,4,4,4,4,4,4,4,4,4,4,4
 
 ; Creature Mapping
 Slug
@@ -41,6 +42,13 @@ Totem Yellow
 Shambler
 Spiked Slug
 Infected
+Gravity Crystal
+Peeper
+Leeper
+Spawn Egg
+Spawn Spider
+Behemoth
+Beacon Red
 
 ; Creatures
 
@@ -60,13 +68,29 @@ Dragon Egg
 Shamrock
 Ruby Ring
 Potion of Strength
-Potion of Speed
-Potion of Range
+Potion of Mana
+Potion of Great Mana
 Potion of Purple
 +1 Gauntlet Slot
 New Level
-Glowing Orb
+Upgrade Orb
+???
+???
+???
+Revive
+Skull
+Galaxy Pendant
+Feather
+Shield
+Wing
+Looking Glass
+Copper Coin
+Silver Coin
+Gold Coin
+Skill Book
 Chest
+Shrine
+Podium
 
 ; Items
 

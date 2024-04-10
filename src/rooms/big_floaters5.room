@@ -4,7 +4,7 @@
 13,7
 
 ; Room Type
-0   # Empty
+1   # Monster
 
 ; Room Rank
 1
@@ -51,6 +51,7 @@ Behemoth
 Beacon Red
 
 ; Creatures
+4,9,3
 
 ; Item Mapping
 Red Gem
@@ -93,7 +94,6 @@ Shrine
 Podium
 
 ; Items
-20,7,4
 
 ; Doors
 1,1,1,1

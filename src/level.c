@@ -38,6 +38,8 @@ static int room_count_boss     = 0;
 
 static int used_room_list_monster[MAX_ROOM_LIST_COUNT] = {0};
 static int used_room_count_monster = 0;
+static int used_room_list_empty[MAX_ROOM_LIST_COUNT] = {0};
+static int used_room_count_empty = 0;
 
 static Level glevel = {0};
 static LevelPath gpath = {0};
@@ -54,7 +56,7 @@ static Room* place_room_and_path(Level* level, Vector2i* pos, RoomType type, Roo
 static bool generate_room_path(Level* level, Room* start, Room* end, LevelPath* path, int max_dist, int tries);
 static void set_doors_from_path(Level* level, LevelPath* path);
 static int room_traversable_func(int x, int y);
-static int get_usable_rooms(RoomType type, bool doors[4], int* ret_list);
+static int get_usable_rooms(RoomType type, bool doors[4], int* ret_list, bool exact_doors);
 static int get_room_dist(int x0, int y0, int x1, int y1);
 static int get_room_count(Level* level);
 static void print_room(Level* level, Room* room);
@@ -304,22 +306,22 @@ Level level_generate(unsigned int seed, int rank)
 
                 if(boss)
                 {
-                    rfd_count = get_usable_rooms(room->type, room->doors, rfd_list);
+                    rfd_count = get_usable_rooms(room->type, room->doors, rfd_list, false);
                     glevel.has_boss_room = rfd_count > 0;
                 }
                 else if(treasure)
                 {
-                    rfd_count = get_usable_rooms(room->type, room->doors, rfd_list);
+                    rfd_count = get_usable_rooms(room->type, room->doors, rfd_list, false);
                     glevel.has_treasure_room = rfd_count > 0;
                 }
                 else if(shrine)
                 {
-                    rfd_count = get_usable_rooms(room->type, room->doors, rfd_list);
+                    rfd_count = get_usable_rooms(room->type, room->doors, rfd_list, false);
                     glevel.has_shrine_room = rfd_count > 0;
                 }
                 else if(library)
                 {
-                    rfd_count = get_usable_rooms(room->type, room->doors, rfd_list);
+                    rfd_count = get_usable_rooms(room->type, room->doors, rfd_list, false);
                     // glevel.has_shrine_room = rfd_count > 0;
                 }
                 else
@@ -327,16 +329,39 @@ Level level_generate(unsigned int seed, int rank)
                     room->type = ROOM_TYPE_EMPTY;
                     if(lrand(&rg_level) % 100 < MONSTER_ROOM_PERCENTAGE)
                         room->type = ROOM_TYPE_MONSTER;
-                    rfd_count = get_usable_rooms(room->type, room->doors, rfd_list);
+
+                    rfd_count = get_usable_rooms(room->type, room->doors, rfd_list, false);
                 }
 
                 if(rfd_count == 0)
                 {
                     // there should always be an empty room available
                     room->type = ROOM_TYPE_EMPTY;
-                    rfd_count = get_usable_rooms(ROOM_TYPE_EMPTY, room->doors, rfd_list);
+                    rfd_count = get_usable_rooms(ROOM_TYPE_EMPTY, room->doors, rfd_list, false);
                 }
-                room->layout = rfd_list[lrand(&rg_level)%rfd_count];
+
+                // rooms that don't have extra possible doors
+                int rfd_list2[100] = {0};
+                int rfd_count2 = 0;
+                rfd_count2 = get_usable_rooms(room->type, room->doors, rfd_list2, true);
+
+                if(rfd_count2 > 0)
+                {
+                    printf("using room with exact doors: %d, %d\n",room->grid.x, room->grid.y);
+                    room->layout = rfd_list2[lrand(&rg_level)%rfd_count2];
+                }
+                else if(rfd_count > 0)
+                {
+                    room->layout = rfd_list[lrand(&rg_level)%rfd_count];
+                }
+                else
+                {
+                    // just in case, but shouldn't happen
+                    printf("defaulting to layout 0!\n");
+                    room->type = ROOM_TYPE_EMPTY;
+                    room->layout = 0;
+                }
+
             }
 
             if(room->type == ROOM_TYPE_BOSS)
@@ -355,6 +380,12 @@ Level level_generate(unsigned int seed, int rank)
             if(room->type == ROOM_TYPE_MONSTER)
             {
                 used_room_list_monster[used_room_count_monster++] = room->layout;
+            }
+
+            // TODO
+            if(room->type == ROOM_TYPE_EMPTY)
+            {
+                used_room_list_empty[used_room_count_empty++] = room->layout;
             }
 
             if(role != ROLE_CLIENT)
@@ -869,13 +900,14 @@ static int room_traversable_func(int x, int y)
     return 1;
 }
 
-static int get_usable_rooms(RoomType type, bool doors[4], int* ret_list)
+static int get_usable_rooms(RoomType type, bool doors[4], int* ret_list, bool exact_doors)
 {
     int list_count = 0;
     int* list;
     int index = 0;
 
     int temp_monster_list[MAX_ROOM_LIST_COUNT] = {0};
+    int temp_empty_list[MAX_ROOM_LIST_COUNT] = {0};
 
     switch(type)
     {
@@ -895,6 +927,7 @@ static int get_usable_rooms(RoomType type, bool doors[4], int* ret_list)
             list_count = room_count_library;
             list = room_list_library;
             break;
+
         case ROOM_TYPE_MONSTER:
         {
             for(int i = 0; i < room_count_monster; ++i)
@@ -915,9 +948,29 @@ static int get_usable_rooms(RoomType type, bool doors[4], int* ret_list)
             }
             list = temp_monster_list;
         } break;
+
         case ROOM_TYPE_EMPTY:
-            list_count = room_count_empty;
-            list = room_list_empty;
+            // list_count = room_count_empty;
+            // list = room_list_empty;
+            // break;
+
+            for(int i = 0; i < room_count_empty; ++i)
+            {
+                bool add = true;
+                for(int j = 0; j < used_room_count_empty; ++j)
+                {
+                    if(room_list_empty[i] == used_room_list_empty[j])
+                    {
+                        add = false;
+                        break;
+                    }
+                }
+                if(add)
+                {
+                    temp_empty_list[list_count++] = room_list_empty[i];
+                }
+            }
+            list = temp_empty_list;
             break;
     }
 
@@ -929,15 +982,36 @@ static int get_usable_rooms(RoomType type, bool doors[4], int* ret_list)
         RoomFileData* rfd = &room_list[list[i]];
 
         bool valid = true;
-        for(int d = 0; d < 4; ++d)
+
+        if(exact_doors)
         {
-            if(!doors[d]) continue;
-            if(!rfd->doors[d])
+
+            for(int d = 0; d < 4; ++d)
             {
-                valid = false;
-                break;
+                if(doors[d] != rfd->doors[d])
+                {
+                    valid = false;
+                    break;
+                }
             }
+
         }
+        else
+        {
+
+            for(int d = 0; d < 4; ++d)
+            {
+                if(!doors[d]) continue;
+                if(!rfd->doors[d])
+                {
+                    valid = false;
+                    break;
+                }
+            }
+
+        }
+
+
         if(!valid) continue;
 
         ret_list[ret_count++] = list[i];

@@ -7,7 +7,7 @@
 1   # Monster
 
 ; Room Rank
-1
+2
 
 ; Tile Mapping
 None
@@ -79,19 +79,29 @@ Dragon Egg
 Shamrock
 Ruby Ring
 Potion of Strength
-Potion of Speed
-Potion of Range
+Potion of Mana
+Potion of Great Mana
 Potion of Purple
 +1 Gauntlet Slot
 New Level
-Glowing Orb
+Upgrade Orb
 ???
 ???
 ???
 Revive
 Skull
+Galaxy Pendant
+Feather
+Shield
+Wing
+Looking Glass
+Copper Coin
+Silver Coin
+Gold Coin
+Skill Book
 Chest
 Shrine
+Podium
 
 ; Items
 
