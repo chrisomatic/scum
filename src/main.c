@@ -1514,7 +1514,7 @@ void draw_map(DrawLevelParams* params)
             {
                 float tlx = room_rect.x - room_rect.w/2.0 + 1.0;
                 float tly = room_rect.y - room_rect.h/2.0;
-                gfx_draw_string(tlx, tly, COLOR_BLACK, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "creatures: %d", creature_get_room_count(room->index, true));
+                gfx_draw_string(tlx, tly, COLOR_BLACK, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "(%d, %d, %u) %d", room->grid.x, room->grid.y, room->index, creature_get_room_count(room->index, true));
 
                 Vector2f size = gfx_string_get_size(tscale, "|");
                 gfx_draw_string(tlx, tly+size.y, COLOR_BLACK, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, room_rect.w, "%s", room_files[room_list[room->layout].file_index]);
