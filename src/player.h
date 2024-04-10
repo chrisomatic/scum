@@ -73,28 +73,21 @@ typedef enum
     ATTACK_SPEED,
     ATTACK_RANGE,
     LUCK,
-    MAX_STAT_TYPE,
+
+    MAX_STAT_TYPE
 } StatType;
 
 #define MAX_TIMED_ITEMS 10
 
-
 typedef struct
 {
-    //phys
     float speed;
-    float speed_factor;
     float max_velocity;
     float base_friction;
-    float mass;
-    float elasticity;
 
-    // projectile
-    float proj_cooldown_max;
-    ProjectileDef projdef;
-    ProjectileSpawn projspawn;
+    bool floating;
+} PlayerSkillMods;
 
-} PlayerAttributes;
 
 typedef struct
 {
@@ -115,7 +108,7 @@ typedef struct
     bool ignore_player_collision;
 
     Physics phys;
-    float vel_factor;
+    float anim_factor;
 
     float aim_deg;
     float scale;
@@ -125,6 +118,8 @@ typedef struct
     uint16_t xp;
     uint8_t level;
     uint8_t new_levels;
+
+    PlayerSkillMods skill_mods;
 
     uint8_t stats[MAX_STAT_TYPE];
 
@@ -243,9 +238,6 @@ void draw_all_other_player_info();
 void draw_hearts();
 void draw_mp_bar();
 void draw_gauntlet();
-void draw_timed_items();
-void randomize_skill_choices(Player* p);
-void draw_skill_selection();
 
 int get_xp_req(int level);
 

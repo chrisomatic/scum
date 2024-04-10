@@ -34,10 +34,10 @@ float lookup_cooldown[SKILL_TYPE_MAX][3] = {
     {0.0, 0.0, 0.0}, // PHASE SHOT
     {0.0, 0.0, 0.0}, // HEAL
     {0.0, 0.0, 0.0}, // DEFLECTOR
-    {2.0, 0.0, 0.0}, // CROWN OF THORNS
+    {2.0, 2.0, 2.0}, // CROWN OF THORNS
     {0.0, 0.0, 0.0}, // FEAR
     {0.0, 0.0, 0.0}, // PHASE SHIFT
-    {0.0, 0.0, 0.0}, // RABBITS FOOT
+    {2.0, 2.0, 2.0}, // RABBITS FOOT
     {0.0, 0.0, 0.0}, // PORCUPINE
     {0.0, 0.0, 0.0}, // RESURRECTION
     {0.0, 0.0, 0.0}, // RAISE GOLEM
@@ -68,13 +68,13 @@ void skills_deactivate(void* player, Skill* skill)
     {
         case SKILL_TYPE_CROWN_OF_THORNS:
         {
-            p->phys.floating = false;
+            p->skill_mods.floating = false;
         } break;
         case SKILL_TYPE_RABBITS_FOOT:
         {
-            p->phys.speed -= skill->delta1;
-            p->phys.max_velocity -= skill->delta2;
-            p->phys.base_friction -= skill->delta3;
+            p->skill_mods.speed -= skill->delta1;
+            p->skill_mods.max_velocity -= skill->delta2;
+            p->skill_mods.base_friction -= skill->delta3;
         } break;
     }
 
@@ -145,39 +145,57 @@ bool skills_use(void* player, Skill* skill)
             def.cluster_stages = 1;
             def.cluster_num[0] = 4;
             def.cluster_scales[0] = 0.8;
-            
+
             Room* room = level_get_room_by_index(&level, p->curr_room);
 
-            int num_waves = 3*skill->rank;
-            int num_rocks = 10*skill->rank;
+            float r = TILE_SIZE/2.0;
 
-            for(int w = 0; w < num_waves; ++w)
+            int num_rocks = 20*skill->rank;
+            for(int i = 0; i < num_rocks; ++i)
             {
-                for(int i = 0; i < num_rocks; ++i)
-                {
-                    Vector2i rand_tile;
-                    Vector2f rand_pos;
+                Vector2i rand_tile;
+                Vector2f rand_pos;
 
-                    level_get_rand_floor_tile(room, &rand_tile, &rand_pos);
+                float xo = RAND_FLOAT(0, r) * RAND_PN();
+                float yo = RAND_FLOAT(0, r) * RAND_PN();
 
-                    Rect r = level_get_tile_rect(rand_tile.x, rand_tile.y);
-                    Vector3f pos = {r.x, r.y, 400.0};
+                level_get_rand_floor_tile(room, &rand_tile, &rand_pos);
 
-                    projectile_drop(pos, 0.0, p->curr_room, &def, &spawn, 0x00553300, true);
-                }
+                Rect r = level_get_tile_rect(rand_tile.x, rand_tile.y);
+                Vector3f pos = {r.x+xo, r.y+yo, 400.0};
+
+                projectile_drop(pos, 0.0, p->curr_room, &def, &spawn, 0x00553300, true);
             }
+
+            // int num_waves = 3*skill->rank;
+            // int num_rocks = 10*skill->rank;
+
+            // for(int w = 0; w < num_waves; ++w)
+            // {
+            //     for(int i = 0; i < num_rocks; ++i)
+            //     {
+            //         Vector2i rand_tile;
+            //         Vector2f rand_pos;
+
+            //         level_get_rand_floor_tile(room, &rand_tile, &rand_pos);
+
+            //         Rect r = level_get_tile_rect(rand_tile.x, rand_tile.y);
+            //         Vector3f pos = {r.x, r.y, 400.0};
+
+            //         projectile_drop(pos, 0.0, p->curr_room, &def, &spawn, 0x00553300, true);
+            //     }
+            // }
 
         } break;
         case SKILL_TYPE_SENTIENCE:
         {
             def.scale += 0.00;
             def.damage *= (1.0+skill->rank);
-            spawn.num = 3 + (2*skill->rank);
+            spawn.num = 3 + (1*skill->rank);
             spawn.spread = 0.0;
             spawn.homing_chance = 1.0;
 
             projectile_add(&p->phys, p->curr_room, &def, &spawn, 0x00555555, p->aim_deg, true);
-
         } break;
 
         case SKILL_TYPE_MULTI_SHOT:
@@ -212,7 +230,7 @@ bool skills_use(void* player, Skill* skill)
         } break;
         case SKILL_TYPE_CROWN_OF_THORNS:
         {
-            p->phys.floating = true;
+            p->skill_mods.floating = true;
             skill->duration = 3.0;
             skill->duration_timer = skill->duration;
         } break;
@@ -229,9 +247,9 @@ bool skills_use(void* player, Skill* skill)
             skill->delta1 = 100.0 * skill->rank;
             skill->delta2 = 50.0 * skill->rank;
             skill->delta3 = 4.0 * skill->rank;
-            p->phys.speed += skill->delta1;
-            p->phys.max_velocity += skill->delta2;
-            p->phys.base_friction += skill->delta3;
+            p->skill_mods.speed += skill->delta1;
+            p->skill_mods.max_velocity += skill->delta2;
+            p->skill_mods.base_friction += skill->delta3;
             skill->duration = 5.0;
             skill->duration_timer = skill->duration;
         } break;

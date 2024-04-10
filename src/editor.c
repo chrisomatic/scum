@@ -259,7 +259,7 @@ void editor_draw()
                     if(p != player)
                     {
                         // imgui_toggle_button(&p->active, "Active");
-;
+
                         bool active = p->active;
                         imgui_toggle_button(&active, "Active");
                         if(active && !p->active)
@@ -298,6 +298,10 @@ void editor_draw()
                     {
                         p->phys.hp = (uint8_t)hp;
                     }
+
+                    int mp = p->phys.mp;
+                    imgui_number_box("MP", 0, p->phys.mp_max, &mp);
+                    p->phys.mp = (uint8_t)mp;
 
                     imgui_slider_float("Jump Velocity", 0.0, 1000.0, &jump_vel_z);
                 }

@@ -813,7 +813,7 @@ void print_rectxy(RectXY* r)
         printf("%.2f%s", r->y[i], i != 3 ? ", " : "\n");
 }
 
-// onyl works with positives
+// only works with positives
 float rand_float_between(float lower, float upper)
 {
     float range = upper - lower;

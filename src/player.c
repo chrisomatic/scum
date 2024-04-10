@@ -152,11 +152,12 @@ void player_set_defaults(Player* p)
 
     // temp
     skills_add_skill(p, SKILL_TYPE_MAGIC_MISSILE);
-    // skills_add_skill(p, SKILL_TYPE_CROWN_OF_THORNS);
+    skills_add_skill(p, SKILL_TYPE_CROWN_OF_THORNS);
     // skills_add_skill(p, SKILL_TYPE_MULTI_SHOT);
-    // skills_add_skill(p, SKILL_TYPE_RABBITS_FOOT);
-    // skills_add_skill(p, SKILL_TYPE_SENTIENCE);
-    // skills_add_skill(p, SKILL_TYPE_ROCK_SHOWER);
+    skills_add_skill(p, SKILL_TYPE_RABBITS_FOOT);
+    skills_add_skill(p, SKILL_TYPE_RABBITS_FOOT);
+    skills_add_skill(p, SKILL_TYPE_SENTIENCE);
+    skills_add_skill(p, SKILL_TYPE_ROCK_SHOWER);
     // skills_add_skill(p, SKILL_TYPE_PHASE_SHOT);
 
     p->periodic_shot_counter = 0.0;
@@ -211,7 +212,7 @@ void player_print(Player* p)
     printf("    index:  %d\n", p->index);
     printf("    name:   %s\n", p->settings.name);
     phys_print(&p->phys);
-    printf("    vel_factor: %.2f\n", p->vel_factor);
+    printf("    anim_factor: %.2f\n", p->anim_factor);
     printf("    scale:      %.2f\n", p->scale);
     printf("    class:      %d\n", p->settings.class);
     printf("    xp:         %d\n", p->xp);
@@ -971,25 +972,6 @@ static void handle_room_collision(Player* p)
     }
 }
 
-void player_handle_skills(Player* p, float dt)
-{
-    // for(int i = 0; i < p->skill_count; ++i)
-    // {
-    //     Skill* s = &skill_list[p->skills[i]];
-
-    //     if(!s)
-    //     {
-    //         LOGW("Skill is nill!");
-    //         continue;
-    //     }
-
-    //     if(s->periodic)
-    //     {
-    //         s->func(s,p,dt);
-    //     }
-    // }
-}
-
 void player_update_all(float dt)
 {
     for(int i = 0; i < MAX_PLAYERS; ++i)
@@ -997,34 +979,6 @@ void player_update_all(float dt)
         Player* p = &players[i];
         player_update(p, dt);
     }
-}
-
-static PlayerAttributes copy_attributes(Player* p)
-{
-    PlayerAttributes att = {0};
-    att.speed = p->phys.speed;
-    att.speed_factor = p->phys.speed_factor;
-    att.max_velocity = p->phys.max_velocity;
-    att.base_friction = p->phys.base_friction;
-    att.mass = p->phys.mass;
-    att.elasticity = p->phys.elasticity;
-    att.proj_cooldown_max = p->proj_cooldown_max;
-    att.projdef = p->proj_def;
-    att.projspawn = p->proj_spawn;
-    return att;
-}
-
-static void apply_attributes(Player* p, PlayerAttributes att)
-{
-    p->phys.speed = att.speed;
-    p->phys.speed_factor = att.speed_factor;
-    p->phys.max_velocity = att.max_velocity;
-    p->phys.base_friction = att.base_friction;
-    p->phys.mass = att.mass;
-    p->phys.elasticity = att.elasticity;
-    p->proj_cooldown_max = att.proj_cooldown_max;
-    p->proj_def = att.projdef;
-    p->proj_spawn = att.projspawn;
 }
 
 static void player_handle_melee(Player* p, float dt)
@@ -1215,33 +1169,50 @@ void player_update(Player* p, float dt)
     bool action_drop = p->actions[PLAYER_ACTION_DROP_ITEM].toggled_on;
     bool tabbed = p->actions[PLAYER_ACTION_TAB_CYCLE].toggled_on;
     bool rshift = p->actions[PLAYER_ACTION_RSHIFT].state;
-    bool show_skill = p->actions[PLAYER_ACTION_SELECT_SKILL].toggled_on;
+
+
+    Item* highlighted_item = NULL;
+    if(p->highlighted_item_id != -1)
+    {
+        highlighted_item = item_get_by_id(p->highlighted_item_id);
+    }
+
+    if(highlighted_item)
+    {
+        if(tabbed)
+        {
+            if(rshift)
+                p->highlighted_index--;
+            else
+                p->highlighted_index++;
+        }
+    }
+
+    if(activate)
+    {
+        // printf("activate\n");
+        Item* pu = highlighted_item;
+        if(pu)
+        {
+            ItemType type = pu->type;
+            ItemProps* pr = &item_props[type];
+
+            LOGI("Using item type: %s (%d)", item_get_name(type), type);
+            bool used = item_use(pu, p);
+        }
+    }
 
     for(int i = 0; i < PLAYER_GAUNTLET_MAX; ++i)
     {
         bool _pressed = p->actions[PLAYER_ACTION_ITEM_1+i].toggled_on;
         if(_pressed)
         {
-            // if(i < p->gauntlet_slots)
             if(i < PLAYER_MAX_SKILLS)
             {
                 p->gauntlet_selection = i;
             }
             break;
         }
-
-        // if(i < p->gauntlet_slots)
-        // {
-        //     if(p->gauntlet[i].type == ITEM_REVIVE)
-        //     {
-        //         int num_players = player_get_active_count();
-        //         if(num_players > 1)
-        //         {
-        //             Item* it = &p->gauntlet[i];
-        //             player_drop_item(p, it);
-        //         }
-        //     }
-        // }
     }
 
     skills_update_timers((void*)p, dt);
@@ -1254,245 +1225,24 @@ void player_update(Player* p, float dt)
         }
     }
 
-    // if(show_skill)
-    // {
-    //     p->show_skill_selection = !p->show_skill_selection;
-    // }
-    // if(p->new_levels == 0) p->show_skill_selection = false;
+    // apply stats
+    p->phys.speed = lookup_movement_speed[p->stats[MOVEMENT_SPEED]];
+    p->phys.max_velocity  = lookup_movement_speed_max_vel[p->stats[MOVEMENT_SPEED]];
+    p->phys.base_friction  = lookup_movement_speed_base_friction[p->stats[MOVEMENT_SPEED]];
+    p->proj_cooldown_max = lookup_attack_speed[p->stats[ATTACK_SPEED]];
 
-    // if(!p->show_skill_selection)
-    if(true)
+    // apply skills
+    p->phys.speed += p->skill_mods.speed;
+    p->phys.max_velocity += p->skill_mods.max_velocity;
+    p->phys.base_friction += p->skill_mods.base_friction;
+    p->phys.floating = p->skill_mods.floating;
+
+    // ensure floating if dead
+    if(p->phys.dead)
     {
-
-        Item* highlighted_item = NULL;
-        if(p->highlighted_item_id != -1)
-        {
-            highlighted_item = item_get_by_id(p->highlighted_item_id);
-        }
-
-        if(highlighted_item)
-        {
-            if(tabbed)
-            {
-                if(rshift)
-                    p->highlighted_index--;
-                else
-                    p->highlighted_index++;
-            }
-        }
-
-        if(activate)
-        {
-            // printf("activate\n");
-            Item* pu = highlighted_item;
-            if(pu)
-            {
-                ItemType type = pu->type;
-                ItemProps* pr = &item_props[type];
-
-                // bool socketable = pr->socketable;
-                // int num_players = player_get_active_count();
-                // if(num_players > 1 && type == ITEM_REVIVE)
-                // {
-                //     socketable = false;
-                // }
-
-                // if(type == ITEM_NEW_LEVEL)
-                // {
-                //     // if(level_grace_time <= 0.0)
-                //     // {
-                //     //     LOGI("Using item type: %s (%d)", item_get_name(type), type);
-                //     //     item_remove(pu);
-                //     //     trigger_generate_level(rand(), level_rank+1, 2, __LINE__);
-
-                //     //     if(role == ROLE_SERVER)
-                //     //     {
-                //     //         NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
-                //     //         net_server_add_event(&ev);
-                //     //     }
-                //     //     return;
-                //     // }
-                // }
-                // else
-                {
-
-                    LOGI("Using item type: %s (%d)", item_get_name(type), type);
-                    bool used = item_use(pu, p);
-
-                    // if(type == ITEM_REVIVE && pu->used)
-                    // {
-                    //     item_remove(pu);
-                    // }
-                }
-                // else if(socketable)
-                // {
-                //     LOGI("Socketing item type: %s (%d)", item_get_name(type), type);
-                //     int idx = p->gauntlet_selection;
-                //     for(int i = 0; i < p->gauntlet_slots; ++i)
-                //     {
-                //         Item* it = &p->gauntlet[i];
-                //         if(it->type == ITEM_NONE)
-                //         {
-                //             idx = i;
-                //             break;
-                //         }
-                //     }
-
-                //     Item* it = &p->gauntlet[idx];
-                //     player_drop_item(p, it);
-                //     memcpy(it, pu, sizeof(Item));
-                // }
-                // else
-                // {
-                //     LOGI("Using item type: %s (%d)", item_get_name(type), type);
-                //     item_use(pu, p);
-
-                //     if(type == ITEM_REVIVE && pu->used)
-                //     {
-                //         item_remove(pu);
-                //     }
-                // }
-            }
-        }
-
-        /*
-        if(action_use)
-        {
-            Item* it = &p->gauntlet[p->gauntlet_selection];
-            if(it->type != ITEM_NONE)
-            {
-                if(item_props[it->type].func)
-                {
-                    bool ret = item_props[it->type].func(it, p);
-                    if(ret)
-                    {
-                        it->type = ITEM_NONE;
-
-                        // cycle selection to next item
-                        int idx = p->gauntlet_selection;
-                        for(int i = 1; i < p->gauntlet_slots; ++i)
-                        {
-                            idx++;
-                            if(idx >= p->gauntlet_slots) idx = 0;
-                            if(p->gauntlet[idx].type != ITEM_NONE)
-                            {
-                                p->gauntlet_selection = idx;
-                                break;
-                            }
-                        }
-                    }
-
-                }
-            }
-        }
-        */
-
-        /*
-        if(action_drop)
-        {
-            player_drop_item(p, &p->gauntlet[p->gauntlet_selection]);
-        }
-        */
-
+        p->phys.floating = true;
     }
-    // else
-    // {
-    //     if(tabbed)
-    //     {
-    //         if(rshift)
-    //         {
-    //             if(p->skill_selection == 0)
-    //                 p->skill_selection = (p->num_skill_selection_choices-1);
-    //             else
-    //                 p->skill_selection--;
-    //         }
-    //         else
-    //         {
-    //             p->skill_selection++;
-    //             if(p->skill_selection >= p->num_skill_selection_choices)
-    //                p->skill_selection = 0;
-    //         }
 
-    //     }
-
-    //     if(p->actions[PLAYER_ACTION_ACTIVATE].toggled_on)
-    //     {
-
-    //         Skill* choose_skill = &skill_list[p->skill_choices[p->skill_selection]];
-
-    //         int index = p->skill_count;
-
-    //         for(int i = 0; i < p->skill_count; ++i)
-    //         {
-    //             Skill* s = &skill_list[p->skills[i]];
-    //             if(choose_skill->type == s->type)
-    //             {
-    //                 index = i;
-    //             }
-    //         }
-
-    //         bool new_skill = (index == p->skill_count);
-
-    //         if(index < PLAYER_MAX_SKILLS)
-    //         {
-    //             p->skills[index] = p->skill_choices[p->skill_selection];
-    //             Skill* skill = &skill_list[p->skills[index]];
-
-    //             if(!skill->periodic)
-    //             {
-    //                 skill->func(skill, p, dt);
-    //             }
-
-    //             if(new_skill)
-    //                 p->skill_count++;
-    //         }
-
-    //         p->new_levels--;
-    //         if(p->new_levels > 0)
-    //         {
-    //             randomize_skill_choices(p);
-    //         }
-    //         else
-    //         {
-    //             p->show_skill_selection = false;
-    //         }
-    //     }
-    // }
-
-    // copy stats/attributes
-    PlayerAttributes att = copy_attributes(p);
-
-    // apply timed items
-    /*
-    for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
-    {
-        if(p->timed_items[i] == ITEM_NONE)
-            continue;
-
-        ItemProps* pr = &item_props[p->timed_items[i]];
-        p->timed_items_ttl[i] -= dt;
-        if(p->timed_items_ttl[i] <= 0)
-        {
-            if(pr->timed_func_end)
-            {
-                pr->timed_func_end(p->timed_items[i], (void*)p);
-            }
-
-            p->timed_items_ttl[i] = 0.0;
-            p->timed_items[i] = ITEM_NONE;
-            continue;
-        }
-
-        if(pr->timed_func)
-        {
-            pr->timed_func(p->timed_items[i], (void*)p);
-        }
-    }
-    */
-
-    // printf("-->  %.2f\n", p->phys.speed);
-
-    player_handle_skills(p,dt);
 
     float cx = p->phys.collision_rect.x;
     float cy = p->phys.collision_rect.y;
@@ -1709,10 +1459,6 @@ void player_update(Player* p, float dt)
             vel_dir.y *= 0.7071f;
         }
 
-        p->phys.speed = lookup_movement_speed[p->stats[MOVEMENT_SPEED]];
-        p->phys.max_velocity  = lookup_movement_speed_max_vel[p->stats[MOVEMENT_SPEED]];
-        p->phys.base_friction  = lookup_movement_speed_base_friction[p->stats[MOVEMENT_SPEED]];
-
         vel_max.x = p->phys.max_velocity*p->phys.speed_factor*vel_dir.x*mud_factor;
         vel_max.y = p->phys.max_velocity*p->phys.speed_factor*vel_dir.y*mud_factor;
 
@@ -1776,14 +1522,14 @@ void player_update(Player* p, float dt)
     float m2 = magn2f(vel_max.x, vel_max.y);
 
     // for animation speed
-    float additional_vel_factor = (lookup_movement_speed_max_vel[p->stats[MOVEMENT_SPEED]] / lookup_movement_speed_max_vel[0]) - 1.0;
+    float additional_anim_factor = p->phys.speed_factor*(lookup_movement_speed_max_vel[p->stats[MOVEMENT_SPEED]] / lookup_movement_speed_max_vel[0]) - 1.0;
 
-    p->vel_factor = RANGE(m1/m2,0.3,1.0) + additional_vel_factor;
+    p->anim_factor = RANGE(m1/m2,0.3,1.0) + additional_anim_factor;
     if(p->phys.pos.z > 0.0)
     {
-        p->vel_factor = RANGE(p->vel_factor, 0.1,0.4);
+        p->anim_factor = RANGE(p->anim_factor, 0.1,0.4);
     }
-    //printf("vel_factor: %f\n",p->vel_factor);
+    //printf("anim_factor: %f\n",p->anim_factor);
 
     if(p->phys.falling)
     {
@@ -1825,7 +1571,6 @@ void player_update(Player* p, float dt)
     GFXImage* img = &gfx_images[p->image];
     Rect* vr = &img->visible_rects[p->sprite_index];
 
-    p->proj_cooldown_max = lookup_attack_speed[p->stats[ATTACK_SPEED]];
 
     if(p->settings.class == PLAYER_CLASS_ROBOT)
     {
@@ -1859,7 +1604,7 @@ void player_update(Player* p, float dt)
     // update animation
     if(moving)
     {
-        gfx_anim_update(&p->anim, p->vel_factor*dt);
+        gfx_anim_update(&p->anim, p->anim_factor*dt);
     }
     else
     {
@@ -1901,7 +1646,6 @@ void player_update(Player* p, float dt)
         }
     }
 
-    apply_attributes(p, att);
 }
 
 void player_ai_move_to_target(Player* p, Player* target)
@@ -2196,20 +1940,20 @@ void draw_gauntlet()
             if(skill.duration_timer > 0)
             {
                 Rect tr = {0};
-                tr.h = r.h * (1.0 - skill.duration_timer / skill.duration);
+                tr.h = r.h * (skill.duration_timer / skill.duration);
                 tr.w = r.w;
                 tr.x =  tlx;
                 tr.y = tly + (r.h-tr.h);
-                gfx_draw_rect_tl(&tr, 0x0020f020, 1.0, NO_ROTATION, 0.4, true, NOT_IN_WORLD);
+                gfx_draw_rect_tl(&tr, 0x0020f020, 1.0, NO_ROTATION, 0.3, true, NOT_IN_WORLD);
             }
             else if(skill.cooldown_timer > 0)
             {
                 Rect tr = {0};
-                tr.h = r.h * (skill.cooldown_timer / skill.cooldown);
+                tr.h = r.h * (1.0 - skill.cooldown_timer / skill.cooldown);
                 tr.w = r.w;
                 tr.x = tlx;
                 tr.y = tly + (r.h-tr.h);
-                gfx_draw_rect_tl(&tr, 0x00f02020, 1.0, NO_ROTATION, 0.4, true, NOT_IN_WORLD);
+                gfx_draw_rect_tl(&tr, 0x00f02020, 1.0, NO_ROTATION, 0.3, true, NOT_IN_WORLD);
             }
             else if(!skills_can_use((void*)player, &skill))
             {
@@ -2226,65 +1970,6 @@ void draw_gauntlet()
         r.x += margin;
     }
 }
-
-// void draw_gauntlet()
-// {
-//     float len = 50.0 * ascale;
-//     float margin = 5.0 * ascale;
-
-//     int w = gfx_images[items_image].element_width;
-//     float scale = len / (float)w;
-
-//     float total_len = (player->gauntlet_slots * len) + ((player->gauntlet_slots-1) * margin);
-
-//     float x = (view_width - total_len) / 2.0;   // left side of first rect
-//     x += len/2.0;   // centered
-
-//     // float y = (float)view_height * 0.75;
-//     float y = view_height - len/2.0 - margin - 10.0;
-
-//     Rect r = {0};
-//     r.w = len;
-//     r.h = len;
-//     r.y = y;
-//     r.x = x;
-
-//     for(int i = 0; i < player->gauntlet_slots; ++i)
-//     {
-//         uint32_t color = COLOR_BLACK;
-//         if(i == player->gauntlet_selection)
-//         {
-//             Item* it = &player->gauntlet[player->gauntlet_selection];
-//             if(it->type != ITEM_NONE)
-//             {
-//                 const char* desc = item_get_description(it->type, it);
-//                 const char* name = item_get_name(it->type);
-
-//                 float scale = 0.16 * ascale;
-//                 Vector2f size = gfx_string_get_size(scale, (char*)desc);
-
-
-//                 float tlx = r.x - r.w/2.0;
-//                 // float tly = r.y - r.h/2.0 + size.y + 2.0;
-//                 float bly = r.y + r.h/2.0 + 2.0;
-
-//                 gfx_draw_string(tlx, bly, COLOR_WHITE, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%s", desc);
-//             }
-//             color = 0x00b0b0b0;
-//         }
-
-//         gfx_draw_rect(&r, color, NOT_SCALED, NO_ROTATION, 0.3, true, NOT_IN_WORLD);
-
-//         ItemType type = player->gauntlet[i].type;
-//         if(type != ITEM_NONE)
-//         {
-//             ItemProps* props = &item_props[type];
-//             gfx_draw_image_ignore_light(props->image, props->sprite_index, r.x, r.y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
-//         }
-//         r.x += len;
-//         r.x += margin;
-//     }
-// }
 
 void draw_stats()
 {
@@ -2341,277 +2026,6 @@ void draw_stats()
 
 }
 
-// void draw_timed_items()
-// {
-//     float len = 20.0 * ascale;
-//     float margin = 5.0 * ascale;
-
-//     int w = gfx_images[items_image].element_width;
-//     float scale = len / (float)w;
-
-//     float _x = 10.0;
-//     float _y = 100.0;
-//     for(int i = 0; i < MAX_TIMED_ITEMS; ++i)
-//     {
-//         ItemType type = player->timed_items[i];
-//         if(type != ITEM_NONE)
-//         {
-//             gfx_draw_image_ignore_light(item_props[type].image, item_props[type].sprite_index, _x, _y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
-
-//             float tscale = 0.17 * ascale;
-//             // Vector2f size = gfx_string_get_size(scale, (char*)desc);
-//             gfx_draw_string(_x+len*0.75, _y-len*0.5, COLOR_WHITE, tscale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%.1f", player->timed_items_ttl[i]);
-
-//             _y += len + margin;
-//         }
-//     }
-
-// }
-
-// skills
-// --------------------------------------------------------------------------------------------------
-
-// int select_random_skill_choice(int weights[], int num, int max_weight)
-// {
-//     int r = (rand() % max_weight) + 1;
-//     for(int i = 0; i < num; ++i)
-//     {
-//         if(r <= weights[i])
-//         {
-//             return i;
-//         }
-//     }
-//     return num-1;
-// }
-
-// int remove_skill_choice(int available_skills[], int num, int remove_index)
-// {
-//     if(num == 1) return 0;
-
-//     if(remove_index >= num)
-//     {
-//         LOGE("remove_index (%d) >= num (%d)", remove_index, num);
-//         return num;
-//     }
-
-//     available_skills[remove_index] = available_skills[num-1];
-//     return num-1;
-// }
-
-// int calc_skill_weights(int available_skills[], int num, int ret_weights[])
-// {
-//     int w = 0;
-//     for(int i = 0; i < num; ++i)
-//     {
-//         w += skill_rarity_weight(skill_list[available_skills[i]].rarity);
-//         ret_weights[i] = w;
-//     }
-//     return w;
-// }
-
-// int determine_available_skills(Player* p, int ret_skills[SKILL_LIST_MAX])
-// {
-// #if 0
-// #define s_print(fmt,...) printf(fmt, __VA_ARGS__)
-// #else
-// #define s_print(fmt,...)
-// #endif
-
-//     int a_num = 0;
-
-//     for(int i = 0; i < skill_list_count; ++i)
-//     {
-
-//         Skill* s = &skill_list[i];
-
-//         if(p->level < s->min_level)
-//         {
-//             s_print("[%d] level %d < %d\n", i, p->level, s->min_level);
-//             continue;
-//         }
-
-//         bool cont = false;
-
-//         // make sure there aren't repeated types
-//         for(int j = 0; j < a_num; ++j)
-//         {
-//             Skill* js = &skill_list[ret_skills[j]];
-//             if(js->type == s->type)
-//             {
-//                 s_print("[%d] repeated skill type %d\n", i, js->type);
-//                 cont = true;
-//                 break;
-//             }
-//         }
-
-//         if(cont) continue;
-
-//         // check player skills
-//         for(int j = 0; j < p->skill_count; ++j)
-//         {
-//             Skill* js = &skill_list[p->skills[j]];
-
-//             if(s->type == js->type)
-//             {
-//                 if((s->rank - js->rank) == 1)
-//                 {
-//                     ret_skills[a_num] = i;
-//                     a_num++;
-//                 }
-//                 else
-//                 {
-//                     s_print("[%d] s->rank: %d, js->rank: %d\n", i, s->rank, js->rank);
-//                 }
-
-//                 cont = true;
-//                 break;
-//             }
-//         }
-
-//         if(cont) continue;
-
-//         // player doesn't have the skill
-//         if(s->rank != 1)
-//         {
-//             s_print("[%d] new skill rank: %d != 1\n", i, s->rank);
-//             continue;
-//         }
-
-//         ret_skills[a_num] = i;
-//         a_num++;
-//     }
-
-//     return a_num;
-// }
-
-// void randomize_skill_choices(Player* p)
-// {
-//     int a_skills[SKILL_LIST_MAX] = {0};
-//     int a_num = determine_available_skills(p, a_skills);
-
-//     if(a_num == 0)
-//     {
-//         LOGW("No available skills!");
-//         p->new_levels = 0;
-//         return;
-//     }
-
-
-//     p->skill_selection = 0;
-//     p->num_skill_selection_choices = MIN(p->num_skill_choices, a_num);
-//     // printf("num_skill_choices: %d\n", num_skill_choices);
-
-//     // for(int i = 0; i < a_num; ++i)
-//     // {
-//     //     printf("   [%d] %d\n",i, a_skills[i]);
-//     // }
-
-//     for(int i = 0; i < p->num_skill_selection_choices; ++i)
-//     {
-//         int weights[SKILL_LIST_MAX] = {0};
-//         int max_weight = calc_skill_weights(a_skills, a_num, weights);
-
-//         // printf("%d ------------------------------\n", p->num_skill_selection_choices);
-//         // for(int j = 0; j < a_num; ++j)
-//         // {
-//         //     printf("(%d)   [%d] %d\n",i, j,a_skills[j]);
-//         // }
-
-//         int idx = select_random_skill_choice(weights, a_num, max_weight);
-
-//         // printf("(%d) chose idx: %d\n", i,idx);
-//         // printf("num_skill_choices: %d\n", p->num_skill_selection_choices);
-
-//         // // printf("skill choices")
-//         p->skill_choices[i] = a_skills[idx];
-
-//         // printf("num_skill_choices: %d\n", p->num_skill_selection_choices);
-//         a_num = remove_skill_choice(a_skills, a_num, idx);
-//         // printf("num_skill_choices: %d\n", p->num_skill_selection_choices);
-
-//         if(a_num <= 0)
-//         {
-//             if(i != p->num_skill_selection_choices-1) LOGE("Error!");
-//             break;
-//         }
-//     }
-// }
-
-// void draw_skill_selection()
-// {
-//     if(player->new_levels == 0) return;
-//     if(!player->show_skill_selection) return;
-
-//     float scale = 0.30 * ascale;
-//     float small_scale = 0.18 * ascale;
-//     Vector2f size = gfx_string_get_size(scale, "|");
-
-//     float pad = 5.0 * ascale;
-
-//     Rect* vr = &gfx_images[card_image].visible_rects[0];
-
-//     float w = 220;
-//     // float h = 100;
-//     float image_scale = w / vr->w;
-//     float h = vr->h * image_scale;
-
-//     int max_per_row = 4;
-//     int num_rows = player->num_skill_selection_choices / max_per_row;
-//     if(player->num_skill_selection_choices % 4 != 0) num_rows++;
-
-//     int total_h = num_rows*h + (num_rows-1)*pad;
-
-//     float y = view_height/2.0 - total_h/2.0;
-
-//     int idx = 0;
-//     for(int i = 0; i < num_rows; ++i)
-//     {
-//         int num_skills_row = MIN(player->num_skill_selection_choices - idx, max_per_row);
-
-//         float total_w = w*num_skills_row + pad*(num_skills_row-1);
-//         float x = view_width/2.0 - total_w/2.0;
-
-//         if(i == 0)
-//         {
-//             gfx_draw_string(x, y-size.y-2*pad, COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "Level Up! (Choose a Skill)");
-//         }
-
-//         for(int j = 0; j < num_skills_row; ++j)
-//         {
-//             Skill* skill = &skill_list[player->skill_choices[idx]];
-
-//             uint32_t color;
-//             switch(skill->rarity)
-//             {
-//                 case SKILL_RARITY_COMMON: color = COLOR_TINT_NONE; break;
-//                 case SKILL_RARITY_RARE: color = 0x008888FF; break;
-//                 case SKILL_RARITY_EPIC: color = 0x00FFD755; break;
-//                 case SKILL_RARITY_LEGENDARY: color = 0x00FF88FF; break;
-//                 default: break;
-//             }
-
-//             bool selected = (idx == player->skill_selection);
-//             gfx_draw_image_ignore_light(card_image, 0, x+w/2.0, y+h/2.0, gfx_blend_colors(color, selected ? COLOR_BLUE : COLOR_TINT_NONE, 0.5), image_scale, 0.0, 0.95, true, NOT_IN_WORLD);
-
-//             // if(skill->rarity > SKILL_RARITY_COMMON)
-//             // {
-//             //     // draw star
-//             //     gfx_draw_image(items_image,20+skill->rarity,x+w-5, y+5, COLOR_TINT_NONE, 1.0, 0.0, 1.0, true, NOT_IN_WORLD);
-//             // }
-
-//             float xadj = 5;
-
-//             gfx_draw_string(x+xadj, y, selected ? COLOR_YELLOW : COLOR_WHITE, scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, w-xadj, "%s", skill->name);
-//             gfx_draw_string(x+xadj, y+size.y+2*pad, COLOR_GRAY, small_scale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, w-xadj, "%s", skill->desc);
-
-//             x += w + pad;
-//             idx++;
-//         }
-//         y += h + pad;
-//     }
-
-//     ui_message_set_small(0.1, "Press e to select skill (skill points: %d)", player->new_levels);
-// }
 
 void player_set_class(Player* p, PlayerClass class)
 {
@@ -2846,6 +2260,7 @@ void player_check_stuck_in_wall(Player* p)
         }
     }
 }
+
 
 void player_handle_collision(Player* p, Entity* e)
 {

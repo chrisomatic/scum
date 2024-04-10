@@ -1864,6 +1864,7 @@ void draw()
             //     level_draw_room(r, NULL, room_area.w*o.x, room_area.h*o.y);
             // }
 
+#if 0
             if(debug_enabled)
             {
                 if(moving_tile.x == 0.0)
@@ -1914,6 +1915,7 @@ void draw()
                 }
                 gfx_draw_rect(&moving_tile, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 0.5, true, IN_WORLD);
             }
+#endif
 
             decal_draw_all();
             entity_draw_all();

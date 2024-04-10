@@ -225,6 +225,9 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
 
     float spread = spawn->spread/2.0;
 
+    uint16_t target_ids[32] = {0};
+    int target_count = 0;
+
     for(int i = 0; i < spawn->num; ++i)
     {
         Projectile p = {0};
@@ -259,11 +262,12 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
 
         if(homing)
         {
+            uint16_t id = 0;
             Physics* target = NULL;
             if(p.from_player)
-                target = entity_get_closest_to(&p.phys, p.curr_room, ENTITY_TYPE_CREATURE);
+                target = entity_get_closest_to(&p.phys, p.curr_room, ENTITY_TYPE_CREATURE, target_ids, target_count, &id);
             else
-                target = entity_get_closest_to(&p.phys, p.curr_room, ENTITY_TYPE_PLAYER);
+                target = entity_get_closest_to(&p.phys, p.curr_room, ENTITY_TYPE_PLAYER, target_ids, target_count, &id);
 
             if(target)
             {
@@ -275,6 +279,16 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
                 p.angle_deg = calc_angle_deg(p.phys.pos.x, p.phys.pos.y, tx, ty);
                 p.phys.vel.x = v.x * p.def.speed;
                 p.phys.vel.y = v.y * p.def.speed;
+
+                target_ids[target_count++] = id;
+            }
+            else
+            {
+                p.angle_deg = rand() % 360;
+                float angle = RAD(p.angle_deg);
+                p.phys.vel.x = +(p.def.speed)*cosf(angle) + vel->x;
+                p.phys.vel.y = -(p.def.speed)*sinf(angle) + vel->y;
+                p.phys.vel.z = 80.0;
             }
         }
 
@@ -310,49 +324,54 @@ void projectile_kill(Projectile* proj)
 
     proj->phys.dead = true;
 
-    const float scale_particle_thresh = 0.2;
+    ProjectileDef pd = proj->def;
+    bool more_cluster = proj->def.cluster && (proj->cluster_stage < (3) && proj->cluster_stage < (pd.cluster_stages));
 
-    ParticleEffect splash = {0};
-    memcpy(&splash, &particle_effects[EFFECT_SPLASH], sizeof(ParticleEffect));
+    const float scale_particle_thresh = 0.25;
+    float pscale = MIN(1.0, proj->def.scale);
 
-    if(role == ROLE_SERVER)
+    if(pscale > scale_particle_thresh && !more_cluster)
     {
-        if(proj->def.scale > scale_particle_thresh)
+        ParticleEffect splash = {0};
+        memcpy(&splash, &particle_effects[EFFECT_SPLASH], sizeof(ParticleEffect));
+
+        uint32_t c1 = proj->from_player ? 0x006484BA : 0x00CC5050;
+        uint32_t c2 = proj->from_player ? 0x001F87DC : 0x00FF8080;
+        uint32_t c3 = proj->from_player ? 0x00112837 : 0x00550000;
+        float lifetime = 0.4;
+
+        if(role == ROLE_SERVER)
         {
             NetEvent ev = {
                 .type = EVENT_TYPE_PARTICLES,
                 .data.particles.effect_index = EFFECT_SPLASH,
                 .data.particles.pos = { proj->phys.pos.x, proj->phys.pos.y },
-                .data.particles.scale = proj->def.scale,
-                .data.particles.color1 = proj->from_player ? 0x006484BA : 0x00CC5050,
-                .data.particles.color2 = proj->from_player ? 0x001F87DC : 0x00FF8080,
-                .data.particles.color3 = proj->from_player ? 0x00112837 : 0x00550000,
-                .data.particles.lifetime = 0.5,
+                .data.particles.scale = pscale,
+                .data.particles.color1 = c1,
+                .data.particles.color2 = c2,
+                .data.particles.color3 = c3,
+                .data.particles.lifetime = lifetime,
                 .data.particles.room_index = proj->curr_room,
             };
 
             net_server_add_event(&ev);
-        }
 
-    }
-    else
-    {
-        if(!proj->from_player)
-        {
-            // make splash effect red
-            splash.color1 = 0x00CC5050;
-            splash.color2 = 0x00FF8080;
-            splash.color3 = 0x00550000;
         }
-
-        if(proj->def.scale > 0.20)
+        else
         {
-            splash.scale.init_min *= proj->def.scale;
-            splash.scale.init_max *= proj->def.scale;
-            ParticleSpawner* ps = particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &splash, 0.5, true, false);
+            splash.color1 = c1;
+            splash.color2 = c2;
+            splash.color3 = c3;
+            splash.scale.init_min *= pscale;
+            splash.scale.init_max *= pscale;
+            ParticleSpawner* ps = particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &splash, lifetime, true, false);
             if(ps != NULL) ps->userdata = (int)proj->curr_room;
         }
 
+    }
+
+    if(role != ROLE_SERVER)
+    {
         if(proj->def.explosive)
         {
             explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, proj->curr_room, proj->from_player);
@@ -361,6 +380,10 @@ void projectile_kill(Projectile* proj)
 
     if(proj->def.cluster)
     {
+
+        if(!more_cluster)
+            return;
+
         // printf("cluster\n");
         ProjectileDef pd = proj->def;
 
@@ -368,6 +391,8 @@ void projectile_kill(Projectile* proj)
         {
             return;
         }
+
+        // pd.damage *= 0.8;
 
         pd.cluster = true;
         pd.scale = pd.cluster_scales[proj->cluster_stage];
@@ -379,13 +404,19 @@ void projectile_kill(Projectile* proj)
         pd.speed = 50.0;
 
         ProjectileSpawn sp = {0};
-        // sp.num = 6;
         sp.num = pd.cluster_num[proj->cluster_stage];
-        sp.spread = 360.0;
+
+        float angle_deg = proj->angle_deg;
+        // float angle_deg = rand() % 360;
+        sp.spread = 210.0;
+
+        // sp.spread = 360.0;
         sp.cluster_stage = proj->cluster_stage+1;
-        proj->phys.vel.x = 0.0;
-        proj->phys.vel.y = 0.0;
-        projectile_add(&proj->phys, proj->curr_room, &pd, &sp, proj->color, rand() % 360, proj->from_player);
+        // proj->phys.vel.x = 0.0;
+        // proj->phys.vel.y = 0.0;
+        proj->phys.vel.x /= 2.0;
+        proj->phys.vel.y /= 2.0;
+        projectile_add(&proj->phys, proj->curr_room, &pd, &sp, proj->color, angle_deg, proj->from_player);
     }
 }
 

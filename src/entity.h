@@ -34,4 +34,4 @@ void entity_handle_collisions();
 void entity_handle_status_effects(float dt);
 void entity_draw_all();
 
-Physics* entity_get_closest_to(Physics* phys, uint8_t curr_room, EntityType type);
+Physics* entity_get_closest_to(Physics* phys, uint8_t curr_room, EntityType type, uint16_t* exclude_ids, int exclude_count, uint16_t* target_id);
