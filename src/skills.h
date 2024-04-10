@@ -42,6 +42,8 @@ typedef struct
 } Skill;
 
 extern int skills_image;
+extern int lookup_mp_cost[SKILL_TYPE_MAX][3];
+extern float lookup_cooldown[SKILL_TYPE_MAX][3];
 
 void skills_init();
 bool skills_add_skill(void* player, SkillType type);
@@ -50,3 +52,4 @@ bool skills_use(void* player, Skill* skill);
 bool skills_can_use(void* player, Skill* skill);
 void skills_update_timers(void* player, float dt);
 void skills_deactivate(void* player, Skill* skill);
+const char* skills_rank_str(int val);

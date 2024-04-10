@@ -48,8 +48,36 @@ static bool item_func_chest(Item* pu, Player* p)
     float y = pu->phys.pos.y;
     int croom = pu->curr_room;
 
-    item_add(item_get_random_chestable(), x, y, croom);
-    item_add(item_get_random_chestable(), x, y, croom);
+    int num = player_get_active_count() + 1;
+
+    ItemType lst[10] = {0};
+
+    for(int i = 0; i < num; ++i)
+    {
+
+        // item_add(item_get_random_chestable(), x, y, croom);
+
+        for(;;)
+        {
+            ItemType type = item_get_random_chestable();
+            bool dup = false;
+
+            for(int j = 0; j < i; ++j)
+            {
+                if(lst[j] == type)
+                {
+                    dup = true;
+                    break;
+                }
+            }
+            if(dup) continue;
+
+            item_add(type, x, y, croom);
+            lst[i] = type;
+            break;
+        }
+
+    }
 
     return true;
 }
@@ -106,22 +134,16 @@ static bool item_func_podium(Item* pu, Player* p)
     float y = pu->phys.pos.y;
     int croom = pu->curr_room;
 
-    // for(int i = 0; i < SKILL_TYPE_MAX; ++i)
-    // {
-    //     Item* a = item_add(ITEM_SKILL_BOOK, x, y, croom);
-    //     a->user_data = i;
-    //     item_set_description(a, "skill: %s", skills_get_name(a->user_data));
-    // }
+    int num = player_get_active_count();
 
-    Item* a = item_add(ITEM_SKILL_BOOK, x, y, croom);
-    a->user_data = SKILL_TYPE_MULTI_SHOT;
-    item_set_description(a, "skill: %s", skills_get_name(a->user_data));
-
+    for(int i = 0; i < num; ++i)
     {
         Item* a = item_add(ITEM_SKILL_BOOK, x, y, croom);
+        // a->user_data = SKILL_TYPE_MULTI_SHOT;
         a->user_data = rand() % SKILL_TYPE_MAX;
         item_set_description(a, "skill: %s", skills_get_name(a->user_data));
-    }
+   }
+
 }
 
 
@@ -208,10 +230,10 @@ static bool item_func_shrine(Item* pu, Player* p)
     return true;
 }
 
-static bool internal_item_use(Item* pu, void* player)
+static bool internal_item_use(Item* pu, void* _player)
 {
 
-    Player* p = (Player*)player;
+    Player* p = (Player*)_player;
 
     switch(pu->type)
     {
@@ -289,36 +311,40 @@ static bool internal_item_use(Item* pu, void* player)
             return player_add_stat(p, LUCK, 1);
         } break;
 
+        // [STAT]
         case ITEM_UPGRADE_ORB:
         {
-
+            return player_add_stat(p, rand() % MAX_STAT_TYPE, 1);
         } break;
 
         case ITEM_COIN_COPPER:
         {
-            p->coins += 1;
+            player_add_coins(p, 1);
+            // p->coins += 1;
+            // if(p == player) text_list_add(ptext, COLOR_WHITE, 3.0, "+1");
         } break;
         case ITEM_COIN_SILVER:
         {
-            p->coins += 5;
+            player_add_coins(p, 5);
+            // p->coins += 5;
+            // if(p == player) text_list_add(ptext, COLOR_WHITE, 3.0, "+5");
         } break;
         case ITEM_COIN_GOLD:
         {
-            p->coins += 10;
+            player_add_coins(p, 10);
+            // p->coins += 10;
+            // if(p == player) text_list_add(ptext, COLOR_WHITE, 3.0, "+10");
         } break;
 
         case ITEM_SKILL_BOOK:
         {
             // printf("player add skill %d\n", pu->user_data);
-            return skills_add_skill(p, pu->user_data);
+            return player_add_skill(p, pu->user_data);
         } break;
 
         case ITEM_GAUNTLET_SLOT:
         {
-            // if(p->gauntlet_slots < PLAYER_GAUNTLET_MAX)
-            // {
-            //     p->gauntlet_slots++;
-            // }
+
         } break;
 
         case ITEM_NEW_LEVEL:
@@ -361,22 +387,17 @@ static bool internal_item_use(Item* pu, void* player)
     return true;
 }
 
-bool item_use(Item* pu, void* player)
+bool item_use(Item* pu, void* _player)
 {
     if(pu->used) return false;
 
-    bool ret = internal_item_use(pu, player);
+    Player* p = (Player*)_player;
+
+    bool ret = internal_item_use(pu, _player);
 
     if(ret)
     {
         pu->used = true;
-
-        // if(pu->type == ITEM_CHEST || pu->type == ITEM_SHRINE)
-        // {
-        //     // don't remove item
-        //     return true;
-        // }
-        // item_remove(pu);
     }
 
     return ret;
@@ -690,7 +711,7 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
     {
         pu.phys.mass = 2.0;
         pu.phys.base_friction = 30.0;
-        pu.phys.radius = 12*iscale; //TEMP
+        pu.phys.radius = 10*iscale; //TEMP
         pu.phys.elasticity = 0.2;
     }
     else if(type == ITEM_SHRINE)

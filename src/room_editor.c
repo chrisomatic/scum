@@ -188,7 +188,7 @@ static void draw_room_file_gui()
         imgui_horizontal_end();
 
         imgui_horizontal_begin();
-        char* buttons2[] = {"All", "Empty", "Monster", "Treasure", "Boss", "Shrine"};
+        char* buttons2[] = {"All", "Empty", "Monster", "Treasure", "Boss", "Shrine", "Library"};
         selected_room_type = imgui_button_select(IM_ARRAYSIZE(buttons2), buttons2, "Room Type");
         imgui_horizontal_end();
 

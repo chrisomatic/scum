@@ -151,14 +151,14 @@ void player_set_defaults(Player* p)
     }
 
     // temp
-    skills_add_skill(p, SKILL_TYPE_MAGIC_MISSILE);
-    skills_add_skill(p, SKILL_TYPE_CROWN_OF_THORNS);
-    // skills_add_skill(p, SKILL_TYPE_MULTI_SHOT);
-    skills_add_skill(p, SKILL_TYPE_RABBITS_FOOT);
-    skills_add_skill(p, SKILL_TYPE_RABBITS_FOOT);
-    skills_add_skill(p, SKILL_TYPE_SENTIENCE);
-    skills_add_skill(p, SKILL_TYPE_ROCK_SHOWER);
-    // skills_add_skill(p, SKILL_TYPE_PHASE_SHOT);
+    // player_add_skill(p, SKILL_TYPE_MAGIC_MISSILE);
+    // player_add_skill(p, SKILL_TYPE_CROWN_OF_THORNS);
+    // // player_add_skill(p, SKILL_TYPE_MULTI_SHOT);
+    // player_add_skill(p, SKILL_TYPE_RABBITS_FOOT);
+    // player_add_skill(p, SKILL_TYPE_RABBITS_FOOT);
+    // player_add_skill(p, SKILL_TYPE_SENTIENCE);
+    // player_add_skill(p, SKILL_TYPE_ROCK_SHOWER);
+    // // player_add_skill(p, SKILL_TYPE_PHASE_SHOT);
 
     p->periodic_shot_counter = 0.0;
 
@@ -461,11 +461,11 @@ void player_add_xp(Player* p, int xp)
         num_new_levels++;
     }
 
-    if(p == player)
-    {
-        text_list_add(ptext, COLOR_WHITE, 3.0, "+%d xp", xp);
-        if(num_new_levels > 0) text_list_add(ptext, COLOR_GREEN, 3.0, "+%d level%s", num_new_levels, num_new_levels > 1 ? "s" : "");
-    }
+    // if(p == player)
+    // {
+    //     text_list_add(ptext, COLOR_WHITE, 3.0, "+%d xp", xp);
+    //     if(num_new_levels > 0) text_list_add(ptext, COLOR_GREEN, 3.0, "+%d level%s", num_new_levels, num_new_levels > 1 ? "s" : "");
+    // }
 
     bool had_new_levels = p->new_levels > 0;
 
@@ -483,6 +483,63 @@ void player_add_xp(Player* p, int xp)
 
 }
 
+
+bool player_add_skill(Player* p, SkillType type)
+{
+    // Player* p = (Player*)player;
+
+    int n = p->skill_count;
+
+    bool has_skill = false;
+    int skill_index = -1;
+
+    for(int i = 0; i < n; ++i)
+    {
+        if(p->skills[i].type == type)
+        {
+            has_skill = true;
+            skill_index = i;
+            break;
+        }
+    }
+
+    if(has_skill)
+    {
+        Skill* s = &p->skills[skill_index];
+
+        if(s->rank >= 3)
+            return false;
+
+        s->rank++;
+        s->mp_cost  = lookup_mp_cost[type][s->rank-1];
+        s->cooldown = lookup_cooldown[type][s->rank-1];
+
+        if(p == player)
+        {
+            text_list_add(ptext, COLOR_WHITE, 3.0, "%s %s", skills_get_name(type), skills_rank_str(s->rank));
+        }
+
+        return true;
+    }
+
+    if(n >= PLAYER_MAX_SKILLS)
+        return false;
+
+    // new skill
+    p->skills[n].type = type;
+    p->skills[n].rank = 1;
+    p->skills[n].mp_cost  = lookup_mp_cost[type][0];
+    p->skills[n].cooldown = lookup_cooldown[type][0];
+    p->skill_count++;
+
+    if(p == player)
+    {
+        text_list_add(ptext, COLOR_WHITE, 3.0, "%s %s", skills_get_name(type), skills_rank_str(p->skills[n].rank));
+    }
+
+    return true;
+}
+
 bool player_add_stat(Player* p, StatType stat, int val)
 {
     uint8_t prev_stat_val = p->stats[stat];
@@ -492,7 +549,22 @@ bool player_add_stat(Player* p, StatType stat, int val)
     if(prev_stat_val - p->stats[stat] == 0) // no change
         return false;
 
+    if(p == player)
+    {
+        text_list_add(ptext, COLOR_WHITE, 3.0, "+ %s", stats_get_name(stat));
+    }
+
     return true;
+}
+
+//TODO
+void player_add_coins(Player* p, int val)
+{
+    if(p == player)
+    {
+        text_list_add(ptext, COLOR_WHITE, 3.0, "+%d coin%s", val, val == 1 ? "" : "s");
+    }
+    p->coins += val;
 }
 
 bool player_add_mp(Player* p, int mp)
@@ -554,7 +626,7 @@ void player_hurt(Player* p, int damage)
         return;
 
     float actual_damage = MAX(1.0, damage * (1.0 - lookup_defense[p->stats[DEFENSE]]));
-        
+
     player_add_hp(p,-actual_damage);
 
     if(p->phys.hp == 0)
@@ -1235,13 +1307,7 @@ void player_update(Player* p, float dt)
     p->phys.speed += p->skill_mods.speed;
     p->phys.max_velocity += p->skill_mods.max_velocity;
     p->phys.base_friction += p->skill_mods.base_friction;
-    p->phys.floating = p->skill_mods.floating;
-
-    // ensure floating if dead
-    if(p->phys.dead)
-    {
-        p->phys.floating = true;
-    }
+    p->phys.floating = p->phys.dead || p->skill_mods.floating;
 
 
     float cx = p->phys.collision_rect.x;
@@ -1625,9 +1691,12 @@ void player_update(Player* p, float dt)
         p->phys.pos.y = prior_y;
     }
 
-    ptext->x = p->phys.pos.x - p->phys.radius/2.0 - 3.0;
-    ptext->y = (p->phys.pos.y - p->phys.pos.z/2.0) - p->phys.vr.h - ptext->text_height - 3.0;
-    text_list_update(ptext, dt);
+    if(p == player)
+    {
+        ptext->x = p->phys.pos.x - p->phys.radius/2.0 - 2.0;
+        ptext->y = (p->phys.pos.y - p->phys.pos.z/2.0) - p->phys.vr.h - ptext->text_height - 4.0;
+        text_list_update(ptext, dt);
+    }
 
     if(role != ROLE_SERVER)
     {
@@ -2130,8 +2199,6 @@ void player_draw(Player* p)
                 ui_message_set_small(0.1, "Item: %s", name);
             }
         }
-
-        text_list_draw(ptext);
 
     }
     // else

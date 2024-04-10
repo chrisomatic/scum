@@ -122,7 +122,7 @@ const char* item_get_name(ItemType type);
 const char* item_get_description(ItemType type, Item* pu);
 Item* item_add(ItemType type, float x, float y, uint8_t curr_room);
 void item_set_description(Item* pu, char* fmt, ...);
-bool item_use(Item* pu, void* player);
+bool item_use(Item* pu, void* _player);
 bool item_remove(Item* pu);
 void item_update(Item* pu, float dt);
 void item_update_all(float dt);

@@ -56,11 +56,9 @@ bool skills_can_use(void* player, Skill* skill)
         return false;
 
     Player* p = (Player*)player;
-
     return (p->phys.mp >= skill->mp_cost);
 }
 
-//TODO: store original deltas
 void skills_deactivate(void* player, Skill* skill)
 {
     Player* p = (Player*)player;
@@ -88,7 +86,6 @@ void skills_update_timers(void* player, float dt)
     for(int i = 0; i < PLAYER_MAX_SKILLS; ++i)
     {
         Skill* s = &p->skills[i];
-        // if(s->cooldown > 0 && s->cooldown_timer > 0)
         if(s->cooldown_timer > 0)
         {
             s->cooldown_timer -= dt;
@@ -166,25 +163,6 @@ bool skills_use(void* player, Skill* skill)
 
                 projectile_drop(pos, 0.0, p->curr_room, &def, &spawn, 0x00553300, true);
             }
-
-            // int num_waves = 3*skill->rank;
-            // int num_rocks = 10*skill->rank;
-
-            // for(int w = 0; w < num_waves; ++w)
-            // {
-            //     for(int i = 0; i < num_rocks; ++i)
-            //     {
-            //         Vector2i rand_tile;
-            //         Vector2f rand_pos;
-
-            //         level_get_rand_floor_tile(room, &rand_tile, &rand_pos);
-
-            //         Rect r = level_get_tile_rect(rand_tile.x, rand_tile.y);
-            //         Vector3f pos = {r.x, r.y, 400.0};
-
-            //         projectile_drop(pos, 0.0, p->curr_room, &def, &spawn, 0x00553300, true);
-            //     }
-            // }
 
         } break;
         case SKILL_TYPE_SENTIENCE:
@@ -275,55 +253,6 @@ bool skills_use(void* player, Skill* skill)
         } break;
     }
 
-    // skill->cooldown_timer = skill->cooldown;
-
-    return true;
-
-}
-
-bool skills_add_skill(void* player, SkillType type)
-{
-    Player* p = (Player*)player;
-
-    int n = p->skill_count;
-
-    bool has_skill = false;
-    int skill_index = -1;
-
-    for(int i = 0; i < n; ++i)
-    {
-        if(p->skills[i].type == type)
-        {
-            has_skill = true;
-            skill_index = i;
-            break;
-        }
-    }
-    
-    if(has_skill)
-    {
-        Skill* s = &p->skills[skill_index];
-
-        if(s->rank >= 3)
-            return false;
-
-        s->rank++;
-        s->mp_cost  = lookup_mp_cost[type][s->rank-1];
-        s->cooldown = lookup_cooldown[type][s->rank-1];
-
-        return true;
-    }
-    
-    if(n >= PLAYER_MAX_SKILLS)
-        return false;
-
-    // new skill
-    p->skills[n].type = type;
-    p->skills[n].rank = 1;
-    p->skills[n].mp_cost  = lookup_mp_cost[type][0];
-    p->skills[n].cooldown = lookup_cooldown[type][0];
-    p->skill_count++;
-
     return true;
 }
 
@@ -349,4 +278,12 @@ const char* skills_get_name(SkillType type)
         case SKILL_TYPE_HOLOGRAM:        return "Hologram";
     }
     return "???";
+}
+
+const char* skills_rank_str(int val)
+{
+    if(val == 1) return "I";
+    if(val == 2) return "II";
+    if(val == 3) return "III";
+    return "";
 }

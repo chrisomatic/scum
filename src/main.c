@@ -1923,6 +1923,8 @@ void draw()
             particles_draw_all();
             draw_all_other_player_info();
 
+            text_list_draw(ptext);
+
             if(debug_enabled)
             {
                 if(show_walls) room_draw_walls(room);
@@ -1955,8 +1957,6 @@ void draw()
     draw_mp_bar();
     draw_gauntlet();
     draw_stats();
-    // draw_timed_items();
-    // draw_skill_selection();
 
     if(level_room_time > 0)
     {
@@ -1977,12 +1977,6 @@ void draw()
     gfx_draw_lines();
 
     draw_chat_box();
-
-
-    // if(level.darkness_curse)
-    // {
-    //     gfx_draw_rect(&cr, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.70, true, IN_WORLD);
-    // }
 
     if(level_transition_state != 0)
     {

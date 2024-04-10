@@ -121,6 +121,7 @@ typedef enum
     ROOM_TYPE_TREASURE,
     ROOM_TYPE_BOSS,
     ROOM_TYPE_SHRINE,
+    ROOM_TYPE_LIBRARY,
     ROOM_TYPE_MAX
 } RoomType;
 
