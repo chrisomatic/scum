@@ -2546,11 +2546,11 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
                 BPW(&server.bp, 8,   (uint32_t)(p->weapon.scale * 255.0));
 
                 uint32_t dir = 0;
-                if(p->phys.rotation_deg == 0.0)
+                if(p->weapon.rotation_deg == 0.0)
                     dir = 1;
-                else if(p->phys.rotation_deg == 270.0)
+                else if(p->weapon.rotation_deg == 270.0)
                     dir = 2;
-                else if(p->phys.rotation_deg == 180.0)
+                else if(p->weapon.rotation_deg == 180.0)
                     dir = 3;
 
                 BPW(&server.bp, 2, dir);
@@ -2653,10 +2653,10 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
 
         switch(weapon_dir)
         {
-            case 0: p->phys.rotation_deg =  90.0; break;
-            case 1: p->phys.rotation_deg =   0.0; break;
-            case 2: p->phys.rotation_deg = 270.0; break;
-            case 3: p->phys.rotation_deg = 180.0; break;
+            case 0: p->weapon.rotation_deg =  90.0; break;
+            case 1: p->weapon.rotation_deg =   0.0; break;
+            case 2: p->weapon.rotation_deg = 270.0; break;
+            case 3: p->weapon.rotation_deg = 180.0; break;
         }
 
         if(!prior_active[client_id])
