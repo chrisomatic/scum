@@ -59,21 +59,21 @@ static void update_weapon_pos(Weapon* w)
     Rect* vr = &img->visible_rects[0];
     Vector2f offset = {0.0, 0.0};
 
-    if(w->phys->rotation_deg == 90.0) // up
+    if(w->rotation_deg == 90.0) // up
     {
         offset.y -= vr->h*w->scale;
         offset.y -= w->phys->vr.h/2.0;
     }
-    else if(w->phys->rotation_deg == 0.0) // right
+    else if(w->rotation_deg == 0.0) // right
     {
         offset.x += vr->w*w->scale/2.0;
     }
-    else if(w->phys->rotation_deg == 270.0) // down
+    else if(w->rotation_deg == 270.0) // down
     {
         offset.y += vr->h*w->scale;
         offset.y += w->phys->vr.h/2.0;
     }
-    else if(w->phys->rotation_deg == 180.0) // left
+    else if(w->rotation_deg == 180.0) // left
     {
         offset.x -= vr->w*w->scale/2.0;
     }
@@ -138,7 +138,7 @@ void weapon_draw(Weapon* w)
     if(role == ROLE_CLIENT)
         update_weapon_pos(w);
 
-    gfx_sprite_batch_add(w->image, 0, w->pos.x, w->pos.y, w->color, false, w->scale, w->phys->rotation_deg, w->scale, false, false, false);
+    gfx_sprite_batch_add(w->image, 0, w->pos.x, w->pos.y, w->color, false, w->scale, w->rotation_deg, w->scale, false, false, false);
 }
 
 

@@ -191,6 +191,9 @@ Level level_generate(unsigned int seed, int rank)
     //     // item_add(ITEM_SHRINE, CENTER_X+TILE_SIZE*2, CENTER_Y, sroom->index);
     // }
 
+    item_add(ITEM_SOCCER_BALL, CENTER_X, CENTER_Y, sroom->index);
+   
+
     LevelPath bpath = {0};
     Room* broom = NULL;
     broom = place_room_and_path(&glevel, NULL, ROOM_TYPE_BOSS, sroom, 2, 4, &bpath, false);

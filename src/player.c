@@ -188,7 +188,7 @@ void player_init()
         p->phys.pos.x = CENTER_X;
         p->phys.pos.y = CENTER_Y;
         p->phys.pos.z = 0.0;
-        p->weapon_deg = 0.0;
+        p->weapon.rotation_deg = 0.0;
         player_set_sprite_index(p, 4);
         player_set_class(p, PLAYER_CLASS_SPACEMAN);
 
@@ -1046,25 +1046,25 @@ static void player_handle_melee(Player* p, float dt)
     if(p->actions[PLAYER_ACTION_SHOOT_UP].state)
     {
         player_set_sprite_index(p, SPRITE_UP);
-        p->weapon_deg = 90.0;
+        p->weapon.rotation_deg = 90.0;
         attacked = true;
     }
     else if(p->actions[PLAYER_ACTION_SHOOT_RIGHT].state)
     {
         player_set_sprite_index(p, SPRITE_RIGHT);
-        p->weapon_deg = 0.0;
+        p->weapon.rotation_deg = 0.0;
         attacked = true;
     }
     else if(p->actions[PLAYER_ACTION_SHOOT_DOWN].state)
     {
         player_set_sprite_index(p, SPRITE_DOWN);
-        p->weapon_deg = 270.0;
+        p->weapon.rotation_deg = 270.0;
         attacked = true;
     }
     else if(p->actions[PLAYER_ACTION_SHOOT_LEFT].state)
     {
         player_set_sprite_index(p, SPRITE_LEFT);
-        p->weapon_deg = 180.0;
+        p->weapon.rotation_deg = 180.0;
         attacked = true;
     }
 
@@ -2131,7 +2131,7 @@ void player_draw(Player* p)
 
     opacity = blink ? 0.3 : opacity;
 
-    if(p->weapon.type != WEAPON_TYPE_NONE && p->weapon_deg == 90.0)
+    if(p->weapon.type != WEAPON_TYPE_NONE && p->weapon.rotation_deg == 90.0)
     {
         weapon_draw(&p->weapon);
     }
@@ -2141,7 +2141,7 @@ void player_draw(Player* p)
     bool ret = gfx_sprite_batch_add(p->image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, p->settings.color, true, p->scale, 0.0, opacity, false, false, false);
     if(!ret) printf("Failed to add player to batch!\n");
 
-    if(p->weapon.type != WEAPON_TYPE_NONE && p->weapon_deg != 90.0)
+    if(p->weapon.type != WEAPON_TYPE_NONE && p->weapon.rotation_deg != 90.0)
     {
         weapon_draw(&p->weapon);
     }
@@ -2153,7 +2153,7 @@ void player_draw(Player* p)
             GFXImage* img = &gfx_images[p->weapon.image];
             Rect* vr = &img->visible_rects[0];
 
-            bool vertical = (p->weapon_deg == 90.0 || p->weapon_deg == 270.0);
+            bool vertical = (p->weapon.rotation_deg == 90.0 || p->weapon.rotation_deg == 270.0);
             float w = vertical ? vr->h : vr->w;
             float h = vertical ? vr->w : vr->h;
 
@@ -2348,7 +2348,7 @@ void player_handle_collision(Player* p, Entity* e)
                 GFXImage* img = &gfx_images[p->weapon.image];
                 Rect* vr = &img->visible_rects[0];
 
-                bool vertical = (p->weapon_deg == 90.0 || p->weapon_deg == 270.0);
+                bool vertical = (p->weapon.rotation_deg == 90.0 || p->weapon.rotation_deg == 270.0);
 
                 float w = vertical ? vr->h : vr->w;
                 float h = vertical ? vr->w : vr->h;

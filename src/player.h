@@ -140,7 +140,6 @@ typedef struct
     ProjectileDef proj_def;
     ProjectileSpawn proj_spawn;
 
-    float weapon_deg;
     Weapon weapon;
 
     GFXAnimation anim;

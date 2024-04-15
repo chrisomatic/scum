@@ -45,6 +45,7 @@ typedef enum
     ITEM_COIN_SILVER,
     ITEM_COIN_GOLD,
     ITEM_SKILL_BOOK,
+    ITEM_SOCCER_BALL,
 
     ITEM_CHEST,
     ITEM_SHRINE,

@@ -21,8 +21,9 @@ typedef struct
     uint16_t id;
     WeaponType type;
     WeaponState state;
-    Physics* phys;
+    Physics* phys; // pointer to whatever physics it is attached to
     Vector3f pos;
+    float rotation_deg;
     int image;
     float scale;
     float damage;

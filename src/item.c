@@ -728,7 +728,7 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
         case ITEM_CHEST:
         {
             pu.phys.mass = 2.0;
-            pu.phys.base_friction = 30.0;
+            pu.phys.base_friction = 50.0;
             pu.phys.radius = 10*iscale; //TEMP
             pu.phys.elasticity = 0.2;
         } break;
@@ -736,7 +736,7 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
         case ITEM_SHRINE:
         {
             pu.phys.mass = 1000.0;
-            pu.phys.base_friction = 30.0;
+            pu.phys.base_friction = 50.0;
             pu.phys.radius = 12*iscale; //TEMP
             pu.phys.elasticity = 0.2;
         } break;
@@ -744,7 +744,7 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
         case ITEM_PODIUM:
         {
             pu.phys.mass = 1000.0;
-            pu.phys.base_friction = 30.0;
+            pu.phys.base_friction = 50.0;
             pu.phys.radius = 12*iscale; //TEMP
             pu.phys.elasticity = 0.2;
         } break;
@@ -754,16 +754,23 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
         case ITEM_COIN_GOLD:
         {
             pu.phys.mass = 0.5;
-            pu.phys.base_friction = 8.0;
+            pu.phys.base_friction = 5.0;
             pu.phys.radius = 4*iscale; //TEMP
             pu.phys.elasticity = 0.5;
             pu.phys.vel.z = 100.0;
         } break;
-
+        case ITEM_SOCCER_BALL:
+        {
+            pu.phys.mass = 0.3;
+            pu.phys.base_friction = 2.0;
+            pu.phys.radius = 8*iscale; //TEMP
+            pu.phys.elasticity = 0.8;
+            pu.phys.vel.z = 200.0;
+        } break;
         default:
         {
             pu.phys.mass = 0.5;
-            pu.phys.base_friction = 8.0;
+            pu.phys.base_friction = 5.0;
             pu.phys.radius = 8*iscale; //TEMP
             pu.phys.elasticity = 0.5;
             pu.phys.vel.z = 200.0;
