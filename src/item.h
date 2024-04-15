@@ -117,6 +117,7 @@ bool item_is_shrine(ItemType type);
 ItemType item_get_random_heart();
 ItemType item_rand(bool include_chest);
 ItemType item_get_random_chestable();
+ItemType item_get_random_coin();
 
 const char* item_get_name(ItemType type);
 const char* item_get_description(ItemType type, Item* pu);

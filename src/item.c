@@ -49,8 +49,15 @@ static bool item_func_chest(Item* pu, Player* p)
     int croom = pu->curr_room;
 
     int num = player_get_active_count() + 1;
-
     ItemType lst[10] = {0};
+
+    if(rand() % 20 == 1)
+    {
+        num = rand()%5+5;
+        for(int i = 0; i < num; ++i)
+            item_add(item_get_random_coin(), x, y, croom);
+        return true;
+    }
 
     for(int i = 0; i < num; ++i)
     {
@@ -78,6 +85,7 @@ static bool item_func_chest(Item* pu, Player* p)
         }
 
     }
+
 
     return true;
 }
@@ -564,6 +572,14 @@ ItemType item_get_random_chestable()
     return item_props[chestables_index[r]].type;
 }
 
+ItemType item_get_random_coin()
+{
+    int r = rand() % 3;
+    if(r == 0) return ITEM_COIN_COPPER;
+    if(r == 1) return ITEM_COIN_SILVER;
+    return ITEM_COIN_GOLD;
+}
+
 ItemType item_get_random_heart()
 {
     for(;;)
@@ -707,34 +723,52 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
     pu.phys.speed = 1.0;
     pu.phys.crawling = true;
 
-    if(type == ITEM_CHEST)
+    switch(type)
     {
-        pu.phys.mass = 2.0;
-        pu.phys.base_friction = 30.0;
-        pu.phys.radius = 10*iscale; //TEMP
-        pu.phys.elasticity = 0.2;
-    }
-    else if(type == ITEM_SHRINE)
-    {
-        pu.phys.mass = 1000.0;
-        pu.phys.base_friction = 30.0;
-        pu.phys.radius = 12*iscale; //TEMP
-        pu.phys.elasticity = 0.2;
-    }
-    else if(type == ITEM_PODIUM)
-    {
-        pu.phys.mass = 1000.0;
-        pu.phys.base_friction = 30.0;
-        pu.phys.radius = 12*iscale; //TEMP
-        pu.phys.elasticity = 0.2;
-    }
-    else
-    {
-        pu.phys.mass = 0.5;
-        pu.phys.base_friction = 8.0;
-        pu.phys.radius = 8*iscale; //TEMP
-        pu.phys.elasticity = 0.5;
-        pu.phys.vel.z = 200.0;
+        case ITEM_CHEST:
+        {
+            pu.phys.mass = 2.0;
+            pu.phys.base_friction = 30.0;
+            pu.phys.radius = 10*iscale; //TEMP
+            pu.phys.elasticity = 0.2;
+        } break;
+
+        case ITEM_SHRINE:
+        {
+            pu.phys.mass = 1000.0;
+            pu.phys.base_friction = 30.0;
+            pu.phys.radius = 12*iscale; //TEMP
+            pu.phys.elasticity = 0.2;
+        } break;
+
+        case ITEM_PODIUM:
+        {
+            pu.phys.mass = 1000.0;
+            pu.phys.base_friction = 30.0;
+            pu.phys.radius = 12*iscale; //TEMP
+            pu.phys.elasticity = 0.2;
+        } break;
+
+        case ITEM_COIN_COPPER:
+        case ITEM_COIN_SILVER:
+        case ITEM_COIN_GOLD:
+        {
+            pu.phys.mass = 0.5;
+            pu.phys.base_friction = 8.0;
+            pu.phys.radius = 4*iscale; //TEMP
+            pu.phys.elasticity = 0.5;
+            pu.phys.vel.z = 100.0;
+        } break;
+
+        default:
+        {
+            pu.phys.mass = 0.5;
+            pu.phys.base_friction = 8.0;
+            pu.phys.radius = 8*iscale; //TEMP
+            pu.phys.elasticity = 0.5;
+            pu.phys.vel.z = 200.0;
+        } break;
+
     }
 
     //TODO

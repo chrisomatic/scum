@@ -29,7 +29,7 @@ float lookup_movement_speed[] = { 620.0, 705.0, 800.0, 900.0, 1000.0, 1100.0, 12
 float lookup_movement_speed_max_vel[] = { 110.0, 135.0, 160.0, 190.0, 220.0, 250.0, 280.0 };
 float lookup_movement_speed_base_friction[] = { 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0 };
 float lookup_attack_speed[] = { 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3 };
-float lookup_attack_range[] = { 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0 };
+float lookup_attack_range[] = { 0.0, 20.0, 50.0, 90.0, 140.0, 180.0, 220.0 };
 float lookup_luck[] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
 
 int player_ignore_input = 0;
@@ -49,7 +49,7 @@ int class_image_robot = -1;
 int shadow_image = -1;
 int card_image = -1;
 
-float jump_vel_z = 150.0;
+float jump_vel_z = 160.0;
 
 Player players[MAX_PLAYERS] = {0};
 Player* player = NULL;
@@ -461,26 +461,12 @@ void player_add_xp(Player* p, int xp)
         num_new_levels++;
     }
 
-    // if(p == player)
-    // {
-    //     text_list_add(ptext, COLOR_WHITE, 3.0, "+%d xp", xp);
-    //     if(num_new_levels > 0) text_list_add(ptext, COLOR_GREEN, 3.0, "+%d level%s", num_new_levels, num_new_levels > 1 ? "s" : "");
-    // }
-
     bool had_new_levels = p->new_levels > 0;
 
     p->level += num_new_levels;
     p->new_levels += num_new_levels;
 
     LOGI("Level: %u, new: %u", p->level, p->new_levels);
-
-    // if(p->new_levels > 0)
-    // {
-    //     randomize_skill_choices(p);
-    //     // if(!had_new_levels)
-    //         p->show_skill_selection = true;
-    // }
-
 }
 
 

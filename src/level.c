@@ -275,7 +275,7 @@ Level level_generate(unsigned int seed, int rank)
                 bool _shrine = aroom->type == ROOM_TYPE_SHRINE;
                 if(_boss || _treasure || _shrine) continue;
 
-                if(lrand(&rg_level)%100 <= 10)
+                if(lrand(&rg_level)%100 <= 40)
                 {
                     room->doors[d] = true;
                     aroom->doors[get_opposite_dir(d)] = true;

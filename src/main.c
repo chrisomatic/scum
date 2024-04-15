@@ -1324,6 +1324,7 @@ void handle_room_completion(Room* room)
 }
 
 Vector2i mouse_map_room = {0};
+Vector2i mouse_map_start_room = {0};
 AStar_t map_asd = {0};
 LevelPath map_path = {0};
 int room_traversable_doors(int x, int y)
@@ -1357,6 +1358,12 @@ void draw_map(DrawLevelParams* params)
             // printf("target: %d, %d\n", mouse_map_room.x, mouse_map_room.y);
             // astar = astar_traverse(&map_asd, level.start.x, level.start.y, mouse_map_room.x, mouse_map_room.y);
             Vector2i roomxy = level_get_room_coords(player->curr_room);
+            if(level_is_room_valid(&level, mouse_map_start_room.x, mouse_map_start_room.y))
+            {
+                roomxy.x = mouse_map_start_room.x;
+                roomxy.y = mouse_map_start_room.y;
+            }
+            
             astar = astar_traverse(&map_asd, roomxy.x, roomxy.y, mouse_map_room.x, mouse_map_room.y);
             if(astar)
             {
@@ -1507,6 +1514,12 @@ void draw_map(DrawLevelParams* params)
                     mouse_on_room = true;
                     mouse_map_room.x = x;
                     mouse_map_room.y = y;
+
+                    if(window_mouse_right_went_up())
+                    {
+                        mouse_map_start_room.x = x;
+                        mouse_map_start_room.y = y;
+                    }
                 }
             }
 
