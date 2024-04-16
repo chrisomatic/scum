@@ -231,7 +231,7 @@ int ai_rand(int max)
 
 void ai_target_rand_tile(Creature* c)
 {
-    Room* room = level_get_room_by_index(&level, c->curr_room);
+    Room* room = level_get_room_by_index(&level, c->phys.curr_room);
 
     Vector2i tilec = {0};
     Vector2f tilep = {0};
@@ -244,14 +244,14 @@ void ai_target_rand_tile(Creature* c)
 
 void ai_shoot_nearest_player(Creature* c)
 {
-    Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+    Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
     float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y) + RAND_FLOAT(-10.0,10.0);
 
     ProjectileType pt = creature_get_projectile_type(c);
     ProjectileDef def = projectile_lookup[pt];
     ProjectileSpawn spawn = projectile_spawn[pt];
 
-    projectile_add(&c->phys, c->curr_room, &def, &spawn, COLOR_RED, angle, false);
+    projectile_add(&c->phys, c->phys.curr_room, &def, &spawn, COLOR_RED, angle, false);
 }
 
 bool ai_on_target_tile(Creature* c)

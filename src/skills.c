@@ -130,7 +130,7 @@ bool skills_use(void* player, Skill* skill)
             spawn.num = 1;
             spawn.spread = 0.0;
 
-            projectile_add(&p->phys, p->curr_room, &def, &spawn, 0x0000CCFF, p->aim_deg, true);
+            projectile_add(&p->phys, p->phys.curr_room, &def, &spawn, 0x0000CCFF, p->aim_deg, true);
 
         } break;
 
@@ -143,7 +143,7 @@ bool skills_use(void* player, Skill* skill)
             def.cluster_num[0] = 4;
             def.cluster_scales[0] = 0.8;
 
-            Room* room = level_get_room_by_index(&level, p->curr_room);
+            Room* room = level_get_room_by_index(&level, p->phys.curr_room);
 
             float r = TILE_SIZE/2.0;
 
@@ -161,7 +161,7 @@ bool skills_use(void* player, Skill* skill)
                 Rect r = level_get_tile_rect(rand_tile.x, rand_tile.y);
                 Vector3f pos = {r.x+xo, r.y+yo, 400.0};
 
-                projectile_drop(pos, 0.0, p->curr_room, &def, &spawn, 0x00553300, true);
+                projectile_drop(pos, 0.0, p->phys.curr_room, &def, &spawn, 0x00553300, true);
             }
 
         } break;
@@ -173,7 +173,7 @@ bool skills_use(void* player, Skill* skill)
             spawn.spread = 0.0;
             spawn.homing_chance = 1.0;
 
-            projectile_add(&p->phys, p->curr_room, &def, &spawn, 0x00555555, p->aim_deg, true);
+            projectile_add(&p->phys, p->phys.curr_room, &def, &spawn, 0x00555555, p->aim_deg, true);
         } break;
 
         case SKILL_TYPE_MULTI_SHOT:
@@ -182,7 +182,7 @@ bool skills_use(void* player, Skill* skill)
             spawn.num = 2 + skill->rank;
             spawn.spread = 30.0 + 10*skill->rank;
 
-            projectile_add(&p->phys, p->curr_room, &def, &spawn, COLOR_WHITE, p->aim_deg, true);
+            projectile_add(&p->phys, p->phys.curr_room, &def, &spawn, COLOR_WHITE, p->aim_deg, true);
             
         } break;
 
@@ -195,7 +195,7 @@ bool skills_use(void* player, Skill* skill)
             spawn.spread = 60.0;
             spawn.ghost_chance = 1.0;
 
-            projectile_add(&p->phys, p->curr_room, &def, &spawn, 0x00808080, p->aim_deg, true);
+            projectile_add(&p->phys, p->phys.curr_room, &def, &spawn, 0x00808080, p->aim_deg, true);
 
         } break;
         case SKILL_TYPE_HEAL:

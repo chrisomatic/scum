@@ -511,7 +511,7 @@ void creature_clear_room(uint8_t room_index)
     for(int i = clist->count; i >= 0; --i)
     {
         Creature* c = &creatures[i];
-        if(c->curr_room == room_index)
+        if(c->phys.curr_room == room_index)
         {
             list_remove(clist, i);
         }
@@ -531,7 +531,7 @@ void creature_kill_room(uint8_t room_index)
 {
     for(int i = clist->count-1; i >= 0; --i)
     {
-        if(creatures[i].curr_room == room_index)
+        if(creatures[i].phys.curr_room == room_index)
         {
             creature_die(&creatures[i]);
             list_remove(clist, i);
@@ -661,13 +661,13 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
     if(creature != NULL)
     {
         memcpy(&c, creature, sizeof(Creature));
-        room = level_get_room_by_index(&level, c.curr_room);
+        room = level_get_room_by_index(&level, c.phys.curr_room);
         if(!room) return NULL;
     }
     else
     {
         if(room == NULL) return NULL;
-        c.curr_room = room->index;
+        c.phys.curr_room = room->index;
 
         c.id = get_id();
         c.type = type;
@@ -721,7 +721,7 @@ void creature_update(Creature* c, float dt)
     if(c->phys.dead)
         return;
 
-    if(!is_any_player_room(c->curr_room))
+    if(!is_any_player_room(c->phys.curr_room))
         return;
 
     phys_add_circular_time(&c->phys, dt);
@@ -926,7 +926,7 @@ void creature_handle_collision(Creature* c, Entity* e)
 
 void creature_draw(Creature* c)
 {
-    if(c->curr_room != player->curr_room)
+    if(c->phys.curr_room != player->phys.curr_room)
         return;
 
     if(c->phys.dead) return;
@@ -964,7 +964,7 @@ void creature_die(Creature* c)
             .data.particles.color2 = eff->color2,
             .data.particles.color3 = eff->color3,
             .data.particles.lifetime = 0.5,
-            .data.particles.room_index = c->curr_room,
+            .data.particles.room_index = c->phys.curr_room,
         };
 
         net_server_add_event(&ev);
@@ -972,16 +972,16 @@ void creature_die(Creature* c)
     else
     {
         ParticleSpawner* ps = particles_spawn_effect(c->phys.pos.x,c->phys.pos.y, 0.0, eff, 0.5, true, false);
-        if(ps != NULL) ps->userdata = (int)c->curr_room;
+        if(ps != NULL) ps->userdata = (int)c->phys.curr_room;
     }
 
     status_effects_clear(&c->phys);
 
     // player_add_xp(player, c->xp);
-    Room* room = level_get_room_by_index(&level, c->curr_room);
+    Room* room = level_get_room_by_index(&level, c->phys.curr_room);
     if(room == NULL)
     {
-        LOGE("room is null %u", c->curr_room);
+        LOGE("room is null %u", c->phys.curr_room);
         return;
     }
 
@@ -1001,16 +1001,16 @@ void creature_die(Creature* c)
     d.ttl = 10.0;
     d.pos.x = c->phys.pos.x;
     d.pos.y = c->phys.pos.y;
-    d.room = c->curr_room;
+    d.room = c->phys.curr_room;
     decal_add(d);
 
     if(rand() % 10 == 0)
     {
         // drop item
-        item_add(ITEM_POTION_MANA, c->phys.pos.x, c->phys.pos.y, c->curr_room);
+        item_add(ITEM_POTION_MANA, c->phys.pos.x, c->phys.pos.y, c->phys.curr_room);
     }
 
-    // handle_room_completion(c->curr_room);
+    // handle_room_completion(c->phys.curr_room);
     handle_room_completion(room);
 }
 
@@ -1060,8 +1060,8 @@ uint16_t creature_get_room_count(uint8_t room_index, bool count_passive)
     uint16_t count = 0;
     for(int i = 0; i < clist->count; ++i)
     {
-        // if(creatures[i].curr_room == room_index && !creatures[i].phys.dead && !creatures[i].passive)
-        if(creatures[i].curr_room == room_index && !creatures[i].phys.dead)
+        // if(creatures[i].phys.curr_room == room_index && !creatures[i].phys.dead && !creatures[i].passive)
+        if(creatures[i].phys.curr_room == room_index && !creatures[i].phys.dead)
         {
             if(count_passive)
                 count++;
@@ -1077,7 +1077,7 @@ bool creature_is_on_tile(Room* room, int tile_x, int tile_y)
     for(int i = clist->count-1; i >= 0; --i)
     {
         Creature* c = &creatures[i];
-        if(c->curr_room != room->index)
+        if(c->phys.curr_room != room->index)
             continue;
 
         if(c->phys.dead)
@@ -1145,7 +1145,7 @@ static void creature_update_slug(Creature* c, float dt)
 static void creature_update_spiked_slug(Creature* c, float dt)
 {
 
-    Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+    Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
     Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
     normalize(&v);
 
@@ -1204,7 +1204,7 @@ static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
     ProjectileDef def = projectile_lookup[pt];
     ProjectileSpawn spawn = projectile_spawn[pt];
 
-    projectile_add(&c->phys, c->curr_room, &def, &spawn, color, angle, false);
+    projectile_add(&c->phys, c->phys.curr_room, &def, &spawn, color, angle, false);
 }
 
 static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float vel0_z, uint32_t color)
@@ -1217,14 +1217,14 @@ static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float 
     Rect r = level_get_tile_rect(tile_x, tile_y);
     Vector3f pos = {r.x, r.y, 400.0};
 
-    projectile_drop(pos, vel0_z, c->curr_room, &def, &spawn, color, false);
+    projectile_drop(pos, vel0_z, c->phys.curr_room, &def, &spawn, color, false);
 }
 
 static void creature_update_clinger(Creature* c, float dt)
 {
 
 
-    Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+    Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
 
     float d = dist(p->phys.pos.x, p->phys.pos.y, c->phys.pos.x, c->phys.pos.y);
     bool horiz = (c->spawn_tile_y == -1 || c->spawn_tile_y == ROOM_TILE_SIZE_Y);
@@ -1422,7 +1422,7 @@ static void creature_update_buzzer(Creature* c, float dt)
             if(c->ai_value % 2 == 0)
             {
                 // fire shots
-                Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+                Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y) + RAND_FLOAT(-10.0,10.0);
                 creature_fire_projectile(c, angle, PROJ_COLOR);
             }
@@ -1444,7 +1444,7 @@ static void creature_update_totem_red(Creature* c, float dt)
     int creature_count = 0;
     for(int i = 0; i < clist->count; ++i)
     {
-        if(creatures[i].curr_room == c->curr_room)
+        if(creatures[i].phys.curr_room == c->phys.curr_room)
         {
             // same room
             if(creatures[i].type != CREATURE_TYPE_TOTEM_RED)
@@ -1503,7 +1503,7 @@ static void creature_update_totem_red(Creature* c, float dt)
                 c->ai_counter = 0.0;
 
                 // fire shots
-                Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+                Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
                 creature_fire_projectile(c, angle, PROJ_COLOR);
 
@@ -1526,7 +1526,7 @@ static void creature_update_totem_blue(Creature* c, float dt)
     int creature_count = 0;
     for(int i = 0; i < clist->count; ++i)
     {
-        if(creatures[i].curr_room == c->curr_room)
+        if(creatures[i].phys.curr_room == c->phys.curr_room)
         {
             // same room
             if(!creatures[i].invincible)
@@ -1584,7 +1584,7 @@ static void creature_update_totem_blue(Creature* c, float dt)
                 c->ai_counter = 0.0;
 
                 // fire shots
-                Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+                Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
 
                 creature_fire_projectile(c, angle, color);
@@ -1608,7 +1608,7 @@ static void creature_update_totem_yellow(Creature* c, float dt)
     int creature_count = 0;
     for(int i = 0; i < clist->count; ++i)
     {
-        if(creatures[i].curr_room == c->curr_room)
+        if(creatures[i].phys.curr_room == c->phys.curr_room)
         {
             // same room
             if(!creatures[i].invincible)
@@ -1727,7 +1727,7 @@ static void creature_update_shambler(Creature* c, float dt)
             if(c->ai_state == 1)
             {
                 // fire 5 shots
-                Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+                Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
                 creature_fire_projectile(c, angle + RAND_FLOAT(-2.0,2.0), PROJ_COLOR);
 
@@ -1799,7 +1799,7 @@ static void creature_update_shambler(Creature* c, float dt)
             {
                 // printf("teleport start\n");
                 // teleport
-                Room* room = level_get_room_by_index(&level, c->curr_room);
+                Room* room = level_get_room_by_index(&level, c->phys.curr_room);
                 Vector2i tilec = {0};
                 Vector2f tilep = {0};
                 level_get_rand_floor_tile(room, &tilec, &tilep);
@@ -1816,7 +1816,7 @@ static void creature_update_shambler(Creature* c, float dt)
                 d.ttl = duration;
                 d.pos.x = tilep.x;
                 d.pos.y = tilep.y;
-                d.room = c->curr_room;
+                d.room = c->phys.curr_room;
                 d.fade_pattern = 1;
                 decal_add(d);
 
@@ -1858,7 +1858,7 @@ static void creature_update_shambler(Creature* c, float dt)
 static void creature_update_infected(Creature* c, float dt)
 {
     // target closest player
-    Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+    Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
 
     if(p)
     {
@@ -1895,7 +1895,7 @@ static void creature_update_gravity_crystal(Creature* c, float dt)
 
         if(!p->active) continue;
         if(p->phys.dead) continue;
-        if(p->curr_room != c->curr_room) continue;
+        if(p->phys.curr_room != c->phys.curr_room) continue;
 
         double m2 = p->phys.mass;
         double r = dist(c->phys.pos.x,c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
@@ -1986,7 +1986,7 @@ static void creature_update_leeper(Creature* c, float dt)
 
         if(act)
         {
-            Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+            Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
             if(p)
             {
                 c->target_pos.x = p->phys.pos.x;
@@ -2031,7 +2031,7 @@ static void creature_update_spawn_egg(Creature* c, float dt)
     if(c->ai_state == 3)
     {
         Vector2i t = {.x=c->phys.curr_tile.x, .y=c->phys.curr_tile.y};
-        Room* room = level_get_room_by_index(&level, c->curr_room);
+        Room* room = level_get_room_by_index(&level, c->phys.curr_room);
 
         for(int i = 0; i < 3+rand()%3; ++i)
         {
@@ -2082,7 +2082,7 @@ static void creature_update_spawn_spider(Creature* c, float dt)
     if(c->ai_state == 1)
     {
         // move toward nearest player
-        Player* p = player_get_nearest(c->curr_room, c->phys.pos.x, c->phys.pos.y);
+        Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
 
         Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
         normalize(&v);
@@ -2142,7 +2142,7 @@ static void creature_update_behemoth(Creature* c, float dt)
     bool act = ai_update_action(c, dt);
     if(!act) return;
 
-    Room* room = level_get_room_by_index(&level, c->curr_room);
+    Room* room = level_get_room_by_index(&level, c->phys.curr_room);
 
     Vector2i rand_tile;
     Vector2f rand_pos;
@@ -2156,7 +2156,7 @@ static void creature_update_behemoth(Creature* c, float dt)
             level_get_rand_floor_tile(room, &rand_tile, &rand_pos);
             creature_add(room, CREATURE_TYPE_PEEPER, &rand_tile, NULL);
             ParticleSpawner* ps = particles_spawn_effect(rand_pos.x,rand_pos.y, 0.0, &particle_effects[EFFECT_SMOKE], 0.3, true, false);
-            if(ps != NULL) ps->userdata = (int)c->curr_room;
+            if(ps != NULL) ps->userdata = (int)c->phys.curr_room;
         }
 
         c->phys.underground = true;
@@ -2209,7 +2209,7 @@ static void creature_update_behemoth(Creature* c, float dt)
             d.ttl = 2.0;
             d.pos.x = rand_pos.x;
             d.pos.y = rand_pos.y;
-            d.room = c->curr_room;
+            d.room = c->phys.curr_room;
             d.fade_pattern = 1;
             decal_add(d);
         }
@@ -2240,7 +2240,7 @@ static void creature_update_beacon_red(Creature* c, float dt)
             .ttl = 5.0,
             .pos.x = c->phys.pos.x,
             .pos.y = c->phys.pos.y,
-            .room = c->curr_room,
+            .room = c->phys.curr_room,
             .fade_pattern = 0
         };
         
@@ -2253,7 +2253,7 @@ static void creature_update_beacon_red(Creature* c, float dt)
     bool act = ai_update_action(c, dt);
     if(!act) return;
 
-    Room* room = level_get_room_by_index(&level, c->curr_room);
+    Room* room = level_get_room_by_index(&level, c->phys.curr_room);
 
     Vector2i rand_tile;
     Vector2f rand_pos;
@@ -2288,7 +2288,7 @@ static void creature_update_beacon_red(Creature* c, float dt)
             .ttl = 2.0,
             .pos.x = rand_pos.x,
             .pos.y = rand_pos.y,
-            .room = c->curr_room,
+            .room = c->phys.curr_room,
             .fade_pattern = 1
         };
 

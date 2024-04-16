@@ -19,6 +19,9 @@ Projectile projectiles[MAX_PROJECTILES];
 Projectile prior_projectiles[MAX_PROJECTILES];
 glist* plist = NULL;
 
+static ProjectileOrbital orbitals[32] = {0};
+static int orbital_count = 0;
+
 static int projectile_image;
 
 // .color = 0x003030FF,
@@ -39,6 +42,9 @@ ProjectileDef projectile_lookup[] = {
         .cluster_stages = 1,
         .cluster_num = {8, 2, 2},
         .cluster_scales = {0.5, 0.5, 0.5},
+
+        .is_orbital = false,
+        .orbital_distance = 64.0,
     },
     {
         // player - kinetic discharge skill
@@ -107,7 +113,7 @@ ProjectileSpawn projectile_spawn[] = {
         // player
         .num = 1,
         .spread = 30.0,
-        .ghost_chance = 0.0,
+        .ghost_chance = 1.0,
         .homing_chance = 0.0,
         .poison_chance = 0.0,
         .cold_chance = 0.0,
@@ -191,7 +197,7 @@ void projectile_clear_all()
     list_clear(plist);
 }
 
-static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player, bool standard_lob)
+static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player, Physics* phys, bool standard_lob)
 {
     if(role == ROLE_CLIENT)
         return;
@@ -217,9 +223,40 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
     proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * proj.def.scale;
     proj.phys.amorphous = proj.def.bouncy ? false : true;
     proj.phys.elasticity = proj.def.bouncy ? 1.0 : 0.1;
-    proj.curr_room = curr_room;
+    proj.phys.curr_room = curr_room;
     proj.from_player = from_player;
     proj.angle_deg = angle_deg;
+
+    if(def->is_orbital)
+    {
+        // assign projectile to orbital
+        ProjectileOrbital* orbital = &orbitals[orbital_count];
+        bool new_orbital = true;
+
+        for(int o = 0; o < orbital_count; ++o)
+        {
+            ProjectileOrbital* orb = &orbitals[o];
+
+            if(phys == orb->body && def->orbital_distance == orb->distance)
+            {
+                new_orbital = false;
+                orbital = orb;
+                break;
+            }
+        }
+
+        orbital->count++;
+
+        if(new_orbital)
+        {
+            orbital->body = phys;
+            orbital->distance = def->orbital_distance;
+            orbital_count++;
+        }
+
+        proj.orbital = orbital;
+        proj.orbital_index = orbital->count;
+    }
 
     proj.cluster_stage = spawn->cluster_stage;
 
@@ -265,9 +302,9 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
             uint16_t id = 0;
             Physics* target = NULL;
             if(p.from_player)
-                target = entity_get_closest_to(&p.phys, p.curr_room, ENTITY_TYPE_CREATURE, target_ids, target_count, &id);
+                target = entity_get_closest_to(&p.phys, p.phys.curr_room, ENTITY_TYPE_CREATURE, target_ids, target_count, &id);
             else
-                target = entity_get_closest_to(&p.phys, p.curr_room, ENTITY_TYPE_PLAYER, target_ids, target_count, &id);
+                target = entity_get_closest_to(&p.phys, p.phys.curr_room, ENTITY_TYPE_PLAYER, target_ids, target_count, &id);
 
             if(target)
             {
@@ -308,13 +345,13 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, Projec
     Vector3f pos = {phys->pos.x, phys->pos.y, phys->height/2.0 + phys->pos.z};
     Vector3f vel = {phys->vel.x, phys->vel.y, 0.0};
 
-    projectile_add_internal(pos, &vel, curr_room, def, spawn, color, angle_deg, from_player, true);
+    projectile_add_internal(pos, &vel, curr_room, def, spawn, color, angle_deg, from_player, phys, true);
 }
 
 void projectile_drop(Vector3f pos, float vel0_z, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, bool from_player)
 {
     Vector3f vel = {0.0, 0.0, vel0_z};
-    projectile_add_internal(pos, &vel, curr_room, def, spawn, color, 0.0, from_player, false);
+    projectile_add_internal(pos, &vel, curr_room, def, spawn, color, 0.0, from_player, NULL, false);
 }
 
 void projectile_kill(Projectile* proj)
@@ -351,7 +388,7 @@ void projectile_kill(Projectile* proj)
                 .data.particles.color2 = c2,
                 .data.particles.color3 = c3,
                 .data.particles.lifetime = lifetime,
-                .data.particles.room_index = proj->curr_room,
+                .data.particles.room_index = proj->phys.curr_room,
             };
 
             net_server_add_event(&ev);
@@ -365,7 +402,7 @@ void projectile_kill(Projectile* proj)
             splash.scale.init_min *= pscale;
             splash.scale.init_max *= pscale;
             ParticleSpawner* ps = particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &splash, lifetime, true, false);
-            if(ps != NULL) ps->userdata = (int)proj->curr_room;
+            if(ps != NULL) ps->userdata = (int)proj->phys.curr_room;
         }
 
     }
@@ -374,8 +411,21 @@ void projectile_kill(Projectile* proj)
     {
         if(proj->def.explosive)
         {
-            explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, proj->curr_room, proj->from_player);
+            explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, proj->phys.curr_room, proj->from_player);
         }
+    }
+
+    if(proj->def.is_orbital)
+    {
+        proj->orbital->count--;
+
+        /*
+        if(proj->orbital->count <= 0)
+        {
+            memcpy(proj->orbital, &orbitals[orbital_count-1], sizeof(ProjectileOrbital));
+            orbital_count--;
+        }
+        */
     }
 
     if(proj->def.cluster)
@@ -416,13 +466,24 @@ void projectile_kill(Projectile* proj)
         // proj->phys.vel.y = 0.0;
         proj->phys.vel.x /= 2.0;
         proj->phys.vel.y /= 2.0;
-        projectile_add(&proj->phys, proj->curr_room, &pd, &sp, proj->color, angle_deg, proj->from_player);
+        projectile_add(&proj->phys, proj->phys.curr_room, &pd, &sp, proj->color, angle_deg, proj->from_player);
     }
 }
 
 void projectile_update_all(float dt)
 {
     // printf("projectile update\n");
+
+    // build orbital lookup table so projectiles can be aware of other projectiles in its own orbital
+    // May be better to keep a global list of orbitals, so this doesn't need to be done every frame.
+
+    for(int o = 0; o < orbital_count; ++o)
+    {
+        // update orbital time
+        orbitals[o].dt += dt;
+        orbitals[o].dt = fmod(orbitals[o].dt,2*PI);
+        orbitals[o].value = 0;
+    }
 
     for(int i = plist->count - 1; i >= 0; --i)
     {
@@ -444,27 +505,62 @@ void projectile_update_all(float dt)
         }
 
         float _dt = RANGE(proj->def.ttl, 0.0, dt);
-        // printf("%3d %.4f\n", i, delta_t);
 
-        proj->def.ttl -= _dt;
-
-        if(proj->def.accel != 0.0 && proj->accel_vector.x == 0.0 && proj->accel_vector.y == 0.0 && proj->accel_vector.z == 0.0)
+        if(proj->def.is_orbital && proj->orbital->body)
         {
-            Vector3f f = {proj->phys.vel.x, proj->phys.vel.y, proj->phys.vel.z};
-            normalize3f(&f);
+            // make sure orbital projectile follows player through rooms
+            proj->phys.curr_room = proj->orbital->body->curr_room;
 
-            f.x *= proj->def.accel;
-            f.y *= proj->def.accel;
-            f.z *= proj->def.accel;
+            // evenly space the projectile in the orbital
+            float speed = proj->def.speed/100.0;
+            float delta_angle = (2*PI) / proj->orbital->count;
+            float angle = (speed*proj->orbital->dt) + (proj->orbital->value * delta_angle);
 
-            proj->accel_vector.x = f.x;
-            proj->accel_vector.y = f.y;
-            proj->accel_vector.z = f.z;
+            float x =  cosf(angle) * proj->def.orbital_distance;
+            float y = -sinf(angle) * proj->def.orbital_distance;
+
+            proj->phys.pos.x = proj->orbital->body->pos.x + x;
+            proj->phys.pos.y = proj->orbital->body->pos.y + y;
+
+            proj->orbital->value++;
+
+            // set velocity for brevity? Although this isn't needed
+            /*
+            Vector2f f = {
+                proj->phys.pos.x - proj->orbital->body->pos.x,
+                proj->phys.pos.y - proj->orbital->body->pos.y
+            };
+
+            normalize(&f);
+
+            proj->phys.vel.x = proj->def.speed * f.y;
+            proj->phys.vel.y = proj->def.speed * -f.x;
+            */
         }
+        else
+        {
 
-        proj->phys.vel.x += proj->accel_vector.x;
-        proj->phys.vel.y += proj->accel_vector.y;
-        proj->phys.vel.z += proj->accel_vector.z;
+            // printf("%3d %.4f\n", i, delta_t);
+            proj->def.ttl -= _dt;
+
+            if(proj->def.accel != 0.0 && proj->accel_vector.x == 0.0 && proj->accel_vector.y == 0.0 && proj->accel_vector.z == 0.0)
+            {
+                Vector3f f = {proj->phys.vel.x, proj->phys.vel.y, proj->phys.vel.z};
+                normalize3f(&f);
+
+                f.x *= proj->def.accel;
+                f.y *= proj->def.accel;
+                f.z *= proj->def.accel;
+
+                proj->accel_vector.x = f.x;
+                proj->accel_vector.y = f.y;
+                proj->accel_vector.z = f.z;
+            }
+
+            proj->phys.vel.x += proj->accel_vector.x;
+            proj->phys.vel.y += proj->accel_vector.y;
+            proj->phys.vel.z += proj->accel_vector.z;
+        }
 
         //printf("adding %f %f; vel: %f %f\n",f.x, f.y, proj->phys.vel.x, proj->phys.vel.y);
 
@@ -475,7 +571,10 @@ void projectile_update_all(float dt)
         proj->phys.pos.x += _dt*proj->phys.vel.x;
         proj->phys.pos.y += _dt*proj->phys.vel.y;
 
-        phys_apply_gravity(&proj->phys, 0.5, _dt);
+        if(!proj->def.is_orbital)
+        {
+            phys_apply_gravity(&proj->phys, 0.5, _dt);
+        }
 
         // printf("proj->phys.pos.z: %.2f\n", proj->phys.pos.z);
 
@@ -511,14 +610,14 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
     {
         Creature* c = (Creature*)e->ptr;
 
-        curr_room = c->curr_room;
+        curr_room = c->phys.curr_room;
         phys = &c->phys;
     }
     else if(!proj->from_player && e->type == ENTITY_TYPE_PLAYER)
     {
         Player* p = (Player*)e->ptr;
 
-        curr_room = p->curr_room;
+        curr_room = p->phys.curr_room;
         phys = &p->phys;
     }
 
@@ -527,7 +626,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
     if(phys)
     {
         if(phys->dead) return;
-        if(proj->curr_room != curr_room) return;
+        if(proj->phys.curr_room != curr_room) return;
 
         Box proj_curr = {
             proj->phys.pos.x,
@@ -577,17 +676,17 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 
             if(proj->cold)
             {
-                status_effects_add_type(phys,proj->curr_room, STATUS_EFFECT_COLD);
+                status_effects_add_type(phys,proj->phys.curr_room, STATUS_EFFECT_COLD);
             }
             
             if(proj->poison)
             {
-                status_effects_add_type(phys,proj->curr_room, STATUS_EFFECT_POISON);
+                status_effects_add_type(phys,proj->phys.curr_room, STATUS_EFFECT_POISON);
             }
 
             if(proj->fire)
             {
-                status_effects_add_type(phys,proj->curr_room, STATUS_EFFECT_FIRE);
+                status_effects_add_type(phys,proj->phys.curr_room, STATUS_EFFECT_FIRE);
             }
 
             switch(e->type)
@@ -605,13 +704,13 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 
     if(hit && projdef->explosive)
     {
-        explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, proj->curr_room, proj->from_player);
+        explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, proj->phys.curr_room, proj->from_player);
     }
 }
 
 void projectile_draw(Projectile* proj)
 {
-    if(proj->curr_room != player->curr_room)
+    if(proj->phys.curr_room != player->phys.curr_room)
         return; // don't draw projectile if not in same room
 
     float opacity = proj->phys.ethereal ? 0.3 : 1.0;

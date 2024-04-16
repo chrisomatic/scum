@@ -33,7 +33,7 @@ void explosion_add(float x, float y, float max_radius, float rate, uint8_t curr_
     ex.phys.dead = false;
     ex.max_radius = max_radius;
     ex.rate = rate;
-    ex.curr_room = curr_room;
+    ex.phys.curr_room = curr_room;
     ex.from_player = from_player;
 
     list_add(explosion_list, &ex);
@@ -69,7 +69,7 @@ void explosion_update_all(float dt)
 
 void explosion_draw(Explosion* ex)
 {
-    if(ex->curr_room != player->curr_room)
+    if(ex->phys.curr_room != player->phys.curr_room)
         return;
 
     gfx_draw_circle(ex->phys.pos.x, ex->phys.pos.y, ex->phys.radius, COLOR_RAND, 1.0, true, IN_WORLD);

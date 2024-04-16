@@ -36,6 +36,7 @@ typedef struct
     float rotation_deg;
 
     Vector2i curr_tile;
+    uint8_t curr_room;
 
     Rect vr;
     Rect collision_rect_prior;

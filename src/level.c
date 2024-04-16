@@ -1656,7 +1656,7 @@ int level_tile_traversable_func(int x, int y)
         p = player;
     }
 
-    Room* room  = level_get_room_by_index(&level, p->curr_room);
+    Room* room  = level_get_room_by_index(&level, p->phys.curr_room);
     TileType tt = level_get_tile_type(room, x, y);
 
     if(tt == TILE_BOULDER) return 0;

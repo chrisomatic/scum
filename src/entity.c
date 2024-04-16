@@ -16,17 +16,16 @@ static void entity_update_tile(Entity* e)
     float cx = e->phys->collision_rect.x;
     float cy = e->phys->collision_rect.y;
     Vector2i tile_coords = level_get_room_coords_by_pos(cx, cy);
-    Room* room = level_get_room_by_index(&level, e->curr_room);
+    Room* room = level_get_room_by_index(&level, e->phys->curr_room);
     e->tile = level_get_tile_type(room, tile_coords.x, tile_coords.y);
 }
 
-static void add_entity(EntityType type, void* ptr, uint8_t curr_room, Physics* phys)
+static void add_entity(EntityType type, void* ptr, Physics* phys)
 {
     Entity* e = &entities[num_entities++];
 
     e->type = type;
     e->ptr = ptr;
-    e->curr_room = curr_room;
     e->phys = phys;
 
     if(role == ROLE_CLIENT)
@@ -42,7 +41,7 @@ static bool is_player_room(uint8_t room_index)
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         if(!players[i].active) continue;
-        if(players[i].curr_room == room_index)
+        if(players[i].phys.curr_room == room_index)
             return true;
     }
 
@@ -99,7 +98,7 @@ void entity_build_all()
     {
         Player* p = &players[i];
         if(!p->active) continue;
-        add_entity(ENTITY_TYPE_PLAYER,p,p->curr_room, &p->phys);
+        add_entity(ENTITY_TYPE_PLAYER,p, &p->phys);
     }
 
     // creatures
@@ -108,31 +107,31 @@ void entity_build_all()
     {
         Creature* c = &creatures[i];
 
-        if(!is_player_room(c->curr_room)) continue;
+        if(!is_player_room(c->phys.curr_room)) continue;
 
         bool ghost = c->phys.dead ? true : false;
-        add_entity(ENTITY_TYPE_CREATURE,c,c->curr_room, &c->phys);
+        add_entity(ENTITY_TYPE_CREATURE,c, &c->phys);
     }
 
     // projectiles
     for(int i = 0; i < plist->count; ++i)
     {
         Projectile* p = &projectiles[i];
-        add_entity(ENTITY_TYPE_PROJECTILE,p,p->curr_room, &p->phys);
+        add_entity(ENTITY_TYPE_PROJECTILE,p, &p->phys);
     }
 
     // items
     for(int i = 0; i < item_list->count; ++i)
     {
         Item* pu = &items[i];
-        add_entity(ENTITY_TYPE_ITEM,pu,pu->curr_room, &pu->phys);
+        add_entity(ENTITY_TYPE_ITEM,pu, &pu->phys);
     }
 
     // explosions
     for(int i = 0; i < explosion_list->count; ++i)
     {
         Explosion* ex = &explosions[i];
-        add_entity(ENTITY_TYPE_EXPLOSION,ex,ex->curr_room, &ex->phys);
+        add_entity(ENTITY_TYPE_EXPLOSION,ex, &ex->phys);
     }
 }
 
@@ -225,8 +224,8 @@ void entity_handle_collisions()
             if(e1 == e2) continue;
             if(e2->phys->dead) continue;
             if(e2->phys->underground) continue;
-            if(e1->curr_room != e2->curr_room) continue;
-            if(!is_any_player_room(e1->curr_room)) continue;
+            if(e1->phys->curr_room != e2->phys->curr_room) continue;
+            if(!is_any_player_room(e1->phys->curr_room)) continue;
 
             switch(e1->type)
             {
@@ -257,7 +256,7 @@ void entity_handle_collisions()
         if(e->phys->ethereal) continue;
         if(e->type == ENTITY_TYPE_EXPLOSION) continue;
 
-        Room* room = level_get_room_by_index(&level, entities[i].curr_room);
+        Room* room = level_get_room_by_index(&level, entities[i].phys->curr_room);
         level_handle_room_collision(room,entities[i].phys, e->type, e);
 
         if(e->phys->dead && e->type == ENTITY_TYPE_PROJECTILE)
@@ -267,7 +266,7 @@ void entity_handle_collisions()
 
             // if(proj->def.explosive)
             // {
-            //     explosion_add(e->phys->pos.x, e->phys->pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, e->curr_room, proj->from_player);
+            //     explosion_add(e->phys->pos.x, e->phys->pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, e->phys->curr_room, proj->from_player);
             // }
         }
     }
@@ -283,7 +282,7 @@ void entity_draw_all()
     {
         Entity* e = &entities[i];
 
-        if(e->curr_room != player->curr_room)
+        if(e->phys->curr_room != player->phys.curr_room)
             continue;
 
         if(e->type == ENTITY_TYPE_WALL)
@@ -347,7 +346,7 @@ void entity_draw_all()
     {
         Entity* e = &entities[i];
 
-        if(e->curr_room != player->curr_room)
+        if(e->phys->curr_room != player->phys.curr_room)
             continue;
 
         if(debug_enabled)
@@ -384,10 +383,10 @@ static Physics* get_physics_from_type(int index, uint8_t curr_room, EntityType t
     switch(type)
     {
         case ENTITY_TYPE_PLAYER:
-            if(!players[index].phys.dead && players[index].curr_room == curr_room && players[index].active)
+            if(!players[index].phys.dead && players[index].phys.curr_room == curr_room && players[index].active)
                 return &players[index].phys;
         case ENTITY_TYPE_CREATURE:
-            if(!creatures[index].phys.dead && creatures[index].curr_room == curr_room)
+            if(!creatures[index].phys.dead && creatures[index].phys.curr_room == curr_room)
                 return &creatures[index].phys;
     }
     return NULL;

@@ -29,11 +29,16 @@ typedef struct
     bool explosive;
     bool bouncy;
     bool penetrate;
-    bool cluster;
 
+    // cluster
+    bool cluster;
     int cluster_stages;
     int cluster_num[3];
     float cluster_scales[3];
+
+    // orbital
+    bool is_orbital;
+    float orbital_distance;
 
 } ProjectileDef;
 
@@ -51,6 +56,15 @@ typedef struct
     int cluster_stage;
 } ProjectileSpawn;
 
+
+typedef struct
+{
+    Physics* body;  // origin of orbital
+    float distance; // radius of orbital
+    int count;
+    int value; // used to index projectiles in orbital
+    float dt;       // used for rotation of projectiles
+} ProjectileOrbital;
 
 typedef struct
 {
@@ -81,6 +95,9 @@ typedef struct
     Vector3f accel_vector;
 
     int cluster_stage;
+
+    ProjectileOrbital* orbital;
+    int orbital_index;
 
     // Networking
     float lerp_t;

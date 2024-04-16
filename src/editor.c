@@ -84,7 +84,7 @@ void editor_draw()
 
         float big = 20.0;
 
-        Room* room = level_get_room_by_index(&level,player->curr_room);
+        Room* room = level_get_room_by_index(&level,player->phys.curr_room);
 
         switch(selection)
         {
@@ -181,29 +181,29 @@ void editor_draw()
                     imgui_listbox(item_names, ITEM_MAX, "Item", &item_sel, 4);
                     if(imgui_button("Add Item '%s'", item_names[item_sel]))
                     {
-                        item_add(item_sel, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+                        item_add(item_sel, player->phys.pos.x, player->phys.pos.y, player->phys.curr_room);
                     }
 
                     // if(imgui_button("Add Item 'New Level'"))
                     // {
-                    //     item_add(ITEM_NEW_LEVEL, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+                    //     item_add(ITEM_NEW_LEVEL, player->phys.pos.x, player->phys.pos.y, player->phys.curr_room);
                     // }
 
                     // if(imgui_button("Add Item 'Chest'"))
                     // {
-                    //     item_add(ITEM_CHEST, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+                    //     item_add(ITEM_CHEST, player->phys.pos.x, player->phys.pos.y, player->phys.curr_room);
                     // }
 
                     if(imgui_button("Add Random Item"))
                     {
-                        item_add(item_rand(true), player->phys.pos.x, player->phys.pos.y, player->curr_room);
+                        item_add(item_rand(true), player->phys.pos.x, player->phys.pos.y, player->phys.curr_room);
                     }
 
                     if(imgui_button("Add All Items"))
                     {
                         for(int i = 0; i < ITEM_MAX; ++i)
                         {
-                            item_add(i, player->phys.pos.x, player->phys.pos.y, player->curr_room);
+                            item_add(i, player->phys.pos.x, player->phys.pos.y, player->phys.curr_room);
                         }
                     }
                 }
@@ -264,7 +264,7 @@ void editor_draw()
                         imgui_toggle_button(&active, "Active");
                         if(active && !p->active)
                         {
-                            p->curr_room = player->curr_room;
+                            p->phys.curr_room = player->phys.curr_room;
                         }
                         p->active = active;
                     }
@@ -314,8 +314,8 @@ void editor_draw()
                 imgui_text("Vel: %.2f, %.2f", p->phys.vel.x, p->phys.vel.y);
 
                 Vector2i c;
-                c = level_get_room_coords(p->curr_room);
-                imgui_text("C Room: %u (%d, %d)", p->curr_room, c.x, c.y);
+                c = level_get_room_coords(p->phys.curr_room);
+                imgui_text("C Room: %u (%d, %d)", p->phys.curr_room, c.x, c.y);
                 c = level_get_room_coords(p->transition_room);
                 imgui_text("T Room: %u (%d, %d)", p->transition_room, c.x, c.y);
 
@@ -361,14 +361,14 @@ void editor_draw()
             {
 
                 imgui_text("Total Count: %u", creature_get_count());
-                imgui_text("Room Count: %u", creature_get_room_count(player->curr_room, true));
+                imgui_text("Room Count: %u", creature_get_room_count(player->phys.curr_room, true));
 
                 if(role == ROLE_LOCAL)
                 {
                     static int num_creatures = 1;
                     imgui_number_box("Spawn", 1, 100, &num_creatures);
 
-                    Room* room = level_get_room_by_index(&level, player->curr_room);
+                    Room* room = level_get_room_by_index(&level, player->phys.curr_room);
 
                     if(imgui_button("Add Slug"))
                     {
@@ -402,8 +402,8 @@ void editor_draw()
 
                     if(imgui_button("Clear Room"))
                     {
-                        creature_kill_room(player->curr_room);
-                        // creature_clear_room(player->curr_room);
+                        creature_kill_room(player->phys.curr_room);
+                        // creature_clear_room(player->phys.curr_room);
                     }
 
                     if(imgui_button("Clear All"))
@@ -481,6 +481,11 @@ void editor_draw()
                     imgui_checkbox("Bouncy", &projd->bouncy);
                     imgui_checkbox("Penetrate", &projd->penetrate);
                     imgui_checkbox("Cluster", &projd->cluster);
+
+                    imgui_horizontal_begin();
+                        imgui_checkbox("Orbital", &projd->is_orbital);
+                        imgui_slider_float("Orbital Distance", 1.0,100.0, &projd->orbital_distance);
+                    imgui_horizontal_end();
 
                     if(projd->cluster)
                     {

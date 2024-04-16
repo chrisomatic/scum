@@ -46,7 +46,7 @@ static bool item_func_chest(Item* pu, Player* p)
 
     float x = pu->phys.pos.x;
     float y = pu->phys.pos.y;
-    int croom = pu->curr_room;
+    int croom = pu->phys.curr_room;
 
     int num = player_get_active_count() + 1;
     ItemType lst[10] = {0};
@@ -127,7 +127,7 @@ static bool item_func_skull(Item* pu, Player* p)
     p->phys.vel.x += RAND_FLOAT(-100.0,100.0)*s;
     p->phys.vel.y += RAND_FLOAT(-100.0,100.0)*s;
 
-    status_effects_add_type(&p->phys, pu->curr_room, STATUS_EFFECT_POISON);
+    status_effects_add_type(&p->phys, pu->phys.curr_room, STATUS_EFFECT_POISON);
 
     pu->used = true;
     return pu->used;
@@ -140,7 +140,7 @@ static bool item_func_podium(Item* pu, Player* p)
 
     float x = pu->phys.pos.x;
     float y = pu->phys.pos.y;
-    int croom = pu->curr_room;
+    int croom = pu->phys.curr_room;
 
     int num = player_get_active_count();
 
@@ -161,11 +161,11 @@ static bool item_func_shrine(Item* pu, Player* p)
     pu->used = true;
 
     ParticleSpawner* ps = particles_spawn_effect(pu->phys.pos.x,pu->phys.pos.y, 0.0, &particle_effects[EFFECT_SHRINE], 2.0, true, false);
-    if(ps != NULL) ps->userdata = (int)pu->curr_room;
+    if(ps != NULL) ps->userdata = (int)pu->phys.curr_room;
 
     float x = pu->phys.pos.x;
     float y = pu->phys.pos.y;
-    int croom = pu->curr_room;
+    int croom = pu->phys.curr_room;
 
     int r = rand() % 7;
 
@@ -195,10 +195,10 @@ static bool item_func_shrine(Item* pu, Player* p)
             for(int i = 0; i < num; ++i)
             {
                 Player* x = &players[i];
-                if(x->curr_room != pu->curr_room)
+                if(x->phys.curr_room != pu->phys.curr_room)
                     continue;
 
-                status_effects_add_type(&x->phys, pu->curr_room, STATUS_EFFECT_POISON);
+                status_effects_add_type(&x->phys, pu->phys.curr_room, STATUS_EFFECT_POISON);
             }
 
             ui_message_set_title(2.0, message_color, message_scale, "Pestilence");
@@ -209,7 +209,7 @@ static bool item_func_shrine(Item* pu, Player* p)
             for(int i = 0; i < num; ++i)
             {
                 Player* x = &players[i];
-                if(x->curr_room != pu->curr_room)
+                if(x->phys.curr_room != pu->phys.curr_room)
                     continue;
 
                 player_add_xp(x, 300);
@@ -717,7 +717,7 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
     Item pu = {0};
     pu.type = type;
     pu.id = get_id();
-    pu.curr_room = curr_room;
+    pu.phys.curr_room = curr_room;
     pu.phys.pos.x = x;
     pu.phys.pos.y = y;
     pu.phys.speed = 1.0;
@@ -882,7 +882,7 @@ void item_update_all(float dt)
         {
             Item* pu = &items[j];
 
-            if(pu->curr_room != p->curr_room) continue;
+            if(pu->phys.curr_room != p->phys.curr_room) continue;
             if(pu->used) continue;
 
             Vector2f c1 = {p->phys.pos.x, p->phys.pos.y};
@@ -982,7 +982,7 @@ void item_update_all(float dt)
 
 void item_draw(Item* pu)
 {
-    if(pu->curr_room != player->curr_room)
+    if(pu->phys.curr_room != player->phys.curr_room)
         return;
 
     uint32_t color = 0x88888888;
@@ -1064,7 +1064,7 @@ bool item_is_on_tile(Room* room, int tile_x, int tile_y)
     {
         Item* pu = &items[i];
 
-        if(pu->curr_room != room->index)
+        if(pu->phys.curr_room != room->index)
             continue;
 
         float _x = pu->phys.pos.x;

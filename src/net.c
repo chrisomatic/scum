@@ -951,10 +951,10 @@ int net_server_start()
                         if(i == cli->client_id) continue;
                         if(players[i].active)
                         {
-                            if(ret == 1 || players[cli->client_id].curr_room != players[i].curr_room)
+                            if(ret == 1 || players[cli->client_id].phys.curr_room != players[i].phys.curr_room)
                             {
                                 Vector2i tile = level_get_room_coords_by_pos(players[i].phys.pos.x, players[i].phys.pos.y);
-                                player_send_to_room(&players[cli->client_id], players[i].curr_room, true, tile);
+                                player_send_to_room(&players[cli->client_id], players[i].phys.curr_room, true, tile);
                             }
                             break;
                         }
@@ -1402,7 +1402,7 @@ bool server_process_command(char* argv[20], int argc, int client_id)
 
         if(kill_type == 0)
         {
-            creature_kill_room(players[client_id].curr_room);
+            creature_kill_room(players[client_id].phys.curr_room);
         }
         else if(kill_type == 1)
         {
@@ -2519,7 +2519,7 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             BPW(&server.bp, 10, (uint32_t)p->phys.pos.y);
             BPW(&server.bp, 6,  (uint32_t)p->phys.pos.z);
             BPW(&server.bp, 5,  (uint32_t)p->sprite_index+p->anim.curr_frame);
-            BPW(&server.bp, 7,  (uint32_t)p->curr_room);
+            BPW(&server.bp, 7,  (uint32_t)p->phys.curr_room);
             BPW(&server.bp, 8,  (uint32_t)p->phys.mp);
             BPW(&server.bp, 8,  (uint32_t)p->phys.mp_max);
             BPW(&server.bp, 4,  (uint32_t)p->phys.hp);
@@ -2661,19 +2661,19 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
 
         if(!prior_active[client_id])
         {
-            p->curr_room = curr_room;
-            p->transition_room = p->curr_room;
+            p->phys.curr_room = curr_room;
+            p->transition_room = p->phys.curr_room;
         }
 
-        uint8_t prior_curr_room = p->curr_room;
+        uint8_t prior_curr_room = p->phys.curr_room;
 
         // moving between rooms
-        if(curr_room != p->curr_room)
+        if(curr_room != p->phys.curr_room)
         {
             if(p == player)
             {
-                p->transition_room = p->curr_room;
-                p->curr_room = curr_room;
+                p->transition_room = p->phys.curr_room;
+                p->phys.curr_room = curr_room;
 
                 if(level_transition_state == 0 && !level_generate_triggered)
                 {
@@ -2681,14 +2681,14 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
                 }
                 else
                 {
-                    p->transition_room = p->curr_room;
+                    p->transition_room = p->phys.curr_room;
                 }
 
             }
             else
             {
                 p->transition_room = curr_room;
-                p->curr_room = curr_room;
+                p->phys.curr_room = curr_room;
             }
             // avoid lerping
             p->phys.pos.x = pos.x;
@@ -2728,7 +2728,7 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         {
             printf("first state packet for %d\n", client_id);
             memcpy(&p->server_state_prior, &p->server_state_target, sizeof(p->server_state_target));
-            p->transition_room = p->curr_room;
+            p->transition_room = p->phys.curr_room;
         }
 
         //player_print(p);
@@ -2742,7 +2742,7 @@ static void pack_creatures(Packet* pkt, ClientInfo* cli)
 
     for(int i = 0; i < num_creatures; ++i)
     {
-        if(!is_any_player_room(creatures[i].curr_room))
+        if(!is_any_player_room(creatures[i].phys.curr_room))
             continue;
 
         num_visible_creatures++;
@@ -2754,7 +2754,7 @@ static void pack_creatures(Packet* pkt, ClientInfo* cli)
     {
         Creature* c = &creatures[i];
 
-        if(!is_any_player_room(c->curr_room))
+        if(!is_any_player_room(c->phys.curr_room))
             continue;
 
         uint8_t r = (c->color >> 16) & 0xFF;
@@ -2768,7 +2768,7 @@ static void pack_creatures(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 6,  (uint32_t)c->phys.pos.z);
         BPW(&server.bp, 8,  (uint32_t)c->phys.width);
         BPW(&server.bp, 6,  (uint32_t)c->sprite_index);
-        BPW(&server.bp, 7,  (uint32_t)c->curr_room);
+        BPW(&server.bp, 7,  (uint32_t)c->phys.curr_room);
         BPW(&server.bp, 8,  (uint32_t)c->phys.hp);
         BPW(&server.bp, 1,  (uint32_t)(c->phys.underground ? 0x01 : 0x00));
 
@@ -2810,7 +2810,7 @@ static void unpack_creatures(Packet* pkt, int* offset, WorldState* ws)
         creature.phys.width = (float)width;
         creature.phys.collision_rect.w = (float)width;
         creature.sprite_index = (uint8_t)sprite_index;
-        creature.curr_room = (uint8_t)curr_room;
+        creature.phys.curr_room = (uint8_t)curr_room;
         creature.phys.hp = (int8_t)hp;
         creature.color = COLOR(r,g,b);
 
@@ -2849,7 +2849,7 @@ static void pack_projectiles(Packet* pkt, ClientInfo* cli)
 
     for(int i = 0; i < num_projectiles; ++i)
     {
-        if(!is_any_player_room(projectiles[i].curr_room))
+        if(!is_any_player_room(projectiles[i].phys.curr_room))
             continue;
 
         num_visible_projectiles++;
@@ -2861,7 +2861,7 @@ static void pack_projectiles(Packet* pkt, ClientInfo* cli)
     {
         Projectile* p = &projectiles[i];
 
-        if(!is_any_player_room(p->curr_room))
+        if(!is_any_player_room(p->phys.curr_room))
             continue;
 
         uint8_t r = (p->color >> 16) & 0xFF;
@@ -2876,7 +2876,7 @@ static void pack_projectiles(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 8,  (uint32_t)g);
         BPW(&server.bp, 8,  (uint32_t)b);
         BPW(&server.bp, 3,  (uint32_t)(p->player_id));
-        BPW(&server.bp, 7,  (uint32_t)(p->curr_room));
+        BPW(&server.bp, 7,  (uint32_t)(p->phys.curr_room));
         BPW(&server.bp, 8,  (uint32_t)(p->def.scale*255.0f));
         BPW(&server.bp, 1,  (uint32_t)(p->from_player ? 0x01 : 0x00));
     }
@@ -2910,7 +2910,7 @@ static void unpack_projectiles(Packet* pkt, int* offset, WorldState* ws)
 
         p->id = (uint16_t)id;
         p->color = COLOR(r,g,b);
-        p->curr_room = (uint8_t)curr_room;
+        p->phys.curr_room = (uint8_t)curr_room;
         p->def.scale = (float)(scale / 255.0f);
         p->from_player = from_player == 0x01 ? true : false;
         p->player_id = (uint8_t)pid;
@@ -2947,7 +2947,7 @@ static void pack_items(Packet* pkt, ClientInfo* cli)
     for(int i = 0; i < num_items; ++i)
     {
         Item* it = &items[i];
-        if(!is_any_player_room(it->curr_room))
+        if(!is_any_player_room(it->phys.curr_room))
             continue;
         num_visible_items++;
     }
@@ -2958,7 +2958,7 @@ static void pack_items(Packet* pkt, ClientInfo* cli)
     {
         Item* it = &items[i];
 
-        if(!is_any_player_room(it->curr_room))
+        if(!is_any_player_room(it->phys.curr_room))
             continue;
 
         BPW(&server.bp, 16, (uint32_t)it->id);
@@ -2966,7 +2966,7 @@ static void pack_items(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 10, (uint32_t)it->phys.pos.x);
         BPW(&server.bp, 10, (uint32_t)it->phys.pos.y);
         BPW(&server.bp, 6,  (uint32_t)it->phys.pos.z);
-        BPW(&server.bp, 7,  (uint32_t)it->curr_room);
+        BPW(&server.bp, 7,  (uint32_t)it->phys.curr_room);
         BPW(&server.bp, 10,  (uint32_t)(it->angle));
         BPW(&server.bp, 1,  (uint32_t)(it->used ? 0x01 : 0x00));
         BPW(&server.bp, 8,  (uint32_t)(it->user_data));
@@ -3023,7 +3023,7 @@ static void unpack_items(Packet* pkt, int* offset, WorldState* ws)
 
         it->id = id;
         it->type = (int32_t)type-1;
-        it->curr_room = (uint8_t)c_room;
+        it->phys.curr_room = (uint8_t)c_room;
         it->highlighted = false;
         it->used = used == 1 ? true : false;
         float angle = (float)_angle;
@@ -3121,7 +3121,7 @@ static void unpack_decals(Packet* pkt, int* offset, WorldState* ws)
 
 static void pack_other(Packet* pkt, ClientInfo* cli)
 {
-    Room* room = level_get_room_by_index(&level, (int)players[cli->client_id].curr_room);
+    Room* room = level_get_room_by_index(&level, (int)players[cli->client_id].phys.curr_room);
 
     BPW(&server.bp, 1,  (uint32_t)(room->doors_locked ? 0x01 : 0x00));
     BPW(&server.bp, 1,  (uint32_t)(level.darkness_curse ? 0x01 : 0x00));
@@ -3131,7 +3131,7 @@ static void pack_other(Packet* pkt, ClientInfo* cli)
 
 static void unpack_other(Packet* pkt, int* offset, WorldState* ws)
 {
-    Room* room = level_get_room_by_index(&level, (int)player->curr_room);
+    Room* room = level_get_room_by_index(&level, (int)player->phys.curr_room);
 
     if(!room)
     {
@@ -3209,9 +3209,9 @@ static void unpack_events(Packet* pkt, int* offset, WorldState* ws)
                 float lifetime       = (float)(bitpack_read(&client.bp,8)/10.0f);
                 uint8_t room_index   = (uint8_t)bitpack_read(&client.bp,7);
 
-                if(room_index != player->curr_room)
+                if(room_index != player->phys.curr_room)
                 {
-                    // printf("%u != %u\n", room_index, player->curr_room);
+                    // printf("%u != %u\n", room_index, player->phys.curr_room);
                     continue;
                 }
 

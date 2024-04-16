@@ -132,6 +132,7 @@ Vector2f vec2(float x, float y);
 Vector3f vec3(float x, float y, float z);
 
 float vec_dot(Vector2f a, Vector2f b);
+Vector2f vec_cross(Vector2f a, Vector2f b);
 
 float get_angle_between_vectors_rad(Vector3f* a, Vector3f* b);
 

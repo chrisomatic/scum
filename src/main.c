@@ -312,7 +312,7 @@ void camera_set(bool immediate)
 
     // if(paused) return;
 
-    if(player->curr_room != player->transition_room)
+    if(player->phys.curr_room != player->transition_room)
     {
         // printf("not updating camera\n");
         return;
@@ -370,7 +370,7 @@ void camera_set(bool immediate)
         {
             Player* p = &players[i];
             if(!p->active) continue;
-            if(p->curr_room == player->curr_room)
+            if(p->phys.curr_room == player->phys.curr_room)
             {
                 Rect r = RECT(p->phys.pos.x, p->phys.pos.y, 1, 1);
                 if(!rectangles_colliding(&cr, &r))
@@ -425,7 +425,7 @@ void camera_set(bool immediate)
                 {
                     Player* p = &players[i];
                     if(!p->active) continue;
-                    if(p->curr_room == player->curr_room)
+                    if(p->phys.curr_room == player->phys.curr_room)
                     {
                         Rect r = RECT(p->phys.pos.x, p->phys.pos.y, 1, 1);
                         if(!rectangles_colliding(&cr2, &r))
@@ -701,14 +701,14 @@ void game_generate_level()
     for(int i = 0; i < ccount; ++i)
     {
         Creature* c = &creatures[i];
-        Room* room = level_get_room_by_index(&level, c->curr_room);
+        Room* room = level_get_room_by_index(&level, c->phys.curr_room);
         if(!room)
         {
-            LOGE("Creature %d has NULL room: %u", i, c->curr_room);
+            LOGE("Creature %d has NULL room: %u", i, c->phys.curr_room);
         }
         else if(!room->valid)
         {
-            LOGE("Creature %d has invalid room: %u", i, c->curr_room);
+            LOGE("Creature %d has invalid room: %u", i, c->phys.curr_room);
         }
     }
 
@@ -737,10 +737,10 @@ void game_generate_level()
         LOGE("Creature count doesn't add up");
         for(int i = 0; i < ccount; ++i)
         {
-            Room* room = level_get_room_by_index(&level, creatures[i].curr_room);
+            Room* room = level_get_room_by_index(&level, creatures[i].phys.curr_room);
             if(!room)
             {
-                LOGE("Creature %d has NULL room: %u", i, creatures[i].curr_room);
+                LOGE("Creature %d has NULL room: %u", i, creatures[i].phys.curr_room);
             }
             else
             {
@@ -1215,10 +1215,10 @@ void update(float dt)
         player_handle_net_inputs(player, dt);
 
         // TODO: make this into a function
-        if(player->curr_room == player->transition_room)
+        if(player->phys.curr_room == player->transition_room)
         {
 
-            Room* room = level_get_room_by_index(&level, player->curr_room);
+            Room* room = level_get_room_by_index(&level, player->phys.curr_room);
             if(room)
             {
                 bool clicked_creature = false;
@@ -1228,7 +1228,7 @@ void update(float dt)
                 for(int i = 0; i < clist->count; ++i)
                 {
                     Creature* c = &creatures[i];
-                    if(c->curr_room != player->curr_room) continue;
+                    if(c->phys.curr_room != player->phys.curr_room) continue;
 
                     if(rectangles_colliding(&mrw, &c->phys.collision_rect))
                     {
@@ -1285,7 +1285,7 @@ void handle_room_completion(Room* room)
             for(int j = 0; j < MAX_CLIENTS; ++j)
             {
                 Player* p = &players[j];
-                if(p->active && p->curr_room == room->index && !p->phys.dead)
+                if(p->active && p->phys.curr_room == room->index && !p->phys.dead)
                 {
                     player_add_xp(p, level_room_xp);
                 }
@@ -1357,7 +1357,7 @@ void draw_map(DrawLevelParams* params)
             astar_set_traversable_func(&map_asd, room_traversable_doors);
             // printf("target: %d, %d\n", mouse_map_room.x, mouse_map_room.y);
             // astar = astar_traverse(&map_asd, level.start.x, level.start.y, mouse_map_room.x, mouse_map_room.y);
-            Vector2i roomxy = level_get_room_coords(player->curr_room);
+            Vector2i roomxy = level_get_room_coords(player->phys.curr_room);
             if(level_is_room_valid(&level, mouse_map_start_room.x, mouse_map_start_room.y))
             {
                 roomxy.x = mouse_map_start_room.x;
@@ -1533,12 +1533,12 @@ void draw_map(DrawLevelParams* params)
                 gfx_draw_string(tlx, tly+size.y, COLOR_BLACK, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, room_rect.w, "%s", room_files[room_list[room->layout].file_index]);
             }
 
-            if(!IS_RECT_EMPTY(&send_to_room_rect) && params->show_all && room->index != player->curr_room)
+            if(!IS_RECT_EMPTY(&send_to_room_rect) && params->show_all && room->index != player->phys.curr_room)
             {
                 if(rectangles_colliding(&room_rect, &send_to_room_rect))
                 {
                     // printf("room->index: %u\n", room->index);
-                    // printf("player->curr_room: %u\n", player->curr_room);
+                    // printf("player->phys.curr_room: %u\n", player->phys.curr_room);
                     for(int d = 0; d < MAX_DOORS; ++d)
                     {
                         if(!room->doors[d]) continue;
@@ -1611,7 +1611,7 @@ void draw_map(DrawLevelParams* params)
         Rect pr = RECT(px, py, margin, margin);
 
         // translate to minimap
-        Vector2i roomxy = level_get_room_coords(p->curr_room);
+        Vector2i roomxy = level_get_room_coords(p->phys.curr_room);
         float draw_x = tlx + roomxy.x*len + r;
         float draw_y = tly + roomxy.y*len + r;
 
@@ -1728,7 +1728,7 @@ void particles_draw_all()
     gfx_sprite_batch_begin(true);
         for(int i = 0; i < spawner_list->count; ++i)
         {
-            if(spawners[i].userdata == player->curr_room)
+            if(spawners[i].userdata == player->phys.curr_room)
                 particles_draw_spawner(&spawners[i], true, true);
         }
     gfx_sprite_batch_draw();
@@ -1839,7 +1839,7 @@ void draw()
 
     gfx_clear_buffer(background_color);
 
-    if(player->curr_room != player->transition_room)
+    if(player->phys.curr_room != player->transition_room)
     {
         lighting_point_light_clear_all();
         player_draw_room_transition();
@@ -1853,7 +1853,7 @@ void draw()
         if(connected)
         {
 
-            Room* room = level_get_room_by_index(&level, player->curr_room);
+            Room* room = level_get_room_by_index(&level, player->phys.curr_room);
             if(!room) LOGW("room is null");
             level_draw_room(room, NULL, 0, 0);
 
@@ -1866,7 +1866,7 @@ void draw()
                 gfx_draw_rect(&ct, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 0.1, true, IN_WORLD);
             }
 
-            // Vector2i c = level_get_room_coords(player->curr_room);
+            // Vector2i c = level_get_room_coords(player->phys.curr_room);
             // for(int d = 0; d < 4; ++d)
             // {
             //     if(!room->doors[d]) continue;

@@ -26,8 +26,8 @@ void decal_draw_all()
     for(int i = decal_list->count-1; i >= 0; --i)
     {
         Decal* d = &decals[i];
-        if(d->room != player->curr_room) continue;
-        // printf("room: %u == %u\n", d->room, player->curr_room);
+        if(d->room != player->phys.curr_room) continue;
+        // printf("room: %u == %u\n", d->room, player->phys.curr_room);
         // printf("%d\n", d->image);
         // printf("%u\n", d->sprite_index);
         // printf("%.1f, %.1f\n", d->pos.x, d->pos.y);

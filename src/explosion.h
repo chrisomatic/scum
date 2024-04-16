@@ -9,7 +9,6 @@ typedef struct
     Physics phys;
     float max_radius;
     float rate;
-    uint8_t curr_room;
     bool from_player;
 } Explosion;
 

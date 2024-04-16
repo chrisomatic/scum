@@ -456,8 +456,8 @@ bool room_editor_update(float dt)
         room->index = level_get_room_index(level.start.x, level.start.y);
         room->discovered = true;
 
-        player->curr_room = room->index;
-        player->transition_room = player->curr_room;
+        player->phys.curr_room = room->index;
+        player->transition_room = player->phys.curr_room;
 
         for(int i = 0; i < 4; ++i)
         {

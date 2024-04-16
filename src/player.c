@@ -222,7 +222,7 @@ void player_print(Player* p)
     // printf("    gauntlet_slots:     %u\n", p->gauntlet_slots);
     // printf("    skill_count:      %d\n", p->skill_count);
     printf("    sprite_index:    %u\n", p->sprite_index);
-    printf("    curr_room:       %u\n", p->curr_room);
+    printf("    curr_room:       %u\n", p->phys.curr_room);
     printf("    transition_room: %u\n", p->transition_room);
     printf("    door: %d\n", p->door);
     printf("    invulnerable:      %s\n", p->invulnerable ? "true" : "false");
@@ -244,7 +244,7 @@ void player_drop_item(Player* p, Item* it)
     float nx = px;
     float ny = py;
 
-    Room* room = level_get_room_by_index(&level, (int)p->curr_room);
+    Room* room = level_get_room_by_index(&level, (int)p->phys.curr_room);
     if(!room) printf("room is null!\n");
 
     // Dir dirs[4] = {DIR_DOWN, DIR_RIGHT, DIR_LEFT, DIR_UP};
@@ -279,7 +279,7 @@ void player_drop_item(Player* p, Item* it)
         // }
     }
     // printf("dropping item at %.2f, %.2f\n", nx, ny);
-    Item* a = item_add(it->type, nx, ny, p->curr_room);
+    Item* a = item_add(it->type, nx, ny, p->phys.curr_room);
     item_set_description(a, "%s", it->desc);
     it->type = ITEM_NONE;
 }
@@ -328,7 +328,7 @@ Player* player_get_nearest(uint8_t room_index, float x, float y)
         Player* p = &players[i];
         if(!p->active) continue;
         if(p->phys.dead) continue;
-        if(p->curr_room != room_index) continue;
+        if(p->phys.curr_room != room_index) continue;
 
         float d = dist(x,y, p->phys.pos.x, p->phys.pos.y);
         if(d < min_dist)
@@ -344,11 +344,11 @@ Player* player_get_nearest(uint8_t room_index, float x, float y)
 void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i tile)
 {
     // printf("player_send_to_room: %u\n");
-    p->transition_room = p->curr_room;
-    p->curr_room = room_index;
+    p->transition_room = p->phys.curr_room;
+    p->phys.curr_room = room_index;
     if(instant)
     {
-        p->transition_room = p->curr_room;
+        p->transition_room = p->phys.curr_room;
     }
 
     Room* room = level_get_room_by_index(&level, room_index);
@@ -362,7 +362,7 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
     level_get_safe_floor_tile(room, tile, NULL, &pos);
     // printf("pos: %.2f, %.2f\n", pos.x, pos.y);
     phys_set_collision_pos(&p->phys, pos.x, pos.y);
-    // printf("player send to room %u (%d, %d)\n", player->curr_room, tile.x, tile.y);
+    // printf("player send to room %u (%d, %d)\n", player->phys.curr_room, tile.x, tile.y);
 
     p->ignore_player_collision = true;
 }
@@ -668,7 +668,7 @@ void player_die(Player* p)
 
     ParticleEffect* eff = &particle_effects[EFFECT_BLOOD2];
     ParticleSpawner* ps = particles_spawn_effect(p->phys.pos.x,p->phys.pos.y, 0.0, eff, 0.5, true, false);
-    if(ps != NULL) ps->userdata = (int)p->curr_room;
+    if(ps != NULL) ps->userdata = (int)p->phys.curr_room;
 
     Decal d = {0};
     d.image = particles_image;
@@ -680,7 +680,7 @@ void player_die(Player* p)
     d.ttl = 10.0;
     d.pos.x = p->phys.pos.x;
     d.pos.y = p->phys.pos.y;
-    d.room = p->curr_room;
+    d.room = p->phys.curr_room;
     decal_add(d);
 
     Item skull = {.type = ITEM_SKULL, .phys.pos.x = p->phys.pos.x, .phys.pos.y = p->phys.pos.y};
@@ -727,7 +727,7 @@ void player_reset(Player* p)
         Player* p2 = &players[i];
         if(p == p2) continue;
         if(!p2->active) continue;
-        player_send_to_room(p, p2->curr_room);
+        player_send_to_room(p, p2->phys.curr_room);
         return;
     }
     */
@@ -740,7 +740,7 @@ void player_draw_room_transition()
     Player* p = player;
     if(!p->active) return;
 
-    if(p->curr_room != p->transition_room)
+    if(p->phys.curr_room != p->transition_room)
     {
         float dx = transition_targets.x/15.0;
         float dy = transition_targets.y/15.0;
@@ -754,7 +754,7 @@ void player_draw_room_transition()
         if(ABS(transition_offsets.x) >= ABS(transition_targets.x) && ABS(transition_offsets.y) >= ABS(transition_targets.y))
         {
             // printf("room transition complete\n");
-            p->transition_room = p->curr_room;
+            p->transition_room = p->phys.curr_room;
 
             bool immediate = true;
             float cx = p->phys.pos.x;
@@ -768,7 +768,7 @@ void player_draw_room_transition()
 
             camera_set(immediate);
 
-            Room* room = level_get_room_by_index(&level, player->curr_room);
+            Room* room = level_get_room_by_index(&level, player->phys.curr_room);
             level_draw_room(room, NULL, 0, 0);
         }
         else
@@ -799,11 +799,11 @@ void player_draw_room_transition()
             Vector2i t = level_get_room_coords(p->transition_room);
             level_draw_room(&level.rooms[t.x][t.y], NULL, x0, y0);
 
-            Vector2i roomxy = level_get_room_coords((int)p->curr_room);
+            Vector2i roomxy = level_get_room_coords((int)p->phys.curr_room);
             level_draw_room(&level.rooms[roomxy.x][roomxy.y], NULL, x1, y1);
 
 
-            // Vector2i c = level_get_room_coords(p->curr_room);
+            // Vector2i c = level_get_room_coords(p->phys.curr_room);
             // for(int d = 0; d < 4; ++d)
             // {
             //     if(!level.rooms[roomxy.x][roomxy.y].doors[d]) continue;
@@ -824,11 +824,11 @@ void player_draw_room_transition()
 void player_start_room_transition(Player* p)
 {
     // printf("start room transition\n");
-    Vector2i roomxy = level_get_room_coords((int)p->curr_room);
+    Vector2i roomxy = level_get_room_coords((int)p->phys.curr_room);
 
     if(role == ROLE_SERVER || role == ROLE_LOCAL)
     {
-        p->transition_room = p->curr_room;
+        p->transition_room = p->phys.curr_room;
 
         Vector2i o = get_dir_offsets(p->door);
         uint8_t room_index = level_get_room_index(roomxy.x + o.x, roomxy.y + o.y);
@@ -868,7 +868,7 @@ void player_start_room_transition(Player* p)
         {
             Player* p2 = &players[i];
             if(!p2->active) continue;
-            if(p2->curr_room == room_index)
+            if(p2->phys.curr_room == room_index)
             {
                 // printf("player %d is in the room already\n", i);
                 continue;
@@ -878,7 +878,7 @@ void player_start_room_transition(Player* p)
             p2->door = p->door;
         }
 
-        // printf("start room transition: %d -> %d\n", p->transition_room, p->curr_room);
+        // printf("start room transition: %d -> %d\n", p->transition_room, p->phys.curr_room);
 
         level_grace_time = ROOM_GRACE_TIME;
         level_room_time = 0.0;
@@ -968,14 +968,14 @@ static float sprite_index_to_angle(Player* p)
 
 static void handle_room_collision(Player* p)
 {
-    Room* room = level_get_room_by_index(&level, p->curr_room);
+    Room* room = level_get_room_by_index(&level, p->phys.curr_room);
 
     // doors
     for(int i = 0; i < 4; ++i)
     {
         if(role == ROLE_LOCAL)
         {
-            if(player->curr_room != player->transition_room) break;
+            if(player->phys.curr_room != player->transition_room) break;
         }
 
         bool is_door = room->doors[i];
@@ -1142,7 +1142,7 @@ static void player_handle_shooting(Player* p, float dt)
                 ProjectileDef temp = p->proj_def;
                 temp.damage += lookup_strength[p->stats[STRENGTH]];
                 temp.speed  += lookup_attack_range[p->stats[ATTACK_RANGE]];
-                projectile_add(&p->phys, p->curr_room, &temp, &p->proj_spawn, 0x0050A0FF, p->aim_deg, true);
+                projectile_add(&p->phys, p->phys.curr_room, &temp, &p->proj_spawn, 0x0050A0FF, p->aim_deg, true);
             }
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;
@@ -1160,7 +1160,7 @@ void player_update(Player* p, float dt)
     // has to be role local because server doesn't know about transition_room
     if(role == ROLE_LOCAL && p == player)
     {
-        if(player->curr_room != player->transition_room) return;
+        if(player->phys.curr_room != player->transition_room) return;
     }
 
     if(role == ROLE_CLIENT)
@@ -1179,7 +1179,7 @@ void player_update(Player* p, float dt)
 
         player_lerp(p, dt);
 
-        Room* room = level_get_room_by_index(&level, (int)p->curr_room);
+        Room* room = level_get_room_by_index(&level, (int)p->phys.curr_room);
         if(!room) return;
 
         room->discovered = true;
@@ -1190,14 +1190,14 @@ void player_update(Player* p, float dt)
     if(role == ROLE_CLIENT)
     {
         player_lerp(p, dt);
-        if(p->curr_room == player->curr_room)
+        if(p->phys.curr_room == player->phys.curr_room)
         {
             p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
         }
 
         if(p == player)
         {
-            Room* room = level_get_room_by_index(&level, (int)p->curr_room);
+            Room* room = level_get_room_by_index(&level, (int)p->phys.curr_room);
 
             if(room)
                 room->discovered = true;
@@ -1298,14 +1298,14 @@ void player_update(Player* p, float dt)
 
     float cx = p->phys.collision_rect.x;
     float cy = p->phys.collision_rect.y;
-    Room* room = level_get_room_by_index(&level, p->curr_room);
+    Room* room = level_get_room_by_index(&level, p->phys.curr_room);
 
     float mud_factor = 1.0;
     float friction_factor = 1.0;
 
     if(!room)
     {
-        LOGW("Failed to load room, player curr room: %u (number of rooms in level: %d)",p->curr_room, level.num_rooms);
+        LOGW("Failed to load room, player curr room: %u (number of rooms in level: %d)",p->phys.curr_room, level.num_rooms);
     }
     else
     {
@@ -1457,7 +1457,7 @@ void player_update(Player* p, float dt)
             else
             {
                 LOGW("Sending to center!");
-                player_send_to_room(p, p->curr_room, true, level_get_door_tile_coords(DIR_NONE));
+                player_send_to_room(p, p->phys.curr_room, true, level_get_door_tile_coords(DIR_NONE));
                 // player_send_to_level_start(p);
             }
 
@@ -1641,7 +1641,7 @@ void player_update(Player* p, float dt)
 
     if(p == player)
     {
-        Room* room = level_get_room_by_index(&level, (int)p->curr_room);
+        Room* room = level_get_room_by_index(&level, (int)p->phys.curr_room);
 
         if(room->type == ROOM_TYPE_BOSS && !room->discovered)
         {
@@ -1686,7 +1686,7 @@ void player_update(Player* p, float dt)
 
     if(role != ROLE_SERVER)
     {
-        if(p->curr_room == player->curr_room)
+        if(p->phys.curr_room == player->phys.curr_room)
         {
             p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
         }
@@ -1705,7 +1705,7 @@ void player_update(Player* p, float dt)
 
 void player_ai_move_to_target(Player* p, Player* target)
 {
-    if(target->curr_room != p->curr_room)
+    if(target->phys.curr_room != p->phys.curr_room)
     {
         p->actions[PLAYER_ACTION_LEFT].state = false;
         p->actions[PLAYER_ACTION_RIGHT].state = false;
@@ -1832,7 +1832,7 @@ void draw_all_other_player_info()
         Player* p = &players[i];
         if(p == player) continue;
         if(!p->active) continue;
-        if(p->curr_room != player->curr_room) continue;
+        if(p->phys.curr_room != player->phys.curr_room) continue;
         draw_other_player_info(p);
     }
 
@@ -2119,12 +2119,12 @@ void player_set_class(Player* p, PlayerClass class)
 void player_draw(Player* p)
 {
     if(!p->active) return;
-    if(p->curr_room != player->curr_room) return;
+    if(p->phys.curr_room != player->phys.curr_room) return;
 
     if(all_players_dead)
         return;
 
-    // Room* room = level_get_room_by_index(&level, (int)p->curr_room);
+    // Room* room = level_get_room_by_index(&level, (int)p->phys.curr_room);
 
     bool blink = p->invulnerable_temp ? ((int)(p->invulnerable_temp_time * 100)) % 2 == 0 : false;
     float opacity = p->phys.dead ? 0.3 : 1.0;
@@ -2248,7 +2248,7 @@ void player_handle_net_inputs(Player* p, double dt)
         }
     }
 
-    if(p->curr_room != p->transition_room || paused)
+    if(p->phys.curr_room != p->transition_room || paused)
     {
         p->input.keys = 0;
     }
@@ -2301,7 +2301,7 @@ void player_check_stuck_in_wall(Player* p)
     float cx = p->phys.collision_rect.x;
     float cy = p->phys.collision_rect.y;
     Vector2i coords = level_get_room_coords_by_pos(cx, cy);
-    Room* room = level_get_room_by_index(&level, (int)p->curr_room);
+    Room* room = level_get_room_by_index(&level, (int)p->phys.curr_room);
     TileType tt = level_get_tile_type(room, coords.x, coords.y);
     if(tt == TILE_BOULDER)
     {
@@ -2432,7 +2432,7 @@ bool is_any_player_room(uint8_t curr_room)
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         if(!players[i].active) continue;
-        if(curr_room == players[i].curr_room)
+        if(curr_room == players[i].phys.curr_room)
         {
             return true;
         }
@@ -2447,7 +2447,7 @@ int player_get_count_in_room(uint8_t curr_room)
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         if(!players[i].active) continue;
-        if(curr_room == players[i].curr_room)
+        if(curr_room == players[i].phys.curr_room)
         {
             count++;
         }

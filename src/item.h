@@ -76,7 +76,6 @@ typedef struct
 {
     ItemType type;
     uint16_t id;
-    uint8_t curr_room;
     Physics phys;
     bool highlighted;
     bool used;
