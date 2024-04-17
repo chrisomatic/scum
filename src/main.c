@@ -550,7 +550,7 @@ void init_areas()
     player_area.w -= 32;
     player_area.h -= 48;
 
-    // margins scaled with reference to view_width and view_height
+    // margins scaled with respect to view_width and view_height
     float mscale = view_width/1200.0;
 
     margin_left.w = 120.0 * mscale;

@@ -85,7 +85,7 @@ ProjectileDef projectile_lookup[] = {
     {
         // clinger
         .damage = 1.0,
-        .speed = 300.0,
+        .speed = 160.0,
         .accel = 0.0,
         .scale = 0.8,
         .ttl = 3.0,

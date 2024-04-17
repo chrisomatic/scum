@@ -114,10 +114,12 @@ bool skills_use(void* player, Skill* skill)
         return false;
 
     Player* p = (Player*)player;
-    p->phys.mp -= skill->mp_cost;
+    // p->phys.mp -= skill->mp_cost;
 
     ProjectileDef def = projectile_lookup[PROJECTILE_TYPE_PLAYER];
     ProjectileSpawn spawn = projectile_spawn[PROJECTILE_TYPE_PLAYER];
+
+    bool used = true;
 
     switch(skill->type)
     {
@@ -200,11 +202,11 @@ bool skills_use(void* player, Skill* skill)
         } break;
         case SKILL_TYPE_HEAL:
         {
-            player_add_hp(p, (2*skill->rank));
+            used = player_add_hp(p, (2*skill->rank));
         } break;
         case SKILL_TYPE_DEFLECTOR:
         {
-
+            used = false;
         } break;
         case SKILL_TYPE_CROWN_OF_THORNS:
         {
@@ -214,11 +216,11 @@ bool skills_use(void* player, Skill* skill)
         } break;
         case SKILL_TYPE_FEAR:
         {
-
+            used = false;
         } break;
         case SKILL_TYPE_PHASE_SHIFT:
         {
-
+            used = false;
         } break;
         case SKILL_TYPE_RABBITS_FOOT:
         {
@@ -233,24 +235,29 @@ bool skills_use(void* player, Skill* skill)
         } break;
         case SKILL_TYPE_PORCUPINE:
         {
-
+            used = false;
         } break;
         case SKILL_TYPE_RESURRECTION:
         {
-
+            used = false;
         } break;
         case SKILL_TYPE_RAISE_GOLEM:
         {
-
+            used = false;
         } break;
         case SKILL_TYPE_INVISIBILITY:
         {
-
+            used = false;
         } break;
         case SKILL_TYPE_HOLOGRAM:
         {
-
+            used = false;
         } break;
+    }
+
+    if(used)
+    {
+        p->phys.mp -= skill->mp_cost;
     }
 
     return true;

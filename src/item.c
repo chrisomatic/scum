@@ -146,10 +146,13 @@ static bool item_func_podium(Item* pu, Player* p)
 
     for(int i = 0; i < num; ++i)
     {
+        uint8_t skill_type = rand() % SKILL_TYPE_MAX;
         Item* a = item_add(ITEM_SKILL_BOOK, x, y, croom);
+        a->user_data = skill_type;
+
         // a->user_data = SKILL_TYPE_MULTI_SHOT;
-        a->user_data = rand() % SKILL_TYPE_MAX;
-        item_set_description(a, "skill: %s", skills_get_name(a->user_data));
+        // a->user_data = rand() % SKILL_TYPE_MAX;
+        // item_set_description(a, "skill: %s", skills_get_name(a->user_data));
    }
 
 }
@@ -663,7 +666,14 @@ const char* item_get_description(ItemType type, Item* pu)
     if(pu)
     {
         if(strlen(pu->desc) > 0)
+        {
             return pu->desc;
+        }
+    }
+
+    if(type == ITEM_SKILL_BOOK)
+    {
+        return skills_get_name(pu->user_data);
     }
 
     switch(type)
@@ -707,7 +717,7 @@ const char* item_get_description(ItemType type, Item* pu)
         case ITEM_COIN_COPPER: return "+1 coin";
         case ITEM_COIN_SILVER: return "+5 coins";
         case ITEM_COIN_GOLD: return "+10 coins";
-        case ITEM_SKILL_BOOK: return "todo";
+        case ITEM_SKILL_BOOK: return "skillz that killz";
     }
     return "???";
 }
@@ -722,6 +732,12 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
     pu.phys.pos.y = y;
     pu.phys.speed = 1.0;
     pu.phys.crawling = true;
+
+    // @NOTE: defaulting to random skill for books, can be overridden after the item has been added
+    if(type == ITEM_SKILL_BOOK)
+    {
+        pu.user_data = rand() % SKILL_TYPE_MAX;
+    }
 
     switch(type)
     {
