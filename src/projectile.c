@@ -43,7 +43,7 @@ ProjectileDef projectile_lookup[] = {
         .cluster_num = {8, 2, 2},
         .cluster_scales = {0.5, 0.5, 0.5},
 
-        .is_orbital = false,
+        .is_orbital = true,
         .orbital_distance = 64.0,
     },
     {
@@ -246,16 +246,35 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
         }
 
         orbital->count++;
+        orbital->lerp_t = 0.0;
 
         if(new_orbital)
         {
             orbital->body = phys;
             orbital->distance = def->orbital_distance;
             orbital_count++;
+            orbital->base_angle = 0.0;
         }
 
         proj.orbital = orbital;
         proj.orbital_index = orbital->count;
+
+        // update all orbital projectiles
+        for(int i = 0; i < plist->count; ++i)
+        {
+            Projectile* proj2 = &projectiles[i];
+
+            if(proj2->orbital->body == NULL)
+                continue;
+
+            if(proj2->orbital->body != proj.orbital->body)
+                continue;
+
+            if(proj2->orbital->distance != proj.orbital->distance)
+                continue;
+
+            proj2->orbital_angle_prior = proj2->orbital_angle;
+        }
     }
 
     proj.cluster_stage = spawn->cluster_stage;
@@ -418,6 +437,30 @@ void projectile_kill(Projectile* proj)
     if(proj->def.is_orbital)
     {
         proj->orbital->count--;
+        proj->orbital->lerp_t = 0.0;
+
+        int index = proj->orbital_index;
+
+        // update all orbital projectiles
+        for(int i = 0; i < plist->count; ++i)
+        {
+            Projectile* proj2 = &projectiles[i];
+
+            if(proj2->orbital->body == NULL)
+                continue;
+
+            if(proj2->orbital->body != proj->orbital->body)
+                continue;
+
+            if(proj2->orbital->distance != proj->orbital->distance)
+                continue;
+
+            if(proj2->orbital_index > index)
+                proj2->orbital_index--;
+
+            proj2->orbital_angle_prior = proj2->orbital_angle;
+
+        }
 
         /*
         if(proj->orbital->count <= 0)
@@ -474,17 +517,6 @@ void projectile_update_all(float dt)
 {
     // printf("projectile update\n");
 
-    // build orbital lookup table so projectiles can be aware of other projectiles in its own orbital
-    // May be better to keep a global list of orbitals, so this doesn't need to be done every frame.
-
-    for(int o = 0; o < orbital_count; ++o)
-    {
-        // update orbital time
-        orbitals[o].dt += dt;
-        orbitals[o].dt = fmod(orbitals[o].dt,2*PI);
-        orbitals[o].value = 0;
-    }
-
     for(int i = plist->count - 1; i >= 0; --i)
     {
         Projectile* proj = &projectiles[i];
@@ -504,7 +536,7 @@ void projectile_update_all(float dt)
             continue;
         }
 
-        float _dt = RANGE(proj->def.ttl, 0.0, dt);
+        float _dt = dt;
 
         if(proj->def.is_orbital && proj->orbital->body)
         {
@@ -514,18 +546,19 @@ void projectile_update_all(float dt)
             // evenly space the projectile in the orbital
             float speed = proj->def.speed/100.0;
             float delta_angle = (2*PI) / proj->orbital->count;
-            float angle = (speed*proj->orbital->dt) + (proj->orbital->value * delta_angle);
+            float target_angle = (speed*proj->orbital->base_angle) + (proj->orbital_index * delta_angle);
 
-            float x =  cosf(angle) * proj->def.orbital_distance;
-            float y = -sinf(angle) * proj->def.orbital_distance;
+            target_angle = fmod(target_angle,2*PI);
+
+            proj->orbital_angle = lerp(proj->orbital_angle_prior, target_angle, proj->orbital->lerp_t);
+
+            float x =  cosf(proj->orbital_angle) * proj->def.orbital_distance;
+            float y = -sinf(proj->orbital_angle) * proj->def.orbital_distance;
 
             proj->phys.pos.x = proj->orbital->body->pos.x + x;
             proj->phys.pos.y = proj->orbital->body->pos.y + y;
 
-            proj->orbital->value++;
-
             // set velocity for brevity? Although this isn't needed
-            /*
             Vector2f f = {
                 proj->phys.pos.x - proj->orbital->body->pos.x,
                 proj->phys.pos.y - proj->orbital->body->pos.y
@@ -535,10 +568,10 @@ void projectile_update_all(float dt)
 
             proj->phys.vel.x = proj->def.speed * f.y;
             proj->phys.vel.y = proj->def.speed * -f.x;
-            */
         }
         else
         {
+            RANGE(proj->def.ttl, 0.0, dt);
 
             // printf("%3d %.4f\n", i, delta_t);
             proj->def.ttl -= _dt;
@@ -581,6 +614,18 @@ void projectile_update_all(float dt)
         if(proj->phys.amorphous && proj->phys.pos.z <= 0.0)
         {
             projectile_kill(proj);
+        }
+    }
+
+    for(int o = 0; o < orbital_count; ++o)
+    {
+        // update orbital time
+        orbitals[o].base_angle += dt;
+
+        if(orbitals[o].lerp_t < 1.0)
+        {
+            orbitals[o].lerp_t += dt;
+            orbitals[o].lerp_t = MIN(1.0, orbitals[o].lerp_t);
         }
     }
 

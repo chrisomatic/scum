@@ -62,8 +62,8 @@ typedef struct
     Physics* body;  // origin of orbital
     float distance; // radius of orbital
     int count;
-    int value; // used to index projectiles in orbital
-    float dt;       // used for rotation of projectiles
+    float base_angle;  // used for rotation of projectiles
+    float lerp_t;
 } ProjectileOrbital;
 
 typedef struct
@@ -98,6 +98,8 @@ typedef struct
 
     ProjectileOrbital* orbital;
     int orbital_index;
+    float orbital_angle_prior;
+    float orbital_angle;
 
     // Networking
     float lerp_t;
