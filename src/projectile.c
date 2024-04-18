@@ -19,8 +19,22 @@ Projectile projectiles[MAX_PROJECTILES];
 Projectile prior_projectiles[MAX_PROJECTILES];
 glist* plist = NULL;
 
-static ProjectileOrbital orbitals[32] = {0};
+static ProjectileOrbital orbitals[MAX_ORBITALS] = {0};
 static int orbital_count = 0;
+
+// @TEMP
+static const uint32_t orbital_colors[] = {
+    COLOR_RED,
+    COLOR_GREEN,
+    COLOR_BLUE,
+    COLOR_ORANGE,
+    COLOR_CYAN,
+    COLOR_PURPLE,
+    COLOR_PINK,
+    COLOR_YELLOW,
+    COLOR_WHITE,
+    COLOR_BLACK  
+};
 
 static int projectile_image;
 
@@ -44,7 +58,7 @@ ProjectileDef projectile_lookup[] = {
         .cluster_scales = {0.5, 0.5, 0.5},
 
         .is_orbital = true,
-        .orbital_distance = 64.0,
+        .orbital_distance = 32.0,
     },
     {
         // player - kinetic discharge skill
@@ -105,6 +119,21 @@ ProjectileDef projectile_lookup[] = {
         .bouncy = false,
         .penetrate = false,
         .cluster = true,
+    },
+    {
+        // watcher
+        .damage = 1.0,
+        .speed = 200.0,
+        .accel = 0.0,
+        .scale = 0.8,
+        .ttl = 3.0,
+        .explosive = false,
+        .bouncy = false,
+        .penetrate = false,
+        .cluster = true,
+
+        .is_orbital = true,
+        .orbital_distance = 64.0,
     },
 };
 
@@ -197,6 +226,16 @@ void projectile_clear_all()
     list_clear(plist);
 }
 
+static float calc_orbital_target_angle(Projectile* proj)
+{
+    //float speed = proj->def.speed/100.0;
+    float delta_angle = (2*PI) / proj->orbital->count;
+    float target_angle = (proj->orbital->base_angle) + (proj->orbital_index * delta_angle);
+    target_angle = fmod(target_angle,2*PI);
+
+    return target_angle; 
+}
+
 static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player, Physics* phys, bool standard_lob)
 {
     if(role == ROLE_CLIENT)
@@ -230,12 +269,19 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
     if(def->is_orbital)
     {
         // assign projectile to orbital
-        ProjectileOrbital* orbital = &orbitals[orbital_count];
+        ProjectileOrbital* orbital = &orbitals[0];
+
         bool new_orbital = true;
 
-        for(int o = 0; o < orbital_count; ++o)
+        for(int o = orbital_count-1; o >= 0; --o)
         {
             ProjectileOrbital* orb = &orbitals[o];
+
+            if(!orb->body)
+            {
+                orbital = orb;
+                break;
+            }
 
             if(phys == orb->body && def->orbital_distance == orb->distance)
             {
@@ -243,6 +289,12 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
                 orbital = orb;
                 break;
             }
+        }
+
+        if(!orbital)
+        {
+            LOGW("Hit max orbitals! Failed to add projectile! (Max: %d)\n", MAX_ORBITALS);
+            return;
         }
 
         orbital->count++;
@@ -254,15 +306,27 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
             orbital->distance = def->orbital_distance;
             orbital_count++;
             orbital->base_angle = 0.0;
+            orbital->evolution = PROJ_ORB_EVOLUTION_NONE;
         }
 
         proj.orbital = orbital;
-        proj.orbital_index = orbital->count;
+        proj.orbital_index = orbital->count-1;
+
+        float target_angle = calc_orbital_target_angle(&proj);
+
+        proj.orbital_angle = target_angle;
+        proj.orbital_angle_prior = target_angle;
+
+        // override color
+        proj.color = orbital_colors[proj.orbital_index % 10];
 
         // update all orbital projectiles
-        for(int i = 0; i < plist->count; ++i)
+        for(int i = plist->count-1; i >= 0; --i)
         {
             Projectile* proj2 = &projectiles[i];
+
+            if(proj2->orbital == NULL)
+                continue;
 
             if(proj2->orbital->body == NULL)
                 continue;
@@ -442,9 +506,12 @@ void projectile_kill(Projectile* proj)
         int index = proj->orbital_index;
 
         // update all orbital projectiles
-        for(int i = 0; i < plist->count; ++i)
+        for(int i = plist->count -1; i >= 0; --i)
         {
             Projectile* proj2 = &projectiles[i];
+
+            if(proj2->orbital == NULL)
+                continue;
 
             if(proj2->orbital->body == NULL)
                 continue;
@@ -462,13 +529,16 @@ void projectile_kill(Projectile* proj)
 
         }
 
-        /*
         if(proj->orbital->count <= 0)
         {
-            memcpy(proj->orbital, &orbitals[orbital_count-1], sizeof(ProjectileOrbital));
+            // clear out orbital variables to free up this space
+            proj->orbital->body = NULL;
+            proj->orbital->distance = 0.0;
+            proj->orbital->base_angle = 0.0;
+            proj->orbital->lerp_t = 0.0;
+
             orbital_count--;
         }
-        */
     }
 
     if(proj->def.cluster)
@@ -544,16 +614,37 @@ void projectile_update_all(float dt)
             proj->phys.curr_room = proj->orbital->body->curr_room;
 
             // evenly space the projectile in the orbital
-            float speed = proj->def.speed/100.0;
-            float delta_angle = (2*PI) / proj->orbital->count;
-            float target_angle = (speed*proj->orbital->base_angle) + (proj->orbital_index * delta_angle);
+            float target_angle = calc_orbital_target_angle(proj);
 
-            target_angle = fmod(target_angle,2*PI);
+            // deal with angle wrap
+            float angle_delta = proj->orbital_angle_prior - target_angle;
+            if(proj->orbital_angle_prior >= PI && angle_delta > 0.0 && ABS(angle_delta) < PI)
+            {
+                //target_angle += PI;
+            }
 
             proj->orbital_angle = lerp(proj->orbital_angle_prior, target_angle, proj->orbital->lerp_t);
 
-            float x =  cosf(proj->orbital_angle) * proj->def.orbital_distance;
-            float y = -sinf(proj->orbital_angle) * proj->def.orbital_distance;
+            float actual_orb_distance = proj->orbital->distance;
+
+            switch(proj->orbital->evolution)
+            {
+                case PROJ_ORB_EVOLUTION_NONE: break;
+                case PROJ_ORB_EVOLUTION_GROW_SHRINK:
+                {
+                    float dist_delta = proj->orbital->base_angle;
+                    if(proj->orbital->base_angle >= PI)
+                    {
+                        dist_delta = (PI - (proj->orbital->base_angle - PI));
+                    }
+                    actual_orb_distance += 10*dist_delta;
+                }
+                break;
+                    
+            }
+
+            float x =  cosf(proj->orbital_angle) * actual_orb_distance;
+            float y = -sinf(proj->orbital_angle) * actual_orb_distance;
 
             proj->phys.pos.x = proj->orbital->body->pos.x + x;
             proj->phys.pos.y = proj->orbital->body->pos.y + y;
@@ -621,6 +712,7 @@ void projectile_update_all(float dt)
     {
         // update orbital time
         orbitals[o].base_angle += dt;
+        orbitals[o].base_angle = fmod(orbitals[o].base_angle,2*PI);
 
         if(orbitals[o].lerp_t < 1.0)
         {
@@ -792,6 +884,7 @@ const char* projectile_def_get_name(ProjectileType proj_type)
         case PROJECTILE_TYPE_CREATURE_GEIZER: return "Geizer";
         case PROJECTILE_TYPE_CREATURE_CLINGER: return "Clinger";
         case PROJECTILE_TYPE_CREATURE_TOTEM_BLUE: return "Totem Blue";
+        case PROJECTILE_TYPE_CREATURE_WATCHER: return "Watcher";
         default: return "???";
     }
 }

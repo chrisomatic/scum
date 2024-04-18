@@ -1142,7 +1142,9 @@ static void player_handle_shooting(Player* p, float dt)
                 ProjectileDef temp = p->proj_def;
                 temp.damage += lookup_strength[p->stats[STRENGTH]];
                 temp.speed  += lookup_attack_range[p->stats[ATTACK_RANGE]];
-                projectile_add(&p->phys, p->phys.curr_room, &temp, &p->proj_spawn, 0x0050A0FF, p->aim_deg, true);
+
+                uint32_t color = 0x0050A0FF;
+                projectile_add(&p->phys, p->phys.curr_room, &temp, &p->proj_spawn, color, p->aim_deg, true);
             }
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;

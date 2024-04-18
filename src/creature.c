@@ -37,6 +37,7 @@ static int creature_image_spawn_egg;
 static int creature_image_spawn_spider;
 static int creature_image_behemoth;
 static int creature_image_beacon_red;
+static int creature_image_watcher;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -57,6 +58,9 @@ static void creature_update_spawn_egg(Creature* c, float dt);
 static void creature_update_spawn_spider(Creature* c, float dt);
 static void creature_update_behemoth(Creature* c, float dt);
 static void creature_update_beacon_red(Creature* c, float dt);
+static void creature_update_watcher(Creature* c, float dt);
+
+static void creature_fire_projectile(Creature* c, float angle, uint32_t color);
 
 static uint16_t id_counter = 1;
 static uint16_t get_id()
@@ -90,6 +94,7 @@ void creature_init()
     creature_image_spawn_spider = gfx_load_image("src/img/creature_spawn_spider.png", false, false, 16, 16);
     creature_image_behemoth = gfx_load_image("src/img/creature_behemoth.png", false, false, 96, 128);
     creature_image_beacon_red = gfx_load_image("src/img/creature_beacon_red.png", false, false, 32, 32);
+    creature_image_watcher = gfx_load_image("src/img/creature_watcher.png", false, false, 32, 32);
 }
 
 char* creature_type_name(CreatureType type)
@@ -134,6 +139,8 @@ char* creature_type_name(CreatureType type)
             return "Behemoth";
         case CREATURE_TYPE_BEACON_RED:
             return "Beacon Red";
+        case CREATURE_TYPE_WATCHER:
+            return "Watcher";
         default:
             return "???";
     }
@@ -181,6 +188,8 @@ int creature_get_image(CreatureType type)
             return creature_image_behemoth;
         case CREATURE_TYPE_BEACON_RED:
             return creature_image_beacon_red;
+        case CREATURE_TYPE_WATCHER:
+            return creature_image_watcher;
         default:
             return -1;
     }
@@ -201,6 +210,9 @@ ProjectileType creature_get_projectile_type(Creature* c)
             break;
         case CREATURE_TYPE_TOTEM_BLUE:
             pt = PROJECTILE_TYPE_CREATURE_TOTEM_BLUE;
+            break;
+        case CREATURE_TYPE_WATCHER:
+            pt = PROJECTILE_TYPE_CREATURE_WATCHER;
             break;
         case CREATURE_TYPE_TOTEM_YELLOW:
             break;
@@ -487,6 +499,20 @@ void creature_init_props(Creature* c)
             c->windup_max = 0.5;
             c->xp = 50;
         } break;
+        case CREATURE_TYPE_WATCHER:
+        {
+            c->phys.speed = 50.0;
+            c->act_time_min = 0.30;
+            c->act_time_max = 0.50;
+            c->phys.mass = 10.0;
+            c->phys.base_friction = 15.0;
+            c->phys.hp_max = 24.0;
+            c->phys.floating = true;
+            c->painful_touch = true;
+            c->windup_max = 0.5;
+            c->xp = 80;
+
+        } break;
     }
 
     if(c->phys.crawling)
@@ -704,8 +730,10 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
 
     phys_calc_collision_rect(&c.phys);
     // c->phys.radius = calc_radius_from_rect(&c->phys.collision_rect);
-
+    
     list_add(clist, (void*)&c);
+
+
 
     return &creatures[clist->count-1];
 }
@@ -788,6 +816,9 @@ void creature_update(Creature* c, float dt)
                 break;
             case CREATURE_TYPE_BEACON_RED:
                 creature_update_beacon_red(c,dt);
+                break;
+            case CREATURE_TYPE_WATCHER:
+                creature_update_watcher(c,dt);
                 break;
         }
     }
@@ -1330,8 +1361,6 @@ static void creature_update_geizer(Creature* c, float dt)
 
 static void creature_update_floater(Creature* c, float dt)
 {
-
-
     bool act = ai_update_action(c, dt);
 
     c->phys.pos.z = c->phys.height/2.0 + 10.0 + 3*sinf(5*c->phys.circular_dt);
@@ -2297,4 +2326,19 @@ static void creature_update_beacon_red(Creature* c, float dt)
 
     c->ai_value++;
     return;
+}
+
+static void creature_update_watcher(Creature* c, float dt)
+{
+    bool act = ai_update_action(c, dt);
+
+    c->phys.pos.z = c->phys.height/2.0 + 10.0 + 3*sinf(5*c->phys.circular_dt);
+
+    if(act)
+    {
+        if(ai_flip_coin())
+        {
+            ai_random_walk(c);
+        }
+    }
 }

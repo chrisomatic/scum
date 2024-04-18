@@ -5,6 +5,7 @@
 #include "net.h"
 #include "entity.h"
 
+#define MAX_ORBITALS 32
 #define MAX_PROJECTILES 4096
 
 typedef enum
@@ -15,9 +16,9 @@ typedef enum
     PROJECTILE_TYPE_CREATURE_GEIZER,
     PROJECTILE_TYPE_CREATURE_CLINGER,
     PROJECTILE_TYPE_CREATURE_TOTEM_BLUE,
+    PROJECTILE_TYPE_CREATURE_WATCHER,
     PROJECTILE_TYPE_MAX
 } ProjectileType;
-
 
 typedef struct
 {
@@ -57,6 +58,12 @@ typedef struct
 } ProjectileSpawn;
 
 
+typedef enum
+{
+    PROJ_ORB_EVOLUTION_NONE = 0,
+    PROJ_ORB_EVOLUTION_GROW_SHRINK,
+} OrbEvolution;
+
 typedef struct
 {
     Physics* body;  // origin of orbital
@@ -64,6 +71,7 @@ typedef struct
     int count;
     float base_angle;  // used for rotation of projectiles
     float lerp_t;
+    OrbEvolution evolution;
 } ProjectileOrbital;
 
 typedef struct
