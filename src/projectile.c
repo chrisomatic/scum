@@ -57,8 +57,9 @@ ProjectileDef projectile_lookup[] = {
         .cluster_num = {8, 2, 2},
         .cluster_scales = {0.5, 0.5, 0.5},
 
-        .is_orbital = true,
+        .is_orbital = false,
         .orbital_distance = 32.0,
+        .orbital_speed_factor = -3.0,
     },
     {
         // player - kinetic discharge skill
@@ -142,7 +143,7 @@ ProjectileSpawn projectile_spawn[] = {
         // player
         .num = 1,
         .spread = 30.0,
-        .ghost_chance = 1.0,
+        .ghost_chance = 0.0,
         .homing_chance = 0.0,
         .poison_chance = 0.0,
         .cold_chance = 0.0,
@@ -226,14 +227,32 @@ void projectile_clear_all()
     list_clear(plist);
 }
 
-static float calc_orbital_target_angle(Projectile* proj)
+static float calc_orbital_target(Projectile* proj)
 {
-    //float speed = proj->def.speed/100.0;
     float delta_angle = (2*PI) / proj->orbital->count;
-    float target_angle = (proj->orbital->base_angle) + (proj->orbital_index * delta_angle);
+    float target_angle = (proj->orbital->base_angle*proj->orbital->speed_factor) + (proj->orbital_index * delta_angle);
     target_angle = fmod(target_angle,2*PI);
 
-    return target_angle; 
+    float actual_orb_distance = proj->orbital->distance;
+
+    switch(proj->orbital->evolution)
+    {
+        case PROJ_ORB_EVOLUTION_NONE:
+            break;
+        case PROJ_ORB_EVOLUTION_GROW_SHRINK:
+        {
+            float dist_delta = proj->orbital->base_angle;
+            if(proj->orbital->base_angle >= PI)
+            {
+                dist_delta = (PI - (proj->orbital->base_angle - PI));
+            }
+            actual_orb_distance += 10*dist_delta;
+        }
+        break;
+    }
+
+    proj->orbital_pos_target.x =  (cosf(target_angle)*actual_orb_distance);
+    proj->orbital_pos_target.y = -(sinf(target_angle)*actual_orb_distance);
 }
 
 static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player, Physics* phys, bool standard_lob)
@@ -304,6 +323,7 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
         {
             orbital->body = phys;
             orbital->distance = def->orbital_distance;
+            orbital->speed_factor = def->orbital_speed_factor;
             orbital_count++;
             orbital->base_angle = 0.0;
             orbital->evolution = PROJ_ORB_EVOLUTION_NONE;
@@ -312,10 +332,13 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
         proj.orbital = orbital;
         proj.orbital_index = orbital->count-1;
 
-        float target_angle = calc_orbital_target_angle(&proj);
+        calc_orbital_target(&proj);
 
-        proj.orbital_angle = target_angle;
-        proj.orbital_angle_prior = target_angle;
+        proj.orbital_pos_prior.x = proj.orbital_pos_target.x;
+        proj.orbital_pos_prior.y = proj.orbital_pos_target.y;
+
+        proj.orbital_pos.x = proj.orbital_pos_target.x;
+        proj.orbital_pos.y = proj.orbital_pos_target.y;
 
         // override color
         proj.color = orbital_colors[proj.orbital_index % 10];
@@ -337,7 +360,8 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
             if(proj2->orbital->distance != proj.orbital->distance)
                 continue;
 
-            proj2->orbital_angle_prior = proj2->orbital_angle;
+            proj2->orbital_pos_prior.x = proj2->orbital_pos.x;
+            proj2->orbital_pos_prior.y = proj2->orbital_pos.y;
         }
     }
 
@@ -525,7 +549,8 @@ void projectile_kill(Projectile* proj)
             if(proj2->orbital_index > index)
                 proj2->orbital_index--;
 
-            proj2->orbital_angle_prior = proj2->orbital_angle;
+            proj2->orbital_pos_prior.x = proj2->orbital_pos.y;
+            proj2->orbital_pos_prior.y = proj2->orbital_pos.y;
 
         }
 
@@ -614,40 +639,17 @@ void projectile_update_all(float dt)
             proj->phys.curr_room = proj->orbital->body->curr_room;
 
             // evenly space the projectile in the orbital
-            float target_angle = calc_orbital_target_angle(proj);
+            calc_orbital_target(proj);
 
-            // deal with angle wrap
-            float angle_delta = proj->orbital_angle_prior - target_angle;
-            if(proj->orbital_angle_prior >= PI && angle_delta > 0.0 && ABS(angle_delta) < PI)
-            {
-                //target_angle += PI;
-            }
+            Vector2f pos = lerp2f(&proj->orbital_pos_prior, &proj->orbital_pos_target, proj->orbital->lerp_t);
 
-            proj->orbital_angle = lerp(proj->orbital_angle_prior, target_angle, proj->orbital->lerp_t);
+            proj->orbital_pos.x = pos.x;
+            proj->orbital_pos.y = pos.y;
 
-            float actual_orb_distance = proj->orbital->distance;
+            proj->phys.pos.x = pos.x + proj->orbital->body->pos.x;
+            proj->phys.pos.y = pos.y + proj->orbital->body->pos.y;
 
-            switch(proj->orbital->evolution)
-            {
-                case PROJ_ORB_EVOLUTION_NONE: break;
-                case PROJ_ORB_EVOLUTION_GROW_SHRINK:
-                {
-                    float dist_delta = proj->orbital->base_angle;
-                    if(proj->orbital->base_angle >= PI)
-                    {
-                        dist_delta = (PI - (proj->orbital->base_angle - PI));
-                    }
-                    actual_orb_distance += 10*dist_delta;
-                }
-                break;
-                    
-            }
-
-            float x =  cosf(proj->orbital_angle) * actual_orb_distance;
-            float y = -sinf(proj->orbital_angle) * actual_orb_distance;
-
-            proj->phys.pos.x = proj->orbital->body->pos.x + x;
-            proj->phys.pos.y = proj->orbital->body->pos.y + y;
+            proj->phys.pos.z = proj->orbital->body->height / 2.0;
 
             // set velocity for brevity? Although this isn't needed
             Vector2f f = {
@@ -807,6 +809,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
                 CollisionInfo ci = {0.0,0.0};
                 proj->phys.pos.x = proj->phys.prior_pos.x;
                 proj->phys.pos.y = proj->phys.prior_pos.y;
+
                 phys_collision_correct(&proj->phys,phys,&ci);
                 projectile_kill(proj);
             }

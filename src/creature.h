@@ -96,7 +96,6 @@ extern Creature prior_creatures[MAX_CREATURES];
 extern Creature creatures[MAX_CREATURES];
 extern glist* clist;
 
-
 void creature_init();
 char* creature_type_name(CreatureType type);
 int creature_get_image(CreatureType type);

@@ -40,6 +40,7 @@ typedef struct
     // orbital
     bool is_orbital;
     float orbital_distance;
+    float orbital_speed_factor;
 
 } ProjectileDef;
 
@@ -68,6 +69,7 @@ typedef struct
 {
     Physics* body;  // origin of orbital
     float distance; // radius of orbital
+    float speed_factor; // speed of rotation, negative spins opposite way. 1.0 is 1 spin/6 seconds
     int count;
     float base_angle;  // used for rotation of projectiles
     float lerp_t;
@@ -106,8 +108,10 @@ typedef struct
 
     ProjectileOrbital* orbital;
     int orbital_index;
-    float orbital_angle_prior;
-    float orbital_angle;
+
+    Vector2f orbital_pos;
+    Vector2f orbital_pos_prior;
+    Vector2f orbital_pos_target;
 
     // Networking
     float lerp_t;
