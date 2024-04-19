@@ -155,6 +155,7 @@ static bool item_func_podium(Item* pu, Player* p)
         // item_set_description(a, "skill: %s", skills_get_name(a->user_data));
    }
 
+   return true;
 }
 
 

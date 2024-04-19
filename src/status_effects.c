@@ -99,6 +99,8 @@ bool status_effect_remove(void* physics, int index)
     int item_size = sizeof(StatusEffect);
     memcpy(p + index*item_size, p+(phys->status_effects_count-1)*item_size, item_size);
     phys->status_effects_count--;
+
+    return true;
 }
 
 void status_effects_clear(void* physics)

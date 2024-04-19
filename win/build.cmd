@@ -24,7 +24,7 @@ xcopy ..\dlls\*.dll %bindir%
 xcopy %srcdir%\core\shaders %bindir%\src\core\shaders
 xcopy %srcdir%\core\fonts %bindir%\src\core\fonts
 
-set srcfiles=%srcdir%\core\gfx.c %srcdir%\core\shader.c %srcdir%\core\timer.c %srcdir%\core\math2d.c %srcdir%\core\window.c %srcdir%\core\imgui.c %srcdir%\core\glist.c %srcdir%\core\text_list.c %srcdir%\core\socket.c %srcdir%\core\particles.c %srcdir%\core\camera.c %srcdir%\core\lighting.c %srcdir%\core\bitpack.c %srcdir%\physics.c %srcdir%\effects.c %srcdir%\projectile.c %srcdir%\player.c %srcdir%\net.c %srcdir%\creature.c %srcdir%\level.c %srcdir%\editor.c %srcdir%\entity.c %srcdir%\item.c %srcdir%\explosion.c %srcdir%\status_effects.c %srcdir%\room_editor.c %srcdir%\room_file.c %srcdir%\skills.c %srcdir%\settings.c %srcdir%\ui.c %srcdir%\weapon.c %srcdir%\main.c
+set srcfiles=%srcdir%\core\gfx.c %srcdir%\core\shader.c %srcdir%\core\timer.c %srcdir%\core\math2d.c %srcdir%\core\window.c %srcdir%\core\astar.c %srcdir%\core\imgui.c %srcdir%\core\glist.c %srcdir%\core\text_list.c %srcdir%\core\socket.c %srcdir%\core\particles.c %srcdir%\core\camera.c %srcdir%\core\lighting.c %srcdir%\core\bitpack.c %srcdir%\physics.c %srcdir%\effects.c %srcdir%\projectile.c %srcdir%\player.c %srcdir%\net.c %srcdir%\decal.c %srcdir%\creature.c %srcdir%\level.c %srcdir%\editor.c %srcdir%\entity.c %srcdir%\item.c %srcdir%\explosion.c %srcdir%\status_effects.c %srcdir%\room_editor.c %srcdir%\room_file.c %srcdir%\skills.c %srcdir%\settings.c %srcdir%\ui.c %srcdir%\weapon.c %srcdir%\main.c
 
 set opts=/O2 /TC /D "_CRT_SECURE_NO_WARNINGS" /nologo
 set includes=/I..\include /I%srcdir% /I%srcdir%\core /I..\dlls

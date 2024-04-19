@@ -2039,7 +2039,7 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
                 {
                     editor_enabled = false;
                 }
-                else if(game_state != GAME_STATE_MENU)
+                else if(game_state == GAME_STATE_PLAYING)
                 {
                     esc_state++;
                     if(esc_state == 1)
@@ -2052,7 +2052,10 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
                         esc_state = 0;
                         set_game_state(GAME_STATE_MENU);
                     }
-
+                }
+                else
+                {
+                    set_game_state(GAME_STATE_MENU);
                 }
             }
             else

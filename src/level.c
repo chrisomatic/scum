@@ -2250,6 +2250,7 @@ Vector2i get_dir_offsets(Dir door)
 // @TODO: Implement this
 Dir get_dir_from_vel(float vel_x, float vel_y)
 {
+    return DIR_NONE;
     /*
     Vector2i o = {0};
 

@@ -10,7 +10,9 @@ bool settings_save(char* filename, Settings* s)
     FILE* fp = fopen(filename, "w");
 
     if(!fp)
+    {
         return false;
+    }
 
     fprintf(fp, "name: %s\n", s->name);
     fprintf(fp, "class: %u\n", s->class);
@@ -26,7 +28,9 @@ bool settings_load(char* filename, Settings* s)
     FILE* fp = fopen(filename, "r");
 
     if(!fp)
+    {
         return false;
+    }
 
     char label[100] = {0};
     char value[100] = {0};
@@ -75,7 +79,8 @@ bool settings_load(char* filename, Settings* s)
         if(!is_value && c == ':')
         {
             is_value = !is_value;
-            label[lindex++] == c;
+            lindex++;
+            // label[lindex++] == c;
             continue;
         }
 

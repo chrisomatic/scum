@@ -91,8 +91,7 @@ bool window_init(int _view_width, int _view_height)
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
-    glfwMaximizeWindow(window); //TEMP
-    glViewport(0.0,0.0,window_width/2.0,window_height/2.0);
+    // glViewport(0.0,0.0,window_width,window_height);
 
     cursor_ibeam = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
 
@@ -101,6 +100,8 @@ bool window_init(int _view_width, int _view_height)
     glfwMakeContextCurrent(window);
     glfwSwapInterval(0); // vsync
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+
+    glfwMaximizeWindow(window); //TEMP
 
     printf("Initializing GLEW.\n");
 
@@ -346,15 +347,12 @@ static bool get_window_monitor(GLFWmonitor** monitor, GLFWwindow* window)
 
 static void window_size_callback(GLFWwindow* window, int width, int height)
 {
-    //printf("Window Resized: W %d, H %d\n",width,height);
+    printf("Window Resized: W %d, H %d\n",width,height);
 
     window_height = height;
     window_width  = width; //ASPECT_RATIO * window_height;
 
-    int start_x = 0.0;
-    int start_y = 0.0;
-
-    glViewport(start_x,start_y,window_width,window_height);
+    glViewport(0,0,window_width,window_height);
 }
 
 static void window_move_callback(GLFWwindow* window, int xpos, int ypos)
@@ -376,6 +374,10 @@ static void window_move_callback(GLFWwindow* window, int xpos, int ypos)
 
 static void window_maximize_callback(GLFWwindow* window, int maximized)
 {
+    // glfwGetWindowSize(window, &window_width, &window_height);
+    // printf("maximized/restored: W %d, H %d\n",window_width,window_height);
+    // glViewport(0,0,window_width,window_height);
+
     if(maximized)
     {
         // The window was maximized
