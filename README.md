@@ -4,6 +4,14 @@
 
 [Gameplay Video](https://youtu.be/gdYWZrb_yb4)
 
+# Build And Run
+
+```
+sudo pacman -S glfw openal
+./run.sh
+
+```
+
 # Controls
 
 ```
