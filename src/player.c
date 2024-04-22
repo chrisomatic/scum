@@ -12,6 +12,7 @@
 #include "ui.h"
 #include "weapon.h"
 #include "decal.h"
+#include "audio.h"
 #include "player.h"
 
 void player_ai_move_to_target(Player* p, Player* target);
@@ -45,6 +46,10 @@ char* class_strs[] =
 
 int class_image_spaceman = -1;
 int class_image_robot = -1;
+
+static int audio_buffer_run1  = -1;
+static int audio_buffer_run2  = -1;
+static int audio_buffer_jump = -1;
 
 int shadow_image = -1;
 int card_image = -1;
@@ -178,6 +183,11 @@ void player_init()
 
         ptext = text_list_init(5, 0, 0, 0.07, true, TEXT_ALIGN_LEFT, IN_WORLD, true);
 
+        // load sounds
+        audio_buffer_run1  = audio_load_file("src/audio/step1.raw");
+        audio_buffer_run2  = audio_load_file("src/audio/step2.raw");
+        audio_buffer_jump = audio_load_file("src/audio/bounce.raw");
+
         _initialized = true;
     }
 
@@ -191,6 +201,14 @@ void player_init()
         p->weapon.rotation_deg = 0.0;
         player_set_sprite_index(p, 4);
         player_set_class(p, PLAYER_CLASS_SPACEMAN);
+
+        p->source_run1 = audio_source_create();
+        p->source_run2 = audio_source_create();
+        p->source_jump = audio_source_create();
+
+        audio_source_assign_buffer(p->source_run1,  audio_buffer_run1);
+        audio_source_assign_buffer(p->source_run2,  audio_buffer_run2);
+        audio_source_assign_buffer(p->source_jump, audio_buffer_jump);
 
         player_set_defaults(p);
 
@@ -1544,6 +1562,8 @@ void player_update(Player* p, float dt)
     if(jump && p->phys.pos.z == 0.0)
     {
         p->phys.vel.z = jump_vel_z;
+
+        audio_source_play(p->source_jump);
     }
 
     if(!p->phys.falling)
@@ -1598,6 +1618,7 @@ void player_update(Player* p, float dt)
     // update position
     p->phys.pos.x += p->phys.vel.x*dt;
     p->phys.pos.y += p->phys.vel.y*dt;
+
 
 
     if(debug_enabled)
@@ -1659,6 +1680,20 @@ void player_update(Player* p, float dt)
     if(moving)
     {
         gfx_anim_update(&p->anim, p->anim_factor*dt);
+
+        if(p->phys.pos.z == 0.0)
+        {
+            if(p->anim.curr_frame == 0)
+            {
+                if(!audio_source_is_playing(p->source_run1))
+                    audio_source_play(p->source_run1);
+            }
+            else if(p->anim.curr_frame == 2)
+            {
+                if(!audio_source_is_playing(p->source_run2))
+                    audio_source_play(p->source_run2);
+            }
+        }
     }
     else
     {
@@ -1703,6 +1738,16 @@ void player_update(Player* p, float dt)
         }
     }
 
+    // update audio positions
+    
+    audio_source_update_position(p->source_run1,  p->phys.pos.x, p->phys.pos.y, p->phys.pos.z);
+    audio_source_update_position(p->source_run2,  p->phys.pos.x, p->phys.pos.y, p->phys.pos.z);
+    audio_source_update_position(p->source_jump, p->phys.pos.x,p->phys.pos.y, p->phys.pos.z);
+
+    if(player == p)
+    {
+        audio_set_listener_pos(p->phys.pos.x, p->phys.pos.y, p->phys.pos.z);
+    }
 }
 
 void player_ai_move_to_target(Player* p, Player* target)

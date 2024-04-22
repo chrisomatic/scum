@@ -18,6 +18,7 @@ gcc core/gfx.c \
     core/lighting.c \
     core/bitpack.c \
     core/astar.c \
+    core/audio.c \
     physics.c \
     effects.c \
     projectile.c \
@@ -39,8 +40,8 @@ gcc core/gfx.c \
     decal.c \
     main.c \
     -Icore \
-    -lglfw -lGLU -lGLEW -lGL -lm \
+    -lglfw -lGLU -lGLEW -lGL -lopenal -lm \
     -o ../bin/scum
 
     # build release
-    #-lglfw -lGLU -lGLEW -lGL -lm -O2 \
+    #-lglfw -lGLU -lGLEW -lGL -lAL -lm -O2 \

@@ -43,6 +43,7 @@ void explosion_update(Explosion* ex, float dt)
 {
     ex->phys.radius += dt * ex->rate;
     // printf("ex->phys.radius: %.2f\n", ex->phys.radius);
+    
     if(ex->phys.radius >= ex->max_radius)
     {
         ex->phys.radius = ex->max_radius;

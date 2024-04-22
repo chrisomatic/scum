@@ -29,6 +29,7 @@
 #include "astar.h"
 #include "decal.h"
 #include "settings.h"
+#include "audio.h"
 
 // =========================
 // Global Vars
@@ -804,11 +805,15 @@ void init()
 
     text_lst = text_list_init(50, 2.0, view_height - 40.0, 0.19*ascale, true, TEXT_ALIGN_LEFT, NOT_IN_WORLD, true);
 
+
     LOGI(" - Particles.");
     particles_init();
 
     LOGI(" - Camera.");
     camera_init();
+
+    LOGI(" - Audio.");
+    audio_init();
 
     LOGI(" - Lighting.");
     lighting_init();

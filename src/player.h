@@ -173,6 +173,11 @@ typedef struct
     float periodic_shot_counter;
     float periodic_shot_counter_max;
 
+    // Audio
+    int source_run1;
+    int source_run2;
+    int source_jump;
+
     // Networking
     NetPlayerInput input;
     NetPlayerInput input_prior;
