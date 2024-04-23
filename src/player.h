@@ -177,6 +177,8 @@ typedef struct
     int source_run1;
     int source_run2;
     int source_jump;
+    int source_shoot;
+    int source_shoot_explode;
 
     // Networking
     NetPlayerInput input;

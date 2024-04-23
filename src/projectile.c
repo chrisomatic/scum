@@ -14,6 +14,7 @@
 #include "projectile.h"
 #include "effects.h"
 #include "decal.h"
+#include "audio.h"
 
 Projectile projectiles[MAX_PROJECTILES];
 Projectile prior_projectiles[MAX_PROJECTILES];
@@ -21,6 +22,8 @@ glist* plist = NULL;
 
 static ProjectileOrbital orbitals[MAX_ORBITALS] = {0};
 static int orbital_count = 0;
+
+static int audio_buffer_explode = -1;
 
 // @TEMP
 static const uint32_t orbital_colors[] = {
@@ -220,6 +223,9 @@ void projectile_init()
 {
     plist = list_create((void*)projectiles, MAX_PROJECTILES, sizeof(Projectile), false);
     projectile_image = gfx_load_image("src/img/projectiles.png", false, false, 16, 16);
+
+    // Audio Buffers
+    audio_buffer_explode = audio_load_file("src/audio/explosion.raw");
 }
 
 void projectile_clear_all()
@@ -436,6 +442,9 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
             }
         }
 
+        p.source_explode = audio_source_create(false);
+        audio_source_assign_buffer(p.source_explode, audio_buffer_explode);
+
         // printf("%s damage: %.2f\n", __func__, p.def.damage);
 
         // p.phys.pos.z = 400.0;
@@ -467,6 +476,9 @@ void projectile_kill(Projectile* proj)
         return;
 
     proj->phys.dead = true;
+
+    //audio_source_play(proj->source_explode);
+    //audio_source_delete(proj->source_explode);
 
     ProjectileDef pd = proj->def;
     bool more_cluster = proj->def.cluster && (proj->cluster_stage < (3) && proj->cluster_stage < (pd.cluster_stages));

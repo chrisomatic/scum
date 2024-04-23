@@ -50,6 +50,7 @@ int class_image_robot = -1;
 static int audio_buffer_run1  = -1;
 static int audio_buffer_run2  = -1;
 static int audio_buffer_jump = -1;
+static int audio_buffer_shoot = -1;
 
 int shadow_image = -1;
 int card_image = -1;
@@ -187,6 +188,7 @@ void player_init()
         audio_buffer_run1  = audio_load_file("src/audio/step1.raw");
         audio_buffer_run2  = audio_load_file("src/audio/step2.raw");
         audio_buffer_jump = audio_load_file("src/audio/bounce.raw");
+        audio_buffer_shoot = audio_load_file("src/audio/laserShoot.raw");
 
         _initialized = true;
     }
@@ -202,13 +204,15 @@ void player_init()
         player_set_sprite_index(p, 4);
         player_set_class(p, PLAYER_CLASS_SPACEMAN);
 
-        p->source_run1 = audio_source_create();
-        p->source_run2 = audio_source_create();
-        p->source_jump = audio_source_create();
+        p->source_run1  = audio_source_create(false);
+        p->source_run2  = audio_source_create(false);
+        p->source_jump  = audio_source_create(false);
+        p->source_shoot = audio_source_create(false);
 
-        audio_source_assign_buffer(p->source_run1,  audio_buffer_run1);
-        audio_source_assign_buffer(p->source_run2,  audio_buffer_run2);
+        audio_source_assign_buffer(p->source_run1, audio_buffer_run1);
+        audio_source_assign_buffer(p->source_run2, audio_buffer_run2);
         audio_source_assign_buffer(p->source_jump, audio_buffer_jump);
+        audio_source_assign_buffer(p->source_shoot, audio_buffer_shoot);
 
         player_set_defaults(p);
 
@@ -1163,6 +1167,7 @@ static void player_handle_shooting(Player* p, float dt)
 
                 uint32_t color = 0x0050A0FF;
                 projectile_add(&p->phys, p->phys.curr_room, &temp, &p->proj_spawn, color, p->aim_deg, true);
+                audio_source_play(p->source_shoot);
             }
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;

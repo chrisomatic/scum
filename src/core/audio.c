@@ -43,7 +43,7 @@ void audio_set_listener_pos(float x, float y, float z)
     alListener3f(AL_VELOCITY, 0.0, 0.0, 0.0);
 }
 
-int audio_source_create()
+int audio_source_create(bool looping)
 {
     int src;
     alGenSources(1, &src);
@@ -55,7 +55,7 @@ int audio_source_create()
         return -1;
     }
 
-    alSourcef(src, AL_GAIN,  1.0);
+    alSourcef(src, AL_GAIN,  0.0);
     alSourcef(src, AL_PITCH, 1.0);
     alSourcef(src, AL_MAX_DISTANCE, 300.0);
     alSourcef(src, AL_ROLLOFF_FACTOR, 1.0);
@@ -64,8 +64,14 @@ int audio_source_create()
     alSourcef(src, AL_MAX_GAIN, 3.0);
     alSource3f(src, AL_POSITION, 0.0, 0.0, 0.0);
     alSource3f(src, AL_VELOCITY, 0.0, 0.0, 0.0);
+    alSourcei(src, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
     
     return src;
+}
+
+void audio_source_set_volume(int src, float vol)
+{
+    alSourcef(src, AL_GAIN,  vol);
 }
 
 void audio_source_delete(int source)
@@ -91,7 +97,7 @@ void audio_source_play(int source)
     alSourcePlay(source);
 }
 
-int audio_load_file(char* filepath)
+static int _load_file_to_buffer(char* filepath, char** return_buf)
 {
     // open test file
     FILE* fp = fopen(filepath,"rb");
@@ -99,7 +105,7 @@ int audio_load_file(char* filepath)
     if(!fp)
     {
         LOGE("Failed to load file %s", filepath);
-        return -1;
+        return 0;
     }
 
     fseek(fp, 0, SEEK_END);
@@ -108,9 +114,19 @@ int audio_load_file(char* filepath)
 
     LOGI("Loaded file: %s, size = %d Bytes", filepath, len);
 
-    char* buf = malloc(len*sizeof(char));
-    fread(buf, sizeof(char), len, fp);
+    *return_buf = malloc(len*sizeof(char));
+    fread(*return_buf, sizeof(char), len, fp);
     fclose(fp);
+
+    return len;
+
+}
+
+int audio_load_file(char* filepath)
+{
+    char* buf;
+    int len = _load_file_to_buffer(filepath, &buf);
+    if(len == 0) return -1;
 
     int buffer;
     alGenBuffers(1, &buffer);
@@ -119,6 +135,7 @@ int audio_load_file(char* filepath)
     if(err != AL_NO_ERROR)
     {
         LOGE("Failed to generate buffers, error: %d\n", err);
+        free(buf);
         return -1;
     }
 
@@ -126,6 +143,30 @@ int audio_load_file(char* filepath)
     free(buf);
 
     return buffer;
+}
+
+int audio_load_music(char* filepath)
+{
+    char* buf;
+    int len = _load_file_to_buffer(filepath, &buf);
+    if(len == 0) return -1;
+
+    int buffer;
+    alGenBuffers(1, &buffer);
+
+    int err = alGetError();
+    if(err != AL_NO_ERROR)
+    {
+        LOGE("Failed to generate buffers, error: %d\n", err);
+        free(buf);
+        return -1;
+    }
+
+    alBufferData(buffer, AL_FORMAT_MONO16, buf, len, 44100); 
+    free(buf);
+
+    return buffer;
+
 }
 
 bool audio_source_is_playing(int source)

@@ -113,6 +113,9 @@ typedef struct
     Vector2f orbital_pos_prior;
     Vector2f orbital_pos_target;
 
+    // Audio
+    int source_explode;
+
     // Networking
     float lerp_t;
     ProjectileNetLerp server_state_prior;

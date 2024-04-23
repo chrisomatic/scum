@@ -104,6 +104,10 @@ char* tile_names[TILE_MAX] = {0};
 char* creature_names[CREATURE_TYPE_MAX] = {0};
 char* item_names[ITEM_MAX] = {0};
 
+// Audio
+int audio_buffer_music = -1;
+int source_music = -1;
+
 // client chat box
 char chat_text[128] = {0};
 uint32_t chat_box_hash = 0x0;
@@ -814,6 +818,12 @@ void init()
 
     LOGI(" - Audio.");
     audio_init();
+
+    audio_buffer_music = audio_load_music("src/audio/moonlight.raw");
+    source_music = audio_source_create(true);
+    audio_source_set_volume(source_music, 5.0);
+    audio_source_assign_buffer(source_music, audio_buffer_music);
+    audio_source_play(source_music);
 
     LOGI(" - Lighting.");
     lighting_init();
