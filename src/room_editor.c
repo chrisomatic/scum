@@ -54,7 +54,7 @@ static PlacedObject objects_prior[OBJECTS_MAX_X][OBJECTS_MAX_Y] = {0};
 
 static float ecam_pos_x = 0;
 static float ecam_pos_y = 0;
-static int ecam_pos_z = 40;
+static int ecam_pos_z = 23;
 
 static int tab_sel = 0;
 static int obj_sel = 0;
@@ -732,9 +732,18 @@ void room_editor_draw()
         {
             case 1:
             {
+
+                if(imgui_button("Reset Camera"))
+                {
+                    ecam_pos_x = CENTER_X;
+                    ecam_pos_y = CENTER_Y;
+                    ecam_pos_z = 23;
+                }
+
                 imgui_number_box("Camera Zoom", 0, 99, &ecam_pos_z);
 
                 imgui_text("Camera Zoom: %.2f", camera_get_zoom());
+                imgui_text("Camera Pos: %.2f, %.2f", ecam_pos_x, ecam_pos_y);
                 imgui_text("Mouse (view): %.1f, %.1f", mouse_x, mouse_y);
                 imgui_text("Mouse States: %d, %d", lmouse_state, rmouse_state);
 
@@ -750,6 +759,7 @@ void room_editor_draw()
 
             case 0:
             {
+
                 if(imgui_button("Clear All"))
                 {
                     clear_all();

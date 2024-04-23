@@ -825,6 +825,13 @@ void init()
     audio_source_assign_buffer(source_music, audio_buffer_music);
     audio_source_play(source_music);
 
+    // int temp_buffer = audio_load_wav_file("src/audio/bounce.wav");
+    // int temp_source =  audio_source_create(true);
+    // audio_source_set_volume(temp_source, 5.0);
+    // audio_source_assign_buffer(temp_source, temp_buffer);
+    // audio_source_play(temp_source);
+    
+
     LOGI(" - Lighting.");
     lighting_init();
 
