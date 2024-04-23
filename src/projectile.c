@@ -134,10 +134,11 @@ ProjectileDef projectile_lookup[] = {
         .explosive = false,
         .bouncy = false,
         .penetrate = false,
-        .cluster = true,
+        .cluster = false,
 
         .is_orbital = true,
-        .orbital_distance = 64.0,
+        .orbital_distance = 50.0,
+        .orbital_speed_factor = 5.0,
     },
 };
 
@@ -194,7 +195,7 @@ ProjectileSpawn projectile_spawn[] = {
         .fire_chance = 0.0,
     },
     {
-        // clinger
+        // totem blue
         .num = 1,
         .spread = 0.0,
         .ghost_chance = 0.0,
@@ -203,6 +204,16 @@ ProjectileSpawn projectile_spawn[] = {
         .cold_chance = 1.0,
         .fire_chance = 0.0,
     },
+    {
+        // watcher
+        .num = 1,
+        .spread = 0.0,
+        .ghost_chance = 1.0,
+        .homing_chance = 0.0,
+        .poison_chance = 0.0,
+        .cold_chance = 0.0,
+        .fire_chance = 0.0,
+    }
 };
 
 static uint16_t id_counter = 1;

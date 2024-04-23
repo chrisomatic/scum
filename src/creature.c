@@ -2341,4 +2341,11 @@ static void creature_update_watcher(Creature* c, float dt)
             ai_random_walk(c);
         }
     }
+
+    c->ai_counter += dt;
+    if(c->ai_counter > 5.0)
+    {
+        c->ai_counter -= 5.0;
+        creature_fire_projectile(c, 0.0, PROJ_COLOR);
+    }
 }

@@ -46,6 +46,7 @@ char* class_strs[] =
 
 int class_image_spaceman = -1;
 int class_image_robot = -1;
+int class_image_physicist = -1;
 
 static int audio_buffer_run1  = -1;
 static int audio_buffer_run2  = -1;
@@ -174,8 +175,9 @@ void player_init()
 {
     if(!_initialized)
     {
-        class_image_spaceman = gfx_load_image("src/img/spaceman.png", false, false, 32, 32);
-        class_image_robot    = gfx_load_image("src/img/robo.png", false, false, 32, 32);
+        class_image_spaceman  = gfx_load_image("src/img/spaceman.png", false, false, 32, 32);
+        class_image_robot     = gfx_load_image("src/img/robo.png", false, false, 32, 32);
+        class_image_physicist = gfx_load_image("src/img/physicist.png", false, false, 32, 32);
 
         // player_image = class_image_spaceman;
 
@@ -2146,7 +2148,7 @@ void player_set_class(Player* p, PlayerClass class)
             p->phys.max_velocity = 120.0;
             break;
         case PLAYER_CLASS_PHYSICIST:
-            p->image = class_image_spaceman;
+            p->image = class_image_physicist;
             p->phys.speed = 700.0;
             p->phys.max_velocity = 120.0;
             break;

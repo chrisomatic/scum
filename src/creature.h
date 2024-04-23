@@ -72,6 +72,7 @@ typedef struct
 
     float ai_counter;
     float ai_counter_max;
+
     int ai_state;
     int ai_value;
 
