@@ -2330,6 +2330,22 @@ static void creature_update_beacon_red(Creature* c, float dt)
 
 static void creature_update_watcher(Creature* c, float dt)
 {
+    ProjectileType pt = creature_get_projectile_type(c);
+    ProjectileDef def = projectile_lookup[pt];
+
+    ProjectileOrbital* orb = projectile_orbital_get(&c->phys, def.orbital_distance);
+
+    if(!orb)
+    {
+        creature_fire_projectile(c, 0.0, PROJ_COLOR);
+    }
+    /*
+    else if(orb->count < 4) 
+    {
+        creature_fire_projectile(c, 0.0, PROJ_COLOR);
+    }
+    */
+
     bool act = ai_update_action(c, dt);
 
     c->phys.pos.z = c->phys.height/2.0 + 10.0 + 3*sinf(5*c->phys.circular_dt);
@@ -2340,12 +2356,5 @@ static void creature_update_watcher(Creature* c, float dt)
         {
             ai_random_walk(c);
         }
-    }
-
-    c->ai_counter += dt;
-    if(c->ai_counter > 5.0)
-    {
-        c->ai_counter -= 5.0;
-        creature_fire_projectile(c, 0.0, PROJ_COLOR);
     }
 }

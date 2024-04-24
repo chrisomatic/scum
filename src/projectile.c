@@ -60,7 +60,7 @@ ProjectileDef projectile_lookup[] = {
         .cluster_num = {8, 2, 2},
         .cluster_scales = {0.5, 0.5, 0.5},
 
-        .is_orbital = false,
+        .is_orbital = true,
         .orbital_distance = 32.0,
         .orbital_speed_factor = -3.0,
     },
@@ -129,7 +129,7 @@ ProjectileDef projectile_lookup[] = {
         .damage = 1.0,
         .speed = 200.0,
         .accel = 0.0,
-        .scale = 0.8,
+        .scale = 1.0,
         .ttl = 3.0,
         .explosive = false,
         .bouncy = false,
@@ -138,7 +138,7 @@ ProjectileDef projectile_lookup[] = {
 
         .is_orbital = true,
         .orbital_distance = 50.0,
-        .orbital_speed_factor = 5.0,
+        .orbital_speed_factor = 3.0,
     },
 };
 
@@ -883,6 +883,19 @@ void projectile_draw(Projectile* proj)
 
     // printf("z: %.2f, scale: %.2f\n", proj->phys.pos.z, scale);
     gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, y, proj->color, false, scale, 0.0, opacity, false, true, false);
+}
+
+ProjectileOrbital* projectile_orbital_get(Physics* body, float distance)
+{
+    for(int i = 0; i < orbital_count; ++i)
+    {
+        if(orbitals[i].body == body && orbitals[i].distance == distance)
+        {
+            return &orbitals[i];
+        }
+    }
+
+    return NULL;
 }
 
 void projectile_lerp(Projectile* p, double dt)

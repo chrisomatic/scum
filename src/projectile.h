@@ -140,3 +140,5 @@ void projectile_handle_collision(Projectile* p, Entity* e);
 void projectile_draw(Projectile* proj);
 void projectile_lerp(Projectile* p, double dt);
 const char* projectile_def_get_name(ProjectileType proj_type);
+
+ProjectileOrbital* projectile_orbital_get(Physics* body, float distance);

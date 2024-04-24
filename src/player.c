@@ -187,10 +187,10 @@ void player_init()
         ptext = text_list_init(5, 0, 0, 0.07, true, TEXT_ALIGN_LEFT, IN_WORLD, true);
 
         // load sounds
-        audio_buffer_run1  = audio_load_file("src/audio/step1.raw");
-        audio_buffer_run2  = audio_load_file("src/audio/step2.raw");
-        audio_buffer_jump = audio_load_file("src/audio/bounce.raw");
-        audio_buffer_shoot = audio_load_file("src/audio/laserShoot.raw");
+        audio_buffer_run1  = audio_load_file("src/audio/footsteps1.wav");
+        audio_buffer_run2  = audio_load_file("src/audio/footsteps2.raw");
+        audio_buffer_jump = audio_load_file("src/audio/jump1.wav");
+        audio_buffer_shoot = audio_load_file("src/audio/laserShoot.wav");
 
         _initialized = true;
     }
