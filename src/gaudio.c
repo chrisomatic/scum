@@ -41,78 +41,57 @@ void gaudio_init()
 
 Gaudio* gaudio_add(const char* filepath, bool wav, bool loop)
 {
-    Gaudio _ga = {0};
-    bool add = list_add(audio_list, &_ga);
-    if(!add) return NULL;
+    if(audio_list->count == audio_list->max_count) return NULL;
 
-    Gaudio* ga = &audio_objs[audio_list->count-1];
+    Gaudio ga = {0};
+    ga.id = get_id();
+    ga.source = audio_source_create(false);
+    ga.buffer1 = audio_buffer_create();
+    ga.buffer2 = audio_buffer_create();
+    ga.wav = wav;
+    ga.loop = loop;
+    ga.dead = false;
 
-    ga->id = get_id();
-    ga->source = audio_source_create(false);
-    ga->buffer1 = audio_buffer_create();
-    ga->buffer2 = audio_buffer_create();
-    ga->wav = wav;
-    ga->loop = loop;
-    ga->dead = false;
-
-    // printf("source: %d\n", ga->source);
-    // printf("buffer1: %d\n", ga->buffer1);
-    // printf("buffer2: %d\n", ga->buffer2);
-
-    // audio_source_set_volume(ga->source, 5.0);
-
-    if(wav)
+    ga.stream = audio_stream_open(filepath, wav ? AUDIO_FILE_WAV : AUDIO_FILE_RAW, NULL, wav ? 0 : 44100);
+    if(ga.stream.type == AUDIO_FILE_NONE)
     {
-        WaveStream ws = wav_stream_open(filepath);
-        wav_print_metadata(&ws);
-
-        ga->stream = calloc(sizeof(WaveStream),1);
-        memcpy(ga->stream, &ws, sizeof(WaveStream));
-
-        int chunksamples = _BUFFER_SIZE / ws.sample_size;
-        if(chunksamples >= ws.num_samples)
-        {
-            chunksamples = ws.num_samples/2;
-            printf("buffer size too big\n");
-        }
-
-
-        ga->chunk_size = chunksamples;  //sizeof(_buffer)
-        printf("chunk size: %d\n", ga->chunk_size);
-
-        _gaudio_start(ga);
+        return NULL;
     }
 
-    return ga;
+    ga.chunk_size = _BUFFER_SIZE / ga.stream.sample_size;
+    printf("chunk size: %d\n", ga.chunk_size);
+
+    // audio_source_set_volume(ga.source, 5.0);
+
+    bool add = list_add(audio_list, &ga);
+    if(!add)
+    {
+        audio_stream_close(&ga.stream);
+        return NULL;
+    }
+
+    _gaudio_start(&ga);
+
+    return &audio_objs[audio_list->count-1];
 }
 
 static void _gaudio_start(Gaudio* ga)
 {
+    int n = 0;
+    bool ret = _set_next_chunk(ga, &n);
+    audio_buffer_set(ga->buffer1, ga->stream.al_format, _buffer, n, ga->stream.sample_rate);
+    audio_source_queue_buffer(ga->source, ga->buffer1);
 
-    if(ga->wav)
+    // set up next buffer
+    if(!ret)
     {
-
-        printf("starting\n");
-
-        int fmt = wav_stream_get_al_format(ga->stream);
-
-        int n = 0;
-        bool ret = _set_next_chunk(ga, &n);
-        audio_buffer_set(ga->buffer1, fmt, _buffer, n, ga->stream->header.sample_rate);
-        audio_source_queue_buffer(ga->source, ga->buffer1);
-
-        // set up next buffer
-        if(!ret)
-        {
-            n = 0;
-            _set_next_chunk(ga, &n);
-            audio_buffer_set(ga->buffer2, fmt, _buffer, n, ga->stream->header.sample_rate);
-            audio_source_queue_buffer(ga->source, ga->buffer2);
-        }
-
-        audio_source_play(ga->source);
+        n = 0;
+        _set_next_chunk(ga, &n);
+        audio_buffer_set(ga->buffer2, ga->stream.al_format, _buffer, n, ga->stream.sample_rate);
+        audio_source_queue_buffer(ga->source, ga->buffer2);
     }
 
+    audio_source_play(ga->source);
 }
 
 
@@ -132,7 +111,7 @@ static bool _set_next_chunk(Gaudio* ga, int* num_bytes)
     {
         if(rem_chunks == 0) break;
 
-        uint64_t n = wav_stream_get_chunk(ga->stream, rem_chunks, (_buffer + *num_bytes));
+        uint64_t n = audio_stream_get_chunk(&ga->stream, rem_chunks, (_buffer + *num_bytes));
 
         if(n == 0)
         {
@@ -141,10 +120,10 @@ static bool _set_next_chunk(Gaudio* ga, int* num_bytes)
         }
 
         *num_bytes += n;
-        n_chunks = *num_bytes / ga->stream->sample_size;
+        n_chunks = *num_bytes / ga->stream.sample_size;
         rem_chunks = ga->chunk_size - n_chunks;
 
-        bool end = (ga->stream->sample_idx == 0);
+        bool end = (ga->stream.sample_idx == 0);
         if(end && !ga->loop)
         {
             // printf("%d / %d  ended\n", n_chunks, ga->stream->num_samples);
@@ -167,10 +146,9 @@ void gaudio_update(float dt)
 
         if(ga->dead) continue;
 
-        if(ga->wav)
+        // if(ga->wav)
         {
 
-            int fmt = wav_stream_get_al_format(ga->stream);
 
             int nump = audio_source_get_processed_buffers(ga->source);
             int cbuf = audio_source_get_buffer(ga->source);
@@ -191,7 +169,7 @@ void gaudio_update(float dt)
                 audio_source_unqueue_buffer(ga->source, *b1);
                 int n = 0;
                 bool ret = _set_next_chunk(ga, &n);
-                audio_buffer_set(*b1, fmt, _buffer, n, ga->stream->header.sample_rate);
+                audio_buffer_set(*b1, ga->stream.al_format, _buffer, n, ga->stream.sample_rate);
                 audio_source_queue_buffer(ga->source, *b1);
 
             }
@@ -203,7 +181,7 @@ void gaudio_update(float dt)
 
                 int n = 0;
                 bool ret = _set_next_chunk(ga, &n);
-                audio_buffer_set(*b1, fmt, _buffer, n, ga->stream->header.sample_rate);
+                audio_buffer_set(*b1, ga->stream.al_format, _buffer, n, ga->stream.sample_rate);
                 audio_source_queue_buffer(ga->source, *b1);
 
                 // set up next buffer
@@ -211,7 +189,7 @@ void gaudio_update(float dt)
                 {
                     n = 0;
                     _set_next_chunk(ga, &n);
-                    audio_buffer_set(*b2, fmt, _buffer, n, ga->stream->header.sample_rate);
+                    audio_buffer_set(*b2, ga->stream.al_format, _buffer, n, ga->stream.sample_rate);
                     audio_source_queue_buffer(ga->source, *b2);
                 }
 

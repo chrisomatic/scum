@@ -1172,10 +1172,10 @@ void update(float dt)
 
     // static int kam = 0;
     // kam++;
-    // // if(kam % 100 == 0)
-    // if(kam == 1)
+    // if(kam % 100 == 0)
+    // // if(kam == 1)
     // {
-    //     Gaudio* ga = gaudio_add("src/audio/Mindseye_The_Warmth.wav", true, true);
+    //     Gaudio* ga = gaudio_add("src/audio/bounce.raw", false, true);
     // }
 
     if(game_state == GAME_STATE_EDITOR)

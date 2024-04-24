@@ -23,8 +23,6 @@ void audio_source_unqueue_buffer(int source, int buffer);
 void audio_source_set_volume(int src, float vol);
 int audio_source_get_processed_buffers(int source);
 int audio_source_get_buffer(int source);
-
-
 bool audio_source_is_playing(int source);
 
 
@@ -46,26 +44,29 @@ typedef struct
     uint32_t data_size;
 } WaveHeader;
 
+typedef enum
+{
+    AUDIO_FILE_NONE,
+    AUDIO_FILE_RAW,
+    AUDIO_FILE_WAV,
+} AudioFileType;
 
 typedef struct
 {
-    WaveHeader header;
-
+    AudioFileType type;
     FILE* fp;
-
-    const char* fmt_str;
+    int al_format;
+    int data_offset;
     int sample_idx;
     uint64_t num_samples;
-    uint64_t sample_size;
+    uint16_t sample_size;
+    uint8_t num_channels;
+    uint32_t sample_rate;
     float duration;
-    int num_channel_bytes;
-} WaveStream;
+} AudioStream;
 
-void wav_print_metadata(WaveStream* stream);
-int wav_stream_get_al_format(WaveStream* stream);
-WaveStream wav_stream_open(const char* fpath);
-void wav_stream_close(WaveStream* stream);
-uint64_t wav_stream_get_chunk(WaveStream* stream, uint64_t num_samples, uint8_t* buf);
+void wav_print_header(WaveHeader* h);
 
-//TEMP
-int audio_load_wav_file(char* filepath);
+AudioStream audio_stream_open(const char* fpath, AudioFileType type, WaveHeader* wave_header, uint64_t raw_sample_rate);
+void audio_stream_close(AudioStream* stream);
+uint64_t audio_stream_get_chunk(AudioStream* stream, uint64_t num_samples, uint8_t* buf);

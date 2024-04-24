@@ -238,7 +238,6 @@ bool audio_source_is_playing(int source)
 
 // WAV
 
-
 static uint32_t convert_to_big_endian_u32(uint8_t buf[4])
 {
     uint32_t val = buf[0];
@@ -255,41 +254,48 @@ static uint16_t convert_to_big_endian_u16(uint8_t buf[2])
     return val;
 }
 
-void wav_print_metadata(WaveStream* stream)
+void wav_print_header(WaveHeader* h)
 {
-    printf("Header:\n");
-    printf("  riff: '%s'\n", stream->header.riff);
-    printf("  total size: %u\n", stream->header.total_size);
-    printf("  wave: '%s'\n", stream->header.wave);
-    printf("  fmt: '%s'\n", stream->header.fmt_chunk_marker);
-    printf("  fmt length: %u\n", stream->header.fmt_length);
-    printf("  fmt type: %u  (%s)\n", stream->header.fmt_type, stream->fmt_str);
-    printf("  channels: %u\n", stream->header.channels);
-    printf("  sample rate: %u\n", stream->header.sample_rate);
-    printf("  byte rate: %u\n", stream->header.byte_rate);
-    printf("  block align: %u\n", stream->header.block_align);
-    printf("  bits/sample: %u\n", stream->header.bits_per_sample);
-    printf("  data header: '%s'\n", stream->header.data_chunk_header);
-    printf("  data size: %u\n", stream->header.data_size);
+    const char* fmt_str;
 
-    printf("Num Samples: %u\n", stream->num_samples);
-    printf("Sample Size: %u bytes\n", stream->sample_size);
-    printf("Duration: %.4f\n", stream->duration);
+    if(h->fmt_type == 1) // PCM (not compressed)
+        fmt_str = "PCM";
+    if(h->fmt_type == 3) // IEEE float
+        fmt_str = "whatever";
+    if(h->fmt_type == 6) // 8bit A law
+        fmt_str = "A-law";
+    if(h->fmt_type == 7) // 8bit mu law
+        fmt_str = "Mu-law";
+
+    printf("Header:\n");
+    printf("  riff: '%s'\n", h->riff);
+    printf("  total size: %u\n", h->total_size);
+    printf("  wave: '%s'\n", h->wave);
+    printf("  fmt: '%s'\n", h->fmt_chunk_marker);
+    printf("  fmt length: %u\n", h->fmt_length);
+    printf("  fmt type: %u  (%s)\n", h->fmt_type, fmt_str);
+    printf("  channels: %u\n", h->channels);
+    printf("  sample rate: %u\n", h->sample_rate);
+    printf("  byte rate: %u\n", h->byte_rate);
+    printf("  block align: %u\n", h->block_align);
+    printf("  bits/sample: %u\n", h->bits_per_sample);
+    printf("  data header: '%s'\n", h->data_chunk_header);
+    printf("  data size: %u\n", h->data_size);
 }
 
-
-int wav_stream_get_al_format(WaveStream* stream)
+static int _get_al_format(AudioStream* stream)
 {
-    int ch = stream->header.channels;
+    int ch = stream->num_channels;
+    int num_channel_bytes = stream->sample_size / ch;
 
-    if(stream->num_channel_bytes == 1)
+    if(num_channel_bytes == 1)
     {
         if(ch == 1)
             return AL_FORMAT_MONO8;
         else if(ch == 2)
             return AL_FORMAT_STEREO8;
     }
-    else if(stream->num_channel_bytes == 2)
+    else if(num_channel_bytes == 2)
     {
         if(ch == 1)
             return AL_FORMAT_MONO16;
@@ -300,92 +306,107 @@ int wav_stream_get_al_format(WaveStream* stream)
     return -1;
 }
 
-
-WaveStream wav_stream_open(const char* fpath)
+AudioStream audio_stream_open(const char* fpath, AudioFileType type, WaveHeader* wave_header, uint64_t raw_sample_rate)
 {
-    WaveStream s = {0};
+    AudioStream s = {0};
+    s.type = AUDIO_FILE_NONE;
 
     s.fp = fopen(fpath, "r");
     if(!s.fp) return s;
 
+    s.type = type;
 
-    uint8_t buffer[4] = {0};
+    if(type == AUDIO_FILE_WAV)
+    {
+        WaveHeader header = {0};
 
-    fseek(s.fp, 0, SEEK_END);
-    size_t sz = ftell(s.fp);
-    rewind(s.fp);
+        char buffer[4] = {0};
 
-    // printf("file size: %d\n", sz);
+        int read = 0;
+        read = fread(header.riff, 4, 1, s.fp);
 
-    WaveHeader header = {0};
+        read = fread(buffer, 4, 1, s.fp);
+        header.total_size = convert_to_big_endian_u32(buffer);
 
-    int read = 0;
-    read = fread(s.header.riff, 4, 1, s.fp);
+        read = fread(header.wave, 4, 1, s.fp);
 
-    read = fread(buffer, 4, 1, s.fp);
-    s.header.total_size = convert_to_big_endian_u32(buffer);
+        read = fread(header.fmt_chunk_marker, 4, 1, s.fp);
 
-    read = fread(s.header.wave, 4, 1, s.fp);
+        read = fread(buffer, 4, 1, s.fp);
+        header.fmt_length = convert_to_big_endian_u32(buffer);
 
-    read = fread(s.header.fmt_chunk_marker, 4, 1, s.fp);
+        read = fread(buffer, 2, 1, s.fp);
+        header.fmt_type = convert_to_big_endian_u16(buffer);
 
-    read = fread(buffer, 4, 1, s.fp);
-    s.header.fmt_length = convert_to_big_endian_u32(buffer);
+        read = fread(buffer, 2, 1, s.fp);
+        header.channels = convert_to_big_endian_u16(buffer);
 
-    read = fread(buffer, 2, 1, s.fp);
-    s.header.fmt_type = convert_to_big_endian_u16(buffer);
+        read = fread(buffer, 4, 1, s.fp);
+        header.sample_rate = convert_to_big_endian_u32(buffer);
 
-    if(s.header.fmt_type == 1) // PCM (not compressed)
-        s.fmt_str = "PCM";
-    if(s.header.fmt_type == 3) // IEEE float
-        s.fmt_str = "whatever";
-    if(s.header.fmt_type == 6) // 8bit A law
-        s.fmt_str = "A-law";
-    if(s.header.fmt_type == 7) // 8bit mu law
-        s.fmt_str = "Mu-law";
+        read = fread(buffer, 4, 1, s.fp);
+        header.byte_rate = convert_to_big_endian_u32(buffer);
 
-    read = fread(buffer, 2, 1, s.fp);
-    s.header.channels = convert_to_big_endian_u16(buffer);
+        read = fread(buffer, 2, 1, s.fp);
+        header.block_align = convert_to_big_endian_u16(buffer);
 
-    read = fread(buffer, 4, 1, s.fp);
-    s.header.sample_rate = convert_to_big_endian_u32(buffer);
+        read = fread(buffer, 2, 1, s.fp);
+        header.bits_per_sample = convert_to_big_endian_u16(buffer);
 
-    read = fread(buffer, 4, 1, s.fp);
-    s.header.byte_rate = convert_to_big_endian_u32(buffer);
+        read = fread(header.data_chunk_header, 4, 1, s.fp);
 
-    read = fread(buffer, 2, 1, s.fp);
-    s.header.block_align = convert_to_big_endian_u16(buffer);
+        read = fread(buffer, 4, 1, s.fp);
+        header.data_size = convert_to_big_endian_u32(buffer);
 
-    read = fread(buffer, 2, 1, s.fp);
-    s.header.bits_per_sample = convert_to_big_endian_u16(buffer);
+        // int num_channel_bytes = s.sample_size / s.header.channels;
 
-    read = fread(s.header.data_chunk_header, 4, 1, s.fp);
+        s.num_samples = (8 * header.data_size) / (header.channels * header.bits_per_sample);
+        s.sample_size = (header.channels * header.bits_per_sample) / 8;  // size of each sample
+        s.duration = (float)header.data_size / header.byte_rate;    // seconds
+        s.sample_rate = header.sample_rate;
+        s.num_channels = header.channels;
 
-    read = fread(buffer, 4, 1, s.fp);
-    s.header.data_size = convert_to_big_endian_u32(buffer);
+        s.data_offset = 44;
 
-    s.num_samples = (8 * s.header.data_size) / (s.header.channels * s.header.bits_per_sample);
-    s.sample_size = (s.header.channels * s.header.bits_per_sample) / 8;  // size of each sample
-    s.duration = (float)s.header.data_size / s.header.byte_rate;    // seconds
+        if(wave_header)
+        {
+            memcpy(wave_header, &header, sizeof(WaveHeader));
+        }
 
-    s.num_channel_bytes = s.sample_size / s.header.channels;
+    }
+    else
+    {
+        fseek(s.fp, 0, SEEK_END);
+        size_t sz = ftell(s.fp);
+        rewind(s.fp);
 
+        s.data_offset = 0;
+        s.num_samples = sz;
+        s.sample_rate = raw_sample_rate;
+        s.sample_size = 1;
+        s.duration = (float)s.num_samples / (float)s.sample_rate;
+        s.num_channels = 1;
+    }
+
+    s.al_format = _get_al_format(&s);
     s.sample_idx = 0;
 
     return s;
 }
 
-void wav_stream_close(WaveStream* stream)
+
+void audio_stream_close(AudioStream* stream)
 {
-    fclose(stream->fp);
+    if(stream->fp) fclose(stream->fp);
 }
 
 
-uint64_t wav_stream_get_chunk(WaveStream* stream, uint64_t num_samples, uint8_t* buf)
+
+uint64_t audio_stream_get_chunk(AudioStream* stream, uint64_t num_samples, uint8_t* buf)
 {
     if(num_samples == 0) num_samples = stream->num_samples;
 
-    fseek(stream->fp, 44+(stream->sample_idx*stream->sample_size), SEEK_SET);
+    fseek(stream->fp, stream->data_offset+(stream->sample_idx*stream->sample_size), SEEK_SET);
 
     if(stream->sample_idx + num_samples > stream->num_samples)
     {
@@ -406,73 +427,9 @@ uint64_t wav_stream_get_chunk(WaveStream* stream, uint64_t num_samples, uint8_t*
     if(stream->sample_idx >= stream->num_samples)
     {
         // printf("back to beginning\n");
-        fseek(stream->fp, 44, SEEK_SET);
+        // fseek(stream->fp, 44, SEEK_SET);
         stream->sample_idx = 0;
     }
 
     return nbytes;
-
-
-    //TODO
-    // int bufi = 0;
-    // char data_buffer[64];
-    // for(int i = 0; i < num_samples; ++i)
-    // {
-    //     read = fread(data_buffer, stream->sample_size, 1, fp);
-    //     if(read != 1)
-    //     {
-    //         printf("fread error\n");
-    //         fclose(fp);
-    //         return 1;
-    //     }
-    //     int channel_data = 0;
-    //     int idx = 0;
-    //     for(int c = 0; c < stream->header.channels; ++c)
-    //     {
-    //         if(stream->num_channel_bytes == 2)
-    //         {
-    //             data_buffer[idx];
-    //             data_buffer[idx+1];
-    //         }
-    //         else if(num_channel_bytes == 1)
-    //         {
-    //             channel_data = data_buffer[idx];
-    //         }
-    //     }
-    //     idx += stream->num_channel_bytes;
-    //     stream->sample_idx++;
-    //     if(stream->sample_idx >= stream->num_samples)
-    //         break;
-    // }
-
-
-
-}
-
-
-//TEMP
-int audio_load_wav_file(char* filepath)
-{
-
-    WaveStream s = wav_stream_open(filepath);
-    size_t size = s.num_samples * s.sample_size;
-    uint8_t* buf = calloc(size, 1);
-
-    uint64_t len = wav_stream_get_chunk(&s, s.num_samples, buf);
-
-    int buffer;
-    alGenBuffers(1, &buffer);
-
-    int err = alGetError();
-    if(err != AL_NO_ERROR)
-    {
-        LOGE("Failed to generate buffers, error: %d\n", err);
-        free(buf);
-        return -1;
-    }
-
-    alBufferData(buffer, wav_stream_get_al_format(&s), buf, len, s.header.sample_rate);
-    free(buf);
-
-    return buffer;
 }

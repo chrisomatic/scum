@@ -17,7 +17,7 @@ typedef struct
     bool dead;
 
     bool wav;
-    WaveStream* stream;
+    AudioStream stream;
     int chunk_size; // number of samples in a chunk
 
 } Gaudio;
