@@ -24,14 +24,42 @@ static void player_set_sprite_index(Player* p, int sprite_index);
 #define XP_REQ_MULT (3.0)
 int xp_levels[] = {100,120,140,160,180,200};
 
-float lookup_strength[] = { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
-float lookup_defense[]  = { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 };
-float lookup_movement_speed[] = { 620.0, 705.0, 800.0, 900.0, 1000.0, 1100.0, 1200.0 };
-float lookup_movement_speed_max_vel[] = { 110.0, 135.0, 160.0, 190.0, 220.0, 250.0, 280.0 };
-float lookup_movement_speed_base_friction[] = { 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0 };
-float lookup_attack_speed[] = { 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3 };
-float lookup_attack_range[] = { 0.0, 20.0, 50.0, 90.0, 140.0, 180.0, 220.0 };
-float lookup_luck[] = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+
+float lookup_spaceman_strength[]                         = { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
+float lookup_spaceman_defense[]                          = { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 };
+float lookup_spaceman_movement_speed[]                   = { 620.0, 705.0, 800.0, 900.0, 1000.0, 1100.0, 1200.0 };
+float lookup_spaceman_movement_speed_max_vel[]           = { 110.0, 135.0, 160.0, 190.0, 220.0, 250.0, 280.0 };
+float lookup_spaceman_movement_speed_base_friction[]     = { 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0 };
+float lookup_spaceman_attack_speed[]                     = { 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3 };
+float lookup_spaceman_attack_range[]                     = { 0.0, 20.0, 50.0, 90.0, 140.0, 180.0, 220.0 };
+float lookup_spaceman_luck[]                             = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+
+float lookup_robot_strength[]                            = { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
+float lookup_robot_defense[]                             = { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 };
+float lookup_robot_movement_speed[]                      = { 520.0, 575.0, 650.0, 735.0, 780.0, 880.0, 1000.0 };
+float lookup_robot_movement_speed_max_vel[]              = { 80.0, 105.0, 130.0, 155.0, 180.0, 205.0, 240.0 };
+float lookup_robot_movement_speed_base_friction[]        = { 12.0, 14.0, 16.0, 20.0, 22.0, 24.0, 26.0 };
+float lookup_robot_attack_speed[]                        = { 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3 };
+float lookup_robot_attack_range[]                        = { 0.0, 20.0, 50.0, 90.0, 140.0, 180.0, 220.0 };
+float lookup_robot_luck[]                                = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+
+float lookup_physicist_strength[]                        = { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
+float lookup_physicist_defense[]                         = { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 };
+float lookup_physicist_movement_speed[]                  = { 680.0, 780.0, 880.0, 1000.0, 1110.0, 1220.0, 1350.0 };
+float lookup_physicist_movement_speed_max_vel[]          = { 130.0, 155.0, 180.0, 220.0, 250.0, 280.0, 315.0 };
+float lookup_physicist_movement_speed_base_friction[]    = { 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0 };
+float lookup_physicist_attack_speed[]                    = { 0.3, 0.26, 0.22, 0.18, 0.15, 0.12, 0.08 };
+float lookup_physicist_attack_range[]                    = { 0.0, 20.0, 50.0, 90.0, 140.0, 180.0, 220.0 };
+float lookup_physicist_luck[]                            = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+
+float *lookup_strength                     = lookup_spaceman_strength;
+float *lookup_defense                      = lookup_spaceman_defense;
+float *lookup_movement_speed               = lookup_spaceman_movement_speed;
+float *lookup_movement_speed_max_vel       = lookup_spaceman_movement_speed_max_vel;
+float *lookup_movement_speed_base_friction = lookup_spaceman_movement_speed_base_friction;
+float *lookup_attack_speed                 = lookup_spaceman_attack_speed;
+float *lookup_attack_range                 = lookup_spaceman_attack_range;
+float *lookup_luck                         = lookup_spaceman_luck;
 
 int player_ignore_input = 0;
 
@@ -1169,7 +1197,7 @@ static void player_handle_shooting(Player* p, float dt)
 
                 uint32_t color = 0x0050A0FF;
                 projectile_add(&p->phys, p->phys.curr_room, &temp, &p->proj_spawn, color, p->aim_deg, true);
-                audio_source_play(p->source_shoot);
+                //audio_source_play(p->source_shoot);
             }
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;
@@ -1311,16 +1339,16 @@ void player_update(Player* p, float dt)
     }
 
     // apply stats
-    p->phys.speed = lookup_movement_speed[p->stats[MOVEMENT_SPEED]];
+    p->phys.speed         = lookup_movement_speed[p->stats[MOVEMENT_SPEED]];
     p->phys.max_velocity  = lookup_movement_speed_max_vel[p->stats[MOVEMENT_SPEED]];
-    p->phys.base_friction  = lookup_movement_speed_base_friction[p->stats[MOVEMENT_SPEED]];
-    p->proj_cooldown_max = lookup_attack_speed[p->stats[ATTACK_SPEED]];
+    p->phys.base_friction = lookup_movement_speed_base_friction[p->stats[MOVEMENT_SPEED]];
+    p->proj_cooldown_max  = lookup_attack_speed[p->stats[ATTACK_SPEED]];
 
     // apply skills
-    p->phys.speed += p->skill_mods.speed;
-    p->phys.max_velocity += p->skill_mods.max_velocity;
+    p->phys.speed         += p->skill_mods.speed;
+    p->phys.max_velocity  += p->skill_mods.max_velocity;
     p->phys.base_friction += p->skill_mods.base_friction;
-    p->phys.floating = p->phys.dead || p->skill_mods.floating;
+    p->phys.floating       = p->phys.dead || p->skill_mods.floating;
 
 
     float cx = p->phys.collision_rect.x;
@@ -1570,7 +1598,7 @@ void player_update(Player* p, float dt)
     {
         p->phys.vel.z = jump_vel_z;
 
-        audio_source_play(p->source_jump);
+        //audio_source_play(p->source_jump);
     }
 
     if(!p->phys.falling)
@@ -1693,12 +1721,16 @@ void player_update(Player* p, float dt)
             if(p->anim.curr_frame == 0)
             {
                 if(!audio_source_is_playing(p->source_run1))
-                    audio_source_play(p->source_run1);
+                {
+                    //audio_source_play(p->source_run1);
+                }
             }
             else if(p->anim.curr_frame == 2)
             {
                 if(!audio_source_is_playing(p->source_run2))
-                    audio_source_play(p->source_run2);
+                {
+                    //audio_source_play(p->source_run2);
+                }
             }
         }
     }
@@ -2144,18 +2176,48 @@ void player_set_class(Player* p, PlayerClass class)
     {
         case PLAYER_CLASS_SPACEMAN:
             p->image = class_image_spaceman;
-            p->phys.speed = 700.0;
-            p->phys.max_velocity = 120.0;
+            p->proj_def.is_orbital = false;
+            p->proj_spawn.ghost_chance = 0.0f;
+
+            lookup_strength                     = lookup_spaceman_strength;
+            lookup_defense                      = lookup_spaceman_defense;
+            lookup_movement_speed               = lookup_spaceman_movement_speed;
+            lookup_movement_speed_max_vel       = lookup_spaceman_movement_speed_max_vel;
+            lookup_movement_speed_base_friction = lookup_spaceman_movement_speed_base_friction;
+            lookup_attack_speed                 = lookup_spaceman_attack_speed;
+            lookup_attack_range                 = lookup_spaceman_attack_range;
+            lookup_luck                         = lookup_spaceman_luck;
+
             break;
         case PLAYER_CLASS_PHYSICIST:
             p->image = class_image_physicist;
-            p->phys.speed = 700.0;
-            p->phys.max_velocity = 120.0;
+            p->proj_def.is_orbital = true;
+            p->proj_spawn.ghost_chance = 1.0f;
+
+            lookup_strength                     = lookup_physicist_strength;
+            lookup_defense                      = lookup_physicist_defense;
+            lookup_movement_speed               = lookup_physicist_movement_speed;
+            lookup_movement_speed_max_vel       = lookup_physicist_movement_speed_max_vel;
+            lookup_movement_speed_base_friction = lookup_physicist_movement_speed_base_friction;
+            lookup_attack_speed                 = lookup_physicist_attack_speed;
+            lookup_attack_range                 = lookup_physicist_attack_range;
+            lookup_luck                         = lookup_physicist_luck;
+
             break;
         case PLAYER_CLASS_ROBOT:
             p->image = class_image_robot;
-            p->phys.speed = 400.0;
-            p->phys.max_velocity = 100.0;
+            p->proj_def.is_orbital = false;
+            p->proj_spawn.ghost_chance = 0.0f;
+
+            lookup_strength                     = lookup_robot_strength;
+            lookup_defense                      = lookup_robot_defense;
+            lookup_movement_speed               = lookup_robot_movement_speed;
+            lookup_movement_speed_max_vel       = lookup_robot_movement_speed_max_vel;
+            lookup_movement_speed_base_friction = lookup_robot_movement_speed_base_friction;
+            lookup_attack_speed                 = lookup_robot_attack_speed;
+            lookup_attack_range                 = lookup_robot_attack_range;
+            lookup_luck                         = lookup_robot_luck;
+
             break;
         default:
             LOGE("Invalid class: %d", class);

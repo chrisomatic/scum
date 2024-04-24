@@ -60,7 +60,7 @@ ProjectileDef projectile_lookup[] = {
         .cluster_num = {8, 2, 2},
         .cluster_scales = {0.5, 0.5, 0.5},
 
-        .is_orbital = true,
+        .is_orbital = false,
         .orbital_distance = 32.0,
         .orbital_speed_factor = -3.0,
     },
@@ -207,7 +207,7 @@ ProjectileSpawn projectile_spawn[] = {
     {
         // watcher
         .num = 1,
-        .spread = 0.0,
+        .spread = 30.0,
         .ghost_chance = 1.0,
         .homing_chance = 0.0,
         .poison_chance = 0.0,
@@ -351,8 +351,8 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
 
         calc_orbital_target(&proj);
 
-        proj.orbital_pos_prior.x = proj.orbital_pos_target.x;
-        proj.orbital_pos_prior.y = proj.orbital_pos_target.y;
+        proj.orbital_pos_prior.x = 0.0;
+        proj.orbital_pos_prior.y = 0.0;
 
         proj.orbital_pos.x = proj.orbital_pos_target.x;
         proj.orbital_pos.y = proj.orbital_pos_target.y;
