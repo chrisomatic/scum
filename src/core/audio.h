@@ -6,6 +6,9 @@ void audio_deinit();
 void audio_set_listener_pos(float x, float y, float z);
 
 // Audio Buffer
+int audio_buffer_create();
+void audio_buffer_delete(int buffer);
+void audio_buffer_set(int buffer, int format, uint8_t* audio_data, int len, int sample_rate);
 int audio_load_file(char* filepath);
 int audio_load_music(char* filepath);
 
@@ -15,7 +18,12 @@ void audio_source_delete(int source);
 void audio_source_update_position(int src, float x, float y, float z);
 void audio_source_assign_buffer(int source, int buffer);
 void audio_source_play(int source);
+void audio_source_queue_buffer(int source, int buffer);
+void audio_source_unqueue_buffer(int source, int buffer);
 void audio_source_set_volume(int src, float vol);
+int audio_source_get_processed_buffers(int source);
+int audio_source_get_buffer(int source);
+
 
 bool audio_source_is_playing(int source);
 
@@ -46,21 +54,18 @@ typedef struct
     FILE* fp;
 
     const char* fmt_str;
-
     int sample_idx;
-
     uint64_t num_samples;
     uint64_t sample_size;
     float duration;
     int num_channel_bytes;
-
 } WaveStream;
 
 void wav_print_metadata(WaveStream* stream);
 int wav_stream_get_al_format(WaveStream* stream);
 WaveStream wav_stream_open(const char* fpath);
 void wav_stream_close(WaveStream* stream);
-uint64_t wav_stream_get_chunk(WaveStream* stream, uint64_t num_samples, uint8_t** buf);
+uint64_t wav_stream_get_chunk(WaveStream* stream, uint64_t num_samples, uint8_t* buf);
 
 //TEMP
 int audio_load_wav_file(char* filepath);

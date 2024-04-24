@@ -38,6 +38,7 @@ gcc core/gfx.c \
     ui.c \
     weapon.c \
     decal.c \
+    gaudio.c \
     main.c \
     -Icore \
     -lglfw -lGLU -lGLEW -lGL -lopenal -lm \

@@ -30,6 +30,7 @@
 #include "decal.h"
 #include "settings.h"
 #include "audio.h"
+#include "gaudio.h"
 
 // =========================
 // Global Vars
@@ -819,11 +820,16 @@ void init()
     LOGI(" - Audio.");
     audio_init();
 
-    audio_buffer_music = audio_load_music("src/audio/moonlight.raw");
-    source_music = audio_source_create(true);
-    audio_source_set_volume(source_music, 5.0);
-    audio_source_assign_buffer(source_music, audio_buffer_music);
-    audio_source_play(source_music);
+    gaudio_init();
+    Gaudio* ga = gaudio_add("src/audio/Mindseye_The_Warmth.wav", true, true);
+
+    // audio_source_set_volume(source_music, 5.0);
+
+    // audio_buffer_music = audio_load_music("src/audio/moonlight.raw");
+    // source_music = audio_source_create(true);
+    // audio_source_set_volume(source_music, 5.0);
+    // audio_source_assign_buffer(source_music, audio_buffer_music);
+    // audio_source_play(source_music);
 
     // int temp_buffer = audio_load_wav_file("src/audio/bounce.wav");
     // int temp_source =  audio_source_create(true);
@@ -1162,6 +1168,16 @@ void update_level_transition(float dt)
 
 void update(float dt)
 {
+    gaudio_update(dt);
+
+    // static int kam = 0;
+    // kam++;
+    // // if(kam % 100 == 0)
+    // if(kam == 1)
+    // {
+    //     Gaudio* ga = gaudio_add("src/audio/Mindseye_The_Warmth.wav", true, true);
+    // }
+
     if(game_state == GAME_STATE_EDITOR)
     {
         bool res = room_editor_update(dt);

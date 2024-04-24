@@ -43,8 +43,11 @@ void audio_set_listener_pos(float x, float y, float z)
     alListener3f(AL_VELOCITY, 0.0, 0.0, 0.0);
 }
 
+
 int audio_source_create(bool looping)
 {
+    alGetError();
+
     int src;
     alGenSources(1, &src);
 
@@ -65,13 +68,31 @@ int audio_source_create(bool looping)
     alSource3f(src, AL_POSITION, 0.0, 0.0, 0.0);
     alSource3f(src, AL_VELOCITY, 0.0, 0.0, 0.0);
     alSourcei(src, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
-    
+
+    alGetError(); // clear previous errors
     return src;
+}
+
+int audio_source_get_processed_buffers(int source)
+{
+    int val = 0;
+    alGetSourcei(source, AL_BUFFERS_PROCESSED, &val);
+    alGetError(); // clear previous errors
+    return val;
+}
+
+int audio_source_get_buffer(int source)
+{
+    int val = 0;
+    alGetSourcei(source, AL_BUFFER, &val);
+    alGetError(); // clear previous errors
+    return val;
 }
 
 void audio_source_set_volume(int src, float vol)
 {
     alSourcef(src, AL_GAIN,  vol);
+    alGetError(); // clear previous errors
 }
 
 void audio_source_delete(int source)
@@ -80,6 +101,7 @@ void audio_source_delete(int source)
     {
         alDeleteSources(1, &source);
     }
+    alGetError(); // clear previous errors
 }
 
 void audio_source_update_position(int src, float x, float y, float z)
@@ -96,6 +118,20 @@ void audio_source_play(int source)
 {
     alSourcePlay(source);
 }
+
+void audio_source_queue_buffer(int source, int buffer)
+{
+    // alSourceUnqueueBuffers(source, 1, &buffer);
+    alSourceQueueBuffers(source, 1, &buffer);
+    alGetError(); // clear previous errors
+}
+
+void audio_source_unqueue_buffer(int source, int buffer)
+{
+    alSourceUnqueueBuffers(source, 1, &buffer);
+    alGetError(); // clear previous errors
+}
+
 
 static int _load_file_to_buffer(char* filepath, char** return_buf)
 {
@@ -120,6 +156,26 @@ static int _load_file_to_buffer(char* filepath, char** return_buf)
 
     return len;
 
+}
+
+int audio_buffer_create()
+{
+    int buffer = -1;
+    alGenBuffers(1, &buffer);
+    alGetError(); // clear previous errors
+    return buffer;
+}
+
+void audio_buffer_delete(int buffer)
+{
+    alDeleteBuffers(1, &buffer);
+    alGetError(); // clear previous errors
+}
+
+void audio_buffer_set(int buffer, int format, uint8_t* audio_data, int len, int sample_rate)
+{
+    alBufferData(buffer, format, audio_data, len, sample_rate);
+    alGetError(); // clear previous errors
 }
 
 int audio_load_file(char* filepath)
@@ -325,7 +381,7 @@ void wav_stream_close(WaveStream* stream)
 }
 
 
-uint64_t wav_stream_get_chunk(WaveStream* stream, uint64_t num_samples, uint8_t** buf)
+uint64_t wav_stream_get_chunk(WaveStream* stream, uint64_t num_samples, uint8_t* buf)
 {
     if(num_samples == 0) num_samples = stream->num_samples;
 
@@ -337,7 +393,7 @@ uint64_t wav_stream_get_chunk(WaveStream* stream, uint64_t num_samples, uint8_t*
     }
 
     int nbytes = stream->sample_size*num_samples;
-    int read = fread(*buf, nbytes, 1, stream->fp);
+    int read = fread(buf, nbytes, 1, stream->fp);
 
     if(read != 1)
     {
@@ -349,7 +405,7 @@ uint64_t wav_stream_get_chunk(WaveStream* stream, uint64_t num_samples, uint8_t*
 
     if(stream->sample_idx >= stream->num_samples)
     {
-        printf("back to beginning\n");
+        // printf("back to beginning\n");
         fseek(stream->fp, 44, SEEK_SET);
         stream->sample_idx = 0;
     }
@@ -402,7 +458,7 @@ int audio_load_wav_file(char* filepath)
     size_t size = s.num_samples * s.sample_size;
     uint8_t* buf = calloc(size, 1);
 
-    uint64_t len = wav_stream_get_chunk(&s, s.num_samples, &buf);
+    uint64_t len = wav_stream_get_chunk(&s, s.num_samples, buf);
 
     int buffer;
     alGenBuffers(1, &buffer);
