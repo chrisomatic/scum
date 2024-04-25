@@ -810,7 +810,6 @@ void init()
 
     text_lst = text_list_init(50, 2.0, view_height - 40.0, 0.19*ascale, true, TEXT_ALIGN_LEFT, NOT_IN_WORLD, true);
 
-
     LOGI(" - Particles.");
     particles_init();
 
@@ -821,7 +820,7 @@ void init()
     audio_init();
 
     gaudio_init();
-    Gaudio* ga = gaudio_add("src/audio/Mindseye_The_Warmth.wav", true, true);
+    //Gaudio* ga = gaudio_add("src/audio/Mindseye_The_Warmth.wav", true, true);
 
     // audio_source_set_volume(source_music, 5.0);
 

@@ -2337,14 +2337,9 @@ static void creature_update_watcher(Creature* c, float dt)
 
     if(!orb)
     {
-        creature_fire_projectile(c, 0.0, PROJ_COLOR);
+        for(int i = 0; i < 4; ++i)
+            creature_fire_projectile(c, 0.0, PROJ_COLOR);
     }
-    /*
-    else if(orb->count < 4) 
-    {
-        creature_fire_projectile(c, 0.0, PROJ_COLOR);
-    }
-    */
 
     bool act = ai_update_action(c, dt);
 

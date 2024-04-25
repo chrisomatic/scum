@@ -185,6 +185,8 @@ void player_set_defaults(Player* p)
         p->skills[j].type = SKILL_TYPE_NONE;
     }
 
+    player_set_class(p, p->settings.class);
+
     // temp
     // player_add_skill(p, SKILL_TYPE_MAGIC_MISSILE);
     // player_add_skill(p, SKILL_TYPE_CROWN_OF_THORNS);
