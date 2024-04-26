@@ -41,6 +41,7 @@ typedef struct
     bool is_orbital;
     float orbital_distance;
     float orbital_speed_factor;
+    int   orbital_max_count;
 
 } ProjectileDef;
 
@@ -71,8 +72,10 @@ typedef struct
     float distance; // radius of orbital
     float speed_factor; // speed of rotation, negative spins opposite way. 1.0 is 1 spin/6 seconds
     int count;
+    int max_count;
     float base_angle;  // used for rotation of projectiles
     float lerp_t;
+    float lerp_factor;
     OrbEvolution evolution;
 } ProjectileOrbital;
 

@@ -249,9 +249,9 @@ void creature_init_props(Creature* c)
     {
         case CREATURE_TYPE_SLUG:
         {
-            c->phys.speed = 40.0;
-            c->act_time_min = 1.5;
-            c->act_time_max = 3.0;
+            c->phys.speed = 60.0;
+            c->act_time_min = 0.5;
+            c->act_time_max = 2.0;
             c->phys.mass = 0.5;
             c->phys.base_friction = 20.0;
             c->phys.hp_max = 3.0;
@@ -287,7 +287,7 @@ void creature_init_props(Creature* c)
         } break;
         case CREATURE_TYPE_FLOATER:
         {
-            c->phys.speed = 20.0;
+            c->phys.speed = 40.0;
             c->act_time_min = 0.2;
             c->act_time_max = 0.5;
             c->phys.mass = 2.0;
@@ -753,6 +753,11 @@ void creature_update(Creature* c, float dt)
         return;
 
     phys_add_circular_time(&c->phys, dt);
+
+    if(c->phys.floating)
+    {
+        c->phys.pos.z = c->phys.height/2.0 + 10.0 + 3*sinf(5*c->phys.circular_dt);
+    }
 
     c->phys.curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
 
@@ -1362,8 +1367,6 @@ static void creature_update_geizer(Creature* c, float dt)
 static void creature_update_floater(Creature* c, float dt)
 {
     bool act = ai_update_action(c, dt);
-
-    c->phys.pos.z = c->phys.height/2.0 + 10.0 + 3*sinf(5*c->phys.circular_dt);
 
     if(act)
     {

@@ -33,7 +33,6 @@ bool audio_init()
     }
 
     alcMakeContextCurrent(context);
-
     alGetError(); // clear previous errors
 }
 
@@ -274,11 +273,11 @@ void wav_print_header(WaveHeader* h)
 
     if(h->fmt_type == 1) // PCM (not compressed)
         fmt_str = "PCM";
-    if(h->fmt_type == 3) // IEEE float
+    else if(h->fmt_type == 3) // IEEE float
         fmt_str = "whatever";
-    if(h->fmt_type == 6) // 8bit A law
+    else if(h->fmt_type == 6) // 8bit A law
         fmt_str = "A-law";
-    if(h->fmt_type == 7) // 8bit mu law
+    else if(h->fmt_type == 7) // 8bit mu law
         fmt_str = "Mu-law";
 
     printf("Header:\n");

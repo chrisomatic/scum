@@ -99,6 +99,14 @@ void gaudio_play(uint16_t id)
 
 }
 
+bool gaudio_playing(uint16_t id)
+{
+    Gaudio* ga = gaudio_get(id);
+    if(!ga) return false;
+
+    return ga->playing;
+}
+
 void gaudio_rewind(uint16_t id)
 {
     Gaudio* ga = gaudio_get(id);

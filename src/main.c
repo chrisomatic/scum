@@ -823,7 +823,11 @@ void init()
 
     gaudio_init();
     Gaudio* ga = gaudio_add("src/audio/Mindseye_The_Warmth.wav", true, true, false);
-
+    if(ga)
+    {
+        music_id = ga->id;    
+        gaudio_play(music_id);
+    }
 
     // audio_source_set_volume(source_music, 5.0);
 

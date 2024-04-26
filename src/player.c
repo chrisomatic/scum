@@ -12,7 +12,7 @@
 #include "ui.h"
 #include "weapon.h"
 #include "decal.h"
-#include "audio.h"
+#include "gaudio.h"
 #include "player.h"
 
 void player_ai_move_to_target(Player* p, Player* target);
@@ -76,10 +76,10 @@ int class_image_spaceman = -1;
 int class_image_robot = -1;
 int class_image_physicist = -1;
 
-static int audio_buffer_run1  = -1;
-static int audio_buffer_run2  = -1;
-static int audio_buffer_jump = -1;
-static int audio_buffer_shoot = -1;
+static uint16_t audio_run1  = -1;
+static uint16_t audio_run2  = -1;
+static uint16_t audio_jump  = -1;
+static uint16_t audio_shoot = -1;
 
 int shadow_image = -1;
 int card_image = -1;
@@ -217,10 +217,10 @@ void player_init()
         ptext = text_list_init(5, 0, 0, 0.07, true, TEXT_ALIGN_LEFT, IN_WORLD, true);
 
         // load sounds
-        audio_buffer_run1  = audio_load_file("src/audio/footsteps1.wav");
-        audio_buffer_run2  = audio_load_file("src/audio/footsteps2.raw");
-        audio_buffer_jump = audio_load_file("src/audio/jump1.wav");
-        audio_buffer_shoot = audio_load_file("src/audio/laserShoot.wav");
+        audio_run1  = gaudio_add("src/audio/footsteps1.wav", true, false, false)->id;
+        audio_run2  = gaudio_add("src/audio/footsteps2.wav", true, false, false)->id;
+        audio_jump  = gaudio_add("src/audio/jump1.wav",      true, false, false)->id;
+        audio_shoot = gaudio_add("src/audio/laserShoot.wav", true, false, false)->id;
 
         _initialized = true;
     }
@@ -235,16 +235,6 @@ void player_init()
         p->weapon.rotation_deg = 0.0;
         player_set_sprite_index(p, 4);
         player_set_class(p, PLAYER_CLASS_SPACEMAN);
-
-        p->source_run1  = audio_source_create(false);
-        p->source_run2  = audio_source_create(false);
-        p->source_jump  = audio_source_create(false);
-        p->source_shoot = audio_source_create(false);
-
-        audio_source_assign_buffer(p->source_run1, audio_buffer_run1);
-        audio_source_assign_buffer(p->source_run2, audio_buffer_run2);
-        audio_source_assign_buffer(p->source_jump, audio_buffer_jump);
-        audio_source_assign_buffer(p->source_shoot, audio_buffer_shoot);
 
         player_set_defaults(p);
 
@@ -1093,6 +1083,77 @@ void player_update_all(float dt)
     }
 }
 
+static void player_handle_orbitals(Player* p, float dt)
+{
+    ProjectileOrbital* orb = projectile_orbital_get(&p->phys, p->proj_def.orbital_distance);
+
+    if(p->actions[PLAYER_ACTION_SHOOT_UP].state)
+    {
+        // eject an orbital
+        
+        if(orb->count <= 0)
+            return;
+
+        p->proj_cooldown -= dt;
+        p->proj_cooldown = MAX(p->proj_cooldown,0.0);
+
+        if(p->proj_cooldown > 0.0)
+            return;
+
+        for(int i = plist->count -1; i >= 0; --i)
+        {
+            if(projectiles[i].orbital != orb)
+                continue;
+
+            // eject
+            p->proj_cooldown = p->proj_cooldown_max;
+            projectiles[i].def.is_orbital = false;
+            projectiles[i].orbital->count--;
+
+            // adjust orbital indices for other projectiles
+            for(int j =plist->count - 1; j >= 0; --j)
+            {
+                if(j == i)
+                    continue;
+
+                if(projectiles[j].orbital != projectiles[i].orbital)
+                    continue;
+
+                if(projectiles[j].orbital_index > projectiles[i].orbital_index)
+                    projectiles[j].orbital_index--;
+            }
+
+            projectiles[i].orbital = NULL;
+
+            break;
+        }
+    }
+    else if(p->actions[PLAYER_ACTION_SHOOT_RIGHT].state)
+    {
+    }
+    else if(p->actions[PLAYER_ACTION_SHOOT_DOWN].state)
+    {
+
+    }
+    else if(p->actions[PLAYER_ACTION_SHOOT_LEFT].state)
+    {
+        ProjectileDef temp = p->proj_def;
+        temp.damage += lookup_strength[p->stats[STRENGTH]];
+        temp.speed  += lookup_attack_range[p->stats[ATTACK_RANGE]];
+
+        uint32_t color = 0x0050A0FF;
+
+        int max = p->proj_def.orbital_max_count;
+        if(orb) max -= orb->count;
+
+        for(int i = 0; i < max; ++i)
+        {
+            projectile_add(&p->phys, p->phys.curr_room, &temp, &p->proj_spawn, color, p->aim_deg, true);
+        }
+    }
+}
+
+
 static void player_handle_melee(Player* p, float dt)
 {
     bool attacked = false;
@@ -1199,8 +1260,10 @@ static void player_handle_shooting(Player* p, float dt)
 
                 uint32_t color = 0x0050A0FF;
                 projectile_add(&p->phys, p->phys.curr_room, &temp, &p->proj_spawn, color, p->aim_deg, true);
-                //audio_source_play(p->source_shoot);
+
+                gaudio_play(audio_shoot);
             }
+
             // text_list_add(text_lst, 5.0, "projectile");
             p->proj_cooldown = p->proj_cooldown_max;
             p->shoot_sprite_cooldown = 1.0;
@@ -1600,7 +1663,7 @@ void player_update(Player* p, float dt)
     {
         p->phys.vel.z = jump_vel_z;
 
-        //audio_source_play(p->source_jump);
+        gaudio_play(audio_jump);
     }
 
     if(!p->phys.falling)
@@ -1688,6 +1751,10 @@ void player_update(Player* p, float dt)
     {
         player_handle_melee(p, dt);
     }
+    else if(p->settings.class == PLAYER_CLASS_PHYSICIST)
+    {
+        player_handle_orbitals(p,dt);
+    }
     else
     {
         player_handle_shooting(p, dt);
@@ -1720,19 +1787,13 @@ void player_update(Player* p, float dt)
 
         if(p->phys.pos.z == 0.0)
         {
-            if(p->anim.curr_frame == 0)
+            if(p->anim.curr_frame == 1)
             {
-                if(!audio_source_is_playing(p->source_run1))
-                {
-                    //audio_source_play(p->source_run1);
-                }
+                gaudio_play(audio_run1);
             }
-            else if(p->anim.curr_frame == 2)
+            else if(p->anim.curr_frame == 3)
             {
-                if(!audio_source_is_playing(p->source_run2))
-                {
-                    //audio_source_play(p->source_run2);
-                }
+                gaudio_play(audio_run2);
             }
         }
     }

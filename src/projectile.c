@@ -63,6 +63,7 @@ ProjectileDef projectile_lookup[] = {
         .is_orbital = false,
         .orbital_distance = 32.0,
         .orbital_speed_factor = 3.0,
+        .orbital_max_count = 5,
     },
     {
         // player - kinetic discharge skill
@@ -138,7 +139,8 @@ ProjectileDef projectile_lookup[] = {
 
         .is_orbital = true,
         .orbital_distance = 50.0,
-        .orbital_speed_factor = 3.0,
+        .orbital_speed_factor = 4.0,
+        .orbital_max_count = 4,
     },
 };
 
@@ -305,15 +307,15 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
     if(def->is_orbital)
     {
         // assign projectile to orbital
-        ProjectileOrbital* orbital = &orbitals[0];
+        ProjectileOrbital* orbital = NULL;
 
         bool new_orbital = true;
 
-        for(int o = orbital_count-1; o >= 0; --o)
+        for(int o = 0; o < MAX_ORBITALS; ++o)
         {
             ProjectileOrbital* orb = &orbitals[o];
 
-            if(!orb->body)
+            if(!orb->body && !orbital)
             {
                 orbital = orb;
                 continue;
@@ -333,9 +335,6 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
             return;
         }
 
-        orbital->count++;
-        orbital->lerp_t = 0.0;
-
         if(new_orbital)
         {
             orbital_count++;
@@ -343,9 +342,17 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
             orbital->body = phys;
             orbital->distance = def->orbital_distance;
             orbital->speed_factor = def->orbital_speed_factor;
+            orbital->max_count = def->orbital_max_count;
             orbital->base_angle = 0.0;
             orbital->evolution = PROJ_ORB_EVOLUTION_NONE;
         }
+
+        if(orbital->count >= orbital->max_count)
+            return;
+
+        orbital->count++;
+        orbital->lerp_t = 0.0;
+        orbital->lerp_factor = 5.0;
 
         proj.orbital = orbital;
         proj.orbital_index = orbital->count-1;
@@ -549,7 +556,8 @@ void projectile_kill(Projectile* proj)
     if(proj->def.is_orbital)
     {
         proj->orbital->count--;
-        proj->orbital->lerp_t = 0.0;
+        //proj->orbital->lerp_t = 0.0;
+        //proj->orbital->lerp_factor = 0.2;
 
         int index = proj->orbital_index;
 
@@ -674,7 +682,6 @@ void projectile_update_all(float dt)
 
             proj->phys.pos.z = proj->orbital->body->height / 2.0;
 
-            /*
             // set velocity for brevity? Although this isn't needed
             Vector2f f = {
                 proj->phys.pos.x - proj->orbital->body->pos.x,
@@ -685,7 +692,6 @@ void projectile_update_all(float dt)
 
             proj->phys.vel.x = proj->def.speed * f.y;
             proj->phys.vel.y = proj->def.speed * -f.x;
-            */
         }
         else
         {
@@ -743,7 +749,7 @@ void projectile_update_all(float dt)
 
         if(orbitals[o].lerp_t < 1.0)
         {
-            orbitals[o].lerp_t += 4*dt;
+            orbitals[o].lerp_t += orbitals[o].lerp_factor*dt;
             orbitals[o].lerp_t = MIN(1.0, orbitals[o].lerp_t);
         }
     }
