@@ -17,17 +17,17 @@ typedef struct
 
     bool playing;
     bool loop;
+    bool destroy;
 
     bool ending;
 
-    bool wav;
     AudioStream stream;
     int chunk_size; // number of samples in a chunk
 
 } Gaudio;
 
 void gaudio_init();
-Gaudio* gaudio_add(const char* filepath, bool wav, bool loop);
+Gaudio* gaudio_add(const char* filepath, bool wav, bool loop, bool destroy);
 void gaudio_update(float dt);
 void gaudio_remove(uint16_t id);
 Gaudio* gaudio_get(uint16_t id);

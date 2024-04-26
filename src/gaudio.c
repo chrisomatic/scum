@@ -39,7 +39,7 @@ void gaudio_init()
 
 }
 
-Gaudio* gaudio_add(const char* filepath, bool wav, bool loop)
+Gaudio* gaudio_add(const char* filepath, bool wav, bool loop, bool destroy)
 {
     if(audio_list->count == audio_list->max_count) return NULL;
 
@@ -48,8 +48,8 @@ Gaudio* gaudio_add(const char* filepath, bool wav, bool loop)
     ga.source = audio_source_create(false);
     ga.buffer1 = audio_buffer_create();
     ga.buffer2 = audio_buffer_create();
-    ga.wav = wav;
     ga.loop = loop;
+    ga.destroy = destroy;
     ga.ending = false;
     ga.playing = false;
 
@@ -129,10 +129,12 @@ void gaudio_remove(uint16_t id)
     {
         if(audio_objs[i].id == id)
         {
-
             Gaudio* ga = &audio_objs[i];
             audio_source_stop(ga->source);
             audio_stream_close(&ga->stream);
+            audio_source_delete(ga->source);
+            audio_buffer_delete(ga->buffer1);
+            audio_buffer_delete(ga->buffer2);
             list_remove(audio_list, i);
             return;
         }
@@ -225,8 +227,16 @@ void gaudio_update(float dt)
         {
             if(cbuf == 0)
             {
+                if(ga->destroy)
+                {
+                    gaudio_remove(ga->id);
+                }
+                else
+                {
+                    ga->playing = false;
+                    gaudio_rewind(ga->id);
+                }
                 // printf("removing\n");
-                gaudio_remove(ga->id);
             }
             continue;
         }
