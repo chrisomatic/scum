@@ -4,6 +4,8 @@
 
 #define MAX_GAUDIO  100
 
+//TODO:
+// add support for callback when audio ends
 
 typedef struct
 {
@@ -13,8 +15,10 @@ typedef struct
     int buffer1;
     int buffer2;
 
+    bool playing;
     bool loop;
-    bool dead;
+
+    bool ending;
 
     bool wav;
     AudioStream stream;
@@ -27,3 +31,7 @@ Gaudio* gaudio_add(const char* filepath, bool wav, bool loop);
 void gaudio_update(float dt);
 void gaudio_remove(uint16_t id);
 Gaudio* gaudio_get(uint16_t id);
+void gaudio_pause(uint16_t id);
+void gaudio_play(uint16_t id);
+void gaudio_rewind(uint16_t id);
+void gaudio_set_volume(uint16_t id, float vol);

@@ -490,9 +490,9 @@ bool room_file_get_all(bool force)
             for(int i = 0; i < room_file_count; ++i)
                 p_room_files[i] = room_files[i];
 
-            LOGI("room files count: %d", room_file_count);
-            for(int i = 0; i < room_file_count; ++i)
-                LOGI("  %d) %s", i+1, room_files[i]);
+            // LOGI("room files count: %d", room_file_count);
+            // for(int i = 0; i < room_file_count; ++i)
+            //     LOGI("  %d) %s", i+1, room_files[i]);
 
             return true;
         }

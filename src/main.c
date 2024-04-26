@@ -36,6 +36,8 @@
 // Global Vars
 // =========================
 
+uint16_t music_id = 0;
+
 GameRole role = ROLE_LOCAL;
 GameState game_state = GAME_STATE_MENU;
 Timer game_timer = {0};
@@ -820,7 +822,8 @@ void init()
     audio_init();
 
     gaudio_init();
-    //Gaudio* ga = gaudio_add("src/audio/Mindseye_The_Warmth.wav", true, true);
+    Gaudio* ga = gaudio_add("src/audio/Mindseye_The_Warmth.wav", true, true);
+
 
     // audio_source_set_volume(source_music, 5.0);
 
@@ -1171,11 +1174,30 @@ void update(float dt)
 
     // static int kam = 0;
     // kam++;
-    // if(kam % 100 == 0)
-    // // if(kam == 1)
+    // // if(kam % 100 == 0)
+    // // Gaudio* ga = gaudio_add("src/audio/bounce.raw", false, true);
+    // if(kam == 1)
     // {
-    //     Gaudio* ga = gaudio_add("src/audio/bounce.raw", false, true);
+    //     Gaudio* ga = gaudio_add("src/audio/Mindseye_The_Warmth.wav", true, true);
+    //     if(ga)
+    //     {
+    //         music_id = ga->id;
+    //         gaudio_play(music_id);
+    //     }
     // }
+    // if(window_mouse_left_went_up())
+    // {
+    //     Gaudio* ga = gaudio_get(music_id);
+    //     if(ga->playing)
+    //         gaudio_pause(music_id);
+    //     else
+    //         gaudio_play(music_id);
+    // }
+    // if(window_mouse_right_went_up())
+    // {
+    //     gaudio_remove(music_id);
+    // }
+
 
     if(game_state == GAME_STATE_EDITOR)
     {

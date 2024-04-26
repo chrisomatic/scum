@@ -18,6 +18,8 @@ void audio_source_delete(int source);
 void audio_source_update_position(int src, float x, float y, float z);
 void audio_source_assign_buffer(int source, int buffer);
 void audio_source_play(int source);
+void audio_source_pause(int source);
+void audio_source_stop(int source);
 void audio_source_queue_buffer(int source, int buffer);
 void audio_source_unqueue_buffer(int source, int buffer);
 void audio_source_set_volume(int src, float vol);

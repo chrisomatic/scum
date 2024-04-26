@@ -46,7 +46,7 @@ void audio_set_listener_pos(float x, float y, float z)
 
 int audio_source_create(bool looping)
 {
-    alGetError();
+    alGetError(); // clear previous errors
 
     int src;
     alGenSources(1, &src);
@@ -69,67 +69,81 @@ int audio_source_create(bool looping)
     alSource3f(src, AL_VELOCITY, 0.0, 0.0, 0.0);
     alSourcei(src, AL_LOOPING, looping ? AL_TRUE : AL_FALSE);
 
-    alGetError(); // clear previous errors
     return src;
 }
 
 int audio_source_get_processed_buffers(int source)
 {
+    alGetError(); // clear previous errors
     int val = 0;
     alGetSourcei(source, AL_BUFFERS_PROCESSED, &val);
-    alGetError(); // clear previous errors
     return val;
 }
 
 int audio_source_get_buffer(int source)
 {
+    alGetError(); // clear previous errors
     int val = 0;
     alGetSourcei(source, AL_BUFFER, &val);
-    alGetError(); // clear previous errors
     return val;
 }
 
 void audio_source_set_volume(int src, float vol)
 {
-    alSourcef(src, AL_GAIN,  vol);
     alGetError(); // clear previous errors
+    alSourcef(src, AL_GAIN,  vol);
 }
 
 void audio_source_delete(int source)
 {
+    alGetError(); // clear previous errors
     if(alIsSource(source))
     {
         alDeleteSources(1, &source);
     }
-    alGetError(); // clear previous errors
 }
 
 void audio_source_update_position(int src, float x, float y, float z)
 {
+    alGetError(); // clear previous errors
     alSource3f(src,AL_POSITION, x, y, z);
 }
 
 void audio_source_assign_buffer(int source, int buffer)
 {
+    alGetError(); // clear previous errors
     alSourcei(source, AL_BUFFER, buffer);
 }
 
 void audio_source_play(int source)
 {
+    alGetError(); // clear previous errors
     alSourcePlay(source);
+}
+
+void audio_source_pause(int source)
+{
+    alGetError(); // clear previous errors
+    alSourcePause(source);
+}
+
+void audio_source_stop(int source)
+{
+    alGetError(); // clear previous errors
+    alSourceStop(source);
 }
 
 void audio_source_queue_buffer(int source, int buffer)
 {
+    alGetError(); // clear previous errors
     // alSourceUnqueueBuffers(source, 1, &buffer);
     alSourceQueueBuffers(source, 1, &buffer);
-    alGetError(); // clear previous errors
 }
 
 void audio_source_unqueue_buffer(int source, int buffer)
 {
-    alSourceUnqueueBuffers(source, 1, &buffer);
     alGetError(); // clear previous errors
+    alSourceUnqueueBuffers(source, 1, &buffer);
 }
 
 

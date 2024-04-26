@@ -92,6 +92,7 @@ typedef struct
     float opacity_border;
 } DrawLevelParams;
 
+extern uint16_t music_id;
 
 extern float mouse_x, mouse_y;
 extern float mouse_world_x, mouse_world_y;
