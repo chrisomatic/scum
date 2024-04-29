@@ -163,11 +163,11 @@ void astar_test()
 
     if(!astar_traverse(&asd,0,0,5,0))
     {
-        printf("Failed to find a path!\n");
+        printf("astar test failed\n");
         return;
     }
 
-    printf("Found a path!\n");
+    printf("astar test succeeded\n");
     astar_print_path_graph(&asd);
 }
 

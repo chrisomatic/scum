@@ -675,13 +675,14 @@ void game_generate_level()
     // particles_delete_all_spawners(); //doesn't work properly
 
     level = level_generate(level_seed, level_rank);
+    level_place_entities(&level);
     level_set_room_pointers(&level);
     ui_message_set_title(2.0, 0x00CCCCCC, 1.2, "Level %d", level_rank);
 
-    if(role == ROLE_CLIENT)
-        return;
+    if(role == ROLE_CLIENT) return;
 
-    LOGI("  Valid Rooms");
+#if 0
+    LOGI("  Level Rooms");
     for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
     {
         for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
@@ -703,6 +704,7 @@ void game_generate_level()
             }
         }
     }
+#endif
 
     uint16_t ccount = creature_get_count();
     LOGI("Total creature count: %u", ccount);
@@ -735,7 +737,9 @@ void game_generate_level()
                 if(!room->valid)
                     LOGE("Room: %-3u (%-2d,%2d) valid: %-5s, creature count: %2u, sum: %2u", room->index, x, y, BOOLSTR(room), c, ccount2);
                 else
-                    LOGI("Room: %-3u (%-2d,%2d) valid: %-5s, creature count: %2u, sum: %2u", room->index, x, y, BOOLSTR(room), c, ccount2);
+                {
+                    // LOGI("Room: %-3u (%-2d,%2d) valid: %-5s, creature count: %2u, sum: %2u", room->index, x, y, BOOLSTR(room), c, ccount2);
+                }
             }
         }
     }
@@ -761,11 +765,6 @@ void game_generate_level()
                     LOGE("Creature %d is in %s room: %u (%d,%d)", i, get_room_type_name(room->type), room->index, room->grid.x, room->grid.y);
                 }
             }
-
-            // if(!room->valid)
-            // {
-            //     LOGE("Creature index %u, room %u is invalid", i, room->index);
-            // }
         }
     }
 
@@ -779,6 +778,11 @@ void game_generate_level()
     }
 
     all_players_dead = false;
+}
+
+void test_cb(uint16_t id)
+{
+    printf("[%u] finished\n", id);
 }
 
 void init()
@@ -822,27 +826,14 @@ void init()
     audio_init();
 
     gaudio_init();
-    Gaudio* ga = gaudio_add("src/audio/Mindseye_The_Warmth.wav", true, true, false);
+    Gaudio* ga = gaudio_add("src/audio/Mindseye_The_Warmth.wav", true, true, false, NULL);
+    // Gaudio* ga = gaudio_add("src/audio/bounce.raw", false, false, true, test_cb);
     if(ga)
     {
-        music_id = ga->id;    
+        music_id = ga->id;
         gaudio_play(music_id);
     }
 
-    // audio_source_set_volume(source_music, 5.0);
-
-    // audio_buffer_music = audio_load_music("src/audio/moonlight.raw");
-    // source_music = audio_source_create(true);
-    // audio_source_set_volume(source_music, 5.0);
-    // audio_source_assign_buffer(source_music, audio_buffer_music);
-    // audio_source_play(source_music);
-
-    // int temp_buffer = audio_load_wav_file("src/audio/bounce.wav");
-    // int temp_source =  audio_source_create(true);
-    // audio_source_set_volume(temp_source, 5.0);
-    // audio_source_assign_buffer(temp_source, temp_buffer);
-    // audio_source_play(temp_source);
-    
 
     LOGI(" - Lighting.");
     lighting_init();
@@ -938,8 +929,6 @@ void init()
         set_game_state(GAME_STATE_PLAYING);
     }
 
-    // @TEMP
-    astar_test();
 }
 
 void deinit()
@@ -1325,7 +1314,6 @@ void update(float dt)
     camera_set(false);
 }
 
-// void handle_room_completion(int room_index)
 void handle_room_completion(Room* room)
 {
     if(role == ROLE_CLIENT) return;
@@ -2131,10 +2119,7 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
                 }
                 else if(key == GLFW_KEY_F3)
                 {
-                    // if(role == ROLE_LOCAL)
-                    {
-                        editor_enabled = !editor_enabled;
-                    }
+                    editor_enabled = !editor_enabled;
                 }
                 else if(key == GLFW_KEY_P)
                 {

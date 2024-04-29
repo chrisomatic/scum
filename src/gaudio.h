@@ -7,6 +7,8 @@
 //TODO:
 // add support for callback when audio ends
 
+typedef void (*gaudio_finished_cb)(uint16_t id);
+
 typedef struct
 {
     uint16_t id;
@@ -22,12 +24,13 @@ typedef struct
     bool ending;
 
     AudioStream stream;
-    int chunk_size; // number of samples in a chunk
+    int chunk_size; // number of samples in a buffer
+    gaudio_finished_cb finished_cb;
 
 } Gaudio;
 
 void gaudio_init();
-Gaudio* gaudio_add(const char* filepath, bool wav, bool loop, bool destroy);
+Gaudio* gaudio_add(const char* filepath, bool wav, bool loop, bool destroy, gaudio_finished_cb cb);
 void gaudio_update(float dt);
 void gaudio_remove(uint16_t id);
 Gaudio* gaudio_get(uint16_t id);

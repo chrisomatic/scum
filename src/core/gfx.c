@@ -15,7 +15,7 @@
 #define MAX_LINES 100
 #define SPRITE_BATCH_MAX_SPRITES 4096
 
-#define PRINT_LOAD_LOGS 1
+#define PRINT_LOAD_LOGS 0
 
 // types
 // --------------------------------------------------------

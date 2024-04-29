@@ -217,10 +217,10 @@ void player_init()
         ptext = text_list_init(5, 0, 0, 0.07, true, TEXT_ALIGN_LEFT, IN_WORLD, true);
 
         // load sounds
-        audio_run1  = gaudio_add("src/audio/footsteps1.wav", true, false, false)->id;
-        audio_run2  = gaudio_add("src/audio/footsteps2.wav", true, false, false)->id;
-        audio_jump  = gaudio_add("src/audio/jump1.wav",      true, false, false)->id;
-        audio_shoot = gaudio_add("src/audio/laserShoot.wav", true, false, false)->id;
+        audio_run1  = gaudio_add("src/audio/footsteps1.wav", true, false, false, NULL)->id;
+        audio_run2  = gaudio_add("src/audio/footsteps2.wav", true, false, false, NULL)->id;
+        audio_jump  = gaudio_add("src/audio/jump1.wav",      true, false, false, NULL)->id;
+        audio_shoot = gaudio_add("src/audio/laserShoot.wav", true, false, false, NULL)->id;
 
         _initialized = true;
     }
@@ -401,6 +401,8 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
         LOGE("room is null");
         return;
     }
+
+    room->doors_locked = (creature_get_room_count(room->index, false) != 0);
 
     Vector2f pos = {0};
     level_get_safe_floor_tile(room, tile, NULL, &pos);

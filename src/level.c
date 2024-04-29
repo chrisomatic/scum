@@ -113,6 +113,8 @@ Level level_generate(unsigned int seed, int rank)
 #endif
 
     used_room_count_monster = 0;
+    used_room_count_empty = 0;
+    
 
     // fill out helpful room information
     room_count_monster = 0;
@@ -159,8 +161,6 @@ Level level_generate(unsigned int seed, int rank)
     printf("   # boss rooms: %d\n",room_count_boss);
 #endif
 
-    item_clear_all();
-    creature_clear_all();
 
     init_level_struct(&glevel);
 
@@ -191,8 +191,8 @@ Level level_generate(unsigned int seed, int rank)
     //     // item_add(ITEM_SHRINE, CENTER_X+TILE_SIZE*2, CENTER_Y, sroom->index);
     // }
 
-    item_add(ITEM_SOCCER_BALL, CENTER_X, CENTER_Y, sroom->index);
-   
+    // item_add(ITEM_SOCCER_BALL, CENTER_X, CENTER_Y, sroom->index);
+
 
     LevelPath bpath = {0};
     Room* broom = NULL;
@@ -391,27 +391,27 @@ Level level_generate(unsigned int seed, int rank)
                 used_room_list_empty[used_room_count_empty++] = room->layout;
             }
 
-            if(role != ROLE_CLIENT)
-            {
-                RoomFileData* rfd = &room_list[room->layout];
-                for(int i = 0; i < rfd->item_count; ++i)
-                {
-                    Vector2f pos = level_get_pos_by_room_coords(rfd->item_locations_x[i]-1, rfd->item_locations_y[i]-1); // @convert room objects to tile grid coordinates
-                    LOGI("Adding item of type: %s to (%f %f)", item_get_name(rfd->item_types[i]), pos.x, pos.y);
-                    item_add(rfd->item_types[i], pos.x, pos.y, room->index);
-                }
+            // if(role != ROLE_CLIENT)
+            // {
+            //     RoomFileData* rfd = &room_list[room->layout];
+            //     for(int i = 0; i < rfd->item_count; ++i)
+            //     {
+            //         Vector2f pos = level_get_pos_by_room_coords(rfd->item_locations_x[i]-1, rfd->item_locations_y[i]-1); // @convert room objects to tile grid coordinates
+            //         // LOGI("Adding item of type: %s to (%.2f %.2f)", item_get_name(rfd->item_types[i]), pos.x, pos.y);
+            //         item_add(rfd->item_types[i], pos.x, pos.y, room->index);
+            //     }
 
-                if(room->type == ROOM_TYPE_MONSTER || room->type == ROOM_TYPE_BOSS)
-                {
-                    for(int i = 0; i < rfd->creature_count; ++i)
-                    {
-                        Vector2i g = {rfd->creature_locations_x[i], rfd->creature_locations_y[i]};
-                        g.x--; g.y--; // @convert room objects to tile grid coordinates
-                        Creature* c = creature_add(room, rfd->creature_types[i], &g, NULL);
-                    }
-                }
-            }
-            room->doors_locked = (creature_get_room_count(room->index, false) != 0);
+            //     if(room->type == ROOM_TYPE_MONSTER || room->type == ROOM_TYPE_BOSS)
+            //     {
+            //         for(int i = 0; i < rfd->creature_count; ++i)
+            //         {
+            //             Vector2i g = {rfd->creature_locations_x[i], rfd->creature_locations_y[i]};
+            //             g.x--; g.y--; // @convert room objects to tile grid coordinates
+            //             Creature* c = creature_add(room, rfd->creature_types[i], &g, NULL);
+            //         }
+            //     }
+            // }
+            // room->doors_locked = (creature_get_room_count(room->index, false) != 0);
         }
     }
 
@@ -445,6 +445,38 @@ Level level_generate(unsigned int seed, int rank)
     astar_set_traversable_func(&glevel.asd, level_tile_traversable_func);
 
     return glevel;
+}
+
+void level_place_entities(Level* level)
+{
+    if(role == ROLE_CLIENT) return;
+
+    for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
+    {
+        for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
+        {
+            Room* room = &level->rooms[x][y];
+            if(!room->valid) continue;
+
+            RoomFileData* rfd = &room_list[room->layout];
+            for(int i = 0; i < rfd->item_count; ++i)
+            {
+                Vector2f pos = level_get_pos_by_room_coords(rfd->item_locations_x[i]-1, rfd->item_locations_y[i]-1); // @convert room objects to tile grid coordinates
+                // LOGI("Adding item of type: %s to (%.2f %.2f)", item_get_name(rfd->item_types[i]), pos.x, pos.y);
+                item_add(rfd->item_types[i], pos.x, pos.y, room->index);
+            }
+
+            if(room->type == ROOM_TYPE_MONSTER || room->type == ROOM_TYPE_BOSS)
+            {
+                for(int i = 0; i < rfd->creature_count; ++i)
+                {
+                    Vector2i g = {rfd->creature_locations_x[i], rfd->creature_locations_y[i]};
+                    g.x--; g.y--; // @convert room objects to tile grid coordinates
+                    Creature* c = creature_add(room, rfd->creature_types[i], &g, NULL);
+                }
+            }
+        }
+    }
 }
 
 void level_set_room_pointers(Level* level)

@@ -11,7 +11,7 @@ glist* audio_list = NULL;
 Gaudio audio_objs[MAX_GAUDIO] = {0};
 
 #define _BUFFER_SIZE    6000
-uint8_t* _buffer = NULL;
+uint8_t stream_data_buffer[_BUFFER_SIZE] = {0};
 
 static uint16_t id_counter = 1;
 static uint16_t get_id()
@@ -29,17 +29,13 @@ static bool _set_next_chunk(Gaudio* ga, int* num_bytes);
 
 void gaudio_init()
 {
-
     if(audio_list)
         return;
 
-    _buffer = calloc(_BUFFER_SIZE, sizeof(uint8_t));
-
     audio_list = list_create((void*)audio_objs, MAX_GAUDIO, sizeof(Gaudio), false);
-
 }
 
-Gaudio* gaudio_add(const char* filepath, bool wav, bool loop, bool destroy)
+Gaudio* gaudio_add(const char* filepath, bool wav, bool loop, bool destroy, gaudio_finished_cb cb)
 {
     if(audio_list->count == audio_list->max_count) return NULL;
 
@@ -52,10 +48,12 @@ Gaudio* gaudio_add(const char* filepath, bool wav, bool loop, bool destroy)
     ga.destroy = destroy;
     ga.ending = false;
     ga.playing = false;
+    ga.finished_cb = cb;
 
     ga.stream = audio_stream_open(filepath, wav ? AUDIO_FILE_WAV : AUDIO_FILE_RAW, NULL, wav ? 0 : 44100);
     if(ga.stream.type == AUDIO_FILE_NONE)
     {
+        LOGE("[%s] Failed to open audio stream", filepath);
         return NULL;
     }
 
@@ -63,7 +61,13 @@ Gaudio* gaudio_add(const char* filepath, bool wav, bool loop, bool destroy)
 
     // float dur = (float)ga.chunk_size / (float)ga.stream.num_samples * ga.stream.duration;
     float dur = (float)ga.chunk_size / (float)ga.stream.sample_rate * 1000;
-    printf("chunk size: %d (%.4f ms)\n", ga.chunk_size, dur);
+    LOGI("[%s] id : %u, chunk size: %d (%.4f ms)", filepath, ga.id, ga.chunk_size, dur);
+
+    // frame rate
+    if(dur < 16)
+    {
+        LOGW("Consider increasing stream_data_buffer size");
+    }
 
     bool add = list_add(audio_list, &ga);
     if(!add)
@@ -112,15 +116,12 @@ void gaudio_rewind(uint16_t id)
     Gaudio* ga = gaudio_get(id);
     if(!ga) return;
 
-    /*
-    TODO
-     stop the source
-     unqueue buffers
-     reset sample_idx
-     set buffers
-    */
+    audio_source_stop(ga->source);
+    audio_source_unqueue_buffer(ga->source, ga->buffer1);
+    audio_source_unqueue_buffer(ga->source, ga->buffer2);
 
     ga->stream.sample_idx = 0;
+    _gaudio_start(ga);
 }
 
 void gaudio_set_volume(uint16_t id, float vol)
@@ -153,7 +154,7 @@ static void _gaudio_start(Gaudio* ga)
 {
     int n = 0;
     bool ret = _set_next_chunk(ga, &n);
-    audio_buffer_set(ga->buffer1, ga->stream.al_format, _buffer, n, ga->stream.sample_rate);
+    audio_buffer_set(ga->buffer1, ga->stream.al_format, stream_data_buffer, n, ga->stream.sample_rate);
     // printf("[%u] setting buffer %d: %d\n", ga->id, ga->buffer1, n);
     audio_source_queue_buffer(ga->source, ga->buffer1);
 
@@ -162,7 +163,7 @@ static void _gaudio_start(Gaudio* ga)
     {
         n = 0;
         _set_next_chunk(ga, &n);
-        audio_buffer_set(ga->buffer2, ga->stream.al_format, _buffer, n, ga->stream.sample_rate);
+        audio_buffer_set(ga->buffer2, ga->stream.al_format, stream_data_buffer, n, ga->stream.sample_rate);
         // printf("[%u] setting buffer %d: %d\n", ga->id, ga->buffer2, n);
         audio_source_queue_buffer(ga->source, ga->buffer2);
     }
@@ -171,11 +172,11 @@ static void _gaudio_start(Gaudio* ga)
 }
 
 
-// fills the _buffer completely if able to
+// fills the stream_data_buffer completely if able to
 // returns true if ended
 static bool _set_next_chunk(Gaudio* ga, int* num_bytes)
 {
-    memset(_buffer, 0, _BUFFER_SIZE);
+    memset(stream_data_buffer, 0, _BUFFER_SIZE);
 
     *num_bytes = 0;
 
@@ -187,7 +188,7 @@ static bool _set_next_chunk(Gaudio* ga, int* num_bytes)
     {
         if(rem_chunks == 0) break;
 
-        uint64_t n = audio_stream_get_chunk(&ga->stream, rem_chunks, (_buffer + *num_bytes));
+        uint64_t n = audio_stream_get_chunk(&ga->stream, rem_chunks, (stream_data_buffer + *num_bytes));
 
         if(n == 0)
         {
@@ -235,6 +236,8 @@ void gaudio_update(float dt)
         {
             if(cbuf == 0)
             {
+                if(ga->finished_cb) ga->finished_cb(ga->id);
+
                 if(ga->destroy)
                 {
                     gaudio_remove(ga->id);
@@ -260,7 +263,7 @@ void gaudio_update(float dt)
             audio_source_unqueue_buffer(ga->source, *b1);
             int n = 0;
             bool ret = _set_next_chunk(ga, &n);
-            audio_buffer_set(*b1, ga->stream.al_format, _buffer, n, ga->stream.sample_rate);
+            audio_buffer_set(*b1, ga->stream.al_format, stream_data_buffer, n, ga->stream.sample_rate);
             // printf("[%u] setting buffer %d: %d\n", ga->id, *b1, n);
             audio_source_queue_buffer(ga->source, *b1);
 
@@ -272,7 +275,7 @@ void gaudio_update(float dt)
 
             int n = 0;
             bool ret = _set_next_chunk(ga, &n);
-            audio_buffer_set(*b1, ga->stream.al_format, _buffer, n, ga->stream.sample_rate);
+            audio_buffer_set(*b1, ga->stream.al_format, stream_data_buffer, n, ga->stream.sample_rate);
             // printf("[%u] setting buffer %d: %d\n", ga->id, *b1, n);
             audio_source_queue_buffer(ga->source, *b1);
 
@@ -281,7 +284,7 @@ void gaudio_update(float dt)
             {
                 n = 0;
                 _set_next_chunk(ga, &n);
-                audio_buffer_set(*b2, ga->stream.al_format, _buffer, n, ga->stream.sample_rate);
+                audio_buffer_set(*b2, ga->stream.al_format, stream_data_buffer, n, ga->stream.sample_rate);
                 // printf("[%u] setting buffer %d: %d\n", ga->id, *b2, n);
                 audio_source_queue_buffer(ga->source, *b2);
             }

@@ -82,7 +82,7 @@ bool effects_save(char* file_path, ParticleEffect* effect)
     FILE* fp = fopen(file_path,"wb");
     if(!fp)
     {
-        LOGW("Failed to save file %s\n",file_path);
+        LOGW("Failed to save file %s",file_path);
         return false;
     }
 
@@ -97,12 +97,12 @@ bool effects_load(char* file_path, ParticleEffect* effect)
     FILE* fp = fopen(file_path,"rb");
     if(!fp)
     {
-        LOGW("Failed to load file %s\n",file_path);
+        LOGW("Failed to load file %s",file_path);
         return false;
     }
 
     fread(effect,sizeof(ParticleEffect),1,fp);
-    LOGI("Loaded effect: %s", file_path);
+    // LOGI("Loaded effect: %s", file_path);
     fclose(fp);
     return true;
 }

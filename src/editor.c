@@ -78,7 +78,7 @@ void editor_draw()
     imgui_begin_panel("Editor", view_width - gui_size.w, 1, true);
 
         imgui_newline();
-        char* buttons[] = {"General", "Level", "Players", "Creatures", "Projectiles", "Particles", "Theme Editor"};
+        char* buttons[] = {"General", "Level", "Players", "Creatures", "Projectiles", "Particles", "Theme Editor","SCUM"};
         int selection = imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "");
         imgui_horizontal_line(1);
 
@@ -518,10 +518,169 @@ void editor_draw()
             {
                 particle_editor_gui();
             } break;
+
             case 6:
             {
                 imgui_theme_editor();
             } break;
+
+            case 7: //SCUM
+            {
+                static bool searching_for_seed = false;
+                static int search_seed = 0;
+                static int search_rank = 1;
+                static bool search_success = false;
+                static Room search_room = {0};
+
+                static int prior_room_file_sel = 0;
+                static int room_file_sel = 0;
+                static int room_file_sel_index_map[MAX_ROOM_LIST_COUNT] = {0}; // filtered list mapped to room_list index
+                static char* filtered_room_files[256] = {0};
+                static int filtered_room_files_count = 0;
+                static char file_filter_str[32] = {0};
+                static char selected_room_name_str[100] = {0};
+                static char selected_room_name[32] = {0};
+                static int selected_rank = 0;
+                static int selected_room_type = 0;
+
+
+                if(searching_for_seed)
+                {
+                    imgui_text("Searching for '%s' (seed: %d, rank: %d)", selected_room_name, search_seed, search_rank);
+                    if(imgui_button("Stop Search"))
+                    {
+                        searching_for_seed = false;
+                    }
+                    else
+                    {
+                        search_seed++;
+                        Level search_level = level_generate(search_seed, search_rank);
+
+                        for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
+                        {
+                            for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
+                            {
+                                Room* room = &search_level.rooms[x][y];
+                                if(!room->valid) continue;
+
+                                char* room_fname = room_files[room_list[room->layout].file_index];
+                                if(STR_EQUAL(room_fname, selected_room_name))
+                                {
+                                    search_success = true;
+                                    searching_for_seed = false;
+                                    memcpy(&search_room, room, sizeof(Room));
+                                    trigger_generate_level(search_seed, search_rank, 1, __LINE__);
+                                    break;
+                                }
+
+                            }
+                        }
+
+                    }
+
+                }
+                else
+                {
+
+                    if(search_success)
+                    {
+                        imgui_text("Seed: %d, Rank: %d", search_seed, search_rank);
+
+                        if(imgui_button("Goto Room"))
+                        {
+
+                            for(int i = 0; i < 4; ++i)
+                            {
+                                if(search_room.doors[i])
+                                {
+                                    player_send_to_room(player, search_room.index, true, level_get_door_tile_coords(i));
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if(imgui_button("Start Search"))
+                    {
+                        search_seed = -1;
+                        search_rank = 1;
+                        searching_for_seed = true;
+                        search_success = false;
+                    }
+
+
+                    const float big = 16.0;
+                    imgui_text_sized(big,"Filter");
+
+                    imgui_horizontal_begin();
+                    char* buttons[] = {"*", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
+                    selected_rank = imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "Rank");
+                    imgui_horizontal_end();
+
+                    imgui_horizontal_begin();
+                    char* buttons2[] = {"All", "Empty", "Monster", "Treasure", "Boss", "Shrine", "Library"};
+                    selected_room_type = imgui_button_select(IM_ARRAYSIZE(buttons2), buttons2, "Room Type");
+                    imgui_horizontal_end();
+
+                    float opacity_scale = imgui_is_mouse_inside() ? 1.0 : 0.4;
+                    imgui_set_global_opacity_scale(opacity_scale);
+                    imgui_horizontal_begin();
+                    imgui_text_box("##FilterText",file_filter_str,IM_ARRAYSIZE(file_filter_str));
+                    if(imgui_button("Clear")) memset(file_filter_str,0,32);
+                    imgui_horizontal_end();
+
+                    int _filtered_room_files_count = 0;
+                    int _room_file_sel_index_map[MAX_ROOM_LIST_COUNT] = {0};
+                    for(int i = 0; i < room_list_count; ++i)
+                    {
+                        RoomFileData* rfd = &room_list[i];
+                        bool match_rank        = selected_rank == 0 ? true : (rfd->rank == selected_rank);
+                        bool match_room_type   = selected_room_type == 0 ? true : (rfd->type == selected_room_type-1);
+                        bool match_filter_text = strstr(p_room_files[i],file_filter_str);
+
+                        if(match_rank && match_room_type && match_filter_text)
+                        {
+                            _room_file_sel_index_map[_filtered_room_files_count] = i;
+                            _filtered_room_files_count++;
+                        }
+                    }
+
+                    // rebuild the filtered list
+                    if(_filtered_room_files_count != filtered_room_files_count || memcmp(_room_file_sel_index_map, room_file_sel_index_map, sizeof(int)*MAX_ROOM_LIST_COUNT) != 0)
+                    {
+                        filtered_room_files_count = _filtered_room_files_count;
+                        memcpy(room_file_sel_index_map, _room_file_sel_index_map, sizeof(int)*MAX_ROOM_LIST_COUNT);
+                        for(int i = 0; i < filtered_room_files_count; ++i)
+                        {
+                            filtered_room_files[i] = p_room_files[room_file_sel_index_map[i]];
+                        }
+
+                        room_file_sel = 0;
+                        for(int i = 0; i < filtered_room_files_count; ++i)
+                        {
+                            if(strcmp(selected_room_name, filtered_room_files[i]) == 0)
+                            {
+                                room_file_sel = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    prior_room_file_sel = room_file_sel;
+                    imgui_listbox(filtered_room_files, filtered_room_files_count, "##files_listbox", &room_file_sel, 15);
+
+                    if(filtered_room_files[room_file_sel])
+                        snprintf(selected_room_name_str,100,"Selected: %s",filtered_room_files[room_file_sel]);
+
+                    strcpy(selected_room_name, filtered_room_files[room_file_sel]);
+                    imgui_text(selected_room_name_str);
+                    search_rank = room_list[ _room_file_sel_index_map[room_file_sel] ].rank;
+                }
+
+
+
+            } break;
+
         }
 
     if(selection != 5)

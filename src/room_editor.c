@@ -169,10 +169,10 @@ static void draw_room_file_gui()
     static char selected_room_name[32] = {0};
     static int selected_rank = 0;
     static int selected_room_type = 0;
-    static bool are_you_sure = false;
+
     static bool force_reload = false;
     static bool should_load_file = true;
-
+    static bool are_you_sure = false;
     static bool file_exists = false;
 
     static Rect room_files_panel_rect = {0};
@@ -413,8 +413,6 @@ static void draw_room_file_gui()
         }
 
     room_files_panel_rect = imgui_end();
-
-
 }
 
 static bool _play_room = false;
@@ -424,6 +422,7 @@ bool room_editor_update(float dt)
     if(_play_room)
     {
         _play_room = false;
+        role = ROLE_LOCAL;
 
         creature_clear_all();
         item_clear_all();
@@ -438,7 +437,7 @@ bool room_editor_update(float dt)
         level.start.x = floor(MAX_ROOMS_GRID_X/2);
         level.start.y = floor(MAX_ROOMS_GRID_Y/2);
 
-        printf("level start: %d %d\n",level.start.x, level.start.y);
+        LOGI("level start: %d %d",level.start.x, level.start.y);
 
         astar_create(&level.asd, ROOM_TILE_SIZE_X, ROOM_TILE_SIZE_Y);
         astar_set_traversable_func(&level.asd, level_tile_traversable_func);
@@ -456,6 +455,9 @@ bool room_editor_update(float dt)
         room->index = level_get_room_index(level.start.x, level.start.y);
         room->discovered = true;
 
+        generate_walls(&level);
+        level_place_entities(&level);
+
         player->phys.curr_room = room->index;
         player->transition_room = player->phys.curr_room;
 
@@ -468,24 +470,21 @@ bool room_editor_update(float dt)
             }
         }
 
-        generate_walls(&level);
+        // // add monsters
+        // for(int i = 0; i < loaded_rfd.creature_count; ++i)
+        // {
+        //     Vector2i g = {loaded_rfd.creature_locations_x[i], loaded_rfd.creature_locations_y[i]};
+        //     g.x--; g.y--; // @convert room objects to tile grid coordinates
+        //     Creature* c = creature_add(room, loaded_rfd.creature_types[i], &g, NULL);
+        // }
 
-        // add monsters
-        for(int i = 0; i < loaded_rfd.creature_count; ++i)
-        {
-            Vector2i g = {loaded_rfd.creature_locations_x[i], loaded_rfd.creature_locations_y[i]};
-            g.x--; g.y--; // @convert room objects to tile grid coordinates
-            Creature* c = creature_add(room, loaded_rfd.creature_types[i], &g, NULL);
-        }
+        // // add items
+        // for(int i = 0; i < loaded_rfd.item_count; ++i)
+        // {
+        //     Vector2f pos = level_get_pos_by_room_coords(loaded_rfd.item_locations_x[i]-1, loaded_rfd.item_locations_y[i]-1); // @convert room objects to tile grid coordinates
+        //     item_add(loaded_rfd.item_types[i], pos.x, pos.y, room->index);
+        // }
 
-        // add items
-        for(int i = 0; i < loaded_rfd.item_count; ++i)
-        {
-            Vector2f pos = level_get_pos_by_room_coords(loaded_rfd.item_locations_x[i]-1, loaded_rfd.item_locations_y[i]-1); // @convert room objects to tile grid coordinates
-            item_add(loaded_rfd.item_types[i], pos.x, pos.y, room->index);
-        }
-
-        role = ROLE_LOCAL;
         set_game_state(GAME_STATE_PLAYING);
         return true;
     }
