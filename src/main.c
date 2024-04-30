@@ -601,13 +601,33 @@ void start_server()
     view_height = VIEW_HEIGHT;
     init_areas();
 
+
+    LOGI(" - Image.");
     gfx_image_init();
+
+    LOGI(" - Audio.");
+    audio_init();
+    gaudio_init();
+
+    LOGI(" - Skills.");
     skills_init();
+
+    LOGI(" - Weapon.");
     weapon_init();
+
+    LOGI(" - Player.");
     player_init();
+
+    LOGI(" - Creature.");
     creature_init();
+
+    LOGI(" - Effects.");
     effects_load_all();
+
+    LOGI(" - Decals.");
     decal_init();
+
+    LOGI(" - Items.");
     item_init();
 
     room_editor_init();

@@ -37,6 +37,8 @@ void gaudio_init()
 
 Gaudio* gaudio_add(const char* filepath, bool wav, bool loop, bool destroy, gaudio_finished_cb cb)
 {
+    if(!audio_list) return NULL;
+
     if(audio_list->count == audio_list->max_count) return NULL;
 
     Gaudio ga = {0};
@@ -134,6 +136,8 @@ void gaudio_set_volume(uint16_t id, float vol)
 
 void gaudio_remove(uint16_t id)
 {
+    if(!audio_list) return;
+
     for(int i = 0; i < audio_list->count; ++i)
     {
         if(audio_objs[i].id == id)
@@ -217,6 +221,8 @@ static bool _set_next_chunk(Gaudio* ga, int* num_bytes)
 
 void gaudio_update(float dt)
 {
+    if(!audio_list) return;
+
     for(int i = audio_list->count-1; i >= 0; --i)
     {
         Gaudio* ga = &audio_objs[i];
@@ -300,6 +306,8 @@ void gaudio_update(float dt)
 
 Gaudio* gaudio_get(uint16_t id)
 {
+    if(!audio_list) return NULL;
+
     for(int i = 0; i < audio_list->count; ++i)
     {
         if(audio_objs[i].id == id)
