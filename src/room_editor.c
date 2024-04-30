@@ -552,7 +552,7 @@ void room_editor_draw()
 {
     gfx_clear_buffer(background_color);
 
-    level_draw_room(&room, &room_data, 0, 0);
+    level_draw_room(&room, &room_data, 0, 0, 1.0, false);
 
     for(int _y = 0; _y < OBJECTS_MAX_Y; ++_y)
     {

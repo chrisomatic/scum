@@ -674,7 +674,25 @@ void editor_draw()
 
                     strcpy(selected_room_name, filtered_room_files[room_file_sel]);
                     imgui_text(selected_room_name_str);
-                    search_rank = room_list[ _room_file_sel_index_map[room_file_sel] ].rank;
+
+                    // search_rank = room_list[ _room_file_sel_index_map[room_file_sel] ].rank;
+
+                    int layout = _room_file_sel_index_map[room_file_sel];
+                    RoomFileData* rfd = &room_list[layout];
+                    search_rank = rfd->rank;
+
+                    Room room = {0};
+                    room.valid = true;
+                    memcpy(room.doors, rfd->doors, 4);
+                    room.type = rfd->type;
+                    room.layout = layout;
+                    room.doors_locked = false;
+
+                    float scale = 0.3;
+                    float xo = room_area.w/4.0 - room_area.w/2.0*scale;
+                    float yo = room_area.h/2.0 - room_area.h/2.0*scale;
+
+                    level_draw_room(&room, rfd, xo, yo, 0.3, true);
                 }
 
 

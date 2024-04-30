@@ -788,8 +788,8 @@ void player_draw_room_transition()
 
     if(p->phys.curr_room != p->transition_room)
     {
-        float dx = transition_targets.x/15.0;
-        float dy = transition_targets.y/15.0;
+        float dx = transition_targets.x/12.0;
+        float dy = transition_targets.y/12.0;
 
         if(!paused)
         {
@@ -815,7 +815,7 @@ void player_draw_room_transition()
             camera_set(immediate);
 
             Room* room = level_get_room_by_index(&level, player->phys.curr_room);
-            level_draw_room(room, NULL, 0, 0);
+            level_draw_room(room, NULL, 0, 0, 1.0, false);
         }
         else
         {
@@ -843,10 +843,10 @@ void player_draw_room_transition()
             float y1 = transition_offsets.y+yoff;
 
             Vector2i t = level_get_room_coords(p->transition_room);
-            level_draw_room(&level.rooms[t.x][t.y], NULL, x0, y0);
+            level_draw_room(&level.rooms[t.x][t.y], NULL, x0, y0, 1.0, false);
 
             Vector2i roomxy = level_get_room_coords((int)p->phys.curr_room);
-            level_draw_room(&level.rooms[roomxy.x][roomxy.y], NULL, x1, y1);
+            level_draw_room(&level.rooms[roomxy.x][roomxy.y], NULL, x1, y1, 1.0, false);
 
 
             // Vector2i c = level_get_room_coords(p->phys.curr_room);

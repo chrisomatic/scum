@@ -1906,7 +1906,7 @@ void draw()
 
             Room* room = level_get_room_by_index(&level, player->phys.curr_room);
             if(!room) LOGW("room is null");
-            level_draw_room(room, NULL, 0, 0);
+            level_draw_room(room, NULL, 0, 0, 1.0, false);
 
             if(debug_enabled)
             {

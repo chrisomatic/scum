@@ -196,7 +196,7 @@ void level_get_safe_floor_tile(Room* room, Vector2i start, Vector2i* tile_coords
 // Note: DIR_NONE is center tile
 Vector2i level_get_door_tile_coords(Dir dir);
 
-void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float yoffset);
+void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float yoffset, float scale, bool show_entities);
 void room_draw_walls(Room* room);
 void level_print(Level* level);
 void level_sort_walls(Wall* walls, int wall_count, Physics* phys);
@@ -207,6 +207,7 @@ int level_get_room_index(int x, int y);
 Vector2i level_get_room_coords(int index);
 Vector2i level_get_room_coords_by_pos(float x, float y);
 Vector2f level_get_pos_by_room_coords(int x, int y);
+Vector2f level_get_pos_by_room_coords_scaled(int x, int y, float scale);
 bool level_is_room_valid(Level* level, int x, int y);
 bool level_is_room_valid_index(Level* level, int index);
 bool level_is_room_discovered(Level* level, int x, int y);
