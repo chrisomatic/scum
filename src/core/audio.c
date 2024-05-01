@@ -53,7 +53,7 @@ int audio_source_create(bool looping)
     int err = alGetError();
     if(err != AL_NO_ERROR)
     {
-        LOGE("Failed to generate sources, error: %d\n", err);
+        LOGE("Failed to generate sources, error: %d", err);
         return -1;
     }
 

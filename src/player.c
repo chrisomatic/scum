@@ -27,10 +27,13 @@ int xp_levels[] = {100,120,140,160,180,200};
 
 float lookup_spaceman_strength[]                         = { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
 float lookup_spaceman_defense[]                          = { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 };
-float lookup_spaceman_movement_speed[]                   = { 620.0, 705.0, 800.0, 900.0, 1000.0, 1100.0, 1200.0 };
-float lookup_spaceman_movement_speed_max_vel[]           = { 110.0, 135.0, 160.0, 190.0, 220.0, 250.0, 280.0 };
-float lookup_spaceman_movement_speed_base_friction[]     = { 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0 };
-float lookup_spaceman_attack_speed[]                     = { 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3 };
+// float lookup_spaceman_movement_speed[]                   = { 620.0, 705.0, 800.0, 900.0, 1000.0, 1100.0, 1200.0 };
+// float lookup_spaceman_movement_speed_max_vel[]           = { 110.0, 135.0, 160.0, 190.0, 220.0, 250.0, 280.0 };
+// float lookup_spaceman_movement_speed_base_friction[]     = { 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0 };
+float lookup_spaceman_movement_speed[]                   = { 750, 800, 850, 900, 1000, 1100, 1200 };
+float lookup_spaceman_movement_speed_max_vel[]           = { 150, 160, 170, 180, 200, 220, 240 };
+float lookup_spaceman_movement_speed_base_friction[]     = { 11.11, 11.85, 12.59, 13.33, 14.81, 16.3, 17.78 };
+float lookup_spaceman_attack_speed[]                     = { 0.45, 0.38, 0.34, 0.31, 0.30, 0.29, 0.28 };
 float lookup_spaceman_attack_range[]                     = { 0.0, 20.0, 50.0, 90.0, 140.0, 180.0, 220.0 };
 float lookup_spaceman_luck[]                             = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
 

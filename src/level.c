@@ -11,6 +11,7 @@
 #include "physics.h"
 #include "player.h"
 
+#define SMALL_LEVELS    1
 
 int dungeon_image = -1;
 int dungeon_image_wall = -1;
@@ -112,10 +113,6 @@ Level level_generate(unsigned int seed, int rank)
     LOGI("Generating level, seed: %u, rank: %d", seed, rank);
 #endif
 
-    used_room_count_monster = 0;
-    used_room_count_empty = 0;
-    
-
     // fill out helpful room information
     room_count_monster = 0;
     room_count_empty = 0;
@@ -123,6 +120,9 @@ Level level_generate(unsigned int seed, int rank)
     room_count_shrine = 0;
     room_count_library = 0;
     room_count_boss = 0;
+
+    used_room_count_monster = 0;
+    used_room_count_empty = 0;
 
     for(int i = 0; i < room_list_count; ++i)
     {
@@ -161,7 +161,6 @@ Level level_generate(unsigned int seed, int rank)
     printf("   # boss rooms: %d\n",room_count_boss);
 #endif
 
-
     init_level_struct(&glevel);
 
     glevel.start.x = (lrand(&rg_level)%(MAX_ROOMS_GRID_X-2))+1;
@@ -193,17 +192,28 @@ Level level_generate(unsigned int seed, int rank)
 
     // item_add(ITEM_SOCCER_BALL, CENTER_X, CENTER_Y, sroom->index);
 
-
     LevelPath bpath = {0};
     Room* broom = NULL;
+#if SMALL_LEVELS
+    broom = place_room_and_path(&glevel, NULL, ROOM_TYPE_BOSS, sroom, 2, 3, &bpath, false);
+#else
     broom = place_room_and_path(&glevel, NULL, ROOM_TYPE_BOSS, sroom, 2, 4, &bpath, false);
+#endif
     set_doors_from_path(&glevel, &bpath);
 
     LevelPath tpath = {0};
     Room* troom = NULL;
 #if 1
 
+#if SMALL_LEVELS
+    if(lrand(&rg_level) % 100 <= 50)
+    {
+        troom = place_room_and_path(&glevel, NULL, ROOM_TYPE_TREASURE, sroom, 2, 3, &tpath, false);
+    }
+#else
     troom = place_room_and_path(&glevel, NULL, ROOM_TYPE_TREASURE, sroom, 2, 4, &tpath, false);
+#endif
+
     set_doors_from_path(&glevel, &tpath);
 
 #else
@@ -222,27 +232,49 @@ Level level_generate(unsigned int seed, int rank)
 
     LevelPath lpath = {0};
     Room* lroom = NULL;
+#if SMALL_LEVELS
+    lroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_LIBRARY, sroom, 1, 2, &lpath, false);
+#else
     lroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_LIBRARY, sroom, 1, 4, &lpath, false);
+#endif
     set_doors_from_path(&glevel, &lpath);
     print_room(&glevel, lroom);
 
+#if SMALL_LEVELS
+    if(lrand(&rg_level) % 100 <= 20)
+#else
     if(lrand(&rg_level) % 100 <= 75)
+#endif
     {
         LevelPath shpath = {0};
         Room* shroom = NULL;
+#if SMALL_LEVELS
+        shroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_SHRINE, sroom, 2, 2, &shpath, false);
+#else
         shroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_SHRINE, sroom, 2, 4, &shpath, false);
+#endif
         if(shroom) set_doors_from_path(&glevel, &shpath);
     }
 
-    for(;;)
-    {
-        int room_count = get_room_count(&glevel);
-        if(room_count > 10) break;
+// #if !SMALL_LEVELS
+//     for(;;)
+//     {
+//         int room_count = get_room_count(&glevel);
+//         if(room_count > 10) break;
+//         // printf("Extra room\n");
+//         LevelPath epath = {0};
+//         Room* eroom = NULL;
+//         eroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_MONSTER, sroom, 1, 3, &epath, false);
+//         set_doors_from_path(&glevel, &epath);
+//     }
+// #endif
 
-        // printf("Extra room\n");
+
+    if(lrand(&rg_level) % 100 <= 5)
+    {
         LevelPath epath = {0};
         Room* eroom = NULL;
-        eroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_MONSTER, sroom, 1, 3, &epath, false);
+        eroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_MONSTER, sroom, 5, 10, &epath, true);
         set_doors_from_path(&glevel, &epath);
     }
 
@@ -907,6 +939,8 @@ static bool generate_room_path(Level* level, Room* start, Room* end, LevelPath* 
 
 static void set_doors_from_path(Level* level, LevelPath* path)
 {
+    if(!path) return;
+    if(path->length <= 1) return;
     for(int i = 1; i < path->length; ++i)
     {
         Dir dir = path->directions[i-1];
@@ -1072,6 +1106,8 @@ static int get_room_count(Level* level)
 
 static void print_room(Level* level, Room* room)
 {
+    if(!room) return;
+    if(!level) return;
     printf("%-8s room: %d, %d (%2u) (dist: %d)\n", get_room_type_name(room->type), room->grid.x, room->grid.y, room->index, get_room_dist(room->grid.x, room->grid.y, level->start.x, level->start.y));
 }
 

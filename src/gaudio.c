@@ -97,12 +97,12 @@ void gaudio_pause(uint16_t id)
 
 void gaudio_play(uint16_t id)
 {
+    if(role == ROLE_SERVER) return;
     Gaudio* ga = gaudio_get(id);
     if(!ga) return;
 
     ga->playing = true;
     audio_source_play(ga->source);
-
 }
 
 bool gaudio_playing(uint16_t id)

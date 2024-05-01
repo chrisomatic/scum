@@ -36,7 +36,7 @@ static const uint32_t orbital_colors[] = {
     COLOR_PINK,
     COLOR_YELLOW,
     COLOR_WHITE,
-    COLOR_BLACK  
+    COLOR_BLACK
 };
 
 static int projectile_image;
@@ -46,7 +46,7 @@ static int projectile_image;
 ProjectileDef projectile_lookup[] = {
     {
         // player
-        .damage = 2.0,
+        .damage = 1.0,
         .speed = 215.0,
         .accel = 0.0,
         .scale = 1.0,
@@ -461,8 +461,8 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
             }
         }
 
-        p.source_explode = audio_source_create(false);
-        audio_source_assign_buffer(p.source_explode, audio_buffer_explode);
+        // p.source_explode = audio_source_create(false);
+        // audio_source_assign_buffer(p.source_explode, audio_buffer_explode);
 
         // printf("%s damage: %.2f\n", __func__, p.def.damage);
 
@@ -795,7 +795,9 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         Box proj_curr = {
             proj->phys.pos.x,
             proj->phys.pos.y,
-            proj->phys.pos.z + proj->phys.height/2.0,
+            // proj->phys.pos.z > 100 ? proj->phys.pos.z + proj->phys.height/2.0 : 0,
+            proj->phys.pos.z - proj->phys.height/2.0,
+            // proj->phys.pos.z,
             proj->phys.width,
             proj->phys.width,
             proj->phys.height*2,
@@ -843,7 +845,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
             {
                 status_effects_add_type(phys,proj->phys.curr_room, STATUS_EFFECT_COLD);
             }
-            
+
             if(proj->poison)
             {
                 status_effects_add_type(phys,proj->phys.curr_room, STATUS_EFFECT_POISON);

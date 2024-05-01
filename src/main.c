@@ -79,7 +79,7 @@ Rect margin_top = {0};
 Rect margin_bottom = {0};
 
 bool dynamic_zoom = false;
-int cam_zoom = 54;
+int cam_zoom = 64;
 int cam_zoom_temp = 70;
 int cam_min_zoom = 54;
 
