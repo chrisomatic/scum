@@ -2821,7 +2821,7 @@ static void pack_creatures(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 6,  (uint32_t)c->type);
         BPW(&server.bp, 10, (uint32_t)c->phys.pos.x);
         BPW(&server.bp, 10, (uint32_t)c->phys.pos.y);
-        BPW(&server.bp, 6,  (uint32_t)c->phys.pos.z);
+        BPW(&server.bp, 9,  (uint32_t)c->phys.pos.z);
         BPW(&server.bp, 8,  (uint32_t)c->phys.width);
         BPW(&server.bp, 6,  (uint32_t)c->sprite_index);
         BPW(&server.bp, 7,  (uint32_t)c->phys.curr_room);
@@ -2847,7 +2847,7 @@ static void unpack_creatures(Packet* pkt, int* offset, WorldState* ws)
         uint32_t type         = bitpack_read(&client.bp, 6);
         uint32_t x            = bitpack_read(&client.bp, 10);
         uint32_t y            = bitpack_read(&client.bp, 10);
-        uint32_t z            = bitpack_read(&client.bp, 6);
+        uint32_t z            = bitpack_read(&client.bp, 9);
         uint32_t width        = bitpack_read(&client.bp, 8);
         uint32_t sprite_index = bitpack_read(&client.bp, 6);
         uint32_t curr_room    = bitpack_read(&client.bp, 7);

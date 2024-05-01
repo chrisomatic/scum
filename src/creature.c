@@ -6,6 +6,7 @@
 #include "log.h"
 #include "player.h"
 #include "glist.h"
+#include "projectile.h"
 #include "particles.h"
 #include "creature.h"
 #include "effects.h"
@@ -984,6 +985,12 @@ void creature_draw(Creature* c)
 void creature_die(Creature* c)
 {
     c->phys.dead = true;
+
+    ProjectileOrbital* orb = projectile_orbital_get(&c->phys, 0.0);
+    if(orb)
+    {
+        projectile_orbital_kill(orb);
+    }
 
     ParticleEffect* eff = &particle_effects[EFFECT_BLOOD2];
 

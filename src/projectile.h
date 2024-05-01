@@ -145,3 +145,4 @@ void projectile_lerp(Projectile* p, double dt);
 const char* projectile_def_get_name(ProjectileType proj_type);
 
 ProjectileOrbital* projectile_orbital_get(Physics* body, float distance);
+void projectile_orbital_kill(ProjectileOrbital* orb);

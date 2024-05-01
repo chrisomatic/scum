@@ -587,13 +587,7 @@ void projectile_kill(Projectile* proj)
 
         if(proj->orbital->count <= 0)
         {
-            // clear out orbital variables to free up this space
-            proj->orbital->body = NULL;
-            proj->orbital->distance = 0.0;
-            proj->orbital->base_angle = 0.0;
-
-            orbital_count--;
-            printf("Orbital Exhausted! Count: %d\n", orbital_count);
+            projectile_orbital_kill(proj->orbital);
         }
     }
 
@@ -897,13 +891,21 @@ ProjectileOrbital* projectile_orbital_get(Physics* body, float distance)
 {
     for(int i = 0; i < orbital_count; ++i)
     {
-        if(orbitals[i].body == body && orbitals[i].distance == distance)
+        if(orbitals[i].body == body && (distance == 0.0 || orbitals[i].distance == distance))
         {
             return &orbitals[i];
         }
     }
 
     return NULL;
+}
+
+void projectile_orbital_kill(ProjectileOrbital* orb)
+{
+    orb->body = NULL;
+    orb->distance = 0.0;
+    orb->base_angle = 0.0;
+    orbital_count--;
 }
 
 void projectile_lerp(Projectile* p, double dt)
