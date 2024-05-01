@@ -2564,9 +2564,14 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             BPW(&server.bp, 4,  (uint32_t)p->phys.hp_max);
             BPW(&server.bp, 16, (uint32_t)(p->highlighted_item_id+1));
 
-            BPW(&server.bp, 12, (uint32_t)(p->xp));
-            BPW(&server.bp, 5, (uint32_t)(p->level));
-            BPW(&server.bp, 5, (uint32_t)(p->new_levels));
+            // BPW(&server.bp, 12, (uint32_t)(p->xp));
+            // BPW(&server.bp, 5, (uint32_t)(p->level));
+            // BPW(&server.bp, 5, (uint32_t)(p->new_levels));
+
+            for(int j = 0; j < MAX_STAT_TYPE; ++j)
+            {
+                BPW(&server.bp, 3, (uint32_t)p->stats[j]);
+            }
 
             BPW(&server.bp, 4,  (uint32_t)p->gauntlet_selection);
 
@@ -2623,9 +2628,15 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         uint32_t hp_max              = bitpack_read(&client.bp, 4);
         uint32_t highlighted_item_id = bitpack_read(&client.bp, 16);
 
-        uint32_t xp                  = bitpack_read(&client.bp, 12);
-        uint32_t level               = bitpack_read(&client.bp, 5);
-        uint32_t new_levels          = bitpack_read(&client.bp, 5);
+        // uint32_t xp                  = bitpack_read(&client.bp, 12);
+        // uint32_t level               = bitpack_read(&client.bp, 5);
+        // uint32_t new_levels          = bitpack_read(&client.bp, 5);
+
+        uint8_t stats[MAX_STAT_TYPE] = {0};
+        for(int j = 0; j < MAX_STAT_TYPE; ++j)
+        {
+            stats[j] = bitpack_read(&client.bp, 3);
+        }
 
         uint32_t gauntlet_selection  = bitpack_read(&client.bp, 4);
 
@@ -2635,6 +2646,7 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         uint32_t dead             = bitpack_read(&client.bp, 1);
 
         uint32_t weapon_state = bitpack_read(&client.bp, 2);
+
 
         //uint32_t weapon_x = 0.0;
         //uint32_t weapon_y = 0.0;
@@ -2672,9 +2684,15 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
 
         p->highlighted_item_id = ((int32_t)highlighted_item_id)-1;
 
-        p->xp = (uint16_t)xp;
-        p->level = (uint8_t)level;
-        p->new_levels = (uint8_t)new_levels;
+        // p->xp = (uint16_t)xp;
+        // p->level = (uint8_t)level;
+        // p->new_levels = (uint8_t)new_levels;
+
+        for(int j = 0; j < MAX_STAT_TYPE; ++j)
+        {
+            p->stats[j] = stats[j];
+        }
+
 
         p->gauntlet_selection = (uint8_t)gauntlet_selection;
 
