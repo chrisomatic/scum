@@ -4,6 +4,24 @@ mkdir bin
 
 cd src
 
+debug_arg=""
+release_arg=""
+
+if ! [ -z "$1" ]
+then
+    if [ "$1" == "debug" ]
+    then
+        debug_arg="-g"
+        echo "building debug"
+    elif [ "$1" == "release" ]
+    then
+        release_arg="-02"
+        echo "building release"
+    else
+        echo "invalid arg"
+    fi
+fi
+
 gcc core/gfx.c \
     core/shader.c \
     core/timer.c \
@@ -41,7 +59,7 @@ gcc core/gfx.c \
     gaudio.c \
     main.c \
     -Icore \
-    -lglfw -lGLU -lGLEW -lGL -lopenal -lm \
+    -lglfw -lGLU -lGLEW -lGL -lopenal -lm $debug_arg $release_arg \
     -o ../bin/scum
 
     # build release

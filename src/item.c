@@ -41,6 +41,10 @@ static uint16_t get_id()
 
 static bool item_func_chest(Item* pu, Player* p)
 {
+
+    // int* d = NULL;
+    // printf("%d\n",*d);
+
     if(pu->used) return false;
     pu->used = true;
 
@@ -499,6 +503,7 @@ void item_init()
 void item_clear_all()
 {
     list_clear(item_list);
+    memset(prior_items, 0, sizeof(Item)*MAX_ITEMS);
 }
 
 Item* item_get_by_id(uint16_t id)
