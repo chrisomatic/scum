@@ -336,25 +336,18 @@ static bool internal_item_use(Item* pu, void* _player)
         case ITEM_COIN_COPPER:
         {
             player_add_coins(p, 1);
-            // p->coins += 1;
-            // if(p == player) text_list_add(ptext, COLOR_WHITE, 3.0, "+1");
         } break;
         case ITEM_COIN_SILVER:
         {
             player_add_coins(p, 5);
-            // p->coins += 5;
-            // if(p == player) text_list_add(ptext, COLOR_WHITE, 3.0, "+5");
         } break;
         case ITEM_COIN_GOLD:
         {
             player_add_coins(p, 10);
-            // p->coins += 10;
-            // if(p == player) text_list_add(ptext, COLOR_WHITE, 3.0, "+10");
         } break;
 
         case ITEM_SKILL_BOOK:
         {
-            // printf("player add skill %d\n", pu->user_data);
             return player_add_skill(p, pu->user_data);
         } break;
 

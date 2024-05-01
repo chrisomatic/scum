@@ -1302,18 +1302,18 @@ void server_send_message(uint8_t to, uint8_t from, char* fmt, ...)
 /*
 
 add xp <amount> <target>
-    cmd add xp 100 all
-    cmd add xp 20 3
+    $add xp 100 all
+    $add xp 20 3
 
 add hp <amount> <target>
-    cmd add hp 2 all
-    cmd add hp 4 2
+    $add hp 2 all
+    $add hp 4 2
 
-kill creatures
+$kill creatures
 
-kill player <target>
+$kill player <target>
 
-get id
+$get id
 
 */
 
@@ -1333,6 +1333,7 @@ bool server_process_command(char* argv[20], int argc, int client_id)
     }
     else if(STR_EQUAL(argv[0], "add"))
     {
+        // $add hp 6 all
         if(argc != 4) return false;
         int o = 1;
 
@@ -1381,6 +1382,8 @@ bool server_process_command(char* argv[20], int argc, int client_id)
     }
     else if(STR_EQUAL(argv[0], "kill"))
     {
+        // $kill creatures all
+
         if(argc < 2) return false;
 
         int o = 1;
@@ -1461,16 +1464,51 @@ bool server_process_command(char* argv[20], int argc, int client_id)
             }
         }
     }
-    else if(STR_EQUAL(argv[0], "seed"))
+    else if(STR_EQUAL(argv[0], "level"))
     {
-        if(argc != 2) return false;
+        if(argc != 3) return false;
 
         int _seed = atoi(argv[1]);
-        trigger_generate_level(_seed, level_rank+1, 2, __LINE__);
+        int _rank = atoi(argv[1]);
+        trigger_generate_level(_seed, _rank, 2, __LINE__);
         if(role == ROLE_SERVER)
         {
             NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
             net_server_add_event(&ev);
+        }
+    }
+    else if(STR_EQUAL(argv[0], "stats"))
+    {
+        // $stats max
+        // $stats reset
+
+        if(argc != 2) return false;
+
+        if(STR_EQUAL(argv[1], "max"))
+        {
+            for(int i = 0; i < MAX_CLIENTS; ++i)
+            {
+                if(server.clients[i].state != DISCONNECTED)
+                {
+                    for(int j = 0; j < MAX_STAT_TYPE; ++j)
+                    {
+                        player_add_stat(&players[i], j, 100);
+                    }
+                }
+            }
+        }
+        else if(STR_EQUAL(argv[1], "reset"))
+        {
+            for(int i = 0; i < MAX_CLIENTS; ++i)
+            {
+                if(server.clients[i].state != DISCONNECTED)
+                {
+                    for(int j = 0; j < MAX_STAT_TYPE; ++j)
+                    {
+                        players[i].stats[j] = 1;
+                    }
+                }
+            }
         }
 
     }
@@ -1499,7 +1537,7 @@ bool net_client_add_player_input(NetPlayerInput* input, WorldState* state)
     if(state)
     {
         ClientMove m = {0};
-        
+
         m.id            = client.info.local_latest_packet_id + input_count;
         m.input.delta_t = input->delta_t;
         m.input.keys    = input->keys;
@@ -2871,13 +2909,13 @@ static void pack_projectiles(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 16, (uint32_t)p->id);
         BPW(&server.bp, 10, (uint32_t)p->phys.pos.x);
         BPW(&server.bp, 10, (uint32_t)p->phys.pos.y);
-        BPW(&server.bp, 6,  (uint32_t)p->phys.pos.z);
+        BPW(&server.bp, 9,  (uint32_t)p->phys.pos.z);
         BPW(&server.bp, 8,  (uint32_t)r);
         BPW(&server.bp, 8,  (uint32_t)g);
         BPW(&server.bp, 8,  (uint32_t)b);
         BPW(&server.bp, 3,  (uint32_t)(p->player_id));
         BPW(&server.bp, 7,  (uint32_t)(p->phys.curr_room));
-        BPW(&server.bp, 8,  (uint32_t)(p->def.scale*255.0f));
+        BPW(&server.bp, 10,  (uint32_t)(p->def.scale*255.0f));
         BPW(&server.bp, 1,  (uint32_t)(p->from_player ? 0x01 : 0x00));
     }
 }
@@ -2899,13 +2937,13 @@ static void unpack_projectiles(Packet* pkt, int* offset, WorldState* ws)
         uint32_t id          = bitpack_read(&client.bp, 16);
         uint32_t x           = bitpack_read(&client.bp, 10);
         uint32_t y           = bitpack_read(&client.bp, 10);
-        uint32_t z           = bitpack_read(&client.bp, 6);
+        uint32_t z           = bitpack_read(&client.bp, 9);
         uint32_t r           = bitpack_read(&client.bp, 8);
         uint32_t g           = bitpack_read(&client.bp, 8);
         uint32_t b           = bitpack_read(&client.bp, 8);
         uint32_t pid         = bitpack_read(&client.bp, 3);
         uint32_t curr_room   = bitpack_read(&client.bp, 7);
-        uint32_t scale       = bitpack_read(&client.bp, 8);
+        uint32_t scale       = bitpack_read(&client.bp, 10);
         uint32_t from_player = bitpack_read(&client.bp, 1);
 
         p->id = (uint16_t)id;

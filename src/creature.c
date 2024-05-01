@@ -1988,8 +1988,8 @@ static void creature_update_peeper(Creature* c, float dt)
         if(act)
         {
             ai_shoot_nearest_player(c);
-            c->act_time_min = 1.0;
-            c->act_time_max = 1.0;
+            c->act_time_min = 2.0;
+            c->act_time_max = 4.0;
             c->ai_state = 2;
         }
         return;

@@ -586,18 +586,35 @@ void editor_draw()
                     {
                         imgui_text("Seed: %d, Rank: %d", search_seed, search_rank);
 
-                        if(imgui_button("Goto Room"))
-                        {
 
-                            for(int i = 0; i < 4; ++i)
+                        if(role == ROLE_CLIENT)
+                        {
+                            search_success = false;
+                            net_client_send_message("$level %d %d", search_seed, search_rank);
+                        }
+
+                        if(imgui_button("Goto Room") || role == ROLE_CLIENT)
+                        {
+                            if(role == ROLE_CLIENT)
                             {
-                                if(search_room.doors[i])
+                                net_client_send_message("$level %d %d", search_seed, search_rank);
+                                search_success = false;
+                            }
+
+                            if(role != ROLE_CLIENT)
+                            {
+                                for(int i = 0; i < 4; ++i)
                                 {
-                                    player_send_to_room(player, search_room.index, true, level_get_door_tile_coords(i));
-                                    break;
+                                    if(search_room.doors[i])
+                                    {
+                                        player_send_to_room(player, search_room.index, true, level_get_door_tile_coords(i));
+                                        break;
+                                    }
                                 }
                             }
+
                         }
+
                     }
 
                     if(imgui_button("Start Search"))
