@@ -81,6 +81,8 @@ static uint16_t audio_run2  = -1;
 static uint16_t audio_jump  = -1;
 static uint16_t audio_shoot = -1;
 
+Room* visible_room; // pointer to currently visible room
+
 int shadow_image = -1;
 int card_image = -1;
 
@@ -403,6 +405,8 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
     }
 
     room->doors_locked = (creature_get_room_count(room->index, false) != 0);
+
+    visible_room = room;
 
     Vector2f pos = {0};
     level_get_safe_floor_tile(room, tile, NULL, &pos);

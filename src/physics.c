@@ -178,6 +178,8 @@ void phys_apply_friction_y(Physics* phys, float friction, float dt)
 
 void phys_calc_collision_rect(Physics* phys)
 {
+    if(!phys) return;
+
     memcpy(&phys->collision_rect_prior, &phys->collision_rect, sizeof(Rect));
 
     bool horizontal = (phys->rotation_deg == 0.0 || phys->rotation_deg == 180.0) && phys->crawling;

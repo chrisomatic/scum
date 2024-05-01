@@ -12,7 +12,7 @@ typedef enum
     ENTITY_TYPE_ITEM,
     ENTITY_TYPE_EXPLOSION,
     ENTITY_TYPE_WEAPON,
-    ENTITY_TYPE_WALL,
+    ENTITY_TYPE_WALL_COLUMN,
     ENTITY_TYPE_MAX,
 } EntityType;
 
@@ -22,6 +22,9 @@ typedef struct
     void* ptr;
     int tile;   //TileType
     Physics* phys;
+    Vector2i curr_tile;
+    Vector2f pos;
+    bool draw_only;
     //bool shadow;
 } Entity;
 

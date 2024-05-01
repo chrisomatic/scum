@@ -27,6 +27,20 @@ static void add_entity(EntityType type, void* ptr, Physics* phys)
     e->type = type;
     e->ptr = ptr;
     e->phys = phys;
+    e->draw_only = false;
+
+    e->pos.x = phys->pos.x;
+    e->pos.y = phys->pos.y;
+
+    if(type == ENTITY_TYPE_WALL_COLUMN)
+    {
+        e->draw_only = true;
+        e->ptr  = NULL;
+        e->phys = NULL;
+        e->curr_tile.x = phys->curr_tile.x;
+        e->curr_tile.y = phys->curr_tile.y;
+        return;
+    }
 
     if(role == ROLE_CLIENT)
     {
@@ -59,7 +73,7 @@ static void sort_entities()
         memcpy(&key, &entities[i], sizeof(Entity));
         j = i - 1;
 
-        while (j >= 0 && entities[j].phys->pos.y > key.phys->pos.y)
+        while (j >= 0 && entities[j].pos.y > key.pos.y)
         {
             memcpy(&entities[j+1], &entities[j], sizeof(Entity));
             j = j - 1;
@@ -133,6 +147,30 @@ void entity_build_all()
         Explosion* ex = &explosions[i];
         add_entity(ENTITY_TYPE_EXPLOSION,ex, &ex->phys);
     }
+
+    // wall columns
+    RoomFileData* rdata = &room_list[visible_room->layout];
+
+    for(int _y = 0; _y < ROOM_TILE_SIZE_Y; ++_y)
+    {
+        for(int _x = 0; _x < ROOM_TILE_SIZE_X; ++_x)
+        {
+            TileType tt = rdata->tiles[_x][_y];
+            if(tt == TILE_BOULDER)
+            {
+                Physics phys = {0};
+
+                phys.curr_tile.x = _x;
+                phys.curr_tile.y = _y;
+
+                Vector2f coords = level_get_pos_by_room_coords(_x, _y);
+                phys.pos.x = coords.x;
+                phys.pos.y = coords.y - 9.0;
+
+                add_entity(ENTITY_TYPE_WALL_COLUMN, NULL, &phys);
+            }
+        }
+    }
 }
 
 
@@ -143,6 +181,8 @@ void entity_handle_status_effects(float dt)
     for(int i = 0; i < num_entities; ++i)
     {
         Entity* e = &entities[i];
+
+        if(!e->phys) continue;
         if(e->phys->dead) continue;
 
         Physics* phys = e->phys;
@@ -211,9 +251,11 @@ void entity_handle_collisions()
     for(int i = 0; i < num_entities; ++i)
     {
         Entity* e1 = &entities[i];
+
+        if(e1->draw_only) continue;
+        if(!e1->phys) continue;
         if(e1->phys->dead) continue;
         if(e1->phys->underground) continue;
-        if(e1->type == ENTITY_TYPE_WALL) continue; // underlying tile block will handle
 
         Physics* p1 = e1->phys;
 
@@ -222,6 +264,8 @@ void entity_handle_collisions()
             Entity* e2 = &entities[j];
 
             if(e1 == e2) continue;
+            if(e2->draw_only) continue;
+            if(!e2->phys) continue;
             if(e2->phys->dead) continue;
             if(e2->phys->underground) continue;
             if(e1->phys->curr_room != e2->phys->curr_room) continue;
@@ -253,6 +297,7 @@ void entity_handle_collisions()
     {
         Entity* e = &entities[i];
 
+        if(e->draw_only) continue;
         if(e->phys->ethereal) continue;
         if(e->type == ENTITY_TYPE_EXPLOSION) continue;
 
@@ -282,21 +327,15 @@ void entity_draw_all()
     {
         Entity* e = &entities[i];
 
-        if(e->phys->curr_room != player->phys.curr_room)
+        if(e->type == ENTITY_TYPE_WALL_COLUMN)
             continue;
 
-        if(e->type == ENTITY_TYPE_WALL)
+        if(e->phys->curr_room != player->phys.curr_room)
             continue;
 
         entity_update_tile(e);
         if(e->tile == TILE_PIT || e->tile == TILE_BOULDER)
             continue;
-
-        // if(e->type == ENTITY_TYPE_CREATURE)
-        //     printf("height %.2f\n", e->phys->height);
-
-        // if(role == ROLE_CLIENT)
-        //     phys_calc_collision_rect(e->phys);
 
         draw_entity_shadow(e->phys, e->type);
     }
@@ -308,6 +347,7 @@ void entity_draw_all()
     for(int i = 0; i < num_entities; ++i)
     {
         Entity* e = &entities[i];
+
         switch(e->type)
         {
             case ENTITY_TYPE_PLAYER:
@@ -326,10 +366,10 @@ void entity_draw_all()
             {
                 item_draw((Item*)e->ptr);
             }   break;
-            case ENTITY_TYPE_WALL:
+            case ENTITY_TYPE_WALL_COLUMN:
             {
-                // @TODO
-                //level_draw_block();
+                level_draw_wall_column(e->pos.x, e->pos.y);
+                continue;
             }
             default:
                 break;
@@ -345,6 +385,9 @@ void entity_draw_all()
     for(int i = 0; i < num_entities; ++i)
     {
         Entity* e = &entities[i];
+
+        if(!e->phys)
+            continue;
 
         if(e->phys->curr_room != player->phys.curr_room)
             continue;

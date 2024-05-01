@@ -197,6 +197,7 @@ extern Player* player2;
 extern text_list_t* ptext;
 extern int xp_levels[];
 extern char* class_strs[];
+extern Room* visible_room;
 
 extern Rect player_pit_rect;
 extern Rect tile_pit_rect;

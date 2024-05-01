@@ -1379,10 +1379,6 @@ static void creature_update_floater(Creature* c, float dt)
 
 static void creature_update_floater_big(Creature* c, float dt)
 {
-
-
-    c->phys.pos.z = 16.0 + 3*sinf(5*c->phys.circular_dt);
-
     if(c->ai_state == 0)
     {
         // initialize direction
@@ -1415,10 +1411,6 @@ static void creature_update_floater_big(Creature* c, float dt)
 
 static void creature_update_buzzer(Creature* c, float dt)
 {
-
-
-    c->phys.pos.z = c->phys.height/2.0 + 10.0 + 3*sinf(5*c->phys.circular_dt);
-
     if(c->ai_state == 0)
     {
         // move
@@ -1737,10 +1729,6 @@ static void creature_update_totem_yellow(Creature* c, float dt)
 
 static void creature_update_shambler(Creature* c, float dt)
 {
-
-
-    c->phys.pos.z = 10.0 + 3*sinf(5*c->phys.circular_dt);
-
     bool low_health = (c->phys.hp < 0.30*c->phys.hp_max);
     if(low_health)
     {
@@ -2345,8 +2333,6 @@ static void creature_update_watcher(Creature* c, float dt)
     }
 
     bool act = ai_update_action(c, dt);
-
-    c->phys.pos.z = c->phys.height/2.0 + 10.0 + 3*sinf(5*c->phys.circular_dt);
 
     if(act)
     {
