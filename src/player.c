@@ -192,6 +192,8 @@ void player_set_defaults(Player* p)
 
     player_set_class(p, p->settings.class);
 
+    player_add_skill(p, SKILL_TYPE_RAISE_GOLEM);
+
     // temp
     // player_add_skill(p, SKILL_TYPE_MAGIC_MISSILE);
     // player_add_skill(p, SKILL_TYPE_CROWN_OF_THORNS);

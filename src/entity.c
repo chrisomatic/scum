@@ -469,6 +469,12 @@ Physics* entity_get_closest_to(Physics* phys, uint8_t curr_room, EntityType type
         if(!phys2) continue;
 
         uint16_t id = get_id_from_type(i, curr_room, type);
+        if(type == ENTITY_TYPE_CREATURE)
+        {
+            Creature* c = creature_get_by_id(id);
+            if(c->friendly) continue;
+        }
+
         bool exclude = false;
         for(int j = 0; j < exclude_count; ++j)
         {
@@ -491,3 +497,4 @@ Physics* entity_get_closest_to(Physics* phys, uint8_t curr_room, EntityType type
 
     return min_result;
 }
+

@@ -221,6 +221,7 @@ Dir angle_to_dir_cardinal(float angle_deg);
 Dir get_opposite_dir(Dir dir);
 Vector2i get_dir_offsets(Dir door);
 Dir get_dir_from_coords(int x0, int y0, int x1, int y1);
+Dir get_dir_from_coords2(int x0, int y0, int x1, int y1);
 void level_generate_room_outer_walls(Room* room);
 void generate_walls(Level* level);
 

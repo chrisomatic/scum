@@ -39,6 +39,7 @@ static int creature_image_spawn_spider;
 static int creature_image_behemoth;
 static int creature_image_beacon_red;
 static int creature_image_watcher;
+static int creature_image_golem;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -60,6 +61,7 @@ static void creature_update_spawn_spider(Creature* c, float dt);
 static void creature_update_behemoth(Creature* c, float dt);
 static void creature_update_beacon_red(Creature* c, float dt);
 static void creature_update_watcher(Creature* c, float dt);
+static void creature_update_golem(Creature* c, float dt);
 
 static void creature_fire_projectile(Creature* c, float angle, uint32_t color);
 
@@ -96,6 +98,7 @@ void creature_init()
     creature_image_behemoth = gfx_load_image("src/img/creature_behemoth.png", false, false, 96, 128);
     creature_image_beacon_red = gfx_load_image("src/img/creature_beacon_red.png", false, false, 32, 32);
     creature_image_watcher = gfx_load_image("src/img/creature_watcher.png", false, false, 32, 32);
+    creature_image_golem = gfx_load_image("src/img/creature_infected.png", false, false, 32, 32);   //TEMP image
 }
 
 char* creature_type_name(CreatureType type)
@@ -142,6 +145,8 @@ char* creature_type_name(CreatureType type)
             return "Beacon Red";
         case CREATURE_TYPE_WATCHER:
             return "Watcher";
+        case CREATURE_TYPE_GOLEM:
+            return "Golem";
         default:
             return "???";
     }
@@ -191,6 +196,8 @@ int creature_get_image(CreatureType type)
             return creature_image_beacon_red;
         case CREATURE_TYPE_WATCHER:
             return creature_image_watcher;
+        case CREATURE_TYPE_GOLEM:
+            return creature_image_golem;
         default:
             return -1;
     }
@@ -512,7 +519,20 @@ void creature_init_props(Creature* c)
             c->painful_touch = true;
             c->windup_max = 0.5;
             c->xp = 80;
-
+        } break;
+        case CREATURE_TYPE_GOLEM:
+        {
+            c->phys.speed = 75.0;
+            c->act_time_min = 0.3;
+            c->act_time_max = 1.0;
+            c->phys.mass = 1.0;
+            c->phys.base_friction = 20.0;
+            c->phys.hp_max = 6.0;
+            c->painful_touch = false;
+            c->passive = true;
+            c->friendly = true;
+            c->xp = 20;
+            c->color = COLOR_BLUE;
         } break;
     }
 
@@ -560,6 +580,7 @@ void creature_kill_room(uint8_t room_index)
     {
         if(creatures[i].phys.curr_room == room_index)
         {
+            if(creatures[i].friendly) continue;
             creature_die(&creatures[i]);
             list_remove(clist, i);
         }
@@ -826,6 +847,9 @@ void creature_update(Creature* c, float dt)
             case CREATURE_TYPE_WATCHER:
                 creature_update_watcher(c,dt);
                 break;
+            case CREATURE_TYPE_GOLEM:
+                creature_update_golem(c,dt);
+                break;
         }
     }
     else
@@ -1057,6 +1081,19 @@ void creature_die(Creature* c)
     handle_room_completion(room);
 }
 
+Creature* creature_get_by_id(uint16_t id)
+{
+    for(int i = 0; i < clist->count; ++i)
+    {
+        if(creatures[i].id == id)
+        {
+            return &creatures[i];
+        }
+    }
+    return NULL;
+}
+
+
 void creature_hurt(Creature* c, float damage)
 {
     if(c->invincible)
@@ -1167,6 +1204,32 @@ CreatureType creature_get_random()
     }
 
     return CREATURE_TYPE_SHAMBLER; // should never happen
+}
+
+Creature* creature_get_nearest(uint8_t room_index, float x, float y)
+{
+    float min_dist = 100000.0;
+    int min_index = -1;
+
+    for(int i = 0; i < clist->count; ++i)
+    {
+        Creature* c = &creatures[i];
+        if(c->phys.dead) continue;
+        if(c->passive) continue;
+        if(c->friendly) continue;
+        if(c->phys.curr_room != room_index) continue;
+
+        float d = dist(x,y, c->phys.pos.x, c->phys.pos.y);
+        if(d < min_dist)
+        {
+            min_dist = d;
+            min_index = i;
+        }
+    }
+
+    if(min_index < 0) return NULL;
+
+    return &creatures[min_index];
 }
 
 static void creature_update_slug(Creature* c, float dt)
@@ -2348,4 +2411,71 @@ static void creature_update_watcher(Creature* c, float dt)
             ai_random_walk(c);
         }
     }
+}
+
+static void creature_update_golem(Creature* c, float dt)
+{
+    Vector2i target = {0};
+    Vector2f target_pos = {0};
+
+    // target closest creature
+    Creature* ct = creature_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
+    if(ct)
+    {
+        printf("found creature target\n");
+        target.x = c->phys.curr_tile.x;
+        target.y = c->phys.curr_tile.y;
+        target_pos.x = ct->phys.collision_rect.x;
+        target_pos.y = ct->phys.collision_rect.y;
+    }
+    else
+    {
+        Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
+        if(!p) return;
+        target.x = p->phys.curr_tile.x;
+        target.y = p->phys.curr_tile.y;
+        target_pos.x = p->phys.collision_rect.x;
+        target_pos.y = p->phys.collision_rect.y;
+    }
+
+    Dir dir = get_dir_from_coords2(target.x, target.y, c->phys.curr_tile.x, c->phys.curr_tile.y);
+    if(dir == DIR_NONE)
+    {
+        float angle_deg = calc_angle_deg(target_pos.x, target_pos.y, c->phys.pos.x, c->phys.pos.y);
+        dir = angle_to_dir_cardinal(angle_deg);
+    }
+
+
+    Vector2i o = get_dir_offsets(dir);
+
+    //TODO
+    o.x *= 1;
+    o.y *= 1;
+
+
+    target.x += o.x;
+    target.y += o.y;
+
+    c->target_tile.x = target.x;
+    c->target_tile.y = target.y;
+
+    printf("%s  (%d, %d) -> (%d, %d)\n", get_dir_name(dir), c->phys.curr_tile.x, c->phys.curr_tile.y, c->target_tile.x, c->target_tile.y);
+
+    // Vector2f pos = level_get_pos_by_room_coords(target.x, target.y);
+
+    if(ai_on_target_tile(c))
+    {
+        printf("on target\n");
+        // // on player tile move to target
+        // Vector2f v = {pos.x - c->phys.pos.x, pos.y - c->phys.pos.y};
+        // normalize(&v);
+        // c->phys.vel.x = c->phys.speed*v.x;
+        // c->phys.vel.y = c->phys.speed*v.y;
+    }
+    else
+    {
+        printf("finding path\n");
+        ai_path_find_to_target_tile(c);
+    }
+
 }

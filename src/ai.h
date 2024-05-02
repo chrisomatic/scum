@@ -271,7 +271,7 @@ bool ai_path_find_to_target_tile(Creature* c)
         bool traversable = astar_traverse(&level.asd, c->phys.curr_tile.x, c->phys.curr_tile.y, c->target_tile.x, c->target_tile.y);
         if(!traversable)
         {
-            // printf("%u not traversable\n", c->id);
+            printf("%u not traversable\n", c->id);
             return false;
         }
 

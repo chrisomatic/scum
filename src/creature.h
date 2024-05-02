@@ -32,6 +32,7 @@ typedef enum
     CREATURE_TYPE_BEHEMOTH,
     CREATURE_TYPE_BEACON_RED,
     CREATURE_TYPE_WATCHER,
+    CREATURE_TYPE_GOLEM,
     CREATURE_TYPE_MAX,
 } CreatureType;
 
@@ -62,6 +63,7 @@ typedef struct
 
     bool invincible;
     bool passive;  // doesn't count toward creature total
+    bool friendly;
 
     // AI
     float action_counter;
@@ -91,6 +93,7 @@ typedef struct
     float lerp_t;
     CreatureNetLerp server_state_prior;
     CreatureNetLerp server_state_target;
+
 } Creature;
 
 extern Creature prior_creatures[MAX_CREATURES];
@@ -115,7 +118,9 @@ void creature_draw(Creature* c);
 void creature_handle_collision(Creature* c, Entity* e);
 void creature_hurt(Creature* c, float damage);
 void creature_die(Creature* c);
+Creature* creature_get_by_id(uint16_t id);
 CreatureType creature_get_random();
+Creature* creature_get_nearest(uint8_t room_index, float x, float y);
 uint16_t creature_get_count();
 uint16_t creature_get_room_count(uint8_t room_index, bool count_passive);
 bool creature_is_on_tile(Room* room, int tile_x, int tile_y);

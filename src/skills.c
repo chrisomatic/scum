@@ -2,6 +2,7 @@
 #include "main.h"
 #include "player.h"
 #include "skills.h"
+#include "creature.h"
 
 int skills_image = -1;
 
@@ -40,7 +41,7 @@ float lookup_cooldown[SKILL_TYPE_MAX][3] = {
     {2.0, 2.0, 2.0}, // RABBITS FOOT
     {0.0, 0.0, 0.0}, // PORCUPINE
     {0.0, 0.0, 0.0}, // RESURRECTION
-    {0.0, 0.0, 0.0}, // RAISE GOLEM
+    {10.0, 10.0, 10.0}, // RAISE GOLEM
     {0.0, 0.0, 0.0}, // INVISIBILITY
     {0.0, 0.0, 0.0}, // HOLOGRAM
 };
@@ -243,7 +244,11 @@ bool skills_use(void* player, Skill* skill)
         } break;
         case SKILL_TYPE_RAISE_GOLEM:
         {
-            used = false;
+            Room* room = level.rooms_ptr[p->phys.curr_room];
+            Vector2i tile = p->last_safe_tile;
+            creature_add(room, CREATURE_TYPE_GOLEM, &tile, NULL);
+            skill->cooldown_timer = skill->cooldown;
+            used = true;
         } break;
         case SKILL_TYPE_INVISIBILITY:
         {

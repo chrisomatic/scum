@@ -2416,6 +2416,28 @@ Dir get_dir_from_coords(int x0, int y0, int x1, int y1)
     return DIR_NONE;
 }
 
+// all directions
+Dir get_dir_from_coords2(int x0, int y0, int x1, int y1)
+{
+    if(x1 > x0 && y1 < y0)
+        return DIR_UP_RIGHT;
+    if(x1 < x0 && y1 > y0)
+        return DIR_DOWN_LEFT;
+    if(x1 > x0 && y1 > y0)
+        return DIR_DOWN_RIGHT;
+    if(x1 < x0 && y1 < y0)
+        return DIR_UP_LEFT;
+    if(x1 > x0)
+        return DIR_RIGHT;
+    if(x1 < x0)
+        return DIR_LEFT;
+    if(y1 > y0)
+        return DIR_DOWN;
+    if(y1 < y0)
+        return DIR_UP;
+    return DIR_NONE;
+}
+
 const char* get_dir_name(Dir dir)
 {
     switch(dir)
@@ -2424,6 +2446,10 @@ const char* get_dir_name(Dir dir)
         case DIR_DOWN: return "down";
         case DIR_LEFT: return "left";
         case DIR_RIGHT: return "right";
+        case DIR_UP_RIGHT: return "up right";
+        case DIR_DOWN_RIGHT: return "down right";
+        case DIR_DOWN_LEFT: return "down left";
+        case DIR_UP_LEFT: return "up left";
         default: return "?";
     }
 }
