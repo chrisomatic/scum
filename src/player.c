@@ -1135,11 +1135,15 @@ void player_update_all(float dt)
 static void player_handle_orbitals(Player* p, float dt)
 {
     ProjectileOrbital* orb = projectile_orbital_get(&p->phys, p->proj_def.orbital_distance);
+    
 
     if(p->actions[PLAYER_ACTION_SHOOT_UP].state)
     {
         // eject an orbital
         
+        if(!orb)
+            return;
+
         if(orb->count <= 0)
             return;
 

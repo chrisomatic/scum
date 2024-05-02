@@ -295,8 +295,8 @@ void creature_init_props(Creature* c)
         case CREATURE_TYPE_GEIZER:
         {
             c->phys.speed = 0.0;
-            c->act_time_min = 0.80;
-            c->act_time_max = 1.50;
+            c->act_time_min = 0.30;
+            c->act_time_max = 0.50;
             c->phys.mass = 1000.0; // so it doesn't slide when hit
             c->phys.base_friction = 50.0;
             c->phys.hp_max = 3.0;
@@ -1361,11 +1361,11 @@ static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
 
     if(c->type == CREATURE_TYPE_GEIZER)
     {
-        def.speed = rand()%50+40;
+        def.speed = rand()%30+20;
         // Vector3f pos = {c->phys.pos.x, c->phys.pos.y, 5.0};
         // projectile_drop(pos, 200.0, c->phys.curr_room, &def, &spawn, color, false);
-        def.scale = RAND_FLOAT(0.6,1.3);
-        projectile_lob(&c->phys, rand()%200+100, c->phys.curr_room, &def, &spawn, color, angle, false);
+        def.scale = RAND_FLOAT(0.6,1.2);
+        projectile_lob(&c->phys, rand()%100+50, c->phys.curr_room, &def, &spawn, color, angle, false);
         return;
     }
 
@@ -1479,11 +1479,11 @@ static void creature_update_geizer(Creature* c, float dt)
     bool act = ai_update_action(c, dt);
     if(act)
     {
-        int n_orbs = 1;
+        int n_orbs = rand() % 7 + 3;
         int angle = rand() % 360;
         for(int i = 0; i < n_orbs; ++i)
         {
-            creature_fire_projectile(c, angle+rand()%10, PROJ_COLOR);
+            creature_fire_projectile(c, angle+rand()%60, PROJ_COLOR);
         }
     }
 }
