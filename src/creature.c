@@ -262,6 +262,8 @@ void creature_init_props(Creature* c)
     c->phys.radius = c->phys.width / 2.0;
     c->phys.vr = *vr;
 
+    c->damage = 1;
+
     switch(c->type)
     {
         case CREATURE_TYPE_SLUG:
@@ -546,16 +548,17 @@ void creature_init_props(Creature* c)
         case CREATURE_TYPE_PHANTOM:
         {
             c->phys.ethereal = true;
-            c->phys.speed = 200.0;
+            c->phys.speed = 30.0;
             c->act_time_min = 1.0;
             c->act_time_max = 1.0;
-            c->phys.mass = 1.0;
-            c->phys.base_friction = 20.0;
+            c->phys.mass = 100.0;
+            c->phys.base_friction = 10.0;
             c->phys.hp_max = 127.0;
             c->painful_touch = true;
             c->passive = true;
             c->phys.floating = true;
-            c->xp = 20;
+            c->xp = 1000;
+            c->damage = 127;
         } break;
     }
 
@@ -566,7 +569,6 @@ void creature_init_props(Creature* c)
     }
 
     c->phys.speed_factor = 1.0;
-    c->damage = 1;
 
     print_creature_dimensions(c);
 }
@@ -2525,16 +2527,20 @@ static void creature_update_golem(Creature* c, float dt)
 
 static void creature_update_phantom(Creature* c, float dt)
 {
+    // target closest player
+    Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
 
-    bool act = ai_update_action(c, dt);
+    if(!p) return;
+        
+    Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
+    normalize(&v);
 
-    if(act)
-    {
-        ai_stop_imm(c);
+    //c->phys.vel.x = c->phys.speed*v.x;
+    //c->phys.vel.y = c->phys.speed*v.y;
 
-        // if(ai_flip_coin())
-        {
-            ai_random_walk(c);
-        }
-    }
+    c->h = v.x;
+    c->v = v.y;
+
+    Dir dir = get_dir_from_coords2(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
+    _update_sprite_index(c, dir);
 }

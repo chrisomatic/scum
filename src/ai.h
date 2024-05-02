@@ -156,7 +156,8 @@ void ai_walk_dir(Creature* c, Dir dir)
            c->type == CREATURE_TYPE_BUZZER ||
            c->type == CREATURE_TYPE_SPIKED_SLUG ||
            c->type == CREATURE_TYPE_INFECTED ||
-           c->type == CREATURE_TYPE_SPAWN_SPIDER)
+           c->type == CREATURE_TYPE_SPAWN_SPIDER ||
+           c->type == CREATURE_TYPE_PHANTOM)
             _update_sprite_index(c, dir);
     }
 }
