@@ -2871,6 +2871,7 @@ static void unpack_creatures(Packet* pkt, int* offset, WorldState* ws)
         creature.color = COLOR(r,g,b);
 
         Creature* c = creature_add(NULL, 0, NULL, &creature);
+        if(!c) continue;
 
         c->phys.underground = (bool)(underground == 0x01);
 

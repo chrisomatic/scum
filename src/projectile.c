@@ -92,7 +92,7 @@ ProjectileDef projectile_lookup[] = {
     {
         // geizer
         .damage = 1.0,
-        .speed = 200.0,
+        .speed = 100.0,
         .accel = 0.0,
         .scale = 0.8,
         .ttl = 3.0,
@@ -487,6 +487,20 @@ void projectile_drop(Vector3f pos, float vel0_z, uint8_t curr_room, ProjectileDe
 {
     Vector3f vel = {0.0, 0.0, vel0_z};
     projectile_add_internal(pos, &vel, curr_room, def, spawn, color, 0.0, from_player, NULL, false);
+}
+
+void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player)
+{
+    // Vector3f pos = {phys->pos.x, phys->pos.y, phys->height/2.0 + phys->pos.z};
+    Vector3f pos = {phys->pos.x, phys->pos.y, phys->height*2.0 + phys->pos.z};
+
+    Vector3f vel = {0.0, 0.0, vel0_z};
+
+    float angle = RAD(angle_deg);
+    vel.x = +(def->speed)*cosf(angle);
+    vel.y = -(def->speed)*sinf(angle);
+
+    projectile_add_internal(pos, &vel, curr_room, def, spawn, color, angle_deg, from_player, phys, false);
 }
 
 void projectile_kill(Projectile* proj)

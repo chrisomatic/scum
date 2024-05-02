@@ -197,33 +197,31 @@ static bool item_func_shrine(Item* pu, Player* p)
             ui_message_set_title(2.0, message_color, message_scale, "Death");
         }   break;
         case 2:
-        {
-            // poison everyone
-            int num = player_get_active_count();
-            for(int i = 0; i < num; ++i)
-            {
-                Player* x = &players[i];
-                if(x->phys.curr_room != pu->phys.curr_room)
-                    continue;
-
-                status_effects_add_type(&x->phys, pu->phys.curr_room, STATUS_EFFECT_POISON);
-            }
-
-            ui_message_set_title(2.0, message_color, message_scale, "Pestilence");
-        }   break;
+        // {
+        //     // poison everyone
+        //     int num = player_get_active_count();
+        //     for(int i = 0; i < num; ++i)
+        //     {
+        //         Player* x = &players[i];
+        //         if(x->phys.curr_room != pu->phys.curr_room)
+        //             continue;
+        //         status_effects_add_type(&x->phys, pu->phys.curr_room, STATUS_EFFECT_POISON);
+        //     }
+        //     ui_message_set_title(2.0, message_color, message_scale, "Pestilence");
+        // }   break;
         case 3:
         {
-            int num = player_get_active_count();
-            for(int i = 0; i < num; ++i)
-            {
-                Player* x = &players[i];
-                if(x->phys.curr_room != pu->phys.curr_room)
-                    continue;
-
-                player_add_xp(x, 300);
-            }
-
-            ui_message_set_title(2.0, message_color, message_scale, "The best gift is that of experience");
+            creature_add(level.rooms_ptr[croom], CREATURE_TYPE_PHANTOM, NULL, NULL);
+            ui_message_set_title(2.0, message_color, message_scale, "Phantom");
+            // int num = player_get_active_count();
+            // for(int i = 0; i < num; ++i)
+            // {
+            //     Player* x = &players[i];
+            //     if(x->phys.curr_room != pu->phys.curr_room)
+            //         continue;
+            //     player_add_xp(x, 300);
+            // }
+            // ui_message_set_title(2.0, message_color, message_scale, "The best gift is that of experience");
         }   break;
         case 4:
         {

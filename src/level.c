@@ -483,8 +483,8 @@ void level_place_entities(Level* level)
 {
     if(role == ROLE_CLIENT) return;
 
-    Room* sroom = &level->rooms[level->start.x][level->start.y];
-    creature_add(sroom, CREATURE_TYPE_PHANTOM, NULL, NULL);
+    // Room* sroom = &level->rooms[level->start.x][level->start.y];
+    // creature_add(sroom, CREATURE_TYPE_PHANTOM, NULL, NULL);
 
     for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
     {

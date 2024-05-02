@@ -753,14 +753,13 @@ void player_die(Player* p)
         if(!p2->phys.dead) return;
     }
 
-    // if all are dead
-    for(int i = 0; i < MAX_PLAYERS; ++i)
-    {
-        Player* p2 = &players[i];
-        if(!p2->active) continue;
-
-        player_reset(p2);
-    }
+    // // if all are dead
+    // for(int i = 0; i < MAX_PLAYERS; ++i)
+    // {
+    //     Player* p2 = &players[i];
+    //     if(!p2->active) continue;
+    //     player_reset(p2);
+    // }
 
     all_players_dead = true;
     trigger_generate_level(rand(), level_rank, 2, __LINE__);
@@ -952,44 +951,44 @@ void player_start_room_transition(Player* p)
             level_room_in_progress = false;
         }
 
-    }
-
-
-    for(int i = 0; i < clist->count; ++i)
-    {
-        if(creatures[i].type == CREATURE_TYPE_PHANTOM)
+        for(int i = 0; i < clist->count; ++i)
         {
-            if(creatures[i].phys.curr_room == room_index) break;
-            float vw = room_area.w;
-            float vh = room_area.h;
-            Vector2f adj = {0};
-            switch(p->door)
+            if(creatures[i].type == CREATURE_TYPE_PHANTOM)
             {
-                case DIR_UP:
+                if(creatures[i].phys.curr_room == room_index) break;
+                float vw = room_area.w;
+                float vh = room_area.h;
+                Vector2f adj = {0};
+                switch(p->door)
                 {
-                    adj.y = vh;
-                } break;
-                case DIR_RIGHT:
-                {
-                    adj.x = -vw;
-                } break;
-                case DIR_DOWN:
-                {
-                    adj.y = -vh;
-                } break;
-                case DIR_LEFT:
-                {
-                    adj.x = vw;
-                } break;
-                default:
-                    break;
+                    case DIR_UP:
+                    {
+                        adj.y = vh;
+                    } break;
+                    case DIR_RIGHT:
+                    {
+                        adj.x = -vw;
+                    } break;
+                    case DIR_DOWN:
+                    {
+                        adj.y = -vh;
+                    } break;
+                    case DIR_LEFT:
+                    {
+                        adj.x = vw;
+                    } break;
+                    default:
+                        break;
+                }
+                adj.x += creatures[i].phys.collision_rect.x;
+                adj.y += creatures[i].phys.collision_rect.y;
+                phys_set_collision_pos(&creatures[i].phys, adj.x, adj.y);
+                break;
             }
-            adj.x += creatures[i].phys.collision_rect.x;
-            adj.y += creatures[i].phys.collision_rect.y;
-            phys_set_collision_pos(&creatures[i].phys, adj.x, adj.y);
-            break;
         }
     }
+
+
 
     if(role == ROLE_SERVER)
         return;
@@ -2546,6 +2545,8 @@ void player_check_stuck_in_wall(Player* p)
 
 void player_handle_collision(Player* p, Entity* e)
 {
+    if(all_players_dead)
+        return;
     if(p->phys.dead)
         return;
 
@@ -2560,6 +2561,8 @@ void player_handle_collision(Player* p, Entity* e)
 
             if(collided)
             {
+                //HACK
+                // if(level_transition_state)
                 phys_collision_correct(&p->phys, &c->phys,&ci);
 
                 if(c->painful_touch)

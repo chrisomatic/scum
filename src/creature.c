@@ -295,8 +295,8 @@ void creature_init_props(Creature* c)
         case CREATURE_TYPE_GEIZER:
         {
             c->phys.speed = 0.0;
-            c->act_time_min = 3.0;
-            c->act_time_max = 5.0;
+            c->act_time_min = 0.80;
+            c->act_time_max = 1.50;
             c->phys.mass = 1000.0; // so it doesn't slide when hit
             c->phys.base_friction = 50.0;
             c->phys.hp_max = 3.0;
@@ -736,7 +736,11 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
     {
         memcpy(&c, creature, sizeof(Creature));
         room = level_get_room_by_index(&level, c.phys.curr_room);
-        if(!room) return NULL;
+        if(!room)
+        {
+            // printf("no room\n");
+            return NULL;
+        }
     }
     else
     {
@@ -1355,6 +1359,16 @@ static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
     ProjectileDef def = projectile_lookup[pt];
     ProjectileSpawn spawn = projectile_spawn[pt];
 
+    if(c->type == CREATURE_TYPE_GEIZER)
+    {
+        def.speed = rand()%50+40;
+        // Vector3f pos = {c->phys.pos.x, c->phys.pos.y, 5.0};
+        // projectile_drop(pos, 200.0, c->phys.curr_room, &def, &spawn, color, false);
+        def.scale = RAND_FLOAT(0.6,1.3);
+        projectile_lob(&c->phys, rand()%200+100, c->phys.curr_room, &def, &spawn, color, angle, false);
+        return;
+    }
+
     projectile_add(&c->phys, c->phys.curr_room, &def, &spawn, color, angle, false);
 }
 
@@ -1462,19 +1476,14 @@ static void creature_update_clinger(Creature* c, float dt)
 
 static void creature_update_geizer(Creature* c, float dt)
 {
-
-
     bool act = ai_update_action(c, dt);
-
     if(act)
     {
-        // printf("geizer act\n");
-        int n_orbs = 5 + (rand() % 5);
-
+        int n_orbs = 1;
+        int angle = rand() % 360;
         for(int i = 0; i < n_orbs; ++i)
         {
-            int angle = rand() % 360;
-            creature_fire_projectile(c, angle, PROJ_COLOR);
+            creature_fire_projectile(c, angle+rand()%10, PROJ_COLOR);
         }
     }
 }
@@ -1579,12 +1588,13 @@ static void creature_update_buzzer(Creature* c, float dt)
 static void creature_update_totem_red(Creature* c, float dt)
 {
 
-
     int creature_count = 0;
     for(int i = 0; i < clist->count; ++i)
     {
         if(creatures[i].phys.curr_room == c->phys.curr_room)
         {
+            if(creatures[i].passive) continue;
+
             // same room
             if(creatures[i].type != CREATURE_TYPE_TOTEM_RED)
             {
@@ -1667,6 +1677,8 @@ static void creature_update_totem_blue(Creature* c, float dt)
     {
         if(creatures[i].phys.curr_room == c->phys.curr_room)
         {
+            if(creatures[i].passive) continue;
+
             // same room
             if(!creatures[i].invincible)
             {
@@ -1749,6 +1761,8 @@ static void creature_update_totem_yellow(Creature* c, float dt)
     {
         if(creatures[i].phys.curr_room == c->phys.curr_room)
         {
+            if(creatures[i].passive) continue;
+
             // same room
             if(!creatures[i].invincible)
             {

@@ -788,6 +788,13 @@ void game_generate_level()
         }
     }
 
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        Player* p2 = &players[i];
+        if(!p2->active) continue;
+        player_reset(p2);
+    }
+
     if(level_transition <= 1)
     {
         LOGI("Send to level start");
