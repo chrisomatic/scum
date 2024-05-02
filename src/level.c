@@ -1677,7 +1677,7 @@ void level_init()
     dungeon_set_image2 = gfx_load_image("src/img/dungeon_set2.png", false, false, TILE_SIZE, TILE_SIZE);
     dungeon_set_image3 = gfx_load_image("src/img/dungeon_set3.png", false, false, TILE_SIZE, TILE_SIZE);
 
-    dungeon_image_wall = gfx_load_image("src/img/dungeon_wall2.png", false, false, 32, 50);
+    dungeon_image_wall = gfx_load_image("src/img/rock_wall.png", false, false, 32, 50);
     dungeon_image = dungeon_set_image2;
 
     room_file_load_all(false);
@@ -1934,7 +1934,8 @@ Vector2i level_get_door_tile_coords(Dir dir)
 
 void level_draw_wall_column(float x, float y)
 {
-    gfx_sprite_batch_add(dungeon_image_wall, 0, x, y, COLOR_TINT_NONE, false, 1.0, 0.0, 1.0, false, false, false);
+    int r = lrand(&rg_room) % 100;
+    gfx_sprite_batch_add(dungeon_image_wall, r < 50 ? 0 : 1, x, y, COLOR_TINT_NONE, false, 1.0, 0.0, 1.0, false, false, false);
 }
 
 void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float yoffset, float scale, bool show_entities)
