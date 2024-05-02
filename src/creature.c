@@ -40,6 +40,7 @@ static int creature_image_behemoth;
 static int creature_image_beacon_red;
 static int creature_image_watcher;
 static int creature_image_golem;
+static int creature_image_phantom;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -62,6 +63,7 @@ static void creature_update_behemoth(Creature* c, float dt);
 static void creature_update_beacon_red(Creature* c, float dt);
 static void creature_update_watcher(Creature* c, float dt);
 static void creature_update_golem(Creature* c, float dt);
+static void creature_update_phantom(Creature* c, float dt);
 
 static void creature_fire_projectile(Creature* c, float angle, uint32_t color);
 
@@ -99,6 +101,7 @@ void creature_init()
     creature_image_beacon_red = gfx_load_image("src/img/creature_beacon_red.png", false, false, 32, 32);
     creature_image_watcher = gfx_load_image("src/img/creature_watcher.png", false, false, 32, 32);
     creature_image_golem = gfx_load_image("src/img/creature_infected.png", false, false, 32, 32);   //TEMP image
+    creature_image_phantom = gfx_load_image("src/img/creature_phantom.png", false, false, 64, 64);
 }
 
 char* creature_type_name(CreatureType type)
@@ -147,6 +150,8 @@ char* creature_type_name(CreatureType type)
             return "Watcher";
         case CREATURE_TYPE_GOLEM:
             return "Golem";
+        case CREATURE_TYPE_PHANTOM:
+            return "Phantom";
         default:
             return "???";
     }
@@ -198,6 +203,8 @@ int creature_get_image(CreatureType type)
             return creature_image_watcher;
         case CREATURE_TYPE_GOLEM:
             return creature_image_golem;
+        case CREATURE_TYPE_PHANTOM:
+            return creature_image_phantom;
         default:
             return -1;
     }
@@ -232,14 +239,16 @@ ProjectileType creature_get_projectile_type(Creature* c)
 
 void print_creature_dimensions(Creature* c)
 {
+#if 0
     static bool _prnt[CREATURE_TYPE_MAX] = {0};
 
     if(!_prnt[c->type])
     {
         _prnt[c->type] = true;
-        // printf("[%s Phys Dimensions]\n", creature_type_name(c->type));
-        // phys_print_dimensions(&c->phys);
+        printf("[%s Phys Dimensions]\n", creature_type_name(c->type));
+        phys_print_dimensions(&c->phys);
     }
+#endif
 }
 
 void creature_init_props(Creature* c)
@@ -534,6 +543,20 @@ void creature_init_props(Creature* c)
             c->xp = 20;
             c->color = COLOR_BLUE;
         } break;
+        case CREATURE_TYPE_PHANTOM:
+        {
+            c->phys.ethereal = true;
+            c->phys.speed = 200.0;
+            c->act_time_min = 1.0;
+            c->act_time_max = 1.0;
+            c->phys.mass = 1.0;
+            c->phys.base_friction = 20.0;
+            c->phys.hp_max = 127.0;
+            c->painful_touch = true;
+            c->passive = true;
+            c->phys.floating = true;
+            c->xp = 20;
+        } break;
     }
 
     if(c->phys.crawling)
@@ -581,6 +604,7 @@ void creature_kill_room(uint8_t room_index)
         if(creatures[i].phys.curr_room == room_index)
         {
             if(creatures[i].friendly) continue;
+            if(creatures[i].passive) continue;
             creature_die(&creatures[i]);
             list_remove(clist, i);
         }
@@ -755,8 +779,6 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
     
     list_add(clist, (void*)&c);
 
-
-
     return &creatures[clist->count-1];
 }
 
@@ -770,6 +792,12 @@ void creature_update(Creature* c, float dt)
 
     if(c->phys.dead)
         return;
+
+    //HACK
+    if(c->type == CREATURE_TYPE_PHANTOM)
+    {
+        c->phys.curr_room = visible_room->index;
+    }
 
     if(!is_any_player_room(c->phys.curr_room))
         return;
@@ -850,6 +878,9 @@ void creature_update(Creature* c, float dt)
             case CREATURE_TYPE_GOLEM:
                 creature_update_golem(c,dt);
                 break;
+            case CREATURE_TYPE_PHANTOM:
+                creature_update_phantom(c,dt);
+                break;
         }
     }
     else
@@ -909,8 +940,16 @@ void creature_update(Creature* c, float dt)
     phys_apply_gravity(&c->phys, GRAVITY_EARTH, dt);
 
     Rect r = RECT(c->phys.pos.x, c->phys.pos.y, 1, 1);
-    Vector2f adj = limit_rect_pos(&room_area, &r);
+    Rect limit = room_area;
 
+    //HACK
+    if(c->type == CREATURE_TYPE_PHANTOM)
+    {
+        limit.w *= 2.0;
+        limit.h *= 2.0;
+    }
+
+    Vector2f adj = limit_rect_pos(&limit, &r);
     c->phys.pos.x += adj.x;
     c->phys.pos.y += adj.y;
 
@@ -956,6 +995,8 @@ void creature_update_all(float dt)
 
 void creature_handle_collision(Creature* c, Entity* e)
 {
+    if(c->phys.ethereal) return;
+
     switch(e->type)
     {
         case ENTITY_TYPE_CREATURE:
@@ -999,9 +1040,11 @@ void creature_draw(Creature* c)
 
     uint32_t color = c->color;
 
+    float op = c->phys.ethereal ? 0.5 : 1.0;
+
     if(!c->phys.underground)
     {
-        gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, color, false, 1.0, 0.0, 1.0, false, false, false);
+        gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, color, false, 1.0, 0.0, op, false, false, false);
     }
 }
 
@@ -2478,4 +2521,20 @@ static void creature_update_golem(Creature* c, float dt)
         ai_path_find_to_target_tile(c);
     }
 
+}
+
+static void creature_update_phantom(Creature* c, float dt)
+{
+
+    bool act = ai_update_action(c, dt);
+
+    if(act)
+    {
+        ai_stop_imm(c);
+
+        // if(ai_flip_coin())
+        {
+            ai_random_walk(c);
+        }
+    }
 }

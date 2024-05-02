@@ -192,9 +192,9 @@ void player_set_defaults(Player* p)
 
     player_set_class(p, p->settings.class);
 
-    player_add_skill(p, SKILL_TYPE_RAISE_GOLEM);
 
     // temp
+    // player_add_skill(p, SKILL_TYPE_RAISE_GOLEM);
     // player_add_skill(p, SKILL_TYPE_MAGIC_MISSILE);
     // player_add_skill(p, SKILL_TYPE_CROWN_OF_THORNS);
     // // player_add_skill(p, SKILL_TYPE_MULTI_SHOT);
@@ -881,12 +881,14 @@ void player_start_room_transition(Player* p)
     // printf("start room transition\n");
     Vector2i roomxy = level_get_room_coords((int)p->phys.curr_room);
 
+    uint8_t room_index = 0;
+
     if(role == ROLE_SERVER || role == ROLE_LOCAL)
     {
         p->transition_room = p->phys.curr_room;
 
         Vector2i o = get_dir_offsets(p->door);
-        uint8_t room_index = level_get_room_index(roomxy.x + o.x, roomxy.y + o.y);
+        room_index = level_get_room_index(roomxy.x + o.x, roomxy.y + o.y);
 
         Dir other_door = DIR_NONE;
         uint8_t sprite_index = 0;
@@ -950,6 +952,43 @@ void player_start_room_transition(Player* p)
             level_room_in_progress = false;
         }
 
+    }
+
+
+    for(int i = 0; i < clist->count; ++i)
+    {
+        if(creatures[i].type == CREATURE_TYPE_PHANTOM)
+        {
+            if(creatures[i].phys.curr_room == room_index) break;
+            float vw = room_area.w;
+            float vh = room_area.h;
+            Vector2f adj = {0};
+            switch(p->door)
+            {
+                case DIR_UP:
+                {
+                    adj.y = vh;
+                } break;
+                case DIR_RIGHT:
+                {
+                    adj.x = -vw;
+                } break;
+                case DIR_DOWN:
+                {
+                    adj.y = -vh;
+                } break;
+                case DIR_LEFT:
+                {
+                    adj.x = vw;
+                } break;
+                default:
+                    break;
+            }
+            adj.x += creatures[i].phys.collision_rect.x;
+            adj.y += creatures[i].phys.collision_rect.y;
+            phys_set_collision_pos(&creatures[i].phys, adj.x, adj.y);
+            break;
+        }
     }
 
     if(role == ROLE_SERVER)

@@ -244,11 +244,15 @@ bool skills_use(void* player, Skill* skill)
         } break;
         case SKILL_TYPE_RAISE_GOLEM:
         {
+#if 0
             Room* room = level.rooms_ptr[p->phys.curr_room];
             Vector2i tile = p->last_safe_tile;
             creature_add(room, CREATURE_TYPE_GOLEM, &tile, NULL);
             skill->cooldown_timer = skill->cooldown;
             used = true;
+#else
+            used = false;
+#endif
         } break;
         case SKILL_TYPE_INVISIBILITY:
         {
