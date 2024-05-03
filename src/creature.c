@@ -808,7 +808,7 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
     phys_calc_collision_rect(&c.phys);
     phys_set_collision_pos(&c.phys, c.phys.pos.x, c.phys.pos.y);
     // c->phys.radius = calc_radius_from_rect(&c->phys.collision_rect);
-    
+
     list_add(clist, (void*)&c);
 
     return &creatures[clist->count-1];
@@ -1417,6 +1417,12 @@ static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
         return;
     }
 
+    // if(c->type == CREATURE_TYPE_SHAMBLER)
+    // {
+    //     projectile_lob(&c->phys, -80.0, c->phys.curr_room, &def, &spawn, color, angle, false);
+    //     return;
+    // }
+
     projectile_add(&c->phys, c->phys.curr_room, &def, &spawn, color, angle, false);
 }
 
@@ -1445,7 +1451,7 @@ static void creature_update_clinger(Creature* c, float dt)
     if(c->ai_state == 1)
     {
         // firing state
-        
+
         if(c->ai_counter == 0.0)
             c->ai_counter_max = 0.3; // time between shots
 
@@ -1925,7 +1931,8 @@ static void creature_update_shambler(Creature* c, float dt)
             {
                 // fire 5 shots
                 Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
-                float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
+                // float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y-c->phys.pos.z/2.0, p->phys.collision_rect.x, p->phys.collision_rect.y);
+                float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.collision_rect.x, p->phys.collision_rect.y);
                 creature_fire_projectile(c, angle + RAND_FLOAT(-2.0,2.0), PROJ_COLOR);
 
                 c->ai_value++;
@@ -2440,7 +2447,7 @@ static void creature_update_beacon_red(Creature* c, float dt)
             .room = c->phys.curr_room,
             .fade_pattern = 0
         };
-        
+
         decal_add(d);
 
         ai_choose_new_action_max(c);
@@ -2593,7 +2600,7 @@ static void creature_update_phantom(Creature* c, float dt)
     Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
 
     if(!p) return;
-        
+
     Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
     normalize(&v);
 
