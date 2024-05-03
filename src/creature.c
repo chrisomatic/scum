@@ -104,7 +104,7 @@ void creature_init()
     creature_image_watcher = gfx_load_image("src/img/creature_watcher.png", false, false, 32, 32);
     creature_image_golem = gfx_load_image("src/img/creature_infected.png", false, false, 32, 32);   //TEMP
     creature_image_phantom = gfx_load_image("src/img/creature_phantom.png", false, false, 64, 64);
-    creature_image_rock = gfx_load_image("src/img/creature_gravity_crystal.png", false, false, 48, 48); //TEMP
+    creature_image_rock = gfx_load_image("src/img/rock1.png", false, false, 32, 32);
 }
 
 char* creature_type_name(CreatureType type)
@@ -578,7 +578,7 @@ void creature_init_props(Creature* c)
             c->act_time_max = 1.0;
             c->phys.mass = 1000.0;
             c->phys.base_friction = 40.0;
-            c->phys.hp_max = 4.0;
+            c->phys.hp_max = 3.0;
             c->painful_touch = false;
             c->passive = true;
             c->xp = 20;
@@ -806,6 +806,7 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
     ai_init_action(&c);
 
     phys_calc_collision_rect(&c.phys);
+    phys_set_collision_pos(&c.phys, c.phys.pos.x, c.phys.pos.y);
     // c->phys.radius = calc_radius_from_rect(&c->phys.collision_rect);
     
     list_add(clist, (void*)&c);
@@ -1079,7 +1080,7 @@ void creature_draw(Creature* c)
 
     if(!c->phys.underground)
     {
-        gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, color, false, 1.0, 0.0, op, false, false, false);
+        gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, color, false, 1.0, 0.0, op, true, false, false);
     }
 }
 
@@ -1101,7 +1102,7 @@ void creature_die(Creature* c)
     {
         mana = false;
         blood = false;
-        item_add(item_get_random_coin(), c->phys.pos.x, c->phys.pos.y, c->phys.curr_room);
+        item_add(item_get_random_coin(), c->phys.collision_rect.x, c->phys.collision_rect.y, c->phys.curr_room);
     }
 
     if(blood)
@@ -1128,7 +1129,7 @@ void creature_die(Creature* c)
         }
         else
         {
-            ParticleSpawner* ps = particles_spawn_effect(c->phys.pos.x,c->phys.pos.y, 0.0, eff, 0.5, true, false);
+            ParticleSpawner* ps = particles_spawn_effect(c->phys.collision_rect.x,c->phys.collision_rect.y, 0.0, eff, 0.5, true, false);
             if(ps != NULL) ps->userdata = (int)c->phys.curr_room;
         }
     }
@@ -1160,8 +1161,8 @@ void creature_die(Creature* c)
         d.rotation = rand() % 360;
         d.opacity = 0.6;
         d.ttl = 10.0;
-        d.pos.x = c->phys.pos.x;
-        d.pos.y = c->phys.pos.y;
+        d.pos.x = c->phys.collision_rect.x;
+        d.pos.y = c->phys.collision_rect.y;
         d.room = c->phys.curr_room;
         decal_add(d);
     }
@@ -1170,7 +1171,7 @@ void creature_die(Creature* c)
     if(mana && rand() % 10 == 0)
     {
         // drop item
-        item_add(ITEM_POTION_MANA, c->phys.pos.x, c->phys.pos.y, c->phys.curr_room);
+        item_add(ITEM_POTION_MANA, c->phys.collision_rect.x, c->phys.collision_rect.y, c->phys.curr_room);
     }
 
     // handle_room_completion(c->phys.curr_room);
@@ -2609,7 +2610,15 @@ static void creature_update_phantom(Creature* c, float dt)
 static void creature_update_rock(Creature* c, float dt)
 {
     if(c->type == CREATURE_TYPE_ROCK)
+    {
+        if(c->phys.hp == c->phys.hp_max)
+            c->sprite_index = 0;
+        else if(c->phys.hp == c->phys.hp_max-1)
+            c->sprite_index = 1;
+        else
+            c->sprite_index = 2;
         return;
+    }
 
     if(c->type == CREATURE_TYPE_ROCK_MONSTER)
     {

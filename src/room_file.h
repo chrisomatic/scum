@@ -40,7 +40,8 @@ extern char room_files[256][32];
 extern char* p_room_files[256];
 extern int  room_file_count;
 
-extern RoomFileData room_list[128];
+// extern RoomFileData room_list[MAX_ROOM_LIST_COUNT];
+extern RoomFileData room_list[200];
 extern int room_list_count;
 
 void room_file_save(RoomFileData* rfd, char* path, ...);

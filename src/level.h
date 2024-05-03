@@ -25,7 +25,7 @@
 #define MAX_DOORS 4
 #define MAX_WALLS_PER_ROOM 200
 
-#define MAX_ROOM_LIST_COUNT 128
+#define MAX_ROOM_LIST_COUNT 200
 
 #define ROOM_GRACE_TIME 1.0
 
