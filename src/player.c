@@ -409,7 +409,7 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
         return;
     }
 
-    room->doors_locked = (creature_get_room_count(room->index, false) != 0);
+    // room->doors_locked = (creature_get_room_count(room->index, false) != 0);
 
     visible_room = room;
 

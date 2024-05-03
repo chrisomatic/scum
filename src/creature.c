@@ -41,6 +41,7 @@ static int creature_image_beacon_red;
 static int creature_image_watcher;
 static int creature_image_golem;
 static int creature_image_phantom;
+static int creature_image_rock;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -64,6 +65,7 @@ static void creature_update_beacon_red(Creature* c, float dt);
 static void creature_update_watcher(Creature* c, float dt);
 static void creature_update_golem(Creature* c, float dt);
 static void creature_update_phantom(Creature* c, float dt);
+static void creature_update_rock(Creature* c, float dt);
 
 static void creature_fire_projectile(Creature* c, float angle, uint32_t color);
 
@@ -100,8 +102,9 @@ void creature_init()
     creature_image_behemoth = gfx_load_image("src/img/creature_behemoth.png", false, false, 96, 128);
     creature_image_beacon_red = gfx_load_image("src/img/creature_beacon_red.png", false, false, 32, 32);
     creature_image_watcher = gfx_load_image("src/img/creature_watcher.png", false, false, 32, 32);
-    creature_image_golem = gfx_load_image("src/img/creature_infected.png", false, false, 32, 32);   //TEMP image
+    creature_image_golem = gfx_load_image("src/img/creature_infected.png", false, false, 32, 32);   //TEMP
     creature_image_phantom = gfx_load_image("src/img/creature_phantom.png", false, false, 64, 64);
+    creature_image_rock = gfx_load_image("src/img/creature_gravity_crystal.png", false, false, 48, 48); //TEMP
 }
 
 char* creature_type_name(CreatureType type)
@@ -152,6 +155,10 @@ char* creature_type_name(CreatureType type)
             return "Golem";
         case CREATURE_TYPE_PHANTOM:
             return "Phantom";
+        case CREATURE_TYPE_ROCK_MONSTER:
+            return "Rock Monster";
+        case CREATURE_TYPE_ROCK:
+            return "Rock";
         default:
             return "???";
     }
@@ -205,6 +212,9 @@ int creature_get_image(CreatureType type)
             return creature_image_golem;
         case CREATURE_TYPE_PHANTOM:
             return creature_image_phantom;
+        case CREATURE_TYPE_ROCK_MONSTER:
+        case CREATURE_TYPE_ROCK:
+            return creature_image_rock;
         default:
             return -1;
     }
@@ -560,6 +570,21 @@ void creature_init_props(Creature* c)
             c->xp = 1000;
             c->damage = 127;
         } break;
+        case CREATURE_TYPE_ROCK:
+        case CREATURE_TYPE_ROCK_MONSTER:
+        {
+            c->phys.speed = 90.0;
+            c->act_time_min = 1.0;
+            c->act_time_max = 1.0;
+            c->phys.mass = 1000.0;
+            c->phys.base_friction = 40.0;
+            c->phys.hp_max = 4.0;
+            c->painful_touch = false;
+            c->passive = true;
+            c->xp = 20;
+            c->damage = 0;
+            c->phys.crawling = true;
+        } break;
     }
 
     if(c->phys.crawling)
@@ -887,6 +912,10 @@ void creature_update(Creature* c, float dt)
             case CREATURE_TYPE_PHANTOM:
                 creature_update_phantom(c,dt);
                 break;
+            case CREATURE_TYPE_ROCK_MONSTER:
+            case CREATURE_TYPE_ROCK:
+                creature_update_rock(c,dt);
+                break;
         }
     }
     else
@@ -1065,31 +1094,45 @@ void creature_die(Creature* c)
         projectile_orbital_kill(orb);
     }
 
-    ParticleEffect* eff = &particle_effects[EFFECT_BLOOD2];
+    bool mana = true;
+    bool blood = true;
 
-    if(role == ROLE_SERVER)
+    if(c->type == CREATURE_TYPE_ROCK)
     {
-        printf("effect colors: %08X, %08X, %08X\n", eff->color1, eff->color2, eff->color3);
-
-        NetEvent ev = {
-            .type = EVENT_TYPE_PARTICLES,
-            .data.particles.effect_index = EFFECT_BLOOD2,
-            .data.particles.pos = { c->phys.pos.x, c->phys.pos.y },
-            .data.particles.scale = 1.0,
-            .data.particles.color1 = eff->color1,
-            .data.particles.color2 = eff->color2,
-            .data.particles.color3 = eff->color3,
-            .data.particles.lifetime = 0.5,
-            .data.particles.room_index = c->phys.curr_room,
-        };
-
-        net_server_add_event(&ev);
+        mana = false;
+        blood = false;
+        item_add(item_get_random_coin(), c->phys.pos.x, c->phys.pos.y, c->phys.curr_room);
     }
-    else
+
+    if(blood)
     {
-        ParticleSpawner* ps = particles_spawn_effect(c->phys.pos.x,c->phys.pos.y, 0.0, eff, 0.5, true, false);
-        if(ps != NULL) ps->userdata = (int)c->phys.curr_room;
+        ParticleEffect* eff = &particle_effects[EFFECT_BLOOD2];
+
+        if(role == ROLE_SERVER)
+        {
+            printf("effect colors: %08X, %08X, %08X\n", eff->color1, eff->color2, eff->color3);
+
+            NetEvent ev = {
+                .type = EVENT_TYPE_PARTICLES,
+                .data.particles.effect_index = EFFECT_BLOOD2,
+                .data.particles.pos = { c->phys.pos.x, c->phys.pos.y },
+                .data.particles.scale = 1.0,
+                .data.particles.color1 = eff->color1,
+                .data.particles.color2 = eff->color2,
+                .data.particles.color3 = eff->color3,
+                .data.particles.lifetime = 0.5,
+                .data.particles.room_index = c->phys.curr_room,
+            };
+
+            net_server_add_event(&ev);
+        }
+        else
+        {
+            ParticleSpawner* ps = particles_spawn_effect(c->phys.pos.x,c->phys.pos.y, 0.0, eff, 0.5, true, false);
+            if(ps != NULL) ps->userdata = (int)c->phys.curr_room;
+        }
     }
+
 
     status_effects_clear(&c->phys);
 
@@ -1106,21 +1149,25 @@ void creature_die(Creature* c)
     // room->xp += c->xp;
     // printf("%d\n", room->xp);
 
-    Decal d = {0};
-    d.image = particles_image;
-    d.sprite_index = 0;
-    // creature_set_sprite_index(c, 0);
-    d.tint = COLOR_RED;
-    d.scale = 1.0;
-    d.rotation = rand() % 360;
-    d.opacity = 0.6;
-    d.ttl = 10.0;
-    d.pos.x = c->phys.pos.x;
-    d.pos.y = c->phys.pos.y;
-    d.room = c->phys.curr_room;
-    decal_add(d);
+    if(blood)
+    {
+        Decal d = {0};
+        d.image = particles_image;
+        d.sprite_index = 0;
+        // creature_set_sprite_index(c, 0);
+        d.tint = COLOR_RED;
+        d.scale = 1.0;
+        d.rotation = rand() % 360;
+        d.opacity = 0.6;
+        d.ttl = 10.0;
+        d.pos.x = c->phys.pos.x;
+        d.pos.y = c->phys.pos.y;
+        d.room = c->phys.curr_room;
+        decal_add(d);
+    }
 
-    if(rand() % 10 == 0)
+
+    if(mana && rand() % 10 == 0)
     {
         // drop item
         item_add(ITEM_POTION_MANA, c->phys.pos.x, c->phys.pos.y, c->phys.curr_room);
@@ -2557,4 +2604,35 @@ static void creature_update_phantom(Creature* c, float dt)
 
     Dir dir = get_dir_from_coords2(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
     _update_sprite_index(c, dir);
+}
+
+static void creature_update_rock(Creature* c, float dt)
+{
+    if(c->type == CREATURE_TYPE_ROCK)
+        return;
+
+    if(c->type == CREATURE_TYPE_ROCK_MONSTER)
+    {
+        if(c->phys.hp != c->phys.hp_max)
+        {
+            c->passive = false;
+        }
+
+        if(!c->passive)
+        {
+            // target closest player
+            Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
+
+            if(!p) return;
+
+            Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
+            normalize(&v);
+
+            //c->phys.vel.x = c->phys.speed*v.x;
+            //c->phys.vel.y = c->phys.speed*v.y;
+
+            c->h = v.x;
+            c->v = v.y;
+        }
+    }
 }

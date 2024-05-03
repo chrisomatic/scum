@@ -788,7 +788,8 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
     {
         Creature* c = (Creature*)e->ptr;
         if(c->friendly) return; // player can't hit friendly creatures
-        if(c->passive) return;
+        if(c->phys.ethereal) return;
+        // if(c->passive) return;
 
         curr_room = c->phys.curr_room;
         phys = &c->phys;

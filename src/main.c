@@ -1350,10 +1350,11 @@ void handle_room_completion(Room* room)
 
     uint8_t room_index = room->index;
 
-    bool prior_locked = room->doors_locked;
-    room->doors_locked = (creature_get_room_count(room_index, false) != 0);
+    // bool prior_locked = room->doors_locked;
+    // room->doors_locked = (creature_get_room_count(room_index, false) != 0);
 
-    if(!room->doors_locked && prior_locked)
+    // if(!room->doors_locked && prior_locked)
+    if(level_room_in_progress)
     {
 
         level_room_in_progress = false;

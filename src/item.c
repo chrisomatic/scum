@@ -193,7 +193,7 @@ static bool item_func_shrine(Item* pu, Player* p)
             // random creature
             Room* room = level_get_room_by_index(&level, croom);
             creature_add(room, creature_get_random(), NULL, NULL);
-            room->doors_locked = true;
+            // room->doors_locked = true;
             ui_message_set_title(2.0, message_color, message_scale, "Death");
         }   break;
         case 2:

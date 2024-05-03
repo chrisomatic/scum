@@ -256,20 +256,6 @@ Level level_generate(unsigned int seed, int rank)
         if(shroom) set_doors_from_path(&glevel, &shpath);
     }
 
-// #if !SMALL_LEVELS
-//     for(;;)
-//     {
-//         int room_count = get_room_count(&glevel);
-//         if(room_count > 10) break;
-//         // printf("Extra room\n");
-//         LevelPath epath = {0};
-//         Room* eroom = NULL;
-//         eroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_MONSTER, sroom, 1, 3, &epath, false);
-//         set_doors_from_path(&glevel, &epath);
-//     }
-// #endif
-
-
     if(lrand(&rg_level) % 100 <= 5)
     {
         LevelPath epath = {0};
@@ -277,6 +263,19 @@ Level level_generate(unsigned int seed, int rank)
         eroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_MONSTER, sroom, 5, 10, &epath, true);
         set_doors_from_path(&glevel, &epath);
     }
+
+// #if !SMALL_LEVELS
+    for(;;)
+    {
+        int room_count = get_room_count(&glevel);
+        if(room_count >= 7) break;
+        // printf("Extra room\n");
+        LevelPath epath = {0};
+        Room* eroom = NULL;
+        eroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_MONSTER, sroom, 1, 3, &epath, false);
+        set_doors_from_path(&glevel, &epath);
+    }
+// #endif
 
     // add some doors between surrounding rooms
     for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
@@ -483,7 +482,9 @@ void level_place_entities(Level* level)
 {
     if(role == ROLE_CLIENT) return;
 
-    // Room* sroom = &level->rooms[level->start.x][level->start.y];
+    Room* sroom = &level->rooms[level->start.x][level->start.y];
+    creature_add(sroom, CREATURE_TYPE_ROCK, NULL, NULL);
+    creature_add(sroom, CREATURE_TYPE_ROCK_MONSTER, NULL, NULL);
     // creature_add(sroom, CREATURE_TYPE_PHANTOM, NULL, NULL);
 
     for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
@@ -1692,6 +1693,11 @@ void level_update(float dt)
     if(level_room_in_progress)
     {
         level_room_time += dt;
+    }
+
+    if(visible_room != NULL)
+    {
+        visible_room->doors_locked = (creature_get_room_count(visible_room->index, false) != 0);
     }
 }
 
