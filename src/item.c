@@ -785,7 +785,7 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
             pu.phys.mass = 0.5;
             pu.phys.base_friction = 5.0;
             pu.phys.radius = 8*iscale; //TEMP
-            pu.phys.elasticity = 0.5;
+            pu.phys.elasticity = 0.4;
             pu.phys.vel.z = 200.0;
         } break;
 

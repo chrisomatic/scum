@@ -93,11 +93,11 @@ void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci)
     float v2x = v2.x - fac2*x2mx1.x;
     float v2y = v2.y - fac2*x2mx1.y;
 
-    phys1->vel.x = v1x;
-    phys1->vel.y = v1y;
+    phys1->vel.x = phys2->elasticity == 0.0 ? 0.0 : v1x;
+    phys1->vel.y = phys2->elasticity == 0.0 ? 0.0 : v1y;
 
-    phys2->vel.x = v2x;
-    phys2->vel.y = v2y;
+    phys2->vel.x = phys1->elasticity == 0.0 ? 0.0 : v2x;
+    phys2->vel.y = phys1->elasticity == 0.0 ? 0.0 : v2y;
 
     // update
     phys_calc_collision_rect(phys1);
