@@ -449,7 +449,7 @@ void creature_init_props(Creature* c)
         } break;
         case CREATURE_TYPE_PEEPER:
         {
-            c->phys.speed = 80.0;
+            c->phys.speed = 120.0;
             c->act_time_min = 1.0;
             c->act_time_max = 2.0;
             c->phys.mass = 0.5;
