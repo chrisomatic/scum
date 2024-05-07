@@ -316,9 +316,9 @@ void creature_init_props(Creature* c)
         } break;
         case CREATURE_TYPE_FLOATER:
         {
-            c->phys.speed = 40.0;
-            c->act_time_min = 0.2;
-            c->act_time_max = 0.5;
+            c->phys.speed = 50.0;
+            c->act_time_min = 0.3;
+            c->act_time_max = 0.8;
             c->phys.mass = 1.0;
             c->phys.base_friction = 1.0;
             c->phys.hp_max = 2.0;
@@ -1099,40 +1099,39 @@ void creature_die(Creature* c)
     bool mana = true;
     bool blood = true;
 
+    int effect_type = EFFECT_BLOOD2;
+
     if(c->type == CREATURE_TYPE_ROCK)
     {
+        effect_type = EFFECT_SMOKE2;
         mana = false;
         blood = false;
+
         item_add(item_get_random_coin(), c->phys.collision_rect.x, c->phys.collision_rect.y, c->phys.curr_room);
     }
 
-    if(blood)
+    ParticleEffect* eff = &particle_effects[effect_type];
+
+    if(role == ROLE_SERVER)
     {
-        ParticleEffect* eff = &particle_effects[EFFECT_BLOOD2];
+        NetEvent ev = {
+            .type = EVENT_TYPE_PARTICLES,
+            .data.particles.effect_index = effect_type,
+            .data.particles.pos = { c->phys.pos.x, c->phys.pos.y },
+            .data.particles.scale = 1.0,
+            .data.particles.color1 = eff->color1,
+            .data.particles.color2 = eff->color2,
+            .data.particles.color3 = eff->color3,
+            .data.particles.lifetime = 0.5,
+            .data.particles.room_index = c->phys.curr_room,
+        };
 
-        if(role == ROLE_SERVER)
-        {
-            printf("effect colors: %08X, %08X, %08X\n", eff->color1, eff->color2, eff->color3);
-
-            NetEvent ev = {
-                .type = EVENT_TYPE_PARTICLES,
-                .data.particles.effect_index = EFFECT_BLOOD2,
-                .data.particles.pos = { c->phys.pos.x, c->phys.pos.y },
-                .data.particles.scale = 1.0,
-                .data.particles.color1 = eff->color1,
-                .data.particles.color2 = eff->color2,
-                .data.particles.color3 = eff->color3,
-                .data.particles.lifetime = 0.5,
-                .data.particles.room_index = c->phys.curr_room,
-            };
-
-            net_server_add_event(&ev);
-        }
-        else
-        {
-            ParticleSpawner* ps = particles_spawn_effect(c->phys.collision_rect.x,c->phys.collision_rect.y, 0.0, eff, 0.5, true, false);
-            if(ps != NULL) ps->userdata = (int)c->phys.curr_room;
-        }
+        net_server_add_event(&ev);
+    }
+    else
+    {
+        ParticleSpawner* ps = particles_spawn_effect(c->phys.collision_rect.x,c->phys.collision_rect.y, 0.0, eff, 0.5, true, false);
+        if(ps != NULL) ps->userdata = (int)c->phys.curr_room;
     }
 
 
@@ -1549,7 +1548,14 @@ static void creature_update_floater(Creature* c, float dt)
 
     if(act)
     {
-        if(ai_flip_coin())
+        if(ai_rand(4) == 0)
+        {
+            creature_fire_projectile(c, 0.0, PROJ_COLOR);
+            creature_fire_projectile(c, 90.0, PROJ_COLOR);
+            creature_fire_projectile(c, 180.0, PROJ_COLOR);
+            creature_fire_projectile(c, 270.0, PROJ_COLOR);
+        }
+        else
         {
             ai_random_walk(c);
         }
@@ -2007,6 +2013,7 @@ static void creature_update_shambler(Creature* c, float dt)
                 Room* room = level_get_room_by_index(&level, c->phys.curr_room);
                 Vector2i tilec = {0};
                 Vector2f tilep = {0};
+
                 level_get_rand_floor_tile(room, &tilec, &tilep);
 
                 float duration = low_health ? 1.0 : 2.0;
