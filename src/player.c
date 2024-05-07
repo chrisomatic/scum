@@ -420,6 +420,19 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
     // printf("player send to room %u (%d, %d)\n", player->phys.curr_room, tile.x, tile.y);
 
     p->ignore_player_collision = true;
+
+    if(role == ROLE_SERVER || role == ROLE_LOCAL)
+    {
+       // if(level.rooms_ptr[room_index]->doors_locked)
+        if(creature_get_room_count(room_index, false) != 0)
+        {
+            level_room_in_progress = true;
+        }
+        else
+        {
+            level_room_in_progress = false;
+        }
+    }
 }
 
 void player_send_to_level_start(Player* p)
@@ -942,14 +955,15 @@ void player_start_room_transition(Player* p)
 
         printf("moving to room %s\n", room_files[room_list[level.rooms_ptr[room_index]->layout].file_index]);
 
-        if(level.rooms_ptr[room_index]->doors_locked)
-        {
-            level_room_in_progress = true;
-        }
-        else
-        {
-            level_room_in_progress = false;
-        }
+        // // if(level.rooms_ptr[room_index]->doors_locked)
+        // if(creature_get_room_count(room_index, false) != 0)
+        // {
+        //     level_room_in_progress = true;
+        // }
+        // else
+        // {
+        //     level_room_in_progress = false;
+        // }
 
         for(int i = 0; i < clist->count; ++i)
         {

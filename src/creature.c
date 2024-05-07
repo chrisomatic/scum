@@ -1273,7 +1273,7 @@ bool creature_is_on_tile(Room* room, int tile_x, int tile_y)
         // if it's overlapping with the tile at all
         Vector2f pos = level_get_pos_by_room_coords(tile_x, tile_y);
         float d = dist(pos.x, pos.y, c->phys.collision_rect.x, c->phys.collision_rect.y);
-        if(d <= (TILE_SIZE + c->phys.radius))
+        if(d <= (TILE_SIZE/2 + c->phys.radius))
         {
             // printf("  overlap with tile!\n");
             return true;

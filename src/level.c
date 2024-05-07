@@ -1687,17 +1687,18 @@ void level_init()
 
 void level_update(float dt)
 {
+
     level_grace_time -= dt;
     level_grace_time = MAX(0.0, level_grace_time);
-
-    if(level_room_in_progress)
-    {
-        level_room_time += dt;
-    }
 
     if(visible_room != NULL)
     {
         visible_room->doors_locked = (creature_get_room_count(visible_room->index, false) != 0);
+    }
+
+    if(level_room_in_progress)
+    {
+        level_room_time += dt;
     }
 }
 
