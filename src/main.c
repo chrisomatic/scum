@@ -788,11 +788,14 @@ void game_generate_level()
         }
     }
 
-    for(int i = 0; i < MAX_PLAYERS; ++i)
+    if(all_players_dead)
     {
-        Player* p2 = &players[i];
-        if(!p2->active) continue;
-        player_reset(p2);
+        for(int i = 0; i < MAX_PLAYERS; ++i)
+        {
+            Player* p2 = &players[i];
+            if(!p2->active) continue;
+            player_reset(p2);
+        }
     }
 
     if(level_transition <= 1)
