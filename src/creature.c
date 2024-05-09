@@ -1412,7 +1412,8 @@ static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
         def.speed = rand()%50+40;
         // Vector3f pos = {c->phys.pos.x, c->phys.pos.y, 5.0};
         // projectile_drop(pos, 200.0, c->phys.curr_room, &def, &spawn, color, false);
-        def.scale = RAND_FLOAT(0.6,1.0);
+        def.scale1 = RAND_FLOAT(0.6,1.0);
+        def.scale2 = RAND_FLOAT(0.6,1.0);
         projectile_lob(&c->phys, rand()%100+50, c->phys.curr_room, &def, &spawn, color, angle, false);
         return;
     }
@@ -1432,7 +1433,11 @@ static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float 
     ProjectileDef def = projectile_lookup[pt];
     ProjectileSpawn spawn = projectile_spawn[pt];
 
-    def.scale += 0.80;
+    def.sprite_index = 4;
+    def.color1 = 0x32251E;
+    def.color2 = 0x4C3228;
+    def.scale1 += 0.80;
+    def.scale2 += 0.80;
     Rect r = level_get_tile_rect(tile_x, tile_y);
     Vector3f pos = {r.x, r.y, 400.0};
 

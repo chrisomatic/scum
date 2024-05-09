@@ -1474,7 +1474,7 @@ void player_update(Player* p, float dt)
     p->phys.speed         = lookup_movement_speed[p->stats[MOVEMENT_SPEED]];
     p->phys.max_velocity  = lookup_movement_speed_max_vel[p->stats[MOVEMENT_SPEED]];
     p->phys.base_friction = lookup_movement_speed_base_friction[p->stats[MOVEMENT_SPEED]];
-    p->proj_cooldown_max  = lookup_attack_speed[p->stats[ATTACK_SPEED]];
+    //p->proj_cooldown_max  = lookup_attack_speed[p->stats[ATTACK_SPEED]];
 
     // apply skills
     p->phys.speed         += p->skill_mods.speed;

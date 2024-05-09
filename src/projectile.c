@@ -48,12 +48,18 @@ ProjectileDef projectile_lookup[] = {
         // player
         .damage = 1.0,
         .speed = 215.0,
-        .accel = 0.0,
-        .scale = 1.0,
-        .ttl = 3.0,
+        .accel.x = 0.0, .accel.y = 0.0, .accel.z = 0.0,
+        .lifetime = 3.0,
         .explosive = false,
         .bouncy = false,
         .penetrate = false,
+
+        .sprite_index = 0,
+        .color1 = 0x0050A0FF,
+        .color2 = 0x0050A0FF,
+
+        .scale1 = 1.0,
+        .scale2 = 1.0,
 
         .cluster = false,
         .cluster_stages = 1,
@@ -69,73 +75,104 @@ ProjectileDef projectile_lookup[] = {
         // player - kinetic discharge skill
         .damage = 1.0,
         .speed = 200.0,
-        .accel = 0.0,
-        .scale = 0.5,
-        .ttl = 3.0,
+        .accel.x = 0.0, .accel.y = 0.0, .accel.z = 0.0,
+        .lifetime = 3.0,
         .explosive = false,
         .bouncy = false,
         .penetrate = false,
         .cluster = false,
+
+        .sprite_index = 0,
+        .color1 = COLOR_WHITE,
+        .color2 = COLOR_WHITE,
+
+        .scale1 = 0.5,
+        .scale2 = 0.5,
     },
     {
         // creature generic
         .damage = 1.0,
         .speed = 200.0,
-        .accel = 0.0,
-        .scale = 0.8,
-        .ttl = 3.0,
+        .accel.x = 0.0, .accel.y = 0.0, .accel.z = 0.0,
+        .lifetime = 3.0,
         .explosive = false,
         .bouncy = false,
         .penetrate = false,
         .cluster = false,
+
+        .sprite_index = 0,
+        .color1 = 0x00FF5050,
+        .color2 = 0x00FF5050,
+        .scale1 = 0.8,
+        .scale2 = 0.8,
     },
     {
         // geizer
         .damage = 1.0,
         .speed = 100.0,
-        .accel = 0.0,
-        .scale = 0.8,
-        .ttl = 3.0,
+        .accel.x = 0.0, .accel.y = 0.0, .accel.z = 0.0,
+        .lifetime = 3.0,
         .explosive = false,
         .bouncy = false,
         .penetrate = false,
         .cluster = false,
+
+        .sprite_index = 0,
+        .color1 = 0x00FF5050,
+        .color2 = 0x00FF5050,
+        .scale1 = 0.8,
+        .scale2 = 0.8,
     },
     {
         // clinger
         .damage = 1.0,
         .speed = 160.0,
-        .accel = 0.0,
-        .scale = 0.8,
-        .ttl = 3.0,
+        .accel.x = 0.0, .accel.y = 0.0, .accel.z = 0.0,
+        .lifetime = 3.0,
         .explosive = false,
         .bouncy = false,
         .penetrate = false,
         .cluster = false,
+
+        .sprite_index = 0,
+        .color1 = 0x00FF5050,
+        .color2 = 0x00FF5050,
+        .scale1 = 0.8,
+        .scale2 = 0.8,
     },
     {
         // totem blue
         .damage = 1.0,
         .speed = 200.0,
-        .accel = 0.0,
-        .scale = 0.8,
-        .ttl = 3.0,
+        .accel.x = 0.0, .accel.y = 0.0, .accel.z = 0.0,
+        .lifetime = 3.0,
         .explosive = false,
         .bouncy = false,
         .penetrate = false,
         .cluster = true,
+
+        .sprite_index = 0,
+        .color1 = 0x00FF5050,
+        .color2 = 0x00FF5050,
+        .scale1 = 0.8,
+        .scale2 = 0.8,
     },
     {
         // watcher
         .damage = 1.0,
         .speed = 200.0,
-        .accel = 0.0,
-        .scale = 1.0,
-        .ttl = 3.0,
+        .accel.x = 0.0, .accel.y = 0.0, .accel.z = 0.0,
+        .lifetime = 3.0,
         .explosive = false,
         .bouncy = false,
         .penetrate = false,
         .cluster = false,
+        
+        .sprite_index = 0,
+        .color1 = 0x00FF5050,
+        .color2 = 0x00FF5050,
+        .scale1 = 1.0,
+        .scale2 = 1.0,
 
         .is_orbital = true,
         .orbital_distance = 50.0,
@@ -148,6 +185,7 @@ ProjectileSpawn projectile_spawn[] = {
     {
         // player
         .num = 1,
+        .spread_type = SPREAD_TYPE_RANDOM,
         .spread = 30.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
@@ -158,6 +196,7 @@ ProjectileSpawn projectile_spawn[] = {
     {
         // player - kinetic discharge skill
         .num = 1,
+        .spread_type = SPREAD_TYPE_RANDOM,
         .spread = 360.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.20,
@@ -168,7 +207,7 @@ ProjectileSpawn projectile_spawn[] = {
     {
         // creature generic
         .num = 1,
-        .spread = 0.0,
+        .spread_type = SPREAD_TYPE_RANDOM,
         .spread = 0.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
@@ -179,6 +218,7 @@ ProjectileSpawn projectile_spawn[] = {
     {
         // geizer
         .num = 1,
+        .spread_type = SPREAD_TYPE_RANDOM,
         .spread = 0.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
@@ -189,6 +229,7 @@ ProjectileSpawn projectile_spawn[] = {
     {
         // clinger
         .num = 1,
+        .spread_type = SPREAD_TYPE_RANDOM,
         .spread = 0.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
@@ -199,6 +240,7 @@ ProjectileSpawn projectile_spawn[] = {
     {
         // totem blue
         .num = 1,
+        .spread_type = SPREAD_TYPE_RANDOM,
         .spread = 0.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
@@ -209,7 +251,8 @@ ProjectileSpawn projectile_spawn[] = {
     {
         // watcher
         .num = 1,
-        .spread = 30.0,
+        .spread_type = SPREAD_TYPE_RANDOM,
+        .spread = 0.0,
         .ghost_chance = 1.0,
         .homing_chance = 0.0,
         .poison_chance = 0.0,
@@ -285,10 +328,12 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
 
     Rect vr = gfx_images[projectile_image].visible_rects[0];
 
-    vr.w *= proj.def.scale;
-    vr.h *= proj.def.scale;
+    vr.w *= def->scale1;
+    vr.h *= def->scale1;
 
-    proj.color = color;
+    proj.color = def->color1;
+    proj.scale = def->scale1;
+    proj.sprite_index = def->sprite_index;
     proj.phys.height = vr.h;
     proj.phys.width =  vr.w;
     proj.phys.length = vr.w;
@@ -297,12 +342,13 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
     proj.phys.pos.y = pos.y;
     proj.phys.pos.z = pos.z;
     proj.phys.mass = 1.0;
-    proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * proj.def.scale;
+    proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * def->scale1;
     proj.phys.amorphous = proj.def.bouncy ? false : true;
     proj.phys.elasticity = proj.def.bouncy ? 1.0 : 0.1;
     proj.phys.curr_room = curr_room;
     proj.from_player = from_player;
     proj.angle_deg = angle_deg;
+    proj.ttl = def->lifetime;
 
     if(def->is_orbital)
     {
@@ -392,7 +438,8 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
 
     proj.cluster_stage = spawn->cluster_stage;
 
-    float spread = spawn->spread/2.0;
+    float spread = spawn->spread_type == SPREAD_TYPE_RANDOM ? spawn->spread/2.0 : spawn->spread / spawn->num;
+    float spread_angle_start = angle_deg - (spawn->spread/2.0);
 
     uint16_t target_ids[32] = {0};
     int target_count = 0;
@@ -411,7 +458,16 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
 
         if(!FEQ0(spread) && i > 0)
         {
-            p.angle_deg += RAND_FLOAT(-spread, spread);
+            if(spawn->spread_type == SPREAD_TYPE_RANDOM)
+            {
+                p.angle_deg += RAND_FLOAT(-spread, spread);
+            }
+            else if(spawn->spread_type == SPREAD_TYPE_UNIFORM)
+            {
+                p.angle_deg = angle_deg + (i*spread);
+                if(p.angle_deg > angle_deg + spawn->spread/2.0)
+                    p.angle_deg += (360 - spawn->spread);
+            }
         }
 
         float angle = RAD(p.angle_deg);
@@ -517,7 +573,7 @@ void projectile_kill(Projectile* proj)
     bool more_cluster = proj->def.cluster && (proj->cluster_stage < (3) && proj->cluster_stage < (pd.cluster_stages));
 
     const float scale_particle_thresh = 0.25;
-    float pscale = MIN(1.0, proj->def.scale);
+    float pscale = MIN(1.0, proj->def.scale2);
 
     if(pscale > scale_particle_thresh && !more_cluster)
     {
@@ -563,7 +619,7 @@ void projectile_kill(Projectile* proj)
     {
         if(proj->def.explosive)
         {
-            explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, proj->phys.curr_room, proj->from_player);
+            explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->def.scale2, 100.0*proj->def.scale2, proj->phys.curr_room, proj->from_player);
         }
     }
 
@@ -622,7 +678,8 @@ void projectile_kill(Projectile* proj)
         // pd.damage *= 0.8;
 
         pd.cluster = true;
-        pd.scale = pd.cluster_scales[proj->cluster_stage];
+        pd.scale1 = pd.cluster_scales[proj->cluster_stage];
+        pd.scale2 = pd.cluster_scales[proj->cluster_stage];
 
         // pd.cluster = false;
         // pd.scale *= 0.5;
@@ -664,7 +721,7 @@ void projectile_update_all(float dt)
         if(proj->phys.dead)
             continue;
 
-        if(proj->def.ttl <= 0)
+        if(proj->ttl <= 0)
         {
             projectile_kill(proj);
             continue;
@@ -703,28 +760,34 @@ void projectile_update_all(float dt)
         }
         else
         {
-            RANGE(proj->def.ttl, 0.0, dt);
+            RANGE(proj->ttl, 0.0, dt);
 
             // printf("%3d %.4f\n", i, delta_t);
-            proj->def.ttl -= _dt;
+            proj->ttl -= _dt;
 
-            if(proj->def.accel != 0.0 && proj->accel_vector.x == 0.0 && proj->accel_vector.y == 0.0 && proj->accel_vector.z == 0.0)
+            proj->angle_deg += proj->def.angular_vel_factor * _dt;
+
+            if(proj->def.accel.x != 0.0 || proj->def.accel.y != 0.0 || proj->def.accel.z != 0.0)
             {
-                Vector3f f = {proj->phys.vel.x, proj->phys.vel.y, proj->phys.vel.z};
+                printf("Accelerating!\n");
+
+                float angle = RAD(proj->angle_deg);
+
+                Vector3f f = {sinf(angle), cos(angle), 1.0};
                 normalize3f(&f);
 
-                f.x *= proj->def.accel;
-                f.y *= proj->def.accel;
-                f.z *= proj->def.accel;
+                f.x *= proj->def.accel.x;
+                f.y *= proj->def.accel.y;
+                f.z *= proj->def.accel.z;
 
-                proj->accel_vector.x = f.x;
-                proj->accel_vector.y = f.y;
-                proj->accel_vector.z = f.z;
+                proj->phys.vel.x += f.x;
+                proj->phys.vel.y += f.y;
+                proj->phys.vel.z += f.z;
             }
 
-            proj->phys.vel.x += proj->accel_vector.x;
-            proj->phys.vel.y += proj->accel_vector.y;
-            proj->phys.vel.z += proj->accel_vector.z;
+            float cfactor = proj->ttl / proj->def.lifetime;
+            proj->color = gfx_blend_colors(proj->def.color2, proj->def.color1, cfactor);
+            proj->scale = lerp(proj->def.scale2, proj->def.scale1, cfactor);
         }
 
         //printf("adding %f %f; vel: %f %f\n",f.x, f.y, proj->phys.vel.x, proj->phys.vel.y);
@@ -888,7 +951,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 
     if(hit && projdef->explosive)
     {
-        explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, proj->phys.curr_room, proj->from_player);
+        explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->def.scale2, 100.0*proj->def.scale2, proj->phys.curr_room, proj->from_player);
     }
 }
 
@@ -900,10 +963,10 @@ void projectile_draw(Projectile* proj)
     float opacity = proj->phys.ethereal ? 0.3 : 1.0;
 
     float y = proj->phys.pos.y - (proj->phys.vr.h + proj->phys.pos.z)/2.0;
-    float scale = RANGE(pow(proj->phys.pos.z/20.0, 0.6), 0.90, 1.10) * proj->def.scale;
+    float scale = RANGE(pow(proj->phys.pos.z/20.0, 0.6), 0.90, 1.10) * proj->scale;
 
     // printf("z: %.2f, scale: %.2f\n", proj->phys.pos.z, scale);
-    gfx_sprite_batch_add(projectile_image, 0, proj->phys.pos.x, y, proj->color, false, scale, 0.0, opacity, false, true, false);
+    gfx_sprite_batch_add(projectile_image, proj->sprite_index, proj->phys.pos.x, y, proj->color, false, scale, 0.0, opacity, false, true, false);
 }
 
 ProjectileOrbital* projectile_orbital_get(Physics* body, float distance)
@@ -955,4 +1018,15 @@ const char* projectile_def_get_name(ProjectileType proj_type)
         case PROJECTILE_TYPE_CREATURE_WATCHER: return "Watcher";
         default: return "???";
     }
+}
+
+const char* projectile_spread_type_get_name(SpreadType spread_type)
+{
+    switch(spread_type)
+    {
+        case SPREAD_TYPE_RANDOM: return "Random";
+        case SPREAD_TYPE_UNIFORM: return "Uniform";
+        default: break;
+    }
+    return "Unknown";
 }

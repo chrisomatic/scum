@@ -444,7 +444,6 @@ void editor_draw()
 
                 if(role == ROLE_LOCAL)
                 {
-
                     char* proj_def_names[PROJECTILE_TYPE_MAX] = {0};
                     for(int i = 0; i < PROJECTILE_TYPE_MAX; ++i)
                     {
@@ -454,6 +453,8 @@ void editor_draw()
                     static int proj_sel = 0;
                     imgui_dropdown(proj_def_names, PROJECTILE_TYPE_MAX, "Projectile Definition", &proj_sel, NULL);
 
+
+                    imgui_button("Randomize");
 
                     ProjectileDef* projd = &projectile_lookup[proj_sel];
                     ProjectileSpawn* projs = &projectile_spawn[proj_sel];
@@ -466,10 +467,28 @@ void editor_draw()
 
                     imgui_slider_float("Damage", 0.0,100.0,&projd->damage);
                     imgui_slider_float("Base Speed", 100.0,1000.0,&projd->speed);
-                    imgui_slider_float("Acceleration", -50.0,50.0,&projd->accel);
-                    imgui_slider_float("TTL", 0.0,60.0,&projd->ttl);
-                    imgui_slider_float("Scale", 0.1, 5.0,&projd->scale);
+                    imgui_slider_float("Angular Vel Factor", -1000.0,1000.0,&projd->angular_vel_factor);
+                    imgui_slider_float("Accel XY", -100.0,100.0,&projd->accel.x);
+                    projd->accel.y = projd->accel.x;
+                    imgui_slider_float("Accel Z", -100.0,100.0,&projd->accel.z);
+                    imgui_slider_float("Lifetime", 0.0,60.0,&projd->lifetime);
+
+                    imgui_slider_float("Scale1", 0.1, 5.0,&projd->scale1);
+                    imgui_slider_float("Scale2", 0.1, 5.0,&projd->scale2);
+
+                    imgui_color_picker("Color1", &projd->color1);
+                    imgui_color_picker("Color2", &projd->color2);
+
+                    char* spread_type_names[SPREAD_TYPE_COUNT] = {0};
+                    for(int i = 0; i < SPREAD_TYPE_COUNT; ++i)
+                        spread_type_names[i] = (char*)projectile_spread_type_get_name(i);
+
+                    static int spread_type_sel = 0;
+                    imgui_dropdown(spread_type_names, SPREAD_TYPE_COUNT, "Spread Type", &spread_type_sel, NULL);
+                    projs->spread_type = spread_type_sel;
                     imgui_slider_float("Angle Spread", 0.0, 360.0,&projs->spread);
+
+                    imgui_number_box("Sprite Index", 0,8, &projd->sprite_index);
 
                     int num = projs->num;
                     imgui_number_box("Num", 1,100, &num);

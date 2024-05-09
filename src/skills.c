@@ -126,7 +126,8 @@ bool skills_use(void* player, Skill* skill)
     {
         case SKILL_TYPE_MAGIC_MISSILE:
         {
-            def.scale += 0.20;
+            def.scale1 += 0.20;
+            def.scale2 += 0.20;
             def.damage *= (1.0+skill->rank);
             def.speed += (200.0*skill->rank);
 
@@ -139,7 +140,8 @@ bool skills_use(void* player, Skill* skill)
 
         case SKILL_TYPE_ROCK_SHOWER:
         {
-            def.scale += 1.00;
+            def.scale1 += 1.00;
+            def.scale2 += 1.00;
 
             def.cluster = true;
             def.cluster_stages = 1;
@@ -170,7 +172,6 @@ bool skills_use(void* player, Skill* skill)
         } break;
         case SKILL_TYPE_SENTIENCE:
         {
-            def.scale += 0.00;
             def.damage *= (1.0+skill->rank);
             spawn.num = 3 + (1*skill->rank);
             spawn.spread = 0.0;
@@ -181,7 +182,8 @@ bool skills_use(void* player, Skill* skill)
 
         case SKILL_TYPE_MULTI_SHOT:
         {
-            def.scale += 0.20;
+            def.scale1 += 0.20;
+            def.scale2 += 0.20;
             spawn.num = 2 + skill->rank;
             spawn.spread = 30.0 + 10*skill->rank;
 
@@ -191,7 +193,8 @@ bool skills_use(void* player, Skill* skill)
 
         case SKILL_TYPE_PHASE_SHOT:
         {
-            def.scale += 0.10;
+            def.scale1 += 0.10;
+            def.scale2 += 0.10;
             def.damage *= (0.5+skill->rank);
 
             spawn.num = 2 + skill->rank;

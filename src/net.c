@@ -2934,7 +2934,7 @@ static void pack_projectiles(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 8,  (uint32_t)b);
         BPW(&server.bp, 3,  (uint32_t)(p->player_id));
         BPW(&server.bp, 7,  (uint32_t)(p->phys.curr_room));
-        BPW(&server.bp, 10,  (uint32_t)(p->def.scale*255.0f));
+        BPW(&server.bp, 10,  (uint32_t)(p->scale*255.0f));
         BPW(&server.bp, 1,  (uint32_t)(p->from_player ? 0x01 : 0x00));
     }
 }
@@ -2968,7 +2968,7 @@ static void unpack_projectiles(Packet* pkt, int* offset, WorldState* ws)
         p->id = (uint16_t)id;
         p->color = COLOR(r,g,b);
         p->phys.curr_room = (uint8_t)curr_room;
-        p->def.scale = (float)(scale / 255.0f);
+        p->scale = (float)(scale / 255.0f);
         p->from_player = from_player == 0x01 ? true : false;
         p->player_id = (uint8_t)pid;
         p->lerp_t = 0.0;

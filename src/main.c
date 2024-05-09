@@ -856,7 +856,7 @@ void init()
     audio_init();
 
     gaudio_init();
-    Gaudio* ga = gaudio_add("src/audio/Mindseye_The_Warmth.wav", true, true, false, NULL);
+    Gaudio* ga = gaudio_add("src/audio/milky_way_mountaineer.wav", true, true, false, NULL);
     // Gaudio* ga = gaudio_add("src/audio/bounce.raw", false, false, true, test_cb);
     if(ga)
     {

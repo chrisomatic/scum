@@ -24,12 +24,20 @@ typedef struct
 {
     float damage;
     float speed;
-    float accel;
-    float scale;
-    float ttl;
+    float scale1;
+    float scale2;
+    float lifetime;
     bool explosive;
     bool bouncy;
     bool penetrate;
+
+    Vector3f accel;
+    float angular_vel_factor;
+
+    int sprite_index;
+
+    uint32_t color1;
+    uint32_t color2;
 
     // cluster
     bool cluster;
@@ -45,9 +53,18 @@ typedef struct
 
 } ProjectileDef;
 
+typedef enum
+{
+    SPREAD_TYPE_RANDOM = 0,
+    SPREAD_TYPE_UNIFORM,
+    SPREAD_TYPE_COUNT,
+} SpreadType;
+
 typedef struct
 {
     int num;
+
+    SpreadType spread_type;
     float spread;
 
     float ghost_chance;
@@ -91,6 +108,8 @@ typedef struct
     ProjectileDef def;
     Physics phys;
 
+    float ttl;
+
     // effects
     bool poison;
     bool cold;
@@ -102,11 +121,11 @@ typedef struct
 
     uint8_t player_id;
 
+    uint8_t sprite_index;
     uint32_t color;
+    float scale;
 
     bool from_player;
-    Vector3f accel_vector;
-
     int cluster_stage;
 
     ProjectileOrbital* orbital;
@@ -144,6 +163,7 @@ void projectile_handle_collision(Projectile* p, Entity* e);
 void projectile_draw(Projectile* proj);
 void projectile_lerp(Projectile* p, double dt);
 const char* projectile_def_get_name(ProjectileType proj_type);
+const char* projectile_spread_type_get_name(SpreadType spread_type);
 
 ProjectileOrbital* projectile_orbital_get(Physics* body, float distance);
 void projectile_orbital_kill(ProjectileOrbital* orb);
