@@ -1700,6 +1700,8 @@ void level_update(float dt)
     {
         level_room_time += dt;
     }
+
+    handle_room_completion(visible_room);
 }
 
 void level_print(Level* level)

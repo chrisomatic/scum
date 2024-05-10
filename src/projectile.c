@@ -721,6 +721,18 @@ void projectile_update_all(float dt)
         if(proj->phys.dead)
             continue;
 
+        if(proj->tts > 0)
+        {
+            proj->tts -= dt;
+            if(proj->tts > 0) continue;
+            //TODO
+            if(proj->shooter)
+            {
+                proj->phys.pos.x = proj->shooter->pos.x;
+                proj->phys.pos.y = proj->shooter->pos.y;
+            }
+        }
+
         if(proj->ttl <= 0)
         {
             projectile_kill(proj);

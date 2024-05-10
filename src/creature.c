@@ -1175,7 +1175,7 @@ void creature_die(Creature* c)
     }
 
     // handle_room_completion(c->phys.curr_room);
-    handle_room_completion(room);
+    // handle_room_completion(room);
 }
 
 Creature* creature_get_by_id(uint16_t id)

@@ -1326,7 +1326,19 @@ static void player_handle_shooting(Player* p, float dt)
                 temp.speed  += lookup_attack_range[p->stats[ATTACK_RANGE]];
 
                 uint32_t color = 0x0050A0FF;
+
                 projectile_add(&p->phys, p->phys.curr_room, &temp, &p->proj_spawn, color, p->aim_deg, true);
+
+                // //TODO: burst
+                // for(int j = 1; j < 3; ++j)
+                // {
+                //     projectile_add(&p->phys, p->phys.curr_room, &temp, &p->proj_spawn, color, p->aim_deg, true);
+                //     for(int k = 0; k < p->proj_spawn.num; ++k)
+                //     {
+                //         projectiles[plist->count-1-k].tts = dt*(j*4);
+                //         projectiles[plist->count-1-k].shooter = &p->phys;
+                //     }
+                // }
 
                 gaudio_play(audio_shoot);
             }

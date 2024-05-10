@@ -1347,6 +1347,7 @@ void update(float dt)
 void handle_room_completion(Room* room)
 {
     if(role == ROLE_CLIENT) return;
+    if(!room) return;
 
     // Room* room = level_get_room_by_index(&level, room_index);
     // if(!room) return;
@@ -1357,7 +1358,7 @@ void handle_room_completion(Room* room)
     // room->doors_locked = (creature_get_room_count(room_index, false) != 0);
 
     // if(!room->doors_locked && prior_locked)
-    if(level_room_in_progress)
+    if(level_room_in_progress && !room->doors_locked)
     {
 
         level_room_in_progress = false;

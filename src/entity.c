@@ -22,6 +22,12 @@ static void entity_update_tile(Entity* e)
 
 static void add_entity(EntityType type, void* ptr, Physics* phys)
 {
+    if(type == ENTITY_TYPE_PROJECTILE)
+    {
+        Projectile* p = (Projectile*)ptr;
+        if(p->tts > 0) return;
+    }
+
     Entity* e = &entities[num_entities++];
 
     e->type = type;

@@ -103,6 +103,9 @@ typedef struct
 
 typedef struct
 {
+    float tts;
+    Physics* shooter;
+
     uint16_t id;
 
     ProjectileDef def;
