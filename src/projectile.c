@@ -583,6 +583,7 @@ void projectile_kill(Projectile* proj)
         uint32_t c1 = proj->from_player ? 0x006484BA : 0x00CC5050;
         uint32_t c2 = proj->from_player ? 0x001F87DC : 0x00FF8080;
         uint32_t c3 = proj->from_player ? 0x00112837 : 0x00550000;
+
         float lifetime = 0.4;
 
         if(role == ROLE_SERVER)
@@ -612,7 +613,6 @@ void projectile_kill(Projectile* proj)
             ParticleSpawner* ps = particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &splash, lifetime, true, false);
             if(ps != NULL) ps->userdata = (int)proj->phys.curr_room;
         }
-
     }
 
     if(role != ROLE_SERVER)
@@ -767,12 +767,14 @@ void projectile_update_all(float dt)
 
             proj->angle_deg += proj->def.angular_vel_factor * _dt;
 
+            float angle = RAD(proj->angle_deg);
+            //float vel_magn = magn2f(proj->phys.vel.x, proj->phys.vel.y);
+
+            //proj->phys.vel.x = cos(angle)*vel_magn;
+            //proj->phys.vel.y = -sin(angle)*vel_magn;
+
             if(proj->def.accel.x != 0.0 || proj->def.accel.y != 0.0 || proj->def.accel.z != 0.0)
             {
-                printf("Accelerating!\n");
-
-                float angle = RAD(proj->angle_deg);
-
                 Vector3f f = {sinf(angle), cos(angle), 1.0};
                 normalize3f(&f);
 
