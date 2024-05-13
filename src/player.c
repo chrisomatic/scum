@@ -1327,7 +1327,8 @@ static void player_handle_shooting(Player* p, float dt)
 
                 uint32_t color = 0x0050A0FF;
 
-                projectile_add(&p->phys, p->phys.curr_room, &temp, &p->proj_spawn, color, p->aim_deg, true);
+                projectile_lob(&p->phys, temp.gravity_factor*120.0, p->phys.curr_room, &temp, &p->proj_spawn, color, p->aim_deg, true);
+                //projectile_add(&p->phys, p->phys.curr_room, &temp, &p->proj_spawn, color, p->aim_deg, true);
 
                 // //TODO: burst
                 // for(int j = 1; j < 3; ++j)

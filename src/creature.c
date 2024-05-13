@@ -1424,7 +1424,8 @@ static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
     //     return;
     // }
 
-    projectile_add(&c->phys, c->phys.curr_room, &def, &spawn, color, angle, false);
+    projectile_lob(&c->phys, def.gravity_factor*120.0, c->phys.curr_room, &def, &spawn, color, angle, false);
+    //projectile_add(&c->phys, c->phys.curr_room, &def, &spawn, color, angle, false);
 }
 
 static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float vel0_z, uint32_t color)

@@ -48,8 +48,9 @@ ProjectileDef projectile_lookup[] = {
         // player
         .damage = 1.0,
         .speed = 215.0,
-        .accel.x = 0.0, .accel.y = 0.0, .accel.z = 0.0,
-        .lifetime = 3.0,
+        .directional_accel = 0.0,
+        .gravity_factor = 0.0,
+        .lifetime = 0.4,
         .explosive = false,
         .bouncy = false,
         .penetrate = false,
@@ -75,7 +76,8 @@ ProjectileDef projectile_lookup[] = {
         // player - kinetic discharge skill
         .damage = 1.0,
         .speed = 200.0,
-        .accel.x = 0.0, .accel.y = 0.0, .accel.z = 0.0,
+        .directional_accel = 0.0,
+        .gravity_factor = 0.0,
         .lifetime = 3.0,
         .explosive = false,
         .bouncy = false,
@@ -93,7 +95,8 @@ ProjectileDef projectile_lookup[] = {
         // creature generic
         .damage = 1.0,
         .speed = 200.0,
-        .accel.x = 0.0, .accel.y = 0.0, .accel.z = 0.0,
+        .directional_accel = 0.0,
+        .gravity_factor = 0.5,
         .lifetime = 3.0,
         .explosive = false,
         .bouncy = false,
@@ -110,7 +113,8 @@ ProjectileDef projectile_lookup[] = {
         // geizer
         .damage = 1.0,
         .speed = 100.0,
-        .accel.x = 0.0, .accel.y = 0.0, .accel.z = 0.0,
+        .directional_accel = 0.0,
+        .gravity_factor = 0.5,
         .lifetime = 3.0,
         .explosive = false,
         .bouncy = false,
@@ -127,7 +131,8 @@ ProjectileDef projectile_lookup[] = {
         // clinger
         .damage = 1.0,
         .speed = 160.0,
-        .accel.x = 0.0, .accel.y = 0.0, .accel.z = 0.0,
+        .directional_accel = 0.0,
+        .gravity_factor = 0.5,
         .lifetime = 3.0,
         .explosive = false,
         .bouncy = false,
@@ -144,7 +149,8 @@ ProjectileDef projectile_lookup[] = {
         // totem blue
         .damage = 1.0,
         .speed = 200.0,
-        .accel.x = 0.0, .accel.y = 0.0, .accel.z = 0.0,
+        .directional_accel = 0.0,
+        .gravity_factor = 0.5,
         .lifetime = 3.0,
         .explosive = false,
         .bouncy = false,
@@ -161,7 +167,8 @@ ProjectileDef projectile_lookup[] = {
         // watcher
         .damage = 1.0,
         .speed = 200.0,
-        .accel.x = 0.0, .accel.y = 0.0, .accel.z = 0.0,
+        .directional_accel = 0.0,
+        .gravity_factor = 0.5,
         .lifetime = 3.0,
         .explosive = false,
         .bouncy = false,
@@ -281,7 +288,7 @@ void projectile_init()
     projectile_image = gfx_load_image("src/img/projectiles.png", false, false, 16, 16);
 
     // Audio Buffers
-    audio_buffer_explode = audio_load_file("src/audio/explosion.raw");
+    audio_buffer_explode = audio_load_file("src/audio/splat1.wav");
 }
 
 void projectile_clear_all()
@@ -317,7 +324,7 @@ static float calc_orbital_target(Projectile* proj)
     proj->orbital_pos_target.y = -(sinf(target_angle)*actual_orb_distance);
 }
 
-static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player, Physics* phys, bool standard_lob)
+static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player, Physics* phys)
 {
     if(role == ROLE_CLIENT)
         return;
@@ -342,6 +349,8 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
     proj.phys.pos.y = pos.y;
     proj.phys.pos.z = pos.z;
     proj.phys.mass = 1.0;
+    proj.phys.speed = def->speed;
+    proj.phys.max_velocity = 2.0*def->speed;
     proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * def->scale1;
     proj.phys.amorphous = proj.def.bouncy ? false : true;
     proj.phys.elasticity = proj.def.bouncy ? 1.0 : 0.1;
@@ -472,18 +481,15 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
 
         float angle = RAD(p.angle_deg);
 
-        if(standard_lob)
-        {
-            p.phys.vel.x = +(p.def.speed)*cosf(angle) + vel->x;
-            p.phys.vel.y = -(p.def.speed)*sinf(angle) + vel->y;
-            p.phys.vel.z = 80.0;
-        }
-        else
-        {
-            p.phys.vel.x = vel->x;
-            p.phys.vel.y = vel->y;
-            p.phys.vel.z = vel->z;
-        }
+        p.phys.vel.x = +(p.def.speed)*cosf(angle) + vel->x;
+        p.phys.vel.y = -(p.def.speed)*sinf(angle) + vel->y;
+        p.phys.vel.z = vel->z;
+
+        /*
+        p.phys.vel.x = vel->x;
+        p.phys.vel.y = vel->y;
+        p.phys.vel.z = vel->z;
+        */
 
         if(homing)
         {
@@ -536,27 +542,27 @@ void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, Projec
     Vector3f pos = {phys->pos.x, phys->pos.y, phys->height/2.0 + phys->pos.z};
     Vector3f vel = {phys->vel.x, phys->vel.y, 0.0};
 
-    projectile_add_internal(pos, &vel, curr_room, def, spawn, color, angle_deg, from_player, phys, true);
+    projectile_add_internal(pos, &vel, curr_room, def, spawn, color, angle_deg, from_player, phys);
 }
 
 void projectile_drop(Vector3f pos, float vel0_z, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, bool from_player)
 {
     Vector3f vel = {0.0, 0.0, vel0_z};
-    projectile_add_internal(pos, &vel, curr_room, def, spawn, color, 0.0, from_player, NULL, false);
+    projectile_add_internal(pos, &vel, curr_room, def, spawn, color, 0.0, from_player, NULL);
 }
 
 void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player)
 {
-    // Vector3f pos = {phys->pos.x, phys->pos.y, phys->height/2.0 + phys->pos.z};
-    Vector3f pos = {phys->pos.x, phys->pos.y, phys->height*2.0 + phys->pos.z};
+    Vector3f pos = {phys->pos.x, phys->pos.y, phys->height + phys->pos.z};
+    //Vector3f pos = {phys->pos.x, phys->pos.y, phys->height*2.0 + phys->pos.z};
 
     Vector3f vel = {0.0, 0.0, vel0_z};
 
     float angle = RAD(angle_deg);
-    vel.x = +(def->speed)*cosf(angle);
-    vel.y = -(def->speed)*sinf(angle);
+    vel.x = phys->vel.x;
+    vel.y = phys->vel.y;
 
-    projectile_add_internal(pos, &vel, curr_room, def, spawn, color, angle_deg, from_player, phys, false);
+    projectile_add_internal(pos, &vel, curr_room, def, spawn, color, angle_deg, from_player, phys);
 }
 
 void projectile_kill(Projectile* proj)
@@ -610,7 +616,7 @@ void projectile_kill(Projectile* proj)
             splash.color3 = c3;
             splash.scale.init_min *= pscale;
             splash.scale.init_max *= pscale;
-            ParticleSpawner* ps = particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, 0.0, &splash, lifetime, true, false);
+            ParticleSpawner* ps = particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, proj->phys.pos.z, &splash, lifetime, true, false);
             if(ps != NULL) ps->userdata = (int)proj->phys.curr_room;
         }
     }
@@ -780,23 +786,28 @@ void projectile_update_all(float dt)
             proj->angle_deg += proj->def.angular_vel_factor * _dt;
 
             float angle = RAD(proj->angle_deg);
-            //float vel_magn = magn2f(proj->phys.vel.x, proj->phys.vel.y);
 
-            //proj->phys.vel.x = cos(angle)*vel_magn;
-            //proj->phys.vel.y = -sin(angle)*vel_magn;
-
-            if(proj->def.accel.x != 0.0 || proj->def.accel.y != 0.0 || proj->def.accel.z != 0.0)
+            if(proj->def.directional_accel != 0.0)
             {
-                Vector3f f = {sinf(angle), cos(angle), 1.0};
-                normalize3f(&f);
+                Vector2f f = {cos(angle), -sin(angle)};
+                normalize(&f);
 
-                f.x *= proj->def.accel.x;
-                f.y *= proj->def.accel.y;
-                f.z *= proj->def.accel.z;
+                float accel = proj->def.directional_accel * 1500.0 * _dt;
 
-                proj->phys.vel.x += f.x;
-                proj->phys.vel.y += f.y;
-                proj->phys.vel.z += f.z;
+                proj->phys.vel.x += (f.x * accel);
+                proj->phys.vel.y += (f.y * accel);
+
+                float vel_magn = magn(proj->phys.vel);
+                if(vel_magn > proj->phys.max_velocity)
+                {
+                    // cap vel
+                    Vector2f c = {proj->phys.vel.x, proj->phys.vel.y};
+                    normalize(&c);
+
+                    proj->phys.vel.x = c.x * proj->def.speed;
+                    proj->phys.vel.y = c.y * proj->def.speed;
+                }
+
             }
 
             float cfactor = proj->ttl / proj->def.lifetime;
@@ -815,7 +826,7 @@ void projectile_update_all(float dt)
 
         if(!proj->def.is_orbital)
         {
-            phys_apply_gravity(&proj->phys, 0.5, _dt);
+            phys_apply_gravity(&proj->phys, proj->def.gravity_factor, _dt);
         }
 
         // printf("proj->phys.pos.z: %.2f\n", proj->phys.pos.z);

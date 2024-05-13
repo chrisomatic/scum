@@ -32,6 +32,8 @@ typedef struct
     bool penetrate;
 
     Vector3f accel;
+    float gravity_factor;
+    float directional_accel;
     float angular_vel_factor;
 
     int sprite_index;

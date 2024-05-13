@@ -468,10 +468,9 @@ void editor_draw()
                     imgui_slider_float("Damage", 0.0,100.0,&projd->damage);
                     imgui_slider_float("Base Speed", 100.0,1000.0,&projd->speed);
                     imgui_slider_float("Angular Vel Factor", -1000.0,1000.0,&projd->angular_vel_factor);
-                    imgui_slider_float("Accel XY", -100.0,100.0,&projd->accel.x);
-                    projd->accel.y = projd->accel.x;
-                    imgui_slider_float("Accel Z", -100.0,100.0,&projd->accel.z);
-                    imgui_slider_float("Lifetime", 0.0,60.0,&projd->lifetime);
+                    imgui_slider_float("Directional Accel", -1.0,1.0,&projd->directional_accel);
+                    imgui_slider_float("Gravity Factor", 0.0,1.0,&projd->gravity_factor);
+                    imgui_slider_float("Lifetime", 0.0,5.0,&projd->lifetime);
 
                     imgui_slider_float("Scale1", 0.1, 5.0,&projd->scale1);
                     imgui_slider_float("Scale2", 0.1, 5.0,&projd->scale2);
