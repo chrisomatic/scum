@@ -117,8 +117,7 @@ bool skills_use(void* player, Skill* skill)
     Player* p = (Player*)player;
     // p->phys.mp -= skill->mp_cost;
 
-    ProjectileDef def = projectile_lookup[PROJECTILE_TYPE_PLAYER];
-    ProjectileSpawn spawn = projectile_spawn[PROJECTILE_TYPE_PLAYER];
+    Gun gun = gun_lookup[PROJECTILE_TYPE_PLAYER];
 
     bool used = true;
 
@@ -126,27 +125,27 @@ bool skills_use(void* player, Skill* skill)
     {
         case SKILL_TYPE_MAGIC_MISSILE:
         {
-            def.scale1 += 0.20;
-            def.scale2 += 0.20;
-            def.damage *= (1.0+skill->rank);
-            def.speed += (200.0*skill->rank);
+            gun.scale1 += 0.20;
+            gun.scale2 += 0.20;
+            gun.damage *= (1.0+skill->rank);
+            gun.speed += (200.0*skill->rank);
 
-            spawn.num = 1;
-            spawn.spread = 0.0;
+            gun.num = 1;
+            gun.spread = 0.0;
 
-            projectile_add(&p->phys, p->phys.curr_room, &def, &spawn, 0x0000CCFF, p->aim_deg, true);
+            projectile_add(&p->phys, p->phys.curr_room, &gun, 0x0000CCFF, p->aim_deg, true);
 
         } break;
 
         case SKILL_TYPE_ROCK_SHOWER:
         {
-            def.scale1 += 1.00;
-            def.scale2 += 1.00;
+            gun.scale1 += 1.00;
+            gun.scale2 += 1.00;
 
-            def.cluster = true;
-            def.cluster_stages = 1;
-            def.cluster_num[0] = 4;
-            def.cluster_scales[0] = 0.8;
+            gun.cluster = true;
+            gun.cluster_stages = 1;
+            gun.cluster_num[0] = 4;
+            gun.cluster_scales[0] = 0.8;
 
             Room* room = level_get_room_by_index(&level, p->phys.curr_room);
 
@@ -166,42 +165,42 @@ bool skills_use(void* player, Skill* skill)
                 Rect r = level_get_tile_rect(rand_tile.x, rand_tile.y);
                 Vector3f pos = {r.x+xo, r.y+yo, 400.0};
 
-                projectile_drop(pos, 0.0, p->phys.curr_room, &def, &spawn, 0x00553300, true);
+                projectile_drop(pos, 0.0, p->phys.curr_room, &gun, 0x00553300, true);
             }
 
         } break;
         case SKILL_TYPE_SENTIENCE:
         {
-            def.damage *= (1.0+skill->rank);
-            spawn.num = 3 + (1*skill->rank);
-            spawn.spread = 0.0;
-            spawn.homing_chance = 1.0;
+            gun.damage *= (1.0+skill->rank);
+            gun.num = 3 + (1*skill->rank);
+            gun.spread = 0.0;
+            gun.homing_chance = 1.0;
 
-            projectile_add(&p->phys, p->phys.curr_room, &def, &spawn, 0x00555555, p->aim_deg, true);
+            projectile_add(&p->phys, p->phys.curr_room, &gun, 0x00555555, p->aim_deg, true);
         } break;
 
         case SKILL_TYPE_MULTI_SHOT:
         {
-            def.scale1 += 0.20;
-            def.scale2 += 0.20;
-            spawn.num = 2 + skill->rank;
-            spawn.spread = 30.0 + 10*skill->rank;
+            gun.scale1 += 0.20;
+            gun.scale2 += 0.20;
+            gun.num = 2 + skill->rank;
+            gun.spread = 30.0 + 10*skill->rank;
 
-            projectile_add(&p->phys, p->phys.curr_room, &def, &spawn, COLOR_WHITE, p->aim_deg, true);
+            projectile_add(&p->phys, p->phys.curr_room, &gun, COLOR_WHITE, p->aim_deg, true);
             
         } break;
 
         case SKILL_TYPE_PHASE_SHOT:
         {
-            def.scale1 += 0.10;
-            def.scale2 += 0.10;
-            def.damage *= (0.5+skill->rank);
+            gun.scale1 += 0.10;
+            gun.scale2 += 0.10;
+            gun.damage *= (0.5+skill->rank);
 
-            spawn.num = 2 + skill->rank;
-            spawn.spread = 60.0;
-            spawn.ghost_chance = 1.0;
+            gun.num = 2 + skill->rank;
+            gun.spread = 60.0;
+            gun.ghost_chance = 1.0;
 
-            projectile_add(&p->phys, p->phys.curr_room, &def, &spawn, 0x00808080, p->aim_deg, true);
+            projectile_add(&p->phys, p->phys.curr_room, &gun, 0x00808080, p->aim_deg, true);
 
         } break;
         case SKILL_TYPE_HEAL:

@@ -146,8 +146,7 @@ void player_set_defaults(Player* p)
 
     weapon_add(WEAPON_TYPE_SPEAR,&p->phys, &p->weapon, (p->weapon.type == WEAPON_TYPE_NONE ? true : false));
 
-    memcpy(&p->proj_def,&projectile_lookup[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileDef));
-    memcpy(&p->proj_spawn,&projectile_spawn[PROJECTILE_TYPE_PLAYER],sizeof(ProjectileSpawn));
+    memcpy(&p->gun,&gun_lookup[PROJECTILE_TYPE_PLAYER],sizeof(Gun));
 
     p->proj_cooldown_max = 0.40;
 
@@ -1148,7 +1147,7 @@ void player_update_all(float dt)
 
 static void player_handle_orbitals(Player* p, float dt)
 {
-    ProjectileOrbital* orb = projectile_orbital_get(&p->phys, p->proj_def.orbital_distance);
+    ProjectileOrbital* orb = projectile_orbital_get(&p->phys, p->gun.orbital_distance);
     
 
     if(p->actions[PLAYER_ACTION_SHOOT_UP].state)
@@ -1174,7 +1173,7 @@ static void player_handle_orbitals(Player* p, float dt)
 
             // eject
             p->proj_cooldown = p->proj_cooldown_max;
-            projectiles[i].def.is_orbital = false;
+            projectiles[i].gun.is_orbital = false;
             projectiles[i].orbital->count--;
 
             // adjust orbital indices for other projectiles
@@ -1204,18 +1203,18 @@ static void player_handle_orbitals(Player* p, float dt)
     }
     else if(p->actions[PLAYER_ACTION_SHOOT_LEFT].state)
     {
-        ProjectileDef temp = p->proj_def;
+        Gun temp = p->gun;
         temp.damage += lookup_strength[p->stats[STRENGTH]];
         temp.speed  += lookup_attack_range[p->stats[ATTACK_RANGE]];
 
         uint32_t color = 0x0050A0FF;
 
-        int max = p->proj_def.orbital_max_count;
+        int max = p->gun.orbital_max_count;
         if(orb) max -= orb->count;
 
         for(int i = 0; i < max; ++i)
         {
-            projectile_add(&p->phys, p->phys.curr_room, &temp, &p->proj_spawn, color, p->aim_deg, true);
+            projectile_add(&p->phys, p->phys.curr_room, &temp, color, p->aim_deg, true);
         }
     }
 }
@@ -1321,20 +1320,20 @@ static void player_handle_shooting(Player* p, float dt)
 
             if(!p->phys.dead)
             {
-                ProjectileDef temp = p->proj_def;
+                Gun temp = p->gun;
                 temp.damage += lookup_strength[p->stats[STRENGTH]];
                 temp.speed  += lookup_attack_range[p->stats[ATTACK_RANGE]];
 
                 uint32_t color = 0x0050A0FF;
 
-                projectile_lob(&p->phys, temp.gravity_factor*120.0, p->phys.curr_room, &temp, &p->proj_spawn, color, p->aim_deg, true);
-                //projectile_add(&p->phys, p->phys.curr_room, &temp, &p->proj_spawn, color, p->aim_deg, true);
+                projectile_lob(&p->phys, temp.gravity_factor*120.0, p->phys.curr_room, &temp, color, p->aim_deg, true);
+                //projectile_add(&p->phys, p->phys.curr_room, &temp, color, p->aim_deg, true);
 
                 // //TODO: burst
                 // for(int j = 1; j < 3; ++j)
                 // {
-                //     projectile_add(&p->phys, p->phys.curr_room, &temp, &p->proj_spawn, color, p->aim_deg, true);
-                //     for(int k = 0; k < p->proj_spawn.num; ++k)
+                //     projectile_add(&p->phys, p->phys.curr_room, &temp, color, p->aim_deg, true);
+                //     for(int k = 0; k < temp.num; ++k)
                 //     {
                 //         projectiles[plist->count-1-k].tts = dt*(j*4);
                 //         projectiles[plist->count-1-k].shooter = &p->phys;
@@ -2319,8 +2318,8 @@ void player_set_class(Player* p, PlayerClass class)
     {
         case PLAYER_CLASS_SPACEMAN:
             p->image = class_image_spaceman;
-            p->proj_def.is_orbital = false;
-            p->proj_spawn.ghost_chance = 0.0f;
+            p->gun.is_orbital = false;
+            p->gun.ghost_chance = 0.0f;
 
             lookup_strength                     = lookup_spaceman_strength;
             lookup_defense                      = lookup_spaceman_defense;
@@ -2334,8 +2333,8 @@ void player_set_class(Player* p, PlayerClass class)
             break;
         case PLAYER_CLASS_PHYSICIST:
             p->image = class_image_physicist;
-            p->proj_def.is_orbital = true;
-            p->proj_spawn.ghost_chance = 1.0f;
+            p->gun.is_orbital = true;
+            p->gun.ghost_chance = 1.0f;
 
             lookup_strength                     = lookup_physicist_strength;
             lookup_defense                      = lookup_physicist_defense;
@@ -2349,8 +2348,8 @@ void player_set_class(Player* p, PlayerClass class)
             break;
         case PLAYER_CLASS_ROBOT:
             p->image = class_image_robot;
-            p->proj_def.is_orbital = false;
-            p->proj_spawn.ghost_chance = 0.0f;
+            p->gun.is_orbital = false;
+            p->gun.ghost_chance = 0.0f;
 
             lookup_strength                     = lookup_robot_strength;
             lookup_defense                      = lookup_robot_defense;

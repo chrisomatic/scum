@@ -249,10 +249,9 @@ void ai_shoot_nearest_player(Creature* c)
     float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y) + RAND_FLOAT(-10.0,10.0);
 
     ProjectileType pt = creature_get_projectile_type(c);
-    ProjectileDef def = projectile_lookup[pt];
-    ProjectileSpawn spawn = projectile_spawn[pt];
+    Gun gun = gun_lookup[pt];
 
-    projectile_add(&c->phys, c->phys.curr_room, &def, &spawn, COLOR_RED, angle, false);
+    projectile_add(&c->phys, c->phys.curr_room, &gun, COLOR_RED, angle, false);
 }
 
 bool ai_on_target_tile(Creature* c)
@@ -266,7 +265,6 @@ bool ai_on_target_tile(Creature* c)
 
 bool ai_path_find_to_target_tile(Creature* c)
 {
-
     if(!ai_on_target_tile(c))
     {
         bool traversable = astar_traverse(&level.asd, c->phys.curr_tile.x, c->phys.curr_tile.y, c->target_tile.x, c->target_tile.y);

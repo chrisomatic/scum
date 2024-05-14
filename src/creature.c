@@ -1404,50 +1404,47 @@ static void creature_update_spiked_slug(Creature* c, float dt)
 static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
 {
     ProjectileType pt = creature_get_projectile_type(c);
-    ProjectileDef def = projectile_lookup[pt];
-    ProjectileSpawn spawn = projectile_spawn[pt];
+    Gun gun = gun_lookup[pt];
 
     if(c->type == CREATURE_TYPE_GEIZER)
     {
-        def.speed = rand()%50+40;
+        gun.speed = rand()%50+40;
         // Vector3f pos = {c->phys.pos.x, c->phys.pos.y, 5.0};
-        // projectile_drop(pos, 200.0, c->phys.curr_room, &def, &spawn, color, false);
-        def.scale1 = RAND_FLOAT(0.6,1.0);
-        def.scale2 = RAND_FLOAT(0.6,1.0);
-        projectile_lob(&c->phys, rand()%100+50, c->phys.curr_room, &def, &spawn, color, angle, false);
+        // projectile_drop(pos, 200.0, c->phys.curr_room, &gun, color, false);
+        gun.scale1 = RAND_FLOAT(0.6,1.0);
+        gun.scale2 = RAND_FLOAT(0.6,1.0);
+        projectile_lob(&c->phys, rand()%100+50, c->phys.curr_room, &gun, color, angle, false);
         return;
     }
 
     // if(c->type == CREATURE_TYPE_SHAMBLER)
     // {
-    //     projectile_lob(&c->phys, -80.0, c->phys.curr_room, &def, &spawn, color, angle, false);
+    //     projectile_lob(&c->phys, -80.0, c->phys.curr_room, &gun, color, angle, false);
     //     return;
     // }
 
-    projectile_lob(&c->phys, def.gravity_factor*120.0, c->phys.curr_room, &def, &spawn, color, angle, false);
-    //projectile_add(&c->phys, c->phys.curr_room, &def, &spawn, color, angle, false);
+    projectile_lob(&c->phys, gun.gravity_factor*120.0, c->phys.curr_room, &gun, color, angle, false);
+    //projectile_add(&c->phys, c->phys.curr_room, &gun, color, angle, false);
 }
 
 static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float vel0_z, uint32_t color)
 {
     ProjectileType pt = creature_get_projectile_type(c);
-    ProjectileDef def = projectile_lookup[pt];
-    ProjectileSpawn spawn = projectile_spawn[pt];
+    Gun gun = gun_lookup[pt];
 
-    def.sprite_index = 4;
-    def.color1 = 0x32251E;
-    def.color2 = 0x4C3228;
-    def.scale1 += 0.80;
-    def.scale2 += 0.80;
+    gun.sprite_index = 4;
+    gun.color1 = 0x32251E;
+    gun.color2 = 0x4C3228;
+    gun.scale1 += 0.80;
+    gun.scale2 += 0.80;
     Rect r = level_get_tile_rect(tile_x, tile_y);
     Vector3f pos = {r.x, r.y, 400.0};
 
-    projectile_drop(pos, vel0_z, c->phys.curr_room, &def, &spawn, color, false);
+    projectile_drop(pos, vel0_z, c->phys.curr_room, &gun, color, false);
 }
 
 static void creature_update_clinger(Creature* c, float dt)
 {
-
 
     Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
 
@@ -2520,9 +2517,9 @@ static void creature_update_beacon_red(Creature* c, float dt)
 static void creature_update_watcher(Creature* c, float dt)
 {
     ProjectileType pt = creature_get_projectile_type(c);
-    ProjectileDef def = projectile_lookup[pt];
+    Gun gun = gun_lookup[pt];
 
-    ProjectileOrbital* orb = projectile_orbital_get(&c->phys, def.orbital_distance);
+    ProjectileOrbital* orb = projectile_orbital_get(&c->phys, gun.orbital_distance);
 
     if(!orb)
     {

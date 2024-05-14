@@ -43,7 +43,7 @@ static int projectile_image;
 
 // .color = 0x003030FF,
 
-ProjectileDef projectile_lookup[] = {
+Gun gun_lookup[] = {
     {
         // player
         .damage = 1.0,
@@ -71,6 +71,15 @@ ProjectileDef projectile_lookup[] = {
         .orbital_distance = 32.0,
         .orbital_speed_factor = 3.0,
         .orbital_max_count = 5,
+
+        .num = 1,
+        .spread_type = SPREAD_TYPE_RANDOM,
+        .spread = 30.0,
+        .ghost_chance = 0.0,
+        .homing_chance = 0.0,
+        .poison_chance = 0.0,
+        .cold_chance = 0.0,
+        .fire_chance = 0.0,
     },
     {
         // player - kinetic discharge skill
@@ -90,6 +99,15 @@ ProjectileDef projectile_lookup[] = {
 
         .scale1 = 0.5,
         .scale2 = 0.5,
+
+        .num = 1,
+        .spread_type = SPREAD_TYPE_RANDOM,
+        .spread = 360.0,
+        .ghost_chance = 0.0,
+        .homing_chance = 0.20,
+        .poison_chance = 0.0,
+        .cold_chance = 0.0,
+        .fire_chance = 0.0,
     },
     {
         // creature generic
@@ -108,6 +126,15 @@ ProjectileDef projectile_lookup[] = {
         .color2 = 0x00FF5050,
         .scale1 = 0.8,
         .scale2 = 0.8,
+
+        .num = 1,
+        .spread_type = SPREAD_TYPE_RANDOM,
+        .spread = 0.0,
+        .ghost_chance = 0.0,
+        .homing_chance = 0.0,
+        .poison_chance = 0.0,
+        .cold_chance = 0.0,
+        .fire_chance = 0.0,
     },
     {
         // geizer
@@ -126,6 +153,15 @@ ProjectileDef projectile_lookup[] = {
         .color2 = 0x00FF5050,
         .scale1 = 0.8,
         .scale2 = 0.8,
+
+        .num = 1,
+        .spread_type = SPREAD_TYPE_RANDOM,
+        .spread = 0.0,
+        .ghost_chance = 0.0,
+        .homing_chance = 0.0,
+        .poison_chance = 0.0,
+        .cold_chance = 0.0,
+        .fire_chance = 0.0,
     },
     {
         // clinger
@@ -144,6 +180,15 @@ ProjectileDef projectile_lookup[] = {
         .color2 = 0x00FF5050,
         .scale1 = 0.8,
         .scale2 = 0.8,
+
+        .num = 1,
+        .spread_type = SPREAD_TYPE_RANDOM,
+        .spread = 0.0,
+        .ghost_chance = 0.0,
+        .homing_chance = 0.0,
+        .poison_chance = 0.0,
+        .cold_chance = 0.0,
+        .fire_chance = 0.0,
     },
     {
         // totem blue
@@ -162,6 +207,15 @@ ProjectileDef projectile_lookup[] = {
         .color2 = 0x00FF5050,
         .scale1 = 0.8,
         .scale2 = 0.8,
+
+        .num = 1,
+        .spread_type = SPREAD_TYPE_RANDOM,
+        .spread = 0.0,
+        .ghost_chance = 0.0,
+        .homing_chance = 0.0,
+        .poison_chance = 0.0,
+        .cold_chance = 1.0,
+        .fire_chance = 0.0,
     },
     {
         // watcher
@@ -185,78 +239,7 @@ ProjectileDef projectile_lookup[] = {
         .orbital_distance = 50.0,
         .orbital_speed_factor = 4.0,
         .orbital_max_count = 4,
-    },
-};
 
-ProjectileSpawn projectile_spawn[] = {
-    {
-        // player
-        .num = 1,
-        .spread_type = SPREAD_TYPE_RANDOM,
-        .spread = 30.0,
-        .ghost_chance = 0.0,
-        .homing_chance = 0.0,
-        .poison_chance = 0.0,
-        .cold_chance = 0.0,
-        .fire_chance = 0.0,
-    },
-    {
-        // player - kinetic discharge skill
-        .num = 1,
-        .spread_type = SPREAD_TYPE_RANDOM,
-        .spread = 360.0,
-        .ghost_chance = 0.0,
-        .homing_chance = 0.20,
-        .poison_chance = 0.0,
-        .cold_chance = 0.0,
-        .fire_chance = 0.0,
-    },
-    {
-        // creature generic
-        .num = 1,
-        .spread_type = SPREAD_TYPE_RANDOM,
-        .spread = 0.0,
-        .ghost_chance = 0.0,
-        .homing_chance = 0.0,
-        .poison_chance = 0.0,
-        .cold_chance = 0.0,
-        .fire_chance = 0.0,
-    },
-    {
-        // geizer
-        .num = 1,
-        .spread_type = SPREAD_TYPE_RANDOM,
-        .spread = 0.0,
-        .ghost_chance = 0.0,
-        .homing_chance = 0.0,
-        .poison_chance = 0.0,
-        .cold_chance = 0.0,
-        .fire_chance = 0.0,
-    },
-    {
-        // clinger
-        .num = 1,
-        .spread_type = SPREAD_TYPE_RANDOM,
-        .spread = 0.0,
-        .ghost_chance = 0.0,
-        .homing_chance = 0.0,
-        .poison_chance = 0.0,
-        .cold_chance = 0.0,
-        .fire_chance = 0.0,
-    },
-    {
-        // totem blue
-        .num = 1,
-        .spread_type = SPREAD_TYPE_RANDOM,
-        .spread = 0.0,
-        .ghost_chance = 0.0,
-        .homing_chance = 0.0,
-        .poison_chance = 0.0,
-        .cold_chance = 1.0,
-        .fire_chance = 0.0,
-    },
-    {
-        // watcher
         .num = 1,
         .spread_type = SPREAD_TYPE_RANDOM,
         .spread = 0.0,
@@ -265,7 +248,7 @@ ProjectileSpawn projectile_spawn[] = {
         .poison_chance = 0.0,
         .cold_chance = 0.0,
         .fire_chance = 0.0,
-    }
+    },
 };
 
 static uint16_t id_counter = 1;
@@ -324,23 +307,23 @@ static float calc_orbital_target(Projectile* proj)
     proj->orbital_pos_target.y = -(sinf(target_angle)*actual_orb_distance);
 }
 
-static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player, Physics* phys)
+static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, Physics* phys)
 {
     if(role == ROLE_CLIENT)
         return;
 
     Projectile proj = {0};
 
-    proj.def = *def;
+    proj.gun = *gun;
 
     Rect vr = gfx_images[projectile_image].visible_rects[0];
 
-    vr.w *= def->scale1;
-    vr.h *= def->scale1;
+    vr.w *= gun->scale1;
+    vr.h *= gun->scale1;
 
-    proj.color = def->color1;
-    proj.scale = def->scale1;
-    proj.sprite_index = def->sprite_index;
+    proj.color = gun->color1;
+    proj.scale = gun->scale1;
+    proj.sprite_index = gun->sprite_index;
     proj.phys.height = vr.h;
     proj.phys.width =  vr.w;
     proj.phys.length = vr.w;
@@ -349,17 +332,17 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
     proj.phys.pos.y = pos.y;
     proj.phys.pos.z = pos.z;
     proj.phys.mass = 1.0;
-    proj.phys.speed = def->speed;
-    proj.phys.max_velocity = 2.0*def->speed;
-    proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * def->scale1;
-    proj.phys.amorphous = proj.def.bouncy ? false : true;
-    proj.phys.elasticity = proj.def.bouncy ? 1.0 : 0.1;
+    proj.phys.speed = gun->speed;
+    proj.phys.max_velocity = 2.0*gun->speed;
+    proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * gun->scale1;
+    proj.phys.amorphous = proj.gun.bouncy ? false : true;
+    proj.phys.elasticity = proj.gun.bouncy ? 1.0 : 0.1;
     proj.phys.curr_room = curr_room;
     proj.from_player = from_player;
     proj.angle_deg = angle_deg;
-    proj.ttl = def->lifetime;
+    proj.ttl = gun->lifetime;
 
-    if(def->is_orbital)
+    if(gun->is_orbital)
     {
         // assign projectile to orbital
         ProjectileOrbital* orbital = NULL;
@@ -376,7 +359,7 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
                 continue;
             }
 
-            if(phys == orb->body && def->orbital_distance == orb->distance)
+            if(phys == orb->body && gun->orbital_distance == orb->distance)
             {
                 new_orbital = false;
                 orbital = orb;
@@ -395,9 +378,9 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
             orbital_count++;
             printf("New orbital! Count: %d\n", orbital_count);
             orbital->body = phys;
-            orbital->distance = def->orbital_distance;
-            orbital->speed_factor = def->orbital_speed_factor;
-            orbital->max_count = def->orbital_max_count;
+            orbital->distance = gun->orbital_distance;
+            orbital->speed_factor = gun->orbital_speed_factor;
+            orbital->max_count = gun->orbital_max_count;
             orbital->base_angle = 0.0;
             orbital->evolution = PROJ_ORB_EVOLUTION_NONE;
         }
@@ -445,44 +428,44 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
         }
     }
 
-    proj.cluster_stage = spawn->cluster_stage;
+    proj.cluster_stage = gun->cluster_stage;
 
-    float spread = spawn->spread_type == SPREAD_TYPE_RANDOM ? spawn->spread/2.0 : spawn->spread / spawn->num;
-    float spread_angle_start = angle_deg - (spawn->spread/2.0);
+    float spread = gun->spread_type == SPREAD_TYPE_RANDOM ? gun->spread/2.0 : gun->spread / gun->num;
+    float spread_angle_start = angle_deg - (gun->spread/2.0);
 
     uint16_t target_ids[32] = {0};
     int target_count = 0;
 
-    for(int i = 0; i < spawn->num; ++i)
+    for(int i = 0; i < gun->num; ++i)
     {
         Projectile p = {0};
         memcpy(&p, &proj, sizeof(Projectile));
         p.id = get_id();
 
-        p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= spawn->ghost_chance;
-        p.poison = RAND_FLOAT(0.0,1.0) <= spawn->poison_chance;
-        p.cold = RAND_FLOAT(0.0,1.0) <= spawn->cold_chance;
-        p.fire = RAND_FLOAT(0.0,1.0) <= spawn->fire_chance;
-        bool homing = RAND_FLOAT(0.0,1.0) <= spawn->homing_chance;
+        p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= gun->ghost_chance;
+        p.poison = RAND_FLOAT(0.0,1.0) <= gun->poison_chance;
+        p.cold = RAND_FLOAT(0.0,1.0) <= gun->cold_chance;
+        p.fire = RAND_FLOAT(0.0,1.0) <= gun->fire_chance;
+        bool homing = RAND_FLOAT(0.0,1.0) <= gun->homing_chance;
 
         if(!FEQ0(spread) && i > 0)
         {
-            if(spawn->spread_type == SPREAD_TYPE_RANDOM)
+            if(gun->spread_type == SPREAD_TYPE_RANDOM)
             {
                 p.angle_deg += RAND_FLOAT(-spread, spread);
             }
-            else if(spawn->spread_type == SPREAD_TYPE_UNIFORM)
+            else if(gun->spread_type == SPREAD_TYPE_UNIFORM)
             {
                 p.angle_deg = angle_deg + (i*spread);
-                if(p.angle_deg > angle_deg + spawn->spread/2.0)
-                    p.angle_deg += (360 - spawn->spread);
+                if(p.angle_deg > angle_deg + gun->spread/2.0)
+                    p.angle_deg += (360 - gun->spread);
             }
         }
 
         float angle = RAD(p.angle_deg);
 
-        p.phys.vel.x = +(p.def.speed)*cosf(angle) + vel->x;
-        p.phys.vel.y = -(p.def.speed)*sinf(angle) + vel->y;
+        p.phys.vel.x = +(p.gun.speed)*cosf(angle) + vel->x;
+        p.phys.vel.y = -(p.gun.speed)*sinf(angle) + vel->y;
         p.phys.vel.z = vel->z;
 
         /*
@@ -508,8 +491,8 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
                 Vector2f v = {tx - p.phys.pos.x, ty - p.phys.pos.y};
                 normalize(&v);
                 p.angle_deg = calc_angle_deg(p.phys.pos.x, p.phys.pos.y, tx, ty);
-                p.phys.vel.x = v.x * p.def.speed;
-                p.phys.vel.y = v.y * p.def.speed;
+                p.phys.vel.x = v.x * p.gun.speed;
+                p.phys.vel.y = v.y * p.gun.speed;
 
                 target_ids[target_count++] = id;
             }
@@ -517,8 +500,8 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
             {
                 p.angle_deg = rand() % 360;
                 float angle = RAD(p.angle_deg);
-                p.phys.vel.x = +(p.def.speed)*cosf(angle) + vel->x;
-                p.phys.vel.y = -(p.def.speed)*sinf(angle) + vel->y;
+                p.phys.vel.x = +(p.gun.speed)*cosf(angle) + vel->x;
+                p.phys.vel.y = -(p.gun.speed)*sinf(angle) + vel->y;
                 p.phys.vel.z = 80.0;
             }
         }
@@ -526,7 +509,7 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
         // p.source_explode = audio_source_create(false);
         // audio_source_assign_buffer(p.source_explode, audio_buffer_explode);
 
-        // printf("%s damage: %.2f\n", __func__, p.def.damage);
+        // printf("%s damage: %.2f\n", __func__, p.gun.damage);
 
         // p.phys.pos.z = 400.0;
         // p.phys.vel.x = 0;
@@ -537,21 +520,21 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
     }
 }
 
-void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player)
+void projectile_add(Physics* phys, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player)
 {
     Vector3f pos = {phys->pos.x, phys->pos.y, phys->height/2.0 + phys->pos.z};
     Vector3f vel = {phys->vel.x, phys->vel.y, 0.0};
 
-    projectile_add_internal(pos, &vel, curr_room, def, spawn, color, angle_deg, from_player, phys);
+    projectile_add_internal(pos, &vel, curr_room, gun, color, angle_deg, from_player, phys);
 }
 
-void projectile_drop(Vector3f pos, float vel0_z, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, bool from_player)
+void projectile_drop(Vector3f pos, float vel0_z, uint8_t curr_room, Gun* gun, uint32_t color, bool from_player)
 {
     Vector3f vel = {0.0, 0.0, vel0_z};
-    projectile_add_internal(pos, &vel, curr_room, def, spawn, color, 0.0, from_player, NULL);
+    projectile_add_internal(pos, &vel, curr_room, gun, color, 0.0, from_player, NULL);
 }
 
-void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player)
+void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player)
 {
     Vector3f pos = {phys->pos.x, phys->pos.y, phys->height + phys->pos.z};
     //Vector3f pos = {phys->pos.x, phys->pos.y, phys->height*2.0 + phys->pos.z};
@@ -562,7 +545,7 @@ void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, ProjectileDe
     vel.x = phys->vel.x;
     vel.y = phys->vel.y;
 
-    projectile_add_internal(pos, &vel, curr_room, def, spawn, color, angle_deg, from_player, phys);
+    projectile_add_internal(pos, &vel, curr_room, gun, color, angle_deg, from_player, phys);
 }
 
 void projectile_kill(Projectile* proj)
@@ -575,11 +558,11 @@ void projectile_kill(Projectile* proj)
     //audio_source_play(proj->source_explode);
     //audio_source_delete(proj->source_explode);
 
-    ProjectileDef pd = proj->def;
-    bool more_cluster = proj->def.cluster && (proj->cluster_stage < (3) && proj->cluster_stage < (pd.cluster_stages));
+    Gun gun = proj->gun;
+    bool more_cluster = proj->gun.cluster && (proj->cluster_stage < (3) && proj->cluster_stage < (gun.cluster_stages));
 
     const float scale_particle_thresh = 0.25;
-    float pscale = MIN(1.0, proj->def.scale2);
+    float pscale = MIN(1.0, proj->gun.scale2);
 
     if(pscale > scale_particle_thresh && !more_cluster)
     {
@@ -623,13 +606,13 @@ void projectile_kill(Projectile* proj)
 
     if(role != ROLE_SERVER)
     {
-        if(proj->def.explosive)
+        if(proj->gun.explosive)
         {
-            explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->def.scale2, 100.0*proj->def.scale2, proj->phys.curr_room, proj->from_player);
+            explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->gun.scale2, 100.0*proj->gun.scale2, proj->phys.curr_room, proj->from_player);
         }
     }
 
-    if(proj->def.is_orbital)
+    if(proj->gun.is_orbital)
     {
         proj->orbital->count--;
         //proj->orbital->lerp_t = 0.0;
@@ -667,46 +650,45 @@ void projectile_kill(Projectile* proj)
         }
     }
 
-    if(proj->def.cluster)
+    if(proj->gun.cluster)
     {
 
         if(!more_cluster)
             return;
 
         // printf("cluster\n");
-        ProjectileDef pd = proj->def;
+        Gun gun = proj->gun;
 
-        if(proj->cluster_stage >= (3) || proj->cluster_stage >= (pd.cluster_stages))
+        if(proj->cluster_stage >= (3) || proj->cluster_stage >= (gun.cluster_stages))
         {
             return;
         }
 
-        // pd.damage *= 0.8;
+        // gun.damage *= 0.8;
 
-        pd.cluster = true;
-        pd.scale1 = pd.cluster_scales[proj->cluster_stage];
-        pd.scale2 = pd.cluster_scales[proj->cluster_stage];
+        gun.cluster = true;
+        gun.scale1 = gun.cluster_scales[proj->cluster_stage];
+        gun.scale2 = gun.cluster_scales[proj->cluster_stage];
 
         // pd.cluster = false;
         // pd.scale *= 0.5;
         // if(pd.scale <= 0.05)
         //     return;
-        pd.speed = 50.0;
+        gun.speed = 50.0;
 
-        ProjectileSpawn sp = {0};
-        sp.num = pd.cluster_num[proj->cluster_stage];
+        gun.num = gun.cluster_num[proj->cluster_stage];
 
         float angle_deg = proj->angle_deg;
         // float angle_deg = rand() % 360;
-        sp.spread = 210.0;
+        gun.spread = 210.0;
 
         // sp.spread = 360.0;
-        sp.cluster_stage = proj->cluster_stage+1;
+        gun.cluster_stage = proj->cluster_stage+1;
         // proj->phys.vel.x = 0.0;
         // proj->phys.vel.y = 0.0;
         proj->phys.vel.x /= 2.0;
         proj->phys.vel.y /= 2.0;
-        projectile_add(&proj->phys, proj->phys.curr_room, &pd, &sp, proj->color, angle_deg, proj->from_player);
+        projectile_add(&proj->phys, proj->phys.curr_room, &gun, proj->color, angle_deg, proj->from_player);
     }
 }
 
@@ -747,7 +729,7 @@ void projectile_update_all(float dt)
 
         float _dt = dt;
 
-        if(proj->def.is_orbital && proj->orbital->body)
+        if(proj->gun.is_orbital && proj->orbital->body)
         {
             // make sure orbital projectile follows player through rooms
             proj->phys.curr_room = proj->orbital->body->curr_room;
@@ -763,7 +745,7 @@ void projectile_update_all(float dt)
             proj->phys.pos.x = pos.x + proj->orbital->body->pos.x;
             proj->phys.pos.y = pos.y + proj->orbital->body->pos.y;
 
-            proj->phys.pos.z = proj->orbital->body->height / 2.0;
+            proj->phys.pos.z = proj->orbital->body->height / 2.0 + proj->orbital->body->pos.z;
 
             // set velocity for brevity? Although this isn't needed
             Vector2f f = {
@@ -773,8 +755,8 @@ void projectile_update_all(float dt)
 
             normalize(&f);
 
-            proj->phys.vel.x = proj->def.speed * f.y;
-            proj->phys.vel.y = proj->def.speed * -f.x;
+            proj->phys.vel.x = proj->gun.speed * f.y;
+            proj->phys.vel.y = proj->gun.speed * -f.x;
         }
         else
         {
@@ -783,16 +765,16 @@ void projectile_update_all(float dt)
             // printf("%3d %.4f\n", i, delta_t);
             proj->ttl -= _dt;
 
-            proj->angle_deg += proj->def.angular_vel_factor * _dt;
+            proj->angle_deg += proj->gun.angular_vel_factor * _dt;
 
             float angle = RAD(proj->angle_deg);
 
-            if(proj->def.directional_accel != 0.0)
+            if(proj->gun.directional_accel != 0.0)
             {
                 Vector2f f = {cos(angle), -sin(angle)};
                 normalize(&f);
 
-                float accel = proj->def.directional_accel * 1500.0 * _dt;
+                float accel = proj->gun.directional_accel * 1500.0 * _dt;
 
                 proj->phys.vel.x += (f.x * accel);
                 proj->phys.vel.y += (f.y * accel);
@@ -804,15 +786,14 @@ void projectile_update_all(float dt)
                     Vector2f c = {proj->phys.vel.x, proj->phys.vel.y};
                     normalize(&c);
 
-                    proj->phys.vel.x = c.x * proj->def.speed;
-                    proj->phys.vel.y = c.y * proj->def.speed;
+                    proj->phys.vel.x = c.x * proj->gun.speed;
+                    proj->phys.vel.y = c.y * proj->gun.speed;
                 }
-
             }
 
-            float cfactor = proj->ttl / proj->def.lifetime;
-            proj->color = gfx_blend_colors(proj->def.color2, proj->def.color1, cfactor);
-            proj->scale = lerp(proj->def.scale2, proj->def.scale1, cfactor);
+            float cfactor = proj->ttl / proj->gun.lifetime;
+            proj->color = gfx_blend_colors(proj->gun.color2, proj->gun.color1, cfactor);
+            proj->scale = lerp(proj->gun.scale2, proj->gun.scale1, cfactor);
         }
 
         //printf("adding %f %f; vel: %f %f\n",f.x, f.y, proj->phys.vel.x, proj->phys.vel.y);
@@ -824,9 +805,9 @@ void projectile_update_all(float dt)
         proj->phys.pos.x += _dt*proj->phys.vel.x;
         proj->phys.pos.y += _dt*proj->phys.vel.y;
 
-        if(!proj->def.is_orbital)
+        if(!proj->gun.is_orbital)
         {
-            phys_apply_gravity(&proj->phys, proj->def.gravity_factor, _dt);
+            phys_apply_gravity(&proj->phys, proj->gun.gravity_factor, _dt);
         }
 
         // printf("proj->phys.pos.z: %.2f\n", proj->phys.pos.z);
@@ -867,7 +848,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 {
     if(proj->phys.dead) return;
 
-    ProjectileDef* projdef = &proj->def;
+    Gun* gun = &proj->gun;
 
     uint8_t curr_room = 0;
     Physics* phys = NULL;
@@ -936,7 +917,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 
         if(hit)
         {
-            if(!projdef->penetrate)
+            if(!gun->penetrate)
             {
                 CollisionInfo ci = {0.0,0.0};
                 proj->phys.pos.x = proj->phys.prior_pos.x;
@@ -964,19 +945,19 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
             switch(e->type)
             {
                 case ENTITY_TYPE_PLAYER:
-                    player_hurt((Player*)e->ptr, projdef->damage);
+                    player_hurt((Player*)e->ptr, gun->damage);
                     break;
                 case ENTITY_TYPE_CREATURE:
-                    // printf("%s damage: %.2f\n", __func__, projdef->damage);
-                    creature_hurt((Creature*)e->ptr, projdef->damage);
+                    // printf("%s damage: %.2f\n", __func__, gun->damage);
+                    creature_hurt((Creature*)e->ptr, gun->damage);
                     break;
             }
         }
     }
 
-    if(hit && projdef->explosive)
+    if(hit && gun->explosive)
     {
-        explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->def.scale2, 100.0*proj->def.scale2, proj->phys.curr_room, proj->from_player);
+        explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->gun.scale2, 100.0*proj->gun.scale2, proj->phys.curr_room, proj->from_player);
     }
 }
 

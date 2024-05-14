@@ -529,43 +529,6 @@ bool item_is_heart(ItemType type)
     return (type >= ITEM_HEART_FULL && type <= ITEM_HEART_HALF);
 }
 
-void item_apply_gauntlet(void* _proj_def, void* _proj_spawn, Item* gauntlet, uint8_t num_slots)
-{
-    ProjectileDef* proj_def = (ProjectileDef*)_proj_def;
-    ProjectileSpawn* proj_spawn = (ProjectileSpawn*)_proj_spawn;
-
-    for(int i = 0; i < num_slots; ++i)
-    {
-        Item* item = &gauntlet[i];
-        if(item->type == ITEM_NONE)
-            continue;
-
-        switch(item->type)
-        {
-            case ITEM_GEM_RED:
-                proj_def->damage += 1.0;
-                break;
-            case ITEM_GEM_GREEN:
-                proj_spawn->poison_chance = 1.0;
-                break;
-            case ITEM_GEM_BLUE:
-                proj_spawn->cold_chance = 1.0;
-                break;
-            case ITEM_GEM_WHITE:
-                proj_spawn->num += 1;
-                break;
-            case ITEM_GEM_YELLOW:
-                proj_def->bouncy = true;
-                break;
-            case ITEM_GEM_PURPLE:
-                proj_spawn->ghost_chance = 1.0;
-                break;
-            default:
-                break;
-        }
-    }
-}
-
 ItemType item_get_random_chestable()
 {
     int r = rand() % num_chestables;

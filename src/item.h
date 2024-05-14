@@ -130,6 +130,5 @@ void item_update_all(float dt);
 void item_draw(Item* pu);
 void item_lerp(Item* it, double dt);
 void item_handle_collision(Item* p, Entity* e);
-void item_apply_gauntlet(void* _proj_def, void* _proj_spawn, Item* gauntlet, uint8_t num_slots);
 bool item_is_on_tile(Room* room, int tile_x, int tile_y);
 

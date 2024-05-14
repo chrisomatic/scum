@@ -137,8 +137,7 @@ typedef struct
     Skill skills[PLAYER_MAX_SKILLS];
     int skill_count;
 
-    ProjectileDef proj_def;
-    ProjectileSpawn proj_spawn;
+    Gun gun;
 
     Weapon weapon;
 

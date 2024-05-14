@@ -20,6 +20,13 @@ typedef enum
     PROJECTILE_TYPE_MAX
 } ProjectileType;
 
+typedef enum
+{
+    SPREAD_TYPE_RANDOM = 0,
+    SPREAD_TYPE_UNIFORM,
+    SPREAD_TYPE_COUNT,
+} SpreadType;
+
 typedef struct
 {
     float damage;
@@ -53,17 +60,7 @@ typedef struct
     float orbital_speed_factor;
     int   orbital_max_count;
 
-} ProjectileDef;
-
-typedef enum
-{
-    SPREAD_TYPE_RANDOM = 0,
-    SPREAD_TYPE_UNIFORM,
-    SPREAD_TYPE_COUNT,
-} SpreadType;
-
-typedef struct
-{
+    // spawn properties
     int num;
 
     SpreadType spread_type;
@@ -76,8 +73,8 @@ typedef struct
     float fire_chance;
 
     int cluster_stage;
-} ProjectileSpawn;
 
+} Gun;
 
 typedef enum
 {
@@ -110,7 +107,7 @@ typedef struct
 
     uint16_t id;
 
-    ProjectileDef def;
+    Gun gun;
     Physics phys;
 
     float ttl;
@@ -152,15 +149,14 @@ typedef struct
 
 extern Projectile projectiles[MAX_PROJECTILES];
 extern Projectile prior_projectiles[MAX_PROJECTILES];
-extern ProjectileDef projectile_lookup[];
-extern ProjectileSpawn projectile_spawn[];
+extern Gun gun_lookup[];
 extern glist* plist;
 
 void projectile_init();
 void projectile_clear_all();
-void projectile_add(Physics* phys, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player);
-void projectile_drop(Vector3f pos, float vel0_z, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, bool from_player);
-void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, ProjectileDef* def, ProjectileSpawn* spawn, uint32_t color, float angle_deg, bool from_player);
+void projectile_add(Physics* phys, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player);
+void projectile_drop(Vector3f pos, float vel0_z, uint8_t curr_room, Gun* gun, uint32_t color, bool from_player);
+void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player);
 void projectile_update_hit_box(Projectile* proj);
 void projectile_update_all(float dt);
 void projectile_kill(Projectile* proj);

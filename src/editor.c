@@ -456,27 +456,25 @@ void editor_draw()
 
                     imgui_button("Randomize");
 
-                    ProjectileDef* projd = &projectile_lookup[proj_sel];
-                    ProjectileSpawn* projs = &projectile_spawn[proj_sel];
+                    Gun* gun = &gun_lookup[proj_sel];
 
                     if(proj_sel == PROJECTILE_TYPE_PLAYER)
                     {
-                        projd = &player->proj_def;
-                        projs = &player->proj_spawn;
+                        gun = &player->gun;
                     }
 
-                    imgui_slider_float("Damage", 0.0,100.0,&projd->damage);
-                    imgui_slider_float("Base Speed", 100.0,1000.0,&projd->speed);
-                    imgui_slider_float("Angular Vel Factor", -1000.0,1000.0,&projd->angular_vel_factor);
-                    imgui_slider_float("Directional Accel", -1.0,1.0,&projd->directional_accel);
-                    imgui_slider_float("Gravity Factor", 0.0,1.0,&projd->gravity_factor);
-                    imgui_slider_float("Lifetime", 0.0,5.0,&projd->lifetime);
+                    imgui_slider_float("Damage", 0.0,100.0,&gun->damage);
+                    imgui_slider_float("Base Speed", 100.0,1000.0,&gun->speed);
+                    imgui_slider_float("Angular Vel Factor", -1000.0,1000.0,&gun->angular_vel_factor);
+                    imgui_slider_float("Directional Accel", -1.0,1.0,&gun->directional_accel);
+                    imgui_slider_float("Gravity Factor", 0.0,1.0,&gun->gravity_factor);
+                    imgui_slider_float("Lifetime", 0.0,5.0,&gun->lifetime);
 
-                    imgui_slider_float("Scale1", 0.1, 5.0,&projd->scale1);
-                    imgui_slider_float("Scale2", 0.1, 5.0,&projd->scale2);
+                    imgui_slider_float("Scale1", 0.1, 5.0,&gun->scale1);
+                    imgui_slider_float("Scale2", 0.1, 5.0,&gun->scale2);
 
-                    imgui_color_picker("Color1", &projd->color1);
-                    imgui_color_picker("Color2", &projd->color2);
+                    imgui_color_picker("Color1", &gun->color1);
+                    imgui_color_picker("Color2", &gun->color2);
 
                     char* spread_type_names[SPREAD_TYPE_COUNT] = {0};
                     for(int i = 0; i < SPREAD_TYPE_COUNT; ++i)
@@ -484,50 +482,50 @@ void editor_draw()
 
                     static int spread_type_sel = 0;
                     imgui_dropdown(spread_type_names, SPREAD_TYPE_COUNT, "Spread Type", &spread_type_sel, NULL);
-                    projs->spread_type = spread_type_sel;
-                    imgui_slider_float("Angle Spread", 0.0, 360.0,&projs->spread);
+                    gun->spread_type = spread_type_sel;
+                    imgui_slider_float("Angle Spread", 0.0, 360.0,&gun->spread);
 
-                    imgui_number_box("Sprite Index", 0,8, &projd->sprite_index);
+                    imgui_number_box("Sprite Index", 0,8, &gun->sprite_index);
 
-                    int num = projs->num;
+                    int num = gun->num;
                     imgui_number_box("Num", 1,100, &num);
-                    projs->num = num;
+                    gun->num = num;
 
                     imgui_text_sized(20.0,"Attributes:");
                     imgui_horizontal_line(1);
-                    imgui_checkbox("Explosive", &projd->explosive);
-                    imgui_checkbox("Bouncy", &projd->bouncy);
-                    imgui_checkbox("Penetrate", &projd->penetrate);
-                    imgui_checkbox("Cluster", &projd->cluster);
+                    imgui_checkbox("Explosive", &gun->explosive);
+                    imgui_checkbox("Bouncy", &gun->bouncy);
+                    imgui_checkbox("Penetrate", &gun->penetrate);
+                    imgui_checkbox("Cluster", &gun->cluster);
 
                     imgui_horizontal_begin();
-                        imgui_checkbox("Orbital", &projd->is_orbital);
-                        imgui_slider_float("Orbital Distance", 1.0,100.0, &projd->orbital_distance);
+                        imgui_checkbox("Orbital", &gun->is_orbital);
+                        imgui_slider_float("Orbital Distance", 1.0,100.0, &gun->orbital_distance);
                     imgui_horizontal_end();
 
-                    if(projd->cluster)
+                    if(gun->cluster)
                     {
-                        imgui_number_box("Cluster Stages", 1,3, &projd->cluster_stages);
+                        imgui_number_box("Cluster Stages", 1,3, &gun->cluster_stages);
 
-                        imgui_number_box("Stage 1 Num", 1,10, &projd->cluster_num[0]);
-                        imgui_slider_float("Stage 1 Scale", 0.1, 2.0, &projd->cluster_scales[0]);
+                        imgui_number_box("Stage 1 Num", 1,10, &gun->cluster_num[0]);
+                        imgui_slider_float("Stage 1 Scale", 0.1, 2.0, &gun->cluster_scales[0]);
 
-                        if(projd->cluster_stages >= 2)
+                        if(gun->cluster_stages >= 2)
                         {
-                            imgui_number_box("Stage 2 Num", 1,10, &projd->cluster_num[1]);
-                            imgui_slider_float("Stage 2 Scale", 0.1, 2.0, &projd->cluster_scales[1]);
+                            imgui_number_box("Stage 2 Num", 1,10, &gun->cluster_num[1]);
+                            imgui_slider_float("Stage 2 Scale", 0.1, 2.0, &gun->cluster_scales[1]);
                         }
 
-                        if(projd->cluster_stages >= 3)
+                        if(gun->cluster_stages >= 3)
                         {
-                            imgui_number_box("Stage 3 Num", 1,10, &projd->cluster_num[2]);
-                            imgui_slider_float("Stage 3 Scale", 0.1, 2.0, &projd->cluster_scales[2]);
+                            imgui_number_box("Stage 3 Num", 1,10, &gun->cluster_num[2]);
+                            imgui_slider_float("Stage 3 Scale", 0.1, 2.0, &gun->cluster_scales[2]);
                         }
                     }
-                    imgui_slider_float("Homing Chance", 0.0, 1.0, &projs->homing_chance);
-                    imgui_slider_float("Ghost Chance", 0.0, 1.0, &projs->ghost_chance);
-                    imgui_slider_float("Cold Chance", 0.0, 1.0, &projs->cold_chance);
-                    imgui_slider_float("Poison Chance", 0.0, 1.0,&projs->poison_chance);
+                    imgui_slider_float("Homing Chance", 0.0, 1.0, &gun->homing_chance);
+                    imgui_slider_float("Ghost Chance", 0.0, 1.0, &gun->ghost_chance);
+                    imgui_slider_float("Cold Chance", 0.0, 1.0, &gun->cold_chance);
+                    imgui_slider_float("Poison Chance", 0.0, 1.0,&gun->poison_chance);
                 }
 
             } break;
