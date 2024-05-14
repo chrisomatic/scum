@@ -38,10 +38,11 @@ typedef struct
     bool bouncy;
     bool penetrate;
 
-    Vector3f accel;
     float gravity_factor;
     float directional_accel;
-    float angular_vel_factor;
+
+    float wave_amplitude;
+    float wave_period;
 
     int sprite_index;
 
@@ -119,6 +120,8 @@ typedef struct
 
     float radius;
     float angle_deg;
+    float wave_time;
+    int  wave_dir;
     uint8_t curr_room;
 
     uint8_t player_id;

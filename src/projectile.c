@@ -765,9 +765,8 @@ void projectile_update_all(float dt)
             // printf("%3d %.4f\n", i, delta_t);
             proj->ttl -= _dt;
 
-            proj->angle_deg += proj->gun.angular_vel_factor * _dt;
-
             float angle = RAD(proj->angle_deg);
+            float vel_magn = magn(proj->phys.vel);
 
             if(proj->gun.directional_accel != 0.0)
             {
@@ -779,7 +778,7 @@ void projectile_update_all(float dt)
                 proj->phys.vel.x += (f.x * accel);
                 proj->phys.vel.y += (f.y * accel);
 
-                float vel_magn = magn(proj->phys.vel);
+                /*
                 if(vel_magn > proj->phys.max_velocity)
                 {
                     // cap vel
@@ -789,7 +788,32 @@ void projectile_update_all(float dt)
                     proj->phys.vel.x = c.x * proj->gun.speed;
                     proj->phys.vel.y = c.y * proj->gun.speed;
                 }
+                */
             }
+
+            if(proj->gun.wave_amplitude > 0.0)
+            {
+                if(proj->gun.wave_period > 0.0)
+                {
+                    Vector2f f = {sin(angle), -cos(angle)};
+                    normalize(&f);
+
+                    proj->wave_time += _dt;
+
+                    if(proj->wave_time >= proj->gun.wave_period)
+                    {
+                        proj->wave_time = 0;
+                        proj->wave_dir = proj->wave_dir == 1 ? -1 : 1;
+                    }
+
+                    f.x *= proj->wave_dir*proj->gun.wave_amplitude*5*_dt;
+                    f.y *= proj->wave_dir*proj->gun.wave_amplitude*5*_dt;
+
+                    proj->phys.vel.x += f.x;
+                    proj->phys.vel.y += f.y;
+                }
+            }
+
 
             float cfactor = proj->ttl / proj->gun.lifetime;
             proj->color = gfx_blend_colors(proj->gun.color2, proj->gun.color1, cfactor);

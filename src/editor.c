@@ -465,7 +465,8 @@ void editor_draw()
 
                     imgui_slider_float("Damage", 0.0,100.0,&gun->damage);
                     imgui_slider_float("Base Speed", 100.0,1000.0,&gun->speed);
-                    imgui_slider_float("Angular Vel Factor", -1000.0,1000.0,&gun->angular_vel_factor);
+                    imgui_slider_float("Wave Amplitude", 0.0,500.0,&gun->wave_amplitude);
+                    imgui_slider_float("Wave Period", 0.0,1.0,&gun->wave_period);
                     imgui_slider_float("Directional Accel", -1.0,1.0,&gun->directional_accel);
                     imgui_slider_float("Gravity Factor", 0.0,1.0,&gun->gravity_factor);
                     imgui_slider_float("Lifetime", 0.0,5.0,&gun->lifetime);
