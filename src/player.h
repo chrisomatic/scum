@@ -155,7 +155,6 @@ typedef struct
 
     uint8_t proj_charge;
     float proj_cooldown;
-    float proj_cooldown_max;
 
     bool invulnerable;
 

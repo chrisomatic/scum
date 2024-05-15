@@ -251,7 +251,7 @@ void ai_shoot_nearest_player(Creature* c)
     ProjectileType pt = creature_get_projectile_type(c);
     Gun gun = gun_lookup[pt];
 
-    projectile_add(&c->phys, c->phys.curr_room, &gun, COLOR_RED, angle, false);
+    projectile_fire(&c->phys, c->phys.curr_room, &gun, COLOR_RED, angle, false);
 }
 
 bool ai_on_target_tile(Creature* c)

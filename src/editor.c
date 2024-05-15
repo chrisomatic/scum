@@ -440,8 +440,6 @@ void editor_draw()
             {
                 imgui_text("Total Count: %u", plist->count);
 
-                imgui_slider_float("Player Cooldown", 0.0,1.0,&player->proj_cooldown_max);
-
                 if(role == ROLE_LOCAL)
                 {
                     char* proj_def_names[PROJECTILE_TYPE_MAX] = {0};
@@ -454,8 +452,6 @@ void editor_draw()
                     imgui_dropdown(proj_def_names, PROJECTILE_TYPE_MAX, "Projectile Definition", &proj_sel, NULL);
 
 
-                    imgui_button("Randomize");
-
                     Gun* gun = &gun_lookup[proj_sel];
 
                     if(proj_sel == PROJECTILE_TYPE_PLAYER)
@@ -463,46 +459,146 @@ void editor_draw()
                         gun = &player->gun;
                     }
 
-                    imgui_slider_float("Damage", 0.0,100.0,&gun->damage);
+                    if(imgui_button("Randomize"))
+                    {
+                        gun->damage_min = RAND_FLOAT(0.0,100.0);
+                        gun->damage_max = RAND_FLOAT(0.0,100.0);
+                        gun->lifetime   = RAND_FLOAT(0.0,5.0);
+                        gun->speed      = RAND_FLOAT(100.0,1000.0);
+                        gun->cooldown = RAND_FLOAT(0.1, 1.0);
+
+                        bool wavy = (rand() % 4 == 0);
+                        gun->wave_amplitude = wavy ? RAND_FLOAT(0.0,500.0) : 0.0;
+                        gun->wave_period = wavy ? RAND_FLOAT(0.0,1.0) : 0.0;
+
+                        bool accels = (rand() % 4 == 0);
+                        gun->directional_accel = accels ? RAND_FLOAT(-1.0,1.0) : 0.0;
+
+                        gun->gravity_factor = RAND_FLOAT(0.0,1.0);
+                        gun->scale1 = RAND_FLOAT(0.1,2.5);
+                        gun->scale2 = RAND_FLOAT(0.1,2.5);
+                        gun->color1 = rand();
+                        gun->color2 = rand();
+                        gun->knockback_factor = RAND_FLOAT(0.0,1.0);
+                        gun->critical_hit_chance = RAND_FLOAT(0.0,1.0);
+                        gun->spread_type = rand() % SPREAD_TYPE_COUNT;
+                        gun->spread = RAND_FLOAT(0.0, 360.0);
+
+                        gun->sprite_index = rand() % 5;
+
+                        bool more_than_one = (rand() % 4 == 0);
+                        gun->num = more_than_one ? rand() % 9 + 1 : 1;
+
+                        bool explosive = (rand() % 4 == 0);
+                        gun->explosion_chance = explosive ? RAND_FLOAT(0.0, 1.0) : 0.0;
+
+                        bool bouncy = (rand() % 4 == 0);
+                        gun->bounce_chance = bouncy ? RAND_FLOAT(0.0, 1.0) : 0.0;
+
+                        bool penetrative = (rand() % 4 == 0);
+                        gun->penetration_chance = penetrative ? RAND_FLOAT(0.0, 1.0) : 0.0;
+
+                        bool homing = (rand() % 4 == 0);
+                        gun->homing_chance = homing ? RAND_FLOAT(0.0, 1.0) : 0.0;
+
+                        bool ghost = (rand() % 4 == 0);
+                        gun->ghost_chance = ghost ? RAND_FLOAT(0.0, 1.0) : 0.0;
+
+                        bool burst = (rand() % 4 == 0);
+                        gun->burst_count = burst ? rand() % 4 + 1 : 0;
+                        gun->burst_rate  = burst ? RAND_FLOAT(0.1, 1.0) : 0.0;
+
+                        bool elemental = (rand() % 4 == 0);
+                        if(elemental)
+                        {
+                            gun->fire_chance = RAND_FLOAT(0.0, 1.0);
+                            gun->cold_chance = RAND_FLOAT(0.0, 1.0);
+                            gun->poison_chance = RAND_FLOAT(0.0, 1.0);
+                            gun->lightning_chance = RAND_FLOAT(0.0, 1.0);
+                        }
+                        else
+                        {
+                            gun->fire_chance = 0.0;
+                            gun->cold_chance = 0.0;
+                            gun->poison_chance = 0.0;
+                            gun->lightning_chance = 0.0;
+                        }
+
+                        //gun->is_orbital = rand() % 2;
+                        //gun->orbital_distance = RAND_FLOAT(1.0, 100.0);
+                        // TODO: cluster
+                    }
+
+                    imgui_horizontal_begin();
+                        imgui_slider_float("Damage Min", 0.0,100.0,&gun->damage_min);
+                        if(gun->damage_min > gun->damage_max)
+                            gun->damage_max = gun->damage_min;
+                        imgui_slider_float("Damage Max", 0.0,100.0,&gun->damage_max);
+                    imgui_horizontal_end();
+
+                    imgui_slider_float("Lifetime", 0.0,5.0,&gun->lifetime);
                     imgui_slider_float("Base Speed", 100.0,1000.0,&gun->speed);
-                    imgui_slider_float("Wave Amplitude", 0.0,500.0,&gun->wave_amplitude);
-                    imgui_slider_float("Wave Period", 0.0,1.0,&gun->wave_period);
+
+                    imgui_slider_float("Cooldown", 0.1,1.0,&gun->cooldown);
+
+                    imgui_horizontal_begin();
+                        imgui_slider_float("Wave Amplitude", 0.0,500.0,&gun->wave_amplitude);
+                        imgui_slider_float("Wave Period", 0.0,1.0,&gun->wave_period);
+                    imgui_horizontal_end();
+
                     imgui_slider_float("Directional Accel", -1.0,1.0,&gun->directional_accel);
                     imgui_slider_float("Gravity Factor", 0.0,1.0,&gun->gravity_factor);
-                    imgui_slider_float("Lifetime", 0.0,5.0,&gun->lifetime);
 
-                    imgui_slider_float("Scale1", 0.1, 5.0,&gun->scale1);
-                    imgui_slider_float("Scale2", 0.1, 5.0,&gun->scale2);
+                    imgui_horizontal_begin();
+                        imgui_number_box("Burst Count", 0, 4,&gun->burst_count);
+                        imgui_slider_float("Burst Rate", 0.1, 1.0,&gun->burst_rate);
+                    imgui_horizontal_end();
 
-                    imgui_color_picker("Color1", &gun->color1);
-                    imgui_color_picker("Color2", &gun->color2);
+                    imgui_horizontal_begin();
+                        imgui_slider_float("Scale1", 0.1, 2.5,&gun->scale1);
+                        imgui_slider_float("Scale2", 0.1, 2.5,&gun->scale2);
+                    imgui_horizontal_end();
+
+                    imgui_horizontal_begin();
+                        imgui_color_picker("Color1", &gun->color1);
+                        imgui_color_picker("Color2", &gun->color2);
+                    imgui_horizontal_end();
+
+                    imgui_horizontal_begin();
+                        imgui_slider_float("Knockback Factor", 0.0, 1.0, &gun->knockback_factor);
+                        imgui_slider_float("Critical Hit Chance", 0.0, 1.0, &gun->critical_hit_chance);
+                    imgui_horizontal_end();
 
                     char* spread_type_names[SPREAD_TYPE_COUNT] = {0};
                     for(int i = 0; i < SPREAD_TYPE_COUNT; ++i)
                         spread_type_names[i] = (char*)projectile_spread_type_get_name(i);
 
                     static int spread_type_sel = 0;
-                    imgui_dropdown(spread_type_names, SPREAD_TYPE_COUNT, "Spread Type", &spread_type_sel, NULL);
-                    gun->spread_type = spread_type_sel;
-                    imgui_slider_float("Angle Spread", 0.0, 360.0,&gun->spread);
+                    imgui_horizontal_begin();
+                        imgui_dropdown(spread_type_names, SPREAD_TYPE_COUNT, "Spread Type", &spread_type_sel, NULL);
+                        gun->spread_type = spread_type_sel;
+                        imgui_slider_float("Angle Spread", 0.0, 360.0,&gun->spread);
+                    imgui_horizontal_end();
 
-                    imgui_number_box("Sprite Index", 0,8, &gun->sprite_index);
+                    imgui_number_box("Sprite Index", 0,4, &gun->sprite_index);
 
                     int num = gun->num;
-                    imgui_number_box("Num", 1,100, &num);
+                    imgui_number_box("Num", 1,10, &num);
                     gun->num = num;
 
                     imgui_text_sized(20.0,"Attributes:");
                     imgui_horizontal_line(1);
-                    imgui_checkbox("Explosive", &gun->explosive);
-                    imgui_checkbox("Bouncy", &gun->bouncy);
-                    imgui_checkbox("Penetrate", &gun->penetrate);
-                    imgui_checkbox("Cluster", &gun->cluster);
+                    imgui_slider_float("Explosive Chance",0.0, 1.0, &gun->explosion_chance);
+                    imgui_slider_float("Bounce Chance", 0.0, 1.0, &gun->bounce_chance);
+                    imgui_slider_float("Penetration Chance", 0.0, 1.0, &gun->penetration_chance);
 
-                    imgui_horizontal_begin();
-                        imgui_checkbox("Orbital", &gun->is_orbital);
+                    imgui_checkbox("Orbital", &gun->is_orbital);
+                    if(gun->is_orbital)
+                    {
                         imgui_slider_float("Orbital Distance", 1.0,100.0, &gun->orbital_distance);
-                    imgui_horizontal_end();
+                    }
+
+                    imgui_checkbox("Cluster", &gun->cluster);
 
                     if(gun->cluster)
                     {

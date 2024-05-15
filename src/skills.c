@@ -127,13 +127,14 @@ bool skills_use(void* player, Skill* skill)
         {
             gun.scale1 += 0.20;
             gun.scale2 += 0.20;
-            gun.damage *= (1.0+skill->rank);
+            gun.damage_min *= (1.0+skill->rank);
+            gun.damage_max *= (1.0+skill->rank);
             gun.speed += (200.0*skill->rank);
 
             gun.num = 1;
             gun.spread = 0.0;
 
-            projectile_add(&p->phys, p->phys.curr_room, &gun, 0x0000CCFF, p->aim_deg, true);
+            projectile_fire(&p->phys, p->phys.curr_room, &gun, 0x0000CCFF, p->aim_deg, true);
 
         } break;
 
@@ -165,18 +166,20 @@ bool skills_use(void* player, Skill* skill)
                 Rect r = level_get_tile_rect(rand_tile.x, rand_tile.y);
                 Vector3f pos = {r.x+xo, r.y+yo, 400.0};
 
-                projectile_drop(pos, 0.0, p->phys.curr_room, &gun, 0x00553300, true);
+                Vector3f vel = {0.0, 0.0, 0.0};
+                projectile_add(pos, &vel, p->phys.curr_room, &gun, 0x00553300, 0.0, true, NULL);
             }
 
         } break;
         case SKILL_TYPE_SENTIENCE:
         {
-            gun.damage *= (1.0+skill->rank);
+            gun.damage_min *= (1.0+skill->rank);
+            gun.damage_max *= (1.0+skill->rank);
             gun.num = 3 + (1*skill->rank);
             gun.spread = 0.0;
             gun.homing_chance = 1.0;
 
-            projectile_add(&p->phys, p->phys.curr_room, &gun, 0x00555555, p->aim_deg, true);
+            projectile_fire(&p->phys, p->phys.curr_room, &gun, 0x00555555, p->aim_deg, true);
         } break;
 
         case SKILL_TYPE_MULTI_SHOT:
@@ -186,7 +189,7 @@ bool skills_use(void* player, Skill* skill)
             gun.num = 2 + skill->rank;
             gun.spread = 30.0 + 10*skill->rank;
 
-            projectile_add(&p->phys, p->phys.curr_room, &gun, COLOR_WHITE, p->aim_deg, true);
+            projectile_fire(&p->phys, p->phys.curr_room, &gun, COLOR_WHITE, p->aim_deg, true);
             
         } break;
 
@@ -194,13 +197,14 @@ bool skills_use(void* player, Skill* skill)
         {
             gun.scale1 += 0.10;
             gun.scale2 += 0.10;
-            gun.damage *= (0.5+skill->rank);
+            gun.damage_min *= (0.5+skill->rank);
+            gun.damage_max *= (0.5+skill->rank);
 
             gun.num = 2 + skill->rank;
             gun.spread = 60.0;
             gun.ghost_chance = 1.0;
 
-            projectile_add(&p->phys, p->phys.curr_room, &gun, 0x00808080, p->aim_deg, true);
+            projectile_fire(&p->phys, p->phys.curr_room, &gun, 0x00808080, p->aim_deg, true);
 
         } break;
         case SKILL_TYPE_HEAL:

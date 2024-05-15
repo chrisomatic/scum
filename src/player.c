@@ -148,8 +148,6 @@ void player_set_defaults(Player* p)
 
     memcpy(&p->gun,&gun_lookup[PROJECTILE_TYPE_PLAYER],sizeof(Gun));
 
-    p->proj_cooldown_max = 0.40;
-
     // p->temp_room = -1;
     p->door = DIR_NONE;
     p->light_radius = 2.0;
@@ -1172,7 +1170,7 @@ static void player_handle_orbitals(Player* p, float dt)
                 continue;
 
             // eject
-            p->proj_cooldown = p->proj_cooldown_max;
+            p->proj_cooldown = p->gun.cooldown;
             projectiles[i].gun.is_orbital = false;
             projectiles[i].orbital->count--;
 
@@ -1204,7 +1202,9 @@ static void player_handle_orbitals(Player* p, float dt)
     else if(p->actions[PLAYER_ACTION_SHOOT_LEFT].state)
     {
         Gun temp = p->gun;
-        temp.damage += lookup_strength[p->stats[STRENGTH]];
+        temp.damage_min += lookup_strength[p->stats[STRENGTH]];
+        temp.damage_max += lookup_strength[p->stats[STRENGTH]];
+
         temp.speed  += lookup_attack_range[p->stats[ATTACK_RANGE]];
 
         uint32_t color = 0x0050A0FF;
@@ -1214,7 +1214,7 @@ static void player_handle_orbitals(Player* p, float dt)
 
         for(int i = 0; i < max; ++i)
         {
-            projectile_add(&p->phys, p->phys.curr_room, &temp, color, p->aim_deg, true);
+            projectile_fire(&p->phys, p->phys.curr_room, &temp, color, p->aim_deg, true);
         }
     }
 }
@@ -1321,30 +1321,30 @@ static void player_handle_shooting(Player* p, float dt)
             if(!p->phys.dead)
             {
                 Gun temp = p->gun;
-                temp.damage += lookup_strength[p->stats[STRENGTH]];
+                temp.damage_min += lookup_strength[p->stats[STRENGTH]];
+                temp.damage_max += lookup_strength[p->stats[STRENGTH]];
                 temp.speed  += lookup_attack_range[p->stats[ATTACK_RANGE]];
 
                 uint32_t color = 0x0050A0FF;
 
                 projectile_lob(&p->phys, temp.gravity_factor*120.0, p->phys.curr_room, &temp, color, p->aim_deg, true);
-                //projectile_add(&p->phys, p->phys.curr_room, &temp, color, p->aim_deg, true);
 
-                // //TODO: burst
-                // for(int j = 1; j < 3; ++j)
-                // {
-                //     projectile_add(&p->phys, p->phys.curr_room, &temp, color, p->aim_deg, true);
-                //     for(int k = 0; k < temp.num; ++k)
-                //     {
-                //         projectiles[plist->count-1-k].tts = dt*(j*4);
-                //         projectiles[plist->count-1-k].shooter = &p->phys;
-                //     }
-                // }
+                for(int j = 0; j < temp.burst_count; ++j)
+                {
+                    projectile_lob(&p->phys, temp.gravity_factor*120.0, p->phys.curr_room, &temp, color, p->aim_deg, true);
+
+                    for(int k = 0; k < temp.num; ++k)
+                    {
+                        projectiles[plist->count-1-k].tts = dt*((j+1)*(1.0/temp.burst_rate));
+                        projectiles[plist->count-1-k].shooter = &p->phys;
+                    }
+                }
 
                 gaudio_play(audio_shoot);
             }
 
             // text_list_add(text_lst, 5.0, "projectile");
-            p->proj_cooldown = p->proj_cooldown_max;
+            p->proj_cooldown = p->gun.cooldown;
             p->shoot_sprite_cooldown = 1.0;
         }
     }
@@ -1486,7 +1486,6 @@ void player_update(Player* p, float dt)
     p->phys.speed         = lookup_movement_speed[p->stats[MOVEMENT_SPEED]];
     p->phys.max_velocity  = lookup_movement_speed_max_vel[p->stats[MOVEMENT_SPEED]];
     p->phys.base_friction = lookup_movement_speed_base_friction[p->stats[MOVEMENT_SPEED]];
-    //p->proj_cooldown_max  = lookup_attack_speed[p->stats[ATTACK_SPEED]];
 
     // apply skills
     p->phys.speed         += p->skill_mods.speed;

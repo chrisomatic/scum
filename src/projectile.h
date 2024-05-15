@@ -29,17 +29,27 @@ typedef enum
 
 typedef struct
 {
-    float damage;
+    float damage_min;
+    float damage_max;
+    
+    float cooldown;
     float speed;
     float scale1;
     float scale2;
     float lifetime;
-    bool explosive;
-    bool bouncy;
-    bool penetrate;
+
+    float explosion_chance;
+    float bounce_chance;
+    float penetration_chance;
+
+    float explosion_radius;
+    float explosion_rate;
 
     float gravity_factor;
     float directional_accel;
+
+    float knockback_factor;
+    float critical_hit_chance;
 
     float wave_amplitude;
     float wave_period;
@@ -54,6 +64,7 @@ typedef struct
     int cluster_stages;
     int cluster_num[3];
     float cluster_scales[3];
+    int cluster_stage;
 
     // orbital
     bool is_orbital;
@@ -69,11 +80,17 @@ typedef struct
 
     float ghost_chance;
     float homing_chance;
-    float poison_chance;
-    float cold_chance;
-    float fire_chance;
 
-    int cluster_stage;
+    // elemental
+    float fire_chance;
+    float cold_chance;
+    float lightning_chance;
+    float poison_chance;
+
+    // bursting
+    int burst_count;
+    float burst_rate;
+
 
 } Gun;
 
@@ -114,9 +131,10 @@ typedef struct
     float ttl;
 
     // effects
-    bool poison;
-    bool cold;
     bool fire;
+    bool cold;
+    bool lightning;
+    bool poison;
 
     float radius;
     float angle_deg;
@@ -157,9 +175,13 @@ extern glist* plist;
 
 void projectile_init();
 void projectile_clear_all();
-void projectile_add(Physics* phys, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player);
-void projectile_drop(Vector3f pos, float vel0_z, uint8_t curr_room, Gun* gun, uint32_t color, bool from_player);
+
+void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, Physics* phys);
+
+void projectile_fire(Physics* phys, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player);
+
 void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player);
+
 void projectile_update_hit_box(Projectile* proj);
 void projectile_update_all(float dt);
 void projectile_kill(Projectile* proj);

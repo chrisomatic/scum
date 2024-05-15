@@ -803,7 +803,9 @@ void imgui_dropdown(char* options[], int num_options, char* label, int* selected
         draw_dropdown(hash, new_label, options, num_options, *selected_index, &interactive);
     }
 
-    ctx->curr.w = interactive.w + 2*theme.text_padding + theme.spacing;
+    Vector2f label_size = gfx_string_get_size(theme.text_scale, new_label);
+
+    ctx->curr.w = interactive.w + label_size.x + 2*theme.text_padding + theme.spacing;
     ctx->curr.h = max_height + theme.spacing;
 
     progress_pos();

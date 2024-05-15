@@ -46,14 +46,19 @@ static int projectile_image;
 Gun gun_lookup[] = {
     {
         // player
-        .damage = 1.0,
+        .damage_min = 1.0,
+        .damage_max = 1.0,
         .speed = 215.0,
+        .cooldown = 0.40,
         .directional_accel = 0.0,
         .gravity_factor = 0.0,
         .lifetime = 0.4,
-        .explosive = false,
-        .bouncy = false,
-        .penetrate = false,
+        .bounce_chance = 0.0,
+        .penetration_chance = 0.0,
+
+        .explosion_chance = 0.0,
+        .explosion_radius = 15.0,
+        .explosion_rate   = 100.0,
 
         .sprite_index = 0,
         .color1 = 0x0050A0FF,
@@ -72,25 +77,33 @@ Gun gun_lookup[] = {
         .orbital_speed_factor = 3.0,
         .orbital_max_count = 5,
 
+        .burst_count = 0,
+        .burst_rate = 0.2,
+
         .num = 1,
         .spread_type = SPREAD_TYPE_RANDOM,
         .spread = 30.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
-        .poison_chance = 0.0,
-        .cold_chance = 0.0,
         .fire_chance = 0.0,
+        .cold_chance = 0.0,
+        .lightning_chance = 0.0,
+        .poison_chance = 0.0,
     },
     {
         // player - kinetic discharge skill
-        .damage = 1.0,
+        .damage_min = 1.0,
+        .damage_max = 1.0,
         .speed = 200.0,
+        .cooldown = 0.40,
         .directional_accel = 0.0,
         .gravity_factor = 0.0,
         .lifetime = 3.0,
-        .explosive = false,
-        .bouncy = false,
-        .penetrate = false,
+        .explosion_chance = 0.0,
+        .explosion_radius = 15.0,
+        .explosion_rate   = 100.0,
+        .bounce_chance = 0.0,
+        .penetration_chance = 0.0,
         .cluster = false,
 
         .sprite_index = 0,
@@ -100,25 +113,33 @@ Gun gun_lookup[] = {
         .scale1 = 0.5,
         .scale2 = 0.5,
 
+        .burst_count = 0,
+        .burst_rate = 0.2,
+
         .num = 1,
         .spread_type = SPREAD_TYPE_RANDOM,
         .spread = 360.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.20,
-        .poison_chance = 0.0,
-        .cold_chance = 0.0,
         .fire_chance = 0.0,
+        .cold_chance = 0.0,
+        .lightning_chance = 0.0,
+        .poison_chance = 0.0,
     },
     {
         // creature generic
-        .damage = 1.0,
+        .damage_min = 1.0,
+        .damage_max = 1.0,
         .speed = 200.0,
+        .cooldown = 0.40,
         .directional_accel = 0.0,
         .gravity_factor = 0.5,
         .lifetime = 3.0,
-        .explosive = false,
-        .bouncy = false,
-        .penetrate = false,
+        .explosion_chance = 0.0,
+        .explosion_radius = 15.0,
+        .explosion_rate   = 100.0,
+        .bounce_chance = 0.0,
+        .penetration_chance = 0.0,
         .cluster = false,
 
         .sprite_index = 0,
@@ -127,25 +148,33 @@ Gun gun_lookup[] = {
         .scale1 = 0.8,
         .scale2 = 0.8,
 
+        .burst_count = 0,
+        .burst_rate = 0.2,
+
         .num = 1,
         .spread_type = SPREAD_TYPE_RANDOM,
         .spread = 0.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
-        .poison_chance = 0.0,
-        .cold_chance = 0.0,
         .fire_chance = 0.0,
+        .cold_chance = 0.0,
+        .lightning_chance = 0.0,
+        .poison_chance = 0.0,
     },
     {
         // geizer
-        .damage = 1.0,
+        .damage_min = 1.0,
+        .damage_max = 1.0,
         .speed = 100.0,
+        .cooldown = 0.40,
         .directional_accel = 0.0,
         .gravity_factor = 0.5,
         .lifetime = 3.0,
-        .explosive = false,
-        .bouncy = false,
-        .penetrate = false,
+        .explosion_chance = 0.0,
+        .explosion_radius = 15.0,
+        .explosion_rate   = 100.0,
+        .bounce_chance = 0.0,
+        .penetration_chance = 0.0,
         .cluster = false,
 
         .sprite_index = 0,
@@ -154,25 +183,33 @@ Gun gun_lookup[] = {
         .scale1 = 0.8,
         .scale2 = 0.8,
 
+        .burst_count = 0,
+        .burst_rate = 0.2,
+
         .num = 1,
         .spread_type = SPREAD_TYPE_RANDOM,
         .spread = 0.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
-        .poison_chance = 0.0,
-        .cold_chance = 0.0,
         .fire_chance = 0.0,
+        .cold_chance = 0.0,
+        .lightning_chance = 0.0,
+        .poison_chance = 0.0,
     },
     {
         // clinger
-        .damage = 1.0,
+        .damage_min = 1.0,
+        .damage_max = 1.0,
         .speed = 160.0,
+        .cooldown = 0.40,
         .directional_accel = 0.0,
         .gravity_factor = 0.5,
         .lifetime = 3.0,
-        .explosive = false,
-        .bouncy = false,
-        .penetrate = false,
+        .explosion_chance = 0.0,
+        .explosion_radius = 15.0,
+        .explosion_rate   = 100.0,
+        .bounce_chance = 0.0,
+        .penetration_chance = 0.0,
         .cluster = false,
 
         .sprite_index = 0,
@@ -181,25 +218,33 @@ Gun gun_lookup[] = {
         .scale1 = 0.8,
         .scale2 = 0.8,
 
+        .burst_count = 0,
+        .burst_rate = 0.2,
+
         .num = 1,
         .spread_type = SPREAD_TYPE_RANDOM,
         .spread = 0.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
-        .poison_chance = 0.0,
-        .cold_chance = 0.0,
         .fire_chance = 0.0,
+        .cold_chance = 0.0,
+        .lightning_chance = 0.0,
+        .poison_chance = 0.0,
     },
     {
         // totem blue
-        .damage = 1.0,
+        .damage_min = 1.0,
+        .damage_max = 1.0,
         .speed = 200.0,
+        .cooldown = 0.40,
         .directional_accel = 0.0,
         .gravity_factor = 0.5,
         .lifetime = 3.0,
-        .explosive = false,
-        .bouncy = false,
-        .penetrate = false,
+        .explosion_chance = 0.0,
+        .explosion_radius = 15.0,
+        .explosion_rate   = 100.0,
+        .bounce_chance = 0.0,
+        .penetration_chance = 0.0,
         .cluster = true,
 
         .sprite_index = 0,
@@ -208,25 +253,33 @@ Gun gun_lookup[] = {
         .scale1 = 0.8,
         .scale2 = 0.8,
 
+        .burst_count = 0,
+        .burst_rate = 0.2,
+
         .num = 1,
         .spread_type = SPREAD_TYPE_RANDOM,
         .spread = 0.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
-        .poison_chance = 0.0,
-        .cold_chance = 1.0,
         .fire_chance = 0.0,
+        .cold_chance = 1.0,
+        .lightning_chance = 0.0,
+        .poison_chance = 0.0,
     },
     {
         // watcher
-        .damage = 1.0,
+        .damage_min = 1.0,
+        .damage_max = 1.0,
         .speed = 200.0,
+        .cooldown = 0.40,
         .directional_accel = 0.0,
         .gravity_factor = 0.5,
         .lifetime = 3.0,
-        .explosive = false,
-        .bouncy = false,
-        .penetrate = false,
+        .explosion_chance = 0.0,
+        .explosion_radius = 15.0,
+        .explosion_rate   = 100.0,
+        .bounce_chance = 0.0,
+        .penetration_chance = 0.0,
         .cluster = false,
         
         .sprite_index = 0,
@@ -234,6 +287,9 @@ Gun gun_lookup[] = {
         .color2 = 0x00FF5050,
         .scale1 = 1.0,
         .scale2 = 1.0,
+
+        .burst_count = 0,
+        .burst_rate = 0.2,
 
         .is_orbital = true,
         .orbital_distance = 50.0,
@@ -245,9 +301,10 @@ Gun gun_lookup[] = {
         .spread = 0.0,
         .ghost_chance = 1.0,
         .homing_chance = 0.0,
-        .poison_chance = 0.0,
-        .cold_chance = 0.0,
         .fire_chance = 0.0,
+        .cold_chance = 0.0,
+        .lightning_chance = 0.0,
+        .poison_chance = 0.0,
     },
 };
 
@@ -307,7 +364,7 @@ static float calc_orbital_target(Projectile* proj)
     proj->orbital_pos_target.y = -(sinf(target_angle)*actual_orb_distance);
 }
 
-static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, Physics* phys)
+void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, Physics* phys)
 {
     if(role == ROLE_CLIENT)
         return;
@@ -335,12 +392,17 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
     proj.phys.speed = gun->speed;
     proj.phys.max_velocity = 2.0*gun->speed;
     proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * gun->scale1;
-    proj.phys.amorphous = proj.gun.bouncy ? false : true;
-    proj.phys.elasticity = proj.gun.bouncy ? 1.0 : 0.1;
+
+    bool bouncy = RAND_FLOAT(0.0,1.0) <= gun->bounce_chance;
+    proj.phys.amorphous = bouncy ? false : true;
+    proj.phys.elasticity = bouncy ? 1.0 : 0.1;
+
     proj.phys.curr_room = curr_room;
     proj.from_player = from_player;
     proj.angle_deg = angle_deg;
     proj.ttl = gun->lifetime;
+    proj.wave_time = gun->wave_period / 2.0;
+    proj.wave_dir = 1;
 
     if(gun->is_orbital)
     {
@@ -443,9 +505,12 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
         p.id = get_id();
 
         p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= gun->ghost_chance;
-        p.poison = RAND_FLOAT(0.0,1.0) <= gun->poison_chance;
-        p.cold = RAND_FLOAT(0.0,1.0) <= gun->cold_chance;
+
         p.fire = RAND_FLOAT(0.0,1.0) <= gun->fire_chance;
+        p.cold = RAND_FLOAT(0.0,1.0) <= gun->cold_chance;
+        p.lightning = RAND_FLOAT(0.0,1.0) <= gun->lightning_chance;
+        p.poison = RAND_FLOAT(0.0,1.0) <= gun->poison_chance;
+
         bool homing = RAND_FLOAT(0.0,1.0) <= gun->homing_chance;
 
         if(!FEQ0(spread) && i > 0)
@@ -467,12 +532,6 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
         p.phys.vel.x = +(p.gun.speed)*cosf(angle) + vel->x;
         p.phys.vel.y = -(p.gun.speed)*sinf(angle) + vel->y;
         p.phys.vel.z = vel->z;
-
-        /*
-        p.phys.vel.x = vel->x;
-        p.phys.vel.y = vel->y;
-        p.phys.vel.z = vel->z;
-        */
 
         if(homing)
         {
@@ -509,7 +568,7 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
         // p.source_explode = audio_source_create(false);
         // audio_source_assign_buffer(p.source_explode, audio_buffer_explode);
 
-        // printf("%s damage: %.2f\n", __func__, p.gun.damage);
+        // printf("%s damage: [%.2f, %.2f]\n", __func__, p.gun.damage_min, p.gun.damage_max);
 
         // p.phys.pos.z = 400.0;
         // p.phys.vel.x = 0;
@@ -520,18 +579,12 @@ static void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_ro
     }
 }
 
-void projectile_add(Physics* phys, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player)
+void projectile_fire(Physics* phys, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player)
 {
     Vector3f pos = {phys->pos.x, phys->pos.y, phys->height/2.0 + phys->pos.z};
     Vector3f vel = {phys->vel.x, phys->vel.y, 0.0};
 
-    projectile_add_internal(pos, &vel, curr_room, gun, color, angle_deg, from_player, phys);
-}
-
-void projectile_drop(Vector3f pos, float vel0_z, uint8_t curr_room, Gun* gun, uint32_t color, bool from_player)
-{
-    Vector3f vel = {0.0, 0.0, vel0_z};
-    projectile_add_internal(pos, &vel, curr_room, gun, color, 0.0, from_player, NULL);
+    projectile_add(pos, &vel, curr_room, gun, color, angle_deg, from_player, phys);
 }
 
 void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player)
@@ -545,7 +598,7 @@ void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, Gun* gun, ui
     vel.x = phys->vel.x;
     vel.y = phys->vel.y;
 
-    projectile_add_internal(pos, &vel, curr_room, gun, color, angle_deg, from_player, phys);
+    projectile_add(pos, &vel, curr_room, gun, color, angle_deg, from_player, phys);
 }
 
 void projectile_kill(Projectile* proj)
@@ -606,9 +659,11 @@ void projectile_kill(Projectile* proj)
 
     if(role != ROLE_SERVER)
     {
-        if(proj->gun.explosive)
+        bool explosive = RAND_FLOAT(0.0,1.0) <= proj->gun.explosion_chance;
+
+        if(explosive)
         {
-            explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->gun.scale2, 100.0*proj->gun.scale2, proj->phys.curr_room, proj->from_player);
+            explosion_add(proj->phys.pos.x, proj->phys.pos.y, proj->gun.explosion_radius, proj->gun.explosion_rate, proj->phys.curr_room, proj->from_player);
         }
     }
 
@@ -664,7 +719,8 @@ void projectile_kill(Projectile* proj)
             return;
         }
 
-        // gun.damage *= 0.8;
+        // gun.damage_min *= 0.8;
+        // gun.damage_max *= 0.8;
 
         gun.cluster = true;
         gun.scale1 = gun.cluster_scales[proj->cluster_stage];
@@ -688,7 +744,8 @@ void projectile_kill(Projectile* proj)
         // proj->phys.vel.y = 0.0;
         proj->phys.vel.x /= 2.0;
         proj->phys.vel.y /= 2.0;
-        projectile_add(&proj->phys, proj->phys.curr_room, &gun, proj->color, angle_deg, proj->from_player);
+
+        projectile_fire(&proj->phys, proj->phys.curr_room, &gun, proj->color, angle_deg, proj->from_player);
     }
 }
 
@@ -795,19 +852,26 @@ void projectile_update_all(float dt)
             {
                 if(proj->gun.wave_period > 0.0)
                 {
-                    Vector2f f = {sin(angle), -cos(angle)};
+                    //Vector2f f = {cos(angle - PI_OVER_2), -sin(angle - PI_OVER_2)};
+                    Vector2f f = {sin(angle), cos(angle)};
                     normalize(&f);
 
                     proj->wave_time += _dt;
 
                     if(proj->wave_time >= proj->gun.wave_period)
                     {
-                        proj->wave_time = 0;
+                        while(proj->wave_time >= proj->gun.wave_period)
+                            proj->wave_time -= proj->gun.wave_period;
+
                         proj->wave_dir = proj->wave_dir == 1 ? -1 : 1;
                     }
 
-                    f.x *= proj->wave_dir*proj->gun.wave_amplitude*5*_dt;
-                    f.y *= proj->wave_dir*proj->gun.wave_amplitude*5*_dt;
+                    float ampl = proj->gun.wave_amplitude;
+
+                    f.x *= proj->wave_dir*ampl*10*_dt;
+                    f.y *= proj->wave_dir*ampl*10*_dt;
+
+                    //printf("f: %3.6f %3.6f\n", f.x, f.y);
 
                     proj->phys.vel.x += f.x;
                     proj->phys.vel.y += f.y;
@@ -870,7 +934,8 @@ void projectile_update_all(float dt)
 
 void projectile_handle_collision(Projectile* proj, Entity* e)
 {
-    if(proj->phys.dead) return;
+    if(proj->phys.dead)
+        return;
 
     Gun* gun = &proj->gun;
 
@@ -941,7 +1006,8 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 
         if(hit)
         {
-            if(!gun->penetrate)
+            bool penetrate = RAND_FLOAT(0.0,1.0) <= proj->gun.penetration_chance;
+            if(!penetrate)
             {
                 CollisionInfo ci = {0.0,0.0};
                 proj->phys.pos.x = proj->phys.prior_pos.x;
@@ -969,19 +1035,21 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
             switch(e->type)
             {
                 case ENTITY_TYPE_PLAYER:
-                    player_hurt((Player*)e->ptr, gun->damage);
+                    player_hurt((Player*)e->ptr, RAND_FLOAT(gun->damage_min, gun->damage_max));
                     break;
                 case ENTITY_TYPE_CREATURE:
-                    // printf("%s damage: %.2f\n", __func__, gun->damage);
-                    creature_hurt((Creature*)e->ptr, gun->damage);
+                    float damage = RAND_FLOAT(gun->damage_min, gun->damage_max);
+                    // printf("%s damage: %.2f\n", __func__, damage);
+                    creature_hurt((Creature*)e->ptr, damage);
                     break;
             }
         }
     }
 
-    if(hit && gun->explosive)
+    bool explosive = RAND_FLOAT(0.0,1.0) <= gun->explosion_chance;
+    if(hit && explosive)
     {
-        explosion_add(proj->phys.pos.x, proj->phys.pos.y, 15.0*proj->gun.scale2, 100.0*proj->gun.scale2, proj->phys.curr_room, proj->from_player);
+        explosion_add(proj->phys.pos.x, proj->phys.pos.y, proj->gun.explosion_radius, proj->gun.explosion_rate, proj->phys.curr_room, proj->from_player);
     }
 }
 

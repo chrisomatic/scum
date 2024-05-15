@@ -1409,22 +1409,13 @@ static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
     if(c->type == CREATURE_TYPE_GEIZER)
     {
         gun.speed = rand()%50+40;
-        // Vector3f pos = {c->phys.pos.x, c->phys.pos.y, 5.0};
-        // projectile_drop(pos, 200.0, c->phys.curr_room, &gun, color, false);
         gun.scale1 = RAND_FLOAT(0.6,1.0);
         gun.scale2 = RAND_FLOAT(0.6,1.0);
         projectile_lob(&c->phys, rand()%100+50, c->phys.curr_room, &gun, color, angle, false);
         return;
     }
 
-    // if(c->type == CREATURE_TYPE_SHAMBLER)
-    // {
-    //     projectile_lob(&c->phys, -80.0, c->phys.curr_room, &gun, color, angle, false);
-    //     return;
-    // }
-
     projectile_lob(&c->phys, gun.gravity_factor*120.0, c->phys.curr_room, &gun, color, angle, false);
-    //projectile_add(&c->phys, c->phys.curr_room, &gun, color, angle, false);
 }
 
 static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float vel0_z, uint32_t color)
@@ -1440,7 +1431,8 @@ static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float 
     Rect r = level_get_tile_rect(tile_x, tile_y);
     Vector3f pos = {r.x, r.y, 400.0};
 
-    projectile_drop(pos, vel0_z, c->phys.curr_room, &gun, color, false);
+    Vector3f vel = {0.0, 0.0, vel0_z};
+    projectile_add(pos, &vel, c->phys.curr_room, &gun, color, 0.0, false, NULL);
 }
 
 static void creature_update_clinger(Creature* c, float dt)
