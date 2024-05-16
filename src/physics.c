@@ -187,7 +187,12 @@ void phys_calc_collision_rect(Physics* phys)
     phys->collision_rect.w = horizontal ? phys->length : phys->width;
     phys->collision_rect.h = horizontal ? phys->width  : phys->length;
 
+
     float vrh = horizontal ? phys->vr.w : phys->vr.h;
+
+    phys->collision_rect.w *= phys->scale;
+    phys->collision_rect.h *= phys->scale;
+    vrh *= phys->scale;
 
     phys->collision_rect.x = phys->pos.x;
     phys->collision_rect.y = phys->pos.y - vrh*0.10;

@@ -27,6 +27,13 @@ typedef enum
     SPREAD_TYPE_COUNT,
 } SpreadType;
 
+typedef enum
+{
+    CHARGE_TYPE_SCALE_DAMAGE,
+    CHARGE_TYPE_SCALE_BURST_COUNT,
+    CHARGE_TYPE_COUNT,
+} ChargeType;
+
 typedef struct
 {
     float damage_min;
@@ -47,12 +54,15 @@ typedef struct
 
     float gravity_factor;
     float directional_accel;
+    float air_friction;
 
     float knockback_factor;
     float critical_hit_chance;
 
     float wave_amplitude;
     float wave_period;
+
+    float spin_factor;
 
     int sprite_index;
 
@@ -71,6 +81,11 @@ typedef struct
     float orbital_distance;
     float orbital_speed_factor;
     int   orbital_max_count;
+
+    // charge
+    bool is_chargeable;
+    float charge_time_max;
+    ChargeType charge_type;
 
     // spawn properties
     int num;
@@ -139,6 +154,8 @@ typedef struct
     float radius;
     float angle_deg;
     float wave_time;
+    float charge_time;
+
     int  wave_dir;
     uint8_t curr_room;
 
@@ -146,7 +163,6 @@ typedef struct
 
     uint8_t sprite_index;
     uint32_t color;
-    float scale;
 
     bool from_player;
     int cluster_stage;
@@ -190,6 +206,7 @@ void projectile_draw(Projectile* proj);
 void projectile_lerp(Projectile* p, double dt);
 const char* projectile_def_get_name(ProjectileType proj_type);
 const char* projectile_spread_type_get_name(SpreadType spread_type);
+const char* projectile_charge_type_get_name(ChargeType charge_type);
 
 ProjectileOrbital* projectile_orbital_get(Physics* body, float distance);
 void projectile_orbital_kill(ProjectileOrbital* orb);

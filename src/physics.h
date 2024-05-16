@@ -34,6 +34,7 @@ typedef struct
     float height;
     float elasticity;
     float rotation_deg;
+    float scale;
 
     Vector2i curr_tile;
     uint8_t curr_room;
@@ -54,6 +55,7 @@ typedef struct
     bool amorphous; // splatters on collision
     bool ethereal;  // can pass through walls
 
+    bool collided; // just a flag to indicate collision with something
     bool falling; // falling down a pit
 
     bool floating;

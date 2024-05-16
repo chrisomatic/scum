@@ -1145,7 +1145,7 @@ static void shuffle_vector2i_list(Vector2i list[], int count)
 
 void level_generate_room_outer_walls(Room* room)
 {
-    const float wall_offset = 7.0;
+    const float wall_offset = 2.0;
     int x0 = room_area.x - room_area.w/2.0;
     int y0 = room_area.y - room_area.h/2.0;
 
@@ -1230,7 +1230,7 @@ void level_generate_room_outer_walls(Room* room)
         wall_door_up1->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+1);
         wall_door_up1->p0.y = y0;
         wall_door_up1->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+1);
-        wall_door_up1->p1.y = y0+TILE_SIZE-7;
+        wall_door_up1->p1.y = y0+TILE_SIZE-wall_offset;
         wall_door_up1->dir = DIR_LEFT;
         wall_door_up1->type = WALL_TYPE_OUTER;
         room->wall_count++;
@@ -1239,7 +1239,7 @@ void level_generate_room_outer_walls(Room* room)
         wall_door_up2->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+2);
         wall_door_up2->p0.y = y0;
         wall_door_up2->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+2);
-        wall_door_up2->p1.y = y0+TILE_SIZE-7;
+        wall_door_up2->p1.y = y0+TILE_SIZE-wall_offset;
         wall_door_up2->dir = DIR_RIGHT;
         wall_door_up2->type = WALL_TYPE_OUTER;
         room->wall_count++;
@@ -1248,7 +1248,7 @@ void level_generate_room_outer_walls(Room* room)
     if(room->doors[DIR_RIGHT])
     {
         Wall* wall_door_right1 = &room->walls[room->wall_count];
-        wall_door_right1->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+7;
+        wall_door_right1->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+wall_offset;
         wall_door_right1->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+1);
         wall_door_right1->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2);
         wall_door_right1->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+1);
@@ -1257,7 +1257,7 @@ void level_generate_room_outer_walls(Room* room)
         room->wall_count++;
 
         Wall* wall_door_right2 = &room->walls[room->wall_count];
-        wall_door_right2->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+7;
+        wall_door_right2->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+wall_offset;
         wall_door_right2->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+2);
         wall_door_right2->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2);
         wall_door_right2->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+2);
@@ -1270,7 +1270,7 @@ void level_generate_room_outer_walls(Room* room)
     {
         Wall* wall_door_down1 = &room->walls[room->wall_count];
         wall_door_down1->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+1);
-        wall_door_down1->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+7;
+        wall_door_down1->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+wall_offset;
         wall_door_down1->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+1);
         wall_door_down1->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2);
         wall_door_down1->dir = DIR_LEFT;
@@ -1279,7 +1279,7 @@ void level_generate_room_outer_walls(Room* room)
 
         Wall* wall_door_down2 = &room->walls[room->wall_count];
         wall_door_down2->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+2);
-        wall_door_down2->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+7;
+        wall_door_down2->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+wall_offset;
         wall_door_down2->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+2);
         wall_door_down2->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2);
         wall_door_down2->dir = DIR_RIGHT;
@@ -1292,7 +1292,7 @@ void level_generate_room_outer_walls(Room* room)
         Wall* wall_door_left1 = &room->walls[room->wall_count];
         wall_door_left1->p0.x = x0;
         wall_door_left1->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+1);
-        wall_door_left1->p1.x = x0+TILE_SIZE-7;
+        wall_door_left1->p1.x = x0+TILE_SIZE-wall_offset;
         wall_door_left1->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+1);
         wall_door_left1->dir = DIR_UP;
         wall_door_left1->type = WALL_TYPE_OUTER;
@@ -1301,7 +1301,7 @@ void level_generate_room_outer_walls(Room* room)
         Wall* wall_door_left2 = &room->walls[room->wall_count];
         wall_door_left2->p0.x = x0;
         wall_door_left2->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+2);
-        wall_door_left2->p1.x = x0+TILE_SIZE-7;
+        wall_door_left2->p1.x = x0+TILE_SIZE-wall_offset;
         wall_door_left2->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+2);
         wall_door_left2->dir = DIR_DOWN;
         wall_door_left2->type = WALL_TYPE_OUTER;
@@ -1603,6 +1603,7 @@ void level_handle_room_collision(Room* room, Physics* phys, int entity_type, voi
         {
             if(phys->amorphous)
             {
+                phys->collided = true;
                 phys->dead = true;
                 return;
             }

@@ -27,7 +27,8 @@ EffectEntry effect_map[] = {
     {EFFECT_JETS,"jets.effect"},
     {EFFECT_EXPLOSION,"explosion.effect"},
     {EFFECT_PLAYER_ACTIVATE,"player_activate.effect"},
-    {EFFECT_SHRINE,"shrine.effect"}
+    {EFFECT_SHRINE,"shrine.effect"},
+    {EFFECT_DISSIPATE,"dissipate.effect"}
 };
 
 static int get_effect_map_index(char* file_name)

@@ -270,6 +270,7 @@ void creature_init_props(Creature* c)
     c->phys.length = vr->w * 0.80;
     c->phys.height = vr->h * 0.80;
     c->phys.radius = c->phys.width / 2.0;
+    c->phys.scale = 1.0;
     c->phys.vr = *vr;
 
     c->damage = 1;
@@ -1081,7 +1082,7 @@ void creature_draw(Creature* c)
 
     if(!c->phys.underground)
     {
-        gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, color, false, 1.0, 0.0, op, true, false, false);
+        gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, color, false, c->phys.scale, 0.0, op, true, false, false);
     }
 }
 

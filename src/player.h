@@ -111,7 +111,6 @@ typedef struct
     float anim_factor;
 
     float aim_deg;
-    float scale;
 
     uint16_t coins;
 
@@ -153,7 +152,6 @@ typedef struct
 
     Vector2i last_safe_tile;
 
-    uint8_t proj_charge;
     float proj_cooldown;
 
     bool invulnerable;

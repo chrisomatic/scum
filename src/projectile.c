@@ -82,7 +82,7 @@ Gun gun_lookup[] = {
 
         .num = 1,
         .spread_type = SPREAD_TYPE_RANDOM,
-        .spread = 30.0,
+        .spread = 10.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
         .fire_chance = 0.0,
@@ -379,16 +379,17 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
     vr.h *= gun->scale1;
 
     proj.color = gun->color1;
-    proj.scale = gun->scale1;
     proj.sprite_index = gun->sprite_index;
     proj.phys.height = vr.h;
     proj.phys.width =  vr.w;
     proj.phys.length = vr.w;
+    proj.phys.scale = gun->scale1;
     proj.phys.vr = vr;
     proj.phys.pos.x = pos.x;
     proj.phys.pos.y = pos.y;
     proj.phys.pos.z = pos.z;
     proj.phys.mass = 1.0;
+    proj.phys.base_friction = gun->air_friction;
     proj.phys.speed = gun->speed;
     proj.phys.max_velocity = 2.0*gun->speed;
     proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * gun->scale1;
@@ -513,13 +514,13 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
 
         bool homing = RAND_FLOAT(0.0,1.0) <= gun->homing_chance;
 
-        if(!FEQ0(spread) && i > 0)
+        if(!FEQ0(spread))
         {
             if(gun->spread_type == SPREAD_TYPE_RANDOM)
             {
                 p.angle_deg += RAND_FLOAT(-spread, spread);
             }
-            else if(gun->spread_type == SPREAD_TYPE_UNIFORM)
+            else if(i > 0 && gun->spread_type == SPREAD_TYPE_UNIFORM)
             {
                 p.angle_deg = angle_deg + (i*spread);
                 if(p.angle_deg > angle_deg + gun->spread/2.0)
@@ -620,20 +621,33 @@ void projectile_kill(Projectile* proj)
     if(pscale > scale_particle_thresh && !more_cluster)
     {
         ParticleEffect splash = {0};
-        memcpy(&splash, &particle_effects[EFFECT_SPLASH], sizeof(ParticleEffect));
+        int effect_index = EFFECT_SPLASH;
 
-        uint32_t c1 = proj->from_player ? 0x006484BA : 0x00CC5050;
-        uint32_t c2 = proj->from_player ? 0x001F87DC : 0x00FF8080;
-        uint32_t c3 = proj->from_player ? 0x00112837 : 0x00550000;
+        if(!proj->phys.collided)
+        {
+            effect_index = EFFECT_DISSIPATE;
+        }
+
+        memcpy(&splash, &particle_effects[effect_index], sizeof(ParticleEffect));
+
+        uint32_t color = proj->color;
+        float r,g,b;
+        gfx_color2floats(color, &r, &g, &b);
+
+        uint32_t c1 = COLOR2(r,g,b);
+        uint32_t c2 = COLOR2(0.66*r, 0.66*g, 0.66*b);
+        uint32_t c3 = COLOR2(0.33*r, 0.33*g, 0.33*b);
 
         float lifetime = 0.4;
+
+        float projy = proj->phys.pos.y - (proj->phys.vr.h + proj->phys.pos.z)/2.0;
 
         if(role == ROLE_SERVER)
         {
             NetEvent ev = {
                 .type = EVENT_TYPE_PARTICLES,
-                .data.particles.effect_index = EFFECT_SPLASH,
-                .data.particles.pos = { proj->phys.pos.x, proj->phys.pos.y },
+                .data.particles.effect_index = effect_index,
+                .data.particles.pos = { proj->phys.pos.x, projy },
                 .data.particles.scale = pscale,
                 .data.particles.color1 = c1,
                 .data.particles.color2 = c2,
@@ -652,7 +666,7 @@ void projectile_kill(Projectile* proj)
             splash.color3 = c3;
             splash.scale.init_min *= pscale;
             splash.scale.init_max *= pscale;
-            ParticleSpawner* ps = particles_spawn_effect(proj->phys.pos.x,proj->phys.pos.y, proj->phys.pos.z, &splash, lifetime, true, false);
+            ParticleSpawner* ps = particles_spawn_effect(proj->phys.pos.x, projy, proj->phys.pos.z, &splash, lifetime, true, false);
             if(ps != NULL) ps->userdata = (int)proj->phys.curr_room;
         }
     }
@@ -848,11 +862,24 @@ void projectile_update_all(float dt)
                 */
             }
 
+            if(proj->phys.base_friction > 0.0)
+            {
+                Vector2f c = {-proj->phys.vel.x, -proj->phys.vel.y};
+                normalize(&c);
+
+                float friction = _dt*4*proj->gun.speed*proj->phys.base_friction;
+
+                float fx = MIN(ABS(proj->phys.vel.x), friction);
+                float fy = MIN(ABS(proj->phys.vel.y), friction);
+
+                proj->phys.vel.x += fx*c.x;
+                proj->phys.vel.y += fy*c.y;
+            }
+
             if(proj->gun.wave_amplitude > 0.0)
             {
                 if(proj->gun.wave_period > 0.0)
                 {
-                    //Vector2f f = {cos(angle - PI_OVER_2), -sin(angle - PI_OVER_2)};
                     Vector2f f = {sin(angle), cos(angle)};
                     normalize(&f);
 
@@ -881,7 +908,13 @@ void projectile_update_all(float dt)
 
             float cfactor = proj->ttl / proj->gun.lifetime;
             proj->color = gfx_blend_colors(proj->gun.color2, proj->gun.color1, cfactor);
-            proj->scale = lerp(proj->gun.scale2, proj->gun.scale1, cfactor);
+            proj->phys.scale = lerp(proj->gun.scale2, proj->gun.scale1, cfactor);
+        }
+
+        if(!FEQ0(proj->gun.spin_factor))
+        {
+            proj->phys.rotation_deg += (proj->gun.spin_factor*1080.0*_dt);
+            proj->phys.rotation_deg = fmod(proj->phys.rotation_deg, 360.0);
         }
 
         //printf("adding %f %f; vel: %f %f\n",f.x, f.y, proj->phys.vel.x, proj->phys.vel.y);
@@ -902,6 +935,7 @@ void projectile_update_all(float dt)
 
         if(proj->phys.amorphous && proj->phys.pos.z <= 0.0)
         {
+            proj->phys.collided = true; // hit floor
             projectile_kill(proj);
         }
     }
@@ -968,24 +1002,13 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         if(proj->phys.curr_room != curr_room) return;
 
         Box proj_curr = {
-            proj->phys.pos.x,
-            proj->phys.pos.y,
-            // proj->phys.pos.z > 100 ? proj->phys.pos.z + proj->phys.height/2.0 : 0,
-            proj->phys.pos.z - proj->phys.height/2.0,
-            // proj->phys.pos.z,
-            proj->phys.width,
-            proj->phys.width,
+            proj->phys.collision_rect.x,
+            proj->phys.collision_rect.y,
+            proj->phys.pos.z + phys->height/2.0,
+            proj->phys.collision_rect.w,
+            proj->phys.collision_rect.h,
             proj->phys.height*2,
         };
-
-        // Box check = {
-        //     phys->pos.x,
-        //     phys->pos.y,
-        //     phys->pos.z + phys->height/2.0,
-        //     phys->width,
-        //     phys->width,
-        //     phys->height*2,
-        // };
 
         float zb = phys->pos.z/2.0;
         if(phys->floating)
@@ -1014,6 +1037,8 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
                 proj->phys.pos.y = proj->phys.prior_pos.y;
 
                 phys_collision_correct(&proj->phys,phys,&ci);
+
+                proj->phys.collided = true;
                 projectile_kill(proj);
             }
 
@@ -1061,10 +1086,10 @@ void projectile_draw(Projectile* proj)
     float opacity = proj->phys.ethereal ? 0.3 : 1.0;
 
     float y = proj->phys.pos.y - (proj->phys.vr.h + proj->phys.pos.z)/2.0;
-    float scale = RANGE(pow(proj->phys.pos.z/20.0, 0.6), 0.90, 1.10) * proj->scale;
+    float scale = RANGE(pow(proj->phys.pos.z/20.0, 0.6), 0.90, 1.10) * proj->phys.scale;
 
     // printf("z: %.2f, scale: %.2f\n", proj->phys.pos.z, scale);
-    gfx_sprite_batch_add(projectile_image, proj->sprite_index, proj->phys.pos.x, y, proj->color, false, scale, 0.0, opacity, false, true, false);
+    gfx_sprite_batch_add(projectile_image, proj->sprite_index, proj->phys.pos.x, y, proj->color, false, scale, proj->phys.rotation_deg, opacity, false, true, false);
 }
 
 ProjectileOrbital* projectile_orbital_get(Physics* body, float distance)
@@ -1124,6 +1149,17 @@ const char* projectile_spread_type_get_name(SpreadType spread_type)
     {
         case SPREAD_TYPE_RANDOM: return "Random";
         case SPREAD_TYPE_UNIFORM: return "Uniform";
+        default: break;
+    }
+    return "Unknown";
+}
+
+const char* projectile_charge_type_get_name(ChargeType charge_type)
+{
+    switch(charge_type)
+    {
+        case CHARGE_TYPE_SCALE_DAMAGE: return "Scale Damage";
+        case CHARGE_TYPE_SCALE_BURST_COUNT: return "Scale Burst Count";
         default: break;
     }
     return "Unknown";

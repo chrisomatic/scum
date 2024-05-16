@@ -132,7 +132,7 @@ void player_set_defaults(Player* p)
     p->invulnerable = false;
     p->invulnerable_temp_time = 0.0;
 
-    p->scale = 1.0;
+    p->phys.scale = 1.0;
     p->phys.falling = false;
     p->phys.floating = false;
 
@@ -261,7 +261,7 @@ void player_print(Player* p)
     printf("    name:   %s\n", p->settings.name);
     phys_print(&p->phys);
     printf("    anim_factor: %.2f\n", p->anim_factor);
-    printf("    scale:      %.2f\n", p->scale);
+    printf("    scale:      %.2f\n", p->phys.scale);
     printf("    class:      %d\n", p->settings.class);
     printf("    xp:         %d\n", p->xp);
     printf("    level:      %d\n", p->level);
@@ -753,7 +753,7 @@ void player_die(Player* p)
     player_drop_item(p, &skull);
 
     p->phys.falling = false;
-    p->scale = 1.0;
+    p->phys.scale = 1.0;
 
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
@@ -1640,10 +1640,10 @@ void player_update(Player* p, float dt)
 
     if(p->phys.falling)
     {
-        p->scale -= 0.04;
-        if(p->scale < 0)
+        p->phys.scale -= 0.04;
+        if(p->phys.scale < 0)
         {
-            p->scale = 1.0;
+            p->phys.scale = 1.0;
             p->phys.falling = false;
 
             TileType tt = level_get_tile_type(room, p->last_safe_tile.x, p->last_safe_tile.y);
@@ -2395,7 +2395,7 @@ void player_draw(Player* p)
 
     //uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
     float y = p->phys.pos.y - (p->phys.vr.h + p->phys.pos.z)/2.0;
-    bool ret = gfx_sprite_batch_add(p->image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, p->settings.color, true, p->scale, 0.0, opacity, false, false, false);
+    bool ret = gfx_sprite_batch_add(p->image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, p->settings.color, true, p->phys.scale, 0.0, opacity, false, false, false);
     if(!ret) printf("Failed to add player to batch!\n");
 
     if(p->weapon.type != WEAPON_TYPE_NONE && p->weapon.rotation_deg != 90.0)

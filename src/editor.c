@@ -451,6 +451,8 @@ void editor_draw()
                     static int proj_sel = 0;
                     imgui_dropdown(proj_def_names, PROJECTILE_TYPE_MAX, "Projectile Definition", &proj_sel, NULL);
 
+                    static int charge_type_sel = 0;
+                    static int spread_type_sel = 0;
 
                     Gun* gun = &gun_lookup[proj_sel];
 
@@ -463,7 +465,7 @@ void editor_draw()
                     {
                         gun->damage_min = RAND_FLOAT(0.0,100.0);
                         gun->damage_max = RAND_FLOAT(0.0,100.0);
-                        gun->lifetime   = RAND_FLOAT(0.0,5.0);
+                        gun->lifetime   = RAND_FLOAT(0.2,3.0);
                         gun->speed      = RAND_FLOAT(100.0,1000.0);
                         gun->cooldown = RAND_FLOAT(0.1, 1.0);
 
@@ -474,6 +476,9 @@ void editor_draw()
                         bool accels = (rand() % 4 == 0);
                         gun->directional_accel = accels ? RAND_FLOAT(-1.0,1.0) : 0.0;
 
+                        bool air_friction = (rand() % 4 == 0);
+                        gun->air_friction = air_friction ? RAND_FLOAT(0.0,1.0) : 0.0;
+
                         gun->gravity_factor = RAND_FLOAT(0.0,1.0);
                         gun->scale1 = RAND_FLOAT(0.1,2.5);
                         gun->scale2 = RAND_FLOAT(0.1,2.5);
@@ -481,10 +486,16 @@ void editor_draw()
                         gun->color2 = rand();
                         gun->knockback_factor = RAND_FLOAT(0.0,1.0);
                         gun->critical_hit_chance = RAND_FLOAT(0.0,1.0);
-                        gun->spread_type = rand() % SPREAD_TYPE_COUNT;
+
+                        bool spinning = (rand() % 4 == 0);
+                        gun->spin_factor = spinning ? RAND_FLOAT(-1.0,1.0) : 0.0;
+
+                        bool random_spread = (rand() % 4 == 0);
+                        gun->spread_type = random_spread ? SPREAD_TYPE_RANDOM : SPREAD_TYPE_UNIFORM;
+                        spread_type_sel = gun->spread_type;
                         gun->spread = RAND_FLOAT(0.0, 360.0);
 
-                        gun->sprite_index = rand() % 5;
+                        gun->sprite_index = rand() % 10;
 
                         bool more_than_one = (rand() % 4 == 0);
                         gun->num = more_than_one ? rand() % 9 + 1 : 1;
@@ -536,7 +547,7 @@ void editor_draw()
                         imgui_slider_float("Damage Max", 0.0,100.0,&gun->damage_max);
                     imgui_horizontal_end();
 
-                    imgui_slider_float("Lifetime", 0.0,5.0,&gun->lifetime);
+                    imgui_slider_float("Lifetime", 0.2,3.0,&gun->lifetime);
                     imgui_slider_float("Base Speed", 100.0,1000.0,&gun->speed);
 
                     imgui_slider_float("Cooldown", 0.1,1.0,&gun->cooldown);
@@ -548,11 +559,27 @@ void editor_draw()
 
                     imgui_slider_float("Directional Accel", -1.0,1.0,&gun->directional_accel);
                     imgui_slider_float("Gravity Factor", 0.0,1.0,&gun->gravity_factor);
+                    imgui_slider_float("Air Friction", 0.0,1.0,&gun->air_friction);
 
                     imgui_horizontal_begin();
                         imgui_number_box("Burst Count", 0, 4,&gun->burst_count);
                         imgui_slider_float("Burst Rate", 0.1, 1.0,&gun->burst_rate);
                     imgui_horizontal_end();
+
+                    imgui_checkbox("Chargeable", &gun->is_chargeable);
+
+                    if(gun->is_chargeable)
+                    {
+                        char* charge_type_names[CHARGE_TYPE_COUNT] = {0};
+                        for(int i = 0; i < CHARGE_TYPE_COUNT; ++i)
+                            charge_type_names[i] = (char*)projectile_charge_type_get_name(i);
+
+                        imgui_horizontal_begin();
+                            imgui_dropdown(charge_type_names, CHARGE_TYPE_COUNT, "Charge Type", &charge_type_sel, NULL);
+                            imgui_slider_float("Charge Time Max", 0.5, 5.0,&gun->charge_time_max);
+                        imgui_horizontal_end();
+
+                    }
 
                     imgui_horizontal_begin();
                         imgui_slider_float("Scale1", 0.1, 2.5,&gun->scale1);
@@ -564,6 +591,8 @@ void editor_draw()
                         imgui_color_picker("Color2", &gun->color2);
                     imgui_horizontal_end();
 
+                    imgui_slider_float("Spin Factor", -1.0, 1.0, &gun->spin_factor);
+
                     imgui_horizontal_begin();
                         imgui_slider_float("Knockback Factor", 0.0, 1.0, &gun->knockback_factor);
                         imgui_slider_float("Critical Hit Chance", 0.0, 1.0, &gun->critical_hit_chance);
@@ -573,14 +602,13 @@ void editor_draw()
                     for(int i = 0; i < SPREAD_TYPE_COUNT; ++i)
                         spread_type_names[i] = (char*)projectile_spread_type_get_name(i);
 
-                    static int spread_type_sel = 0;
                     imgui_horizontal_begin();
                         imgui_dropdown(spread_type_names, SPREAD_TYPE_COUNT, "Spread Type", &spread_type_sel, NULL);
                         gun->spread_type = spread_type_sel;
                         imgui_slider_float("Angle Spread", 0.0, 360.0,&gun->spread);
                     imgui_horizontal_end();
 
-                    imgui_number_box("Sprite Index", 0,4, &gun->sprite_index);
+                    imgui_number_box("Sprite Index", 0,9, &gun->sprite_index);
 
                     int num = gun->num;
                     imgui_number_box("Num", 1,10, &num);

@@ -26,6 +26,7 @@ typedef enum
     EFFECT_EXPLOSION,
     EFFECT_PLAYER_ACTIVATE,
     EFFECT_SHRINE,
+    EFFECT_DISSIPATE,
     EFFECT_MAX,
 } Effect;
 
