@@ -39,3 +39,4 @@ void gaudio_play(uint16_t id);
 bool gaudio_playing(uint16_t id);
 void gaudio_rewind(uint16_t id);
 void gaudio_set_volume(uint16_t id, float vol);
+void gaudio_set_pitch(uint16_t id, float pitch);

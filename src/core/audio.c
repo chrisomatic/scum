@@ -93,6 +93,12 @@ void audio_source_set_volume(int src, float vol)
     alSourcef(src, AL_GAIN,  vol);
 }
 
+void audio_source_set_pitch(int src, float pitch)
+{
+    alGetError(); // clear previous errors
+    alSourcef(src, AL_PITCH,  pitch);
+}
+
 void audio_source_delete(int source)
 {
     alGetError(); // clear previous errors

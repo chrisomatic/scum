@@ -23,6 +23,7 @@ void audio_source_stop(int source);
 void audio_source_queue_buffer(int source, int buffer);
 void audio_source_unqueue_buffer(int source, int buffer);
 void audio_source_set_volume(int src, float vol);
+void audio_source_set_pitch(int src, float pitch);
 int audio_source_get_processed_buffers(int source);
 int audio_source_get_buffer(int source);
 bool audio_source_is_playing(int source);

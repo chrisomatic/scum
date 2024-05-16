@@ -134,6 +134,14 @@ void gaudio_set_volume(uint16_t id, float vol)
     audio_source_set_volume(ga->source, vol);
 }
 
+void gaudio_set_pitch(uint16_t id, float pitch)
+{
+    Gaudio* ga = gaudio_get(id);
+    if(!ga) return;
+
+    audio_source_set_pitch(ga->source, pitch);
+}
+
 void gaudio_remove(uint16_t id)
 {
     if(!audio_list) return;

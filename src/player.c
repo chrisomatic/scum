@@ -1340,6 +1340,7 @@ static void player_handle_shooting(Player* p, float dt)
                     }
                 }
 
+                gaudio_set_pitch(audio_shoot, RAND_FLOAT(0.9,1.1));
                 gaudio_play(audio_shoot);
             }
 
