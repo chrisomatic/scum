@@ -7,6 +7,7 @@
 
 #define MAX_ORBITALS 32
 #define MAX_PROJECTILES 4096
+#define MAX_CLUSTER_STAGES 2
 
 typedef enum
 {
@@ -72,8 +73,8 @@ typedef struct
     // cluster
     bool cluster;
     int cluster_stages;
-    int cluster_num[3];
-    float cluster_scales[3];
+    int cluster_num[MAX_CLUSTER_STAGES];
+    float cluster_scales[MAX_CLUSTER_STAGES];
     int cluster_stage;
 
     // orbital
@@ -83,7 +84,9 @@ typedef struct
     int   orbital_max_count;
 
     // charge
+    bool charging;
     bool is_chargeable;
+    float charge_time;
     float charge_time_max;
     ChargeType charge_type;
 

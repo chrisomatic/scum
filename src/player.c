@@ -1272,6 +1272,12 @@ static void player_handle_shooting(Player* p, float dt)
     {
         if(p->actions[PLAYER_ACTION_SHOOT_UP+i].toggled_on)
         {
+            if(p->gun.is_chargeable && p->proj_cooldown == 0.0)
+            {
+                // Charging
+                p->gun.charging = true;
+            }
+
             p->last_shoot_action = PLAYER_ACTION_SHOOT_UP+i;
             break;
         }
@@ -1279,6 +1285,22 @@ static void player_handle_shooting(Player* p, float dt)
 
     if(p->last_shoot_action >= PLAYER_ACTION_SHOOT_UP && p->last_shoot_action <= PLAYER_ACTION_SHOOT_RIGHT)
     {
+        if(p->gun.is_chargeable)
+        {
+            if(!p->gun.charging && p->actions[p->last_shoot_action].state && p->proj_cooldown == 0.0)
+            {
+                p->gun.charging = true;
+            }
+
+            if(p->gun.charging)
+            {
+                p->gun.charge_time += dt;
+                p->gun.charge_time = MIN(p->gun.charge_time_max, p->gun.charge_time);
+            }
+        }
+
+        bool shoot = p->gun.is_chargeable ? false : p->actions[p->last_shoot_action].state && p->proj_cooldown == 0.0;
+
         if(p->actions[p->last_shoot_action].toggled_off)
         {
             for(int i = 0; i < 4; ++i)
@@ -1288,6 +1310,12 @@ static void player_handle_shooting(Player* p, float dt)
                     p->last_shoot_action = PLAYER_ACTION_SHOOT_UP+i;
                     break;
                 }
+            }
+
+            if(p->gun.is_chargeable && p->gun.charging)
+            {
+                // Release!
+                shoot = true;
             }
         }
 
@@ -1314,7 +1342,7 @@ static void player_handle_shooting(Player* p, float dt)
             player_set_sprite_index(p, sprite_index);
         }
 
-        if(p->actions[p->last_shoot_action].state && p->proj_cooldown == 0.0)
+        if(shoot)
         {
             player_set_sprite_index(p, sprite_index);
 
@@ -1325,13 +1353,16 @@ static void player_handle_shooting(Player* p, float dt)
                 temp.damage_max += lookup_strength[p->stats[STRENGTH]];
                 temp.speed  += lookup_attack_range[p->stats[ATTACK_RANGE]];
 
+                p->gun.charging = false;
+                p->gun.charge_time = 0.0;
+
                 uint32_t color = 0x0050A0FF;
 
-                projectile_lob(&p->phys, temp.gravity_factor*120.0, p->phys.curr_room, &temp, color, p->aim_deg, true);
+                projectile_lob(&p->phys, MIN(1.0, temp.gravity_factor)*120.0, p->phys.curr_room, &temp, color, p->aim_deg, true);
 
                 for(int j = 0; j < temp.burst_count; ++j)
                 {
-                    projectile_lob(&p->phys, temp.gravity_factor*120.0, p->phys.curr_room, &temp, color, p->aim_deg, true);
+                    projectile_lob(&p->phys, MIN(1.0, temp.gravity_factor)*120.0, p->phys.curr_room, &temp, color, p->aim_deg, true);
 
                     for(int k = 0; k < temp.num; ++k)
                     {
@@ -2402,6 +2433,19 @@ void player_draw(Player* p)
     if(p->weapon.type != WEAPON_TYPE_NONE && p->weapon.rotation_deg != 90.0)
     {
         weapon_draw(&p->weapon);
+    }
+
+    if(p->gun.charging)
+    {
+        const float bar_width = 20;
+        const float bar_height = 2;
+
+        const float x = p->phys.pos.x - bar_width/2.0;
+        const float y = p->phys.pos.y - p->phys.height - bar_height - 10;
+
+        gfx_draw_rect_xywh_tl(x, y, bar_width, bar_height, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.4, true, true);
+        gfx_draw_rect_xywh_tl(x, y, bar_width*(p->gun.charge_time / p->gun.charge_time_max), bar_height, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 0.4, true, true);
+
     }
 
     if(debug_enabled)

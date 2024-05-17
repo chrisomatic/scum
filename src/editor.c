@@ -438,6 +438,9 @@ void editor_draw()
 
             case 4: // projectiles
             {
+                imgui_store_theme();
+
+                imgui_set_text_size(9.0);
                 imgui_text("Total Count: %u", plist->count);
 
                 if(role == ROLE_LOCAL)
@@ -479,7 +482,7 @@ void editor_draw()
                         bool air_friction = (rand() % 4 == 0);
                         gun->air_friction = air_friction ? RAND_FLOAT(0.0,1.0) : 0.0;
 
-                        gun->gravity_factor = RAND_FLOAT(0.0,1.0);
+                        gun->gravity_factor = RAND_FLOAT(0.0,2.0);
                         gun->scale1 = RAND_FLOAT(0.1,2.5);
                         gun->scale2 = RAND_FLOAT(0.1,2.5);
                         gun->color1 = rand();
@@ -535,9 +538,28 @@ void editor_draw()
                             gun->lightning_chance = 0.0;
                         }
 
+                        gun->cluster = (rand() % 4 == 0);
+                        if(gun->cluster)
+                        {
+                            gun->cluster_stages = rand() % 2 + 1;
+                            for(int i = 0; i < gun->cluster_stages; ++i)
+                            {
+                                gun->cluster_num[i] = rand() % 4 + 1;
+                                gun->cluster_scales[i] = RAND_FLOAT(0.1,2.0);
+                            }
+                        }
+
+                        gun->is_chargeable = (rand() % 4 == 0);
+                        if(gun->is_chargeable)
+                        {
+                            gun->charge_type = rand() % CHARGE_TYPE_COUNT;
+                            charge_type_sel = gun->charge_type;
+                            gun->charge_time = 0.0;
+                            gun->charge_time_max = RAND_FLOAT(0.3, 2.0);
+                        }
+
                         //gun->is_orbital = rand() % 2;
                         //gun->orbital_distance = RAND_FLOAT(1.0, 100.0);
-                        // TODO: cluster
                     }
 
                     imgui_horizontal_begin();
@@ -558,8 +580,11 @@ void editor_draw()
                     imgui_horizontal_end();
 
                     imgui_slider_float("Directional Accel", -1.0,1.0,&gun->directional_accel);
-                    imgui_slider_float("Gravity Factor", 0.0,1.0,&gun->gravity_factor);
-                    imgui_slider_float("Air Friction", 0.0,1.0,&gun->air_friction);
+
+                    imgui_horizontal_begin();
+                        imgui_slider_float("Gravity Factor", 0.0,2.0,&gun->gravity_factor);
+                        imgui_slider_float("Air Friction", 0.0,1.0,&gun->air_friction);
+                    imgui_horizontal_end();
 
                     imgui_horizontal_begin();
                         imgui_number_box("Burst Count", 0, 4,&gun->burst_count);
@@ -576,6 +601,7 @@ void editor_draw()
 
                         imgui_horizontal_begin();
                             imgui_dropdown(charge_type_names, CHARGE_TYPE_COUNT, "Charge Type", &charge_type_sel, NULL);
+                            gun->charge_type = charge_type_sel;
                             imgui_slider_float("Charge Time Max", 0.5, 5.0,&gun->charge_time_max);
                         imgui_horizontal_end();
 
@@ -630,9 +656,9 @@ void editor_draw()
 
                     if(gun->cluster)
                     {
-                        imgui_number_box("Cluster Stages", 1,3, &gun->cluster_stages);
+                        imgui_number_box("Cluster Stages", 1, MAX_CLUSTER_STAGES, &gun->cluster_stages);
 
-                        imgui_number_box("Stage 1 Num", 1,10, &gun->cluster_num[0]);
+                        imgui_number_box("Stage 1 Num", 1,5, &gun->cluster_num[0]);
                         imgui_slider_float("Stage 1 Scale", 0.1, 2.0, &gun->cluster_scales[0]);
 
                         if(gun->cluster_stages >= 2)
@@ -640,18 +666,14 @@ void editor_draw()
                             imgui_number_box("Stage 2 Num", 1,10, &gun->cluster_num[1]);
                             imgui_slider_float("Stage 2 Scale", 0.1, 2.0, &gun->cluster_scales[1]);
                         }
-
-                        if(gun->cluster_stages >= 3)
-                        {
-                            imgui_number_box("Stage 3 Num", 1,10, &gun->cluster_num[2]);
-                            imgui_slider_float("Stage 3 Scale", 0.1, 2.0, &gun->cluster_scales[2]);
-                        }
                     }
                     imgui_slider_float("Homing Chance", 0.0, 1.0, &gun->homing_chance);
                     imgui_slider_float("Ghost Chance", 0.0, 1.0, &gun->ghost_chance);
                     imgui_slider_float("Cold Chance", 0.0, 1.0, &gun->cold_chance);
                     imgui_slider_float("Poison Chance", 0.0, 1.0,&gun->poison_chance);
                 }
+
+                imgui_restore_theme();
 
             } break;
 

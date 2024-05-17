@@ -69,8 +69,8 @@ Gun gun_lookup[] = {
 
         .cluster = false,
         .cluster_stages = 1,
-        .cluster_num = {8, 2, 2},
-        .cluster_scales = {0.5, 0.5, 0.5},
+        .cluster_num = {2, 2},
+        .cluster_scales = {0.6, 0.6},
 
         .is_orbital = false,
         .orbital_distance = 32.0,
@@ -79,6 +79,11 @@ Gun gun_lookup[] = {
 
         .burst_count = 0,
         .burst_rate = 0.2,
+
+        .is_chargeable = false,
+        .charge_type = CHARGE_TYPE_SCALE_DAMAGE,
+        .charge_time = 0.0,
+        .charge_time_max = 1.0,
 
         .num = 1,
         .spread_type = SPREAD_TYPE_RANDOM,
@@ -373,6 +378,28 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
 
     proj.gun = *gun;
 
+    if(proj.gun.charging)
+    {
+        proj.gun.charging = false;
+        float factor  = (proj.gun.charge_time / proj.gun.charge_time_max);
+
+        switch(proj.gun.charge_type)
+        {
+            case CHARGE_TYPE_SCALE_DAMAGE:
+            {
+                proj.gun.damage_min *= (1.0 + factor);
+                proj.gun.damage_max *= (1.0 + factor);
+                proj.gun.scale1 *= (1.0 + factor);
+                proj.gun.scale2 *= (1.0 + factor);
+            }   break;
+            case CHARGE_TYPE_SCALE_BURST_COUNT:
+            {
+                int burst_count = (int)(factor*4.0);
+                proj.gun.burst_count = burst_count;
+            } break;
+        }
+    }
+
     Rect vr = gfx_images[projectile_image].visible_rects[0];
 
     vr.w *= gun->scale1;
@@ -404,6 +431,8 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
     proj.ttl = gun->lifetime;
     proj.wave_time = gun->wave_period / 2.0;
     proj.wave_dir = 1;
+
+    // TODO: Move bursting code to this function
 
     if(gun->is_orbital)
     {
@@ -613,7 +642,7 @@ void projectile_kill(Projectile* proj)
     //audio_source_delete(proj->source_explode);
 
     Gun gun = proj->gun;
-    bool more_cluster = proj->gun.cluster && (proj->cluster_stage < (3) && proj->cluster_stage < (gun.cluster_stages));
+    bool more_cluster = proj->gun.cluster && (proj->cluster_stage < (MAX_CLUSTER_STAGES) && proj->cluster_stage < (gun.cluster_stages));
 
     const float scale_particle_thresh = 0.25;
     float pscale = MIN(1.0, proj->gun.scale2);
@@ -733,33 +762,28 @@ void projectile_kill(Projectile* proj)
             return;
         }
 
-        // gun.damage_min *= 0.8;
-        // gun.damage_max *= 0.8;
-
         gun.cluster = true;
-        gun.scale1 = gun.cluster_scales[proj->cluster_stage];
-        gun.scale2 = gun.cluster_scales[proj->cluster_stage];
 
-        // pd.cluster = false;
-        // pd.scale *= 0.5;
-        // if(pd.scale <= 0.05)
-        //     return;
-        gun.speed = 50.0;
+        gun.scale1 = gun.cluster_scales[proj->cluster_stage]*proj->phys.scale;
+        gun.scale2 = gun.scale1;
+
+        gun.speed *= 0.6;
 
         gun.num = gun.cluster_num[proj->cluster_stage];
 
         float angle_deg = proj->angle_deg;
         // float angle_deg = rand() % 360;
-        gun.spread = 210.0;
+        gun.spread = 60.0;
 
         // sp.spread = 360.0;
         gun.cluster_stage = proj->cluster_stage+1;
         // proj->phys.vel.x = 0.0;
         // proj->phys.vel.y = 0.0;
+
         proj->phys.vel.x /= 2.0;
         proj->phys.vel.y /= 2.0;
 
-        projectile_fire(&proj->phys, proj->phys.curr_room, &gun, proj->color, angle_deg, proj->from_player);
+        projectile_lob(&proj->phys, gun.gravity_factor*120.0, proj->phys.curr_room, &gun, proj->color, angle_deg, proj->from_player);
     }
 }
 
