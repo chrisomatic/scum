@@ -72,7 +72,7 @@ Gun gun_lookup[] = {
         .cluster_num = {2, 2},
         .cluster_scales = {0.6, 0.6},
 
-        .is_orbital = false,
+        .orbital = false,
         .orbital_distance = 32.0,
         .orbital_speed_factor = 3.0,
         .orbital_max_count = 5,
@@ -80,7 +80,7 @@ Gun gun_lookup[] = {
         .burst_count = 0,
         .burst_rate = 0.2,
 
-        .is_chargeable = false,
+        .chargeable = false,
         .charge_type = CHARGE_TYPE_SCALE_DAMAGE,
         .charge_time = 0.0,
         .charge_time_max = 1.0,
@@ -296,7 +296,7 @@ Gun gun_lookup[] = {
         .burst_count = 0,
         .burst_rate = 0.2,
 
-        .is_orbital = true,
+        .orbital = true,
         .orbital_distance = 50.0,
         .orbital_speed_factor = 4.0,
         .orbital_max_count = 4,
@@ -334,6 +334,16 @@ void projectile_init()
 
     // Audio Buffers
     audio_buffer_explode = audio_load_file("src/audio/splat1.wav");
+
+    // @TEMP
+    gun_save_to_file(&gun_lookup[0], "test", "Just a cool gun");
+
+    Gun test = {0};
+    char name[50] = {0};
+    char desc[100] = {0};
+    gun_load_from_file(&test, "test", desc);
+
+    gun_print(&test);
 }
 
 void projectile_clear_all()
@@ -434,7 +444,7 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
 
     // TODO: Move bursting code to this function
 
-    if(gun->is_orbital)
+    if(gun->orbital)
     {
         // assign projectile to orbital
         ProjectileOrbital* orbital = NULL;
@@ -710,7 +720,7 @@ void projectile_kill(Projectile* proj)
         }
     }
 
-    if(proj->gun.is_orbital)
+    if(proj->gun.orbital)
     {
         proj->orbital->count--;
         //proj->orbital->lerp_t = 0.0;
@@ -824,7 +834,7 @@ void projectile_update_all(float dt)
 
         float _dt = dt;
 
-        if(proj->gun.is_orbital && proj->orbital->body)
+        if(proj->gun.orbital && proj->orbital->body)
         {
             // make sure orbital projectile follows player through rooms
             proj->phys.curr_room = proj->orbital->body->curr_room;
@@ -950,7 +960,7 @@ void projectile_update_all(float dt)
         proj->phys.pos.x += _dt*proj->phys.vel.x;
         proj->phys.pos.y += _dt*proj->phys.vel.y;
 
-        if(!proj->gun.is_orbital)
+        if(!proj->gun.orbital)
         {
             phys_apply_gravity(&proj->phys, proj->gun.gravity_factor, _dt);
         }
@@ -1188,3 +1198,312 @@ const char* projectile_charge_type_get_name(ChargeType charge_type)
     }
     return "Unknown";
 }
+
+
+// Gun File Handling
+void gun_save_to_file(Gun* gun, const char* gun_name, const char* desc)
+{
+    char file_path[50] = {0};
+    snprintf(file_path,50, "src/guns/%s.gun", gun_name);
+
+    FILE* fp = fopen(file_path, "w");
+
+    if(!fp)
+    {
+        LOGE("Failed to open file for writing");
+        return;
+    }
+
+    fprintf(fp, "# %s\n", desc);
+    fprintf(fp, "\n");
+
+    fprintf(fp, "name: %s\n", gun_name);
+    fprintf(fp, "based_on: %s\n", "null");
+    fprintf(fp, "\n");
+    fprintf(fp, "damage_min: %3.2f\n", gun->damage_min);
+    fprintf(fp, "damage_max: %3.2f\n", gun->damage_max);
+    fprintf(fp, "num: %d\n", gun->num);
+    fprintf(fp, "speed: %3.2f\n", gun->speed);
+    fprintf(fp, "scale1: %3.2f\n", gun->scale1);
+    fprintf(fp, "scale2: %3.2f\n", gun->scale2);
+    fprintf(fp, "lifetime: %3.2f\n", gun->lifetime);
+    fprintf(fp, "cooldown: %3.2f\n", gun->cooldown);
+    fprintf(fp, "burst_count: %d\n", gun->burst_count);
+    fprintf(fp, "burst_rate: %3.2f\n", gun->burst_rate);
+    fprintf(fp, "critical_hit_chance: %3.2f\n", gun->critical_hit_chance);
+    fprintf(fp, "knockback_factor: %3.2f\n", gun->knockback_factor);
+    fprintf(fp, "\n");
+    fprintf(fp, "spread_type: %d\n", gun->spread_type);
+    fprintf(fp, "spread: %3.2f\n", gun->spread);
+    fprintf(fp, "\n");
+    fprintf(fp, "sprite_index: %d\n", gun->sprite_index);
+    fprintf(fp, "spin_factor: %3.2f\n", gun->spin_factor);
+    fprintf(fp, "color1: %06X\n", gun->color1);
+    fprintf(fp, "color2: %06X\n", gun->color2);
+    fprintf(fp, "\n");
+    fprintf(fp, "directional_accel: %3.2f\n", gun->directional_accel);
+    fprintf(fp, "gravity_factor: %3.2f\n", gun->gravity_factor);
+    fprintf(fp, "air_friction: %3.2f\n", gun->air_friction);
+    fprintf(fp, "\n");
+    fprintf(fp, "wave_amplitude: %3.2f\n", gun->wave_amplitude);
+    fprintf(fp, "wave_period: %3.2f\n", gun->wave_period);
+    fprintf(fp, "\n");
+    fprintf(fp, "ghost_chance: %3.2f\n", gun->ghost_chance);
+    fprintf(fp, "homing_chance: %3.2f\n", gun->homing_chance);
+    fprintf(fp, "bounce_chance: %3.2f\n", gun->bounce_chance);
+    fprintf(fp, "penetration_chance: %3.2f\n", gun->penetration_chance);
+    fprintf(fp, "explosion_chance: %3.2f\n", gun->explosion_chance);
+    fprintf(fp, "explosion_radius: %3.2f\n", gun->explosion_radius);
+    fprintf(fp, "explosion_rate: %3.2f\n", gun->explosion_rate);
+    fprintf(fp, "\n");
+    fprintf(fp, "fire_chance: %3.2f\n", gun->fire_chance);
+    fprintf(fp, "cold_chance: %3.2f\n", gun->cold_chance);
+    fprintf(fp, "lightning_chance: %3.2f\n", gun->lightning_chance);
+    fprintf(fp, "poison_chance: %3.2f\n", gun->poison_chance);
+    fprintf(fp, "\n");
+    fprintf(fp, "chargeable: %s\n", gun->chargeable ? "true" : "false");
+    fprintf(fp, "charge_type: %d\n", gun->charge_type);
+    fprintf(fp, "charge_time_max: %3.2f\n", gun->charge_time_max);
+    fprintf(fp, "\n");
+    fprintf(fp, "cluster: %s\n", gun->cluster ? "true" : "false");
+    fprintf(fp, "cluster_stages: %d\n", gun->cluster_stages);
+    fprintf(fp, "cluster_num0: %d\n", gun->cluster_num[0]);
+    fprintf(fp, "cluster_num1: %d\n", gun->cluster_num[1]);
+    fprintf(fp, "cluster_scale0: %3.2f\n", gun->cluster_scales[0]);
+    fprintf(fp, "cluster_scale1: %3.2f\n", gun->cluster_scales[1]);
+    fprintf(fp, "\n");
+    fprintf(fp, "orbital: %s\n", gun->orbital ? "true" : "false");
+    fprintf(fp, "orbital_max_count: %d\n", gun->orbital_max_count);
+    fprintf(fp, "orbital_distance: %3.2f\n", gun->orbital_distance);
+    fprintf(fp, "orbital_speed_factor: %3.2f\n", gun->orbital_speed_factor);
+
+    fclose(fp);
+}
+
+void gun_print(Gun* gun)
+{
+    printf("damage_min: %3.2f\n", gun->damage_min);
+    printf("damage_max: %3.2f\n", gun->damage_max);
+    printf("num: %d\n", gun->num);
+    printf("speed: %3.2f\n", gun->speed);
+    printf("scale1: %3.2f\n", gun->scale1);
+    printf("scale2: %3.2f\n", gun->scale2);
+    printf("lifetime: %3.2f\n", gun->lifetime);
+    printf("cooldown: %3.2f\n", gun->cooldown);
+    printf("burst_count: %d\n", gun->burst_count);
+    printf("burst_rate: %3.2f\n", gun->burst_rate);
+    printf("critical_hit_chance: %3.2f\n", gun->critical_hit_chance);
+    printf("knockback_factor: %3.2f\n", gun->knockback_factor);
+    printf("\n");
+    printf("spread_type: %d\n", gun->spread_type);
+    printf("spread: %3.2f\n", gun->spread);
+    printf("\n");
+    printf("sprite_index: %d\n", gun->sprite_index);
+    printf("spin_factor: %3.2f\n", gun->spin_factor);
+    printf("color1: %06X\n", gun->color1);
+    printf("color2: %06X\n", gun->color2);
+    printf("\n");
+    printf("directional_accel: %3.2f\n", gun->directional_accel);
+    printf("gravity_factor: %3.2f\n", gun->gravity_factor);
+    printf("air_friction: %3.2f\n", gun->air_friction);
+    printf("\n");
+    printf("wave_amplitude: %3.2f\n", gun->wave_amplitude);
+    printf("wave_period: %3.2f\n", gun->wave_period);
+    printf("\n");
+    printf("ghost_chance: %3.2f\n", gun->ghost_chance);
+    printf("homing_chance: %3.2f\n", gun->homing_chance);
+    printf("bounce_chance: %3.2f\n", gun->bounce_chance);
+    printf("penetration_chance: %3.2f\n", gun->penetration_chance);
+    printf("explosion_chance: %3.2f\n", gun->explosion_chance);
+    printf("explosion_radius: %3.2f\n", gun->explosion_radius);
+    printf("explosion_rate: %3.2f\n", gun->explosion_rate);
+    printf("\n");
+    printf("fire_chance: %3.2f\n", gun->fire_chance);
+    printf("cold_chance: %3.2f\n", gun->cold_chance);
+    printf("lightning_chance: %3.2f\n", gun->lightning_chance);
+    printf("poison_chance: %3.2f\n", gun->poison_chance);
+    printf("\n");
+    printf("chargeable: %s\n", gun->chargeable ? "true" : "false");
+    printf("charge_type: %d\n", gun->charge_type);
+    printf("charge_time_max: %3.2f\n", gun->charge_time_max);
+    printf("\n");
+    printf("cluster: %s\n", gun->cluster ? "true" : "false");
+    printf("cluster_stages: %d\n", gun->cluster_stages);
+    printf("cluster_num0: %d\n", gun->cluster_num[0]);
+    printf("cluster_num1: %d\n", gun->cluster_num[1]);
+    printf("cluster_scale0: %3.2f\n", gun->cluster_scales[0]);
+    printf("cluster_scale1: %3.2f\n", gun->cluster_scales[1]);
+    printf("\n");
+    printf("orbital: %s\n", gun->orbital ? "true" : "false");
+    printf("orbital_max_count: %d\n", gun->orbital_max_count);
+    printf("orbital_distance: %3.2f\n", gun->orbital_distance);
+    printf("orbital_speed_factor: %3.2f\n", gun->orbital_speed_factor);
+}
+
+void gun_load_from_file(Gun* gun, char* gun_name, char* desc)
+{
+    char file_path[50] = {0};
+    snprintf(file_path,50, "src/guns/%s.gun", gun_name);
+
+    FILE* fp = fopen(file_path, "r");
+
+    if(!fp)
+    {
+        LOGE("Failed to open file for reading");
+        return;
+    }
+
+    int c;
+    int value = 0;
+
+    char key[256] = {0}; int ikey = 0;
+    char val[256] = {0}; int ival = 0;
+
+    bool comment = false;
+
+    for(;;)
+    {
+        c = fgetc(fp);
+
+        if(c == EOF)
+            break;
+
+        if(c == '\n')
+        {
+            printf("newline, key: %s, val: %s\n", key, val);
+            // set value
+
+            if(STR_EQUAL(key, "name"))
+                printf("TODO\n");
+            else if(STR_EQUAL(key, "based_on"))
+                printf("TODO\n");
+            else if(STR_EQUAL(key, "damage_min"))
+                gun->damage_min = atof(val);
+            else if(STR_EQUAL(key, "damage_max"))
+                gun->damage_max = atof(val);
+            else if(STR_EQUAL(key, "num"))
+                gun->num = atoi(val);
+            else if(STR_EQUAL(key, "speed"))
+                gun->speed = atof(val);
+            else if(STR_EQUAL(key, "scale1"))
+                gun->scale1 = atof(val);
+            else if(STR_EQUAL(key, "scale2"))
+                gun->scale2 = atof(val);
+            else if(STR_EQUAL(key, "lifetime"))
+                gun->lifetime = atof(val);
+            else if(STR_EQUAL(key, "cooldown"))
+                gun->cooldown = atof(val);
+            else if(STR_EQUAL(key, "burst_count"))
+                gun->burst_count = atoi(val);
+            else if(STR_EQUAL(key, "burst_rate"))
+                gun->burst_rate = atof(val);
+            else if(STR_EQUAL(key, "critical_hit_chance"))
+                gun->critical_hit_chance = atof(val);
+            else if(STR_EQUAL(key, "spread_type"))
+                gun->spread_type = (SpreadType)atoi(val);
+            else if(STR_EQUAL(key, "spread"))
+                gun->spread = atof(val);
+            else if(STR_EQUAL(key, "sprite_index"))
+                gun->sprite_index = atoi(val);
+            else if(STR_EQUAL(key, "spin_factor"))
+                gun->spin_factor = atof(val);
+            else if(STR_EQUAL(key, "color1"))
+                gun->color1 = atoi(val);
+            else if(STR_EQUAL(key, "color2"))
+                gun->color2 = atoi(val);
+            else if(STR_EQUAL(key, "directional_accel"))
+                gun->directional_accel = atof(val);
+            else if(STR_EQUAL(key, "gravity_factor"))
+                gun->gravity_factor = atof(val);
+            else if(STR_EQUAL(key, "air_friction"))
+                gun->air_friction = atof(val);
+            else if(STR_EQUAL(key, "wave_amplitude"))
+                gun->wave_amplitude = atof(val);
+            else if(STR_EQUAL(key, "wave_period"))
+                gun->wave_period = atof(val);
+            else if(STR_EQUAL(key, "ghost_chance"))
+                gun->ghost_chance = atof(val);
+            else if(STR_EQUAL(key, "homing_chance"))
+                gun->homing_chance = atof(val);
+            else if(STR_EQUAL(key, "bounce_chance"))
+                gun->bounce_chance = atof(val);
+            else if(STR_EQUAL(key, "penetration_chance"))
+                gun->penetration_chance = atof(val);
+            else if(STR_EQUAL(key, "explosion_chance"))
+                gun->explosion_chance = atof(val);
+            else if(STR_EQUAL(key, "explosion_radius"))
+                gun->explosion_radius = atof(val);
+            else if(STR_EQUAL(key, "explosion_rate"))
+                gun->explosion_rate = atof(val);
+            else if(STR_EQUAL(key, "fire_chance"))
+                gun->fire_chance = atof(val);
+            else if(STR_EQUAL(key, "cold_chance"))
+                gun->cold_chance = atof(val);
+            else if(STR_EQUAL(key, "lightning_chance"))
+                gun->lightning_chance = atof(val);
+            else if(STR_EQUAL(key, "poison_chance"))
+                gun->poison_chance = atof(val);
+            else if(STR_EQUAL(key, "chargeable"))
+                gun->chargeable = STR_EQUAL(val, "true") ? true : false;
+            else if(STR_EQUAL(key, "charge_type"))
+                gun->charge_type = atoi(val);
+            else if(STR_EQUAL(key, "charge_time_max"))
+                gun->charge_time_max = atof(val);
+            else if(STR_EQUAL(key, "cluster"))
+                gun->cluster = STR_EQUAL(val, "true") ? true : false;
+            else if(STR_EQUAL(key, "cluster_stages"))
+                gun->cluster_stages = atoi(val);
+            else if(STR_EQUAL(key, "cluster_num0"))
+                gun->cluster_num[0] = atoi(val);
+            else if(STR_EQUAL(key, "cluster_num1"))
+                gun->cluster_num[1] = atoi(val);
+            else if(STR_EQUAL(key, "cluster_scale0"))
+                gun->cluster_scales[0] = atof(val);
+            else if(STR_EQUAL(key, "cluster_scale1"))
+                gun->cluster_scales[1] = atof(val);
+            else if(STR_EQUAL(key, "orbital"))
+                gun->orbital = STR_EQUAL(val, "true") ? true : false;
+            else if(STR_EQUAL(key, "orbital_max_count"))
+                gun->orbital_max_count = atoi(val);
+            else if(STR_EQUAL(key, "orbital_distance"))
+                gun->orbital_distance = atof(val);
+            else if(STR_EQUAL(key, "orbital_speed_factor"))
+                gun->orbital_speed_factor = atof(val);
+
+            // reset 
+            comment = false;
+            value = 0;
+            memset(key, 0, 256);
+            memset(val, 0, 256);
+            ikey = 0;
+            ival = 0;
+            continue;
+        }
+
+        if(comment)
+            continue;
+
+        if(c == ':')
+        {
+            value = 1;
+        }
+        else if(c == '#')
+        {
+            comment = true;
+        }
+        else
+        {
+            if(value)
+            {
+                val[ival++] = c;
+            }
+            else
+            {
+                key[ikey++] = c;
+            }
+        }
+    }
+
+    fclose(fp);
+}
+

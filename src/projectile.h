@@ -78,14 +78,14 @@ typedef struct
     int cluster_stage;
 
     // orbital
-    bool is_orbital;
+    bool  orbital;
     float orbital_distance;
     float orbital_speed_factor;
     int   orbital_max_count;
 
     // charge
     bool charging;
-    bool is_chargeable;
+    bool chargeable;
     float charge_time;
     float charge_time_max;
     ChargeType charge_type;
@@ -213,3 +213,7 @@ const char* projectile_charge_type_get_name(ChargeType charge_type);
 
 ProjectileOrbital* projectile_orbital_get(Physics* body, float distance);
 void projectile_orbital_kill(ProjectileOrbital* orb);
+
+void gun_save_to_file(Gun* gun, const char* name, const char* desc);
+void gun_load_from_file(Gun* gun, char* name, char* desc);
+void gun_print(Gun* gun);

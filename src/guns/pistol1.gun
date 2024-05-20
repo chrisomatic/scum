@@ -1,0 +1,61 @@
+# Just a pistol brah
+
+name:                  pistol1
+based_on:                 null
+
+damage_min:                1.0
+damage_max:                1.0
+num:                         1
+speed:                   215.0
+scale1:                    1.0
+scale2:                    1.0
+lifetime:                  0.4
+cooldown:                  0.4
+burst_count:                 0
+burst_rate:                0.0
+critical_hit_chance:       0.0
+knockback_factor:          0.0
+
+spread_type:                 0
+spread:                  360.0
+
+sprite_index:                0
+spin_factor:               0.0
+color1:                 50A0FF
+color2:                 50A0FF
+
+directional_accel:         0.0
+gravity_factor:            0.0
+air_friction:              0.0
+
+wave_amplitude:            0.0
+wave_period:               0.0
+
+ghost_chance:              0.0
+homing_chance:             0.0
+bounce_chance:             0.0
+penetration_chance:        0.0
+explosion_chance:          0.0
+explosion_radius:          0.0
+explosion_rate:            0.0
+
+fire_chance:               0.0
+cold_chance:               0.0
+lightning_chance:          0.0
+poison_chance:             0.0
+
+chargeable:              false
+charge_type:                 0
+charge_time_max:           0.0
+
+cluster:                 false
+cluster_stages:              0
+cluster_num0:                0
+cluster_num1:                0 
+cluster_scale0:            0.0
+cluster_scale1:            0.0 
+
+orbital:                 false
+orbital_max_count:           0
+orbital_distance:          0.0
+orbital_speed_factor:      0.0

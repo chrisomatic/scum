@@ -549,8 +549,8 @@ void editor_draw()
                             }
                         }
 
-                        gun->is_chargeable = (rand() % 4 == 0);
-                        if(gun->is_chargeable)
+                        gun->chargeable = (rand() % 4 == 0);
+                        if(gun->chargeable)
                         {
                             gun->charge_type = rand() % CHARGE_TYPE_COUNT;
                             charge_type_sel = gun->charge_type;
@@ -558,7 +558,7 @@ void editor_draw()
                             gun->charge_time_max = RAND_FLOAT(0.3, 2.0);
                         }
 
-                        //gun->is_orbital = rand() % 2;
+                        //gun->orbital = rand() % 2;
                         //gun->orbital_distance = RAND_FLOAT(1.0, 100.0);
                     }
 
@@ -591,9 +591,9 @@ void editor_draw()
                         imgui_slider_float("Burst Rate", 0.1, 1.0,&gun->burst_rate);
                     imgui_horizontal_end();
 
-                    imgui_checkbox("Chargeable", &gun->is_chargeable);
+                    imgui_checkbox("Chargeable", &gun->chargeable);
 
-                    if(gun->is_chargeable)
+                    if(gun->chargeable)
                     {
                         char* charge_type_names[CHARGE_TYPE_COUNT] = {0};
                         for(int i = 0; i < CHARGE_TYPE_COUNT; ++i)
@@ -646,8 +646,8 @@ void editor_draw()
                     imgui_slider_float("Bounce Chance", 0.0, 1.0, &gun->bounce_chance);
                     imgui_slider_float("Penetration Chance", 0.0, 1.0, &gun->penetration_chance);
 
-                    imgui_checkbox("Orbital", &gun->is_orbital);
-                    if(gun->is_orbital)
+                    imgui_checkbox("Orbital", &gun->orbital);
+                    if(gun->orbital)
                     {
                         imgui_slider_float("Orbital Distance", 1.0,100.0, &gun->orbital_distance);
                     }

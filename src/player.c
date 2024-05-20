@@ -1171,7 +1171,7 @@ static void player_handle_orbitals(Player* p, float dt)
 
             // eject
             p->proj_cooldown = p->gun.cooldown;
-            projectiles[i].gun.is_orbital = false;
+            projectiles[i].gun.orbital = false;
             projectiles[i].orbital->count--;
 
             // adjust orbital indices for other projectiles
@@ -1272,7 +1272,7 @@ static void player_handle_shooting(Player* p, float dt)
     {
         if(p->actions[PLAYER_ACTION_SHOOT_UP+i].toggled_on)
         {
-            if(p->gun.is_chargeable && p->proj_cooldown == 0.0)
+            if(p->gun.chargeable && p->proj_cooldown == 0.0)
             {
                 // Charging
                 p->gun.charging = true;
@@ -1285,7 +1285,7 @@ static void player_handle_shooting(Player* p, float dt)
 
     if(p->last_shoot_action >= PLAYER_ACTION_SHOOT_UP && p->last_shoot_action <= PLAYER_ACTION_SHOOT_RIGHT)
     {
-        if(p->gun.is_chargeable)
+        if(p->gun.chargeable)
         {
             if(!p->gun.charging && p->actions[p->last_shoot_action].state && p->proj_cooldown == 0.0)
             {
@@ -1299,7 +1299,7 @@ static void player_handle_shooting(Player* p, float dt)
             }
         }
 
-        bool shoot = p->gun.is_chargeable ? false : p->actions[p->last_shoot_action].state && p->proj_cooldown == 0.0;
+        bool shoot = p->gun.chargeable ? false : p->actions[p->last_shoot_action].state && p->proj_cooldown == 0.0;
 
         if(p->actions[p->last_shoot_action].toggled_off)
         {
@@ -1312,7 +1312,7 @@ static void player_handle_shooting(Player* p, float dt)
                 }
             }
 
-            if(p->gun.is_chargeable && p->gun.charging)
+            if(p->gun.chargeable && p->gun.charging)
             {
                 // Release!
                 shoot = true;
@@ -2349,7 +2349,7 @@ void player_set_class(Player* p, PlayerClass class)
     {
         case PLAYER_CLASS_SPACEMAN:
             p->image = class_image_spaceman;
-            p->gun.is_orbital = false;
+            p->gun.orbital = false;
             p->gun.ghost_chance = 0.0f;
 
             lookup_strength                     = lookup_spaceman_strength;
@@ -2364,7 +2364,7 @@ void player_set_class(Player* p, PlayerClass class)
             break;
         case PLAYER_CLASS_PHYSICIST:
             p->image = class_image_physicist;
-            p->gun.is_orbital = true;
+            p->gun.orbital = true;
             p->gun.ghost_chance = 1.0f;
 
             lookup_strength                     = lookup_physicist_strength;
@@ -2379,7 +2379,7 @@ void player_set_class(Player* p, PlayerClass class)
             break;
         case PLAYER_CLASS_ROBOT:
             p->image = class_image_robot;
-            p->gun.is_orbital = false;
+            p->gun.orbital = false;
             p->gun.ghost_chance = 0.0f;
 
             lookup_strength                     = lookup_robot_strength;
