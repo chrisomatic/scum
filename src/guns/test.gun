@@ -39,10 +39,10 @@ explosion_chance: 0.00
 explosion_radius: 15.00
 explosion_rate: 100.00
 
-fire_chance: 0.00
-cold_chance: 0.00
-lightning_chance: 0.00
-poison_chance: 0.00
+fire_damage: 0.00
+cold_damage: 0.00
+lightning_damage: 0.00
+poison_damage: 0.00
 
 chargeable: false
 charge_type: 0

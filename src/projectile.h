@@ -100,10 +100,10 @@ typedef struct
     float homing_chance;
 
     // elemental
-    float fire_chance;
-    float cold_chance;
-    float lightning_chance;
-    float poison_chance;
+    float fire_damage;
+    float cold_damage;
+    float lightning_damage;
+    float poison_damage;
 
     // bursting
     int burst_count;

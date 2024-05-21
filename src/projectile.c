@@ -15,6 +15,7 @@
 #include "effects.h"
 #include "decal.h"
 #include "audio.h"
+#include "core/files.h"
 
 Projectile projectiles[MAX_PROJECTILES];
 Projectile prior_projectiles[MAX_PROJECTILES];
@@ -90,10 +91,10 @@ Gun gun_lookup[] = {
         .spread = 10.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
-        .fire_chance = 0.0,
-        .cold_chance = 0.0,
-        .lightning_chance = 0.0,
-        .poison_chance = 0.0,
+        .fire_damage = 0.0,
+        .cold_damage = 0.0,
+        .lightning_damage = 0.0,
+        .poison_damage = 0.0,
     },
     {
         // player - kinetic discharge skill
@@ -126,10 +127,10 @@ Gun gun_lookup[] = {
         .spread = 360.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.20,
-        .fire_chance = 0.0,
-        .cold_chance = 0.0,
-        .lightning_chance = 0.0,
-        .poison_chance = 0.0,
+        .fire_damage = 0.0,
+        .cold_damage = 0.0,
+        .lightning_damage = 0.0,
+        .poison_damage = 0.0,
     },
     {
         // creature generic
@@ -161,10 +162,10 @@ Gun gun_lookup[] = {
         .spread = 0.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
-        .fire_chance = 0.0,
-        .cold_chance = 0.0,
-        .lightning_chance = 0.0,
-        .poison_chance = 0.0,
+        .fire_damage = 0.0,
+        .cold_damage = 0.0,
+        .lightning_damage = 0.0,
+        .poison_damage = 0.0,
     },
     {
         // geizer
@@ -196,10 +197,10 @@ Gun gun_lookup[] = {
         .spread = 0.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
-        .fire_chance = 0.0,
-        .cold_chance = 0.0,
-        .lightning_chance = 0.0,
-        .poison_chance = 0.0,
+        .fire_damage = 0.0,
+        .cold_damage = 0.0,
+        .lightning_damage = 0.0,
+        .poison_damage = 0.0,
     },
     {
         // clinger
@@ -231,10 +232,10 @@ Gun gun_lookup[] = {
         .spread = 0.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
-        .fire_chance = 0.0,
-        .cold_chance = 0.0,
-        .lightning_chance = 0.0,
-        .poison_chance = 0.0,
+        .fire_damage = 0.0,
+        .cold_damage = 0.0,
+        .lightning_damage = 0.0,
+        .poison_damage = 0.0,
     },
     {
         // totem blue
@@ -266,10 +267,10 @@ Gun gun_lookup[] = {
         .spread = 0.0,
         .ghost_chance = 0.0,
         .homing_chance = 0.0,
-        .fire_chance = 0.0,
-        .cold_chance = 1.0,
-        .lightning_chance = 0.0,
-        .poison_chance = 0.0,
+        .fire_damage = 0.0,
+        .cold_damage = 1.0,
+        .lightning_damage = 0.0,
+        .poison_damage = 0.0,
     },
     {
         // watcher
@@ -306,10 +307,10 @@ Gun gun_lookup[] = {
         .spread = 0.0,
         .ghost_chance = 1.0,
         .homing_chance = 0.0,
-        .fire_chance = 0.0,
-        .cold_chance = 0.0,
-        .lightning_chance = 0.0,
-        .poison_chance = 0.0,
+        .fire_damage = 0.0,
+        .cold_damage = 0.0,
+        .lightning_damage = 0.0,
+        .poison_damage = 0.0,
     },
 };
 
@@ -335,15 +336,36 @@ void projectile_init()
     // Audio Buffers
     audio_buffer_explode = audio_load_file("src/audio/splat1.wav");
 
-    // @TEMP
-    gun_save_to_file(&gun_lookup[0], "test", "Just a cool gun");
+    char gun_files[256][32] = {0};
+    int gun_file_count = io_get_files_in_dir("src/guns",".gun", gun_files);
 
-    Gun test = {0};
-    char name[50] = {0};
+    // insertion sort
+    int i, j;
+    char key[32];
+
+    for (i = 1; i < gun_file_count; ++i) 
+    {
+        memcpy(key, gun_files[i], 32*sizeof(char));
+        j = i - 1;
+
+        while (j >= 0 && strncmp(key,gun_files[j],32) < 0)
+        {
+            memcpy(gun_files[j+1], gun_files[j], 32*sizeof(char));
+            j = j - 1;
+        }
+        memcpy(gun_files[j+1], key, 32*sizeof(char));
+    }
+
     char desc[100] = {0};
-    gun_load_from_file(&test, "test", desc);
+    for (i = 0; i < gun_file_count; ++i) 
+    {
+        Gun test = {0};
+        gun_load_from_file(&test, gun_files[i], desc);
+    }
 
-    gun_print(&test);
+    //gun_save_to_file(&gun_lookup[0], "test", "Just a cool gun");
+
+    //gun_print(&test);
 }
 
 void projectile_clear_all()
@@ -546,10 +568,10 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
 
         p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= gun->ghost_chance;
 
-        p.fire = RAND_FLOAT(0.0,1.0) <= gun->fire_chance;
-        p.cold = RAND_FLOAT(0.0,1.0) <= gun->cold_chance;
-        p.lightning = RAND_FLOAT(0.0,1.0) <= gun->lightning_chance;
-        p.poison = RAND_FLOAT(0.0,1.0) <= gun->poison_chance;
+        p.fire = RAND_FLOAT(0.0,1.0) <= gun->fire_damage;
+        p.cold = RAND_FLOAT(0.0,1.0) <= gun->cold_damage;
+        p.lightning = RAND_FLOAT(0.0,1.0) <= gun->lightning_damage;
+        p.poison = RAND_FLOAT(0.0,1.0) <= gun->poison_damage;
 
         bool homing = RAND_FLOAT(0.0,1.0) <= gun->homing_chance;
 
@@ -1256,10 +1278,10 @@ void gun_save_to_file(Gun* gun, const char* gun_name, const char* desc)
     fprintf(fp, "explosion_radius: %3.2f\n", gun->explosion_radius);
     fprintf(fp, "explosion_rate: %3.2f\n", gun->explosion_rate);
     fprintf(fp, "\n");
-    fprintf(fp, "fire_chance: %3.2f\n", gun->fire_chance);
-    fprintf(fp, "cold_chance: %3.2f\n", gun->cold_chance);
-    fprintf(fp, "lightning_chance: %3.2f\n", gun->lightning_chance);
-    fprintf(fp, "poison_chance: %3.2f\n", gun->poison_chance);
+    fprintf(fp, "fire_damage: %3.2f\n", gun->fire_damage);
+    fprintf(fp, "cold_damage: %3.2f\n", gun->cold_damage);
+    fprintf(fp, "lightning_damage: %3.2f\n", gun->lightning_damage);
+    fprintf(fp, "poison_damage: %3.2f\n", gun->poison_damage);
     fprintf(fp, "\n");
     fprintf(fp, "chargeable: %s\n", gun->chargeable ? "true" : "false");
     fprintf(fp, "charge_type: %d\n", gun->charge_type);
@@ -1318,10 +1340,10 @@ void gun_print(Gun* gun)
     printf("explosion_radius: %3.2f\n", gun->explosion_radius);
     printf("explosion_rate: %3.2f\n", gun->explosion_rate);
     printf("\n");
-    printf("fire_chance: %3.2f\n", gun->fire_chance);
-    printf("cold_chance: %3.2f\n", gun->cold_chance);
-    printf("lightning_chance: %3.2f\n", gun->lightning_chance);
-    printf("poison_chance: %3.2f\n", gun->poison_chance);
+    printf("fire_damage: %3.2f\n", gun->fire_damage);
+    printf("cold_damage: %3.2f\n", gun->cold_damage);
+    printf("lightning_damage: %3.2f\n", gun->lightning_damage);
+    printf("poison_damage: %3.2f\n", gun->poison_damage);
     printf("\n");
     printf("chargeable: %s\n", gun->chargeable ? "true" : "false");
     printf("charge_type: %d\n", gun->charge_type);
@@ -1343,7 +1365,7 @@ void gun_print(Gun* gun)
 void gun_load_from_file(Gun* gun, char* gun_name, char* desc)
 {
     char file_path[50] = {0};
-    snprintf(file_path,50, "src/guns/%s.gun", gun_name);
+    snprintf(file_path,50, "src/guns/%s", gun_name);
 
     FILE* fp = fopen(file_path, "r");
 
@@ -1370,7 +1392,6 @@ void gun_load_from_file(Gun* gun, char* gun_name, char* desc)
 
         if(c == '\n')
         {
-            printf("newline, key: %s, val: %s\n", key, val);
             // set value
 
             if(STR_EQUAL(key, "name"))
@@ -1435,14 +1456,14 @@ void gun_load_from_file(Gun* gun, char* gun_name, char* desc)
                 gun->explosion_radius = atof(val);
             else if(STR_EQUAL(key, "explosion_rate"))
                 gun->explosion_rate = atof(val);
-            else if(STR_EQUAL(key, "fire_chance"))
-                gun->fire_chance = atof(val);
-            else if(STR_EQUAL(key, "cold_chance"))
-                gun->cold_chance = atof(val);
-            else if(STR_EQUAL(key, "lightning_chance"))
-                gun->lightning_chance = atof(val);
-            else if(STR_EQUAL(key, "poison_chance"))
-                gun->poison_chance = atof(val);
+            else if(STR_EQUAL(key, "fire_damage"))
+                gun->fire_damage = atof(val);
+            else if(STR_EQUAL(key, "cold_damage"))
+                gun->cold_damage = atof(val);
+            else if(STR_EQUAL(key, "lightning_damage"))
+                gun->lightning_damage = atof(val);
+            else if(STR_EQUAL(key, "poison_damage"))
+                gun->poison_damage = atof(val);
             else if(STR_EQUAL(key, "chargeable"))
                 gun->chargeable = STR_EQUAL(val, "true") ? true : false;
             else if(STR_EQUAL(key, "charge_type"))

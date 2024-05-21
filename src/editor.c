@@ -451,11 +451,18 @@ void editor_draw()
                         proj_def_names[i] = (char*)projectile_def_get_name(i);
                     }
 
+                    imgui_horizontal_begin();
                     static int proj_sel = 0;
+                    static int proj_sel_prior;
+                    static char selected_name[50] = {0};
+
+                    proj_sel_prior = proj_sel;
                     imgui_dropdown(proj_def_names, PROJECTILE_TYPE_MAX, "Projectile Definition", &proj_sel, NULL);
 
-                    static int charge_type_sel = 0;
-                    static int spread_type_sel = 0;
+                    if(proj_sel != proj_sel_prior)
+                    {
+                        strcpy(selected_name, proj_def_names[proj_sel]);
+                    }
 
                     Gun* gun = &gun_lookup[proj_sel];
 
@@ -464,8 +471,25 @@ void editor_draw()
                         gun = &player->gun;
                     }
 
+                    imgui_text_box("Name", selected_name, 50);
+
+                    if(imgui_button("Save"))
+                    {
+                        gun_save_to_file(gun, selected_name, "");
+                    }
+
+                    imgui_horizontal_end();
+
+                    static int charge_type_sel = 0;
+                    static int spread_type_sel = 0;
+                    static int sel_phrase = 0;
+
+                    static char* phrases[] = {"Hell yeah!", "Go Bananas!", "Who cares?", "That's so random", "RRRRRANNDOM", "You rock!"};
+                    imgui_tooltip(phrases[sel_phrase]);
+
                     if(imgui_button("Randomize"))
                     {
+                        sel_phrase = rand() % 6;
                         gun->damage_min = RAND_FLOAT(0.0,100.0);
                         gun->damage_max = RAND_FLOAT(0.0,100.0);
                         gun->lifetime   = RAND_FLOAT(0.2,3.0);
@@ -483,8 +507,8 @@ void editor_draw()
                         gun->air_friction = air_friction ? RAND_FLOAT(0.0,1.0) : 0.0;
 
                         gun->gravity_factor = RAND_FLOAT(0.0,2.0);
-                        gun->scale1 = RAND_FLOAT(0.1,2.5);
-                        gun->scale2 = RAND_FLOAT(0.1,2.5);
+                        gun->scale1 = RAND_FLOAT(0.4,2.2);
+                        gun->scale2 = RAND_FLOAT(0.4,2.2);
                         gun->color1 = rand();
                         gun->color2 = rand();
                         gun->knockback_factor = RAND_FLOAT(0.0,1.0);
@@ -522,21 +546,15 @@ void editor_draw()
                         gun->burst_count = burst ? rand() % 4 + 1 : 0;
                         gun->burst_rate  = burst ? RAND_FLOAT(0.1, 1.0) : 0.0;
 
-                        bool elemental = (rand() % 4 == 0);
-                        if(elemental)
-                        {
-                            gun->fire_chance = RAND_FLOAT(0.0, 1.0);
-                            gun->cold_chance = RAND_FLOAT(0.0, 1.0);
-                            gun->poison_chance = RAND_FLOAT(0.0, 1.0);
-                            gun->lightning_chance = RAND_FLOAT(0.0, 1.0);
-                        }
-                        else
-                        {
-                            gun->fire_chance = 0.0;
-                            gun->cold_chance = 0.0;
-                            gun->poison_chance = 0.0;
-                            gun->lightning_chance = 0.0;
-                        }
+                        bool fire = (rand() % 16 == 0);
+                        bool cold = (rand() % 16 == 0);
+                        bool lightning = (rand() % 16 == 0);
+                        bool poison = (rand() % 16 == 0);
+
+                        gun->fire_damage = fire ? RAND_FLOAT(0.0, 100.0) : 0.0;
+                        gun->cold_damage = cold ? RAND_FLOAT(0.0, 100.0) : 0.0;
+                        gun->lightning_damage = lightning ? RAND_FLOAT(0.0, 100.0) : 0.0;
+                        gun->poison_damage = poison ? RAND_FLOAT(0.0, 100.0) : 0.0;
 
                         gun->cluster = (rand() % 4 == 0);
                         if(gun->cluster)
@@ -562,6 +580,9 @@ void editor_draw()
                         //gun->orbital_distance = RAND_FLOAT(1.0, 100.0);
                     }
 
+                    imgui_text_sized(16.0,"Main Properties:");
+                    imgui_horizontal_line(1);
+
                     imgui_horizontal_begin();
                         imgui_slider_float("Damage Min", 0.0,100.0,&gun->damage_min);
                         if(gun->damage_min > gun->damage_max)
@@ -569,22 +590,56 @@ void editor_draw()
                         imgui_slider_float("Damage Max", 0.0,100.0,&gun->damage_max);
                     imgui_horizontal_end();
 
-                    imgui_slider_float("Lifetime", 0.2,3.0,&gun->lifetime);
-                    imgui_slider_float("Base Speed", 100.0,1000.0,&gun->speed);
+                    int num = gun->num;
+                    imgui_number_box("Num", 1,10, &num);
+                    gun->num = num;
 
-                    imgui_slider_float("Cooldown", 0.1,1.0,&gun->cooldown);
+                    imgui_horizontal_begin();
+                        imgui_slider_float("Base Speed", 100.0,1000.0,&gun->speed);
+                        imgui_slider_float("Lifetime", 0.2,3.0,&gun->lifetime);
+                        imgui_slider_float("Cooldown", 0.1,1.0,&gun->cooldown);
+                    imgui_horizontal_end();
+
+                    imgui_horizontal_begin();
+                        imgui_slider_float("Critical Hit Chance", 0.0, 1.0, &gun->critical_hit_chance);
+                        imgui_slider_float("Knockback Factor", 0.0, 1.0, &gun->knockback_factor);
+                    imgui_horizontal_end();
+
+                    imgui_horizontal_begin();
+                        imgui_slider_float("Fire Damage", 0.0, 100.0, &gun->fire_damage);
+                        imgui_slider_float("Cold Damage", 0.0, 100.0, &gun->cold_damage);
+                    imgui_horizontal_end();
+                    imgui_horizontal_begin();
+                        imgui_slider_float("Lightning Damage", 0.0, 100.0,&gun->lightning_damage);
+                        imgui_slider_float("Poison Damage", 0.0, 100.0,&gun->poison_damage);
+                    imgui_horizontal_end();
+
+                    imgui_text_sized(16.0,"Movement");
+                    imgui_horizontal_line(1);
 
                     imgui_horizontal_begin();
                         imgui_slider_float("Wave Amplitude", 0.0,500.0,&gun->wave_amplitude);
                         imgui_slider_float("Wave Period", 0.0,1.0,&gun->wave_period);
                     imgui_horizontal_end();
 
-                    imgui_slider_float("Directional Accel", -1.0,1.0,&gun->directional_accel);
-
                     imgui_horizontal_begin();
+                        imgui_slider_float("Directional Accel", -1.0,1.0,&gun->directional_accel);
                         imgui_slider_float("Gravity Factor", 0.0,2.0,&gun->gravity_factor);
                         imgui_slider_float("Air Friction", 0.0,1.0,&gun->air_friction);
                     imgui_horizontal_end();
+
+                    char* spread_type_names[SPREAD_TYPE_COUNT] = {0};
+                    for(int i = 0; i < SPREAD_TYPE_COUNT; ++i)
+                        spread_type_names[i] = (char*)projectile_spread_type_get_name(i);
+
+                    imgui_horizontal_begin();
+                        imgui_dropdown(spread_type_names, SPREAD_TYPE_COUNT, "Spread Type", &spread_type_sel, NULL);
+                        gun->spread_type = spread_type_sel;
+                        imgui_slider_float("Angle Spread", 0.0, 360.0,&gun->spread);
+                    imgui_horizontal_end();
+
+                    imgui_text_sized(16.0,"Mechanics");
+                    imgui_horizontal_line(1);
 
                     imgui_horizontal_begin();
                         imgui_number_box("Burst Count", 0, 4,&gun->burst_count);
@@ -595,6 +650,7 @@ void editor_draw()
 
                     if(gun->chargeable)
                     {
+                        imgui_indent_begin(26);
                         char* charge_type_names[CHARGE_TYPE_COUNT] = {0};
                         for(int i = 0; i < CHARGE_TYPE_COUNT; ++i)
                             charge_type_names[i] = (char*)projectile_charge_type_get_name(i);
@@ -604,8 +660,56 @@ void editor_draw()
                             gun->charge_type = charge_type_sel;
                             imgui_slider_float("Charge Time Max", 0.5, 5.0,&gun->charge_time_max);
                         imgui_horizontal_end();
-
+                        imgui_indent_end();
                     }
+
+                    imgui_horizontal_begin();
+                        imgui_slider_float("Explosive Chance",0.0, 1.0, &gun->explosion_chance);
+                        imgui_slider_float("Bounce Chance", 0.0, 1.0, &gun->bounce_chance);
+                        imgui_slider_float("Penetration Chance", 0.0, 1.0, &gun->penetration_chance);
+                    imgui_horizontal_end();
+
+                    imgui_horizontal_begin();
+                        imgui_slider_float("Homing Chance", 0.0, 1.0, &gun->homing_chance);
+                        imgui_slider_float("Ghost Chance", 0.0, 1.0, &gun->ghost_chance);
+                    imgui_horizontal_end();
+
+                    imgui_checkbox("Orbital", &gun->orbital);
+                    if(gun->orbital)
+                    {
+                        imgui_indent_begin(26);
+                        imgui_slider_float("Orbital Distance", 1.0,100.0, &gun->orbital_distance);
+                        imgui_indent_end();
+                    }
+
+                    imgui_checkbox("Cluster", &gun->cluster);
+
+                    if(gun->cluster)
+                    {
+                        imgui_indent_begin(26);
+
+                        imgui_number_box("Cluster Stages", 1, MAX_CLUSTER_STAGES, &gun->cluster_stages);
+
+                        imgui_horizontal_begin();
+                            imgui_number_box("Stage 1 Num", 1,5, &gun->cluster_num[0]);
+                            imgui_slider_float("Stage 1 Scale", 0.1, 2.0, &gun->cluster_scales[0]);
+                        imgui_horizontal_end();
+
+                        if(gun->cluster_stages >= 2)
+                        {
+                            imgui_horizontal_begin();
+                                imgui_number_box("Stage 2 Num", 1,10, &gun->cluster_num[1]);
+                                imgui_slider_float("Stage 2 Scale", 0.1, 2.0, &gun->cluster_scales[1]);
+                            imgui_horizontal_end();
+                        }
+
+                        imgui_indent_end();
+                    }
+
+                    imgui_text_sized(16.0,"Appearance");
+                    imgui_horizontal_line(1);
+
+                    imgui_number_box("Sprite Index", 0,9, &gun->sprite_index);
 
                     imgui_horizontal_begin();
                         imgui_slider_float("Scale1", 0.1, 2.5,&gun->scale1);
@@ -619,58 +723,6 @@ void editor_draw()
 
                     imgui_slider_float("Spin Factor", -1.0, 1.0, &gun->spin_factor);
 
-                    imgui_horizontal_begin();
-                        imgui_slider_float("Knockback Factor", 0.0, 1.0, &gun->knockback_factor);
-                        imgui_slider_float("Critical Hit Chance", 0.0, 1.0, &gun->critical_hit_chance);
-                    imgui_horizontal_end();
-
-                    char* spread_type_names[SPREAD_TYPE_COUNT] = {0};
-                    for(int i = 0; i < SPREAD_TYPE_COUNT; ++i)
-                        spread_type_names[i] = (char*)projectile_spread_type_get_name(i);
-
-                    imgui_horizontal_begin();
-                        imgui_dropdown(spread_type_names, SPREAD_TYPE_COUNT, "Spread Type", &spread_type_sel, NULL);
-                        gun->spread_type = spread_type_sel;
-                        imgui_slider_float("Angle Spread", 0.0, 360.0,&gun->spread);
-                    imgui_horizontal_end();
-
-                    imgui_number_box("Sprite Index", 0,9, &gun->sprite_index);
-
-                    int num = gun->num;
-                    imgui_number_box("Num", 1,10, &num);
-                    gun->num = num;
-
-                    imgui_text_sized(20.0,"Attributes:");
-                    imgui_horizontal_line(1);
-                    imgui_slider_float("Explosive Chance",0.0, 1.0, &gun->explosion_chance);
-                    imgui_slider_float("Bounce Chance", 0.0, 1.0, &gun->bounce_chance);
-                    imgui_slider_float("Penetration Chance", 0.0, 1.0, &gun->penetration_chance);
-
-                    imgui_checkbox("Orbital", &gun->orbital);
-                    if(gun->orbital)
-                    {
-                        imgui_slider_float("Orbital Distance", 1.0,100.0, &gun->orbital_distance);
-                    }
-
-                    imgui_checkbox("Cluster", &gun->cluster);
-
-                    if(gun->cluster)
-                    {
-                        imgui_number_box("Cluster Stages", 1, MAX_CLUSTER_STAGES, &gun->cluster_stages);
-
-                        imgui_number_box("Stage 1 Num", 1,5, &gun->cluster_num[0]);
-                        imgui_slider_float("Stage 1 Scale", 0.1, 2.0, &gun->cluster_scales[0]);
-
-                        if(gun->cluster_stages >= 2)
-                        {
-                            imgui_number_box("Stage 2 Num", 1,10, &gun->cluster_num[1]);
-                            imgui_slider_float("Stage 2 Scale", 0.1, 2.0, &gun->cluster_scales[1]);
-                        }
-                    }
-                    imgui_slider_float("Homing Chance", 0.0, 1.0, &gun->homing_chance);
-                    imgui_slider_float("Ghost Chance", 0.0, 1.0, &gun->ghost_chance);
-                    imgui_slider_float("Cold Chance", 0.0, 1.0, &gun->cold_chance);
-                    imgui_slider_float("Poison Chance", 0.0, 1.0,&gun->poison_chance);
                 }
 
                 imgui_restore_theme();
