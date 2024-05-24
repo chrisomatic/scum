@@ -8,6 +8,9 @@
 #define MAX_ORBITALS 32
 #define MAX_PROJECTILES 4096
 #define MAX_CLUSTER_STAGES 2
+#define MAX_GUNS 100
+#define GUN_NAME_MAX_LEN 50 
+#define GUN_DESC_MAX_LEN 100
 
 typedef enum
 {
@@ -37,6 +40,8 @@ typedef enum
 
 typedef struct
 {
+    char  name[GUN_NAME_MAX_LEN+1];
+    char  desc[GUN_DESC_MAX_LEN+1];
     float damage_min;
     float damage_max;
     
@@ -108,7 +113,6 @@ typedef struct
     // bursting
     int burst_count;
     float burst_rate;
-
 
 } Gun;
 
@@ -189,7 +193,8 @@ typedef struct
 
 extern Projectile projectiles[MAX_PROJECTILES];
 extern Projectile prior_projectiles[MAX_PROJECTILES];
-extern Gun gun_lookup[];
+extern Gun gun_list[];
+extern int gun_list_count;
 extern glist* plist;
 
 void projectile_init();
@@ -214,6 +219,8 @@ const char* projectile_charge_type_get_name(ChargeType charge_type);
 ProjectileOrbital* projectile_orbital_get(Physics* body, float distance);
 void projectile_orbital_kill(ProjectileOrbital* orb);
 
-void gun_save_to_file(Gun* gun, const char* name, const char* desc);
-void gun_load_from_file(Gun* gun, char* name, char* desc);
+void gun_save_to_file(Gun* gun);
+void gun_load_from_file(Gun* gun, const char* file_name);
+void gun_refresh_list();
 void gun_print(Gun* gun);
+bool gun_get_by_name(char* gun_name, Gun* gun);

@@ -15,6 +15,7 @@
 #include "effects.h"
 #include "decal.h"
 #include "audio.h"
+#include "str.h"
 #include "core/files.h"
 
 Projectile projectiles[MAX_PROJECTILES];
@@ -42,277 +43,8 @@ static const uint32_t orbital_colors[] = {
 
 static int projectile_image;
 
-// .color = 0x003030FF,
-
-Gun gun_lookup[] = {
-    {
-        // player
-        .damage_min = 1.0,
-        .damage_max = 1.0,
-        .speed = 215.0,
-        .cooldown = 0.40,
-        .directional_accel = 0.0,
-        .gravity_factor = 0.0,
-        .lifetime = 0.4,
-        .bounce_chance = 0.0,
-        .penetration_chance = 0.0,
-
-        .explosion_chance = 0.0,
-        .explosion_radius = 15.0,
-        .explosion_rate   = 100.0,
-
-        .sprite_index = 0,
-        .color1 = 0x0050A0FF,
-        .color2 = 0x0050A0FF,
-
-        .scale1 = 1.0,
-        .scale2 = 1.0,
-
-        .cluster = false,
-        .cluster_stages = 1,
-        .cluster_num = {2, 2},
-        .cluster_scales = {0.6, 0.6},
-
-        .orbital = false,
-        .orbital_distance = 32.0,
-        .orbital_speed_factor = 3.0,
-        .orbital_max_count = 5,
-
-        .burst_count = 0,
-        .burst_rate = 0.2,
-
-        .chargeable = false,
-        .charge_type = CHARGE_TYPE_SCALE_DAMAGE,
-        .charge_time = 0.0,
-        .charge_time_max = 1.0,
-
-        .num = 1,
-        .spread_type = SPREAD_TYPE_RANDOM,
-        .spread = 10.0,
-        .ghost_chance = 0.0,
-        .homing_chance = 0.0,
-        .fire_damage = 0.0,
-        .cold_damage = 0.0,
-        .lightning_damage = 0.0,
-        .poison_damage = 0.0,
-    },
-    {
-        // player - kinetic discharge skill
-        .damage_min = 1.0,
-        .damage_max = 1.0,
-        .speed = 200.0,
-        .cooldown = 0.40,
-        .directional_accel = 0.0,
-        .gravity_factor = 0.0,
-        .lifetime = 3.0,
-        .explosion_chance = 0.0,
-        .explosion_radius = 15.0,
-        .explosion_rate   = 100.0,
-        .bounce_chance = 0.0,
-        .penetration_chance = 0.0,
-        .cluster = false,
-
-        .sprite_index = 0,
-        .color1 = COLOR_WHITE,
-        .color2 = COLOR_WHITE,
-
-        .scale1 = 0.5,
-        .scale2 = 0.5,
-
-        .burst_count = 0,
-        .burst_rate = 0.2,
-
-        .num = 1,
-        .spread_type = SPREAD_TYPE_RANDOM,
-        .spread = 360.0,
-        .ghost_chance = 0.0,
-        .homing_chance = 0.20,
-        .fire_damage = 0.0,
-        .cold_damage = 0.0,
-        .lightning_damage = 0.0,
-        .poison_damage = 0.0,
-    },
-    {
-        // creature generic
-        .damage_min = 1.0,
-        .damage_max = 1.0,
-        .speed = 200.0,
-        .cooldown = 0.40,
-        .directional_accel = 0.0,
-        .gravity_factor = 0.5,
-        .lifetime = 3.0,
-        .explosion_chance = 0.0,
-        .explosion_radius = 15.0,
-        .explosion_rate   = 100.0,
-        .bounce_chance = 0.0,
-        .penetration_chance = 0.0,
-        .cluster = false,
-
-        .sprite_index = 0,
-        .color1 = 0x00FF5050,
-        .color2 = 0x00FF5050,
-        .scale1 = 0.8,
-        .scale2 = 0.8,
-
-        .burst_count = 0,
-        .burst_rate = 0.2,
-
-        .num = 1,
-        .spread_type = SPREAD_TYPE_RANDOM,
-        .spread = 0.0,
-        .ghost_chance = 0.0,
-        .homing_chance = 0.0,
-        .fire_damage = 0.0,
-        .cold_damage = 0.0,
-        .lightning_damage = 0.0,
-        .poison_damage = 0.0,
-    },
-    {
-        // geizer
-        .damage_min = 1.0,
-        .damage_max = 1.0,
-        .speed = 100.0,
-        .cooldown = 0.40,
-        .directional_accel = 0.0,
-        .gravity_factor = 0.5,
-        .lifetime = 3.0,
-        .explosion_chance = 0.0,
-        .explosion_radius = 15.0,
-        .explosion_rate   = 100.0,
-        .bounce_chance = 0.0,
-        .penetration_chance = 0.0,
-        .cluster = false,
-
-        .sprite_index = 0,
-        .color1 = 0x00FF5050,
-        .color2 = 0x00FF5050,
-        .scale1 = 0.8,
-        .scale2 = 0.8,
-
-        .burst_count = 0,
-        .burst_rate = 0.2,
-
-        .num = 1,
-        .spread_type = SPREAD_TYPE_RANDOM,
-        .spread = 0.0,
-        .ghost_chance = 0.0,
-        .homing_chance = 0.0,
-        .fire_damage = 0.0,
-        .cold_damage = 0.0,
-        .lightning_damage = 0.0,
-        .poison_damage = 0.0,
-    },
-    {
-        // clinger
-        .damage_min = 1.0,
-        .damage_max = 1.0,
-        .speed = 160.0,
-        .cooldown = 0.40,
-        .directional_accel = 0.0,
-        .gravity_factor = 0.5,
-        .lifetime = 3.0,
-        .explosion_chance = 0.0,
-        .explosion_radius = 15.0,
-        .explosion_rate   = 100.0,
-        .bounce_chance = 0.0,
-        .penetration_chance = 0.0,
-        .cluster = false,
-
-        .sprite_index = 0,
-        .color1 = 0x00FF5050,
-        .color2 = 0x00FF5050,
-        .scale1 = 0.8,
-        .scale2 = 0.8,
-
-        .burst_count = 0,
-        .burst_rate = 0.2,
-
-        .num = 1,
-        .spread_type = SPREAD_TYPE_RANDOM,
-        .spread = 0.0,
-        .ghost_chance = 0.0,
-        .homing_chance = 0.0,
-        .fire_damage = 0.0,
-        .cold_damage = 0.0,
-        .lightning_damage = 0.0,
-        .poison_damage = 0.0,
-    },
-    {
-        // totem blue
-        .damage_min = 1.0,
-        .damage_max = 1.0,
-        .speed = 200.0,
-        .cooldown = 0.40,
-        .directional_accel = 0.0,
-        .gravity_factor = 0.5,
-        .lifetime = 3.0,
-        .explosion_chance = 0.0,
-        .explosion_radius = 15.0,
-        .explosion_rate   = 100.0,
-        .bounce_chance = 0.0,
-        .penetration_chance = 0.0,
-        .cluster = true,
-
-        .sprite_index = 0,
-        .color1 = 0x00FF5050,
-        .color2 = 0x00FF5050,
-        .scale1 = 0.8,
-        .scale2 = 0.8,
-
-        .burst_count = 0,
-        .burst_rate = 0.2,
-
-        .num = 1,
-        .spread_type = SPREAD_TYPE_RANDOM,
-        .spread = 0.0,
-        .ghost_chance = 0.0,
-        .homing_chance = 0.0,
-        .fire_damage = 0.0,
-        .cold_damage = 1.0,
-        .lightning_damage = 0.0,
-        .poison_damage = 0.0,
-    },
-    {
-        // watcher
-        .damage_min = 1.0,
-        .damage_max = 1.0,
-        .speed = 200.0,
-        .cooldown = 0.40,
-        .directional_accel = 0.0,
-        .gravity_factor = 0.5,
-        .lifetime = 3.0,
-        .explosion_chance = 0.0,
-        .explosion_radius = 15.0,
-        .explosion_rate   = 100.0,
-        .bounce_chance = 0.0,
-        .penetration_chance = 0.0,
-        .cluster = false,
-        
-        .sprite_index = 0,
-        .color1 = 0x00FF5050,
-        .color2 = 0x00FF5050,
-        .scale1 = 1.0,
-        .scale2 = 1.0,
-
-        .burst_count = 0,
-        .burst_rate = 0.2,
-
-        .orbital = true,
-        .orbital_distance = 50.0,
-        .orbital_speed_factor = 4.0,
-        .orbital_max_count = 4,
-
-        .num = 1,
-        .spread_type = SPREAD_TYPE_RANDOM,
-        .spread = 0.0,
-        .ghost_chance = 1.0,
-        .homing_chance = 0.0,
-        .fire_damage = 0.0,
-        .cold_damage = 0.0,
-        .lightning_damage = 0.0,
-        .poison_damage = 0.0,
-    },
-};
+Gun gun_list[MAX_GUNS];
+int gun_list_count = 0;
 
 static uint16_t id_counter = 1;
 static uint16_t get_id()
@@ -336,36 +68,8 @@ void projectile_init()
     // Audio Buffers
     audio_buffer_explode = audio_load_file("src/audio/splat1.wav");
 
-    char gun_files[256][32] = {0};
-    int gun_file_count = io_get_files_in_dir("src/guns",".gun", gun_files);
+    gun_refresh_list();
 
-    // insertion sort
-    int i, j;
-    char key[32];
-
-    for (i = 1; i < gun_file_count; ++i) 
-    {
-        memcpy(key, gun_files[i], 32*sizeof(char));
-        j = i - 1;
-
-        while (j >= 0 && strncmp(key,gun_files[j],32) < 0)
-        {
-            memcpy(gun_files[j+1], gun_files[j], 32*sizeof(char));
-            j = j - 1;
-        }
-        memcpy(gun_files[j+1], key, 32*sizeof(char));
-    }
-
-    char desc[100] = {0};
-    for (i = 0; i < gun_file_count; ++i) 
-    {
-        Gun test = {0};
-        gun_load_from_file(&test, gun_files[i], desc);
-    }
-
-    //gun_save_to_file(&gun_lookup[0], "test", "Just a cool gun");
-
-    //gun_print(&test);
 }
 
 void projectile_clear_all()
@@ -1223,10 +927,10 @@ const char* projectile_charge_type_get_name(ChargeType charge_type)
 
 
 // Gun File Handling
-void gun_save_to_file(Gun* gun, const char* gun_name, const char* desc)
+void gun_save_to_file(Gun* gun)
 {
-    char file_path[50] = {0};
-    snprintf(file_path,50, "src/guns/%s.gun", gun_name);
+    char file_path[100] = {0};
+    snprintf(file_path,50, "src/guns/%s.gun", gun->name);
 
     FILE* fp = fopen(file_path, "w");
 
@@ -1236,10 +940,8 @@ void gun_save_to_file(Gun* gun, const char* gun_name, const char* desc)
         return;
     }
 
-    fprintf(fp, "# %s\n", desc);
-    fprintf(fp, "\n");
-
-    fprintf(fp, "name: %s\n", gun_name);
+    fprintf(fp, "name: %s\n", gun->name);
+    fprintf(fp, "desc: %s\n", gun->desc);
     fprintf(fp, "based_on: %s\n", "null");
     fprintf(fp, "\n");
     fprintf(fp, "damage_min: %3.2f\n", gun->damage_min);
@@ -1304,6 +1006,8 @@ void gun_save_to_file(Gun* gun, const char* gun_name, const char* desc)
 
 void gun_print(Gun* gun)
 {
+    printf("name: %s\n", gun->name);
+    printf("desc: %s\n", gun->desc);
     printf("damage_min: %3.2f\n", gun->damage_min);
     printf("damage_max: %3.2f\n", gun->damage_max);
     printf("num: %d\n", gun->num);
@@ -1362,10 +1066,10 @@ void gun_print(Gun* gun)
     printf("orbital_speed_factor: %3.2f\n", gun->orbital_speed_factor);
 }
 
-void gun_load_from_file(Gun* gun, char* gun_name, char* desc)
+void gun_load_from_file(Gun* gun, const char* file_name)
 {
     char file_path[50] = {0};
-    snprintf(file_path,50, "src/guns/%s", gun_name);
+    snprintf(file_path,50, "src/guns/%s", file_name);
 
     FILE* fp = fopen(file_path, "r");
 
@@ -1374,6 +1078,8 @@ void gun_load_from_file(Gun* gun, char* gun_name, char* desc)
         LOGE("Failed to open file for reading");
         return;
     }
+
+    memset(gun, 0, sizeof(Gun));
 
     int c;
     int value = 0;
@@ -1393,103 +1099,106 @@ void gun_load_from_file(Gun* gun, char* gun_name, char* desc)
         if(c == '\n')
         {
             // set value
+            char* val2 = str_trim_whitespace(val);
 
             if(STR_EQUAL(key, "name"))
-                printf("TODO\n");
+                memcpy(gun->name, val2, sizeof(char)*MIN(GUN_NAME_MAX_LEN, strlen(val2)));
+            else if(STR_EQUAL(key, "desc"))
+                memcpy(gun->desc, val, sizeof(char)*MIN(GUN_DESC_MAX_LEN, strlen(val)));
             else if(STR_EQUAL(key, "based_on"))
                 printf("TODO\n");
             else if(STR_EQUAL(key, "damage_min"))
-                gun->damage_min = atof(val);
+                gun->damage_min = atof(val2);
             else if(STR_EQUAL(key, "damage_max"))
-                gun->damage_max = atof(val);
+                gun->damage_max = atof(val2);
             else if(STR_EQUAL(key, "num"))
-                gun->num = atoi(val);
+                gun->num = atoi(val2);
             else if(STR_EQUAL(key, "speed"))
-                gun->speed = atof(val);
+                gun->speed = atof(val2);
             else if(STR_EQUAL(key, "scale1"))
-                gun->scale1 = atof(val);
+                gun->scale1 = atof(val2);
             else if(STR_EQUAL(key, "scale2"))
-                gun->scale2 = atof(val);
+                gun->scale2 = atof(val2);
             else if(STR_EQUAL(key, "lifetime"))
-                gun->lifetime = atof(val);
+                gun->lifetime = atof(val2);
             else if(STR_EQUAL(key, "cooldown"))
-                gun->cooldown = atof(val);
+                gun->cooldown = atof(val2);
             else if(STR_EQUAL(key, "burst_count"))
-                gun->burst_count = atoi(val);
+                gun->burst_count = atoi(val2);
             else if(STR_EQUAL(key, "burst_rate"))
-                gun->burst_rate = atof(val);
+                gun->burst_rate = atof(val2);
             else if(STR_EQUAL(key, "critical_hit_chance"))
-                gun->critical_hit_chance = atof(val);
+                gun->critical_hit_chance = atof(val2);
             else if(STR_EQUAL(key, "spread_type"))
-                gun->spread_type = (SpreadType)atoi(val);
+                gun->spread_type = (SpreadType)atoi(val2);
             else if(STR_EQUAL(key, "spread"))
-                gun->spread = atof(val);
+                gun->spread = atof(val2);
             else if(STR_EQUAL(key, "sprite_index"))
-                gun->sprite_index = atoi(val);
+                gun->sprite_index = atoi(val2);
             else if(STR_EQUAL(key, "spin_factor"))
-                gun->spin_factor = atof(val);
+                gun->spin_factor = atof(val2);
             else if(STR_EQUAL(key, "color1"))
-                gun->color1 = atoi(val);
+                gun->color1 = (int)strtol(val2, NULL, 16);
             else if(STR_EQUAL(key, "color2"))
-                gun->color2 = atoi(val);
+                gun->color2 = (int)strtol(val2, NULL, 16);
             else if(STR_EQUAL(key, "directional_accel"))
-                gun->directional_accel = atof(val);
+                gun->directional_accel = atof(val2);
             else if(STR_EQUAL(key, "gravity_factor"))
-                gun->gravity_factor = atof(val);
+                gun->gravity_factor = atof(val2);
             else if(STR_EQUAL(key, "air_friction"))
-                gun->air_friction = atof(val);
+                gun->air_friction = atof(val2);
             else if(STR_EQUAL(key, "wave_amplitude"))
-                gun->wave_amplitude = atof(val);
+                gun->wave_amplitude = atof(val2);
             else if(STR_EQUAL(key, "wave_period"))
-                gun->wave_period = atof(val);
+                gun->wave_period = atof(val2);
             else if(STR_EQUAL(key, "ghost_chance"))
-                gun->ghost_chance = atof(val);
+                gun->ghost_chance = atof(val2);
             else if(STR_EQUAL(key, "homing_chance"))
-                gun->homing_chance = atof(val);
+                gun->homing_chance = atof(val2);
             else if(STR_EQUAL(key, "bounce_chance"))
-                gun->bounce_chance = atof(val);
+                gun->bounce_chance = atof(val2);
             else if(STR_EQUAL(key, "penetration_chance"))
-                gun->penetration_chance = atof(val);
+                gun->penetration_chance = atof(val2);
             else if(STR_EQUAL(key, "explosion_chance"))
-                gun->explosion_chance = atof(val);
+                gun->explosion_chance = atof(val2);
             else if(STR_EQUAL(key, "explosion_radius"))
-                gun->explosion_radius = atof(val);
+                gun->explosion_radius = atof(val2);
             else if(STR_EQUAL(key, "explosion_rate"))
-                gun->explosion_rate = atof(val);
+                gun->explosion_rate = atof(val2);
             else if(STR_EQUAL(key, "fire_damage"))
-                gun->fire_damage = atof(val);
+                gun->fire_damage = atof(val2);
             else if(STR_EQUAL(key, "cold_damage"))
-                gun->cold_damage = atof(val);
+                gun->cold_damage = atof(val2);
             else if(STR_EQUAL(key, "lightning_damage"))
-                gun->lightning_damage = atof(val);
+                gun->lightning_damage = atof(val2);
             else if(STR_EQUAL(key, "poison_damage"))
-                gun->poison_damage = atof(val);
+                gun->poison_damage = atof(val2);
             else if(STR_EQUAL(key, "chargeable"))
-                gun->chargeable = STR_EQUAL(val, "true") ? true : false;
+                gun->chargeable = STR_EQUAL(val2, "true") ? true : false;
             else if(STR_EQUAL(key, "charge_type"))
-                gun->charge_type = atoi(val);
+                gun->charge_type = atoi(val2);
             else if(STR_EQUAL(key, "charge_time_max"))
-                gun->charge_time_max = atof(val);
+                gun->charge_time_max = atof(val2);
             else if(STR_EQUAL(key, "cluster"))
-                gun->cluster = STR_EQUAL(val, "true") ? true : false;
+                gun->cluster = STR_EQUAL(val2, "true") ? true : false;
             else if(STR_EQUAL(key, "cluster_stages"))
-                gun->cluster_stages = atoi(val);
+                gun->cluster_stages = atoi(val2);
             else if(STR_EQUAL(key, "cluster_num0"))
-                gun->cluster_num[0] = atoi(val);
+                gun->cluster_num[0] = atoi(val2);
             else if(STR_EQUAL(key, "cluster_num1"))
-                gun->cluster_num[1] = atoi(val);
+                gun->cluster_num[1] = atoi(val2);
             else if(STR_EQUAL(key, "cluster_scale0"))
-                gun->cluster_scales[0] = atof(val);
+                gun->cluster_scales[0] = atof(val2);
             else if(STR_EQUAL(key, "cluster_scale1"))
-                gun->cluster_scales[1] = atof(val);
+                gun->cluster_scales[1] = atof(val2);
             else if(STR_EQUAL(key, "orbital"))
-                gun->orbital = STR_EQUAL(val, "true") ? true : false;
+                gun->orbital = STR_EQUAL(val2, "true") ? true : false;
             else if(STR_EQUAL(key, "orbital_max_count"))
-                gun->orbital_max_count = atoi(val);
+                gun->orbital_max_count = atoi(val2);
             else if(STR_EQUAL(key, "orbital_distance"))
-                gun->orbital_distance = atof(val);
+                gun->orbital_distance = atof(val2);
             else if(STR_EQUAL(key, "orbital_speed_factor"))
-                gun->orbital_speed_factor = atof(val);
+                gun->orbital_speed_factor = atof(val2);
 
             // reset 
             comment = false;
@@ -1514,13 +1223,10 @@ void gun_load_from_file(Gun* gun, char* gun_name, char* desc)
         }
         else
         {
-            if(value)
+            if(c >= 32 && c <= 126)
             {
-                val[ival++] = c;
-            }
-            else
-            {
-                key[ikey++] = c;
+                if(value) val[ival++] = c;
+                else      key[ikey++] = c;
             }
         }
     }
@@ -1528,3 +1234,46 @@ void gun_load_from_file(Gun* gun, char* gun_name, char* desc)
     fclose(fp);
 }
 
+bool gun_get_by_name(char* gun_name, Gun* gun)
+{
+    for(int i = 0; i < gun_list_count; ++i)
+    {
+        if(STR_EQUAL(gun_name, gun_list[i].name))
+        {
+            memcpy(gun, &gun_list[i], sizeof(Gun));
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void gun_refresh_list()
+{
+    // Load up Gun List
+    char gun_files[256][32] = {0};
+    int gun_file_count = io_get_files_in_dir("src/guns",".gun", gun_files);
+
+    // insertion sort
+    int i, j;
+    char key[32];
+
+    for (i = 1; i < gun_file_count; ++i) 
+    {
+        memcpy(key, gun_files[i], 32*sizeof(char));
+        j = i - 1;
+
+        while (j >= 0 && strncmp(key,gun_files[j],32) < 0)
+        {
+            memcpy(gun_files[j+1], gun_files[j], 32*sizeof(char));
+            j = j - 1;
+        }
+        memcpy(gun_files[j+1], key, 32*sizeof(char));
+    }
+
+    gun_list_count = 0;
+    for (i = 0; i < gun_file_count; ++i) 
+    {
+        gun_load_from_file(&gun_list[gun_list_count++], gun_files[i]);
+    }
+}

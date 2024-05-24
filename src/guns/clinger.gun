@@ -1,14 +1,14 @@
-name: pistol1
-desc: Basic starting player gun
+name: clinger
+desc: Spider dude
 based_on: null
 
 damage_min: 1.00
 damage_max: 1.00
 num: 1
-speed: 215.00
-scale1: 1.00
-scale2: 1.00
-lifetime: 0.40
+speed: 160.00
+scale1: 0.80
+scale2: 0.80
+lifetime: 3.00
 cooldown: 0.40
 burst_count: 0
 burst_rate: 0.20
@@ -16,15 +16,15 @@ critical_hit_chance: 0.00
 knockback_factor: 0.00
 
 spread_type: 0
-spread: 10.00
+spread: 0.00
 
 sprite_index: 0
 spin_factor: 0.00
-color1: 50A0FF
-color2: 50A0FF
+color1: FF5050
+color2: FF5050
 
 directional_accel: 0.00
-gravity_factor: 0.00
+gravity_factor: 0.50
 air_friction: 0.00
 
 wave_amplitude: 0.00
@@ -45,16 +45,16 @@ poison_damage: 0.00
 
 chargeable: false
 charge_type: 0
-charge_time_max: 1.00
+charge_time_max: 0.00
 
 cluster: false
-cluster_stages: 1
-cluster_num0: 2
-cluster_num1: 2
-cluster_scale0: 0.60
-cluster_scale1: 0.60
+cluster_stages: 0
+cluster_num0: 0
+cluster_num1: 0
+cluster_scale0: 0.00
+cluster_scale1: 0.00
 
 orbital: false
-orbital_max_count: 5
-orbital_distance: 32.00
-orbital_speed_factor: 3.00
+orbital_max_count: 0
+orbital_distance: 0.00
+orbital_speed_factor: 0.00

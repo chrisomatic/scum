@@ -248,8 +248,13 @@ void ai_shoot_nearest_player(Creature* c)
     Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
     float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y) + RAND_FLOAT(-10.0,10.0);
 
-    ProjectileType pt = creature_get_projectile_type(c);
-    Gun gun = gun_lookup[pt];
+    Gun gun;
+    char* gun_name = creature_get_gun_name(c->type);
+    if(!gun_get_by_name(gun_name, &gun))
+    {
+        LOGE("Couldn't find gun with name %s", gun_name);
+        return;
+    }
 
     projectile_fire(&c->phys, c->phys.curr_room, &gun, COLOR_RED, angle, false);
 }

@@ -220,31 +220,16 @@ int creature_get_image(CreatureType type)
     }
 }
 
-ProjectileType creature_get_projectile_type(Creature* c)
+char* creature_get_gun_name(CreatureType type)
 {
-    ProjectileType pt = PROJECTILE_TYPE_CREATURE_GENERIC;
-    switch(c->type)
+    switch(type)
     {
-        case CREATURE_TYPE_CLINGER:
-            pt = PROJECTILE_TYPE_CREATURE_CLINGER;
-            break;
-        case CREATURE_TYPE_GEIZER:
-            pt = PROJECTILE_TYPE_CREATURE_GEIZER;
-            break;
-        case CREATURE_TYPE_TOTEM_RED:
-            break;
-        case CREATURE_TYPE_TOTEM_BLUE:
-            pt = PROJECTILE_TYPE_CREATURE_TOTEM_BLUE;
-            break;
-        case CREATURE_TYPE_WATCHER:
-            pt = PROJECTILE_TYPE_CREATURE_WATCHER;
-            break;
-        case CREATURE_TYPE_TOTEM_YELLOW:
-            break;
-        default:
-            break;
+        case CREATURE_TYPE_CLINGER:    return "clinger";
+        case CREATURE_TYPE_GEIZER:     return "geizer";
+        case CREATURE_TYPE_TOTEM_BLUE: return "totem_blue";
+        case CREATURE_TYPE_WATCHER:    return "watcher";
+        default:                       return "creature";
     }
-    return pt;
 }
 
 void print_creature_dimensions(Creature* c)
@@ -1404,8 +1389,13 @@ static void creature_update_spiked_slug(Creature* c, float dt)
 
 static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
 {
-    ProjectileType pt = creature_get_projectile_type(c);
-    Gun gun = gun_lookup[pt];
+    Gun gun;
+    char* gun_name = creature_get_gun_name(c->type);
+    if(!gun_get_by_name(gun_name, &gun))
+    {
+        LOGE("Couldn't find gun with name %s", gun_name);
+        return;
+    }
 
     if(c->type == CREATURE_TYPE_GEIZER)
     {
@@ -1421,8 +1411,13 @@ static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
 
 static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float vel0_z, uint32_t color)
 {
-    ProjectileType pt = creature_get_projectile_type(c);
-    Gun gun = gun_lookup[pt];
+    Gun gun;
+    char* gun_name = creature_get_gun_name(c->type);
+    if(!gun_get_by_name(gun_name, &gun))
+    {
+        LOGE("Couldn't find gun with name %s", gun_name);
+        return;
+    }
 
     gun.sprite_index = 4;
     gun.color1 = 0x32251E;
@@ -2509,8 +2504,13 @@ static void creature_update_beacon_red(Creature* c, float dt)
 
 static void creature_update_watcher(Creature* c, float dt)
 {
-    ProjectileType pt = creature_get_projectile_type(c);
-    Gun gun = gun_lookup[pt];
+    Gun gun;
+    char* gun_name = creature_get_gun_name(c->type);
+    if(!gun_get_by_name(gun_name, &gun))
+    {
+        LOGE("Couldn't find gun with name %s", gun_name);
+        return;
+    }
 
     ProjectileOrbital* orb = projectile_orbital_get(&c->phys, gun.orbital_distance);
 

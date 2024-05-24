@@ -37,6 +37,7 @@ gcc core/gfx.c \
     core/bitpack.c \
     core/astar.c \
     core/audio.c \
+    core/str.c \
     physics.c \
     effects.c \
     projectile.c \

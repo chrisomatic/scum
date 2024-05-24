@@ -146,7 +146,12 @@ void player_set_defaults(Player* p)
 
     weapon_add(WEAPON_TYPE_SPEAR,&p->phys, &p->weapon, (p->weapon.type == WEAPON_TYPE_NONE ? true : false));
 
-    memcpy(&p->gun,&gun_lookup[PROJECTILE_TYPE_PLAYER],sizeof(Gun));
+    char* gun_name = "pistol1";
+    if(!gun_get_by_name(gun_name, &p->gun))
+    {
+        LOGE("Couldn't find gun with name %s", gun_name);
+        return;
+    }
 
     // p->temp_room = -1;
     p->door = DIR_NONE;
@@ -1349,6 +1354,7 @@ static void player_handle_shooting(Player* p, float dt)
             if(!p->phys.dead)
             {
                 Gun temp = p->gun;
+
                 temp.damage_min += lookup_strength[p->stats[STRENGTH]];
                 temp.damage_max += lookup_strength[p->stats[STRENGTH]];
                 temp.speed  += lookup_attack_range[p->stats[ATTACK_RANGE]];

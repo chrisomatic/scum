@@ -117,7 +117,7 @@ bool skills_use(void* player, Skill* skill)
     Player* p = (Player*)player;
     // p->phys.mp -= skill->mp_cost;
 
-    Gun gun = gun_lookup[PROJECTILE_TYPE_PLAYER];
+    Gun gun = gun_list[PROJECTILE_TYPE_PLAYER];
 
     bool used = true;
 

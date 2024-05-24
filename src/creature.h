@@ -106,7 +106,7 @@ extern glist* clist;
 void creature_init();
 char* creature_type_name(CreatureType type);
 int creature_get_image(CreatureType type);
-ProjectileType creature_get_projectile_type(Creature* c);
+char* creature_get_gun_name(CreatureType type);
 void creature_init_props(Creature* c);
 void creature_clear_all();
 void creature_clear_room(uint8_t room_index);

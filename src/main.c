@@ -615,6 +615,10 @@ void start_server()
     LOGI(" - Weapon.");
     weapon_init();
 
+    LOGI(" - Projectiles.");
+    projectile_init();
+    explosion_init();
+
     LOGI(" - Player.");
     player_init();
 
@@ -637,9 +641,6 @@ void start_server()
 
     level_init();
     trigger_generate_level(level_seed, 1, 0, __LINE__);
-
-    projectile_init();
-    explosion_init();
 
     // start
     net_server_start();
@@ -864,7 +865,6 @@ void init()
         gaudio_play(music_id);
     }
 
-
     LOGI(" - Lighting.");
     lighting_init();
 
@@ -886,6 +886,12 @@ void init()
     LOGI(" - Weapon.");
     weapon_init();
 
+    LOGI(" - Projectiles.");
+    projectile_init();
+
+    LOGI(" - Explosions.");
+    explosion_init();
+
     LOGI(" - Player.");
     player = &players[0];
     player_init();
@@ -898,12 +904,6 @@ void init()
 
     LOGI(" - Room Data.");
     level_init();
-
-    LOGI(" - Projectiles.");
-    projectile_init();
-
-    LOGI(" - Explosions.");
-    explosion_init();
 
     imgui_load_theme("retro.theme");
 
