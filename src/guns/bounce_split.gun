@@ -1,0 +1,60 @@
+name: bounce_split
+desc: 
+based_on: null
+
+damage_min: 41.04
+damage_max: 61.91
+num: 1
+speed: 308.49
+scale1: 0.52
+scale2: 0.41
+lifetime: 2.86
+cooldown: 0.43
+burst_count: 0
+burst_rate: 0.00
+critical_hit_chance: 0.63
+knockback_factor: 0.43
+
+spread_type: 1
+spread: 312.89
+
+sprite_index: 1
+spin_factor: 0.91
+color1: DD2B72
+color2: C854C1
+
+directional_accel: 0.00
+gravity_factor: 1.45
+air_friction: 0.00
+
+wave_amplitude: 0.00
+wave_period: 0.00
+
+ghost_chance: 0.00
+homing_chance: 0.00
+bounce_chance: 0.00
+penetration_chance: 0.00
+explosion_chance: 0.00
+explosion_radius: 15.00
+explosion_rate: 100.00
+
+fire_damage: 0.00
+cold_damage: 0.00
+lightning_damage: 0.00
+poison_damage: 0.00
+
+chargeable: false
+charge_type: 1
+charge_time_max: 1.84
+
+cluster: true
+cluster_stages: 2
+cluster_num0: 3
+cluster_num1: 1
+cluster_scale0: 1.12
+cluster_scale1: 1.33
+
+orbital: false
+orbital_max_count: 0
+orbital_distance: 0.00
+orbital_speed_factor: 0.00

@@ -25,6 +25,7 @@ int items_image = -1;
 int chest_image = -1;
 int shrine_image = -1;
 int podium_image = -1;
+int guns_image = -1;
 
 static int chestables_index[ITEM_MAX] = {0};
 static int num_chestables = 0;
@@ -55,6 +56,17 @@ static bool item_func_chest(Item* pu, Player* p)
     int num = player_get_active_count() + 1;
     ItemType lst[10] = {0};
 
+    static bool _test_ = false;
+    if(!_test_)
+    {
+        _test_ = true;
+        // item_add(ITEM_GUN, x, y, croom);
+        item_add_gun(0, 0, x, y, croom);
+        item_add_gun(1, 0, x, y, croom);
+        item_add_gun(2, 0, x, y, croom);
+        return true;
+    }
+
     if(rand() % 20 == 1)
     {
         num = rand()%5+5;
@@ -65,9 +77,7 @@ static bool item_func_chest(Item* pu, Player* p)
 
     for(int i = 0; i < num; ++i)
     {
-
         // item_add(item_get_random_chestable(), x, y, croom);
-
         for(;;)
         {
             ItemType type = item_get_random_chestable();
@@ -421,6 +431,7 @@ void item_init()
     chest_image = gfx_load_image("src/img/chest.png", false, false, 32, 32);
     shrine_image = gfx_load_image("src/img/shrine.png", false, false, 32, 48);
     podium_image = gfx_load_image("src/img/podium.png", false, false, 32, 48);
+    guns_image = gfx_load_image("src/img/guns.png", false, false, 32, 32);
 
     for(int i = 0; i < ITEM_MAX; ++i)
     {
@@ -441,6 +452,11 @@ void item_init()
         else if(p->type == ITEM_PODIUM)
         {
             p->image = podium_image;
+            p->sprite_index = 0;
+        }
+        else if(p->type == ITEM_GUN)
+        {
+            p->image = guns_image;
             p->sprite_index = 0;
         }
         else
@@ -468,6 +484,7 @@ void item_init()
             case ITEM_LOOKING_GLASS:
             case ITEM_SHAMROCK:
             case ITEM_UPGRADE_ORB:
+            case ITEM_GUN:
             {
                 p->chestable = true;
                 p->touchable = false;
@@ -617,6 +634,7 @@ const char* item_get_name(ItemType type)
         case ITEM_COIN_SILVER: return "Silver Coin";
         case ITEM_COIN_GOLD: return "Gold Coin";
         case ITEM_SKILL_BOOK: return "Skill Book";
+        case ITEM_GUN: return "Gun";
     }
     return "???";
 }
@@ -680,6 +698,16 @@ const char* item_get_description(ItemType type, Item* pu)
         case ITEM_SKILL_BOOK: return "skillz that killz";
     }
     return "???";
+}
+
+Item* item_add_gun(uint8_t gun_index, uint32_t seed, float x, float y, uint8_t curr_room)
+{
+    Item* it = item_add(ITEM_GUN, x, y, curr_room);
+    it->user_data = gun_index;
+    it->user_data2 = seed;
+    // printf("index: %u\n", gun_index);
+    item_set_description(it, "%s: %s", gun_list[it->user_data].name, gun_list[it->user_data].desc);
+    return it;
 }
 
 Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
@@ -758,16 +786,15 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
     pu.phys.width  = 1.6f*pu.phys.radius;
     pu.phys.length = 1.6f*pu.phys.radius;
     pu.phys.height = 1.6f*pu.phys.radius;
-    pu.phys.vr = gfx_images[ item_props[pu.type].image ].visible_rects[0];
+
+    pu.phys.vr = gfx_images[ item_props[pu.type].image ].visible_rects[ item_props[pu.type].sprite_index ];
 
     // x,y position passed in are meant to be the collision positions
     phys_calc_collision_rect(&pu.phys);
     phys_set_collision_pos(&pu.phys, x, y);
 
     bool ret = list_add(item_list,&pu);
-
     if(!ret) return NULL;
-
     return &items[item_list->count-1];
 }
 
@@ -969,8 +996,17 @@ void item_draw(Item* pu)
 
     int sprite_index = item_props[pu->type].sprite_index;
 
+    if(pu->type == ITEM_GUN)
+    {
+        //TODO
+        // sprite_index = gun_list[pu->user_data].gun_sprite_index;
+        sprite_index = pu->user_data % 3;
+    }
+
     if(pu->used)
+    {
         sprite_index++;
+    }
 
     // float y = pu->phys.pos.y - 0.5*pu->phys.pos.z;
     float y = pu->phys.pos.y - (pu->phys.vr.h + pu->phys.pos.z)/2.0;

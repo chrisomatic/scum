@@ -328,6 +328,8 @@ Level level_generate(unsigned int seed, int rank)
             // printf("%2u) %2d, %-2d\n", glevel.rooms[x][y].index, x, y);
             if(!room->valid) continue;
 
+            room->rand_seed = lrand(&rg_level);
+
             bool start = x == glevel.start.x && y == glevel.start.y;
             bool boss = room->type == ROOM_TYPE_BOSS;
             bool treasure = room->type == ROOM_TYPE_TREASURE;
@@ -497,9 +499,19 @@ void level_place_entities(Level* level)
             RoomFileData* rfd = &room_list[room->layout];
             for(int i = 0; i < rfd->item_count; ++i)
             {
+                Item* it = NULL;
                 Vector2f pos = level_get_pos_by_room_coords(rfd->item_locations_x[i]-1, rfd->item_locations_y[i]-1); // @convert room objects to tile grid coordinates
                 // LOGI("Adding item of type: %s to (%.2f %.2f)", item_get_name(rfd->item_types[i]), pos.x, pos.y);
-                item_add(rfd->item_types[i], pos.x, pos.y, room->index);
+                if(rfd->item_types[i] == ITEM_GUN)
+                {
+                    //TODO: determine gun
+                    slrand(&rg_room, room->rand_seed);
+                    it = item_add_gun(lrand(&rg_room) % gun_list_count, lrand(&rg_room), pos.x, pos.y, room->index);
+                }
+                else
+                    it = item_add(rfd->item_types[i], pos.x, pos.y, room->index);
+
+                if(it) it->phys.vel.z = 0.0;
             }
 
             if(room->type == ROOM_TYPE_MONSTER || room->type == ROOM_TYPE_BOSS)
@@ -772,7 +784,8 @@ static Room* place_room_and_path(Level* level, Vector2i* pos, RoomType type, Roo
     }
 
     // set room rand number
-    room->rand_seed = rand();
+    // room->rand_seed = lrand(&rg_level);
+    // printf("set room rand seed %u\n", room->rand_seed);
 
     if(direct)
     {
@@ -933,6 +946,7 @@ static bool generate_room_path(Level* level, Room* start, Room* end, LevelPath* 
             Room* proom = &level->rooms[x][y];
             path->rooms[path->length] = proom;
             proom->valid = true;
+            // proom->rand_seed = lrand(&rg_level);
             path->length++;
         }
     }

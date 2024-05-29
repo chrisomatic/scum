@@ -1626,6 +1626,7 @@ void draw_map(DrawLevelParams* params)
                     {
                         if(!room->doors[d]) continue;
                         player_send_to_room(player, room->index, true, level_get_door_tile_coords(d));
+                        level_grace_time = 2.0;
                         break;
                     }
 

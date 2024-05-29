@@ -49,6 +49,11 @@ Spawn Egg
 Spawn Spider
 Behemoth
 Beacon Red
+Watcher
+Golem
+Phantom
+Rock Monster
+Rock
 
 ; Creatures
 
@@ -88,12 +93,15 @@ Copper Coin
 Silver Coin
 Gold Coin
 Skill Book
+???
 Chest
 Shrine
 Podium
+Gun
 
 ; Items
-35,2,2
+36,2,2
+39,11,2
 
 ; Doors
 1,1,1,1

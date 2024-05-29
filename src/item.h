@@ -50,6 +50,7 @@ typedef enum
     ITEM_CHEST,
     ITEM_SHRINE,
     ITEM_PODIUM,
+    ITEM_GUN,
 
     ITEM_MAX
 } ItemType;
@@ -80,9 +81,9 @@ typedef struct
     bool highlighted;
     bool used;
     float angle;
-
     char desc[32];
     uint8_t user_data;
+    uint32_t user_data2;
 
     // Networking
     float lerp_t;
@@ -98,6 +99,8 @@ typedef struct
 } ItemSort;
 
 extern int items_image;
+extern int guns_image;
+
 extern glist* item_list;
 extern Item prior_items[MAX_ITEMS];
 extern Item items[MAX_ITEMS];
@@ -122,6 +125,7 @@ ItemType item_get_random_coin();
 const char* item_get_name(ItemType type);
 const char* item_get_description(ItemType type, Item* pu);
 Item* item_add(ItemType type, float x, float y, uint8_t curr_room);
+Item* item_add_gun(uint8_t gun_index, uint32_t seed, float x, float y, uint8_t curr_room);
 void item_set_description(Item* pu, char* fmt, ...);
 bool item_use(Item* pu, void* _player);
 bool item_remove(Item* pu);
