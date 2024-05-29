@@ -927,7 +927,7 @@ const char* projectile_charge_type_get_name(ChargeType charge_type)
 
 
 // Gun File Handling
-void gun_save_to_file(Gun* gun)
+void gun_save_to_file(Gun* gun, Gun* based_on)
 {
     char file_path[100] = {0};
     snprintf(file_path,50, "src/guns/%s.gun", gun->name);
@@ -940,66 +940,112 @@ void gun_save_to_file(Gun* gun)
         return;
     }
 
+    bool base_gun = (based_on == NULL);
+
+    fprintf(fp, "based_on: %s\n", base_gun ? "null" : based_on->name);
     fprintf(fp, "name: %s\n", gun->name);
     fprintf(fp, "desc: %s\n", gun->desc);
-    fprintf(fp, "based_on: %s\n", "null");
-    fprintf(fp, "\n");
-    fprintf(fp, "damage_min: %3.2f\n", gun->damage_min);
-    fprintf(fp, "damage_max: %3.2f\n", gun->damage_max);
-    fprintf(fp, "num: %d\n", gun->num);
-    fprintf(fp, "speed: %3.2f\n", gun->speed);
-    fprintf(fp, "scale1: %3.2f\n", gun->scale1);
-    fprintf(fp, "scale2: %3.2f\n", gun->scale2);
-    fprintf(fp, "lifetime: %3.2f\n", gun->lifetime);
-    fprintf(fp, "cooldown: %3.2f\n", gun->cooldown);
-    fprintf(fp, "burst_count: %d\n", gun->burst_count);
-    fprintf(fp, "burst_rate: %3.2f\n", gun->burst_rate);
-    fprintf(fp, "critical_hit_chance: %3.2f\n", gun->critical_hit_chance);
-    fprintf(fp, "knockback_factor: %3.2f\n", gun->knockback_factor);
-    fprintf(fp, "\n");
-    fprintf(fp, "spread_type: %d\n", gun->spread_type);
-    fprintf(fp, "spread: %3.2f\n", gun->spread);
-    fprintf(fp, "\n");
-    fprintf(fp, "sprite_index: %d\n", gun->sprite_index);
-    fprintf(fp, "spin_factor: %3.2f\n", gun->spin_factor);
-    fprintf(fp, "color1: %06X\n", gun->color1);
-    fprintf(fp, "color2: %06X\n", gun->color2);
-    fprintf(fp, "\n");
-    fprintf(fp, "directional_accel: %3.2f\n", gun->directional_accel);
-    fprintf(fp, "gravity_factor: %3.2f\n", gun->gravity_factor);
-    fprintf(fp, "air_friction: %3.2f\n", gun->air_friction);
-    fprintf(fp, "\n");
-    fprintf(fp, "wave_amplitude: %3.2f\n", gun->wave_amplitude);
-    fprintf(fp, "wave_period: %3.2f\n", gun->wave_period);
-    fprintf(fp, "\n");
-    fprintf(fp, "ghost_chance: %3.2f\n", gun->ghost_chance);
-    fprintf(fp, "homing_chance: %3.2f\n", gun->homing_chance);
-    fprintf(fp, "bounce_chance: %3.2f\n", gun->bounce_chance);
-    fprintf(fp, "penetration_chance: %3.2f\n", gun->penetration_chance);
-    fprintf(fp, "explosion_chance: %3.2f\n", gun->explosion_chance);
-    fprintf(fp, "explosion_radius: %3.2f\n", gun->explosion_radius);
-    fprintf(fp, "explosion_rate: %3.2f\n", gun->explosion_rate);
-    fprintf(fp, "\n");
-    fprintf(fp, "fire_damage: %3.2f\n", gun->fire_damage);
-    fprintf(fp, "cold_damage: %3.2f\n", gun->cold_damage);
-    fprintf(fp, "lightning_damage: %3.2f\n", gun->lightning_damage);
-    fprintf(fp, "poison_damage: %3.2f\n", gun->poison_damage);
-    fprintf(fp, "\n");
-    fprintf(fp, "chargeable: %s\n", gun->chargeable ? "true" : "false");
-    fprintf(fp, "charge_type: %d\n", gun->charge_type);
-    fprintf(fp, "charge_time_max: %3.2f\n", gun->charge_time_max);
-    fprintf(fp, "\n");
-    fprintf(fp, "cluster: %s\n", gun->cluster ? "true" : "false");
-    fprintf(fp, "cluster_stages: %d\n", gun->cluster_stages);
-    fprintf(fp, "cluster_num0: %d\n", gun->cluster_num[0]);
-    fprintf(fp, "cluster_num1: %d\n", gun->cluster_num[1]);
-    fprintf(fp, "cluster_scale0: %3.2f\n", gun->cluster_scales[0]);
-    fprintf(fp, "cluster_scale1: %3.2f\n", gun->cluster_scales[1]);
-    fprintf(fp, "\n");
-    fprintf(fp, "orbital: %s\n", gun->orbital ? "true" : "false");
-    fprintf(fp, "orbital_max_count: %d\n", gun->orbital_max_count);
-    fprintf(fp, "orbital_distance: %3.2f\n", gun->orbital_distance);
-    fprintf(fp, "orbital_speed_factor: %3.2f\n", gun->orbital_speed_factor);
+
+    if(base_gun)
+    {
+        fprintf(fp, "damage_min: %3.2f\n", gun->damage_min);
+        fprintf(fp, "damage_max: %3.2f\n", gun->damage_max);
+        fprintf(fp, "num: %d\n", gun->num);
+        fprintf(fp, "speed: %3.2f\n", gun->speed);
+        fprintf(fp, "scale1: %3.2f\n", gun->scale1);
+        fprintf(fp, "scale2: %3.2f\n", gun->scale2);
+        fprintf(fp, "lifetime: %3.2f\n", gun->lifetime);
+        fprintf(fp, "cooldown: %3.2f\n", gun->cooldown);
+        fprintf(fp, "burst_count: %d\n", gun->burst_count);
+        fprintf(fp, "burst_rate: %3.2f\n", gun->burst_rate);
+        fprintf(fp, "critical_hit_chance: %3.2f\n", gun->critical_hit_chance);
+        fprintf(fp, "knockback_factor: %3.2f\n", gun->knockback_factor);
+        fprintf(fp, "spread_type: %d\n", gun->spread_type);
+        fprintf(fp, "spread: %3.2f\n", gun->spread);
+        fprintf(fp, "sprite_index: %d\n", gun->sprite_index);
+        fprintf(fp, "spin_factor: %3.2f\n", gun->spin_factor);
+        fprintf(fp, "color1: %06X\n", gun->color1);
+        fprintf(fp, "color2: %06X\n", gun->color2);
+        fprintf(fp, "directional_accel: %3.2f\n", gun->directional_accel);
+        fprintf(fp, "gravity_factor: %3.2f\n", gun->gravity_factor);
+        fprintf(fp, "air_friction: %3.2f\n", gun->air_friction);
+        fprintf(fp, "wave_amplitude: %3.2f\n", gun->wave_amplitude);
+        fprintf(fp, "wave_period: %3.2f\n", gun->wave_period);
+        fprintf(fp, "ghost_chance: %3.2f\n", gun->ghost_chance);
+        fprintf(fp, "homing_chance: %3.2f\n", gun->homing_chance);
+        fprintf(fp, "bounce_chance: %3.2f\n", gun->bounce_chance);
+        fprintf(fp, "penetration_chance: %3.2f\n", gun->penetration_chance);
+        fprintf(fp, "explosion_chance: %3.2f\n", gun->explosion_chance);
+        fprintf(fp, "explosion_radius: %3.2f\n", gun->explosion_radius);
+        fprintf(fp, "explosion_rate: %3.2f\n", gun->explosion_rate);
+        fprintf(fp, "fire_damage: %3.2f\n", gun->fire_damage);
+        fprintf(fp, "cold_damage: %3.2f\n", gun->cold_damage);
+        fprintf(fp, "lightning_damage: %3.2f\n", gun->lightning_damage);
+        fprintf(fp, "poison_damage: %3.2f\n", gun->poison_damage);
+        fprintf(fp, "chargeable: %s\n", gun->chargeable ? "true" : "false");
+        fprintf(fp, "charge_type: %d\n", gun->charge_type);
+        fprintf(fp, "charge_time_max: %3.2f\n", gun->charge_time_max);
+        fprintf(fp, "cluster: %s\n", gun->cluster ? "true" : "false");
+        fprintf(fp, "cluster_stages: %d\n", gun->cluster_stages);
+        fprintf(fp, "cluster_num0: %d\n", gun->cluster_num[0]);
+        fprintf(fp, "cluster_num1: %d\n", gun->cluster_num[1]);
+        fprintf(fp, "cluster_scale0: %3.2f\n", gun->cluster_scales[0]);
+        fprintf(fp, "cluster_scale1: %3.2f\n", gun->cluster_scales[1]);
+        fprintf(fp, "orbital: %s\n", gun->orbital ? "true" : "false");
+        fprintf(fp, "orbital_max_count: %d\n", gun->orbital_max_count);
+        fprintf(fp, "orbital_distance: %3.2f\n", gun->orbital_distance);
+        fprintf(fp, "orbital_speed_factor: %3.2f\n", gun->orbital_speed_factor);
+    }
+    else
+    {
+        if(gun->damage_min           != based_on->damage_min)           fprintf(fp, "damage_min: %3.2f\n", gun->damage_min);
+        if(gun->damage_max           != based_on->damage_max)           fprintf(fp, "damage_max: %3.2f\n", gun->damage_max);
+        if(gun->num                  != based_on->num)                  fprintf(fp, "num: %d\n", gun->num);
+        if(gun->speed                != based_on->speed)                fprintf(fp, "speed: %3.2f\n", gun->speed);
+        if(gun->scale1               != based_on->scale1)               fprintf(fp, "scale1: %3.2f\n", gun->scale1);
+        if(gun->scale2               != based_on->scale2)               fprintf(fp, "scale2: %3.2f\n", gun->scale2);
+        if(gun->lifetime             != based_on->lifetime)             fprintf(fp, "lifetime: %3.2f\n", gun->lifetime);
+        if(gun->cooldown             != based_on->cooldown)             fprintf(fp, "cooldown: %3.2f\n", gun->cooldown);
+        if(gun->burst_count          != based_on->burst_count)          fprintf(fp, "burst_count: %d\n", gun->burst_count);
+        if(gun->burst_rate           != based_on->burst_rate)           fprintf(fp, "burst_rate: %3.2f\n", gun->burst_rate);
+        if(gun->critical_hit_chance  != based_on->critical_hit_chance)  fprintf(fp, "critical_hit_chance: %3.2f\n", gun->critical_hit_chance);
+        if(gun->knockback_factor     != based_on->knockback_factor)     fprintf(fp, "knockback_factor: %3.2f\n", gun->knockback_factor);
+        if(gun->spread_type          != based_on->spread_type)          fprintf(fp, "spread_type: %d\n", gun->spread_type);
+        if(gun->spread               != based_on->spread)               fprintf(fp, "spread: %3.2f\n", gun->spread);
+        if(gun->sprite_index         != based_on->sprite_index)         fprintf(fp, "sprite_index: %d\n", gun->sprite_index);
+        if(gun->spin_factor          != based_on->spin_factor)          fprintf(fp, "spin_factor: %3.2f\n", gun->spin_factor);
+        if(gun->color1               != based_on->color1)               fprintf(fp, "color1: %06X\n", gun->color1);
+        if(gun->color2               != based_on->color2)               fprintf(fp, "color2: %06X\n", gun->color2);
+        if(gun->directional_accel    != based_on->directional_accel)    fprintf(fp, "directional_accel: %3.2f\n", gun->directional_accel);
+        if(gun->gravity_factor       != based_on->gravity_factor)       fprintf(fp, "gravity_factor: %3.2f\n", gun->gravity_factor);
+        if(gun->air_friction         != based_on->air_friction)         fprintf(fp, "air_friction: %3.2f\n", gun->air_friction);
+        if(gun->wave_amplitude       != based_on->wave_amplitude)       fprintf(fp, "wave_amplitude: %3.2f\n", gun->wave_amplitude);
+        if(gun->wave_period          != based_on->wave_period)          fprintf(fp, "wave_period: %3.2f\n", gun->wave_period);
+        if(gun->ghost_chance         != based_on->ghost_chance)         fprintf(fp, "ghost_chance: %3.2f\n", gun->ghost_chance);
+        if(gun->homing_chance        != based_on->homing_chance)        fprintf(fp, "homing_chance: %3.2f\n", gun->homing_chance);
+        if(gun->bounce_chance        != based_on->bounce_chance)        fprintf(fp, "bounce_chance: %3.2f\n", gun->bounce_chance);
+        if(gun->penetration_chance   != based_on->penetration_chance)   fprintf(fp, "penetration_chance: %3.2f\n", gun->penetration_chance);
+        if(gun->explosion_chance     != based_on->explosion_chance)     fprintf(fp, "explosion_chance: %3.2f\n", gun->explosion_chance);
+        if(gun->explosion_radius     != based_on->explosion_radius)     fprintf(fp, "explosion_radius: %3.2f\n", gun->explosion_radius);
+        if(gun->explosion_rate       != based_on->explosion_rate)       fprintf(fp, "explosion_rate: %3.2f\n", gun->explosion_rate);
+        if(gun->fire_damage          != based_on->fire_damage)          fprintf(fp, "fire_damage: %3.2f\n", gun->fire_damage);
+        if(gun->cold_damage          != based_on->cold_damage)          fprintf(fp, "cold_damage: %3.2f\n", gun->cold_damage);
+        if(gun->lightning_damage     != based_on->lightning_damage)     fprintf(fp, "lightning_damage: %3.2f\n", gun->lightning_damage);
+        if(gun->poison_damage        != based_on->poison_damage)        fprintf(fp, "poison_damage: %3.2f\n", gun->poison_damage);
+        if(gun->chargeable           != based_on->chargeable)           fprintf(fp, "chargeable: %s\n", gun->chargeable ? "true" : "false");
+        if(gun->charge_type          != based_on->charge_type)          fprintf(fp, "charge_type: %d\n", gun->charge_type);
+        if(gun->charge_time_max      != based_on->charge_time_max)      fprintf(fp, "charge_time_max: %3.2f\n", gun->charge_time_max);
+        if(gun->cluster              != based_on->cluster)              fprintf(fp, "cluster: %s\n", gun->cluster ? "true" : "false");
+        if(gun->cluster_stages       != based_on->cluster_stages)       fprintf(fp, "cluster_stages: %d\n", gun->cluster_stages);
+        if(gun->cluster_num[0]       != based_on->cluster_num[0])       fprintf(fp, "cluster_num0: %d\n", gun->cluster_num[0]);
+        if(gun->cluster_num[1]       != based_on->cluster_num[1])       fprintf(fp, "cluster_num1: %d\n", gun->cluster_num[1]);
+        if(gun->cluster_scales[0]    != based_on->cluster_scales[0])    fprintf(fp, "cluster_scale0: %3.2f\n", gun->cluster_scales[0]);
+        if(gun->cluster_scales[1]    != based_on->cluster_scales[1])    fprintf(fp, "cluster_scale1: %3.2f\n", gun->cluster_scales[1]);
+        if(gun->orbital              != based_on->orbital)              fprintf(fp, "orbital: %s\n", gun->orbital ? "true" : "false");
+        if(gun->orbital_max_count    != based_on->orbital_max_count)    fprintf(fp, "orbital_max_count: %d\n", gun->orbital_max_count);
+        if(gun->orbital_distance     != based_on->orbital_distance)     fprintf(fp, "orbital_distance: %3.2f\n", gun->orbital_distance);
+        if(gun->orbital_speed_factor != based_on->orbital_speed_factor) fprintf(fp, "orbital_speed_factor: %3.2f\n", gun->orbital_speed_factor);
+    }
 
     fclose(fp);
 }
@@ -1066,6 +1112,88 @@ void gun_print(Gun* gun)
     printf("orbital_speed_factor: %3.2f\n", gun->orbital_speed_factor);
 }
 
+bool is_gun_file_base_gun(const char* file_name)
+{
+    char file_path[50] = {0};
+    snprintf(file_path,50, "src/guns/%s", file_name);
+
+    FILE* fp = fopen(file_path, "r");
+
+    if(!fp)
+    {
+        LOGE("Failed to open file for reading");
+        return false;
+    }
+
+    int c;
+    int value = 0;
+
+    char key[256] = {0}; int ikey = 0;
+    char val[256] = {0}; int ival = 0;
+
+    bool comment = false;
+
+    for(;;)
+    {
+        c = fgetc(fp);
+
+        if(c == EOF)
+            break;
+
+        if(c == '\n')
+        {
+            // set value
+            char* val2 = str_trim_whitespace(val);
+
+            if(STR_EQUAL(key, "based_on"))
+            {
+                if(STR_EQUAL(val2, "null"))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            
+            // reset 
+            comment = false;
+            value = 0;
+            memset(key, 0, 256);
+            memset(val, 0, 256);
+            ikey = 0;
+            ival = 0;
+            continue;
+        }
+
+        if(comment)
+            continue;
+
+        if(c == ':')
+        {
+            value = 1;
+        }
+        else if(c == '#')
+        {
+            comment = true;
+        }
+        else
+        {
+            if(c >= 32 && c <= 126)
+            {
+                if(value) val[ival++] = c;
+                else      key[ikey++] = c;
+            }
+        }
+    }
+
+    return false;
+
+    fclose(fp);
+
+}
+
 void gun_load_from_file(Gun* gun, const char* file_name)
 {
     char file_path[50] = {0};
@@ -1101,12 +1229,19 @@ void gun_load_from_file(Gun* gun, const char* file_name)
             // set value
             char* val2 = str_trim_whitespace(val);
 
-            if(STR_EQUAL(key, "name"))
+            if(STR_EQUAL(key, "based_on"))
+            {
+                // get base gun from gun_list
+                Gun base_gun = {0};
+                gun_get_by_name(val2, &base_gun);
+                
+                // copy gun to this gun
+                memcpy(gun, &base_gun, sizeof(Gun));
+            }
+            else if(STR_EQUAL(key, "name"))
                 memcpy(gun->name, val2, sizeof(char)*MIN(GUN_NAME_MAX_LEN, strlen(val2)));
             else if(STR_EQUAL(key, "desc"))
                 memcpy(gun->desc, val, sizeof(char)*MIN(GUN_DESC_MAX_LEN, strlen(val)));
-            else if(STR_EQUAL(key, "based_on"))
-                printf("TODO\n");
             else if(STR_EQUAL(key, "damage_min"))
                 gun->damage_min = atof(val2);
             else if(STR_EQUAL(key, "damage_max"))
@@ -1272,8 +1407,27 @@ void gun_refresh_list()
     }
 
     gun_list_count = 0;
+
+    int child_indices[256] = {0};
+    int child_gun_count = 0;
+
+    // load all base guns
     for (i = 0; i < gun_file_count; ++i) 
     {
-        gun_load_from_file(&gun_list[gun_list_count++], gun_files[i]);
+        bool base_gun = is_gun_file_base_gun(gun_files[i]);
+        if(base_gun)
+        {
+            gun_load_from_file(&gun_list[gun_list_count++], gun_files[i]);
+        }
+        else
+        {
+            child_indices[child_gun_count++] = i;
+        }
+    }
+
+    // load derivative guns
+    for (i = 0; i < child_gun_count; ++i) 
+    {
+        gun_load_from_file(&gun_list[gun_list_count++], gun_files[child_indices[i]]);
     }
 }

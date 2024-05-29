@@ -1,6 +1,6 @@
+based_on: null
 name: bounce_split
 desc: 
-based_on: null
 
 damage_min: 41.04
 damage_max: 61.91

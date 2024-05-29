@@ -1,6 +1,6 @@
+based_on: null
 name: clinger
 desc: Spider dude
-based_on: null
 
 damage_min: 1.00
 damage_max: 1.00

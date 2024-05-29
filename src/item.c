@@ -39,7 +39,6 @@ static uint16_t get_id()
     return id_counter++;
 }
 
-
 static bool item_func_chest(Item* pu, Player* p)
 {
 
@@ -99,7 +98,6 @@ static bool item_func_chest(Item* pu, Player* p)
         }
 
     }
-
 
     return true;
 }
@@ -256,11 +254,14 @@ static bool item_func_shrine(Item* pu, Player* p)
 
 static bool internal_item_use(Item* pu, void* _player)
 {
-
     Player* p = (Player*)_player;
 
     switch(pu->type)
     {
+        case ITEM_GUN:
+        {
+            player_set_gun(p, &gun_list[pu->user_data]);
+        } break;
         case ITEM_HEART_FULL:
         {
             return player_add_hp(p, 2);

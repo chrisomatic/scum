@@ -2803,3 +2803,8 @@ Vector2i stats_get_img(StatType stat)
     ret.y = p->sprite_index;
     return ret;
 }
+
+void player_set_gun(Player* p, Gun* g)
+{
+    memcpy(&p->gun, g, sizeof(Gun));
+}

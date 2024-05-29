@@ -1,0 +1,7 @@
+based_on: pistol1
+name: pistol2
+desc:   Basic starting player gun
+damage_min: 1.72
+damage_max: 2.58
+lifetime: 0.49
+spread: 9.31

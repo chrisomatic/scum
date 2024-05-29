@@ -219,8 +219,9 @@ const char* projectile_charge_type_get_name(ChargeType charge_type);
 ProjectileOrbital* projectile_orbital_get(Physics* body, float distance);
 void projectile_orbital_kill(ProjectileOrbital* orb);
 
-void gun_save_to_file(Gun* gun);
+void gun_save_to_file(Gun* gun, Gun* based_on);
 void gun_load_from_file(Gun* gun, const char* file_name);
 void gun_refresh_list();
 void gun_print(Gun* gun);
 bool gun_get_by_name(char* gun_name, Gun* gun);
+bool is_gun_file_base_gun(const char* file_name);

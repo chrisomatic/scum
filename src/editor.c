@@ -447,46 +447,56 @@ void editor_draw()
 
                 if(role == ROLE_LOCAL)
                 {
-                    char* gun_names[MAX_GUNS] = {0};
-                    for(int i = 0; i < gun_list_count; ++i)
-                        gun_names[i] = (char*)gun_list[i].name;
-
-                    static int gun_sel = 0;
-                    static int gun_sel_prior = -1;
-
-                    imgui_dropdown(gun_names, gun_list_count, "Gun List", &gun_sel, NULL);
-
-                    if(gun_sel != gun_sel_prior)
-                    {
-                        // copy properties to gun
-                        gun = gun_list[gun_sel];
-                    }
-
-                    if(memcmp(&gun, &gun_prior, sizeof(Gun)) != 0)
-                    {
-                        // gun changed
-                        memcpy(&player->gun, &gun, sizeof(Gun));
-                    }
-
-                    memcpy(&gun_prior, &gun, sizeof(Gun));
-                    gun_sel_prior = gun_sel;
-
                     imgui_horizontal_begin();
 
                     imgui_text_box_sized("Name##GunName", gun.name, GUN_NAME_MAX_LEN, 80, 16);
                     imgui_text_box_sized("Description##GunDesc", gun.desc, GUN_DESC_MAX_LEN, 250, 16);
 
-                    if(imgui_button("Save"))
+                    imgui_horizontal_end();
+
+                    imgui_horizontal_begin();
+
+                    static bool based_on = false;
+                    static int gun_sel = 0;
+                    static int gun_sel_prior = -1;
+
+                    imgui_checkbox("Based on...", &based_on);
+
+                    if(based_on)
                     {
-                        gun_save_to_file(&gun);
-                        gun_refresh_list();
+                        char* gun_names[MAX_GUNS] = {0};
+
+                        for(int i = 0; i < gun_list_count; ++i)
+                            gun_names[i] = (char*)gun_list[i].name;
+
+                        imgui_dropdown(gun_names, gun_list_count, "Gun List", &gun_sel, NULL);
+
+                        if(gun_sel != gun_sel_prior)
+                        {
+                            gun = gun_list[gun_sel];
+                        }
+
+                        if(memcmp(&gun, &gun_prior, sizeof(Gun)) != 0)
+                        {
+                            // gun changed
+                            memcpy(&player->gun, &gun, sizeof(Gun));
+                        }
+
+                        memcpy(&gun_prior, &gun, sizeof(Gun));
+                        gun_sel_prior = gun_sel;
+
+                        if(memcmp(&gun, &gun_list[gun_sel], sizeof(Gun)) != 0)
+                        {
+                            imgui_text_colored(COLOR_ORANGE, "**Modified**");
+                        }
                     }
 
                     imgui_horizontal_end();
 
-                    if(memcmp(&gun, &gun_list[gun_sel], sizeof(Gun)) != 0)
+                    if(imgui_button("Save"))
                     {
-                        imgui_text_colored(COLOR_ORANGE, "**Modified**");
+                        gun_save_to_file(&gun, based_on ? &gun_list[gun_sel] : NULL);
+                        gun_refresh_list();
                     }
 
                     imgui_text("Projectile Count: %u", plist->count);
