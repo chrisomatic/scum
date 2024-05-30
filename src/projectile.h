@@ -9,7 +9,7 @@
 #define MAX_PROJECTILES 4096
 #define MAX_CLUSTER_STAGES 2
 #define MAX_GUNS 100
-#define GUN_NAME_MAX_LEN 50 
+#define GUN_NAME_MAX_LEN 32 
 #define GUN_DESC_MAX_LEN 100
 
 typedef enum
@@ -41,7 +41,9 @@ typedef enum
 typedef struct
 {
     char  name[GUN_NAME_MAX_LEN+1];
+    char  based_on_name[GUN_NAME_MAX_LEN+1];
     char  desc[GUN_DESC_MAX_LEN+1];
+
     float damage_min;
     float damage_max;
     
@@ -70,6 +72,7 @@ typedef struct
 
     float spin_factor;
 
+    int gun_sprite_index;
     int sprite_index;
 
     uint32_t color1;

@@ -82,6 +82,13 @@ void editor_draw()
         int selection = imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "");
         imgui_horizontal_line(1);
 
+        static int gun_sel = 0;
+        static int gun_sel_prior = -1;
+        static bool based_on = false;
+
+        static Gun gun;
+        static Gun gun_prior;
+
         float big = 20.0;
 
         Room* room = level_get_room_by_index(&level,player->phys.curr_room);
@@ -242,8 +249,6 @@ void editor_draw()
 
             case 2: // players
             {
-
-
                 Player* p = player;
 
                 if(role == ROLE_LOCAL)
@@ -442,9 +447,6 @@ void editor_draw()
 
                 imgui_set_text_size(8.0);
 
-                static Gun gun;
-                static Gun gun_prior;
-
                 if(role == ROLE_LOCAL)
                 {
                     imgui_horizontal_begin();
@@ -456,46 +458,23 @@ void editor_draw()
 
                     imgui_horizontal_begin();
 
-                    static bool based_on = false;
-                    static int gun_sel = 0;
-                    static int gun_sel_prior = -1;
+                    bool base_gun_exists = false;
+                    Gun based_on_gun = {0};
 
                     imgui_checkbox("Based on...", &based_on);
-
                     if(based_on)
                     {
-                        char* gun_names[MAX_GUNS] = {0};
-
-                        for(int i = 0; i < gun_list_count; ++i)
-                            gun_names[i] = (char*)gun_list[i].name;
-
-                        imgui_dropdown(gun_names, gun_list_count, "Gun List", &gun_sel, NULL);
-
-                        if(gun_sel != gun_sel_prior)
-                        {
-                            gun = gun_list[gun_sel];
-                        }
-
-                        if(memcmp(&gun, &gun_prior, sizeof(Gun)) != 0)
-                        {
-                            // gun changed
-                            memcpy(&player->gun, &gun, sizeof(Gun));
-                        }
-
-                        memcpy(&gun_prior, &gun, sizeof(Gun));
-                        gun_sel_prior = gun_sel;
-
-                        if(memcmp(&gun, &gun_list[gun_sel], sizeof(Gun)) != 0)
-                        {
-                            imgui_text_colored(COLOR_ORANGE, "**Modified**");
-                        }
+                        imgui_text_box_sized("Based On##GunNameBasedOn", gun.based_on_name, GUN_NAME_MAX_LEN, 80, 16);
+                        base_gun_exists = gun_get_by_name(gun.based_on_name, &based_on_gun);
+                        if(base_gun_exists)
+                            imgui_text_colored(COLOR_GREEN, "Nice");
                     }
 
                     imgui_horizontal_end();
 
                     if(imgui_button("Save"))
                     {
-                        gun_save_to_file(&gun, based_on ? &gun_list[gun_sel] : NULL);
+                        gun_save_to_file(&gun, base_gun_exists ? &based_on_gun : NULL);
                         gun_refresh_list();
                     }
 
@@ -543,6 +522,7 @@ void editor_draw()
                         spread_type_sel = gun.spread_type;
                         gun.spread = RAND_FLOAT(0.0, 360.0);
 
+                        gun.gun_sprite_index = rand() % 3;
                         gun.sprite_index = rand() % 10;
 
                         bool more_than_one = (rand() % 4 == 0);
@@ -730,6 +710,7 @@ void editor_draw()
                     imgui_text_sized(16.0,"Appearance");
                     imgui_horizontal_line(1);
 
+                    imgui_number_box("Gun Sprite Index", 0,3, &gun.gun_sprite_index);
                     imgui_number_box("Sprite Index", 0,9, &gun.sprite_index);
 
                     imgui_horizontal_begin();
@@ -744,9 +725,8 @@ void editor_draw()
 
                     imgui_slider_float("Spin Factor", -1.0, 1.0, &gun.spin_factor);
 
+                    imgui_restore_theme();
                 }
-
-                imgui_restore_theme();
 
             } break;
 
@@ -959,6 +939,48 @@ void editor_draw()
         particle_spawner->hidden = true;
     }
     gui_size = imgui_end();
+
+    if(selection == 4)
+    {
+        // projectiles
+
+        imgui_begin_panel("Gun Selector", 2, 2, true);
+
+            char* gun_names[MAX_GUNS] = {0};
+
+            for(int i = 0; i < gun_list_count; ++i)
+                gun_names[i] = (char*)gun_list[i].name;
+
+            imgui_listbox(gun_names, gun_list_count, "Guns", &gun_sel, 10);
+
+            if(gun_sel != gun_sel_prior)
+            {
+                gun = gun_list[gun_sel];
+            }
+
+            if(memcmp(&gun, &gun_prior, sizeof(Gun)) != 0)
+            {
+                // gun changed
+                memcpy(&player->gun, &gun, sizeof(Gun));
+                based_on = !STR_EMPTY(gun.based_on_name);
+            }
+
+            memcpy(&gun_prior, &gun, sizeof(Gun));
+            gun_sel_prior = gun_sel;
+
+
+            imgui_horizontal_begin();
+                if(imgui_button("<")) gun_sel -= 1;
+                if(imgui_button(">")) gun_sel += 1;
+                gun_sel = BOUND(gun_sel, 0, gun_list_count-1);
+            imgui_horizontal_end();
+
+            imgui_end();
+
+        imgui_end();
+
+
+    }
 }
 
 static void particle_editor_gui()

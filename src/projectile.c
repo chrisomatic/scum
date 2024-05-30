@@ -962,6 +962,7 @@ void gun_save_to_file(Gun* gun, Gun* based_on)
         fprintf(fp, "knockback_factor: %3.2f\n", gun->knockback_factor);
         fprintf(fp, "spread_type: %d\n", gun->spread_type);
         fprintf(fp, "spread: %3.2f\n", gun->spread);
+        fprintf(fp, "gun_sprite_index: %d\n", gun->gun_sprite_index);
         fprintf(fp, "sprite_index: %d\n", gun->sprite_index);
         fprintf(fp, "spin_factor: %3.2f\n", gun->spin_factor);
         fprintf(fp, "color1: %06X\n", gun->color1);
@@ -1012,6 +1013,7 @@ void gun_save_to_file(Gun* gun, Gun* based_on)
         if(gun->knockback_factor     != based_on->knockback_factor)     fprintf(fp, "knockback_factor: %3.2f\n", gun->knockback_factor);
         if(gun->spread_type          != based_on->spread_type)          fprintf(fp, "spread_type: %d\n", gun->spread_type);
         if(gun->spread               != based_on->spread)               fprintf(fp, "spread: %3.2f\n", gun->spread);
+        if(gun->gun_sprite_index     != based_on->gun_sprite_index)     fprintf(fp, "gun_sprite_index: %d\n", gun->gun_sprite_index);
         if(gun->sprite_index         != based_on->sprite_index)         fprintf(fp, "sprite_index: %d\n", gun->sprite_index);
         if(gun->spin_factor          != based_on->spin_factor)          fprintf(fp, "spin_factor: %3.2f\n", gun->spin_factor);
         if(gun->color1               != based_on->color1)               fprintf(fp, "color1: %06X\n", gun->color1);
@@ -1070,6 +1072,7 @@ void gun_print(Gun* gun)
     printf("spread_type: %d\n", gun->spread_type);
     printf("spread: %3.2f\n", gun->spread);
     printf("\n");
+    printf("gun_sprite_index: %d\n", gun->gun_sprite_index);
     printf("sprite_index: %d\n", gun->sprite_index);
     printf("spin_factor: %3.2f\n", gun->spin_factor);
     printf("color1: %06X\n", gun->color1);
@@ -1231,12 +1234,16 @@ void gun_load_from_file(Gun* gun, const char* file_name)
 
             if(STR_EQUAL(key, "based_on"))
             {
-                // get base gun from gun_list
-                Gun base_gun = {0};
-                gun_get_by_name(val2, &base_gun);
-                
-                // copy gun to this gun
-                memcpy(gun, &base_gun, sizeof(Gun));
+                if(!STR_EQUAL(val2, "null"))
+                {
+                    // get base gun from gun_list
+                    Gun base_gun = {0};
+                    gun_get_by_name(val2, &base_gun);
+
+                    // copy gun to this gun
+                    memcpy(gun, &base_gun, sizeof(Gun));
+                    memcpy(gun->based_on_name, base_gun.name, strlen(base_gun.name));
+                }
             }
             else if(STR_EQUAL(key, "name"))
                 memcpy(gun->name, val2, sizeof(char)*MIN(GUN_NAME_MAX_LEN, strlen(val2)));
@@ -1268,6 +1275,8 @@ void gun_load_from_file(Gun* gun, const char* file_name)
                 gun->spread_type = (SpreadType)atoi(val2);
             else if(STR_EQUAL(key, "spread"))
                 gun->spread = atof(val2);
+            else if(STR_EQUAL(key, "gun_sprite_index"))
+                gun->gun_sprite_index = atoi(val2);
             else if(STR_EQUAL(key, "sprite_index"))
                 gun->sprite_index = atoi(val2);
             else if(STR_EQUAL(key, "spin_factor"))
@@ -1389,30 +1398,13 @@ void gun_refresh_list()
     char gun_files[256][32] = {0};
     int gun_file_count = io_get_files_in_dir("src/guns",".gun", gun_files);
 
-    // insertion sort
-    int i, j;
-    char key[32];
-
-    for (i = 1; i < gun_file_count; ++i) 
-    {
-        memcpy(key, gun_files[i], 32*sizeof(char));
-        j = i - 1;
-
-        while (j >= 0 && strncmp(key,gun_files[j],32) < 0)
-        {
-            memcpy(gun_files[j+1], gun_files[j], 32*sizeof(char));
-            j = j - 1;
-        }
-        memcpy(gun_files[j+1], key, 32*sizeof(char));
-    }
-
     gun_list_count = 0;
 
     int child_indices[256] = {0};
     int child_gun_count = 0;
 
     // load all base guns
-    for (i = 0; i < gun_file_count; ++i) 
+    for (int i = 0; i < gun_file_count; ++i) 
     {
         bool base_gun = is_gun_file_base_gun(gun_files[i]);
         if(base_gun)
@@ -1426,8 +1418,26 @@ void gun_refresh_list()
     }
 
     // load derivative guns
-    for (i = 0; i < child_gun_count; ++i) 
+    for (int i = 0; i < child_gun_count; ++i) 
     {
         gun_load_from_file(&gun_list[gun_list_count++], gun_files[child_indices[i]]);
     }
+
+    // insertion sort
+    Gun key;
+
+    int i, j;
+    for (i = 1; i < gun_list_count; ++i) 
+    {
+        memcpy(&key, &gun_list[i], sizeof(Gun));
+        j = i - 1;
+
+        while (j >= 0 && strncmp(key.name,gun_list[j].name,GUN_NAME_MAX_LEN) < 0)
+        {
+            memcpy(&gun_list[j+1], &gun_list[j], sizeof(Gun));
+            j = j - 1;
+        }
+        memcpy(&gun_list[j+1], &key, sizeof(Gun));
+    }
+
 }
