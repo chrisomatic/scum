@@ -99,6 +99,9 @@ typedef struct
 } ItemSort;
 
 extern int items_image;
+extern int chest_image;
+extern int shrine_image;
+extern int podium_image;
 extern int guns_image;
 
 extern glist* item_list;
@@ -123,16 +126,16 @@ ItemType item_get_random_chestable();
 ItemType item_get_random_coin();
 
 const char* item_get_name(ItemType type);
-const char* item_get_description(ItemType type, Item* pu);
+const char* item_get_description(ItemType type, Item* it);
 Item* item_add(ItemType type, float x, float y, uint8_t curr_room);
 Item* item_add_gun(uint8_t gun_index, uint32_t seed, float x, float y, uint8_t curr_room);
-void item_set_description(Item* pu, char* fmt, ...);
-bool item_use(Item* pu, void* _player);
-bool item_remove(Item* pu);
-void item_update(Item* pu, float dt);
+void item_set_description(Item* it, char* fmt, ...);
+bool item_use(Item* it, void* _player);
+bool item_remove(Item* it);
+void item_update(Item* it, float dt);
 void item_update_all(float dt);
-void item_draw(Item* pu);
+void item_draw(Item* it);
 void item_lerp(Item* it, double dt);
-void item_handle_collision(Item* p, Entity* e);
+void item_handle_collision(Item* it, Entity* e);
 bool item_is_on_tile(Room* room, int tile_x, int tile_y);
-
+void item_calc_phys_props(Item* it);

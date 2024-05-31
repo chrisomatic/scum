@@ -14,8 +14,6 @@
 #include "player.h"
 #include "item.h"
 
-const float iscale = 0.8;
-
 glist* item_list = NULL;
 Item prior_items[MAX_ITEMS] = {0};
 Item items[MAX_ITEMS] = {0};
@@ -39,18 +37,20 @@ static uint16_t get_id()
     return id_counter++;
 }
 
-static bool item_func_chest(Item* pu, Player* p)
+static bool item_func_chest(Item* it, Player* p)
 {
-
     // int* d = NULL;
     // printf("%d\n",*d);
 
-    if(pu->used) return false;
-    pu->used = true;
+    if(it->used) return false;
+    it->used = true;
 
-    float x = pu->phys.pos.x;
-    float y = pu->phys.pos.y;
-    int croom = pu->phys.curr_room;
+    it->phys.vr = gfx_images[ item_props[it->type].image ].visible_rects[ item_props[it->type].sprite_index+1 ];
+    item_calc_phys_props(it);
+
+    float x = it->phys.pos.x;
+    float y = it->phys.pos.y;
+    int croom = it->phys.curr_room;
 
     int num = player_get_active_count() + 1;
     ItemType lst[10] = {0};
@@ -59,10 +59,10 @@ static bool item_func_chest(Item* pu, Player* p)
     if(!_test_)
     {
         _test_ = true;
-        // item_add(ITEM_GUN, x, y, croom);
-        item_add_gun(0, 0, x, y, croom);
-        item_add_gun(1, 0, x, y, croom);
-        item_add_gun(2, 0, x, y, croom);
+        for(int i = 0; i < num; ++i)
+        {
+            item_add_gun(rand() % gun_list_count, 0, x, y, croom);
+        }
         return true;
     }
 
@@ -102,9 +102,9 @@ static bool item_func_chest(Item* pu, Player* p)
     return true;
 }
 
-static bool item_func_revive(Item* pu, Player* p)
+static bool item_func_revive(Item* it, Player* p)
 {
-    if(pu->used) return false;
+    if(it->used) return false;
 
     int others[MAX_PLAYERS] = {0};
     int count = 0;
@@ -119,19 +119,19 @@ static bool item_func_revive(Item* pu, Player* p)
 
     if(count > 0)
     {
-        pu->used = true;
+        it->used = true;
         Player* p2 = &players[others[rand()%count]];
         p2->phys.dead = false;
         p2->phys.hp = 2;
         p2->phys.floating = false; //TODO
     }
 
-    return pu->used;
+    return it->used;
 }
 
-static bool item_func_skull(Item* pu, Player* p)
+static bool item_func_skull(Item* it, Player* p)
 {
-    if(pu->used) return false;
+    if(it->used) return false;
 
     const float s = 5.0;
 
@@ -139,20 +139,20 @@ static bool item_func_skull(Item* pu, Player* p)
     p->phys.vel.x += RAND_FLOAT(-100.0,100.0)*s;
     p->phys.vel.y += RAND_FLOAT(-100.0,100.0)*s;
 
-    status_effects_add_type(&p->phys, pu->phys.curr_room, STATUS_EFFECT_POISON);
+    status_effects_add_type(&p->phys, it->phys.curr_room, STATUS_EFFECT_POISON);
 
-    pu->used = true;
-    return pu->used;
+    it->used = true;
+    return it->used;
 }
 
-static bool item_func_podium(Item* pu, Player* p)
+static bool item_func_podium(Item* it, Player* p)
 {
-    if(pu->used) return false;
-    pu->used = true;
+    if(it->used) return false;
+    it->used = true;
 
-    float x = pu->phys.pos.x;
-    float y = pu->phys.pos.y;
-    int croom = pu->phys.curr_room;
+    float x = it->phys.pos.x;
+    float y = it->phys.pos.y;
+    int croom = it->phys.curr_room;
 
     int num = player_get_active_count();
 
@@ -171,17 +171,17 @@ static bool item_func_podium(Item* pu, Player* p)
 }
 
 
-static bool item_func_shrine(Item* pu, Player* p)
+static bool item_func_shrine(Item* it, Player* p)
 {
-    if(pu->used) return false;
-    pu->used = true;
+    if(it->used) return false;
+    it->used = true;
 
-    ParticleSpawner* ps = particles_spawn_effect(pu->phys.pos.x,pu->phys.pos.y, 0.0, &particle_effects[EFFECT_SHRINE], 2.0, true, false);
-    if(ps != NULL) ps->userdata = (int)pu->phys.curr_room;
+    ParticleSpawner* ps = particles_spawn_effect(it->phys.pos.x,it->phys.pos.y, 0.0, &particle_effects[EFFECT_SHRINE], 2.0, true, false);
+    if(ps != NULL) ps->userdata = (int)it->phys.curr_room;
 
-    float x = pu->phys.pos.x;
-    float y = pu->phys.pos.y;
-    int croom = pu->phys.curr_room;
+    float x = it->phys.pos.x;
+    float y = it->phys.pos.y;
+    int croom = it->phys.curr_room;
 
     int r = rand() % 7;
 
@@ -211,9 +211,9 @@ static bool item_func_shrine(Item* pu, Player* p)
         //     for(int i = 0; i < num; ++i)
         //     {
         //         Player* x = &players[i];
-        //         if(x->phys.curr_room != pu->phys.curr_room)
+        //         if(x->phys.curr_room != it->phys.curr_room)
         //             continue;
-        //         status_effects_add_type(&x->phys, pu->phys.curr_room, STATUS_EFFECT_POISON);
+        //         status_effects_add_type(&x->phys, it->phys.curr_room, STATUS_EFFECT_POISON);
         //     }
         //     ui_message_set_title(2.0, message_color, message_scale, "Pestilence");
         // }   break;
@@ -225,7 +225,7 @@ static bool item_func_shrine(Item* pu, Player* p)
             // for(int i = 0; i < num; ++i)
             // {
             //     Player* x = &players[i];
-            //     if(x->phys.curr_room != pu->phys.curr_room)
+            //     if(x->phys.curr_room != it->phys.curr_room)
             //         continue;
             //     player_add_xp(x, 300);
             // }
@@ -252,15 +252,15 @@ static bool item_func_shrine(Item* pu, Player* p)
     return true;
 }
 
-static bool internal_item_use(Item* pu, void* _player)
+static bool internal_item_use(Item* it, void* _player)
 {
     Player* p = (Player*)_player;
 
-    switch(pu->type)
+    switch(it->type)
     {
         case ITEM_GUN:
         {
-            player_set_gun(p, &gun_list[pu->user_data]);
+            player_set_gun(p, &gun_list[it->user_data]);
         } break;
         case ITEM_HEART_FULL:
         {
@@ -357,7 +357,7 @@ static bool internal_item_use(Item* pu, void* _player)
 
         case ITEM_SKILL_BOOK:
         {
-            return player_add_skill(p, pu->user_data);
+            return player_add_skill(p, it->user_data);
         } break;
 
         case ITEM_GAUNTLET_SLOT:
@@ -379,22 +379,22 @@ static bool internal_item_use(Item* pu, void* _player)
 
         case ITEM_REVIVE:
         {
-            return item_func_revive(pu, p);
+            return item_func_revive(it, p);
         } break;
 
         case ITEM_CHEST:
         {
-            item_func_chest(pu, p);
+            item_func_chest(it, p);
         } break;
 
         case ITEM_SHRINE:
         {
-            item_func_shrine(pu, p);
+            item_func_shrine(it, p);
         } break;
 
         case ITEM_PODIUM:
         {
-            item_func_podium(pu, p);
+            item_func_podium(it, p);
         } break;
 
         default:
@@ -405,17 +405,17 @@ static bool internal_item_use(Item* pu, void* _player)
     return true;
 }
 
-bool item_use(Item* pu, void* _player)
+bool item_use(Item* it, void* _player)
 {
-    if(pu->used) return false;
+    if(it->used) return false;
 
     Player* p = (Player*)_player;
 
-    bool ret = internal_item_use(pu, _player);
+    bool ret = internal_item_use(it, _player);
 
     if(ret)
     {
-        pu->used = true;
+        it->used = true;
     }
 
     return ret;
@@ -640,19 +640,19 @@ const char* item_get_name(ItemType type)
     return "???";
 }
 
-const char* item_get_description(ItemType type, Item* pu)
+const char* item_get_description(ItemType type, Item* it)
 {
-    if(pu)
+    if(it)
     {
-        if(strlen(pu->desc) > 0)
+        if(strlen(it->desc) > 0)
         {
-            return pu->desc;
+            return it->desc;
         }
     }
 
     if(type == ITEM_SKILL_BOOK)
     {
-        return skills_get_name(pu->user_data);
+        return skills_get_name(it->user_data);
     }
 
     switch(type)
@@ -707,133 +707,166 @@ Item* item_add_gun(uint8_t gun_index, uint32_t seed, float x, float y, uint8_t c
     it->user_data = gun_index;
     it->user_data2 = seed;
     // printf("index: %u\n", gun_index);
-    item_set_description(it, "%s: %s", gun_list[it->user_data].name, gun_list[it->user_data].desc);
+
+    Gun* gun = &gun_list[gun_index];
+    item_set_description(it, "%s: %s", gun->name, gun->desc);
+
+    it->phys.vr = gfx_images[ item_props[ITEM_GUN].image ].visible_rects[ gun->gun_sprite_index ];
+    phys_calc_collision_rect(&it->phys);
+
     return it;
 }
 
 Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
 {
-    Item pu = {0};
-    pu.type = type;
-    pu.id = get_id();
-    pu.phys.curr_room = curr_room;
-    pu.phys.pos.x = x;
-    pu.phys.pos.y = y;
-    pu.phys.speed = 1.0;
-    pu.phys.crawling = true;
+    Item it = {0};
+    it.type = type;
+    it.id = get_id();
+    it.phys.scale = 0.8;
+    it.phys.curr_room = curr_room;
+    it.phys.pos.x = x;
+    it.phys.pos.y = y;
+    it.phys.pos.z = 0.0;
+    it.phys.speed = 1.0;
+    it.phys.crawling = true;
 
     // @NOTE: defaulting to random skill for books, can be overridden after the item has been added
     if(type == ITEM_SKILL_BOOK)
     {
-        pu.user_data = rand() % SKILL_TYPE_MAX;
+        it.user_data = rand() % SKILL_TYPE_MAX;
     }
 
     switch(type)
     {
         case ITEM_CHEST:
         {
-            pu.phys.mass = 2.0;
-            pu.phys.base_friction = 50.0;
-            pu.phys.radius = 10*iscale; //TEMP
-            pu.phys.elasticity = 0.2;
+            it.phys.mass = 3.0;
+            it.phys.base_friction = 50.0;
+            it.phys.elasticity = 0.2;
+            it.phys.rotation_deg = 1.01;    // avoid horizontal bool in phys_calc_collision_rect()
         } break;
 
         case ITEM_SHRINE:
         {
-            pu.phys.mass = 1000.0;
-            pu.phys.base_friction = 50.0;
-            pu.phys.radius = 12*iscale; //TEMP
-            pu.phys.elasticity = 0.2;
+            it.phys.crawling = false;
+            it.phys.mass = 1000.0;
+            it.phys.base_friction = 50.0;
+            it.phys.elasticity = 0.2;
         } break;
 
         case ITEM_PODIUM:
         {
-            pu.phys.mass = 1000.0;
-            pu.phys.base_friction = 50.0;
-            pu.phys.radius = 12*iscale; //TEMP
-            pu.phys.elasticity = 0.2;
+            it.phys.crawling = false;
+            it.phys.mass = 1000.0;
+            it.phys.base_friction = 50.0;
+            it.phys.elasticity = 0.2;
         } break;
 
         case ITEM_COIN_COPPER:
         case ITEM_COIN_SILVER:
         case ITEM_COIN_GOLD:
         {
-            pu.phys.mass = 0.5;
-            pu.phys.base_friction = 5.0;
-            pu.phys.radius = 4*iscale; //TEMP
-            pu.phys.elasticity = 0.5;
-            pu.phys.vel.z = 100.0;
+            it.phys.mass = 0.5;
+            it.phys.base_friction = 5.0;
+            it.phys.elasticity = 0.5;
+            it.phys.vel.z = 100.0;
         } break;
         case ITEM_SOCCER_BALL:
         {
-            pu.phys.mass = 0.3;
-            pu.phys.base_friction = 2.0;
-            pu.phys.radius = 8*iscale; //TEMP
-            pu.phys.elasticity = 0.8;
-            pu.phys.vel.z = 200.0;
+            it.phys.mass = 0.3;
+            it.phys.base_friction = 2.0;
+            it.phys.elasticity = 0.8;
+            it.phys.vel.z = 200.0;
         } break;
         default:
         {
-            pu.phys.mass = 0.5;
-            pu.phys.base_friction = 5.0;
-            pu.phys.radius = 8*iscale; //TEMP
-            pu.phys.elasticity = 0.4;
-            pu.phys.vel.z = 200.0;
+            it.phys.mass = 0.5;
+            it.phys.base_friction = 5.0;
+            it.phys.elasticity = 0.4;
+            it.phys.vel.z = 200.0;
         } break;
 
     }
 
-    //TODO
-    pu.phys.width  = 1.6f*pu.phys.radius;
-    pu.phys.length = 1.6f*pu.phys.radius;
-    pu.phys.height = 1.6f*pu.phys.radius;
-
-    pu.phys.vr = gfx_images[ item_props[pu.type].image ].visible_rects[ item_props[pu.type].sprite_index ];
+    it.phys.vr = gfx_images[ item_props[it.type].image ].visible_rects[ item_props[it.type].sprite_index ];
+    item_calc_phys_props(&it);
 
     // x,y position passed in are meant to be the collision positions
-    phys_calc_collision_rect(&pu.phys);
-    phys_set_collision_pos(&pu.phys, x, y);
+    phys_calc_collision_rect(&it.phys);
+    phys_set_collision_pos(&it.phys, x, y);
 
-    bool ret = list_add(item_list,&pu);
+    bool ret = list_add(item_list, &it);
     if(!ret) return NULL;
     return &items[item_list->count-1];
 }
 
-void item_set_description(Item* pu, char* fmt, ...)
+void item_calc_phys_props(Item* it)
 {
-    if(!pu) return;
-    memset(pu->desc, 0, sizeof(char)*32);
+    if(it->phys.crawling)
+    {
+        it->phys.width  = it->phys.vr.w;
+        it->phys.length = it->phys.vr.h;
+        it->phys.height = MIN(it->phys.width, it->phys.length);
+    }
+    else
+    {
+        it->phys.width  = it->phys.vr.w;
+        it->phys.length = it->phys.vr.w;
+        it->phys.height = it->phys.vr.h;
+    }
+    it->phys.radius = MIN(it->phys.vr.w, it->phys.vr.h)/2.0 * it->phys.scale * 0.90;
+
+    if(!it->phys.crawling)
+    {
+        it->phys.radius *= 0.8;
+    }
+    // if(type == ITEM_PODIUM)
+    //     it->phys.radius *= 0.8;
+    // else if(type == ITEM_SHRINE)
+    //     it->phys.radius *= 0.8;
+
+    // if(type == ITEM_CHEST)
+    // {
+    //     printf("[CHEST] \n");
+    //     print_rect(&it->phys.vr);
+    // }
+}
+
+void item_set_description(Item* it, char* fmt, ...)
+{
+    if(!it) return;
+    memset(it->desc, 0, sizeof(char)*32);
 
     va_list args;
     va_start(args, fmt);
-    vsprintf(pu->desc, fmt, args);
+    vsprintf(it->desc, fmt, args);
     va_end(args);
 }
 
 
-bool item_remove(Item* pu)
+bool item_remove(Item* it)
 {
-    return list_remove_by_item(item_list, pu);
+    return list_remove_by_item(item_list, it);
 }
 
-void item_update(Item* pu, float dt)
+void item_update(Item* it, float dt)
 {
-    pu->phys.pos.x += dt*pu->phys.vel.x;
-    pu->phys.pos.y += dt*pu->phys.vel.y;
+    it->phys.pos.x += dt*it->phys.vel.x;
+    it->phys.pos.y += dt*it->phys.vel.y;
 
-    phys_apply_gravity(&pu->phys,GRAVITY_EARTH,dt);
-    phys_apply_friction(&pu->phys,pu->phys.base_friction,dt);
+    phys_apply_gravity(&it->phys, GRAVITY_EARTH, dt);
+    phys_apply_friction(&it->phys, it->phys.base_friction, dt);
 
-    if(pu->type == ITEM_NEW_LEVEL)
+    if(it->type == ITEM_NEW_LEVEL)
     {
         if(role == ROLE_LOCAL)
         {
-            pu->angle += 80.0 * dt;
-            pu->angle = fmod(pu->angle,360.0f);
+            it->angle += 80.0 * dt;
+            it->angle = fmod(it->angle,360.0f);
         }
     }
 
-    pu->highlighted = false;
+    it->highlighted = false;
 }
 
 void item_update_all(float dt)
@@ -841,25 +874,25 @@ void item_update_all(float dt)
 
     for(int i = item_list->count-1; i >= 0; --i)
     {
-        Item* pu = &items[i];
+        Item* it = &items[i];
 
         // remove previously used items
-        if(pu->used)
+        if(it->used)
         {
-            if(!(pu->type == ITEM_CHEST || pu->type == ITEM_SHRINE || pu->type == ITEM_PODIUM))
+            if(!(it->type == ITEM_CHEST || it->type == ITEM_SHRINE || it->type == ITEM_PODIUM))
             {
-                item_remove(pu);
+                item_remove(it);
                 continue;
             }
         }
 
         if(role == ROLE_CLIENT)
         {
-            item_lerp(pu, dt);
+            item_lerp(it, dt);
             continue;
         }
 
-        item_update(pu, dt);
+        item_update(it, dt);
     }
 
     if(role == ROLE_CLIENT)
@@ -884,13 +917,13 @@ void item_update_all(float dt)
 
         for(int j = 0; j < item_list->count; ++j)
         {
-            Item* pu = &items[j];
+            Item* it = &items[j];
 
-            if(pu->phys.curr_room != p->phys.curr_room) continue;
-            if(pu->used) continue;
+            if(it->phys.curr_room != p->phys.curr_room) continue;
+            if(it->used) continue;
 
             Vector2f c1 = {p->phys.pos.x, p->phys.pos.y};
-            Vector2f c2 = {pu->phys.pos.x, pu->phys.pos.y};
+            Vector2f c2 = {it->phys.pos.x, it->phys.pos.y};
 
             float distance;
             bool in_pickup_radius = circles_colliding(&c1, p->phys.radius, &c2, ITEM_PICKUP_RADIUS, &distance);
@@ -899,7 +932,7 @@ void item_update_all(float dt)
             {
                 p->near_items[p->near_items_count].index = j;
                 p->near_items[p->near_items_count].dist = distance;
-                p->near_items[p->near_items_count].id = pu->id;
+                p->near_items[p->near_items_count].id = it->id;
                 p->near_items_count++;
             }
 
@@ -984,35 +1017,32 @@ void item_update_all(float dt)
 
 }
 
-void item_draw(Item* pu)
+void item_draw(Item* it)
 {
-    if(pu->phys.curr_room != player->phys.curr_room)
+    if(it->phys.curr_room != player->phys.curr_room)
         return;
 
     uint32_t color = 0x88888888;
-    if(pu->highlighted || pu->id == player->highlighted_item_id)
+    if(it->highlighted || it->id == player->highlighted_item_id)
     {
         color = COLOR_TINT_NONE;
     }
 
-    int sprite_index = item_props[pu->type].sprite_index;
+    int sprite_index = item_props[it->type].sprite_index;
 
-    if(pu->type == ITEM_GUN)
+    if(it->type == ITEM_GUN)
     {
-        //TODO
-        // sprite_index = gun_list[pu->user_data].gun_sprite_index;
-        sprite_index = pu->user_data % 3;
+        sprite_index = gun_list[it->user_data].gun_sprite_index;
     }
 
-    if(pu->used)
+    if(it->used)
     {
         sprite_index++;
     }
 
-    // float y = pu->phys.pos.y - 0.5*pu->phys.pos.z;
-    float y = pu->phys.pos.y - (pu->phys.vr.h + pu->phys.pos.z)/2.0;
+    float y = it->phys.pos.y - (it->phys.vr.h * it->phys.scale + it->phys.pos.z)/2.0;
 
-    gfx_sprite_batch_add(item_props[pu->type].image, sprite_index, pu->phys.pos.x, y, color, false, iscale, pu->angle, 1.0, true, false, false);
+    gfx_sprite_batch_add(item_props[it->type].image, sprite_index, it->phys.pos.x, y, color, false, it->phys.scale, it->angle, 1.0, false, false, false);
 }
 
 void item_lerp(Item* it, double dt)
@@ -1022,7 +1052,7 @@ void item_lerp(Item* it, double dt)
     float tick_time = 1.0/TICK_RATE;
     float t = (it->lerp_t / tick_time);
 
-    Vector3f lp = lerp3f(&it->server_state_prior.pos,&it->server_state_target.pos,t);
+    Vector3f lp = lerp3f(&it->server_state_prior.pos, &it->server_state_target.pos, t);
     it->phys.pos.x = lp.x;
     it->phys.pos.y = lp.y;
     it->phys.pos.z = lp.z;
@@ -1032,16 +1062,16 @@ void item_lerp(Item* it, double dt)
     if(it->type == ITEM_NEW_LEVEL)
     {
         it->angle += 80.0 * dt;
-        it->angle = fmod(it->angle,360.0f);
+        it->angle = fmod(it->angle, 360.0f);
     }
 #else
     it->angle = lerp_angle_deg(it->server_state_prior.angle, it->server_state_target.angle, t);
 #endif
 }
 
-void item_handle_collision(Item* p, Entity* e)
+void item_handle_collision(Item* it, Entity* e)
 {
-    Vector3f ppos = p->phys.pos;
+    Vector3f ppos = it->phys.pos;
 
     switch(e->type)
     {
@@ -1053,16 +1083,16 @@ void item_handle_collision(Item* p, Entity* e)
                 return;
 
             CollisionInfo ci = {0};
-            bool collided = phys_collision_circles(&p->phys,&p2->phys, &ci);
+            bool collided = phys_collision_circles(&it->phys,&p2->phys, &ci);
 
             if(collided)
             {
-                phys_collision_correct(&p->phys, &p2->phys,&ci);
+                phys_collision_correct(&it->phys, &p2->phys,&ci);
             }
 
-            if(p->type == ITEM_CHEST && p->used)
+            if(it->type == ITEM_CHEST && it->used)
             {
-                p->phys.pos = ppos;
+                it->phys.pos = ppos;
             }
 
         } break;
@@ -1075,13 +1105,13 @@ bool item_is_on_tile(Room* room, int tile_x, int tile_y)
 
     for(int i = item_list->count-1; i >= 0; --i)
     {
-        Item* pu = &items[i];
+        Item* it = &items[i];
 
-        if(pu->phys.curr_room != room->index)
+        if(it->phys.curr_room != room->index)
             continue;
 
-        float _x = pu->phys.pos.x;
-        float _y = pu->phys.pos.y;
+        float _x = it->phys.pos.x;
+        float _y = it->phys.pos.y;
 
         // simple check
         Rect ir = RECT(_x, _y, 1, 1);

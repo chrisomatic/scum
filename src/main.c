@@ -200,6 +200,8 @@ int main(int argc, char* argv[])
 
     init();
 
+    // gfx_load_image("src/img/chest.png", false, false, 32, 32);
+
     camera_move(CENTER_X, CENTER_Y, (float)cam_zoom/100.0, true, NULL);
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 

@@ -478,7 +478,7 @@ void creature_init_props(Creature* c)
             c->phys.speed = 90.0;
             c->act_time_min = 0.5;
             c->act_time_max = 1.5;
-            c->phys.mass = 0.5;
+            c->phys.mass = 0.1;
             c->phys.base_friction = 20.0;
             c->phys.hp_max = 1.0;
             c->painful_touch = true;

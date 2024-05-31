@@ -2639,7 +2639,7 @@ void player_handle_collision(Player* p, Entity* e)
             CollisionInfo ci = {0};
             bool collided = phys_collision_circles(&p->phys,&c->phys, &ci);
 
-            if(collided)
+            if(collided && p->phys.pos.z <= 0 && !p->phys.floating)
             {
                 //HACK
                 // if(level_transition_state)

@@ -314,11 +314,6 @@ void entity_handle_collisions()
         {
             Projectile* proj = (Projectile*)e->ptr;
             projectile_kill(proj);
-
-            // if(proj->def.explosive)
-            // {
-            //     explosion_add(e->phys->pos.x, e->phys->pos.y, 15.0*proj->def.scale, 100.0*proj->def.scale, e->phys->curr_room, proj->from_player);
-            // }
         }
     }
 }
@@ -414,6 +409,11 @@ void entity_draw_all()
             // draw center dot
             gfx_draw_rect_xywh(cx, cy, 1, 1, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, true, true);
 
+
+            // float vry = vy - (e->phys->vr.h*e->phys->scale + e->phys->pos.z)/2.0;
+            // gfx_draw_rect_xywh(vx, vry, e->phys->vr.w*e->phys->scale, e->phys->vr.h*e->phys->scale, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true); // bottom rect
+
+
             // draw boundingbox
             gfx_draw_rect_xywh(cx, cy, e->phys->collision_rect.w, e->phys->collision_rect.h, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true); // bottom rect
             gfx_draw_rect_xywh(cx, cy - e->phys->height, e->phys->collision_rect.w, e->phys->collision_rect.h, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true); // top rect
@@ -425,6 +425,14 @@ void entity_draw_all()
             gfx_add_line(x0, y0, x1, y1, COLOR_RED);
         }
     }
+
+    // gfx_sprite_batch_begin(true);
+    // gfx_sprite_batch_add(podium_image, 0, 500, 400, COLOR_TINT_NONE, false, 1.0, 0.0, 1.0, true, false, false);
+    // gfx_sprite_batch_draw();
+
+    // GFXImage* img = &gfx_images[podium_image];
+    // gfx_draw_rect_xywh(500, 400, img->visible_rects[0].w*1.0, img->visible_rects[0].h*1.0, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, true);
+
 }
 
 static Physics* get_physics_from_type(int index, uint8_t curr_room, EntityType type)

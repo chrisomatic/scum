@@ -1754,6 +1754,7 @@ static void image_get_visible_rect(int img_w, int img_h, int img_n, unsigned cha
     ret->h = (float)height;
     ret->x = (float)left + ret->w/2.0;
     ret->y = (float)top + ret->h/2.0;
+    // print_rect(ret);
 
     vr_time += timer_get_elapsed(&_timer);
     // printf("vr time: %.4f\n", vr_time);
