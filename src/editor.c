@@ -86,6 +86,9 @@ void editor_draw()
         static int gun_sel_prior = -1;
         static bool based_on = false;
 
+        static int charge_type_sel = 0;
+        static int spread_type_sel = 0;
+
         static Gun gun;
         static Gun gun_prior;
 
@@ -480,8 +483,6 @@ void editor_draw()
 
                     imgui_text("Projectile Count: %u", plist->count);
 
-                    static int charge_type_sel = 0;
-                    static int spread_type_sel = 0;
                     static int sel_phrase = 0;
 
                     static char* phrases[] = {"Hell yeah!", "Go Bananas!", "Who cares?", "That's so random", "RRRRRANNDOM", "You rock!"};
@@ -963,6 +964,9 @@ void editor_draw()
                 // gun changed
                 memcpy(&player->gun, &gun, sizeof(Gun));
                 based_on = !STR_EMPTY(gun.based_on_name);
+
+                spread_type_sel = gun.spread_type;
+                charge_type_sel = gun.charge_type;
             }
 
             memcpy(&gun_prior, &gun, sizeof(Gun));

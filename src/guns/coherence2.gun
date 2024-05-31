@@ -1,0 +1,13 @@
+based_on: coherence1
+name: coherence2
+desc: random split waves
+num: 4
+speed: 247.34
+burst_rate: 0.22
+spread: 359.81
+spin_factor: -0.83
+directional_accel: -0.00
+air_friction: 0.34
+wave_amplitude: 107.70
+wave_period: 0.40
+ghost_chance: 0.50

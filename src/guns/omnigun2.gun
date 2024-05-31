@@ -1,0 +1,7 @@
+based_on: omnigun1
+name: omnigun2
+desc: Shoot in multiple directions
+num: 4
+scale1: 0.62
+scale2: 0.66
+spread: 359.81

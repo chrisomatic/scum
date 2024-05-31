@@ -1,0 +1,8 @@
+based_on: bouncer1
+name: bouncer2
+desc:  Good at bouncing
+speed: 324.88
+scale1: 1.09
+scale2: 1.03
+lifetime: 1.62
+air_friction: 0.09

@@ -1,0 +1,14 @@
+based_on: boomerang1
+name: boomerang2
+desc: Watch out again
+num: 3
+speed: 495.49
+scale1: 1.28
+scale2: 0.82
+lifetime: 1.04
+cooldown: 0.90
+burst_rate: 0.17
+spread: 83.75
+spin_factor: -0.26
+directional_accel: -0.78
+air_friction: 0.38

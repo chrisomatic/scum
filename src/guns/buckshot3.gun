@@ -1,0 +1,13 @@
+based_on: buckshot1
+name: buckshot3
+desc: Double shotjjjjjjjj
+damage_min: 5.17
+damage_max: 6.03
+speed: 301.62
+scale1: 1.26
+scale2: 0.47
+lifetime: 0.42
+cooldown: 0.77
+burst_count: 1
+burst_rate: 0.10
+spread: 55.83
