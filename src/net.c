@@ -2926,6 +2926,7 @@ static void pack_projectiles(Packet* pkt, ClientInfo* cli)
         uint8_t b = (p->color >>  0) & 0xFF;
 
         BPW(&server.bp, 16, (uint32_t)p->id);
+        BPW(&server.bp, 5,  (uint32_t)p->sprite_index);
         BPW(&server.bp, 10, (uint32_t)p->phys.pos.x);
         BPW(&server.bp, 10, (uint32_t)p->phys.pos.y);
         BPW(&server.bp, 9,  (uint32_t)p->phys.pos.z);
@@ -2935,6 +2936,7 @@ static void pack_projectiles(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 3,  (uint32_t)(p->player_id));
         BPW(&server.bp, 7,  (uint32_t)(p->phys.curr_room));
         BPW(&server.bp, 10,  (uint32_t)(p->phys.scale*255.0f));
+        BPW(&server.bp, 10,  (uint32_t)(p->phys.rotation_deg));
         BPW(&server.bp, 1,  (uint32_t)(p->from_player ? 0x01 : 0x00));
     }
 }
@@ -2953,21 +2955,27 @@ static void unpack_projectiles(Packet* pkt, int* offset, WorldState* ws)
     {
         Projectile* p = &projectiles[i];
 
-        uint32_t id          = bitpack_read(&client.bp, 16);
-        uint32_t x           = bitpack_read(&client.bp, 10);
-        uint32_t y           = bitpack_read(&client.bp, 10);
-        uint32_t z           = bitpack_read(&client.bp, 9);
-        uint32_t r           = bitpack_read(&client.bp, 8);
-        uint32_t g           = bitpack_read(&client.bp, 8);
-        uint32_t b           = bitpack_read(&client.bp, 8);
-        uint32_t pid         = bitpack_read(&client.bp, 3);
-        uint32_t curr_room   = bitpack_read(&client.bp, 7);
-        uint32_t scale       = bitpack_read(&client.bp, 10);
-        uint32_t from_player = bitpack_read(&client.bp, 1);
+        uint32_t id           = bitpack_read(&client.bp, 16);
+        uint32_t sprite_index = bitpack_read(&client.bp, 5);
+        uint32_t x            = bitpack_read(&client.bp, 10);
+        uint32_t y            = bitpack_read(&client.bp, 10);
+        uint32_t z            = bitpack_read(&client.bp, 9);
+        uint32_t r            = bitpack_read(&client.bp, 8);
+        uint32_t g            = bitpack_read(&client.bp, 8);
+        uint32_t b            = bitpack_read(&client.bp, 8);
+        uint32_t pid          = bitpack_read(&client.bp, 3);
+        uint32_t curr_room    = bitpack_read(&client.bp, 7);
+        uint32_t scale        = bitpack_read(&client.bp, 10);
+        uint32_t _angle       = bitpack_read(&client.bp, 10);
+        uint32_t from_player  = bitpack_read(&client.bp, 1);
+
+        float angle = (float)_angle;
 
         p->id = (uint16_t)id;
+        p->sprite_index = (int)sprite_index;
         p->color = COLOR(r,g,b);
         p->phys.curr_room = (uint8_t)curr_room;
+        p->phys.rotation_deg = angle;
         p->phys.scale = (float)(scale / 255.0f);
         p->from_player = from_player == 0x01 ? true : false;
         p->player_id = (uint8_t)pid;
@@ -2976,6 +2984,7 @@ static void unpack_projectiles(Packet* pkt, int* offset, WorldState* ws)
         p->server_state_prior.pos.x = (float)x;
         p->server_state_prior.pos.y = (float)y;
         p->server_state_prior.pos.z = (float)z;
+        p->server_state_prior.angle = angle;
 
         //find the prior
         for(int j = i; j < MAX_PROJECTILES; ++j)
@@ -2986,6 +2995,7 @@ static void unpack_projectiles(Packet* pkt, int* offset, WorldState* ws)
                 p->server_state_prior.pos.x = pj->phys.pos.x;
                 p->server_state_prior.pos.y = pj->phys.pos.y;
                 p->server_state_prior.pos.z = pj->phys.pos.z;
+                p->server_state_prior.angle = pj->phys.rotation_deg;
                 break;
             }
         }
@@ -2993,6 +3003,7 @@ static void unpack_projectiles(Packet* pkt, int* offset, WorldState* ws)
         p->server_state_target.pos.x = (float)x;
         p->server_state_target.pos.y = (float)y;
         p->server_state_target.pos.z = (float)z;
+        p->server_state_target.angle = angle;
     }
 }
 

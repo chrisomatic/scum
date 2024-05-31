@@ -141,6 +141,7 @@ typedef struct
 typedef struct
 {
     Vector3f pos;
+    float angle;
 } ProjectileNetLerp;
 
 typedef struct

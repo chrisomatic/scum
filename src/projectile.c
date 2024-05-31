@@ -885,6 +885,8 @@ void projectile_lerp(Projectile* p, double dt)
     p->phys.pos.y = lp.y;
     p->phys.pos.z = lp.z;
 
+    p->phys.rotation_deg = lerp_angle_deg(p->server_state_prior.angle, p->server_state_target.angle, t);
+
     //printf("prior_pos: %f %f, target_pos: %f %f, pos: %f %f, t: %f\n",p->server_state_prior.pos.x, p->server_state_prior.pos.y, p->server_state_target.pos.x, p->server_state_target.pos.y, p->phys.pos.x, p->phys.pos.y, t);
 }
 
