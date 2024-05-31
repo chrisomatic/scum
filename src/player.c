@@ -2804,7 +2804,27 @@ Vector2i stats_get_img(StatType stat)
     return ret;
 }
 
-void player_set_gun(Player* p, Gun* g)
+void player_set_gun(Player* p, Gun* g, bool drop_old_gun)
 {
+    Gun gun_prior = {0};
+    memcpy(&gun_prior, &p->gun, sizeof(Gun));
+
+    p->proj_cooldown = 0.0;
+
     memcpy(&p->gun, g, sizeof(Gun));
+
+    if(drop_old_gun)
+    {
+        for(int i = 0; i < gun_list_count; ++i)
+        {
+            if(STR_EQUAL(gun_prior.name, gun_list[i].name))
+            {
+                float x = p->phys.pos.x;
+                float y = p->phys.pos.y;
+                int croom = p->phys.curr_room;
+                Item* it = item_add_gun(i, 0, x, y, croom);
+                return;
+            }
+        }
+    }
 }

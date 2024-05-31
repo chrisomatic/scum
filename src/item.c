@@ -260,7 +260,7 @@ static bool internal_item_use(Item* it, void* _player)
     {
         case ITEM_GUN:
         {
-            player_set_gun(p, &gun_list[it->user_data]);
+            player_set_gun(p, &gun_list[it->user_data], true);
         } break;
         case ITEM_HEART_FULL:
         {
@@ -706,9 +706,8 @@ Item* item_add_gun(uint8_t gun_index, uint32_t seed, float x, float y, uint8_t c
     Item* it = item_add(ITEM_GUN, x, y, curr_room);
     it->user_data = gun_index;
     it->user_data2 = seed;
-    // printf("index: %u\n", gun_index);
 
-    Gun* gun = &gun_list[gun_index];
+    Gun* gun = &gun_list[it->user_data];
     item_set_description(it, "%s: %s", gun->name, gun->desc);
 
     it->phys.vr = gfx_images[ item_props[ITEM_GUN].image ].visible_rects[ gun->gun_sprite_index ];
@@ -839,7 +838,7 @@ void item_set_description(Item* it, char* fmt, ...)
 
     va_list args;
     va_start(args, fmt);
-    vsprintf(it->desc, fmt, args);
+    vsnprintf(it->desc,32, fmt, args);
     va_end(args);
 }
 
