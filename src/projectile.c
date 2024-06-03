@@ -156,6 +156,7 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
     proj.phys.speed = gun->speed;
     proj.phys.max_velocity = 2.0*gun->speed;
     proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * gun->scale1;
+    proj.phys.rotation_deg = angle_deg;
 
     bool bouncy = RAND_FLOAT(0.0,1.0) <= gun->bounce_chance;
     proj.phys.amorphous = bouncy ? false : true;

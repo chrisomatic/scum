@@ -1,6 +1,6 @@
 based_on: null
 name: plasmagun1
-desc: A mysterious alien weapon
+desc:  A mysterious alien weapon
 damage_min: 1.00
 damage_max: 1.00
 num: 1
@@ -15,7 +15,7 @@ critical_hit_chance: 0.00
 knockback_factor: 0.00
 spread_type: 1
 spread: 359.81
-gun_sprite_index: 0
+gun_sprite_index: 2
 sprite_index: 1
 spin_factor: 0.71
 color1: 7711EF

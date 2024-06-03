@@ -1,6 +1,6 @@
 based_on: null
 name: buckshot1
-desc:  Get bucked
+desc:    Get bucked
 damage_min: 1.72
 damage_max: 2.58
 num: 5
@@ -15,8 +15,8 @@ critical_hit_chance: 0.00
 knockback_factor: 0.00
 spread_type: 0
 spread: 105.46
-gun_sprite_index: 0
-sprite_index: 7
+gun_sprite_index: 1
+sprite_index: 12
 spin_factor: 0.00
 color1: FFDC95
 color2: AC7A4C

@@ -1059,7 +1059,15 @@ void item_draw(Item* it)
 
     if(it->type == ITEM_GUN)
     {
-        sprite_index = gun_list[it->user_data].gun_sprite_index;
+        Gun* gun = &gun_list[it->user_data];
+
+        sprite_index = gun->gun_sprite_index;
+        color = gfx_blend_colors(COLOR_BLACK, gun->color1, 0.7);
+
+        if(it->highlighted || it->id == player->highlighted_item_id)
+        {
+            color = gun->color1;
+        }
     }
 
     if(it->used)

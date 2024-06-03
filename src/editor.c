@@ -524,7 +524,7 @@ void editor_draw()
                         gun.spread = RAND_FLOAT(0.0, 360.0);
 
                         gun.gun_sprite_index = rand() % 3;
-                        gun.sprite_index = rand() % 10;
+                        gun.sprite_index = rand() % 13;
 
                         bool more_than_one = (rand() % 4 == 0);
                         gun.num = more_than_one ? rand() % 9 + 1 : 1;
@@ -712,7 +712,7 @@ void editor_draw()
                     imgui_horizontal_line(1);
 
                     imgui_number_box("Gun Sprite Index", 0,3, &gun.gun_sprite_index);
-                    imgui_number_box("Sprite Index", 0,9, &gun.sprite_index);
+                    imgui_number_box("Sprite Index", 0,12, &gun.sprite_index);
 
                     imgui_horizontal_begin();
                         imgui_slider_float("Scale1", 0.1, 2.5,&gun.scale1);

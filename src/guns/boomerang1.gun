@@ -1,6 +1,6 @@
 based_on: null
 name: boomerang1
-desc:   Watch out
+desc:    Watch out
 damage_min: 1.72
 damage_max: 2.58
 num: 1
@@ -16,8 +16,8 @@ knockback_factor: 0.00
 spread_type: 1
 spread: 105.46
 gun_sprite_index: 0
-sprite_index: 8
-spin_factor: -0.26
+sprite_index: 11
+spin_factor: -0.00
 color1: EAAA07
 color2: 836068
 directional_accel: -0.78

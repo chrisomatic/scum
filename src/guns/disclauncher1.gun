@@ -1,6 +1,6 @@
 based_on: null
 name: disclauncher1
-desc: spinning pow
+desc:   spinning pow
 damage_min: 3.45
 damage_max: 5.17
 num: 1
@@ -15,7 +15,7 @@ critical_hit_chance: 0.00
 knockback_factor: 0.00
 spread_type: 0
 spread: 0.00
-gun_sprite_index: 0
+gun_sprite_index: 2
 sprite_index: 1
 spin_factor: -0.62
 color1: 509CFF
