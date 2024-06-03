@@ -48,6 +48,7 @@ typedef enum
     ITEM_SOCCER_BALL,
 
     ITEM_CHEST,
+    ITEM_CHEST_GUN,
     ITEM_SHRINE,
     ITEM_PODIUM,
     ITEM_GUN,

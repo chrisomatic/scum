@@ -95,14 +95,17 @@ Gold Coin
 Skill Book
 ???
 Chest
+Gun Chest
 Shrine
 Podium
 Gun
 
 ; Items
 36,2,2
-38,4,2
-39,11,2
+39,4,2
+40,11,2
+37,2,6
+37,9,6
 
 ; Doors
 1,1,1,1

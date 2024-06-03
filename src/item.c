@@ -55,17 +55,6 @@ static bool item_func_chest(Item* it, Player* p)
     int num = player_get_active_count() + 1;
     ItemType lst[10] = {0};
 
-    static bool _test_ = false;
-    if(!_test_)
-    {
-        _test_ = true;
-        for(int i = 0; i < num; ++i)
-        {
-            item_add_gun(rand() % gun_list_count, 0, x, y, croom);
-        }
-        return true;
-    }
-
     if(rand() % 20 == 1)
     {
         num = rand()%5+5;
@@ -80,6 +69,7 @@ static bool item_func_chest(Item* it, Player* p)
         for(;;)
         {
             ItemType type = item_get_random_chestable();
+            if(type == ITEM_GUN) continue;
             bool dup = false;
 
             for(int j = 0; j < i; ++j)
@@ -97,6 +87,31 @@ static bool item_func_chest(Item* it, Player* p)
             break;
         }
 
+    }
+
+    return true;
+}
+
+static bool item_func_chest_gun(Item* it, Player* p)
+{
+    // int* d = NULL;
+    // printf("%d\n",*d);
+
+    if(it->used) return false;
+    it->used = true;
+
+    it->phys.vr = gfx_images[ item_props[it->type].image ].visible_rects[ item_props[it->type].sprite_index+1 ];
+    item_calc_phys_props(it);
+
+    float x = it->phys.pos.x;
+    float y = it->phys.pos.y;
+    int croom = it->phys.curr_room;
+
+    int num = player_get_active_count() + 1;
+
+    for(int i = 0; i < num; ++i)
+    {
+        item_add_gun(rand() % gun_list_count, 0, x, y, croom);
     }
 
     return true;
@@ -387,6 +402,11 @@ static bool internal_item_use(Item* it, void* _player)
             item_func_chest(it, p);
         } break;
 
+        case ITEM_CHEST_GUN:
+        {
+            item_func_chest_gun(it, p);
+        } break;
+
         case ITEM_SHRINE:
         {
             item_func_shrine(it, p);
@@ -444,6 +464,11 @@ void item_init()
         {
             p->image = chest_image;
             p->sprite_index = 0;
+        }
+        else if(p->type == ITEM_CHEST_GUN)
+        {
+            p->image = chest_image;
+            p->sprite_index = 2;
         }
         else if(p->type == ITEM_SHRINE)
         {
@@ -534,7 +559,7 @@ bool item_is_shrine(ItemType type)
 
 bool item_is_chest(ItemType type)
 {
-    return (type == ITEM_CHEST);
+    return (type == ITEM_CHEST || type == ITEM_CHEST_GUN);
 }
 
 bool item_is_gem(ItemType type)
@@ -599,6 +624,7 @@ const char* item_get_name(ItemType type)
         case ITEM_REVIVE:     return "Revive";
         case ITEM_SHRINE:     return "Shrine";
         case ITEM_CHEST:      return "Chest";
+        case ITEM_CHEST_GUN:  return "Gun Chest";
         case ITEM_PODIUM:      return "Podium";
 
         case ITEM_NEW_LEVEL:  return "New Level";
@@ -661,6 +687,7 @@ const char* item_get_description(ItemType type, Item* it)
         case ITEM_REVIVE:     return "cheat death";
         case ITEM_SHRINE:     return "hmmmm";
         case ITEM_CHEST:      return "contains loot";
+        case ITEM_CHEST_GUN:  return "contains guns";
         case ITEM_PODIUM:     return "this looks interesting";
 
         case ITEM_NEW_LEVEL:  return "enter new level";
@@ -738,6 +765,7 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
     switch(type)
     {
         case ITEM_CHEST:
+        case ITEM_CHEST_GUN:
         {
             it.phys.mass = 3.0;
             it.phys.base_friction = 50.0;
@@ -878,7 +906,7 @@ void item_update_all(float dt)
         // remove previously used items
         if(it->used)
         {
-            if(!(it->type == ITEM_CHEST || it->type == ITEM_SHRINE || it->type == ITEM_PODIUM))
+            if(!(it->type == ITEM_CHEST || it->type == ITEM_CHEST_GUN || it->type == ITEM_SHRINE || it->type == ITEM_PODIUM))
             {
                 item_remove(it);
                 continue;
@@ -1078,7 +1106,7 @@ void item_handle_collision(Item* it, Entity* e)
         {
             Item* p2 = (Item*)e->ptr;
 
-            if(p2->type == ITEM_CHEST && p2->used)
+            if(item_is_chest(p2->type) &&  p2->used)
                 return;
 
             CollisionInfo ci = {0};
@@ -1089,7 +1117,7 @@ void item_handle_collision(Item* it, Entity* e)
                 phys_collision_correct(&it->phys, &p2->phys,&ci);
             }
 
-            if(it->type == ITEM_CHEST && it->used)
+            if(item_is_chest(it->type) && it->used)
             {
                 it->phys.pos = ppos;
             }
