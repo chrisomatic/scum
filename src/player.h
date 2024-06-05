@@ -245,6 +245,7 @@ void draw_all_other_player_info();
 void draw_hearts();
 void draw_mp_bar();
 void draw_gauntlet();
+void draw_equipped_gun();
 
 int get_xp_req(int level);
 

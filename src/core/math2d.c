@@ -838,12 +838,29 @@ bool boxes_colliding(Box* b1, Box* b2)
     Vector3f b2_min = {b2->x - hw2, b2->y - hl2, b2->z - hh2};
     Vector3f b2_max = {b2->x + hw2, b2->y + hl2, b2->z + hh2};
 
-    bool colliding = (b1_max.x > b2_min.x &&
-           b1_min.x < b2_max.x &&
-           b1_max.y > b2_min.y &&
-           b1_min.y < b2_max.y &&
-           b1_max.z > b2_min.z &&
-           b1_min.z < b2_max.z);
+    bool colliding = (
+           b1_max.x >= b2_min.x &&
+           b1_min.x <= b2_max.x &&
+           b1_max.y >= b2_min.y &&
+           b1_min.y <= b2_max.y &&
+           b1_max.z >= b2_min.z &&
+           b1_min.z <= b2_max.z);
+
+    /*
+    printf("b1_min: x: %5.2f, y: %5.2f, z: %5.2f\n", b1_min.x, b1_min.y, b1_min.z);
+    printf("b1_max: x: %5.2f, y: %5.2f, z: %5.2f\n", b1_max.x, b1_max.y, b1_max.z);
+
+    printf("b2_min: x: %5.2f, y: %5.2f, z: %5.2f\n", b2_min.x, b2_min.y, b2_min.z);
+    printf("b2_max: x: %5.2f, y: %5.2f, z: %5.2f\n", b2_max.x, b2_max.y, b2_max.z);
+
+    #define B(b) b ? "true" : "false"
+    printf("%d) %s\n", __LINE__, B(b1_max.x >= b2_min.x));
+    printf("%d) %s\n", __LINE__, B(b1_min.x <= b2_max.x));
+    printf("%d) %s\n", __LINE__, B(b1_max.y >= b2_min.y));
+    printf("%d) %s\n", __LINE__, B(b1_min.y <= b2_max.y));
+    printf("%d) %s\n", __LINE__, B(b1_max.z >= b2_min.z));
+    printf("%d) %s\n", __LINE__, B(b1_min.z <= b2_max.z));
+    */
 
     return colliding;
 

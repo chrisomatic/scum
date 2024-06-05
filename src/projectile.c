@@ -766,9 +766,9 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
             proj->phys.collision_rect.x,
             proj->phys.collision_rect.y,
             proj->phys.pos.z + phys->height/2.0,
-            proj->phys.collision_rect.w,
-            proj->phys.collision_rect.h,
-            proj->phys.height*2,
+            proj->phys.collision_rect.w*1.25,
+            proj->phys.collision_rect.h*1.25,
+            proj->phys.height*4.0,
         };
 
         float zb = phys->pos.z/2.0;
@@ -781,12 +781,19 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
             phys->collision_rect.x,
             phys->collision_rect.y,
             phys->pos.z + phys->height/2.0,
-            phys->collision_rect.w,
-            phys->collision_rect.h,
-            phys->height*2,
+            phys->collision_rect.w*1.25,
+            phys->collision_rect.h*1.25,
+            phys->height*4.0,
         };
 
         hit = boxes_colliding(&proj_curr, &check);
+
+        /*
+        printf("\n");
+        printf("Proj.   Box: {x: %5.2f, y: %5.2f, z: %5.2f}, {w: %5.2f, l: %5.2f, h: %5.2f}\n", proj_curr.x, proj_curr.y, proj_curr.z, proj_curr.w, proj_curr.l, proj_curr.h);
+        printf("Entity  Box: {x: %5.2f, y: %5.2f, z: %5.2f}, {w: %5.2f, l: %5.2f, h: %5.2f}\n", check.x, check.y, check.z, check.w, check.l, check.h);
+        printf("\n");
+        */
 
         if(hit)
         {

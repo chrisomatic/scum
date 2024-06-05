@@ -2346,6 +2346,33 @@ void draw_stats()
 
 }
 
+void draw_equipped_gun()
+{
+    float box_w = 60.0;
+    float box_h = 60.0;
+    float bottom_margin = 5.0;
+
+    Gun* gun = &player->gun;
+
+    Rect r = {view_width/2.0 - 30, view_height-(box_h+bottom_margin)/2.0, box_w, box_h};
+
+    gfx_draw_rect(&r, COLOR_WHITE, NOT_SCALED, NO_ROTATION, 0.3, true, NOT_IN_WORLD);
+    gfx_draw_image_ignore_light(guns_image, gun->gun_sprite_index, r.x, r.y, gun->color1, 3.0, 0.0, 0.8, false, NOT_IN_WORLD);
+
+    float x = r.x+r.w/2.0 + 5;
+    float y = r.y-r.h/2.0 + 5;
+
+    Vector2f sbig = gfx_string_get_size(0.25, "Gun: %s", player->gun.name);
+    Vector2f ssmall = gfx_string_get_size(0.15, "Damage");
+
+    gfx_draw_string(x, y, COLOR_CYAN, 0.25, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "Gun: %s", gun->name);
+    y += sbig.y + 2;
+    gfx_draw_string(x, y, COLOR_WHITE, 0.15, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "Damage: %.2f - %.2f", gun->damage_min, gun->damage_max);
+    y += ssmall.y + 2;
+    gfx_draw_string(x, y, COLOR_WHITE, 0.15, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "Crit: %.2f Knbk: %.2f", gun->critical_hit_chance, gun->knockback_factor);
+    y += ssmall.y + 2;
+    gfx_draw_string(x, y, COLOR_WHITE, 0.15, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "\"%s\"", gun->desc);
+}
 
 void player_set_class(Player* p, PlayerClass class)
 {

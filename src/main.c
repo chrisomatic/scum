@@ -2054,7 +2054,8 @@ void draw()
     draw_minimap();
     draw_hearts();
     draw_mp_bar();
-    draw_gauntlet();
+    //draw_gauntlet();
+    draw_equipped_gun();
     draw_stats();
 
     if(level_room_time > 0)
