@@ -128,9 +128,14 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
                 proj.gun.scale1 *= (1.0 + factor);
                 proj.gun.scale2 *= (1.0 + factor);
             }   break;
+            case CHARGE_TYPE_SCALE_NUM:
+            {
+                int num = (int)(factor*gun->num);
+                proj.gun.num = MAX(1,num);
+            } break;
             case CHARGE_TYPE_SCALE_BURST_COUNT:
             {
-                int burst_count = (int)(factor*4.0);
+                int burst_count = (int)(factor*gun->burst_count);
                 proj.gun.burst_count = burst_count;
             } break;
         }
@@ -138,40 +143,40 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
 
     Rect vr = gfx_images[projectile_image].visible_rects[0];
 
-    vr.w *= gun->scale1;
-    vr.h *= gun->scale1;
+    vr.w *= proj.gun.scale1;
+    vr.h *= proj.gun.scale1;
 
-    proj.color = gun->color1;
-    proj.sprite_index = gun->sprite_index;
+    proj.color = proj.gun.color1;
+    proj.sprite_index = proj.gun.sprite_index;
     proj.phys.height = vr.h;
     proj.phys.width =  vr.w;
     proj.phys.length = vr.w;
-    proj.phys.scale = gun->scale1;
+    proj.phys.scale = proj.gun.scale1;
     proj.phys.vr = vr;
     proj.phys.pos.x = pos.x;
     proj.phys.pos.y = pos.y;
     proj.phys.pos.z = pos.z;
     proj.phys.mass = 1.0;
-    proj.phys.base_friction = gun->air_friction;
-    proj.phys.speed = gun->speed;
-    proj.phys.max_velocity = 2.0*gun->speed;
-    proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * gun->scale1;
+    proj.phys.base_friction = proj.gun.air_friction;
+    proj.phys.speed = proj.gun.speed;
+    proj.phys.max_velocity = 2.0*proj.gun.speed;
+    proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * proj.gun.scale1;
     proj.phys.rotation_deg = angle_deg;
 
-    bool bouncy = RAND_FLOAT(0.0,1.0) <= gun->bounce_chance;
+    bool bouncy = RAND_FLOAT(0.0,1.0) <= proj.gun.bounce_chance;
     proj.phys.amorphous = bouncy ? false : true;
     proj.phys.elasticity = bouncy ? 1.0 : 0.1;
 
     proj.phys.curr_room = curr_room;
     proj.from_player = from_player;
     proj.angle_deg = angle_deg;
-    proj.ttl = gun->lifetime;
-    proj.wave_time = gun->wave_period / 2.0;
+    proj.ttl = proj.gun.lifetime;
+    proj.wave_time = proj.gun.wave_period / 2.0;
     proj.wave_dir = 1;
 
     // TODO: Move bursting code to this function
 
-    if(gun->orbital)
+    if(proj.gun.orbital)
     {
         // assign projectile to orbital
         ProjectileOrbital* orbital = NULL;
@@ -188,7 +193,7 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
                 continue;
             }
 
-            if(phys == orb->body && gun->orbital_distance == orb->distance)
+            if(phys == orb->body && proj.gun.orbital_distance == orb->distance)
             {
                 new_orbital = false;
                 orbital = orb;
@@ -207,9 +212,9 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
             orbital_count++;
             printf("New orbital! Count: %d\n", orbital_count);
             orbital->body = phys;
-            orbital->distance = gun->orbital_distance;
-            orbital->speed_factor = gun->orbital_speed_factor;
-            orbital->max_count = gun->orbital_max_count;
+            orbital->distance = proj.gun.orbital_distance;
+            orbital->speed_factor = proj.gun.orbital_speed_factor;
+            orbital->max_count = proj.gun.orbital_max_count;
             orbital->base_angle = 0.0;
             orbital->evolution = PROJ_ORB_EVOLUTION_NONE;
         }
@@ -257,40 +262,40 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
         }
     }
 
-    proj.cluster_stage = gun->cluster_stage;
+    proj.cluster_stage = proj.gun.cluster_stage;
 
-    float spread = gun->spread_type == SPREAD_TYPE_RANDOM ? gun->spread/2.0 : gun->spread / gun->num;
-    float spread_angle_start = angle_deg - (gun->spread/2.0);
+    float spread = proj.gun.spread_type == SPREAD_TYPE_RANDOM ? proj.gun.spread/2.0 : proj.gun.spread / proj.gun.num;
+    float spread_angle_start = angle_deg - (proj.gun.spread/2.0);
 
     uint16_t target_ids[32] = {0};
     int target_count = 0;
 
-    for(int i = 0; i < gun->num; ++i)
+    for(int i = 0; i < proj.gun.num; ++i)
     {
         Projectile p = {0};
         memcpy(&p, &proj, sizeof(Projectile));
         p.id = get_id();
 
-        p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= gun->ghost_chance;
+        p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= proj.gun.ghost_chance;
 
-        p.fire = RAND_FLOAT(0.0,1.0) <= gun->fire_damage;
-        p.cold = RAND_FLOAT(0.0,1.0) <= gun->cold_damage;
-        p.lightning = RAND_FLOAT(0.0,1.0) <= gun->lightning_damage;
-        p.poison = RAND_FLOAT(0.0,1.0) <= gun->poison_damage;
+        p.fire = RAND_FLOAT(0.0,1.0) <= proj.gun.fire_damage;
+        p.cold = RAND_FLOAT(0.0,1.0) <= proj.gun.cold_damage;
+        p.lightning = RAND_FLOAT(0.0,1.0) <= proj.gun.lightning_damage;
+        p.poison = RAND_FLOAT(0.0,1.0) <= proj.gun.poison_damage;
 
-        bool homing = RAND_FLOAT(0.0,1.0) <= gun->homing_chance;
+        bool homing = RAND_FLOAT(0.0,1.0) <= proj.gun.homing_chance;
 
         if(!FEQ0(spread))
         {
-            if(gun->spread_type == SPREAD_TYPE_RANDOM)
+            if(proj.gun.spread_type == SPREAD_TYPE_RANDOM)
             {
                 p.angle_deg += RAND_FLOAT(-spread, spread);
             }
-            else if(i > 0 && gun->spread_type == SPREAD_TYPE_UNIFORM)
+            else if(i > 0 && proj.gun.spread_type == SPREAD_TYPE_UNIFORM)
             {
                 p.angle_deg = angle_deg + (i*spread);
-                if(p.angle_deg > angle_deg + gun->spread/2.0)
-                    p.angle_deg += (360 - gun->spread);
+                if(p.angle_deg > angle_deg + proj.gun.spread/2.0)
+                    p.angle_deg += (360 - proj.gun.spread);
             }
         }
 
@@ -928,7 +933,8 @@ const char* projectile_charge_type_get_name(ChargeType charge_type)
 {
     switch(charge_type)
     {
-        case CHARGE_TYPE_SCALE_DAMAGE: return "Scale Damage";
+        case CHARGE_TYPE_SCALE_DAMAGE:      return "Scale Damage";
+        case CHARGE_TYPE_SCALE_NUM:         return "Scale Num";
         case CHARGE_TYPE_SCALE_BURST_COUNT: return "Scale Burst Count";
         default: break;
     }
@@ -1258,7 +1264,7 @@ void gun_load_from_file(Gun* gun, const char* file_name)
             else if(STR_EQUAL(key, "name"))
                 memcpy(gun->name, val2, sizeof(char)*MIN(GUN_NAME_MAX_LEN, strlen(val2)));
             else if(STR_EQUAL(key, "desc"))
-                memcpy(gun->desc, val, sizeof(char)*MIN(GUN_DESC_MAX_LEN, strlen(val)));
+                memcpy(gun->desc, val2, sizeof(char)*MIN(GUN_DESC_MAX_LEN, strlen(val2)));
             else if(STR_EQUAL(key, "damage_min"))
                 gun->damage_min = atof(val2);
             else if(STR_EQUAL(key, "damage_max"))

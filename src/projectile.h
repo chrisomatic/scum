@@ -34,6 +34,7 @@ typedef enum
 typedef enum
 {
     CHARGE_TYPE_SCALE_DAMAGE,
+    CHARGE_TYPE_SCALE_NUM,
     CHARGE_TYPE_SCALE_BURST_COUNT,
     CHARGE_TYPE_COUNT,
 } ChargeType;
