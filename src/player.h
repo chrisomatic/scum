@@ -195,6 +195,10 @@ extern int xp_levels[];
 extern char* class_strs[];
 extern Room* visible_room;
 
+extern int class_image_spaceman;
+extern int class_image_robot;
+extern int class_image_physicist;
+
 extern Rect player_pit_rect;
 extern Rect tile_pit_rect;
 extern float jump_vel_z;

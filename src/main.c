@@ -120,6 +120,10 @@ enum
     MENU_KEY_UP,
     MENU_KEY_DOWN,
     MENU_KEY_ENTER,
+    MENU_KEY_ARROW_RIGHT,
+    MENU_KEY_ARROW_LEFT,
+    MENU_KEY_ARROW_UP,
+    MENU_KEY_ARROW_DOWN,
     MENU_KEY_MAX
 };
 PlayerInput menu_keys[MENU_KEY_MAX] = {0};
@@ -151,6 +155,8 @@ void draw();
 void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods);
 void start_server();
 
+void update_menu_characters(float dt);
+void draw_menu_characters();
 
 // =========================
 // Main Loop
@@ -250,6 +256,10 @@ void set_menu_keys()
     window_controls_add_key(&menu_keys[MENU_KEY_UP].state, GLFW_KEY_W);
     window_controls_add_key(&menu_keys[MENU_KEY_DOWN].state, GLFW_KEY_S);
     window_controls_add_key(&menu_keys[MENU_KEY_ENTER].state, GLFW_KEY_ENTER);
+    window_controls_add_key(&menu_keys[MENU_KEY_ARROW_RIGHT].state, GLFW_KEY_RIGHT);
+    window_controls_add_key(&menu_keys[MENU_KEY_ARROW_LEFT].state, GLFW_KEY_LEFT);
+    window_controls_add_key(&menu_keys[MENU_KEY_ARROW_UP].state, GLFW_KEY_UP);
+    window_controls_add_key(&menu_keys[MENU_KEY_ARROW_DOWN].state, GLFW_KEY_DOWN);
 
     for(int i = 0;  i < MENU_KEY_MAX; ++i)
         memset(&menu_keys[i], 0, sizeof(PlayerInput));
@@ -1087,6 +1097,9 @@ bool client_handle_connection()
 
 void update_main_menu(float dt)
 {
+
+    update_menu_characters(dt);
+
     for(int i = 0; i < MENU_KEY_MAX; ++i)
     {
         update_input_state(&menu_keys[i], dt);
@@ -1820,9 +1833,188 @@ void particles_draw_all()
     gfx_sprite_batch_draw();
 }
 
+
+typedef struct
+{
+    float x;
+    float y;
+    float speed;
+    int image;
+    float scale;
+    GFXAnimation anim;
+    float anim_factor;
+} MenuCharacter;
+
+#define MC_MAX 50
+Dir mc_dir = DIR_DOWN;
+MenuCharacter mc[MC_MAX] = {0};
+
+
+void update_menu_characters(float dt)
+{
+
+    if(mc[0].anim.max_frames == 0)
+    {
+        for(int i = 0; i < MC_MAX; ++i)
+        {
+            mc[i].image = -1;
+            mc[i].anim.curr_frame = 0;
+            mc[i].anim.max_frames = 4;
+            mc[i].anim.curr_frame_time = 0.0f;
+            mc[i].anim.max_frame_time = 0.10f;
+            mc[i].anim.finite = false;
+            mc[i].anim.curr_loop = 0;
+            mc[i].anim.max_loops = 0;
+            mc[i].anim.frame_sequence[0] = 0;
+            mc[i].anim.frame_sequence[1] = 1;
+            mc[i].anim.frame_sequence[2] = 2;
+            mc[i].anim.frame_sequence[3] = 3;
+        }
+    }
+
+
+    if(class_image_spaceman == -1) return;
+    if(class_image_physicist == -1) return;
+    if(class_image_robot == -1) return;
+
+    if(rand() % 40 == 1)
+    {
+        for(int i = 0; i < MC_MAX; ++i)
+        {
+            if(mc[i].image == -1)
+            {
+                MenuCharacter* p = &mc[i];
+
+                if(mc_dir == DIR_RIGHT)
+                {
+                    p->x = -8;
+                    p->y = rand_float_between(0.0, view_height);
+                }
+                else if(mc_dir == DIR_LEFT)
+                {
+                    p->x = view_width + 8;
+                    p->y = rand_float_between(0.0, view_height);
+                }
+                else if(mc_dir == DIR_UP)
+                {
+                    p->x = rand_float_between(0.0, view_width);
+                    p->y = view_height+8;
+                }
+                else if(mc_dir == DIR_DOWN)
+                {
+                    p->x = rand_float_between(0.0, view_width);
+                    p->y = -8;
+                }
+                int class = rand() % PLAYER_CLASS_MAX;
+                if(class == PLAYER_CLASS_SPACEMAN) p->image = class_image_spaceman;
+                else if(class == PLAYER_CLASS_PHYSICIST) p->image = class_image_physicist;
+                else if(class == PLAYER_CLASS_ROBOT) p->image = class_image_robot;
+                p->speed = rand_float_between(50.0,100.0);
+                p->anim_factor = RANGE(p->speed/80.0, 0.3, 1.0);
+                p->scale = rand_float_between(0.8,2.0);
+                break;
+            }
+        }
+
+    }
+
+    float speed_mult = 1.0;
+    if(menu_keys[MENU_KEY_ARROW_RIGHT].state)
+    {
+        mc_dir = DIR_RIGHT;
+        speed_mult = 3.0;
+    }
+    else if(menu_keys[MENU_KEY_ARROW_LEFT].state)
+    {
+        mc_dir = DIR_LEFT;
+        speed_mult = 3.0;
+    }
+    else if(menu_keys[MENU_KEY_ARROW_UP].state)
+    {
+        mc_dir = DIR_UP;
+        speed_mult = 3.0;
+    }
+    else if(menu_keys[MENU_KEY_ARROW_DOWN].state)
+    {
+        mc_dir = DIR_DOWN;
+        speed_mult = 3.0;
+    }
+
+
+    for(int i = 0; i < MC_MAX; ++i)
+    {
+        if(mc[i].image != -1)
+        {
+            MenuCharacter* p = &mc[i];
+
+            if(mc_dir == DIR_RIGHT)
+                p->x += p->speed * dt * speed_mult;
+            else if(mc_dir == DIR_LEFT)
+                p->x += -p->speed * dt * speed_mult;
+            else if(mc_dir == DIR_UP)
+                p->y += -p->speed * dt * speed_mult;
+            else if(mc_dir == DIR_DOWN)
+                p->y += p->speed * dt * speed_mult;
+
+            if(p->x-16 > view_width || p->x+16 < 0)
+            {
+                p->image = -1;
+                continue;
+            }
+            if(p->y-32 > view_height || p->y+32 < 0)
+            {
+                p->image = -1;
+                continue;
+            }
+            gfx_anim_update(&p->anim, p->anim_factor*dt);
+        }
+    }
+
+}
+
+void draw_menu_characters()
+{
+    if(mc[0].anim.max_frames == 0)
+    {
+        for(int i = 0; i < MC_MAX; ++i)
+        {
+            mc[i].image = -1;
+            mc[i].anim.curr_frame = 0;
+            mc[i].anim.max_frames = 4;
+            mc[i].anim.curr_frame_time = 0.0f;
+            mc[i].anim.max_frame_time = 0.10f;
+            mc[i].anim.finite = false;
+            mc[i].anim.curr_loop = 0;
+            mc[i].anim.max_loops = 0;
+            mc[i].anim.frame_sequence[0] = 0;
+            mc[i].anim.frame_sequence[1] = 1;
+            mc[i].anim.frame_sequence[2] = 2;
+            mc[i].anim.frame_sequence[3] = 3;
+        }
+    }
+
+    int sprite = SPRITE_RIGHT;
+    if(mc_dir == DIR_LEFT) sprite = SPRITE_LEFT;
+    else if(mc_dir == DIR_UP) sprite = SPRITE_UP;
+    else if(mc_dir == DIR_DOWN) sprite = SPRITE_DOWN;
+
+    gfx_sprite_batch_begin(false);
+    for(int i = 0; i < MC_MAX; ++i)
+    {
+        if(mc[i].image != -1)
+        {
+            MenuCharacter* p = &mc[i];
+            bool ret = gfx_sprite_batch_add(p->image, sprite+p->anim.curr_frame, p->x, p->y, COLOR_TINT_NONE, true, p->scale, 0.0, 1.0, false, false, false);
+        }
+    }
+    gfx_sprite_batch_draw();
+}
+
 void draw_main_menu()
 {
     gfx_clear_buffer(background_color);
+
+    draw_menu_characters();
 
     float menu_item_scale = 0.4 * ascale;
 
