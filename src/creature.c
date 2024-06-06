@@ -1402,11 +1402,11 @@ static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
         gun.speed = rand()%50+40;
         gun.scale1 = RAND_FLOAT(0.6,1.0);
         gun.scale2 = RAND_FLOAT(0.6,1.0);
-        projectile_lob(&c->phys, rand()%100+50, c->phys.curr_room, &gun, color, angle, false);
+        projectile_lob(&c->phys, rand()%100+50, c->phys.curr_room, &gun, color, angle, false, c->id);
         return;
     }
 
-    projectile_lob(&c->phys, MIN(1.0, gun.gravity_factor)*120.0, c->phys.curr_room, &gun, color, angle, false);
+    projectile_lob(&c->phys, MIN(1.0, gun.gravity_factor)*120.0, c->phys.curr_room, &gun, color, angle, false, c->id);
 }
 
 static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float vel0_z, uint32_t color)
@@ -1428,7 +1428,7 @@ static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float 
     Vector3f pos = {r.x, r.y, 400.0};
 
     Vector3f vel = {0.0, 0.0, vel0_z};
-    projectile_add(pos, &vel, c->phys.curr_room, &gun, color, 0.0, false, NULL);
+    projectile_add(pos, &vel, c->phys.curr_room, &gun, color, 0.0, false, NULL, c->id);
 }
 
 static void creature_update_clinger(Creature* c, float dt)
@@ -2128,6 +2128,15 @@ static void creature_update_peeper(Creature* c, float dt)
 
     if(c->ai_state == 0)
     {
+        c->action_counter += dt;
+
+        if(c->action_counter >= 8.0)
+        {
+            ai_clear_target(c);
+            c->action_counter = 0;
+            c->ai_state = 1;
+        }
+
         // underground
         c->phys.underground = true;
 
@@ -2155,12 +2164,12 @@ static void creature_update_peeper(Creature* c, float dt)
         c->phys.underground = false;
 
         bool act = ai_update_action(c, dt);
-
         if(act)
         {
             ai_shoot_nearest_player(c);
             c->act_time_min = 2.0;
             c->act_time_max = 4.0;
+            ai_choose_new_action_max(c);
             c->ai_state = 2;
         }
         return;
@@ -2173,6 +2182,7 @@ static void creature_update_peeper(Creature* c, float dt)
         {
             c->act_time_min = 1.0;
             c->act_time_max = 2.0;
+            ai_choose_new_action_max(c);
             c->ai_state = 0;
         }
     }

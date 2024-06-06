@@ -1555,6 +1555,8 @@ void level_handle_room_collision(Room* room, Physics* phys, int entity_type, voi
         float px = phys->pos.x;
         float py = phys->pos.y;
 
+        if(phys->underground) continue;
+
         if(entity_type == ENTITY_TYPE_PROJECTILE && (wall->type == WALL_TYPE_PIT || wall->type == WALL_TYPE_INNER))
             continue;
 
@@ -1761,6 +1763,11 @@ int level_tile_traversable_func(int x, int y)
     if(tt == TILE_ICE)     return 2;
 
     return 3;
+}
+
+int level_every_tile_traversable_func(int x, int y)
+{
+    return 1;
 }
 
 Rect level_get_tile_rect(int x, int y)

@@ -714,6 +714,12 @@ void game_generate_level()
 
     if(role == ROLE_CLIENT) return;
 
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        players[i].level_hits = 0;
+        players[i].room_hits = 0;
+    }
+
 #if 0
     LOGI("  Level Rooms");
     for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)
@@ -2144,6 +2150,7 @@ void draw()
                 gfx_draw_rect(&ct, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 0.1, true, IN_WORLD);
             }
 
+            // // surrounding rooms
             // Vector2i c = level_get_room_coords(player->phys.curr_room);
             // for(int d = 0; d < 4; ++d)
             // {
@@ -2152,7 +2159,7 @@ void draw()
             //     Room* r = level_get_room(&level, c.x+o.x, c.y+o.y);
             //     if(!r) continue;
             //     if(!r->valid) continue;
-            //     level_draw_room(r, NULL, room_area.w*o.x, room_area.h*o.y);
+            //     level_draw_room(r, NULL, room_area.w*o.x, room_area.h*o.y, 1.0, false);
             // }
 
 #if 0

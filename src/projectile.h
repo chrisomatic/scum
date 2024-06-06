@@ -149,6 +149,7 @@ typedef struct
 {
     float tts;
     Physics* shooter;
+    uint16_t from_id;
 
     uint16_t id;
 
@@ -205,11 +206,11 @@ extern glist* plist;
 void projectile_init();
 void projectile_clear_all();
 
-void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, Physics* phys);
+void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, Physics* phys, uint16_t from_id);
 
-void projectile_fire(Physics* phys, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player);
+void projectile_fire(Physics* phys, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, uint16_t from_id);
 
-void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player);
+void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, uint16_t from_id);
 
 void projectile_update_hit_box(Projectile* proj);
 void projectile_update_all(float dt);

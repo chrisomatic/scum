@@ -105,7 +105,7 @@ static float calc_orbital_target(Projectile* proj)
     proj->orbital_pos_target.y = -(sinf(target_angle)*actual_orb_distance);
 }
 
-void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, Physics* phys)
+void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, Physics* phys, uint16_t from_id)
 {
     if(role == ROLE_CLIENT)
         return;
@@ -113,6 +113,7 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
     Projectile proj = {0};
 
     proj.gun = *gun;
+    proj.from_id = from_id;
 
     if(proj.gun.charging)
     {
@@ -141,7 +142,7 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
         }
     }
 
-    Rect vr = gfx_images[projectile_image].visible_rects[0];
+    Rect vr = gfx_images[projectile_image].visible_rects[proj.gun.sprite_index];
 
     vr.w *= proj.gun.scale1;
     vr.h *= proj.gun.scale1;
@@ -150,7 +151,7 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
     proj.sprite_index = proj.gun.sprite_index;
     proj.phys.height = vr.h;
     proj.phys.width =  vr.w;
-    proj.phys.length = vr.w;
+    proj.phys.length = vr.h;
     proj.phys.scale = proj.gun.scale1;
     proj.phys.vr = vr;
     proj.phys.pos.x = pos.x;
@@ -272,94 +273,90 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
 
     for(int i = 0; i < proj.gun.num; ++i)
     {
-        Projectile p = {0};
-        memcpy(&p, &proj, sizeof(Projectile));
-        p.id = get_id();
 
-        p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= proj.gun.ghost_chance;
-
-        p.fire = RAND_FLOAT(0.0,1.0) <= proj.gun.fire_damage;
-        p.cold = RAND_FLOAT(0.0,1.0) <= proj.gun.cold_damage;
-        p.lightning = RAND_FLOAT(0.0,1.0) <= proj.gun.lightning_damage;
-        p.poison = RAND_FLOAT(0.0,1.0) <= proj.gun.poison_damage;
-
-        bool homing = RAND_FLOAT(0.0,1.0) <= proj.gun.homing_chance;
-
-        if(!FEQ0(spread))
+        for(int j = 0; j < proj.gun.burst_count+1; ++j)
         {
-            if(proj.gun.spread_type == SPREAD_TYPE_RANDOM)
+            Projectile p = {0};
+            memcpy(&p, &proj, sizeof(Projectile));
+            p.id = get_id();
+
+            if(j > 0)   // burst
             {
-                p.angle_deg += RAND_FLOAT(-spread, spread);
+                p.tts = 1/60.0*((j)*(1.0/proj.gun.burst_rate));
+                p.shooter = phys;
             }
-            else if(i > 0 && proj.gun.spread_type == SPREAD_TYPE_UNIFORM)
+
+            p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= proj.gun.ghost_chance;
+            p.fire = RAND_FLOAT(0.0,1.0) <= proj.gun.fire_damage;
+            p.cold = RAND_FLOAT(0.0,1.0) <= proj.gun.cold_damage;
+            p.lightning = RAND_FLOAT(0.0,1.0) <= proj.gun.lightning_damage;
+            p.poison = RAND_FLOAT(0.0,1.0) <= proj.gun.poison_damage;
+            bool homing = RAND_FLOAT(0.0,1.0) <= proj.gun.homing_chance;
+
+            if(!FEQ0(spread))
             {
-                p.angle_deg = angle_deg + (i*spread);
-                if(p.angle_deg > angle_deg + proj.gun.spread/2.0)
-                    p.angle_deg += (360 - proj.gun.spread);
+                if(proj.gun.spread_type == SPREAD_TYPE_RANDOM)
+                {
+                    p.angle_deg += RAND_FLOAT(-spread, spread);
+                }
+                else if(i > 0 && proj.gun.spread_type == SPREAD_TYPE_UNIFORM)
+                {
+                    p.angle_deg = angle_deg + (i*spread);
+                    if(p.angle_deg > angle_deg + proj.gun.spread/2.0)
+                        p.angle_deg += (360 - proj.gun.spread);
+                }
             }
+
+            float angle = RAD(p.angle_deg);
+
+            p.phys.vel.x = +(p.gun.speed)*cosf(angle) + vel->x;
+            p.phys.vel.y = -(p.gun.speed)*sinf(angle) + vel->y;
+            p.phys.vel.z = vel->z;
+
+            if(homing)
+            {
+                uint16_t id = 0;
+                Physics* target = NULL;
+                if(p.from_player)
+                    target = entity_get_closest_to(&p.phys, p.phys.curr_room, ENTITY_TYPE_CREATURE, target_ids, target_count, &id);
+                else
+                    target = entity_get_closest_to(&p.phys, p.phys.curr_room, ENTITY_TYPE_PLAYER, target_ids, target_count, &id);
+
+                if(target)
+                {
+                    float tx = target->pos.x;
+                    float ty = target->pos.y;
+
+                    Vector2f v = {tx - p.phys.pos.x, ty - p.phys.pos.y};
+                    normalize(&v);
+                    p.angle_deg = calc_angle_deg(p.phys.pos.x, p.phys.pos.y, tx, ty);
+                    p.phys.vel.x = v.x * p.gun.speed;
+                    p.phys.vel.y = v.y * p.gun.speed;
+
+                    target_ids[target_count++] = id;
+                }
+            }
+
+            // p.source_explode = audio_source_create(false);
+            // audio_source_assign_buffer(p.source_explode, audio_buffer_explode);
+
+            // printf("%s damage: [%.2f, %.2f]\n", __func__, p.gun.damage_min, p.gun.damage_max);
+
+            list_add(plist, (void*)&p);
         }
 
-        float angle = RAD(p.angle_deg);
-
-        p.phys.vel.x = +(p.gun.speed)*cosf(angle) + vel->x;
-        p.phys.vel.y = -(p.gun.speed)*sinf(angle) + vel->y;
-        p.phys.vel.z = vel->z;
-
-        if(homing)
-        {
-            uint16_t id = 0;
-            Physics* target = NULL;
-            if(p.from_player)
-                target = entity_get_closest_to(&p.phys, p.phys.curr_room, ENTITY_TYPE_CREATURE, target_ids, target_count, &id);
-            else
-                target = entity_get_closest_to(&p.phys, p.phys.curr_room, ENTITY_TYPE_PLAYER, target_ids, target_count, &id);
-
-            if(target)
-            {
-                float tx = target->pos.x;
-                float ty = target->pos.y;
-
-                Vector2f v = {tx - p.phys.pos.x, ty - p.phys.pos.y};
-                normalize(&v);
-                p.angle_deg = calc_angle_deg(p.phys.pos.x, p.phys.pos.y, tx, ty);
-                p.phys.vel.x = v.x * p.gun.speed;
-                p.phys.vel.y = v.y * p.gun.speed;
-
-                target_ids[target_count++] = id;
-            }
-            else
-            {
-                p.angle_deg = rand() % 360;
-                float angle = RAD(p.angle_deg);
-                p.phys.vel.x = +(p.gun.speed)*cosf(angle) + vel->x;
-                p.phys.vel.y = -(p.gun.speed)*sinf(angle) + vel->y;
-                p.phys.vel.z = 80.0;
-            }
-        }
-
-        // p.source_explode = audio_source_create(false);
-        // audio_source_assign_buffer(p.source_explode, audio_buffer_explode);
-
-        // printf("%s damage: [%.2f, %.2f]\n", __func__, p.gun.damage_min, p.gun.damage_max);
-
-        // p.phys.pos.z = 400.0;
-        // p.phys.vel.x = 0;
-        // p.phys.vel.y = 0;
-        // p.angle_deg = 0.0;
-
-        list_add(plist, (void*)&p);
     }
 }
 
-void projectile_fire(Physics* phys, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player)
+void projectile_fire(Physics* phys, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, uint16_t from_id)
 {
     Vector3f pos = {phys->pos.x, phys->pos.y, phys->height/2.0 + phys->pos.z};
     Vector3f vel = {phys->vel.x, phys->vel.y, 0.0};
 
-    projectile_add(pos, &vel, curr_room, gun, color, angle_deg, from_player, phys);
+    projectile_add(pos, &vel, curr_room, gun, color, angle_deg, from_player, phys, from_id);
 }
 
-void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player)
+void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, uint16_t from_id)
 {
     Vector3f pos = {phys->pos.x, phys->pos.y, phys->height + phys->pos.z};
     //Vector3f pos = {phys->pos.x, phys->pos.y, phys->height*2.0 + phys->pos.z};
@@ -370,7 +367,7 @@ void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, Gun* gun, ui
     vel.x = phys->vel.x;
     vel.y = phys->vel.y;
 
-    projectile_add(pos, &vel, curr_room, gun, color, angle_deg, from_player, phys);
+    projectile_add(pos, &vel, curr_room, gun, color, angle_deg, from_player, phys, from_id);
 }
 
 void projectile_kill(Projectile* proj)
@@ -525,7 +522,7 @@ void projectile_kill(Projectile* proj)
         proj->phys.vel.x /= 2.0;
         proj->phys.vel.y /= 2.0;
 
-        projectile_lob(&proj->phys, gun.gravity_factor*120.0, proj->phys.curr_room, &gun, proj->color, angle_deg, proj->from_player);
+        projectile_lob(&proj->phys, gun.gravity_factor*120.0, proj->phys.curr_room, &gun, proj->color, angle_deg, proj->from_player, proj->from_id);
     }
 }
 
@@ -671,10 +668,10 @@ void projectile_update_all(float dt)
                 }
             }
 
-
             float cfactor = proj->ttl / proj->gun.lifetime;
             proj->color = gfx_blend_colors(proj->gun.color2, proj->gun.color1, cfactor);
             proj->phys.scale = lerp(proj->gun.scale2, proj->gun.scale1, cfactor);
+            proj->phys.radius = (MAX(proj->phys.length, proj->phys.width) / 2.0) * proj->phys.scale;
         }
 
         if(!FEQ0(proj->gun.spin_factor))
@@ -729,7 +726,6 @@ void projectile_update_all(float dt)
         }
     }
     // if(count > 0) printf("removed %d\n", count);
-
 }
 
 void projectile_handle_collision(Projectile* proj, Entity* e)
@@ -742,7 +738,9 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
     uint8_t curr_room = 0;
     Physics* phys = NULL;
 
-    if(proj->from_player && e->type == ENTITY_TYPE_CREATURE)
+    bool player_hitting_creature = proj->from_player && e->type == ENTITY_TYPE_CREATURE;
+
+    if(player_hitting_creature)
     {
         Creature* c = (Creature*)e->ptr;
         if(c->friendly) return; // player can't hit friendly creatures
@@ -802,6 +800,14 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 
         if(hit)
         {
+
+            if(player_hitting_creature)
+            {
+                players[proj->from_id].total_hits++;
+                players[proj->from_id].level_hits++;
+                players[proj->from_id].room_hits++;
+            }
+
             bool penetrate = RAND_FLOAT(0.0,1.0) <= proj->gun.penetration_chance;
             if(!penetrate)
             {

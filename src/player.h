@@ -137,6 +137,9 @@ typedef struct
     int skill_count;
 
     Gun gun;
+    uint16_t total_hits;
+    uint16_t level_hits;
+    uint16_t room_hits;
 
     Weapon weapon;
 

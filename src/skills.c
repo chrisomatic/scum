@@ -134,7 +134,7 @@ bool skills_use(void* player, Skill* skill)
             gun.num = 1;
             gun.spread = 0.0;
 
-            projectile_fire(&p->phys, p->phys.curr_room, &gun, 0x0000CCFF, p->aim_deg, true);
+            projectile_fire(&p->phys, p->phys.curr_room, &gun, 0x0000CCFF, p->aim_deg, true, p->index);
 
         } break;
 
@@ -167,7 +167,7 @@ bool skills_use(void* player, Skill* skill)
                 Vector3f pos = {r.x+xo, r.y+yo, 400.0};
 
                 Vector3f vel = {0.0, 0.0, 0.0};
-                projectile_add(pos, &vel, p->phys.curr_room, &gun, 0x00553300, 0.0, true, NULL);
+                projectile_add(pos, &vel, p->phys.curr_room, &gun, 0x00553300, 0.0, true, NULL, p->index);
             }
 
         } break;
@@ -179,7 +179,7 @@ bool skills_use(void* player, Skill* skill)
             gun.spread = 0.0;
             gun.homing_chance = 1.0;
 
-            projectile_fire(&p->phys, p->phys.curr_room, &gun, 0x00555555, p->aim_deg, true);
+            projectile_fire(&p->phys, p->phys.curr_room, &gun, 0x00555555, p->aim_deg, true, p->index);
         } break;
 
         case SKILL_TYPE_MULTI_SHOT:
@@ -189,7 +189,7 @@ bool skills_use(void* player, Skill* skill)
             gun.num = 2 + skill->rank;
             gun.spread = 30.0 + 10*skill->rank;
 
-            projectile_fire(&p->phys, p->phys.curr_room, &gun, COLOR_WHITE, p->aim_deg, true);
+            projectile_fire(&p->phys, p->phys.curr_room, &gun, COLOR_WHITE, p->aim_deg, true, p->index);
             
         } break;
 
@@ -204,7 +204,7 @@ bool skills_use(void* player, Skill* skill)
             gun.spread = 60.0;
             gun.ghost_chance = 1.0;
 
-            projectile_fire(&p->phys, p->phys.curr_room, &gun, 0x00808080, p->aim_deg, true);
+            projectile_fire(&p->phys, p->phys.curr_room, &gun, 0x00808080, p->aim_deg, true, p->index);
 
         } break;
         case SKILL_TYPE_HEAL:

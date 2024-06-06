@@ -37,7 +37,7 @@ bool ai_update_action(Creature* c, float dt)
 
     if(c->action_counter >= c->action_counter_max)
     {
-        c->action_counter -= c->action_counter_max;
+        c->action_counter = 0;
         ai_choose_new_action_max(c);
         return true;
     }
@@ -256,7 +256,7 @@ void ai_shoot_nearest_player(Creature* c)
         return;
     }
 
-    projectile_fire(&c->phys, c->phys.curr_room, &gun, COLOR_RED, angle, false);
+    projectile_fire(&c->phys, c->phys.curr_room, &gun, COLOR_RED, angle, false, c->id);
 }
 
 bool ai_on_target_tile(Creature* c)
@@ -272,7 +272,13 @@ bool ai_path_find_to_target_tile(Creature* c)
 {
     if(!ai_on_target_tile(c))
     {
+        if(c->phys.underground)
+        {
+            astar_set_traversable_func(&level.asd, level_every_tile_traversable_func);
+        }
         bool traversable = astar_traverse(&level.asd, c->phys.curr_tile.x, c->phys.curr_tile.y, c->target_tile.x, c->target_tile.y);
+        astar_set_traversable_func(&level.asd, level_tile_traversable_func);//set back to default
+
         if(!traversable)
         {
             printf("%u not traversable\n", c->id);

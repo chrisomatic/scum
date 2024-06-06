@@ -65,9 +65,11 @@ void editor_init()
 
 void editor_draw()
 {
+    static bool refresh_gun_sel = true;
     if(!editor_enabled)
     {
         if(particle_spawner != NULL) particle_spawner->hidden = true;
+        refresh_gun_sel = true;
         return;
     }
 
@@ -78,7 +80,7 @@ void editor_draw()
     imgui_begin_panel("Editor", view_width - gui_size.w, 1, true);
 
         imgui_newline();
-        char* buttons[] = {"General", "Level", "Players", "Creatures", "Projectiles", "Particles", "Theme Editor","SCUM"};
+        char* buttons[] = {"General", "Level", "Players", "Creatures", "Projectiles", "Particles", "Theme Editor","Room Finder"};
         int selection = imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "");
         imgui_horizontal_line(1);
 
@@ -950,7 +952,15 @@ void editor_draw()
             char* gun_names[MAX_GUNS] = {0};
 
             for(int i = 0; i < gun_list_count; ++i)
+            {
                 gun_names[i] = (char*)gun_list[i].name;
+                if(refresh_gun_sel && STR_EQUAL(player->gun.name, gun_names[i]))
+                {
+                    gun_sel = i;
+                }
+            }
+
+            refresh_gun_sel = false;
 
             imgui_listbox(gun_names, gun_list_count, "Guns", &gun_sel, 10);
 
@@ -971,7 +981,6 @@ void editor_draw()
 
             memcpy(&gun_prior, &gun, sizeof(Gun));
             gun_sel_prior = gun_sel;
-
 
             imgui_horizontal_begin();
                 if(imgui_button("<")) gun_sel -= 1;

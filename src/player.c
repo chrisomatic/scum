@@ -176,6 +176,10 @@ void player_set_defaults(Player* p)
 
     p->gauntlet_selection = 0;
 
+    p->total_hits = 0;
+    p->level_hits = 0;
+    p->room_hits = 0;
+
     p->coins = 0;
 
     p->xp = 0;
@@ -403,6 +407,8 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
     {
         p->transition_room = p->phys.curr_room;
     }
+
+    p->room_hits = 0;
 
     Room* room = level_get_room_by_index(&level, room_index);
     if(!room)
@@ -725,6 +731,10 @@ void player_die(Player* p)
     p->phys.dead = true;
     p->phys.floating = true;
     status_effects_clear(&p->phys);
+
+    p->total_hits = 0;
+    p->level_hits = 0;
+    p->room_hits = 0;
 
     // // drop all items
     // for(int i = 0; i < PLAYER_GAUNTLET_MAX; ++i)
@@ -1219,7 +1229,7 @@ static void player_handle_orbitals(Player* p, float dt)
 
         for(int i = 0; i < max; ++i)
         {
-            projectile_fire(&p->phys, p->phys.curr_room, &temp, color, p->aim_deg, true);
+            projectile_fire(&p->phys, p->phys.curr_room, &temp, color, p->aim_deg, true, p->index);
         }
     }
 }
@@ -1364,18 +1374,7 @@ static void player_handle_shooting(Player* p, float dt)
 
                 uint32_t color = 0x0050A0FF;
 
-                projectile_lob(&p->phys, MIN(1.0, temp.gravity_factor)*120.0, p->phys.curr_room, &temp, color, p->aim_deg, true);
-
-                for(int j = 0; j < temp.burst_count; ++j)
-                {
-                    projectile_lob(&p->phys, MIN(1.0, temp.gravity_factor)*120.0, p->phys.curr_room, &temp, color, p->aim_deg, true);
-
-                    for(int k = 0; k < temp.num; ++k)
-                    {
-                        projectiles[plist->count-1-k].tts = dt*((j+1)*(1.0/temp.burst_rate));
-                        projectiles[plist->count-1-k].shooter = &p->phys;
-                    }
-                }
+                projectile_lob(&p->phys, MIN(1.0, temp.gravity_factor)*120.0, p->phys.curr_room, &temp, color, p->aim_deg, true, p->index);
 
                 gaudio_set_pitch(audio_shoot, RAND_FLOAT(0.9,1.1));
                 gaudio_play(audio_shoot);
@@ -2343,6 +2342,8 @@ void draw_stats()
 
         y += len + margin;
     }
+
+    gfx_draw_string(x, y, COLOR_WHITE, 0.20, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%u, %u, %u", player->total_hits, player->level_hits, player->room_hits);
 
 }
 
