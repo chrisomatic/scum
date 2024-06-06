@@ -39,6 +39,11 @@ typedef enum
     CHARGE_TYPE_COUNT,
 } ChargeType;
 
+typedef enum
+{
+    GUN_PERK_NONE,
+} GunPerk;
+
 typedef struct
 {
     char  name[GUN_NAME_MAX_LEN+1];

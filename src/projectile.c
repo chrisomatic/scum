@@ -1462,4 +1462,28 @@ void gun_refresh_list()
         memcpy(&gun_list[j+1], &key, sizeof(Gun));
     }
 
+    /*
+    for (i = 0; i < gun_list_count; ++i) 
+    {
+        Gun* gun = &gun_list[i];
+        printf("%s, %s, %d, %d, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %s, %s\n",
+                gun->name,
+                gun->desc,
+                gun->num,
+                gun->burst_count,
+                gun->speed,
+                gun->lifetime,
+                gun->cooldown,
+                gun->spread,
+                gun->damage_min,
+                gun->damage_max,
+                gun->critical_hit_chance,
+                gun->knockback_factor,
+                gun->ghost_chance,
+                gun->homing_chance,
+                gun->chargeable ? "true" : "false",
+                gun->cluster ? "true" : "false"
+              );
+    }
+    */
 }
