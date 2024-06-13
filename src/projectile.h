@@ -169,7 +169,7 @@ typedef struct
 
     uint32_t perk_seed;
 
-    Perk perks[MAX_PERKS];
+    GunPerk perks[MAX_PERKS];
     int num_perks;
 
 } Gun;
