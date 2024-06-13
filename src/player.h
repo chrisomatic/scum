@@ -132,6 +132,8 @@ typedef struct
     int skill_count;
 
     Gun gun;
+    uint8_t room_gun_index;
+
     uint16_t total_hits;
     uint16_t level_hits;
     uint16_t room_hits;
@@ -239,7 +241,7 @@ bool is_any_player_room(uint8_t curr_room);
 int player_get_count_in_room(uint8_t curr_room);
 Player* player_get_nearest(uint8_t room_index, float x, float y);
 
-void player_set_gun(Player* p, Gun* g, bool drop_old_gun);
+void player_set_gun(Player* p, uint8_t room_gun_index, bool drop_old_gun);
 
 void draw_all_other_player_info();
 void draw_hearts();

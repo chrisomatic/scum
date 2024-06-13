@@ -111,7 +111,10 @@ static bool item_func_chest_gun(Item* it, Player* p)
 
     for(int i = 0; i < num; ++i)
     {
-        item_add_gun(rand() % gun_list_count, 0, x, y, croom);
+        int r = rand() % gun_list_count;
+        Item* it = item_add_gun(r, 0, x, y, croom);
+        if(!it) continue;
+        it->user_data3 = add_to_room_gun_list(&gun_list[r]);
     }
 
     return true;
@@ -275,7 +278,7 @@ static bool internal_item_use(Item* it, void* _player)
     {
         case ITEM_GUN:
         {
-            player_set_gun(p, &gun_list[it->user_data], true);
+            player_set_gun(p, it->user_data3, true);
         } break;
         case ITEM_HEART_FULL:
         {

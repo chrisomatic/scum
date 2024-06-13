@@ -85,6 +85,7 @@ typedef struct
     char desc[32];
     uint8_t user_data;
     uint32_t user_data2;
+    uint8_t user_data3;
 
     // Networking
     float lerp_t;

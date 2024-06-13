@@ -934,10 +934,12 @@ void init()
     LOGI(" - Items.");
     item_init();
 
+    /*
     if(role == ROLE_LOCAL)
     {
         trigger_generate_level(level_seed, level_rank, 0, __LINE__);
     }
+    */
 
     // camera_zoom(cam_zoom, true);
     camera_move(0,0,cam_zoom,true,NULL);
@@ -1132,6 +1134,12 @@ void update_main_menu(float dt)
         if(STR_EQUAL(s, "Continue Game"))
         {
             role = ROLE_LOCAL;
+            static bool first_init = true;
+            if(first_init)
+            {
+                first_init = false;
+                trigger_generate_level(level_seed, level_rank, 0, __LINE__);
+            }
             set_game_state(GAME_STATE_PLAYING);
         }
         else if(STR_EQUAL(s, "New Game"))

@@ -93,6 +93,9 @@ static int projectile_image;
 Gun gun_list[MAX_GUNS];
 int gun_list_count = 0;
 
+Gun room_gun_list[8];
+int room_gun_count = 0;
+
 static uint16_t id_counter = 1;
 static uint16_t get_id()
 {
@@ -159,72 +162,78 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
 
     Projectile proj = {0};
 
-    proj.gun = *gun;
+    if(from_player)
+        proj.room_gun_index = players[from_id].room_gun_index;
+    else
+        proj.room_gun_index = 0; // TODO: handle creatures
+
+    Gun* proj_gun = &room_gun_list[proj.room_gun_index];
+
     proj.from_id = from_id;
 
-    if(proj.gun.charging)
+    if(proj_gun->charging)
     {
-        proj.gun.charging = false;
-        float factor  = (proj.gun.charge_time / proj.gun.charge_time_max);
+        proj_gun->charging = false;
+        float factor  = (proj_gun->charge_time / proj_gun->charge_time_max);
 
-        switch(proj.gun.charge_type)
+        switch(proj_gun->charge_type)
         {
             case CHARGE_TYPE_SCALE_DAMAGE:
             {
-                proj.gun.damage_min *= (1.0 + factor);
-                proj.gun.damage_max *= (1.0 + factor);
-                proj.gun.scale1 *= (1.0 + factor);
-                proj.gun.scale2 *= (1.0 + factor);
+                proj_gun->damage_min *= (1.0 + factor);
+                proj_gun->damage_max *= (1.0 + factor);
+                proj_gun->scale1 *= (1.0 + factor);
+                proj_gun->scale2 *= (1.0 + factor);
             }   break;
             case CHARGE_TYPE_SCALE_NUM:
             {
                 int num = (int)(factor*gun->num);
-                proj.gun.num = MAX(1,num);
+                proj_gun->num = MAX(1,num);
             } break;
             case CHARGE_TYPE_SCALE_BURST_COUNT:
             {
                 int burst_count = (int)(factor*gun->burst_count);
-                proj.gun.burst_count = burst_count;
+                proj_gun->burst_count = burst_count;
             } break;
         }
     }
 
-    Rect vr = gfx_images[projectile_image].visible_rects[proj.gun.sprite_index];
+    Rect vr = gfx_images[projectile_image].visible_rects[proj_gun->sprite_index];
 
-    vr.w *= proj.gun.scale1;
-    vr.h *= proj.gun.scale1;
+    vr.w *= proj_gun->scale1;
+    vr.h *= proj_gun->scale1;
 
-    proj.color = proj.gun.color1;
-    proj.sprite_index = proj.gun.sprite_index;
+    proj.color = proj_gun->color1;
+    proj.sprite_index = proj_gun->sprite_index;
     proj.phys.height = vr.h;
     proj.phys.width =  vr.w;
     proj.phys.length = vr.h;
-    proj.phys.scale = proj.gun.scale1;
+    proj.phys.scale = proj_gun->scale1;
     proj.phys.vr = vr;
     proj.phys.pos.x = pos.x;
     proj.phys.pos.y = pos.y;
     proj.phys.pos.z = pos.z;
     proj.phys.mass = 1.0;
-    proj.phys.base_friction = proj.gun.air_friction;
-    proj.phys.speed = proj.gun.speed;
-    proj.phys.max_velocity = 2.0*proj.gun.speed;
-    proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * proj.gun.scale1;
+    proj.phys.base_friction = proj_gun->air_friction;
+    proj.phys.speed = proj_gun->speed;
+    proj.phys.max_velocity = 2.0*proj_gun->speed;
+    proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * proj_gun->scale1;
     proj.phys.rotation_deg = angle_deg;
 
-    bool bouncy = RAND_FLOAT(0.0,1.0) <= proj.gun.bounce_chance;
+    bool bouncy = RAND_FLOAT(0.0,1.0) <= proj_gun->bounce_chance;
     proj.phys.amorphous = bouncy ? false : true;
     proj.phys.elasticity = bouncy ? 1.0 : 0.1;
 
     proj.phys.curr_room = curr_room;
     proj.from_player = from_player;
     proj.angle_deg = angle_deg;
-    proj.ttl = proj.gun.lifetime;
-    proj.wave_time = proj.gun.wave_period / 2.0;
+    proj.ttl = proj_gun->lifetime;
+    proj.wave_time = proj_gun->wave_period / 2.0;
     proj.wave_dir = 1;
 
     // TODO: Move bursting code to this function
 
-    if(proj.gun.orbital)
+    if(proj_gun->orbital)
     {
         // assign projectile to orbital
         ProjectileOrbital* orbital = NULL;
@@ -241,7 +250,7 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
                 continue;
             }
 
-            if(phys == orb->body && proj.gun.orbital_distance == orb->distance)
+            if(phys == orb->body && proj_gun->orbital_distance == orb->distance)
             {
                 new_orbital = false;
                 orbital = orb;
@@ -260,9 +269,9 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
             orbital_count++;
             printf("New orbital! Count: %d\n", orbital_count);
             orbital->body = phys;
-            orbital->distance = proj.gun.orbital_distance;
-            orbital->speed_factor = proj.gun.orbital_speed_factor;
-            orbital->max_count = proj.gun.orbital_max_count;
+            orbital->distance = proj_gun->orbital_distance;
+            orbital->speed_factor = proj_gun->orbital_speed_factor;
+            orbital->max_count = proj_gun->orbital_max_count;
             orbital->base_angle = 0.0;
             orbital->evolution = PROJ_ORB_EVOLUTION_NONE;
         }
@@ -310,18 +319,18 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
         }
     }
 
-    proj.cluster_stage = proj.gun.cluster_stage;
+    proj.cluster_stage = proj_gun->cluster_stage;
 
-    float spread = proj.gun.spread_type == SPREAD_TYPE_RANDOM ? proj.gun.spread/2.0 : proj.gun.spread / proj.gun.num;
-    float spread_angle_start = angle_deg - (proj.gun.spread/2.0);
+    float spread = proj_gun->spread_type == SPREAD_TYPE_RANDOM ? proj_gun->spread/2.0 : proj_gun->spread / proj_gun->num;
+    float spread_angle_start = angle_deg - (proj_gun->spread/2.0);
 
     uint16_t target_ids[32] = {0};
     int target_count = 0;
 
-    for(int i = 0; i < proj.gun.num; ++i)
+    for(int i = 0; i < proj_gun->num; ++i)
     {
 
-        for(int j = 0; j < proj.gun.burst_count+1; ++j)
+        for(int j = 0; j < proj_gun->burst_count+1; ++j)
         {
             Projectile p = {0};
             memcpy(&p, &proj, sizeof(Projectile));
@@ -329,35 +338,35 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
 
             if(j > 0)   // burst
             {
-                p.tts = 1/60.0*((j)*(1.0/proj.gun.burst_rate));
+                p.tts = 1/60.0*((j)*(1.0/proj_gun->burst_rate));
                 p.shooter = phys;
             }
 
-            p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= proj.gun.ghost_chance;
-            p.fire = RAND_FLOAT(0.0,1.0) <= proj.gun.fire_damage;
-            p.cold = RAND_FLOAT(0.0,1.0) <= proj.gun.cold_damage;
-            p.lightning = RAND_FLOAT(0.0,1.0) <= proj.gun.lightning_damage;
-            p.poison = RAND_FLOAT(0.0,1.0) <= proj.gun.poison_damage;
-            bool homing = RAND_FLOAT(0.0,1.0) <= proj.gun.homing_chance;
+            p.phys.ethereal = RAND_FLOAT(0.0,1.0) <= proj_gun->ghost_chance;
+            p.fire = RAND_FLOAT(0.0,1.0) <= proj_gun->fire_damage;
+            p.cold = RAND_FLOAT(0.0,1.0) <= proj_gun->cold_damage;
+            p.lightning = RAND_FLOAT(0.0,1.0) <= proj_gun->lightning_damage;
+            p.poison = RAND_FLOAT(0.0,1.0) <= proj_gun->poison_damage;
+            bool homing = RAND_FLOAT(0.0,1.0) <= proj_gun->homing_chance;
 
             if(!FEQ0(spread))
             {
-                if(proj.gun.spread_type == SPREAD_TYPE_RANDOM)
+                if(proj_gun->spread_type == SPREAD_TYPE_RANDOM)
                 {
                     p.angle_deg += RAND_FLOAT(-spread, spread);
                 }
-                else if(i > 0 && proj.gun.spread_type == SPREAD_TYPE_UNIFORM)
+                else if(i > 0 && proj_gun->spread_type == SPREAD_TYPE_UNIFORM)
                 {
                     p.angle_deg = angle_deg + (i*spread);
-                    if(p.angle_deg > angle_deg + proj.gun.spread/2.0)
-                        p.angle_deg += (360 - proj.gun.spread);
+                    if(p.angle_deg > angle_deg + proj_gun->spread/2.0)
+                        p.angle_deg += (360 - proj_gun->spread);
                 }
             }
 
             float angle = RAD(p.angle_deg);
 
-            p.phys.vel.x = +(p.gun.speed)*cosf(angle) + vel->x;
-            p.phys.vel.y = -(p.gun.speed)*sinf(angle) + vel->y;
+            p.phys.vel.x = +(proj_gun->speed)*cosf(angle) + vel->x;
+            p.phys.vel.y = -(proj_gun->speed)*sinf(angle) + vel->y;
             p.phys.vel.z = vel->z;
 
             if(homing)
@@ -377,8 +386,8 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
                     Vector2f v = {tx - p.phys.pos.x, ty - p.phys.pos.y};
                     normalize(&v);
                     p.angle_deg = calc_angle_deg(p.phys.pos.x, p.phys.pos.y, tx, ty);
-                    p.phys.vel.x = v.x * p.gun.speed;
-                    p.phys.vel.y = v.y * p.gun.speed;
+                    p.phys.vel.x = v.x * proj_gun->speed;
+                    p.phys.vel.y = v.y * proj_gun->speed;
 
                     target_ids[target_count++] = id;
                 }
@@ -427,11 +436,15 @@ void projectile_kill(Projectile* proj)
     //audio_source_play(proj->source_explode);
     //audio_source_delete(proj->source_explode);
 
-    Gun gun = proj->gun;
-    bool more_cluster = proj->gun.cluster && (proj->cluster_stage < (MAX_CLUSTER_STAGES) && proj->cluster_stage < (gun.cluster_stages));
+    Gun* proj_gun = &room_gun_list[proj->room_gun_index];
+
+    Gun gun;
+    memcpy(&gun,proj_gun,sizeof(Gun));
+
+    bool more_cluster = proj_gun->cluster && (proj->cluster_stage < (MAX_CLUSTER_STAGES) && proj->cluster_stage < (gun.cluster_stages));
 
     const float scale_particle_thresh = 0.25;
-    float pscale = MIN(1.0, proj->gun.scale2);
+    float pscale = MIN(1.0, proj_gun->scale2);
 
     if(pscale > scale_particle_thresh && !more_cluster)
     {
@@ -488,15 +501,15 @@ void projectile_kill(Projectile* proj)
 
     if(role != ROLE_SERVER)
     {
-        bool explosive = RAND_FLOAT(0.0,1.0) <= proj->gun.explosion_chance;
+        bool explosive = RAND_FLOAT(0.0,1.0) <= proj_gun->explosion_chance;
 
         if(explosive)
         {
-            explosion_add(proj->phys.pos.x, proj->phys.pos.y, proj->gun.explosion_radius, proj->gun.explosion_rate, proj->phys.curr_room, proj->from_player);
+            explosion_add(proj->phys.pos.x, proj->phys.pos.y, proj_gun->explosion_radius, proj_gun->explosion_rate, proj->phys.curr_room, proj->from_player);
         }
     }
 
-    if(proj->gun.orbital)
+    if(proj_gun->orbital)
     {
         proj->orbital->count--;
         //proj->orbital->lerp_t = 0.0;
@@ -534,14 +547,15 @@ void projectile_kill(Projectile* proj)
         }
     }
 
-    if(proj->gun.cluster)
+    if(proj_gun->cluster)
     {
 
         if(!more_cluster)
             return;
 
         // printf("cluster\n");
-        Gun gun = proj->gun;
+        Gun gun;
+        memcpy(&gun, proj_gun, sizeof(Gun));
 
         if(proj->cluster_stage >= (3) || proj->cluster_stage >= (gun.cluster_stages))
         {
@@ -581,6 +595,8 @@ void projectile_update_all(float dt)
     {
         Projectile* proj = &projectiles[i];
 
+        Gun* proj_gun = &room_gun_list[proj->room_gun_index];
+
         if(role == ROLE_CLIENT)
         {
             projectile_lerp(proj, dt);
@@ -610,7 +626,7 @@ void projectile_update_all(float dt)
 
         float _dt = dt;
 
-        if(proj->gun.orbital && proj->orbital->body)
+        if(proj->orbital && proj->orbital->body)
         {
             // make sure orbital projectile follows player through rooms
             proj->phys.curr_room = proj->orbital->body->curr_room;
@@ -636,8 +652,8 @@ void projectile_update_all(float dt)
 
             normalize(&f);
 
-            proj->phys.vel.x = proj->gun.speed * f.y;
-            proj->phys.vel.y = proj->gun.speed * -f.x;
+            proj->phys.vel.x = proj_gun->speed * f.y;
+            proj->phys.vel.y = proj_gun->speed * -f.x;
         }
         else
         {
@@ -649,12 +665,12 @@ void projectile_update_all(float dt)
             float angle = RAD(proj->angle_deg);
             float vel_magn = magn(proj->phys.vel);
 
-            if(proj->gun.directional_accel != 0.0)
+            if(proj_gun->directional_accel != 0.0)
             {
                 Vector2f f = {cos(angle), -sin(angle)};
                 normalize(&f);
 
-                float accel = proj->gun.directional_accel * 1500.0 * _dt;
+                float accel = proj_gun->directional_accel * 1500.0 * _dt;
 
                 proj->phys.vel.x += (f.x * accel);
                 proj->phys.vel.y += (f.y * accel);
@@ -666,8 +682,8 @@ void projectile_update_all(float dt)
                     Vector2f c = {proj->phys.vel.x, proj->phys.vel.y};
                     normalize(&c);
 
-                    proj->phys.vel.x = c.x * proj->gun.speed;
-                    proj->phys.vel.y = c.y * proj->gun.speed;
+                    proj->phys.vel.x = c.x * proj_gun->speed;
+                    proj->phys.vel.y = c.y * proj_gun->speed;
                 }
                 */
             }
@@ -677,7 +693,7 @@ void projectile_update_all(float dt)
                 Vector2f c = {-proj->phys.vel.x, -proj->phys.vel.y};
                 normalize(&c);
 
-                float friction = _dt*4*proj->gun.speed*proj->phys.base_friction;
+                float friction = _dt*4*proj_gun->speed*proj->phys.base_friction;
 
                 float fx = MIN(ABS(proj->phys.vel.x), friction);
                 float fy = MIN(ABS(proj->phys.vel.y), friction);
@@ -686,24 +702,24 @@ void projectile_update_all(float dt)
                 proj->phys.vel.y += fy*c.y;
             }
 
-            if(proj->gun.wave_amplitude > 0.0)
+            if(proj_gun->wave_amplitude > 0.0)
             {
-                if(proj->gun.wave_period > 0.0)
+                if(proj_gun->wave_period > 0.0)
                 {
                     Vector2f f = {sin(angle), cos(angle)};
                     normalize(&f);
 
                     proj->wave_time += _dt;
 
-                    if(proj->wave_time >= proj->gun.wave_period)
+                    if(proj->wave_time >= proj_gun->wave_period)
                     {
-                        while(proj->wave_time >= proj->gun.wave_period)
-                            proj->wave_time -= proj->gun.wave_period;
+                        while(proj->wave_time >= proj_gun->wave_period)
+                            proj->wave_time -= proj_gun->wave_period;
 
                         proj->wave_dir = proj->wave_dir == 1 ? -1 : 1;
                     }
 
-                    float ampl = proj->gun.wave_amplitude;
+                    float ampl = proj_gun->wave_amplitude;
 
                     f.x *= proj->wave_dir*ampl*10*_dt;
                     f.y *= proj->wave_dir*ampl*10*_dt;
@@ -715,15 +731,15 @@ void projectile_update_all(float dt)
                 }
             }
 
-            float cfactor = proj->ttl / proj->gun.lifetime;
-            proj->color = gfx_blend_colors(proj->gun.color2, proj->gun.color1, cfactor);
-            proj->phys.scale = lerp(proj->gun.scale2, proj->gun.scale1, cfactor);
+            float cfactor = proj->ttl / proj_gun->lifetime;
+            proj->color = gfx_blend_colors(proj_gun->color2, proj_gun->color1, cfactor);
+            proj->phys.scale = lerp(proj_gun->scale2, proj_gun->scale1, cfactor);
             proj->phys.radius = (MAX(proj->phys.length, proj->phys.width) / 2.0) * proj->phys.scale;
         }
 
-        if(!FEQ0(proj->gun.spin_factor))
+        if(!FEQ0(proj_gun->spin_factor))
         {
-            proj->phys.rotation_deg += (proj->gun.spin_factor*1080.0*_dt);
+            proj->phys.rotation_deg += (proj_gun->spin_factor*1080.0*_dt);
             proj->phys.rotation_deg = fmod(proj->phys.rotation_deg, 360.0);
         }
 
@@ -736,9 +752,9 @@ void projectile_update_all(float dt)
         proj->phys.pos.x += _dt*proj->phys.vel.x;
         proj->phys.pos.y += _dt*proj->phys.vel.y;
 
-        if(!proj->gun.orbital)
+        if(!proj_gun->orbital)
         {
-            phys_apply_gravity(&proj->phys, proj->gun.gravity_factor, _dt);
+            phys_apply_gravity(&proj->phys, proj_gun->gravity_factor, _dt);
         }
 
         // printf("proj->phys.pos.z: %.2f\n", proj->phys.pos.z);
@@ -780,7 +796,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
     if(proj->phys.dead)
         return;
 
-    Gun* gun = &proj->gun;
+    Gun* gun = &room_gun_list[proj->room_gun_index];
 
     uint8_t curr_room = 0;
     Physics* phys = NULL;
@@ -855,7 +871,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
                 players[proj->from_id].room_hits++;
             }
 
-            bool penetrate = RAND_FLOAT(0.0,1.0) <= proj->gun.penetration_chance;
+            bool penetrate = RAND_FLOAT(0.0,1.0) <= gun->penetration_chance;
             if(!penetrate)
             {
                 CollisionInfo ci = {0.0,0.0};
@@ -900,7 +916,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
     bool explosive = RAND_FLOAT(0.0,1.0) <= gun->explosion_chance;
     if(hit && explosive)
     {
-        explosion_add(proj->phys.pos.x, proj->phys.pos.y, proj->gun.explosion_radius, proj->gun.explosion_rate, proj->phys.curr_room, proj->from_player);
+        explosion_add(proj->phys.pos.x, proj->phys.pos.y, gun->explosion_radius, gun->explosion_rate, proj->phys.curr_room, proj->from_player);
     }
 }
 
@@ -1534,3 +1550,57 @@ void gun_refresh_list()
     }
     */
 }
+
+void refresh_visible_room_gun_list()
+{
+    if(!visible_room)
+        return;
+
+    // clear room gun list
+    memset(room_gun_list, 0, 8*sizeof(Gun));
+    room_gun_count = 0;
+    
+    // add player guns
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        Player* p = &players[i];
+
+        if(!p->active) continue;
+        if(p->phys.dead) continue;
+        if(room_gun_count >= 8) break;
+
+        memcpy(&room_gun_list[room_gun_count++], &p->gun, sizeof(Gun));
+        p->room_gun_index = room_gun_count-1;
+    }
+    
+    // add room item guns
+    for(int i = 0; i < item_list->count; ++i)
+    {
+        Item* it = &items[i];
+
+        if(it->type != ITEM_GUN) continue;
+        if(it->phys.curr_room != visible_room->index) continue;
+        if(room_gun_count >= 8) break;
+
+        memcpy(&room_gun_list[room_gun_count++], &gun_list[it->user_data], sizeof(Gun));
+        it->user_data3 = (uint8_t)(room_gun_count-1);
+    }
+
+    printf("Refreshing room gun list. Count: %d\n", room_gun_count);
+    for(int i = 0; i < room_gun_count; ++i)
+        printf("  %d) %s\n", i, room_gun_list[i].name);
+}
+
+int add_to_room_gun_list(Gun* g)
+{
+    if(!visible_room)
+        return -1;
+
+    if(room_gun_count >= 8)
+        return -1;
+
+    memcpy(&room_gun_list[room_gun_count++], g, sizeof(Gun));
+
+    return room_gun_count-1;
+}
+

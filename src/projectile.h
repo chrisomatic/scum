@@ -206,8 +206,8 @@ typedef struct
     uint16_t from_id;
 
     uint16_t id;
+    uint8_t room_gun_index;
 
-    Gun gun;
     Physics phys;
 
     float ttl;
@@ -257,6 +257,9 @@ extern Gun gun_list[];
 extern int gun_list_count;
 extern glist* plist;
 
+extern Gun room_gun_list[];
+extern int room_gun_count;
+
 void projectile_init();
 void projectile_clear_all();
 
@@ -285,3 +288,7 @@ void gun_refresh_list();
 void gun_print(Gun* gun);
 bool gun_get_by_name(char* gun_name, Gun* gun);
 bool is_gun_file_base_gun(const char* file_name);
+
+// room gun list
+void refresh_visible_room_gun_list();
+int add_to_room_gun_list(Gun* g);

@@ -399,6 +399,7 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
     // room->doors_locked = (creature_get_room_count(room->index, false) != 0);
 
     visible_room = room;
+    refresh_visible_room_gun_list();
 
     Vector2f pos = {0};
     level_get_safe_floor_tile(room, tile, NULL, &pos);
@@ -1137,7 +1138,8 @@ static void player_handle_orbitals(Player* p, float dt)
 
             // eject
             p->proj_cooldown = p->gun.cooldown;
-            projectiles[i].gun.orbital = false;
+
+            //gun.orbital = false;
             projectiles[i].orbital->count--;
 
             // adjust orbital indices for other projectiles
@@ -2761,25 +2763,28 @@ Vector2i stats_get_img(StatType stat)
     return ret;
 }
 
-void player_set_gun(Player* p, Gun* g, bool drop_old_gun)
+void player_set_gun(Player* p, uint8_t room_gun_index, bool drop_old_gun)
 {
-    Gun gun_prior = {0};
-    memcpy(&gun_prior, &p->gun, sizeof(Gun));
-
     p->proj_cooldown = 0.0;
 
-    memcpy(&p->gun, g, sizeof(Gun));
+    uint8_t prior_room_gun_index = p->room_gun_index;
+    p->room_gun_index = room_gun_index;
+
+    memcpy(&p->gun, &room_gun_list[room_gun_index], sizeof(Gun));
+
+    Gun* gun_prior = &room_gun_list[prior_room_gun_index];
 
     if(drop_old_gun)
     {
         for(int i = 0; i < gun_list_count; ++i)
         {
-            if(STR_EQUAL(gun_prior.name, gun_list[i].name))
+            if(STR_EQUAL(gun_prior->name, gun_list[i].name))
             {
                 float x = p->phys.pos.x;
                 float y = p->phys.pos.y;
                 int croom = p->phys.curr_room;
                 Item* it = item_add_gun(i, 0, x, y, croom);
+                it->user_data3 = prior_room_gun_index;
                 return;
             }
         }
