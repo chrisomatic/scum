@@ -128,11 +128,6 @@ typedef struct
     PlayerActions last_shoot_action;
     float shoot_sprite_cooldown;
 
-    // Item gauntlet_item;
-    uint8_t gauntlet_selection;
-    uint8_t gauntlet_slots;
-    Item gauntlet[PLAYER_GAUNTLET_MAX];
-
     Skill skills[PLAYER_MAX_SKILLS];
     int skill_count;
 
@@ -208,9 +203,7 @@ extern float jump_vel_z;
 extern int shadow_image;
 
 void player_init();
-uint8_t player_get_gauntlet_count(Player* p);
 void player_drop_item(Player* p, Item* it);
-bool player_gauntlet_full(Player* p);
 void player_init_keys();
 void player2_init_keys();
 void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i tile);
@@ -251,7 +244,6 @@ void player_set_gun(Player* p, Gun* g, bool drop_old_gun);
 void draw_all_other_player_info();
 void draw_hearts();
 void draw_mp_bar();
-void draw_gauntlet();
 void draw_equipped_gun();
 
 int get_xp_req(int level);

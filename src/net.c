@@ -2573,8 +2573,6 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
                 BPW(&server.bp, 3, (uint32_t)p->stats[j]);
             }
 
-            BPW(&server.bp, 4,  (uint32_t)p->gauntlet_selection);
-
             BPW(&server.bp, 1, (uint32_t)(p->invulnerable_temp ? 1 : 0));
             BPW(&server.bp, 6, (uint32_t)p->invulnerable_temp_time);
             BPW(&server.bp, 4, (uint32_t)p->door);
@@ -2692,9 +2690,6 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         {
             p->stats[j] = stats[j];
         }
-
-
-        p->gauntlet_selection = (uint8_t)gauntlet_selection;
 
         p->invulnerable_temp = invunerable_temp == 1 ? true : false;
         float invulnerable_temp_time = (float)inv_temp_time;

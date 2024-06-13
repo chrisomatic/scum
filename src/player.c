@@ -174,7 +174,6 @@ void player_set_defaults(Player* p)
     p->anim.frame_sequence[2] = 2;
     p->anim.frame_sequence[3] = 3;
 
-    p->gauntlet_selection = 0;
 
     p->total_hits = 0;
     p->level_hits = 0;
@@ -275,9 +274,6 @@ void player_print(Player* p)
     printf("    xp:         %d\n", p->xp);
     printf("    level:      %d\n", p->level);
     printf("    new_levels: %d\n", p->new_levels);
-    printf("    gauntlet_selection: %u\n", p->gauntlet_selection);
-    // printf("    gauntlet_slots:     %u\n", p->gauntlet_slots);
-    // printf("    skill_count:      %d\n", p->skill_count);
     printf("    sprite_index:    %u\n", p->sprite_index);
     printf("    curr_room:       %u\n", p->phys.curr_room);
     printf("    transition_room: %u\n", p->transition_room);
@@ -340,23 +336,6 @@ void player_drop_item(Player* p, Item* it)
     item_set_description(a, "%s", it->desc);
     it->type = ITEM_NONE;
 }
-
-uint8_t player_get_gauntlet_count(Player* p)
-{
-    uint8_t count = 0;
-    // for(int i = 0; i < p->gauntlet_slots; ++i)
-    // {
-    //     if(p->gauntlet[i].type != ITEM_NONE)
-    //         count++;
-    // }
-    return count;
-}
-
-bool player_gauntlet_full(Player* p)
-{
-    return (player_get_gauntlet_count(p) == p->gauntlet_slots);
-}
-
 
 void player_set_active(Player* p, bool active)
 {
@@ -473,14 +452,14 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_USE_ITEM].state, GLFW_KEY_U);
     window_controls_add_key(&player->actions[PLAYER_ACTION_DROP_ITEM].state, GLFW_KEY_N);
 
-    window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_1].state, GLFW_KEY_1);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_2].state, GLFW_KEY_2);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_3].state, GLFW_KEY_3);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_4].state, GLFW_KEY_4);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_5].state, GLFW_KEY_5);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_6].state, GLFW_KEY_6);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_7].state, GLFW_KEY_7);
-    window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_8].state, GLFW_KEY_8);
+    // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_1].state, GLFW_KEY_1);
+    // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_2].state, GLFW_KEY_2);
+    // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_3].state, GLFW_KEY_3);
+    // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_4].state, GLFW_KEY_4);
+    // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_5].state, GLFW_KEY_5);
+    // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_6].state, GLFW_KEY_6);
+    // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_7].state, GLFW_KEY_7);
+    // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_8].state, GLFW_KEY_8);
 
     window_controls_add_key(&player->actions[PLAYER_ACTION_TAB_CYCLE].state, GLFW_KEY_TAB);
 
@@ -707,24 +686,6 @@ void player_hurt(Player* p, int damage)
 void player_die(Player* p)
 {
 
-    /*
-    for(int i = 0; i < PLAYER_GAUNTLET_MAX; ++i)
-    {
-        if(i < p->gauntlet_slots)
-        {
-            if(p->gauntlet[i].type == ITEM_REVIVE)
-            {
-                p->phys.dead = true;
-                Item* it = &p->gauntlet[i];
-                if(item_props[it->type].func) item_props[it->type].func(it, p);
-                it->type = ITEM_NONE;
-                text_list_add(text_lst, COLOR_WHITE, 3.0, "Revived!");
-                return;
-            }
-        }
-    }
-    */
-
     text_list_add(text_lst, COLOR_WHITE, 3.0, "%s died.", p->settings.name);
 
     p->phys.hp = 0;
@@ -735,16 +696,6 @@ void player_die(Player* p)
     p->total_hits = 0;
     p->level_hits = 0;
     p->room_hits = 0;
-
-    // // drop all items
-    // for(int i = 0; i < PLAYER_GAUNTLET_MAX; ++i)
-    // {
-    //     if(p->gauntlet[i].type == ITEM_NONE)
-    //         continue;
-
-    //     player_drop_item(p, &p->gauntlet[i]);
-    //     p->gauntlet[i].type = ITEM_NONE;
-    // }
 
     ParticleEffect* eff = &particle_effects[EFFECT_BLOOD2];
     ParticleSpawner* ps = particles_spawn_effect(p->phys.pos.x,p->phys.pos.y, 0.0, eff, 0.5, true, false);
@@ -1496,29 +1447,6 @@ void player_update(Player* p, float dt)
         }
     }
 
-    for(int i = 0; i < PLAYER_GAUNTLET_MAX; ++i)
-    {
-        bool _pressed = p->actions[PLAYER_ACTION_ITEM_1+i].toggled_on;
-        if(_pressed)
-        {
-            if(i < PLAYER_MAX_SKILLS)
-            {
-                p->gauntlet_selection = i;
-            }
-            break;
-        }
-    }
-
-    skills_update_timers((void*)p, dt);
-
-    if(action_use)
-    {
-        if(p->skills[p->gauntlet_selection].type != SKILL_TYPE_NONE)
-        {
-            skills_use(p, &p->skills[p->gauntlet_selection]);
-        }
-    }
-
     // apply stats
     p->phys.speed         = lookup_movement_speed[p->stats[MOVEMENT_SPEED]];
     p->phys.max_velocity  = lookup_movement_speed_max_vel[p->stats[MOVEMENT_SPEED]];
@@ -1529,7 +1457,6 @@ void player_update(Player* p, float dt)
     p->phys.max_velocity  += p->skill_mods.max_velocity;
     p->phys.base_friction += p->skill_mods.base_friction;
     p->phys.floating       = p->phys.dead || p->skill_mods.floating;
-
 
     float cx = p->phys.collision_rect.x;
     float cy = p->phys.collision_rect.y;
@@ -2199,6 +2126,7 @@ void draw_mp_bar()
     gfx_draw_string(x+1, y+h+2, COLOR_WHITE, 0.15*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "MP: %02d/%02d", player->phys.mp, player->phys.mp_max);
 }
 
+#if 0
 void draw_gauntlet()
 {
     float len = 50.0 * ascale;
@@ -2289,6 +2217,7 @@ void draw_gauntlet()
         r.x += margin;
     }
 }
+#endif
 
 void draw_stats()
 {
