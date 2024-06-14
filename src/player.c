@@ -1089,8 +1089,6 @@ static void player_handle_orbitals(Player* p, float dt)
 
         temp.speed  += lookup_attack_range[p->stats[ATTACK_RANGE]];
 
-        uint32_t color = 0x0050A0FF;
-
         int max = p->gun.orbital_max_count;
         if(orb) max -= orb->count;
 
@@ -1414,7 +1412,6 @@ void player_update(Player* p, float dt)
                     break;
             }
         }
-
 
         bool on_edge = memcmp(&p->phys.curr_tile, &c_tile, sizeof(Vector2i)) != 0;
         bool dir_edge[4] = {0};
@@ -2682,13 +2679,19 @@ void player_set_gun(Player* p, uint8_t room_gun_index, bool drop_old_gun)
 
     memcpy(&p->gun, &room_gun_list[room_gun_index], sizeof(Gun));
 
+    printf("Gun Perks (%d):\n", p->gun.num_perks);
+    for(int i = 0; i < p->gun.num_perks; ++i)
+    {
+        printf("[%d] %s\n", i, get_gun_perk_name(p->gun.perks[i]));
+    }
+
     Gun* gun_prior = &room_gun_list[prior_room_gun_index];
 
     if(drop_old_gun)
     {
-        for(int i = 0; i < gun_list_count; ++i)
+        for(int i = 0; i < gun_catalog_count; ++i)
         {
-            if(STR_EQUAL(gun_prior->name, gun_list[i].name))
+            if(STR_EQUAL(gun_prior->name, gun_catalog[i].name))
             {
                 float x = p->phys.pos.x;
                 float y = p->phys.pos.y;

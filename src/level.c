@@ -506,7 +506,7 @@ void level_place_entities(Level* level)
                 {
                     //TODO: determine gun
                     slrand(&rg_room, room->rand_seed);
-                    it = item_add_gun(lrand(&rg_room) % gun_list_count, lrand(&rg_room), pos.x, pos.y, room->index);
+                    it = item_add_gun(lrand(&rg_room) % gun_catalog_count, lrand(&rg_room), pos.x, pos.y, room->index);
                 }
                 else
                     it = item_add(rfd->item_types[i], pos.x, pos.y, room->index);

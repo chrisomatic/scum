@@ -950,9 +950,9 @@ void editor_draw()
 
             char* gun_names[MAX_GUNS] = {0};
 
-            for(int i = 0; i < gun_list_count; ++i)
+            for(int i = 0; i < gun_catalog_count; ++i)
             {
-                gun_names[i] = (char*)gun_list[i].name;
+                gun_names[i] = (char*)gun_catalog[i].name;
                 if(refresh_gun_sel && STR_EQUAL(player->gun.name, gun_names[i]))
                 {
                     gun_sel = i;
@@ -961,11 +961,11 @@ void editor_draw()
 
             refresh_gun_sel = false;
 
-            imgui_listbox(gun_names, gun_list_count, "Guns", &gun_sel, 10);
+            imgui_listbox(gun_names, gun_catalog_count, "Guns", &gun_sel, 10);
 
             if(gun_sel != gun_sel_prior)
             {
-                gun = gun_list[gun_sel];
+                gun = gun_catalog[gun_sel];
             }
 
             if(memcmp(&gun, &gun_prior, sizeof(Gun)) != 0)
@@ -985,7 +985,7 @@ void editor_draw()
             imgui_horizontal_begin();
                 if(imgui_button("<")) gun_sel -= 1;
                 if(imgui_button(">")) gun_sel += 1;
-                gun_sel = BOUND(gun_sel, 0, gun_list_count-1);
+                gun_sel = BOUND(gun_sel, 0, gun_catalog_count-1);
             imgui_horizontal_end();
 
             imgui_end();

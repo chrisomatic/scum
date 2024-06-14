@@ -43,7 +43,6 @@ typedef enum
 
 typedef enum
 {
-    GUN_PERK_NONE,
     GUN_PERK_INCREASE_BASE_DAMAGE_1,
     GUN_PERK_INCREASE_BASE_DAMAGE_2,
     GUN_PERK_INCREASE_BASE_DAMAGE_3,
@@ -87,6 +86,7 @@ typedef enum
     GUN_PERK_MAX_GHOST_CHANCE,
     GUN_PERK_MAX_HOMING_CHANCE,
     GUN_PERK_INCREASE_CRIT_HIT_CHANCE_4,
+    GUN_PERK_COUNT,
 } GunPerk;
 
 typedef struct
@@ -168,8 +168,7 @@ typedef struct
     int burst_count;
     float burst_rate;
 
-    uint32_t perk_seed;
-
+    // perks
     GunPerk perks[MAX_PERKS];
     int num_perks;
 
@@ -254,8 +253,10 @@ typedef struct
 
 extern Projectile projectiles[MAX_PROJECTILES];
 extern Projectile prior_projectiles[MAX_PROJECTILES];
-extern Gun gun_list[];
-extern int gun_list_count;
+
+extern Gun gun_catalog[];
+extern int gun_catalog_count;
+
 extern glist* plist;
 
 extern Gun room_gun_list[];
@@ -288,5 +289,7 @@ bool is_gun_file_base_gun(const char* file_name);
 
 // room gun list
 void refresh_visible_room_gun_list();
-int add_to_room_gun_list(Gun* g);
+void add_to_room_gun_list(void* it);
 void replace_player_room_gun(void* p, Gun* g);
+
+char* get_gun_perk_name(GunPerk p);

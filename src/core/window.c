@@ -347,7 +347,7 @@ static bool get_window_monitor(GLFWmonitor** monitor, GLFWwindow* window)
 
 static void window_size_callback(GLFWwindow* window, int width, int height)
 {
-    printf("Window Resized: W %d, H %d\n",width,height);
+    //printf("Window Resized: W %d, H %d\n",width,height);
 
     window_height = height;
     window_width  = width; //ASPECT_RATIO * window_height;

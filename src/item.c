@@ -110,10 +110,10 @@ static bool item_func_chest_gun(Item* it, Player* p)
 
     for(int i = 0; i < num; ++i)
     {
-        int r = rand() % gun_list_count;
-        Item* it = item_add_gun(r, 0, x, y, croom);
+        int r = rand() % gun_catalog_count;
+        Item* it = item_add_gun(r, rand(), x, y, croom);
         if(!it) continue;
-        it->user_data3 = add_to_room_gun_list(&gun_list[r]);
+        add_to_room_gun_list(it);
     }
 
     return true;
@@ -711,7 +711,7 @@ Item* item_add_gun(uint8_t gun_index, uint32_t seed, float x, float y, uint8_t c
     it->user_data = gun_index;
     it->user_data2 = seed;
 
-    Gun* gun = &gun_list[it->user_data];
+    Gun* gun = &gun_catalog[it->user_data];
     item_set_description(it, "%s: %s", gun->name, gun->desc);
 
     it->phys.vr = gfx_images[ item_props[ITEM_GUN].image ].visible_rects[ gun->gun_sprite_index ];
@@ -1030,7 +1030,7 @@ void item_draw(Item* it)
 
     if(it->type == ITEM_GUN)
     {
-        Gun* gun = &gun_list[it->user_data];
+        Gun* gun = &gun_catalog[it->user_data];
 
         sprite_index = gun->gun_sprite_index;
         color = gfx_blend_colors(COLOR_BLACK, gun->color1, 0.7);

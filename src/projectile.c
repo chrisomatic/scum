@@ -90,8 +90,8 @@ static float perk_drop_table[] =
 
 static int projectile_image;
 
-Gun gun_list[MAX_GUNS];
-int gun_list_count = 0;
+Gun gun_catalog[MAX_GUNS];
+int gun_catalog_count = 0;
 
 Gun room_gun_list[MAX_ROOM_GUNS];
 int room_gun_count = 0;
@@ -1438,11 +1438,11 @@ void gun_load_from_file(Gun* gun, const char* file_name)
 
 bool gun_get_by_name(char* gun_name, Gun* gun)
 {
-    for(int i = 0; i < gun_list_count; ++i)
+    for(int i = 0; i < gun_catalog_count; ++i)
     {
-        if(STR_EQUAL(gun_name, gun_list[i].name))
+        if(STR_EQUAL(gun_name, gun_catalog[i].name))
         {
-            memcpy(gun, &gun_list[i], sizeof(Gun));
+            memcpy(gun, &gun_catalog[i], sizeof(Gun));
             return true;
         }
     }
@@ -1456,7 +1456,7 @@ void gun_refresh_list()
     char gun_files[256][32] = {0};
     int gun_file_count = io_get_files_in_dir("src/guns",".gun", gun_files);
 
-    gun_list_count = 0;
+    gun_catalog_count = 0;
 
     int child_indices[256] = {0};
     int child_gun_count = 0;
@@ -1467,7 +1467,7 @@ void gun_refresh_list()
         bool base_gun = is_gun_file_base_gun(gun_files[i]);
         if(base_gun)
         {
-            gun_load_from_file(&gun_list[gun_list_count++], gun_files[i]);
+            gun_load_from_file(&gun_catalog[gun_catalog_count++], gun_files[i]);
         }
         else
         {
@@ -1478,30 +1478,30 @@ void gun_refresh_list()
     // load derivative guns
     for (int i = 0; i < child_gun_count; ++i) 
     {
-        gun_load_from_file(&gun_list[gun_list_count++], gun_files[child_indices[i]]);
+        gun_load_from_file(&gun_catalog[gun_catalog_count++], gun_files[child_indices[i]]);
     }
 
     // insertion sort
     Gun key;
 
     int i, j;
-    for (i = 1; i < gun_list_count; ++i) 
+    for (i = 1; i < gun_catalog_count; ++i) 
     {
-        memcpy(&key, &gun_list[i], sizeof(Gun));
+        memcpy(&key, &gun_catalog[i], sizeof(Gun));
         j = i - 1;
 
-        while (j >= 0 && strncmp(key.name,gun_list[j].name,GUN_NAME_MAX_LEN) < 0)
+        while (j >= 0 && strncmp(key.name,gun_catalog[j].name,GUN_NAME_MAX_LEN) < 0)
         {
-            memcpy(&gun_list[j+1], &gun_list[j], sizeof(Gun));
+            memcpy(&gun_catalog[j+1], &gun_catalog[j], sizeof(Gun));
             j = j - 1;
         }
-        memcpy(&gun_list[j+1], &key, sizeof(Gun));
+        memcpy(&gun_catalog[j+1], &key, sizeof(Gun));
     }
 
     /*
-    for (i = 0; i < gun_list_count; ++i) 
+    for (i = 0; i < gun_catalog_count; ++i) 
     {
-        Gun* gun = &gun_list[i];
+        Gun* gun = &gun_catalog[i];
         printf("%s, %s, %d, %d, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %s, %s\n",
                 gun->name,
                 gun->desc,
@@ -1522,6 +1522,267 @@ void gun_refresh_list()
               );
     }
     */
+}
+
+void determine_gun_perks(Gun* gun, uint32_t seed)
+{
+    srand(seed);
+
+    // determine number of perks
+    int num_perks = 0;
+
+    float pct = RAND_FLOAT(0.0, 100.0);
+
+    if(pct <= 0.08)       num_perks = 5;
+    else if(pct <= 0.25)  num_perks = 4;
+    else if(pct <= 2.00)  num_perks = 3;
+    else if(pct <= 5.00)  num_perks = 2;
+    else if(pct <= 20.0)  num_perks = 1;
+
+    for(int i = 0; i < num_perks; ++i)
+    {
+        // throw dart
+        float r = RAND_FLOAT(0.0, 100.0);
+
+        // look through perk table
+
+        float cum = 0.0;
+        for(int j = 0; j < GUN_PERK_COUNT; ++j)
+        {
+            cum += perk_drop_table[j*3+MIN(level_rank-1,2)];
+            if(r <= cum)
+            {
+                gun->perks[gun->num_perks++] = (GunPerk)(j);
+                break;
+            }
+        }
+    }
+
+    gun->num_perks = num_perks;
+}
+
+void apply_gun_perks(Gun* gun)
+{
+    for(int i = 0; i < gun->num_perks; ++i)
+    {
+        switch(gun->perks[i])
+        {
+            case GUN_PERK_INCREASE_BASE_DAMAGE_1:
+            {
+                int increased_damage = RAND_RANGE(2,5);
+                gun->damage_min += increased_damage;
+                gun->damage_max += increased_damage;
+            } break;
+            case GUN_PERK_INCREASE_BASE_DAMAGE_2:
+            {
+                int increased_damage = RAND_RANGE(10,15);
+                gun->damage_min += increased_damage;
+                gun->damage_max += increased_damage;
+            } break;
+            case GUN_PERK_INCREASE_BASE_DAMAGE_3:
+            {
+                int increased_damage = RAND_RANGE(20,35);
+                gun->damage_min += increased_damage;
+                gun->damage_max += increased_damage;
+            } break;
+            case GUN_PERK_INCREASE_DAMAGE_PERC_1:
+            {
+                int _perc = RAND_RANGE(1,3);
+                gun->damage_min *= (1.0 + (_perc/100.0));
+                gun->damage_max += (1.0 + (_perc/100.0));
+            } break;
+            case GUN_PERK_INCREASE_DAMAGE_PERC_2:
+            {
+                int _perc = RAND_RANGE(5,10);
+                gun->damage_min *= (1.0 + (_perc/100.0));
+                gun->damage_max += (1.0 + (_perc/100.0));
+            } break;
+            case GUN_PERK_INCREASE_DAMAGE_PERC_3:
+            {
+                int _perc = RAND_RANGE(15,20);
+                gun->damage_min *= (1.0 + (_perc/100.0));
+                gun->damage_max += (1.0 + (_perc/100.0));
+            } break;
+            case GUN_PERK_INCREASE_ACCURACY_1:
+            {
+                float _acc = 0.10;
+                gun->spread = gun->spread*(1.00-_acc);
+            } break;
+            case GUN_PERK_INCREASE_ACCURACY_2:
+            {
+                float _acc = 0.25;
+                gun->spread = gun->spread*(1.00-_acc);
+            } break;
+            case GUN_PERK_INCREASE_ACCURACY_3:
+            {
+                float _acc = 0.50;
+                gun->spread = gun->spread*(1.00-_acc);
+            } break;
+            case GUN_PERK_INCREASE_CRIT_HIT_CHANCE_1:
+            {
+                int _perc = RAND_RANGE(2,5);
+                gun->critical_hit_chance += (_perc/100.0);
+            } break;
+            case GUN_PERK_INCREASE_CRIT_HIT_CHANCE_2:
+            {
+                int _perc = RAND_RANGE(7,10);
+                gun->critical_hit_chance += (_perc/100.0);
+            } break;
+            case GUN_PERK_INCREASE_CRIT_HIT_CHANCE_3:
+            {
+                int _perc = RAND_RANGE(12,15);
+                gun->critical_hit_chance += (_perc/100.0);
+            } break;
+            case GUN_PERK_INCREASE_PEN_CHANCE_1:
+            {
+                int _perc = RAND_RANGE(5,10);
+                gun->penetration_chance += (_perc/100.0);
+            } break;
+            case GUN_PERK_INCREASE_PEN_CHANCE_2:
+            {
+                int _perc = RAND_RANGE(12,15);
+                gun->penetration_chance += (_perc/100.0);
+            } break;
+            case GUN_PERK_INCREASE_PEN_CHANCE_3:
+            {
+                int _perc = RAND_RANGE(20,30);
+                gun->penetration_chance += (_perc/100.0);
+            } break;
+            case GUN_PERK_INCREASE_GHOST_CHANCE_1:
+            {
+                gun->ghost_chance += (0.10);
+            } break;
+            case GUN_PERK_INCREASE_GHOST_CHANCE_2:
+            {
+                gun->ghost_chance += (0.25);
+            } break;
+            case GUN_PERK_INCREASE_GHOST_CHANCE_3:
+            {
+                gun->ghost_chance += (0.50);
+            } break;
+            case GUN_PERK_INCREASE_SHOT_LIFETIME_1:
+            {
+                int _perc = RAND_RANGE(10,20);
+                gun->lifetime *= (1.0 + (_perc/100.0));
+            } break;
+            case GUN_PERK_INCREASE_SHOT_LIFETIME_2:
+            {
+                int _perc = RAND_RANGE(25,35);
+                gun->lifetime *= (1.0 + (_perc/100.0));
+            } break;
+            case GUN_PERK_INCREASE_SHOT_LIFETIME_3:
+            {
+                int _perc = RAND_RANGE(40,50);
+                gun->lifetime *= (1.0 + (_perc/100.0));
+            } break;
+            case GUN_PERK_INCREASE_SHOT_SPEED_1:
+            {
+                int _perc = RAND_RANGE(10,15);
+                gun->speed *= (1.0 + (_perc/100.0));
+            } break;
+            case GUN_PERK_INCREASE_SHOT_SPEED_2:
+            {
+                int _perc = RAND_RANGE(20,25);
+                gun->speed *= (1.0 + (_perc/100.0));
+            } break;
+            case GUN_PERK_INCREASE_SHOT_SPEED_3:
+            {
+                int _perc = RAND_RANGE(30,35);
+                gun->speed *= (1.0 + (_perc/100.0));
+            } break;
+            case GUN_PERK_SMALL_EXPLOSIVES:
+            {
+                gun->explosion_chance = 1.0;
+                gun->explosion_radius = 30.0;
+            } break;
+            case GUN_PERK_MEDIUM_EXPLOSIVES:
+            {
+                gun->explosion_chance = 1.0;
+                gun->explosion_radius = 60.0;
+            } break;
+            case GUN_PERK_LARGE_EXPLOSIVES:
+            {
+                gun->explosion_chance = 1.0;
+                gun->explosion_radius = 100.0;
+            } break;
+            case GUN_PERK_FIRE_DAMAGE_1:
+            {
+                int _dam = RAND_RANGE(2,5);
+                gun->fire_damage += _dam;
+            } break;
+            case GUN_PERK_FIRE_DAMAGE_2:
+            {
+                int _dam = RAND_RANGE(10,15);
+                gun->fire_damage += _dam;
+            } break;
+            case GUN_PERK_FIRE_DAMAGE_3:
+            {
+                int _dam = RAND_RANGE(20,35);
+                gun->fire_damage += _dam;
+            } break;
+            case GUN_PERK_COLD_DAMAGE_1:
+            {
+                int _dam = RAND_RANGE(2,5);
+                gun->cold_damage += _dam;
+            } break;
+            case GUN_PERK_COLD_DAMAGE_2:
+            {
+                int _dam = RAND_RANGE(10,15);
+                gun->cold_damage += _dam;
+            } break;
+            case GUN_PERK_COLD_DAMAGE_3:
+            {
+                int _dam = RAND_RANGE(20,35);
+                gun->cold_damage += _dam;
+            } break;
+            case GUN_PERK_LIGHTNING_DAMAGE_1:
+            {
+                int _dam = RAND_RANGE(2,5);
+                gun->lightning_damage += _dam;
+            } break;
+            case GUN_PERK_LIGHTNING_DAMAGE_2:
+            {
+                int _dam = RAND_RANGE(10,15);
+                gun->lightning_damage += _dam;
+            } break;
+            case GUN_PERK_LIGHTNING_DAMAGE_3:
+            {
+                int _dam = RAND_RANGE(20,35);
+                gun->lightning_damage += _dam;
+            } break;
+            case GUN_PERK_POISON_DAMAGE_1:
+            {
+                int _dam = RAND_RANGE(2,5);
+                gun->poison_damage += _dam;
+            } break;
+            case GUN_PERK_POISON_DAMAGE_2:
+            {
+                int _dam = RAND_RANGE(10,15);
+                gun->poison_damage += _dam;
+            } break;
+            case GUN_PERK_POISON_DAMAGE_3:
+            {
+                int _dam = RAND_RANGE(20,35);
+                gun->poison_damage += _dam;
+            } break;
+            case GUN_PERK_ADD_1_SHOT:
+            {
+                gun->num += 1;
+            } break;
+            case GUN_PERK_MAX_GHOST_CHANCE:
+            {
+                gun->ghost_chance = 1.0;
+            } break;
+            case GUN_PERK_MAX_HOMING_CHANCE:
+            {
+                gun->homing_chance = 1.0;
+            } break;
+            case GUN_PERK_INCREASE_CRIT_HIT_CHANCE_4:
+            {
+                gun->critical_hit_chance += 0.30;
+            } break;
+        }
+    }
 }
 
 void refresh_visible_room_gun_list()
@@ -1587,7 +1848,11 @@ void refresh_visible_room_gun_list()
         if(it->phys.curr_room != visible_room->index) continue;
         if(room_gun_count >= MAX_ROOM_GUNS) break;
 
-        memcpy(&room_gun_list[room_gun_count++], &gun_list[it->user_data], sizeof(Gun));
+        Gun item_gun = gun_catalog[it->user_data];
+        determine_gun_perks(&item_gun, it->user_data2);
+        apply_gun_perks(&item_gun);
+
+        memcpy(&room_gun_list[room_gun_count++], &item_gun, sizeof(Gun));
         it->user_data3 = (uint8_t)(room_gun_count-1);
     }
 
@@ -1596,17 +1861,22 @@ void refresh_visible_room_gun_list()
         printf("  %d) %s\n", i, room_gun_list[i].name);
 }
 
-int add_to_room_gun_list(Gun* g)
+void add_to_room_gun_list(void* it)
 {
     if(!visible_room)
-        return -1;
+        return;
 
     if(room_gun_count >= MAX_ROOM_GUNS)
-        return -1;
+        return;
 
-    memcpy(&room_gun_list[room_gun_count++], g, sizeof(Gun));
+    Item* item = (Item*)it;
 
-    return room_gun_count-1;
+    Gun item_gun = gun_catalog[item->user_data];
+    determine_gun_perks(&item_gun, item->user_data2);
+    apply_gun_perks(&item_gun);
+
+    memcpy(&room_gun_list[room_gun_count++], &item_gun, sizeof(Gun));
+    item->user_data3 = (uint8_t)(room_gun_count-1);
 }
 
 void replace_player_room_gun(void* p, Gun* g)
@@ -1622,4 +1892,56 @@ void replace_player_room_gun(void* p, Gun* g)
 
     Player* pl = (Player*)p;
     memcpy(&room_gun_list[pl->room_gun_index], g, sizeof(Gun));
+}
+
+char* get_gun_perk_name(GunPerk p)
+{
+    switch(p)
+    {
+        case GUN_PERK_INCREASE_BASE_DAMAGE_1: return "Increase Base Damage 1";
+        case GUN_PERK_INCREASE_BASE_DAMAGE_2: return "Increase Base Damage 2";
+        case GUN_PERK_INCREASE_BASE_DAMAGE_3: return "Increase Base Damage 3";
+        case GUN_PERK_INCREASE_DAMAGE_PERC_1: return "Increase Damage Percentage 1";
+        case GUN_PERK_INCREASE_DAMAGE_PERC_2: return "Increase Damage Percentage 2";
+        case GUN_PERK_INCREASE_DAMAGE_PERC_3: return "Increase Damage Percentage 3";
+        case GUN_PERK_INCREASE_ACCURACY_1: return "Increase Accuracy 1";
+        case GUN_PERK_INCREASE_ACCURACY_2: return "Increase Accuracy 2";
+        case GUN_PERK_INCREASE_ACCURACY_3: return "Increase Accuracy 3";
+        case GUN_PERK_INCREASE_CRIT_HIT_CHANCE_1: return "Increase Critical Hit Chance 1";
+        case GUN_PERK_INCREASE_CRIT_HIT_CHANCE_2: return "Increase Critical Hit Chance 2";
+        case GUN_PERK_INCREASE_CRIT_HIT_CHANCE_3: return "Increase Critical Hit Chance 3";
+        case GUN_PERK_INCREASE_PEN_CHANCE_1: return "Increase Penetration Chance 1";
+        case GUN_PERK_INCREASE_PEN_CHANCE_2: return "Increase Penetration Chance 2";
+        case GUN_PERK_INCREASE_PEN_CHANCE_3: return "Increase Penetration Chance 3";
+        case GUN_PERK_INCREASE_GHOST_CHANCE_1: return "Increase Ghost Chance 1";
+        case GUN_PERK_INCREASE_GHOST_CHANCE_2: return "Increase Ghost Chance 2";
+        case GUN_PERK_INCREASE_GHOST_CHANCE_3: return "Increase Ghost Chance 3";
+        case GUN_PERK_INCREASE_SHOT_LIFETIME_1: return "Increase Shot Lifetime 1";
+        case GUN_PERK_INCREASE_SHOT_LIFETIME_2: return "Increase Shot Lifetime 2";
+        case GUN_PERK_INCREASE_SHOT_LIFETIME_3: return "Increase Shot Lifetime 3";
+        case GUN_PERK_INCREASE_SHOT_SPEED_1: return "Increase Shot Speed 1";
+        case GUN_PERK_INCREASE_SHOT_SPEED_2: return "Increase Shot Speed 2";
+        case GUN_PERK_INCREASE_SHOT_SPEED_3: return "Increase Shot Speed 3";
+        case GUN_PERK_SMALL_EXPLOSIVES: return "Small Explosives";
+        case GUN_PERK_MEDIUM_EXPLOSIVES: return "Medium Explosives";
+        case GUN_PERK_LARGE_EXPLOSIVES: return "Large Explosives";
+        case GUN_PERK_FIRE_DAMAGE_1: return "Fire Damage 1";
+        case GUN_PERK_FIRE_DAMAGE_2: return "Fire Damage 2";
+        case GUN_PERK_FIRE_DAMAGE_3: return "Fire Damage 3";
+        case GUN_PERK_COLD_DAMAGE_1: return "Cold Damage 1";
+        case GUN_PERK_COLD_DAMAGE_2: return "Cold Damage 2";
+        case GUN_PERK_COLD_DAMAGE_3: return "Cold Damage 3";
+        case GUN_PERK_LIGHTNING_DAMAGE_1: return "Lightning Damage 1";
+        case GUN_PERK_LIGHTNING_DAMAGE_2: return "Lightning Damage 2";
+        case GUN_PERK_LIGHTNING_DAMAGE_3: return "Lightning Damage 3";
+        case GUN_PERK_POISON_DAMAGE_1: return "Poison Damage 1";
+        case GUN_PERK_POISON_DAMAGE_2: return "Poison Damage 2";
+        case GUN_PERK_POISON_DAMAGE_3: return "Poison Damage 3";
+        case GUN_PERK_ADD_1_SHOT: return "Add 1 shot";
+        case GUN_PERK_MAX_GHOST_CHANCE: return "Max Ghost Chance";
+        case GUN_PERK_MAX_HOMING_CHANCE: return "Max Homing Chance";
+        case GUN_PERK_INCREASE_CRIT_HIT_CHANCE_4: return "Increase Critical Hit Chance 4";
+        default:
+            return "Unknown";
+    }
 }
