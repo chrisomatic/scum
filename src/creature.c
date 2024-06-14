@@ -773,13 +773,17 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
 
         if(c.type == CREATURE_TYPE_CLINGER)
         {
-            if(tile) add_to_wall_tile(&c, tile->x, tile->y);
-            else     add_to_random_wall_tile(&c);
+            if(tile)
+                add_to_wall_tile(&c, tile->x, tile->y);
+            else
+                add_to_random_wall_tile(&c);
         }
         else
         {
-            if(tile) add_to_tile(&c, tile->x, tile->y);
-            else     add_to_random_tile(&c, room);
+            if(tile)
+                add_to_tile(&c, tile->x, tile->y);
+            else
+                add_to_random_tile(&c, room);
         }
     }
 

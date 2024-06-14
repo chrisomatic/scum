@@ -147,6 +147,7 @@ bool rectangles_colliding2(Rect* a, Rect* b);
 bool circles_colliding(Vector2f* p1, float r1, Vector2f* p2, float r2, float *distance);
 bool are_spheres_colliding(Vector4f* prior_s, Vector4f* curr_s, Vector4f* check);
 Vector2f limit_rect_pos(Rect* limit, Rect* rect);
+bool is_rect_inside(Rect* a, Rect* b);
 bool is_point_in_rect(Vector2f* p, Rect* rect);
 float calc_radius_from_rect(Rect* r);
 

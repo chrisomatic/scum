@@ -19,13 +19,12 @@
 
 #define ASCII_NUMS {"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"}
 
-int player_selection = 0;
 static char particles_file_name[33] = {0};
-
 static ParticleSpawner* particle_spawner;
 static char* effect_options[100] = {0};
 static int prior_selected_effect = 0;
 static int selected_effect = 0;
+int player_selection = 0;
 
 static void randomize_effect(ParticleEffect* effect);
 static void load_effect_options();
@@ -65,6 +64,7 @@ void editor_init()
 
 void editor_draw()
 {
+
     static bool refresh_gun_sel = true;
     if(!editor_enabled)
     {
@@ -269,7 +269,6 @@ void editor_draw()
                     if(p != player)
                     {
                         // imgui_toggle_button(&p->active, "Active");
-
                         bool active = p->active;
                         imgui_toggle_button(&active, "Active");
                         if(active && !p->active)

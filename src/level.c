@@ -1784,7 +1784,7 @@ Rect level_get_tile_rect(int x, int y)
 
         for(int xi = 0; xi < ROOM_TILE_SIZE_X; ++xi)
         {
-            for(int yi = 0; yi < ROOM_TILE_SIZE_X; ++yi)
+            for(int yi = 0; yi < ROOM_TILE_SIZE_Y; ++yi)
             {
                 float xp = xtl + (xi+1)*TILE_SIZE;
                 float yp = ytl + (yi+1)*TILE_SIZE;

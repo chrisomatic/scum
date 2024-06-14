@@ -585,6 +585,26 @@ Vector2f limit_rect_pos(Rect* limit, Rect* rect)
     return adj;
 }
 
+// is 'a' fully inside of 'b'
+bool is_rect_inside(Rect* a, Rect* b)
+{
+    float ax0 = a->x - a->w/2.0;
+    float ax1 = ax0 + a->w;
+    float ay0 = a->y - a->h/2.0;
+    float ay1 = ay0 + a->h;
+
+    float bx0 = b->x - b->w/2.0;
+    float bx1 = bx0 + b->w;
+    float by0 = b->y - b->h/2.0;
+    float by1 = by0 + b->h;
+
+    if(ax0 >= bx0 && ax1 <= bx1 && ay0 >= by0 && ay1 <= by1)
+        return true;
+
+    return false;
+}
+
+
 bool is_point_in_rect(Vector2f* p, Rect* rect)
 {
     return (p->x >= rect->x && p->x <= rect->x + rect->w)

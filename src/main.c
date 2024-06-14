@@ -391,8 +391,9 @@ void camera_set(bool immediate)
             if(!p->active) continue;
             if(p->phys.curr_room == player->phys.curr_room)
             {
-                Rect r = RECT(p->phys.pos.x, p->phys.pos.y, 1, 1);
-                if(!rectangles_colliding(&cr, &r))
+                // position is bottom middle of player
+                Rect r = RECT(p->phys.pos.x, p->phys.pos.y - p->phys.vr.h/2.0, p->phys.vr.w, p->phys.vr.h);
+                if(!is_rect_inside(&r,&cr))
                 {
                     all_visible = false;
                     break;
@@ -446,8 +447,8 @@ void camera_set(bool immediate)
                     if(!p->active) continue;
                     if(p->phys.curr_room == player->phys.curr_room)
                     {
-                        Rect r = RECT(p->phys.pos.x, p->phys.pos.y, 1, 1);
-                        if(!rectangles_colliding(&cr2, &r))
+                        Rect r = RECT(p->phys.pos.x, p->phys.pos.y - p->phys.vr.h/2.0, p->phys.vr.w, p->phys.vr.h);
+                        if(!is_rect_inside(&r,&cr2))
                         {
                             check = false;
                             break;
@@ -704,8 +705,8 @@ void game_generate_level()
     // particles_delete_all_spawners(); //doesn't work properly
 
     level = level_generate(level_seed, level_rank);
-    level_place_entities(&level);
     level_set_room_pointers(&level);
+    level_place_entities(&level);
     ui_message_set_title(2.0, 0x00CCCCCC, 1.2, "Level %d", level_rank);
 
     if(role == ROLE_CLIENT) return;
