@@ -23,7 +23,6 @@
 #include "status_effects.h"
 #include "room_editor.h"
 #include "text_list.h"
-#include "skills.h"
 #include "ui.h"
 #include "weapon.h"
 #include "astar.h"
@@ -621,9 +620,6 @@ void start_server()
     audio_init();
     gaudio_init();
 
-    LOGI(" - Skills.");
-    skills_init();
-
     LOGI(" - Weapon.");
     weapon_init();
 
@@ -890,9 +886,6 @@ void init()
 
     LOGI(" - Status Effects.");
     status_effects_init();
-
-    LOGI(" - Skills.");
-    skills_init();
 
     LOGI(" - Settings.");
     settings_load(DEFAULT_SETTINGS, &menu_settings);

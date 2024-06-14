@@ -88,6 +88,7 @@ typedef struct
     Vector2f target_pos;
 
     int xp;
+    uint8_t room_gun_index;
 
     // temp debug stuff
     int spawn_tile_x;    //room tile x

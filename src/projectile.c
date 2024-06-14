@@ -93,7 +93,7 @@ static int projectile_image;
 Gun gun_list[MAX_GUNS];
 int gun_list_count = 0;
 
-Gun room_gun_list[8];
+Gun room_gun_list[MAX_ROOM_GUNS];
 int room_gun_count = 0;
 
 static uint16_t id_counter = 1;
@@ -155,18 +155,14 @@ static float calc_orbital_target(Projectile* proj)
     proj->orbital_pos_target.y = -(sinf(target_angle)*actual_orb_distance);
 }
 
-void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, Physics* phys, uint16_t from_id)
+void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, uint8_t room_gun_index, float angle_deg, bool from_player, Physics* phys, uint16_t from_id)
 {
     if(role == ROLE_CLIENT)
         return;
 
     Projectile proj = {0};
 
-    if(from_player)
-        proj.room_gun_index = players[from_id].room_gun_index;
-    else
-        proj.room_gun_index = 0; // TODO: handle creatures
-
+    proj.room_gun_index = room_gun_index; 
     Gun* proj_gun = &room_gun_list[proj.room_gun_index];
 
     proj.from_id = from_id;
@@ -187,12 +183,12 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
             }   break;
             case CHARGE_TYPE_SCALE_NUM:
             {
-                int num = (int)(factor*gun->num);
+                int num = (int)(factor*proj_gun->num);
                 proj_gun->num = MAX(1,num);
             } break;
             case CHARGE_TYPE_SCALE_BURST_COUNT:
             {
-                int burst_count = (int)(factor*gun->burst_count);
+                int burst_count = (int)(factor*proj_gun->burst_count);
                 proj_gun->burst_count = burst_count;
             } break;
         }
@@ -396,34 +392,9 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, ui
             // p.source_explode = audio_source_create(false);
             // audio_source_assign_buffer(p.source_explode, audio_buffer_explode);
 
-            // printf("%s damage: [%.2f, %.2f]\n", __func__, p.gun.damage_min, p.gun.damage_max);
-
             list_add(plist, (void*)&p);
         }
-
     }
-}
-
-void projectile_fire(Physics* phys, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, uint16_t from_id)
-{
-    Vector3f pos = {phys->pos.x, phys->pos.y, phys->height/2.0 + phys->pos.z};
-    Vector3f vel = {phys->vel.x, phys->vel.y, 0.0};
-
-    projectile_add(pos, &vel, curr_room, gun, color, angle_deg, from_player, phys, from_id);
-}
-
-void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, uint16_t from_id)
-{
-    Vector3f pos = {phys->pos.x, phys->pos.y, phys->height + phys->pos.z};
-    //Vector3f pos = {phys->pos.x, phys->pos.y, phys->height*2.0 + phys->pos.z};
-
-    Vector3f vel = {0.0, 0.0, vel0_z};
-
-    float angle = RAD(angle_deg);
-    vel.x = phys->vel.x;
-    vel.y = phys->vel.y;
-
-    projectile_add(pos, &vel, curr_room, gun, color, angle_deg, from_player, phys, from_id);
 }
 
 void projectile_kill(Projectile* proj)
@@ -572,18 +543,19 @@ void projectile_kill(Projectile* proj)
         gun.num = gun.cluster_num[proj->cluster_stage];
 
         float angle_deg = proj->angle_deg;
-        // float angle_deg = rand() % 360;
-        gun.spread = 60.0;
 
-        // sp.spread = 360.0;
+        gun.spread = 60.0;
         gun.cluster_stage = proj->cluster_stage+1;
-        // proj->phys.vel.x = 0.0;
-        // proj->phys.vel.y = 0.0;
 
         proj->phys.vel.x /= 2.0;
         proj->phys.vel.y /= 2.0;
 
-        projectile_lob(&proj->phys, gun.gravity_factor*120.0, proj->phys.curr_room, &gun, proj->color, angle_deg, proj->from_player, proj->from_id);
+        Vector3f pos = {proj->phys.pos.x, proj->phys.pos.y, proj->phys.height + proj->phys.pos.z};
+        Vector3f vel = {proj->phys.vel.x, proj->phys.vel.y, 0.0};
+
+        vel.z = gun.gravity_factor*120.0;
+
+        projectile_add(pos, &vel, proj->phys.curr_room, proj->room_gun_index, angle_deg, proj->from_player, &proj->phys, proj->from_id);
     }
 }
 
@@ -1557,7 +1529,7 @@ void refresh_visible_room_gun_list()
         return;
 
     // clear room gun list
-    memset(room_gun_list, 0, 8*sizeof(Gun));
+    memset(room_gun_list, 0, MAX_ROOM_GUNS*sizeof(Gun));
     room_gun_count = 0;
     
     // add player guns
@@ -1567,10 +1539,42 @@ void refresh_visible_room_gun_list()
 
         if(!p->active) continue;
         if(p->phys.dead) continue;
-        if(room_gun_count >= 8) break;
+        if(room_gun_count >= MAX_ROOM_GUNS) break;
 
         memcpy(&room_gun_list[room_gun_count++], &p->gun, sizeof(Gun));
         p->room_gun_index = room_gun_count-1;
+    }
+
+    // add creature guns
+    for(int i = clist->count; i >= 0; --i)
+    {
+        Creature* c = &creatures[i];
+
+        if(c->phys.curr_room != visible_room->index) continue;
+        if(room_gun_count >= MAX_ROOM_GUNS) break;
+
+        Gun gun;
+        char* gun_name = creature_get_gun_name(c->type);
+        gun_get_by_name(gun_name, &gun);
+
+        int existing_index = -1;
+        for(int j = 0; j < room_gun_count; ++j)
+        {
+            if(memcmp(&room_gun_list[j],&gun, sizeof(Gun)) == 0)
+            {
+                existing_index = j;
+                break;
+            }
+        }
+
+        if(existing_index >= 0)
+        {
+            c->room_gun_index = existing_index;
+            continue;
+        }
+
+        memcpy(&room_gun_list[room_gun_count++], &gun, sizeof(Gun));
+        c->room_gun_index = room_gun_count-1;
     }
     
     // add room item guns
@@ -1580,7 +1584,7 @@ void refresh_visible_room_gun_list()
 
         if(it->type != ITEM_GUN) continue;
         if(it->phys.curr_room != visible_room->index) continue;
-        if(room_gun_count >= 8) break;
+        if(room_gun_count >= MAX_ROOM_GUNS) break;
 
         memcpy(&room_gun_list[room_gun_count++], &gun_list[it->user_data], sizeof(Gun));
         it->user_data3 = (uint8_t)(room_gun_count-1);
@@ -1596,7 +1600,7 @@ int add_to_room_gun_list(Gun* g)
     if(!visible_room)
         return -1;
 
-    if(room_gun_count >= 8)
+    if(room_gun_count >= MAX_ROOM_GUNS)
         return -1;
 
     memcpy(&room_gun_list[room_gun_count++], g, sizeof(Gun));
@@ -1604,3 +1608,17 @@ int add_to_room_gun_list(Gun* g)
     return room_gun_count-1;
 }
 
+void replace_player_room_gun(void* p, Gun* g)
+{
+    if(!p)
+        return;
+
+    if(!visible_room)
+        return; 
+
+    if(room_gun_count >= MAX_ROOM_GUNS)
+        return;
+
+    Player* pl = (Player*)p;
+    memcpy(&room_gun_list[pl->room_gun_index], g, sizeof(Gun));
+}

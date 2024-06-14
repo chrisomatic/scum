@@ -8,7 +8,6 @@
 #include "net.h"
 #include "effects.h"
 #include "creature.h"
-#include "skills.h"
 #include "ui.h"
 
 #include "player.h"
@@ -172,20 +171,7 @@ static bool item_func_podium(Item* it, Player* p)
     float y = it->phys.pos.y;
     int croom = it->phys.curr_room;
 
-    int num = player_get_active_count();
-
-    for(int i = 0; i < num; ++i)
-    {
-        uint8_t skill_type = rand() % SKILL_TYPE_MAX;
-        Item* a = item_add(ITEM_SKILL_BOOK, x, y, croom);
-        a->user_data = skill_type;
-
-        // a->user_data = SKILL_TYPE_MULTI_SHOT;
-        // a->user_data = rand() % SKILL_TYPE_MAX;
-        // item_set_description(a, "skill: %s", skills_get_name(a->user_data));
-   }
-
-   return true;
+    return true;
 }
 
 
@@ -371,11 +357,6 @@ static bool internal_item_use(Item* it, void* _player)
         case ITEM_COIN_GOLD:
         {
             player_add_coins(p, 10);
-        } break;
-
-        case ITEM_SKILL_BOOK:
-        {
-            return player_add_skill(p, it->user_data);
         } break;
 
         case ITEM_GAUNTLET_SLOT:
@@ -663,7 +644,6 @@ const char* item_get_name(ItemType type)
         case ITEM_COIN_COPPER: return "Copper Coin";
         case ITEM_COIN_SILVER: return "Silver Coin";
         case ITEM_COIN_GOLD: return "Gold Coin";
-        case ITEM_SKILL_BOOK: return "Skill Book";
         case ITEM_GUN: return "Gun";
     }
     return "???";
@@ -677,11 +657,6 @@ const char* item_get_description(ItemType type, Item* it)
         {
             return it->desc;
         }
-    }
-
-    if(type == ITEM_SKILL_BOOK)
-    {
-        return skills_get_name(it->user_data);
     }
 
     switch(type)
@@ -726,7 +701,6 @@ const char* item_get_description(ItemType type, Item* it)
         case ITEM_COIN_COPPER: return "+1 coin";
         case ITEM_COIN_SILVER: return "+5 coins";
         case ITEM_COIN_GOLD: return "+10 coins";
-        case ITEM_SKILL_BOOK: return "skillz that killz";
     }
     return "???";
 }
@@ -758,12 +732,6 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
     it.phys.pos.z = 0.0;
     it.phys.speed = 1.0;
     it.phys.crawling = true;
-
-    // @NOTE: defaulting to random skill for books, can be overridden after the item has been added
-    if(type == ITEM_SKILL_BOOK)
-    {
-        it.user_data = rand() % SKILL_TYPE_MAX;
-    }
 
     switch(type)
     {

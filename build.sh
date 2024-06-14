@@ -15,7 +15,7 @@ then
         echo "building debug"
     elif [ "$1" == "release" ]
     then
-        release_arg="-02"
+        release_arg="-O2"
         echo "building release"
     else
         echo "invalid arg"
@@ -52,7 +52,6 @@ gcc core/gfx.c \
     status_effects.c \
     room_editor.c \
     room_file.c \
-    skills.c \
     settings.c \
     ui.c \
     weapon.c \

@@ -67,7 +67,7 @@ static void creature_update_golem(Creature* c, float dt);
 static void creature_update_phantom(Creature* c, float dt);
 static void creature_update_rock(Creature* c, float dt);
 
-static void creature_fire_projectile(Creature* c, float angle, uint32_t color);
+static void creature_fire_projectile(Creature* c, float angle);
 
 static uint16_t id_counter = 1;
 static uint16_t get_id()
@@ -1387,53 +1387,43 @@ static void creature_update_spiked_slug(Creature* c, float dt)
     }
 }
 
-static void creature_fire_projectile(Creature* c, float angle, uint32_t color)
+static void creature_fire_projectile(Creature* c, float angle)
 {
-    Gun gun;
-    char* gun_name = creature_get_gun_name(c->type);
-    if(!gun_get_by_name(gun_name, &gun))
-    {
-        LOGE("Couldn't find gun with name %s", gun_name);
-        return;
-    }
+    Vector3f pos = {c->phys.pos.x, c->phys.pos.y, c->phys.height + c->phys.pos.z};
+    Vector3f vel = {c->phys.vel.x, c->phys.vel.y, 0.0};
 
     if(c->type == CREATURE_TYPE_GEIZER)
     {
-        gun.speed = rand()%50+40;
-        gun.scale1 = RAND_FLOAT(0.6,1.0);
-        gun.scale2 = RAND_FLOAT(0.6,1.0);
-        projectile_lob(&c->phys, rand()%100+50, c->phys.curr_room, &gun, color, angle, false, c->id);
+        vel.z = rand()%100+50;
+        projectile_add(pos, &vel, c->phys.curr_room, c->room_gun_index, angle, false, &c->phys, c->id);
         return;
     }
 
-    projectile_lob(&c->phys, MIN(1.0, gun.gravity_factor)*120.0, c->phys.curr_room, &gun, color, angle, false, c->id);
+    Gun* gun = &room_gun_list[c->room_gun_index];
+    vel.z = MIN(1.0, gun->gravity_factor)*120.0;
+
+    projectile_add(pos, &vel, c->phys.curr_room, c->room_gun_index, angle, false, &c->phys, c->id);
 }
 
 static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float vel0_z, uint32_t color)
 {
-    Gun gun;
-    char* gun_name = creature_get_gun_name(c->type);
-    if(!gun_get_by_name(gun_name, &gun))
-    {
-        LOGE("Couldn't find gun with name %s", gun_name);
-        return;
-    }
+    Gun* gun = &room_gun_list[c->room_gun_index];
 
-    gun.sprite_index = 4;
-    gun.color1 = 0x32251E;
-    gun.color2 = 0x4C3228;
-    gun.scale1 += 0.80;
-    gun.scale2 += 0.80;
+    gun->sprite_index = 4;
+    gun->color1 = 0x32251E;
+    gun->color2 = 0x4C3228;
+    gun->scale1 += 0.80;
+    gun->scale2 += 0.80;
+
     Rect r = level_get_tile_rect(tile_x, tile_y);
     Vector3f pos = {r.x, r.y, 400.0};
 
     Vector3f vel = {0.0, 0.0, vel0_z};
-    projectile_add(pos, &vel, c->phys.curr_room, &gun, color, 0.0, false, NULL, c->id);
+    projectile_add(pos, &vel, c->phys.curr_room, c->room_gun_index, 0.0, false, &c->phys, c->id);
 }
 
 static void creature_update_clinger(Creature* c, float dt)
 {
-
     Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
 
     float d = dist(p->phys.pos.x, p->phys.pos.y, c->phys.pos.x, c->phys.pos.y);
@@ -1458,8 +1448,8 @@ static void creature_update_clinger(Creature* c, float dt)
             c->ai_counter = 0.0;
 
             // fire
-            if(horiz) creature_fire_projectile(c, dir_to_angle_deg(c->spawn_tile_y == -1 ? DIR_DOWN : DIR_UP), PROJ_COLOR);
-            else      creature_fire_projectile(c, dir_to_angle_deg(c->spawn_tile_x == -1 ? DIR_RIGHT : DIR_LEFT), PROJ_COLOR);
+            if(horiz) creature_fire_projectile(c, dir_to_angle_deg(c->spawn_tile_y == -1 ? DIR_DOWN : DIR_UP));
+            else      creature_fire_projectile(c, dir_to_angle_deg(c->spawn_tile_x == -1 ? DIR_RIGHT : DIR_LEFT));
 
             c->ai_value++;
         }
@@ -1528,7 +1518,7 @@ static void creature_update_geizer(Creature* c, float dt)
         for(int i = 0; i < n_orbs; ++i)
         {
             int angle = rand() % 360;
-            creature_fire_projectile(c, angle, PROJ_COLOR);
+            creature_fire_projectile(c, angle);
         }
     }
 }
@@ -1541,10 +1531,10 @@ static void creature_update_floater(Creature* c, float dt)
     {
         if(ai_rand(4) == 0)
         {
-            creature_fire_projectile(c, 0.0, PROJ_COLOR);
-            creature_fire_projectile(c, 90.0, PROJ_COLOR);
-            creature_fire_projectile(c, 180.0, PROJ_COLOR);
-            creature_fire_projectile(c, 270.0, PROJ_COLOR);
+            creature_fire_projectile(c, 0.0);
+            creature_fire_projectile(c, 90.0);
+            creature_fire_projectile(c, 180.0);
+            creature_fire_projectile(c, 270.0);
         }
         else
         {
@@ -1624,7 +1614,7 @@ static void creature_update_buzzer(Creature* c, float dt)
                 // fire shots
                 Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y) + RAND_FLOAT(-10.0,10.0);
-                creature_fire_projectile(c, angle, PROJ_COLOR);
+                creature_fire_projectile(c, angle);
             }
 
             c->ai_value++;
@@ -1662,7 +1652,7 @@ static void creature_update_totem_red(Creature* c, float dt)
         float aplus = 360.0 / 6;
         for(int i = 0; i < 6; ++i)
         {
-            creature_fire_projectile(c, a, PROJ_COLOR);
+            creature_fire_projectile(c, a);
             a += aplus;
         }
 
@@ -1706,7 +1696,7 @@ static void creature_update_totem_red(Creature* c, float dt)
                 // fire shots
                 Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
-                creature_fire_projectile(c, angle, PROJ_COLOR);
+                creature_fire_projectile(c, angle);
 
                 c->ai_value++;
                 if(c->ai_value >= 3)
@@ -1745,7 +1735,7 @@ static void creature_update_totem_blue(Creature* c, float dt)
         float aplus = 360.0 / 6;
         for(int i = 0; i < 6; ++i)
         {
-            creature_fire_projectile(c, a, color);
+            creature_fire_projectile(c, a);
             a += aplus;
         }
 
@@ -1790,11 +1780,11 @@ static void creature_update_totem_blue(Creature* c, float dt)
                 Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
 
-                creature_fire_projectile(c, angle, color);
-                creature_fire_projectile(c, angle-30, color);
-                creature_fire_projectile(c, angle-60, color);
-                creature_fire_projectile(c, angle+30, color);
-                creature_fire_projectile(c, angle+60, color);
+                creature_fire_projectile(c, angle);
+                creature_fire_projectile(c, angle-30);
+                creature_fire_projectile(c, angle-60);
+                creature_fire_projectile(c, angle+30);
+                creature_fire_projectile(c, angle+60);
 
                 c->ai_value++;
                 c->ai_state = 0;
@@ -1829,14 +1819,14 @@ static void creature_update_totem_yellow(Creature* c, float dt)
         float aplus = 360.0 / 6;
         for(int i = 0; i < 6; ++i)
         {
-            creature_fire_projectile(c, a, PROJ_COLOR);
+            creature_fire_projectile(c, a);
             a += aplus;
         }
 
-        // creature_fire_projectile(c, 0.0, PROJ_COLOR);
-        // creature_fire_projectile(c, 90.0, PROJ_COLOR);
-        // creature_fire_projectile(c, 180.0, PROJ_COLOR);
-        // creature_fire_projectile(c, 270.0, PROJ_COLOR);
+        // creature_fire_projectile(c, 0.0);
+        // creature_fire_projectile(c, 90.0);
+        // creature_fire_projectile(c, 180.0);
+        // creature_fire_projectile(c, 270.0);
 
         // deactivate totem
         creature_die(c);
@@ -1887,17 +1877,17 @@ static void creature_update_totem_yellow(Creature* c, float dt)
                 // fire shots
                 if(c->ai_value == 0)
                 {
-                    creature_fire_projectile(c, 0.0, PROJ_COLOR);
-                    creature_fire_projectile(c, 90.0, PROJ_COLOR);
-                    creature_fire_projectile(c, 180.0, PROJ_COLOR);
-                    creature_fire_projectile(c, 270.0, PROJ_COLOR);
+                    creature_fire_projectile(c, 0.0);
+                    creature_fire_projectile(c, 90.0);
+                    creature_fire_projectile(c, 180.0);
+                    creature_fire_projectile(c, 270.0);
                 }
                 else
                 {
-                    creature_fire_projectile(c, 45.0, PROJ_COLOR);
-                    creature_fire_projectile(c, 135.0, PROJ_COLOR);
-                    creature_fire_projectile(c, 225.0, PROJ_COLOR);
-                    creature_fire_projectile(c, 315.0, PROJ_COLOR);
+                    creature_fire_projectile(c, 45.0);
+                    creature_fire_projectile(c, 135.0);
+                    creature_fire_projectile(c, 225.0);
+                    creature_fire_projectile(c, 315.0);
                 }
 
                 c->ai_value++;
@@ -1931,7 +1921,7 @@ static void creature_update_shambler(Creature* c, float dt)
                 Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
                 // float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y-c->phys.pos.z/2.0, p->phys.collision_rect.x, p->phys.collision_rect.y);
                 float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.collision_rect.x, p->phys.collision_rect.y);
-                creature_fire_projectile(c, angle + RAND_FLOAT(-2.0,2.0), PROJ_COLOR);
+                creature_fire_projectile(c, angle + RAND_FLOAT(-2.0,2.0));
 
                 c->ai_value++;
                 if(c->ai_value >= 5)
@@ -1945,10 +1935,10 @@ static void creature_update_shambler(Creature* c, float dt)
                 if(c->ai_value % 2 == 0)
                 {
                     float aoffset = c->ai_value*10.0;
-                    creature_fire_projectile(c, 0.0 + aoffset, PROJ_COLOR);
-                    creature_fire_projectile(c, 90.0 + aoffset, PROJ_COLOR);
-                    creature_fire_projectile(c, 180.0 + aoffset, PROJ_COLOR);
-                    creature_fire_projectile(c, 270.0 + aoffset, PROJ_COLOR);
+                    creature_fire_projectile(c, 0.0 + aoffset);
+                    creature_fire_projectile(c, 90.0 + aoffset);
+                    creature_fire_projectile(c, 180.0 + aoffset);
+                    creature_fire_projectile(c, 270.0 + aoffset);
                 }
 
                 c->ai_value++;
@@ -1972,7 +1962,7 @@ static void creature_update_shambler(Creature* c, float dt)
                 float aplus = 360.0 / num_projectiles;
                 for(int i = 0; i < num_projectiles; ++i)
                 {
-                    creature_fire_projectile(c, a, PROJ_COLOR);
+                    creature_fire_projectile(c, a);
                     a += aplus;
                 }
             }
@@ -2514,20 +2504,15 @@ static void creature_update_beacon_red(Creature* c, float dt)
 
 static void creature_update_watcher(Creature* c, float dt)
 {
-    Gun gun;
-    char* gun_name = creature_get_gun_name(c->type);
-    if(!gun_get_by_name(gun_name, &gun))
-    {
-        LOGE("Couldn't find gun with name %s", gun_name);
-        return;
-    }
 
-    ProjectileOrbital* orb = projectile_orbital_get(&c->phys, gun.orbital_distance);
+    Gun* gun = &room_gun_list[c->room_gun_index];
+
+    ProjectileOrbital* orb = projectile_orbital_get(&c->phys, gun->orbital_distance);
 
     if(!orb)
     {
         for(int i = 0; i < 4; ++i)
-            creature_fire_projectile(c, 0.0, PROJ_COLOR);
+            creature_fire_projectile(c, 0.0);
     }
 
     bool act = ai_update_action(c, dt);

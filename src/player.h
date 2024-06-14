@@ -5,7 +5,6 @@
 #include "gfx.h"
 #include "net.h"
 #include "item.h"
-#include "skills.h"
 #include "projectile.h"
 #include "weapon.h"
 #include "settings.h"
@@ -18,8 +17,6 @@
 #define SPRITE_RIGHT 12
 
 #define PLAYER_NAME_MAX 16
-#define PLAYER_MAX_SKILLS 5
-
 
 #define PLAYER_GAUNTLET_MAX 8
 
@@ -37,7 +34,6 @@ typedef enum
     PLAYER_ACTION_SHOOT_RIGHT,
 
     PLAYER_ACTION_ACTIVATE,
-    PLAYER_ACTION_SELECT_SKILL, //show skill selection
 
     PLAYER_ACTION_USE_ITEM,
     PLAYER_ACTION_DROP_ITEM,
@@ -81,16 +77,6 @@ typedef enum
 
 typedef struct
 {
-    float speed;
-    float max_velocity;
-    float base_friction;
-
-    bool floating;
-} PlayerSkillMods;
-
-
-typedef struct
-{
     Vector3f pos;
     float invulnerable_temp_time;
     float weapon_scale;
@@ -118,8 +104,6 @@ typedef struct
     uint8_t level;
     uint8_t new_levels;
 
-    PlayerSkillMods skill_mods;
-
     uint8_t stats[MAX_STAT_TYPE];
 
     Settings settings;
@@ -127,9 +111,6 @@ typedef struct
 
     PlayerActions last_shoot_action;
     float shoot_sprite_cooldown;
-
-    Skill skills[PLAYER_MAX_SKILLS];
-    int skill_count;
 
     Gun gun;
     uint8_t room_gun_index;
@@ -219,7 +200,6 @@ void player_handle_net_inputs(Player* p, double dt);
 void player_add_xp(Player* p, int xp);
 void player_hurt_no_inv(Player* p, int damage);
 void player_hurt(Player* p, int damage);
-bool player_add_skill(Player* p, SkillType type);
 bool player_add_stat(Player* p, StatType stat, int val);
 void player_add_coins(Player* p, int val);
 bool player_add_hp(Player* p, int hp);

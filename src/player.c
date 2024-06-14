@@ -188,13 +188,6 @@ void player_set_defaults(Player* p)
     p->highlighted_item_id = -1;
     p->highlighted_index = 0;
 
-    memset(p->skills,0,sizeof(Skill)*PLAYER_MAX_SKILLS);
-    p->skill_count = 0;
-    for(int j = 0; j < PLAYER_MAX_SKILLS; ++j)
-    {
-        p->skills[j].type = SKILL_TYPE_NONE;
-    }
-
     player_set_class(p, p->settings.class);
 
 
@@ -448,8 +441,6 @@ void player_init_keys()
     // window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_ENTER);
     window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_E);
 
-    window_controls_add_key(&player->actions[PLAYER_ACTION_SELECT_SKILL].state, GLFW_KEY_T);
-
     window_controls_add_key(&player->actions[PLAYER_ACTION_USE_ITEM].state, GLFW_KEY_U);
     window_controls_add_key(&player->actions[PLAYER_ACTION_DROP_ITEM].state, GLFW_KEY_N);
 
@@ -523,63 +514,6 @@ void player_add_xp(Player* p, int xp)
     p->new_levels += num_new_levels;
 
     LOGI("Level: %u, new: %u", p->level, p->new_levels);
-}
-
-
-bool player_add_skill(Player* p, SkillType type)
-{
-    // Player* p = (Player*)player;
-
-    int n = p->skill_count;
-
-    bool has_skill = false;
-    int skill_index = -1;
-
-    for(int i = 0; i < n; ++i)
-    {
-        if(p->skills[i].type == type)
-        {
-            has_skill = true;
-            skill_index = i;
-            break;
-        }
-    }
-
-    if(has_skill)
-    {
-        Skill* s = &p->skills[skill_index];
-
-        if(s->rank >= 3)
-            return false;
-
-        s->rank++;
-        s->mp_cost  = lookup_mp_cost[type][s->rank-1];
-        s->cooldown = lookup_cooldown[type][s->rank-1];
-
-        if(p == player)
-        {
-            text_list_add(ptext, COLOR_WHITE, 3.0, "%s %s", skills_get_name(type), skills_rank_str(s->rank));
-        }
-
-        return true;
-    }
-
-    if(n >= PLAYER_MAX_SKILLS)
-        return false;
-
-    // new skill
-    p->skills[n].type = type;
-    p->skills[n].rank = 1;
-    p->skills[n].mp_cost  = lookup_mp_cost[type][0];
-    p->skills[n].cooldown = lookup_cooldown[type][0];
-    p->skill_count++;
-
-    if(p == player)
-    {
-        text_list_add(ptext, COLOR_WHITE, 3.0, "%s %s", skills_get_name(type), skills_rank_str(p->skills[n].rank));
-    }
-
-    return true;
 }
 
 bool player_add_stat(Player* p, StatType stat, int val)
@@ -1180,9 +1114,14 @@ static void player_handle_orbitals(Player* p, float dt)
         int max = p->gun.orbital_max_count;
         if(orb) max -= orb->count;
 
+        Vector3f pos = {p->phys.pos.x, p->phys.pos.y, p->phys.height + p->phys.pos.z};
+        Vector3f vel = {p->phys.vel.x, p->phys.vel.y, 0.0};
+
+        vel.z = MIN(1.0, p->gun.gravity_factor)*120.0;
+
         for(int i = 0; i < max; ++i)
         {
-            projectile_fire(&p->phys, p->phys.curr_room, &temp, color, p->aim_deg, true, p->index);
+            projectile_add(pos, &vel, p->phys.curr_room, p->room_gun_index, p->aim_deg, true, &p->phys, p->index);
         }
     }
 }
@@ -1316,18 +1255,15 @@ static void player_handle_shooting(Player* p, float dt)
 
             if(!p->phys.dead)
             {
-                Gun temp = p->gun;
-
-                temp.damage_min += lookup_strength[p->stats[STRENGTH]];
-                temp.damage_max += lookup_strength[p->stats[STRENGTH]];
-                temp.speed  += lookup_attack_range[p->stats[ATTACK_RANGE]];
-
                 p->gun.charging = false;
                 p->gun.charge_time = 0.0;
 
-                uint32_t color = 0x0050A0FF;
+                Vector3f pos = {p->phys.pos.x, p->phys.pos.y, p->phys.height + p->phys.pos.z};
+                Vector3f vel = {p->phys.vel.x, p->phys.vel.y, 0.0};
 
-                projectile_lob(&p->phys, MIN(1.0, temp.gravity_factor)*120.0, p->phys.curr_room, &temp, color, p->aim_deg, true, p->index);
+                vel.z = MIN(1.0, p->gun.gravity_factor)*120.0;
+
+                projectile_add(pos, &vel, p->phys.curr_room, p->room_gun_index, p->aim_deg, true, &p->phys, p->index);
 
                 gaudio_set_pitch(audio_shoot, RAND_FLOAT(0.9,1.1));
                 gaudio_play(audio_shoot);
@@ -1453,12 +1389,6 @@ void player_update(Player* p, float dt)
     p->phys.speed         = lookup_movement_speed[p->stats[MOVEMENT_SPEED]];
     p->phys.max_velocity  = lookup_movement_speed_max_vel[p->stats[MOVEMENT_SPEED]];
     p->phys.base_friction = lookup_movement_speed_base_friction[p->stats[MOVEMENT_SPEED]];
-
-    // apply skills
-    p->phys.speed         += p->skill_mods.speed;
-    p->phys.max_velocity  += p->skill_mods.max_velocity;
-    p->phys.base_friction += p->skill_mods.base_friction;
-    p->phys.floating       = p->phys.dead || p->skill_mods.floating;
 
     float cx = p->phys.collision_rect.x;
     float cy = p->phys.collision_rect.y;

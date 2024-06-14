@@ -9,6 +9,7 @@
 #define MAX_PROJECTILES 4096
 #define MAX_CLUSTER_STAGES 2
 #define MAX_GUNS 100
+#define MAX_ROOM_GUNS 16
 #define GUN_NAME_MAX_LEN 32 
 #define GUN_DESC_MAX_LEN 100
 #define MAX_PERKS 6
@@ -263,11 +264,7 @@ extern int room_gun_count;
 void projectile_init();
 void projectile_clear_all();
 
-void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, Physics* phys, uint16_t from_id);
-
-void projectile_fire(Physics* phys, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, uint16_t from_id);
-
-void projectile_lob(Physics* phys, float vel0_z, uint8_t curr_room, Gun* gun, uint32_t color, float angle_deg, bool from_player, uint16_t from_id);
+void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, uint8_t room_gun_index, float angle_deg, bool from_player, Physics* phys, uint16_t from_id);
 
 void projectile_update_hit_box(Projectile* proj);
 void projectile_update_all(float dt);
@@ -292,3 +289,4 @@ bool is_gun_file_base_gun(const char* file_name);
 // room gun list
 void refresh_visible_room_gun_list();
 int add_to_room_gun_list(Gun* g);
+void replace_player_room_gun(void* p, Gun* g);

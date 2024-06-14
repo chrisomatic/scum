@@ -973,6 +973,7 @@ void editor_draw()
             {
                 // gun changed
                 memcpy(&player->gun, &gun, sizeof(Gun));
+                replace_player_room_gun(player, &gun);
                 based_on = !STR_EMPTY(gun.based_on_name);
 
                 spread_type_sel = gun.spread_type;
