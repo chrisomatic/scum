@@ -290,6 +290,7 @@ bool is_gun_file_base_gun(const char* file_name);
 // room gun list
 void refresh_visible_room_gun_list();
 void add_to_room_gun_list(void* it);
+void add_to_room_gun_list_creature(void* creature);
 void replace_player_room_gun(void* p, Gun* g);
 
 char* get_gun_perk_name(GunPerk p);

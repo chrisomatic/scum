@@ -151,7 +151,7 @@ void player_set_defaults(Player* p)
     if(!gun_get_by_name(gun_name, &p->gun))
     {
         LOGE("Couldn't find gun with name %s", gun_name);
-        memcpy(&p->gun, &gun_list[0], sizeof(Gun));
+        memcpy(&p->gun, &gun_catalog[0], sizeof(Gun));
     }
 
     // p->temp_room = -1;

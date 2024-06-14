@@ -1413,11 +1413,11 @@ static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float 
 {
     Gun* gun = &room_gun_list[c->room_gun_index];
 
-    gun->sprite_index = 4;
-    gun->color1 = 0x32251E;
-    gun->color2 = 0x4C3228;
-    gun->scale1 += 0.80;
-    gun->scale2 += 0.80;
+    // gun->sprite_index = 4;
+    // gun->color1 = 0x32251E;
+    // gun->color2 = 0x4C3228;
+    // gun->scale1 += 0.80;
+    // gun->scale2 += 0.80;
 
     Rect r = level_get_tile_rect(tile_x, tile_y);
     Vector3f pos = {r.x, r.y, 400.0};
@@ -2361,9 +2361,13 @@ static void creature_update_behemoth(Creature* c, float dt)
         for(int i = 0; i < n; ++i)
         {
             level_get_rand_floor_tile(room, &rand_tile, &rand_pos);
-            creature_add(room, CREATURE_TYPE_PEEPER, &rand_tile, NULL);
-            ParticleSpawner* ps = particles_spawn_effect(rand_pos.x,rand_pos.y, 0.0, &particle_effects[EFFECT_SMOKE], 0.3, true, false);
-            if(ps != NULL) ps->userdata = (int)c->phys.curr_room;
+            Creature* c = creature_add(room, CREATURE_TYPE_PEEPER, &rand_tile, NULL);
+            if(c)
+            {
+                add_to_room_gun_list_creature(c);
+                ParticleSpawner* ps = particles_spawn_effect(rand_pos.x,rand_pos.y, 0.0, &particle_effects[EFFECT_SMOKE], 0.3, true, false);
+                if(ps != NULL) ps->userdata = (int)c->phys.curr_room;
+            }
         }
 
         c->phys.underground = true;

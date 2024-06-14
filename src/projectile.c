@@ -365,6 +365,13 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, uint8_t room
             p.phys.vel.y = -(proj_gun->speed)*sinf(angle) + vel->y;
             p.phys.vel.z = vel->z;
 
+            // HACK
+            if(pos.z >= 300)
+            {
+                p.phys.vel.x = 0;
+                p.phys.vel.y = 0;
+            }
+
             if(homing)
             {
                 uint16_t id = 0;
@@ -1877,6 +1884,40 @@ void add_to_room_gun_list(void* it)
 
     memcpy(&room_gun_list[room_gun_count++], &item_gun, sizeof(Gun));
     item->user_data3 = (uint8_t)(room_gun_count-1);
+}
+
+void add_to_room_gun_list_creature(void* creature)
+{
+    if(!visible_room)
+        return;
+
+    if(room_gun_count >= MAX_ROOM_GUNS)
+        return;
+
+    Creature* c = (Creature*)creature;
+
+    Gun gun;
+    char* gun_name = creature_get_gun_name(c->type);
+    gun_get_by_name(gun_name, &gun);
+
+    int existing_index = -1;
+    for(int j = 0; j < room_gun_count; ++j)
+    {
+        if(memcmp(&room_gun_list[j],&gun, sizeof(Gun)) == 0)
+        {
+            existing_index = j;
+            break;
+        }
+    }
+
+    if(existing_index >= 0)
+    {
+        c->room_gun_index = existing_index;
+        return;
+    }
+
+    memcpy(&room_gun_list[room_gun_count++], &gun, sizeof(Gun));
+    c->room_gun_index = room_gun_count-1;
 }
 
 void replace_player_room_gun(void* p, Gun* g)
