@@ -100,7 +100,8 @@ static void draw_entity_shadow(Physics* phys, EntityType type)
 
     if(phys->vr.w == 0) phys->vr.w = 8; // @HACK: To address projectiles without shadows
 
-    float scale = (phys->vr.w/32.0 * 0.80);
+    // float scale = (phys->vr.w/32.0 * 0.80);
+    float scale = (phys->vr.w / gfx_images[shadow_image].visible_rects[0].w * 0.80) * phys->scale;
     float opacity = 0.6; //RANGE(0.5*(1.0 - (phys->pos.z / 128.0)),0.1,0.5);
 
     float shadow_x = phys->pos.x;

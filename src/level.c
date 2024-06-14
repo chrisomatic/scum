@@ -1772,6 +1772,47 @@ int level_every_tile_traversable_func(int x, int y)
 
 Rect level_get_tile_rect(int x, int y)
 {
+#if 1
+    static Vector2f tile_positions[ROOM_TILE_SIZE_X][ROOM_TILE_SIZE_Y] = {0};
+    static bool _set = false;
+    if(!_set)
+    {
+        _set = true;
+
+        float xtl = room_area.x - room_area.w/2.0;
+        float ytl = room_area.y - room_area.h/2.0;
+
+        for(int xi = 0; xi < ROOM_TILE_SIZE_X; ++xi)
+        {
+            for(int yi = 0; yi < ROOM_TILE_SIZE_X; ++yi)
+            {
+                float xp = xtl + (xi+1)*TILE_SIZE;
+                float yp = ytl + (yi+1)*TILE_SIZE;
+                tile_positions[xi][yi].x = xp + TILE_SIZE/2.0;
+                tile_positions[xi][yi].y = yp + TILE_SIZE/2.0;
+            }
+        }
+    }
+
+    float xc;
+    float yc;
+
+    if(x < 0 || y < 0 || x >= ROOM_TILE_SIZE_X || y >= ROOM_TILE_SIZE_Y)
+    {
+        float xtl = room_area.x - room_area.w/2.0;
+        float ytl = room_area.y - room_area.h/2.0;
+        xc = xtl + (x+1)*TILE_SIZE + TILE_SIZE/2.0;
+        yc = ytl + (y+1)*TILE_SIZE + TILE_SIZE/2.0;
+    }
+    else
+    {
+        xc = tile_positions[x][y].x;
+        yc = tile_positions[x][y].y;
+    }
+
+    Rect r = RECT(xc, yc, TILE_SIZE, TILE_SIZE);
+    return r;
+#else
     float _x = room_area.x - room_area.w/2.0;
     float _y = room_area.y - room_area.h/2.0;
 
@@ -1780,8 +1821,8 @@ Rect level_get_tile_rect(int x, int y)
 
     Rect r = RECT((_x+TILE_SIZE/2.0), (_y+TILE_SIZE/2.0), TILE_SIZE, TILE_SIZE);
     return r;
+#endif
 }
-
 Rect level_get_rect_by_pos(float x, float y)
 {
     Vector2i tile_coords = level_get_room_coords_by_pos(x, y);

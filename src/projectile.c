@@ -196,8 +196,8 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, uint8_t room
 
     Rect vr = gfx_images[projectile_image].visible_rects[proj_gun->sprite_index];
 
-    vr.w *= proj_gun->scale1;
-    vr.h *= proj_gun->scale1;
+    // vr.w *= proj_gun->scale1;
+    // vr.h *= proj_gun->scale1;
 
     proj.color = proj_gun->color1;
     proj.sprite_index = proj_gun->sprite_index;
@@ -899,8 +899,9 @@ void projectile_draw(Projectile* proj)
 
     float opacity = proj->phys.ethereal ? 0.3 : 1.0;
 
-    float y = proj->phys.pos.y - (proj->phys.vr.h + proj->phys.pos.z)/2.0;
-    float scale = RANGE(pow(proj->phys.pos.z/20.0, 0.6), 0.90, 1.10) * proj->phys.scale;
+    // float scale = RANGE(pow(proj->phys.pos.z/20.0, 0.6), 0.90, 1.10) * proj->phys.scale;
+    float y = proj->phys.pos.y - (proj->phys.vr.h * proj->phys.scale + proj->phys.pos.z)/2.0;
+    float scale = proj->phys.scale;
 
     // printf("z: %.2f, scale: %.2f\n", proj->phys.pos.z, scale);
     gfx_sprite_batch_add(projectile_image, proj->sprite_index, proj->phys.pos.x, y, proj->color, false, scale, proj->phys.rotation_deg, opacity, false, true, false);

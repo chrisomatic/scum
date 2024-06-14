@@ -146,11 +146,12 @@ void player_set_defaults(Player* p)
 
     weapon_add(WEAPON_TYPE_SPEAR,&p->phys, &p->weapon, (p->weapon.type == WEAPON_TYPE_NONE ? true : false));
 
-    char* gun_name = "pistol1";
+    // char* gun_name = "pistol1";
+    char* gun_name = "machinegun2";
     if(!gun_get_by_name(gun_name, &p->gun))
     {
         LOGE("Couldn't find gun with name %s", gun_name);
-        return;
+        memcpy(&p->gun, &gun_list[0], sizeof(Gun));
     }
 
     // p->temp_room = -1;
@@ -664,14 +665,6 @@ void player_die(Player* p)
         if(!p2->phys.dead) return;
     }
 
-    // // if all are dead
-    // for(int i = 0; i < MAX_PLAYERS; ++i)
-    // {
-    //     Player* p2 = &players[i];
-    //     if(!p2->active) continue;
-    //     player_reset(p2);
-    // }
-
     all_players_dead = true;
     trigger_generate_level(rand(), level_rank, 2, __LINE__);
 
@@ -685,19 +678,6 @@ void player_die(Player* p)
 void player_reset(Player* p)
 {
     player_set_defaults(p);
-
-    /*
-    for(int i = 0; i < MAX_PLAYERS; ++i)
-    {
-        Player* p2 = &players[i];
-        if(p == p2) continue;
-        if(!p2->active) continue;
-        player_send_to_room(p, p2->phys.curr_room);
-        return;
-    }
-    */
-
-    // player_send_to_level_start(p);
 }
 
 void player_draw_room_transition()
