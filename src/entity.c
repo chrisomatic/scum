@@ -237,6 +237,26 @@ void entity_handle_status_effects(float dt)
     }
 }
 
+void entity_handle_misc(float dt)
+{
+    for(int i = 0; i < num_entities; ++i)
+    {
+        Entity* e = &entities[i];
+
+        if(!e->phys) continue;
+        if(e->phys->dead) continue;
+
+        // stun timer
+        if(e->phys->stun_timer > 0.0)
+        {
+            e->phys->stun_timer -= dt;
+
+            if(e->phys->stun_timer < 0.0)
+               e->phys->stun_timer = 0.0;
+        }
+    }
+}
+
 void entity_handle_collisions()
 {
     if(role == ROLE_CLIENT) return;
@@ -317,6 +337,14 @@ void entity_handle_collisions()
             projectile_kill(proj);
         }
     }
+}
+
+
+void entity_update_all(float dt)
+{
+    entity_handle_collisions();
+    entity_handle_status_effects(dt);
+    entity_handle_misc(dt);
 }
 
 void entity_draw_all()

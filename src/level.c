@@ -1728,8 +1728,8 @@ void level_update(float dt)
         if(p->phys.floating) continue;
         if(level_get_tile_type(visible_room, p->phys.curr_tile.x, p->phys.curr_tile.y) == TILE_BREAKABLE_FLOOR)
         {
-            if(visible_room->breakable_floor_counter[p->phys.curr_tile.x][p->phys.curr_tile.y] < BREAKABLE_FLOOR_COUNTER_MAX)
-               visible_room->breakable_floor_counter[p->phys.curr_tile.x][p->phys.curr_tile.y]++;
+            if(visible_room->breakable_floor_timer[p->phys.curr_tile.x][p->phys.curr_tile.y] < BREAKABLE_FLOOR_TIME_MAX)
+               visible_room->breakable_floor_timer[p->phys.curr_tile.x][p->phys.curr_tile.y] += dt;
         }
     }
 
@@ -1860,22 +1860,22 @@ static uint8_t get_pit_tile_sprite(Room* room, int x, int y)
     uint8_t sprite = SPRITE_TILE_PIT;
 
     if( pit_up &&  pit_right &&  pit_down &&  pit_left) return sprite+0;
-    if(!pit_up &&  pit_right &&  pit_down &&  pit_left) return sprite+9;
-    if( pit_up && !pit_right &&  pit_down &&  pit_left) return sprite+10;
-    if( pit_up &&  pit_right && !pit_down &&  pit_left) return sprite+11;
-    if( pit_up &&  pit_right &&  pit_down && !pit_left) return sprite+12;
-    if(!pit_up &&  pit_right &&  pit_down && !pit_left) return sprite+13;
-    if(!pit_up && !pit_right &&  pit_down &&  pit_left) return sprite+14;
-    if(!pit_up &&  pit_right && !pit_down &&  pit_left) return sprite+15;
-    if( pit_up && !pit_right && !pit_down &&  pit_left) return sprite+16;
-    if( pit_up && !pit_right &&  pit_down && !pit_left) return sprite+17;
-    if( pit_up &&  pit_right && !pit_down && !pit_left) return sprite+18;
-    if(!pit_up && !pit_right &&  pit_down && !pit_left) return sprite+19;
-    if(!pit_up && !pit_right && !pit_down &&  pit_left) return sprite+20;
-    if( pit_up && !pit_right && !pit_down && !pit_left) return sprite+21;
-    if(!pit_up &&  pit_right && !pit_down && !pit_left) return sprite+22;
+    if(!pit_up &&  pit_right &&  pit_down &&  pit_left) return sprite+12;
+    if( pit_up && !pit_right &&  pit_down &&  pit_left) return sprite+13;
+    if( pit_up &&  pit_right && !pit_down &&  pit_left) return sprite+14;
+    if( pit_up &&  pit_right &&  pit_down && !pit_left) return sprite+15;
+    if(!pit_up &&  pit_right &&  pit_down && !pit_left) return sprite+16;
+    if(!pit_up && !pit_right &&  pit_down &&  pit_left) return sprite+17;
+    if(!pit_up &&  pit_right && !pit_down &&  pit_left) return sprite+18;
+    if( pit_up && !pit_right && !pit_down &&  pit_left) return sprite+19;
+    if( pit_up && !pit_right &&  pit_down && !pit_left) return sprite+20;
+    if( pit_up &&  pit_right && !pit_down && !pit_left) return sprite+21;
+    if(!pit_up && !pit_right &&  pit_down && !pit_left) return sprite+22;
+    if(!pit_up && !pit_right && !pit_down &&  pit_left) return sprite+23;
+    if( pit_up && !pit_right && !pit_down && !pit_left) return sprite+24;
+    if(!pit_up &&  pit_right && !pit_down && !pit_left) return sprite+25;
 
-    return sprite+23;
+    return sprite+26;
 }
 
 uint8_t level_get_tile_sprite(TileType tt)
@@ -1898,7 +1898,7 @@ uint8_t level_get_tile_sprite(TileType tt)
              else            sprite = SPRITE_TILE_FLOOR_ALT5;
                  
         } break;
-        case TILE_BREAKABLE_FLOOR: sprite = SPRITE_TILE_FLOOR;  break;
+        case TILE_BREAKABLE_FLOOR: sprite = SPRITE_TILE_FLOOR_BREAK1;  break;
         case TILE_PIT:           sprite = SPRITE_TILE_PIT;    break;
         case TILE_BOULDER:       sprite = SPRITE_TILE_BLOCK;  break;
         case TILE_MUD:           sprite = SPRITE_TILE_MUD;    break;
@@ -1937,7 +1937,7 @@ TileType level_get_tile_type(Room* room, int x, int y)
 
     if(rdata->tiles[x][y] == TILE_BREAKABLE_FLOOR)
     {
-        if(room->breakable_floor_counter[x][y] >= BREAKABLE_FLOOR_COUNTER_MAX)
+        if(room->breakable_floor_timer[x][y] >= BREAKABLE_FLOOR_TIME_MAX)
             return TILE_PIT;
     }
 
@@ -2144,12 +2144,13 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
     {
         for(int _x = 0; _x < ROOM_TILE_SIZE_X; ++_x)
         {
+            
             // TileType tt = rdata->tiles[_x][_y];
             // uint8_t sprite = level_get_tile_sprite(tt);
 
             // if(tt == TILE_BREAKABLE_FLOOR)
             // {
-            //     if(room->breakable_floors_counter[_x][_y] >= BREAKABLE_FLOOR_COUNTER_MAX)
+            //     if(room->breakable_floors_timer[_x][_y] >= BREAKABLE_FLOOR_TIME_MAX)
             //     {
             //         tt = TILE_PIT;
             //     }
@@ -2158,17 +2159,13 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
             TileType tt = level_get_tile_type(room, _x, _y);
             uint8_t sprite = level_get_tile_sprite(tt);
 
-            uint8_t fcounter = room->breakable_floor_counter[_x][_y];
-             if(tt == TILE_BREAKABLE_FLOOR && fcounter < BREAKABLE_FLOOR_COUNTER_MAX)
-             {
-                if(fcounter == 0) sprite = SPRITE_TILE_FLOOR;
-                else if(fcounter < 10) sprite = SPRITE_TILE_FLOOR_ALT1;
-                else if(fcounter < 20) sprite = SPRITE_TILE_FLOOR_ALT2;
-                else if(fcounter < 30) sprite = SPRITE_TILE_FLOOR_ALT3;
-                else if(fcounter < 40) sprite = SPRITE_TILE_FLOOR_ALT4;
-                else if(fcounter < 50) sprite = SPRITE_TILE_FLOOR_ALT5;
-             }
-
+            float ftimer = room->breakable_floor_timer[_x][_y];
+            if(tt == TILE_BREAKABLE_FLOOR && ftimer < BREAKABLE_FLOOR_TIME_MAX)
+            {
+                if(ftimer < 0.25) sprite = SPRITE_TILE_FLOOR_BREAK1;
+                else if(ftimer < 0.50) sprite = SPRITE_TILE_FLOOR_BREAK2;
+                else sprite = SPRITE_TILE_FLOOR_BREAK3;
+            }
 
             if(tt == TILE_PIT)
                 sprite = get_pit_tile_sprite(room,_x,_y);

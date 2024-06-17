@@ -832,9 +832,8 @@ DBG();
 DBG();
     entity_build_all();
 DBG();
-    entity_handle_collisions();
+    entity_update_all(dt);
 DBG();
-    entity_handle_status_effects(dt);
 
     dbg = false;
 }

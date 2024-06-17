@@ -325,7 +325,6 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, uint8_t room
 
     for(int i = 0; i < proj_gun->num; ++i)
     {
-
         for(int j = 0; j < proj_gun->burst_count+1; ++j)
         {
             Projectile p = {0};
@@ -863,6 +862,12 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
                 projectile_kill(proj);
             }
 
+            bool stun = RAND_FLOAT(0.0,1.0) <= gun->stun_chance;
+            if(stun)
+            {
+                phys->stun_timer = 1.0;
+            }
+
             if(proj->cold)
             {
                 status_effects_add_type(phys,proj->phys.curr_room, STATUS_EFFECT_COLD);
@@ -1041,6 +1046,7 @@ void gun_save_to_file(Gun* gun, Gun* based_on)
         fprintf(fp, "homing_chance: %3.2f\n", gun->homing_chance);
         fprintf(fp, "bounce_chance: %3.2f\n", gun->bounce_chance);
         fprintf(fp, "penetration_chance: %3.2f\n", gun->penetration_chance);
+        fprintf(fp, "stun_chance: %3.2f\n", gun->stun_chance);
         fprintf(fp, "explosion_chance: %3.2f\n", gun->explosion_chance);
         fprintf(fp, "explosion_radius: %3.2f\n", gun->explosion_radius);
         fprintf(fp, "explosion_rate: %3.2f\n", gun->explosion_rate);
@@ -1092,6 +1098,7 @@ void gun_save_to_file(Gun* gun, Gun* based_on)
         if(gun->homing_chance        != based_on->homing_chance)        fprintf(fp, "homing_chance: %3.2f\n", gun->homing_chance);
         if(gun->bounce_chance        != based_on->bounce_chance)        fprintf(fp, "bounce_chance: %3.2f\n", gun->bounce_chance);
         if(gun->penetration_chance   != based_on->penetration_chance)   fprintf(fp, "penetration_chance: %3.2f\n", gun->penetration_chance);
+        if(gun->stun_chance          != based_on->stun_chance)          fprintf(fp, "stun_chance: %3.2f\n", gun->stun_chance);
         if(gun->explosion_chance     != based_on->explosion_chance)     fprintf(fp, "explosion_chance: %3.2f\n", gun->explosion_chance);
         if(gun->explosion_radius     != based_on->explosion_radius)     fprintf(fp, "explosion_radius: %3.2f\n", gun->explosion_radius);
         if(gun->explosion_rate       != based_on->explosion_rate)       fprintf(fp, "explosion_rate: %3.2f\n", gun->explosion_rate);
@@ -1154,6 +1161,7 @@ void gun_print(Gun* gun)
     printf("homing_chance: %3.2f\n", gun->homing_chance);
     printf("bounce_chance: %3.2f\n", gun->bounce_chance);
     printf("penetration_chance: %3.2f\n", gun->penetration_chance);
+    printf("stun_chance: %3.2f\n", gun->stun_chance);
     printf("explosion_chance: %3.2f\n", gun->explosion_chance);
     printf("explosion_radius: %3.2f\n", gun->explosion_radius);
     printf("explosion_rate: %3.2f\n", gun->explosion_rate);
@@ -1368,6 +1376,8 @@ void gun_load_from_file(Gun* gun, const char* file_name)
                 gun->bounce_chance = atof(val2);
             else if(STR_EQUAL(key, "penetration_chance"))
                 gun->penetration_chance = atof(val2);
+            else if(STR_EQUAL(key, "stun_chance"))
+                gun->stun_chance = atof(val2);
             else if(STR_EQUAL(key, "explosion_chance"))
                 gun->explosion_chance = atof(val2);
             else if(STR_EQUAL(key, "explosion_radius"))
@@ -1655,6 +1665,21 @@ void apply_gun_perks(Gun* gun)
                 int _perc = RAND_RANGE(20,30);
                 gun->penetration_chance += (_perc/100.0);
             } break;
+            case GUN_PERK_INCREASE_STUN_CHANCE_1:
+            {
+                int _perc = RAND_RANGE(5,10);
+                gun->stun_chance += (_perc/100.0);
+            } break;
+            case GUN_PERK_INCREASE_STUN_CHANCE_2:
+            {
+                int _perc = RAND_RANGE(12,15);
+                gun->stun_chance += (_perc/100.0);
+            } break;
+            case GUN_PERK_INCREASE_STUN_CHANCE_3:
+            {
+                int _perc = RAND_RANGE(20,30);
+                gun->stun_chance += (_perc/100.0);
+            } break;
             case GUN_PERK_INCREASE_GHOST_CHANCE_1:
             {
                 gun->ghost_chance += (0.10);
@@ -1783,6 +1808,10 @@ void apply_gun_perks(Gun* gun)
             case GUN_PERK_MAX_HOMING_CHANCE:
             {
                 gun->homing_chance = 1.0;
+            } break;
+            case GUN_PERK_MAX_STUN_CHANCE:
+            {
+                gun->stun_chance = 1.0;
             } break;
             case GUN_PERK_INCREASE_CRIT_HIT_CHANCE_4:
             {
@@ -1954,6 +1983,9 @@ char* get_gun_perk_name(GunPerk p)
         case GUN_PERK_INCREASE_PEN_CHANCE_1: return "Increase Penetration Chance 1";
         case GUN_PERK_INCREASE_PEN_CHANCE_2: return "Increase Penetration Chance 2";
         case GUN_PERK_INCREASE_PEN_CHANCE_3: return "Increase Penetration Chance 3";
+        case GUN_PERK_INCREASE_STUN_CHANCE_1: return "Increase Stun Chance 1";
+        case GUN_PERK_INCREASE_STUN_CHANCE_2: return "Increase Stun Chance 2";
+        case GUN_PERK_INCREASE_STUN_CHANCE_3: return "Increase Stun Chance 3";
         case GUN_PERK_INCREASE_GHOST_CHANCE_1: return "Increase Ghost Chance 1";
         case GUN_PERK_INCREASE_GHOST_CHANCE_2: return "Increase Ghost Chance 2";
         case GUN_PERK_INCREASE_GHOST_CHANCE_3: return "Increase Ghost Chance 3";

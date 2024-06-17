@@ -94,6 +94,9 @@ typedef enum
     SPRITE_TILE_DOOR_RIGHT_CLOSED,
     SPRITE_TILE_DOOR_DOWN_CLOSED,
     SPRITE_TILE_DOOR_LEFT_CLOSED,
+    SPRITE_TILE_FLOOR_BREAK1,
+    SPRITE_TILE_FLOOR_BREAK2,
+    SPRITE_TILE_FLOOR_BREAK3,
     SPRITE_TILE_MAX,
 } SpriteTileType;
 
@@ -126,7 +129,7 @@ typedef enum
     ROOM_TYPE_MAX
 } RoomType;
 
-#define BREAKABLE_FLOOR_COUNTER_MAX 60
+#define BREAKABLE_FLOOR_TIME_MAX 0.75
 
 typedef struct
 {
@@ -137,7 +140,7 @@ typedef struct
     bool doors_locked;
     uint32_t color;
 
-    uint8_t breakable_floor_counter[ROOM_TILE_SIZE_X][ROOM_TILE_SIZE_Y];
+    float breakable_floor_timer[ROOM_TILE_SIZE_X][ROOM_TILE_SIZE_Y];
 
     Wall walls[MAX_WALLS_PER_ROOM];
     int wall_count;

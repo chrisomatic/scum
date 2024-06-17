@@ -1312,8 +1312,7 @@ void update(float dt)
         particles_update(dt);
 
         entity_build_all();
-        entity_handle_collisions();
-        entity_handle_status_effects(dt);
+        entity_update_all(dt);
 
         update_level_transition(dt);
 

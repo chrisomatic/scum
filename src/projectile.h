@@ -58,6 +58,9 @@ typedef enum
     GUN_PERK_INCREASE_PEN_CHANCE_1,
     GUN_PERK_INCREASE_PEN_CHANCE_2,
     GUN_PERK_INCREASE_PEN_CHANCE_3,
+    GUN_PERK_INCREASE_STUN_CHANCE_1,
+    GUN_PERK_INCREASE_STUN_CHANCE_2,
+    GUN_PERK_INCREASE_STUN_CHANCE_3,
     GUN_PERK_INCREASE_GHOST_CHANCE_1,
     GUN_PERK_INCREASE_GHOST_CHANCE_2,
     GUN_PERK_INCREASE_GHOST_CHANCE_3,
@@ -85,6 +88,7 @@ typedef enum
     GUN_PERK_ADD_1_SHOT,
     GUN_PERK_MAX_GHOST_CHANCE,
     GUN_PERK_MAX_HOMING_CHANCE,
+    GUN_PERK_MAX_STUN_CHANCE,
     GUN_PERK_INCREASE_CRIT_HIT_CHANCE_4,
     GUN_PERK_COUNT,
 } GunPerk;
@@ -107,6 +111,7 @@ typedef struct
     float explosion_chance;
     float bounce_chance;
     float penetration_chance;
+    float stun_chance;
 
     float explosion_radius;
     float explosion_rate;

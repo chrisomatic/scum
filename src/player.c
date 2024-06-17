@@ -118,6 +118,7 @@ void player_set_defaults(Player* p)
     p->phys.mass = 1.0;
     p->phys.elasticity = 0.1;
     p->phys.vr = *vr;
+    p->phys.stun_timer = 0.0;
 
     memset(p->stats,0,sizeof(uint8_t)*MAX_STAT_TYPE);
 
@@ -1588,6 +1589,8 @@ void player_update(Player* p, float dt)
         moving = (up || down || left || right);
 
         float speed = p->phys.speed*p->phys.speed_factor*mud_factor;
+        if(p->phys.stun_timer > 0.0)
+            speed = 0.0;
 
         if(moving)
         {

@@ -539,6 +539,9 @@ void editor_draw()
                         bool penetrative = (rand() % 4 == 0);
                         gun.penetration_chance = penetrative ? RAND_FLOAT(0.0, 1.0) : 0.0;
 
+                        bool stun = (rand() % 4 == 0);
+                        gun.stun_chance = stun ? RAND_FLOAT(0.0, 1.0) : 0.0;
+
                         bool homing = (rand() % 4 == 0);
                         gun.homing_chance = homing ? RAND_FLOAT(0.0, 1.0) : 0.0;
 
@@ -673,6 +676,7 @@ void editor_draw()
                     imgui_horizontal_end();
 
                     imgui_horizontal_begin();
+                        imgui_slider_float("Stun Chance", 0.0, 1.0, &gun.stun_chance);
                         imgui_slider_float("Homing Chance", 0.0, 1.0, &gun.homing_chance);
                         imgui_slider_float("Ghost Chance", 0.0, 1.0, &gun.ghost_chance);
                     imgui_horizontal_end();

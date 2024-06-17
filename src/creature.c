@@ -248,7 +248,6 @@ void print_creature_dimensions(Creature* c)
 
 void creature_init_props(Creature* c)
 {
-
     c->image = creature_get_image(c->type);
     Rect* vr = &gfx_images[c->image].visible_rects[0];
     c->phys.width  = vr->w * 0.80;
@@ -256,6 +255,7 @@ void creature_init_props(Creature* c)
     c->phys.height = vr->h * 0.80;
     c->phys.radius = c->phys.width / 2.0;
     c->phys.scale = 1.0;
+    c->phys.stun_timer = 0.0;
     c->phys.vr = *vr;
 
     c->damage = 1;
@@ -834,7 +834,7 @@ void creature_update(Creature* c, float dt)
 
     c->phys.curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
 
-    if(level_grace_time <= 0.0 && creatures_can_move)
+    if(level_grace_time <= 0.0 && c->phys.stun_timer <= 0.0 && creatures_can_move)
     {
         switch(c->type)
         {
