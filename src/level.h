@@ -44,6 +44,7 @@ typedef enum
     TILE_SPIKES,
     TILE_TIMED_SPIKES1,
     TILE_TIMED_SPIKES2,
+    TILE_BREAKABLE_FLOOR,
     TILE_MAX
 } TileType;
 
@@ -125,6 +126,8 @@ typedef enum
     ROOM_TYPE_MAX
 } RoomType;
 
+#define BREAKABLE_FLOOR_COUNTER_MAX 60
+
 typedef struct
 {
     bool valid;
@@ -133,6 +136,8 @@ typedef struct
     bool doors[MAX_DOORS];
     bool doors_locked;
     uint32_t color;
+
+    uint8_t breakable_floor_counter[ROOM_TILE_SIZE_X][ROOM_TILE_SIZE_Y];
 
     Wall walls[MAX_WALLS_PER_ROOM];
     int wall_count;

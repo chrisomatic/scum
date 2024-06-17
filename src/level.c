@@ -10,6 +10,7 @@
 #include "entity.h"
 #include "physics.h"
 #include "player.h"
+#include "room_editor.h"
 
 #define SMALL_LEVELS    1
 
@@ -1718,6 +1719,20 @@ void level_update(float dt)
         level_room_time += dt;
     }
 
+    // todo
+    for(int i = 0; i < MAX_PLAYERS; ++i)
+    {
+        Player* p = &players[i];
+        if(!p->active) continue;
+        if(p->phys.dead) continue;
+        if(p->phys.floating) continue;
+        if(level_get_tile_type(visible_room, p->phys.curr_tile.x, p->phys.curr_tile.y) == TILE_BREAKABLE_FLOOR)
+        {
+            if(visible_room->breakable_floor_counter[p->phys.curr_tile.x][p->phys.curr_tile.y] < BREAKABLE_FLOOR_COUNTER_MAX)
+               visible_room->breakable_floor_counter[p->phys.curr_tile.x][p->phys.curr_tile.y]++;
+        }
+    }
+
     handle_room_completion(visible_room);
 }
 
@@ -1761,8 +1776,9 @@ int level_tile_traversable_func(int x, int y)
     if(tt == TILE_SPIKES)  return 1;
     if(tt == TILE_MUD)     return 2;
     if(tt == TILE_ICE)     return 2;
+    if(tt == TILE_BREAKABLE_FLOOR)  return 3;
 
-    return 3;
+    return 4;
 }
 
 int level_every_tile_traversable_func(int x, int y)
@@ -1829,12 +1845,17 @@ Rect level_get_rect_by_pos(float x, float y)
     return level_get_tile_rect(tile_coords.x, tile_coords.y);
 }
 
-static uint8_t get_pit_tile_sprite(RoomFileData* rdata, int x, int y)
+static uint8_t get_pit_tile_sprite(Room* room, int x, int y)
 {
-    bool pit_up    = (rdata->tiles[x][y-1] == TILE_PIT);
-    bool pit_right = (rdata->tiles[x+1][y] == TILE_PIT);
-    bool pit_down  = (rdata->tiles[x][y+1] == TILE_PIT);
-    bool pit_left  = (rdata->tiles[x-1][y] == TILE_PIT);
+    // bool pit_up    = (rdata->tiles[x][y-1] == TILE_PIT);
+    // bool pit_right = (rdata->tiles[x+1][y] == TILE_PIT);
+    // bool pit_down  = (rdata->tiles[x][y+1] == TILE_PIT);
+    // bool pit_left  = (rdata->tiles[x-1][y] == TILE_PIT);
+
+    bool pit_up    = level_get_tile_type(room, x, y-1) == TILE_PIT;
+    bool pit_right = level_get_tile_type(room, x+1, y) == TILE_PIT;
+    bool pit_down  = level_get_tile_type(room, x, y+1) == TILE_PIT;
+    bool pit_left  = level_get_tile_type(room, x-1, y) == TILE_PIT;
 
     uint8_t sprite = SPRITE_TILE_PIT;
 
@@ -1877,11 +1898,12 @@ uint8_t level_get_tile_sprite(TileType tt)
              else            sprite = SPRITE_TILE_FLOOR_ALT5;
                  
         } break;
+        case TILE_BREAKABLE_FLOOR: sprite = SPRITE_TILE_FLOOR;  break;
         case TILE_PIT:           sprite = SPRITE_TILE_PIT;    break;
         case TILE_BOULDER:       sprite = SPRITE_TILE_BLOCK;  break;
         case TILE_MUD:           sprite = SPRITE_TILE_MUD;    break;
         case TILE_ICE:           sprite = SPRITE_TILE_ICE;    break;
-        case TILE_SPIKES:        sprite = SPRITE_TILE_SPIKES; break; 
+        case TILE_SPIKES:        sprite = SPRITE_TILE_SPIKES; break;
         case TILE_TIMED_SPIKES1:  {
             sprite = spikes ? SPRITE_TILE_SPIKES : SPRITE_TILE_SPIKES_DOWN;
         } break;
@@ -1900,8 +1922,24 @@ TileType level_get_tile_type(Room* room, int x, int y)
     if(!room) return TILE_NONE;
     if(room->layout >= MAX_ROOM_LIST_COUNT) return TILE_NONE;
 
-    RoomFileData* rdata = &room_list[room->layout];
+    RoomFileData* rdata = NULL;
+    if(room->layout == -1)
+    {
+        //HACK: could also pass in rdata pointer as optional argument
+        rdata = &room_data_editor;
+    }
+    else
+    {
+        rdata = &room_list[room->layout];
+    }
+
     if(!rdata) return TILE_NONE;
+
+    if(rdata->tiles[x][y] == TILE_BREAKABLE_FLOOR)
+    {
+        if(room->breakable_floor_counter[x][y] >= BREAKABLE_FLOOR_COUNTER_MAX)
+            return TILE_PIT;
+    }
 
     return rdata->tiles[x][y];
 }
@@ -2095,7 +2133,7 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
     RoomFileData* rdata;
     if(room_data != NULL)
         rdata = room_data;
-    else
+    else    
         rdata = &room_list[room->layout];
 
     // draw room
@@ -2106,17 +2144,48 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
     {
         for(int _x = 0; _x < ROOM_TILE_SIZE_X; ++_x)
         {
-            TileType tt = rdata->tiles[_x][_y];
+            // TileType tt = rdata->tiles[_x][_y];
+            // uint8_t sprite = level_get_tile_sprite(tt);
+
+            // if(tt == TILE_BREAKABLE_FLOOR)
+            // {
+            //     if(room->breakable_floors_counter[_x][_y] >= BREAKABLE_FLOOR_COUNTER_MAX)
+            //     {
+            //         tt = TILE_PIT;
+            //     }
+            // }
+
+            TileType tt = level_get_tile_type(room, _x, _y);
             uint8_t sprite = level_get_tile_sprite(tt);
 
+            uint8_t fcounter = room->breakable_floor_counter[_x][_y];
+             if(tt == TILE_BREAKABLE_FLOOR && fcounter < BREAKABLE_FLOOR_COUNTER_MAX)
+             {
+                if(fcounter == 0) sprite = SPRITE_TILE_FLOOR;
+                else if(fcounter < 10) sprite = SPRITE_TILE_FLOOR_ALT1;
+                else if(fcounter < 20) sprite = SPRITE_TILE_FLOOR_ALT2;
+                else if(fcounter < 30) sprite = SPRITE_TILE_FLOOR_ALT3;
+                else if(fcounter < 40) sprite = SPRITE_TILE_FLOOR_ALT4;
+                else if(fcounter < 50) sprite = SPRITE_TILE_FLOOR_ALT5;
+             }
+
+
             if(tt == TILE_PIT)
-                sprite = get_pit_tile_sprite(rdata,_x,_y);
+                sprite = get_pit_tile_sprite(room,_x,_y);
 
             // +1 for walls
             float draw_x = r.x + (_x+1)*w;
             float draw_y = r.y + (_y+1)*h;
 
             uint32_t tcolor = color;
+
+            if(debug_enabled)
+            {
+                if(tt == TILE_BREAKABLE_FLOOR)
+                {
+                    tcolor = COLOR_ORANGE;
+                }
+            }
             // if(debug_enabled)
             // {
             //     if(player->phys.curr_tile.x == _x && player->phys.curr_tile.y == _y)
@@ -2544,6 +2613,7 @@ const char* get_tile_name(TileType tt)
         case TILE_SPIKES: return "Spikes";
         case TILE_TIMED_SPIKES1: return "Timed Spikes 1";
         case TILE_TIMED_SPIKES2: return "Timed Spikes 2";
+        case TILE_BREAKABLE_FLOOR: return "Breakable Floor";
     }
     return "?";
 }

@@ -47,7 +47,7 @@ typedef struct
 
 
 static PlacedObject objects[OBJECTS_MAX_X][OBJECTS_MAX_Y] = {0};
-static RoomFileData room_data = {0};
+RoomFileData room_data_editor = {0};
 static Room room = {0};
 
 static PlacedObject objects_prior[OBJECTS_MAX_X][OBJECTS_MAX_Y] = {0};
@@ -300,7 +300,7 @@ static void draw_room_file_gui()
             // tiles
             for(int i = 0; i < loaded_rfd.size_x; ++i)
                 for(int j = 0; j < loaded_rfd.size_y; ++j)
-                    room_data.tiles[i][j] = (TileType)loaded_rfd.tiles[i][j];
+                    room_data_editor.tiles[i][j] = (TileType)loaded_rfd.tiles[i][j];
 
             const int adj = 0;
             for(int i = 0; i < loaded_rfd.creature_count; ++i)
@@ -369,7 +369,7 @@ static void draw_room_file_gui()
 
                 for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
                     for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
-                        rfd.tiles[x][y] = (int)room_data.tiles[x][y];
+                        rfd.tiles[x][y] = (int)room_data_editor.tiles[x][y];
 
                 for(int y = 0; y < OBJECTS_MAX_Y; ++y)
                 {
@@ -552,7 +552,8 @@ void room_editor_draw()
 {
     gfx_clear_buffer(background_color);
 
-    level_draw_room(&room, &room_data, 0, 0, 1.0, false);
+    room.layout = -1;
+    level_draw_room(&room, &room_data_editor, 0, 0, 1.0, false);
 
     for(int _y = 0; _y < OBJECTS_MAX_Y; ++_y)
     {
@@ -905,7 +906,7 @@ void room_editor_draw()
     RoomFileData room_data_temp = {0};
     Room room_temp = {0};
     memcpy(objects_temp, objects, sizeof(PlacedObject)*OBJECTS_MAX_X*OBJECTS_MAX_Y);
-    memcpy(&room_data_temp, &room_data, sizeof(RoomFileData));
+    memcpy(&room_data_temp, &room_data_editor, sizeof(RoomFileData));
     memcpy(&room_temp, &room, sizeof(Room));
 
     if(out_of_area)
@@ -922,18 +923,18 @@ void room_editor_draw()
         // if(obj_coords.x > 0 && obj_coords.y > 0 && (obj_coords.x-1) < ROOM_TILE_SIZE_X && (obj_coords.y-1) < ROOM_TILE_SIZE_Y)
         if(!out_of_room)
         {
-            room_data.tiles[obj_coords.x-1][obj_coords.y-1] = TILE_FLOOR;
+            room_data_editor.tiles[obj_coords.x-1][obj_coords.y-1] = TILE_FLOOR;
         }
         o->type = TYPE_NONE;
     }
     else if(obj_sel == 0) //tiles
     {
         TileType tt = tile_sel;
-        if(tt == TILE_PIT || tt == TILE_BOULDER)
+        if(tt == TILE_PIT || tt == TILE_BOULDER || tt == TILE_BREAKABLE_FLOOR)
         {
             o->type = TYPE_NONE;
         }
-        room_data.tiles[obj_coords.x-1][obj_coords.y-1] = tt;
+        room_data_editor.tiles[obj_coords.x-1][obj_coords.y-1] = tt;
     }
     else if(obj_sel == 1) //doors
     {
@@ -948,8 +949,8 @@ void room_editor_draw()
                 o->type = TYPE_NONE;
 
                 Vector2i front = get_in_front_of_door_coords(door);
-                TileType* ttf = (TileType*)&room_data.tiles[front.x-1][front.y-1];
-                if(*ttf == TILE_PIT || *ttf == TILE_BOULDER)
+                TileType* ttf = (TileType*)&room_data_editor.tiles[front.x-1][front.y-1];
+                if(*ttf == TILE_PIT || *ttf == TILE_BOULDER || *ttf == TILE_BREAKABLE_FLOOR)
                 {
                     *ttf = TILE_FLOOR;
                 }
@@ -966,8 +967,8 @@ void room_editor_draw()
         // if(obj_coords.x > 0 && obj_coords.y > 0 && (obj_coords.x+1) < ROOM_TILE_SIZE_X && (obj_coords.y+1) < ROOM_TILE_SIZE_Y)
         if(!out_of_room)
         {
-            TileType* tt = (TileType*)&room_data.tiles[obj_coords.x-1][obj_coords.y-1];
-            if(*tt == TILE_PIT || *tt == TILE_BOULDER)
+            TileType* tt = (TileType*)&room_data_editor.tiles[obj_coords.x-1][obj_coords.y-1];
+            if(*tt == TILE_PIT || *tt == TILE_BOULDER || *tt == TILE_BREAKABLE_FLOOR)
                 *tt = TILE_FLOOR;
         }
 
@@ -1091,7 +1092,7 @@ static void clear_all()
     {
         for(int ri = 0; ri < ROOM_TILE_SIZE_X; ++ri)
         {
-            room_data.tiles[ri][rj] = TILE_FLOOR;
+            room_data_editor.tiles[ri][rj] = TILE_FLOOR;
         }
     }
 }

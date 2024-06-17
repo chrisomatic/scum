@@ -2,6 +2,7 @@
 
 #include "level.h"
 
+
 // +2 for walls
 #define OBJECTS_MAX_X (ROOM_TILE_SIZE_X+2)
 #define OBJECTS_MAX_Y (ROOM_TILE_SIZE_Y+2)

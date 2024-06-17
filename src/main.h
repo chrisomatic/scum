@@ -146,6 +146,7 @@ extern char* item_names[];
 extern Rect moving_tile;
 extern Rect moving_tile_prior;
 
+extern RoomFileData room_data_editor;
 
 void camera_set(bool immediate);
 bool camera_can_be_limited(float x, float y, float z);
