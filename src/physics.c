@@ -196,7 +196,6 @@ void phys_calc_collision_rect(Physics* phys)
     vrh *= phys->scale;
 
     phys->collision_rect.x = phys->pos.x;
-    // phys->collision_rect.y = phys->pos.y - vrh*0.15;
     phys->collision_rect.y = phys->pos.y - phys->radius*0.75;
 
     if(phys->floating)

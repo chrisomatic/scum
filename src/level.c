@@ -2177,13 +2177,13 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
 
             uint32_t tcolor = color;
 
-            if(debug_enabled)
-            {
-                if(tt == TILE_BREAKABLE_FLOOR)
-                {
-                    tcolor = COLOR_ORANGE;
-                }
-            }
+            // if(debug_enabled)
+            // {
+            //     if(tt == TILE_BREAKABLE_FLOOR)
+            //     {
+            //         tcolor = COLOR_ORANGE;
+            //     }
+            // }
             // if(debug_enabled)
             // {
             //     if(player->phys.curr_tile.x == _x && player->phys.curr_tile.y == _y)

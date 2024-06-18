@@ -257,10 +257,10 @@ void creature_init_props(Creature* c)
 {
     c->image = creature_get_image(c->type);
     Rect* vr = &gfx_images[c->image].visible_rects[0];
-    c->phys.width  = vr->w * 0.80;
-    c->phys.length = vr->w * 0.80;
-    c->phys.height = vr->h * 0.80;
-    c->phys.radius = c->phys.width / 2.0;
+    // c->phys.width  = vr->w * 0.80;
+    // c->phys.length = vr->w * 0.80;
+    // c->phys.height = vr->h * 0.80;
+    // c->phys.radius = c->phys.width / 2.0;
     c->phys.scale = 1.0;
     c->phys.stun_timer = 0.0;
     c->phys.vr = *vr;
@@ -460,6 +460,7 @@ void creature_init_props(Creature* c)
         } break;
         case CREATURE_TYPE_LEEPER:
         {
+            c->phys.scale = 0.4;
             c->phys.speed = 120.0;
             c->act_time_min = 0.2;
             c->act_time_max = 0.8;
@@ -608,9 +609,30 @@ void creature_init_props(Creature* c)
 
     if(c->phys.crawling)
     {
-        c->phys.length = c->phys.height;
-        c->phys.height = 20;
+        c->phys.width  = c->phys.vr.w;
+        c->phys.length = c->phys.vr.h;
+        c->phys.height = MIN(c->phys.width, c->phys.length);
     }
+    else
+    {
+        c->phys.width  = c->phys.vr.w;
+        c->phys.length = c->phys.vr.w;
+        c->phys.height = c->phys.vr.h;
+    }
+    c->phys.radius = MIN(c->phys.vr.w, c->phys.vr.h)/2.0 * c->phys.scale * 0.90;
+
+    if(!c->phys.crawling)
+    {
+        c->phys.radius *= 0.8;
+    }
+
+    // c->phys.radius *= c->phys.scale;
+
+    // if(c->phys.crawling)
+    // {
+    //     c->phys.length = c->phys.height;
+    //     c->phys.height = 20;
+    // }
 
     c->phys.speed_factor = 1.0;
 
