@@ -59,6 +59,7 @@ typedef struct
     bool falling; // falling down a pit
 
     bool floating;
+    bool bobbing;
     bool crawling;
     bool underground; // doesn't interact
 

@@ -43,7 +43,7 @@ void phys_collision_correct(Physics* phys1, Physics* phys2, CollisionInfo* ci)
     // collision correct
     float cratio = phys2->mass/(phys1->mass+phys2->mass);
 
-    if(phys2->mass > 100.0*phys1->mass)
+    if(phys2->mass > 10.0*phys1->mass)
         cratio = 1.0; // mass is sufficiently large to not move at all
 
     float c1x = phys1->collision_rect.x - ci->overlap.x*cratio;

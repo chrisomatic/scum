@@ -42,6 +42,7 @@ static int creature_image_watcher;
 static int creature_image_golem;
 static int creature_image_phantom;
 static int creature_image_rock;
+static int creature_image_uniball;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -66,6 +67,7 @@ static void creature_update_watcher(Creature* c, float dt);
 static void creature_update_golem(Creature* c, float dt);
 static void creature_update_phantom(Creature* c, float dt);
 static void creature_update_rock(Creature* c, float dt);
+static void creature_update_uniball(Creature* c, float dt);
 
 static void creature_fire_projectile(Creature* c, float angle);
 
@@ -105,6 +107,7 @@ void creature_init()
     creature_image_golem = gfx_load_image("src/img/creature_infected.png", false, false, 32, 32);   //TEMP
     creature_image_phantom = gfx_load_image("src/img/creature_phantom.png", false, false, 64, 64);
     creature_image_rock = gfx_load_image("src/img/rock1.png", false, false, 32, 32);
+    creature_image_uniball = gfx_load_image("src/img/creature_uniball.png", false, false, 32, 32);
 }
 
 char* creature_type_name(CreatureType type)
@@ -159,6 +162,8 @@ char* creature_type_name(CreatureType type)
             return "Rock Monster";
         case CREATURE_TYPE_ROCK:
             return "Rock";
+        case CREATURE_TYPE_UNIBALL:
+            return "Uniball";
         default:
             return "???";
     }
@@ -215,6 +220,8 @@ int creature_get_image(CreatureType type)
         case CREATURE_TYPE_ROCK_MONSTER:
         case CREATURE_TYPE_ROCK:
             return creature_image_rock;
+        case CREATURE_TYPE_UNIBALL:
+            return creature_image_uniball;
         default:
             return -1;
     }
@@ -309,6 +316,7 @@ void creature_init_props(Creature* c)
             c->phys.base_friction = 1.0;
             c->phys.hp_max = 2.0;
             c->phys.floating = true;
+            c->phys.bobbing = true;
             c->painful_touch = true;
             c->xp = 10;
         } break;
@@ -322,6 +330,7 @@ void creature_init_props(Creature* c)
             c->phys.base_friction = 0.0;
             c->phys.elasticity = 1.0;
             c->phys.floating = true;
+            c->phys.bobbing = true;
             c->painful_touch = true;
             c->xp = 20;
         } break;
@@ -334,6 +343,7 @@ void creature_init_props(Creature* c)
             c->phys.base_friction = 10.0;
             c->phys.hp_max = 2.0;
             c->phys.floating = true;
+            c->phys.bobbing = true;
             c->painful_touch = true;
             c->windup_max = 0.5;
             c->xp = 40;
@@ -391,6 +401,7 @@ void creature_init_props(Creature* c)
             c->phys.base_friction = 15.0;
             c->phys.hp_max = 20.0;
             c->phys.floating = true;
+            c->phys.bobbing = true;
             c->painful_touch = true;
             c->windup_max = 0.5;
             c->xp = 300;
@@ -523,6 +534,7 @@ void creature_init_props(Creature* c)
             c->phys.base_friction = 15.0;
             c->phys.hp_max = 7.0;
             c->phys.floating = true;
+            c->phys.bobbing = true;
             c->painful_touch = true;
             c->windup_max = 0.5;
             c->xp = 80;
@@ -553,6 +565,7 @@ void creature_init_props(Creature* c)
             c->painful_touch = true;
             c->passive = true;
             c->phys.floating = true;
+            c->phys.bobbing = true;
             c->xp = 1000;
             c->damage = 127;
         } break;
@@ -571,6 +584,25 @@ void creature_init_props(Creature* c)
             c->xp = 20;
             c->damage = 0;
             c->phys.crawling = true;
+        } break;
+        case CREATURE_TYPE_UNIBALL:
+        {
+            c->phys.speed = 100.0;
+            c->act_time_min = 0.5;
+            c->act_time_max = 2.0;
+            c->phys.mass = 10000.0;
+            c->phys.base_friction = 0.0;
+            c->phys.hp_max = 1.0;
+            c->phys.elasticity = 1.0;
+            c->phys.ethereal = false;
+            c->painful_touch = true;
+            c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
+            c->phys.crawling = false;
+            c->phys.floating = true;
+            c->phys.bobbing = false;
+            c->passive = false;
+            c->invincible = true;
+            c->xp = 15;
         } break;
     }
 
@@ -827,7 +859,7 @@ void creature_update(Creature* c, float dt)
 
     phys_add_circular_time(&c->phys, dt);
 
-    if(c->phys.floating)
+    if(c->phys.floating && c->phys.bobbing)
     {
         c->phys.pos.z = c->phys.height/2.0 + 10.0 + 3*sinf(5*c->phys.circular_dt);
     }
@@ -907,6 +939,9 @@ void creature_update(Creature* c, float dt)
             case CREATURE_TYPE_ROCK_MONSTER:
             case CREATURE_TYPE_ROCK:
                 creature_update_rock(c,dt);
+                break;
+            case CREATURE_TYPE_UNIBALL:
+                creature_update_uniball(c,dt);
                 break;
         }
     }
@@ -1232,7 +1267,7 @@ uint16_t creature_get_room_count(uint8_t room_index, bool count_passive)
         {
             if(count_passive)
                 count++;
-            else if(!creatures[i].passive && !creatures[i].invincible)
+            else if(!creatures[i].passive)
                 count++;
         }
     }
@@ -2657,5 +2692,27 @@ static void creature_update_rock(Creature* c, float dt)
             c->h = v.x;
             c->v = v.y;
         }
+    }
+}
+
+static void creature_update_uniball(Creature* c, float dt)
+{
+    printf("creature rot deg: %f, vel: %f %f\n", c->phys.rotation_deg, c->phys.vel.x, c->phys.vel.y);
+
+    if(c->phys.rotation_deg == 0.0 && c->phys.vel.x == 0.0)
+    {
+        c->phys.vel.x = c->phys.speed;
+    }
+    else if(c->phys.rotation_deg == 90.0 && c->phys.vel.y == 0.0)
+    {
+        c->phys.vel.y = -c->phys.speed;
+    }
+    else if(c->phys.rotation_deg == 180.0 && c->phys.vel.x == 0.0)
+    {
+        c->phys.vel.x = -c->phys.speed;
+    }
+    else if(c->phys.rotation_deg == 270.0 && c->phys.vel.y == 0.0)
+    {
+        c->phys.vel.y = c->phys.speed;
     }
 }

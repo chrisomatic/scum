@@ -3,13 +3,15 @@
 static float sprite_index_to_angle(Creature* c)
 {
     if(c->sprite_index == 0)
-        return 90.0;
-    else if(c->sprite_index == 1)
         return 0.0;
-    else if(c->sprite_index == 2)
-        return 270.0;
 
-    return 180.0;
+    if(c->sprite_index == 1)
+        return 90.0;
+
+    if(c->sprite_index == 2)
+        return 180.0;
+
+    return 270.0;
 }
 
 static void creature_set_sprite_index(Creature* c, int sprite_index)

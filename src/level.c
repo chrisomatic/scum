@@ -513,9 +513,10 @@ void level_place_entities(Level* level)
                         if(ori == 1) c->phys.rotation_deg = 90.0;
                         else if(ori == 2) c->phys.rotation_deg = 180.0;
                         else if(ori == 3) c->phys.rotation_deg = 270.0;
-                        // printf("set the rotation to %.2f\n", c->phys.rotation_deg);
-                        // printf("  room %s\n", room_files[room_list[room->layout].file_index]);
-                        // printf("  %s\n", creature_type_name(c->type));
+
+                        printf("set the rotation to %.2f\n", c->phys.rotation_deg);
+                        printf("  room %s\n", room_files[room_list[room->layout].file_index]);
+                        printf("  %s\n", creature_type_name(c->type));
                     }
                 }
             }

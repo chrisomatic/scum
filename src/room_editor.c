@@ -1021,10 +1021,10 @@ static float get_orientation_deg(int _orientation)
 
 static const char* get_orientation_str(int _orientation)
 {
-    if(_orientation == 0) return "^";
-    else if(_orientation == 1) return "<";
-    else if(_orientation == 2) return "v";
-    return ">";
+    if(_orientation == 0) return ">";
+    else if(_orientation == 1) return "^";
+    else if(_orientation == 2) return "<";
+    return "v";
 }
 
 // returns true is number of doors is 0 or 1
