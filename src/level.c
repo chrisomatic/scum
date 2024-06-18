@@ -479,6 +479,7 @@ void level_place_entities(Level* level)
         {
             Room* room = &level->rooms[x][y];
             if(!room->valid) continue;
+            slrand(&rg_room, room->rand_seed);
 
             RoomFileData* rfd = &room_list[room->layout];
             for(int i = 0; i < rfd->item_count; ++i)
@@ -487,11 +488,7 @@ void level_place_entities(Level* level)
                 Vector2f pos = level_get_pos_by_room_coords(rfd->item_locations_x[i]-1, rfd->item_locations_y[i]-1); // @convert room objects to tile grid coordinates
                 // LOGI("Adding item of type: %s to (%.2f %.2f)", item_get_name(rfd->item_types[i]), pos.x, pos.y);
                 if(rfd->item_types[i] == ITEM_GUN)
-                {
-                    //TODO: determine gun
-                    slrand(&rg_room, room->rand_seed);
                     it = item_add_gun(lrand(&rg_room) % gun_catalog_count, lrand(&rg_room), pos.x, pos.y, room->index);
-                }
                 else
                     it = item_add(rfd->item_types[i], pos.x, pos.y, room->index);
 
