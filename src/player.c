@@ -2700,7 +2700,7 @@ void player_set_gun(Player* p, uint8_t room_gun_index, bool drop_old_gun)
                 float y = p->phys.pos.y;
                 int croom = p->phys.curr_room;
                 Item* it = item_add_gun(i, 0, x, y, croom);
-                it->user_data3 = prior_room_gun_index;
+                it->user_data2 = prior_room_gun_index;
                 return;
             }
         }

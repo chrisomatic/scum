@@ -101,15 +101,6 @@ Level level_generate(unsigned int seed, int rank)
         level_rank = rank;
     }
 
-//     if(rank != 5)
-//     {
-// #if !GENERATE_ROOMS_TEST
-//         LOGW("Overriding rank!");
-// #endif
-//         rank = 5;
-//         level_rank = rank;
-//     }
-
 #if !GENERATE_ROOMS_TEST
     LOGI("Generating level, seed: %u, rank: %d", seed, rank);
 #endif
@@ -170,14 +161,6 @@ Level level_generate(unsigned int seed, int rank)
     sroom->valid = true;
     sroom->type = ROOM_TYPE_EMPTY;
     sroom->layout = 0;
-
-    // for(int i = 0; i < 3; ++i)
-    // {
-    //     Vector2i t = {.x=i,.y=i};
-    //     Creature* c = creature_add(sroom, CREATURE_TYPE_PEEPER, &t, NULL);
-    // }
-    //Vector2i t = {5,5};
-    //creature_add(sroom, CREATURE_TYPE_GRAVITY_CRYSTAL, &t, NULL);
 
     // item_add(ITEM_REVIVE, CENTER_X, CENTER_Y, sroom->index);
 
@@ -522,6 +505,18 @@ void level_place_entities(Level* level)
                     Vector2i g = {rfd->creature_locations_x[i], rfd->creature_locations_y[i]};
                     g.x--; g.y--; // @convert room objects to tile grid coordinates
                     Creature* c = creature_add(room, rfd->creature_types[i], &g, NULL);
+                    if(!c) continue;
+
+                    int ori = rfd->creature_orientations[i];
+                    if(ori != 0)
+                    {
+                        if(ori == 1) c->phys.rotation_deg = 90.0;
+                        else if(ori == 2) c->phys.rotation_deg = 180.0;
+                        else if(ori == 3) c->phys.rotation_deg = 270.0;
+                        // printf("set the rotation to %.2f\n", c->phys.rotation_deg);
+                        // printf("  room %s\n", room_files[room_list[room->layout].file_index]);
+                        // printf("  %s\n", creature_type_name(c->type));
+                    }
                 }
             }
         }

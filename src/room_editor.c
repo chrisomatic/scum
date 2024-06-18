@@ -23,6 +23,7 @@ enum
     EDITOR_KEY_DOWN,
     EDITOR_KEY_LEFT,
     EDITOR_KEY_RIGHT,
+    EDITOR_KEY_ROTATE,
 
     EDITOR_KEY_MAX
 };
@@ -38,11 +39,21 @@ typedef enum
     TYPE_CREATURE,
 } PlacedType;
 
+static int orientation = 0;
+static float orientation_deg = 0.0;
+
+// orientation
+// 0: 0.0
+// 1: 90.0
+// 2: 180.0
+// 3: 270.0
+
 typedef struct
 {
     PlacedType type;
     int subtype;
     int subtype2;
+    int orientation;
 } PlacedObject;
 
 
@@ -79,6 +90,7 @@ Vector2i obj_coords = {0}; // tile_coords translated to object grid
 
 Rect gui_size = {0};
 
+static float get_orientation_deg(int _orientation);
 static bool check_no_door_placement();
 static Vector2i get_door_coords(Dir door);
 static Vector2i get_in_front_of_door_coords(Dir door);
@@ -87,7 +99,6 @@ static Dir match_in_front_of_door_coords(int x, int y);
 
 static void editor_camera_set(bool immediate);
 static void clear_all();
-
 
 void room_editor_init()
 {
@@ -143,6 +154,7 @@ void room_editor_start()
     window_controls_add_key(&editor_keys[EDITOR_KEY_DOWN].state, GLFW_KEY_S);
     window_controls_add_key(&editor_keys[EDITOR_KEY_LEFT].state, GLFW_KEY_A);
     window_controls_add_key(&editor_keys[EDITOR_KEY_RIGHT].state, GLFW_KEY_D);
+    window_controls_add_key(&editor_keys[EDITOR_KEY_ROTATE].state, GLFW_KEY_R);
 
     for(int i = 0;  i < EDITOR_KEY_MAX; ++i)
         memset(&editor_keys[i], 0, sizeof(PlayerInput));
@@ -320,7 +332,7 @@ static void draw_room_file_gui()
 
                 objects[x][y].type     = TYPE_ITEM;
                 objects[x][y].subtype  = loaded_rfd.item_types[i];
-                objects[x][y].subtype2 = creature_get_image(loaded_rfd.item_types[i]);
+                // objects[x][y].subtype2 = creature_get_image(loaded_rfd.item_types[i]);
             }
 
             for(int i = 0; i < 4; ++i)
@@ -382,6 +394,7 @@ static void draw_room_file_gui()
                             rfd.creature_types[rfd.creature_count] = o->subtype;
                             rfd.creature_locations_x[rfd.creature_count] = x;
                             rfd.creature_locations_y[rfd.creature_count] = y;
+                            rfd.creature_orientations[rfd.creature_count] = o->orientation;
                             // printf("creature (%d) %.1f,%.1f   %d,%d\n", rfd.creature_count, rfd.creature_locations_x[rfd.creature_count], rfd.creature_locations_y[rfd.creature_count],x,y);
                             rfd.creature_count++;
 
@@ -515,6 +528,18 @@ bool room_editor_update(float dt)
     bool down  = editor_keys[EDITOR_KEY_DOWN].state;
     bool left  = editor_keys[EDITOR_KEY_LEFT].state;
     bool right = editor_keys[EDITOR_KEY_RIGHT].state;
+    bool rotate = editor_keys[EDITOR_KEY_ROTATE].toggled_on;
+
+    if(rotate)
+    {
+        if(orientation == 3) orientation = 0;
+        else orientation++;
+
+        if(orientation == 0) orientation_deg = 0.0;
+        else if(orientation == 1) orientation_deg = 90.0;
+        else if(orientation == 2) orientation_deg = 180.0;
+        else if(orientation == 3) orientation_deg = 270.0;
+    }
 
     Vector2f vel_dir = {0.0,0.0};
     if(up)
@@ -566,7 +591,8 @@ void room_editor_draw()
 
             if(o->type == TYPE_CREATURE)
             {
-                gfx_draw_image(o->subtype2, 0, tile_rect.x, tile_rect.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+                // printf("%.2f\n", get_orientation_deg(o->orientation));
+                gfx_draw_image(o->subtype2, 0, tile_rect.x, tile_rect.y, COLOR_TINT_NONE, 1.0, get_orientation_deg(o->orientation), 1.0, false, true);
             }
             else if(o->type == TYPE_ITEM)
             {
@@ -695,8 +721,9 @@ void room_editor_draw()
         obj.type = TYPE_CREATURE;
         obj.subtype = creature_sel;
         obj.subtype2 = creature_get_image(obj.subtype);
+        obj.orientation = orientation;
 
-        gfx_draw_image(obj.subtype2, 0, tile_rect.x, tile_rect.y, COLOR_TINT_NONE, 1.0, 0.0, 1.0, false, true);
+        gfx_draw_image(obj.subtype2, 0, tile_rect.x, tile_rect.y, COLOR_TINT_NONE, 1.0, orientation_deg, 1.0, false, true);
         gfx_draw_rect(&tile_rect, status_color, NOT_SCALED, NO_ROTATION, 0.2, true, true);
 
     }
@@ -975,11 +1002,19 @@ void room_editor_draw()
         o->type = obj.type;
         o->subtype = obj.subtype;
         o->subtype2 = obj.subtype2;
+        o->orientation = obj.orientation;
     }
 
     obj_sel = prior_obj_sel;
 }
 
+static float get_orientation_deg(int _orientation)
+{
+    if(_orientation == 0) return 0.0;
+    else if(_orientation == 1) return 90.0;
+    else if(_orientation == 2) return 180.0;
+    return 270.0;
+}
 // returns true is number of doors is 0 or 1
 static bool check_no_door_placement(int x, int y)
 {

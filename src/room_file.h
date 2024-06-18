@@ -19,6 +19,7 @@ typedef struct
     int   creature_types[100];
     int creature_locations_x[100];
     int creature_locations_y[100];
+    uint8_t creature_orientations[100];
     int   creature_count;
 
     // items

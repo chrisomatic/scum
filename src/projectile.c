@@ -1885,11 +1885,11 @@ void refresh_visible_room_gun_list()
         if(room_gun_count >= MAX_ROOM_GUNS) break;
 
         Gun item_gun = gun_catalog[it->user_data];
-        determine_gun_perks(&item_gun, it->user_data2);
+        determine_gun_perks(&item_gun, it->seed);
         apply_gun_perks(&item_gun);
 
         memcpy(&room_gun_list[room_gun_count++], &item_gun, sizeof(Gun));
-        it->user_data3 = (uint8_t)(room_gun_count-1);
+        it->user_data2 = (uint8_t)(room_gun_count-1);
     }
 
     printf("Refreshing room gun list. Count: %d\n", room_gun_count);
@@ -1908,11 +1908,11 @@ void add_to_room_gun_list(void* it)
     Item* item = (Item*)it;
 
     Gun item_gun = gun_catalog[item->user_data];
-    determine_gun_perks(&item_gun, item->user_data2);
+    determine_gun_perks(&item_gun, item->seed);
     apply_gun_perks(&item_gun);
 
     memcpy(&room_gun_list[room_gun_count++], &item_gun, sizeof(Gun));
-    item->user_data3 = (uint8_t)(room_gun_count-1);
+    item->user_data2 = (uint8_t)(room_gun_count-1);
 }
 
 void add_to_room_gun_list_creature(void* creature)

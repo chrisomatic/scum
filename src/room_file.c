@@ -76,7 +76,7 @@ void room_file_save(RoomFileData* rfd, char* path, ...)
         fputs("; Creatures\n", fp);
         for(int i = 0; i < rfd->creature_count; ++i)
         {
-            fprintf(fp, "%d,%d,%d\n", rfd->creature_types[i], rfd->creature_locations_x[i], rfd->creature_locations_y[i]);
+            fprintf(fp, "%d,%d,%d,%d\n", rfd->creature_types[i], rfd->creature_locations_x[i], rfd->creature_locations_y[i], rfd->creature_orientations[i]);
         }
         fputs("\n", fp);
 
@@ -148,7 +148,7 @@ bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path
     }
 #endif
 
-    //printf("loading file: %s\n", filename);
+    // printf("loading file: %s\n", filename);
 
     io_replace_char(filename, '\\', '/');
 
@@ -289,14 +289,19 @@ bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path
         {
             int index;
             int x,y;
+            int orientation = 0;
 
             for(;;)
             {
                 fgets(line,sizeof(line),fp); __line_num++;
-                int matches = sscanf(line,"%d,%d,%d",&index,&x,&y);
+                int matches = sscanf(line,"%d,%d,%d,%d",&index,&x,&y,&orientation);
 
-                if(matches != 3)
-                    break;
+                if(matches != 4)
+                {
+                    matches = sscanf(line,"%d,%d,%d",&index,&x,&y);
+                    if(matches != 3)
+                        break;
+                }
 
                 if(index < 0 || index >= CREATURE_TYPE_MAX)
                 {
@@ -320,6 +325,7 @@ bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path
                 rfd->creature_types[rfd->creature_count] = type;
                 rfd->creature_locations_x[rfd->creature_count] = x;
                 rfd->creature_locations_y[rfd->creature_count] = y;
+                rfd->creature_orientations[rfd->creature_count] = orientation;
                 rfd->creature_count++;
             }
         }

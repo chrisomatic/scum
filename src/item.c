@@ -264,7 +264,7 @@ static bool internal_item_use(Item* it, void* _player)
     {
         case ITEM_GUN:
         {
-            player_set_gun(p, it->user_data3, true);
+            player_set_gun(p, it->user_data2, true);
         } break;
         case ITEM_HEART_FULL:
         {
@@ -482,10 +482,16 @@ void item_init()
         {
             case ITEM_HEART_HALF:
             case ITEM_HEART_FULL:
-            case ITEM_POTION_MANA:
-            case ITEM_POTION_GREAT_MANA:
             case ITEM_COSMIC_HEART_HALF:
             case ITEM_COSMIC_HEART_FULL:
+            case ITEM_GUN:
+            {
+                p->chestable = true;
+                p->touchable = false;
+            } break;
+
+            case ITEM_POTION_MANA:
+            case ITEM_POTION_GREAT_MANA:
             case ITEM_GALAXY_PENDANT:
             case ITEM_POTION_STRENGTH:
             case ITEM_SHIELD:
@@ -494,9 +500,8 @@ void item_init()
             case ITEM_LOOKING_GLASS:
             case ITEM_SHAMROCK:
             case ITEM_UPGRADE_ORB:
-            case ITEM_GUN:
             {
-                p->chestable = true;
+                p->chestable = false;
                 p->touchable = false;
             } break;
 
@@ -556,6 +561,11 @@ bool item_is_heart(ItemType type)
     return (type >= ITEM_HEART_FULL && type <= ITEM_HEART_HALF);
 }
 
+bool item_is_coin(ItemType type)
+{
+    return (type >= ITEM_COIN_COPPER && type <= ITEM_COIN_GOLD);
+}
+
 ItemType item_get_random_chestable()
 {
     int r = rand() % num_chestables;
@@ -572,12 +582,9 @@ ItemType item_get_random_coin()
 
 ItemType item_get_random_heart()
 {
-    for(;;)
-    {
-        ItemType it = rand() % ITEM_MAX;
-        if(item_is_heart(it))
-            return it;
-    }
+    int r = rand() % 2;
+    if(r == 0) return ITEM_HEART_HALF;
+    return ITEM_HEART_FULL;
 }
 
 // junk
@@ -709,7 +716,7 @@ Item* item_add_gun(uint8_t gun_index, uint32_t seed, float x, float y, uint8_t c
 {
     Item* it = item_add(ITEM_GUN, x, y, curr_room);
     it->user_data = gun_index;
-    it->user_data2 = seed;
+    it->seed = seed;
 
     Gun* gun = &gun_catalog[it->user_data];
     item_set_description(it, "%s: %s", gun->name, gun->desc);

@@ -82,9 +82,10 @@ typedef struct
     bool used;
     float angle;
     char desc[32];
+
+    uint32_t seed;
     uint8_t user_data;
-    uint32_t user_data2;
-    uint8_t user_data3;
+    uint8_t user_data2;
 
     // Networking
     float lerp_t;
@@ -120,6 +121,7 @@ bool item_is_gem(ItemType type);
 bool item_is_heart(ItemType type);
 bool item_is_chest(ItemType type);
 bool item_is_shrine(ItemType type);
+bool item_is_coin(ItemType type);
 
 ItemType item_get_random_heart();
 ItemType item_rand(bool include_chest);
