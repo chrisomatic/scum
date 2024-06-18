@@ -1879,12 +1879,11 @@ void update_menu_characters(float dt)
         }
     }
 
-
     if(class_image_spaceman == -1) return;
     if(class_image_physicist == -1) return;
     if(class_image_robot == -1) return;
 
-    if(rand() % 40 == 1)
+    if(rand() % 20 == 1)
     {
         for(int i = 0; i < MC_MAX; ++i)
         {

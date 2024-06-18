@@ -141,6 +141,7 @@ typedef struct
     uint32_t color;
 
     float breakable_floor_timer[ROOM_TILE_SIZE_X][ROOM_TILE_SIZE_Y];
+    // uint8_t breakable_floor_state[ROOM_TILE_SIZE_X][ROOM_TILE_SIZE_Y];
 
     Wall walls[MAX_WALLS_PER_ROOM];
     int wall_count;

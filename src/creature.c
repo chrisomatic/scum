@@ -1232,7 +1232,7 @@ uint16_t creature_get_room_count(uint8_t room_index, bool count_passive)
         {
             if(count_passive)
                 count++;
-            else if(!creatures[i].passive)
+            else if(!creatures[i].passive && !creatures[i].invincible)
                 count++;
         }
     }

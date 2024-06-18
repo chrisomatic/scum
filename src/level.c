@@ -1698,6 +1698,8 @@ void level_init()
     printf("Done with room files\n");
 }
 
+// void level_update_breakable_floors
+
 void level_update(float dt)
 {
 
@@ -1714,6 +1716,8 @@ void level_update(float dt)
         level_room_time += dt;
     }
 
+    Vector2i breakable_tiles[] = {0};
+
     // todo
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
@@ -1721,6 +1725,7 @@ void level_update(float dt)
         if(!p->active) continue;
         if(p->phys.dead) continue;
         if(p->phys.floating) continue;
+        if(p->phys.pos.z > 0) continue;
         if(level_get_tile_type(visible_room, p->phys.curr_tile.x, p->phys.curr_tile.y) == TILE_BREAKABLE_FLOOR)
         {
             if(visible_room->breakable_floor_timer[p->phys.curr_tile.x][p->phys.curr_tile.y] < BREAKABLE_FLOOR_TIME_MAX)

@@ -319,10 +319,12 @@ static void draw_room_file_gui()
             {
                 int x = loaded_rfd.creature_locations_x[i];
                 int y = loaded_rfd.creature_locations_y[i];
+                int ori = loaded_rfd.creature_orientations[i];
 
                 objects[x][y].type     = TYPE_CREATURE;
                 objects[x][y].subtype  = loaded_rfd.creature_types[i];
                 objects[x][y].subtype2 = creature_get_image(loaded_rfd.creature_types[i]);
+                objects[x][y].orientation = ori;
             }
 
             for(int i = 0; i < loaded_rfd.item_count; ++i)
