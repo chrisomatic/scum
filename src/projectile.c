@@ -155,7 +155,7 @@ static float calc_orbital_target(Projectile* proj)
     proj->orbital_pos_target.y = -(sinf(target_angle)*actual_orb_distance);
 }
 
-void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, uint8_t room_gun_index, float angle_deg, bool from_player, Physics* phys, uint16_t from_id)
+void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, uint8_t room_gun_index, Projectile* base_proj, float angle_deg, bool from_player, Physics* phys, uint16_t from_id)
 {
     if(role == ROLE_CLIENT)
         return;
@@ -315,7 +315,14 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, uint8_t room
         }
     }
 
-    proj.cluster_stage = proj_gun->cluster_stage;
+    int proj_num = proj_gun->num;
+    
+    if(base_proj)
+    {
+        proj_num = proj_gun->cluster_num[proj.cluster_stage];
+        proj.cluster_stage = base_proj->cluster_stage+1;
+        proj_gun->spread = 60.0;
+    }
 
     float spread = proj_gun->spread_type == SPREAD_TYPE_RANDOM ? proj_gun->spread/2.0 : proj_gun->spread / proj_gun->num;
     float spread_angle_start = angle_deg - (proj_gun->spread/2.0);
@@ -323,7 +330,7 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, uint8_t room
     uint16_t target_ids[32] = {0};
     int target_count = 0;
 
-    for(int i = 0; i < proj_gun->num; ++i)
+    for(int i = 0; i < proj_num; ++i)
     {
         for(int j = 0; j < proj_gun->burst_count+1; ++j)
         {
@@ -401,6 +408,11 @@ void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, uint8_t room
             list_add(plist, (void*)&p);
         }
     }
+}
+
+void projectile_add(Vector3f pos, Vector3f* vel, uint8_t curr_room, uint8_t room_gun_index, float angle_deg, bool from_player, Physics* phys, uint16_t from_id)
+{
+    projectile_add_internal(pos, vel, curr_room, room_gun_index, NULL, angle_deg, from_player, phys, from_id);
 }
 
 void projectile_kill(Projectile* proj)
@@ -526,7 +538,6 @@ void projectile_kill(Projectile* proj)
 
     if(proj_gun->cluster)
     {
-
         if(!more_cluster)
             return;
 
@@ -551,7 +562,6 @@ void projectile_kill(Projectile* proj)
         float angle_deg = proj->angle_deg;
 
         gun.spread = 60.0;
-        gun.cluster_stage = proj->cluster_stage+1;
 
         proj->phys.vel.x /= 2.0;
         proj->phys.vel.y /= 2.0;
@@ -561,7 +571,7 @@ void projectile_kill(Projectile* proj)
 
         vel.z = gun.gravity_factor*120.0;
 
-        projectile_add(pos, &vel, proj->phys.curr_room, proj->room_gun_index, angle_deg, proj->from_player, &proj->phys, proj->from_id);
+        projectile_add_internal(pos, &vel, proj->phys.curr_room, proj->room_gun_index, proj, angle_deg, proj->from_player, &proj->phys, proj->from_id);
     }
 }
 

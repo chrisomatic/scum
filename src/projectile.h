@@ -139,7 +139,6 @@ typedef struct
     int cluster_stages;
     int cluster_num[MAX_CLUSTER_STAGES];
     float cluster_scales[MAX_CLUSTER_STAGES];
-    int cluster_stage;
 
     // orbital
     bool  orbital;
