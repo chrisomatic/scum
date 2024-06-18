@@ -4,7 +4,7 @@
 13,7
 
 ; Room Type
-5   # Library
+5   # Shop
 
 ; Room Rank
 1
@@ -19,6 +19,7 @@ Ice
 Spikes
 Timed Spikes 1
 Timed Spikes 2
+Breakable Floor
 
 ; Tile Data
 1,1,1,1,1,1,1,1,1,1,1,1,1
@@ -49,6 +50,12 @@ Spawn Egg
 Spawn Spider
 Behemoth
 Beacon Red
+Watcher
+Golem
+Phantom
+Rock Monster
+Rock
+Uniball
 
 ; Creatures
 
@@ -87,13 +94,21 @@ Looking Glass
 Copper Coin
 Silver Coin
 Gold Coin
-Skill Book
+???
 Chest
+Gun Chest
 Shrine
 Podium
+Gun
 
 ; Items
-37,7,4
+25,1,1
+25,13,1
+39,5,4
+39,7,4
+39,9,4
+25,1,7
+25,13,7
 
 ; Doors
 1,1,1,1

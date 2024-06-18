@@ -28,14 +28,14 @@ static int room_list_monster[MAX_ROOM_LIST_COUNT] = {0};
 static int room_list_empty[MAX_ROOM_LIST_COUNT] = {0};
 static int room_list_treasure[MAX_ROOM_LIST_COUNT] = {0};
 static int room_list_shrine[MAX_ROOM_LIST_COUNT] = {0};
-static int room_list_library[MAX_ROOM_LIST_COUNT] = {0};
+static int room_list_shop[MAX_ROOM_LIST_COUNT] = {0};
 static int room_list_boss[MAX_ROOM_LIST_COUNT] = {0};
 
 static int room_count_monster  = 0;
 static int room_count_empty    = 0;
 static int room_count_treasure = 0;
 static int room_count_shrine   = 0;
-static int room_count_library  = 0;
+static int room_count_shop  = 0;
 static int room_count_boss     = 0;
 
 static int used_room_list_monster[MAX_ROOM_LIST_COUNT] = {0};
@@ -110,7 +110,7 @@ Level level_generate(unsigned int seed, int rank)
     room_count_empty = 0;
     room_count_treasure = 0;
     room_count_shrine = 0;
-    room_count_library = 0;
+    room_count_shop = 0;
     room_count_boss = 0;
 
     used_room_count_monster = 0;
@@ -137,7 +137,7 @@ Level level_generate(unsigned int seed, int rank)
             case ROOM_TYPE_EMPTY:    room_list_empty[room_count_empty++]       = i; break;
             case ROOM_TYPE_TREASURE: room_list_treasure[room_count_treasure++] = i; break;
             case ROOM_TYPE_SHRINE:   room_list_shrine[room_count_shrine++]     = i; break;
-            case ROOM_TYPE_LIBRARY:  room_list_library[room_count_library++]     = i; break;
+            case ROOM_TYPE_SHOP:     room_list_shop[room_count_shop++]         = i; break;
             case ROOM_TYPE_BOSS:     room_list_boss[room_count_boss++]         = i; break;
             default: break;
         }
@@ -149,7 +149,7 @@ Level level_generate(unsigned int seed, int rank)
     printf("   # empty rooms: %d\n",room_count_empty);
     printf("   # treasure rooms: %d\n",room_count_treasure);
     printf("   # shrine rooms: %d\n",room_count_shrine);
-    printf("   # library rooms: %d\n",room_count_library);
+    printf("   # shop rooms: %d\n",room_count_shop);
     printf("   # boss rooms: %d\n",room_count_boss);
 #endif
 
@@ -217,9 +217,9 @@ Level level_generate(unsigned int seed, int rank)
     LevelPath lpath = {0};
     Room* lroom = NULL;
 #if SMALL_LEVELS
-    lroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_LIBRARY, sroom, 1, 2, &lpath, false);
+    lroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_SHOP, sroom, 1, 2, &lpath, false);
 #else
-    lroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_LIBRARY, sroom, 1, 4, &lpath, false);
+    lroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_SHOP, sroom, 1, 4, &lpath, false);
 #endif
     set_doors_from_path(&glevel, &lpath);
     print_room(&glevel, lroom);
@@ -269,13 +269,15 @@ Level level_generate(unsigned int seed, int rank)
             Room* room = &glevel.rooms[x][y];
             // printf("%2u) %2d, %-2d\n", glevel.rooms[x][y].index, x, y);
             if(!room->valid) continue;
+
             bool start = x == glevel.start.x && y == glevel.start.y;
             bool boss = room->type == ROOM_TYPE_BOSS;
             bool treasure = room->type == ROOM_TYPE_TREASURE;
             bool shrine = room->type == ROOM_TYPE_SHRINE;
-            bool library = room->type == ROOM_TYPE_LIBRARY;
+            bool shop = room->type == ROOM_TYPE_SHOP;
+
             if(start || boss || treasure || shrine) continue;
-            // if(start || boss || treasure || shrine || library) continue;
+            // if(start || boss || treasure || shrine || shop) continue;
 
             // check surrounding rooms
             for(int d = 0; d < 4; ++d)
@@ -318,7 +320,7 @@ Level level_generate(unsigned int seed, int rank)
             bool boss = room->type == ROOM_TYPE_BOSS;
             bool treasure = room->type == ROOM_TYPE_TREASURE;
             bool shrine = room->type == ROOM_TYPE_SHRINE;
-            bool library = room->type == ROOM_TYPE_LIBRARY;
+            bool shop = room->type == ROOM_TYPE_SHOP;
 
             if(!start)
             {
@@ -339,7 +341,7 @@ Level level_generate(unsigned int seed, int rank)
                     rfd_count = get_usable_rooms(room->type, room->doors, rfd_list, false);
                     glevel.has_shrine_room = rfd_count > 0;
                 }
-                else if(library)
+                else if(shop)
                 {
                     rfd_count = get_usable_rooms(room->type, room->doors, rfd_list, false);
                     // glevel.has_shrine_room = rfd_count > 0;
@@ -390,7 +392,7 @@ Level level_generate(unsigned int seed, int rank)
                 room->color = COLOR(200,200,100);
             else if(room->type == ROOM_TYPE_SHRINE)
                 room->color = COLOR(200,100,200);
-            else if(room->type == ROOM_TYPE_LIBRARY)
+            else if(room->type == ROOM_TYPE_SHOP)
                 room->color = COLOR(100,200,200);
             else if(room->type == ROOM_TYPE_MONSTER)
                 room->color = COLOR(200,100,100);
@@ -1004,9 +1006,9 @@ static int get_usable_rooms(RoomType type, bool doors[4], int* ret_list, bool ex
             list_count = room_count_shrine;
             list = room_list_shrine;
             break;
-        case ROOM_TYPE_LIBRARY:
-            list_count = room_count_library;
-            list = room_list_library;
+        case ROOM_TYPE_SHOP:
+            list_count = room_count_shop;
+            list = room_list_shop;
             break;
 
         case ROOM_TYPE_MONSTER:
@@ -2119,7 +2121,7 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
                 dcolor = aroom->color;
             else if(aroom->type == ROOM_TYPE_BOSS)
                 dcolor = aroom->color;
-            // else if(aroom->type == ROOM_TYPE_LIBRARY)
+            // else if(aroom->type == ROOM_TYPE_SHOP)
             //     dcolor = aroom->color;
         }
         float _x = centerx + halfw*o.x;
@@ -2621,7 +2623,7 @@ const char* get_room_type_name(RoomType rt)
         case ROOM_TYPE_MONSTER: return "Monster";
         case ROOM_TYPE_TREASURE: return "Treasure";
         case ROOM_TYPE_SHRINE: return "Shrine";
-        case ROOM_TYPE_LIBRARY: return "Library";
+        case ROOM_TYPE_SHOP: return "Shop";
         case ROOM_TYPE_BOSS: return "Boss";
     }
     return "?";
