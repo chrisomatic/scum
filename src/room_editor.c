@@ -90,6 +90,7 @@ Vector2i obj_coords = {0}; // tile_coords translated to object grid
 
 Rect gui_size = {0};
 
+static const char* get_orientation_str(int _orientation);
 static float get_orientation_deg(int _orientation);
 static bool check_no_door_placement();
 static Vector2i get_door_coords(Dir door);
@@ -593,8 +594,8 @@ void room_editor_draw()
 
             if(o->type == TYPE_CREATURE)
             {
-                // printf("%.2f\n", get_orientation_deg(o->orientation));
                 gfx_draw_image(o->subtype2, 0, tile_rect.x, tile_rect.y, COLOR_TINT_NONE, 1.0, get_orientation_deg(o->orientation), 1.0, false, true);
+                gfx_draw_string(tile_rect.x-tile_rect.w/2.0, tile_rect.y-tile_rect.h/2.0, COLOR_WHITE, 0.13, NO_ROTATION, 0.7, IN_WORLD, DROP_SHADOW, 0, "%s", get_orientation_str(o->orientation));
             }
             else if(o->type == TYPE_ITEM)
             {
@@ -1017,6 +1018,15 @@ static float get_orientation_deg(int _orientation)
     else if(_orientation == 2) return 180.0;
     return 270.0;
 }
+
+static const char* get_orientation_str(int _orientation)
+{
+    if(_orientation == 0) return "^";
+    else if(_orientation == 1) return "<";
+    else if(_orientation == 2) return "v";
+    return ">";
+}
+
 // returns true is number of doors is 0 or 1
 static bool check_no_door_placement(int x, int y)
 {
