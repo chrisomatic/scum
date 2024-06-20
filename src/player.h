@@ -37,6 +37,7 @@ typedef enum
 
     PLAYER_ACTION_USE_ITEM,
     PLAYER_ACTION_DROP_ITEM,
+    PLAYER_ACTION_REVIVE,
 
     PLAYER_ACTION_ITEM_1,
     PLAYER_ACTION_ITEM_2,
@@ -99,6 +100,7 @@ typedef struct
     float aim_deg;
 
     uint16_t coins;
+    uint8_t revives;
 
     uint16_t xp;
     uint8_t level;
@@ -226,6 +228,7 @@ void player_set_gun(Player* p, uint8_t room_gun_index, bool drop_old_gun);
 void draw_all_other_player_info();
 void draw_hearts();
 void draw_coins();
+void draw_revives();
 void draw_equipped_gun();
 
 int get_xp_req(int level);

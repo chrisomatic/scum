@@ -122,28 +122,31 @@ static bool item_func_chest_gun(Item* it, Player* p)
 static bool item_func_revive(Item* it, Player* p)
 {
     if(it->used) return false;
+    p->revives++;
+    it->used = true;
+    return true;
 
-    int others[MAX_PLAYERS] = {0};
-    int count = 0;
+    // int others[MAX_PLAYERS] = {0};
+    // int count = 0;
 
-    for(int i = 0; i < MAX_PLAYERS; ++i)
-    {
-        Player* p2 = &players[i];
-        // if(p == p2) continue;
-        if(!p2->active) continue;
-        if(p2->phys.dead) others[count++] = i;
-    }
+    // for(int i = 0; i < MAX_PLAYERS; ++i)
+    // {
+    //     Player* p2 = &players[i];
+    //     // if(p == p2) continue;
+    //     if(!p2->active) continue;
+    //     if(p2->phys.dead) others[count++] = i;
+    // }
 
-    if(count > 0)
-    {
-        it->used = true;
-        Player* p2 = &players[others[rand()%count]];
-        p2->phys.dead = false;
-        p2->phys.hp = 2;
-        p2->phys.floating = false; //TODO
-    }
+    // if(count > 0)
+    // {
+    //     it->used = true;
+    //     Player* p2 = &players[others[rand()%count]];
+    //     p2->phys.dead = false;
+    //     p2->phys.hp = 2;
+    //     p2->phys.floating = false; //TODO
+    // }
 
-    return it->used;
+    // return it->used;
 }
 
 static bool item_func_skull(Item* it, Player* p)

@@ -182,6 +182,7 @@ void player_set_defaults(Player* p)
     p->room_hits = 0;
 
     p->coins = 0;
+    p->revives = 0;
 
     p->xp = 0;
     p->level = 0;
@@ -446,11 +447,13 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_USE_ITEM].state, GLFW_KEY_U);
     window_controls_add_key(&player->actions[PLAYER_ACTION_DROP_ITEM].state, GLFW_KEY_N);
 
+    window_controls_add_key(&player->actions[PLAYER_ACTION_REVIVE].state, GLFW_KEY_R);
+
     // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_1].state, GLFW_KEY_1);
     // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_2].state, GLFW_KEY_2);
     // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_3].state, GLFW_KEY_3);
     // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_4].state, GLFW_KEY_4);
-    // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_5].state, GLFW_KEY_5);
+    // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM5].state, GLFW_KEY_5);
     // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_6].state, GLFW_KEY_6);
     // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_7].state, GLFW_KEY_7);
     // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_8].state, GLFW_KEY_8);
@@ -629,6 +632,13 @@ void player_hurt(Player* p, int damage)
 
 void player_die(Player* p)
 {
+    if(p->revives > 0)
+    {
+        p->revives--;
+        p->phys.hp = 2;
+        text_list_add(text_lst, COLOR_WHITE, 3.0, "Revived!");
+        return;
+    }
 
     text_list_add(text_lst, COLOR_WHITE, 3.0, "%s died.", p->settings.name);
 
@@ -1337,6 +1347,29 @@ void player_update(Player* p, float dt)
     bool action_drop = p->actions[PLAYER_ACTION_DROP_ITEM].toggled_on;
     bool tabbed = p->actions[PLAYER_ACTION_TAB_CYCLE].toggled_on;
     bool rshift = p->actions[PLAYER_ACTION_RSHIFT].state;
+    bool revive = p->actions[PLAYER_ACTION_REVIVE].toggled_on;
+
+    if(p->revives > 0 && revive)
+    {
+        uint8_t others[MAX_PLAYERS] = {0};
+        int count = 0;
+        for(int i = 0; i < MAX_PLAYERS; ++i)
+        {
+            Player* p2 = &players[i];
+            // if(p == p2) continue;
+            if(!p2->active) continue;
+            if(p2->phys.dead) others[count++] = i;
+        }
+
+        if(count > 0)
+        {
+            Player* p2 = &players[others[rand()%count]];
+            p2->phys.dead = false;
+            p2->phys.hp = 2;
+            p2->phys.floating = false;
+            p->revives--;
+        }
+    }
 
 
     Item* highlighted_item = NULL;
@@ -1949,7 +1982,7 @@ void draw_all_other_player_info()
 }
 
 
-float xp_bar_y = 0.0;
+float coins_y = 0.0;
 void draw_hearts()
 {
 #define TOP_MARGIN  1
@@ -1989,7 +2022,7 @@ void draw_hearts()
 
     x = area.x;
     y = area.y;
-    xp_bar_y = area.y + area.h/2.0;
+    coins_y = area.y + area.h/2.0;
     for(int i = 0; i < num; ++i)
     {
         gfx_draw_image(image_full, si_full, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
@@ -2015,13 +2048,32 @@ void draw_hearts()
 
 }
 
+float revives_y = 0.0;
 void draw_coins()
 {
     float x = 16.0;
-    float y = xp_bar_y + 10.0;
+    float y = coins_y + 15.0;
+    float scale = 3.0*ascale;
+    int sprite = item_props[ITEM_COIN_GOLD].sprite_index;
+    int image = item_props[ITEM_COIN_GOLD].image;
+    float h = gfx_images[image].visible_rects[sprite].h;
+    revives_y = y + h;
 
-    gfx_draw_image(items_image, ITEM_COIN_GOLD, x, y, COLOR_TINT_NONE, 3.0, 0.0, 1.0, false, NOT_IN_WORLD);
+    gfx_draw_image(image, sprite, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
     gfx_draw_string(x+12, y-9, 0xD4AF37, 0.25*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "%u", player->coins);
+}
+
+void draw_revives()
+{
+    float x = 16.0;
+    float y = revives_y + 15.0;
+    float scale = 1.4*ascale;
+    int sprite = item_props[ITEM_REVIVE].sprite_index;
+    int image = item_props[ITEM_REVIVE].image;
+    float h = gfx_images[image].visible_rects[sprite].h;
+
+    gfx_draw_image(image, sprite, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+    gfx_draw_string(x+12, y-9, COLOR_TINT_NONE, 0.25*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "%u", player->revives);
 }
 
 #if 0
