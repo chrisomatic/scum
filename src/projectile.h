@@ -99,6 +99,8 @@ typedef struct
     char  based_on_name[GUN_NAME_MAX_LEN+1];
     char  desc[GUN_DESC_MAX_LEN+1];
 
+    uint8_t cost;
+
     float damage_min;
     float damage_max;
     

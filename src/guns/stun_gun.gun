@@ -1,6 +1,7 @@
 based_on: null
 name: stun_gun
 desc: shoot short-range stun beam
+cost: 6
 damage_min: 0.86
 damage_max: 0.86
 num: 1

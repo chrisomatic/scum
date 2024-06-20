@@ -1,6 +1,7 @@
 based_on: null
 name: crazy_bounce
 desc: test
+cost: 15
 
 damage_min: 34.68
 damage_max: 34.68

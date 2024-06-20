@@ -1,6 +1,7 @@
 based_on: null
 name: disclauncher1
 desc:   spinning pow
+cost: 15
 damage_min: 3.45
 damage_max: 5.17
 num: 1

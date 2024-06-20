@@ -1,6 +1,7 @@
 based_on: repeater1
 name: repeater2
 desc:  Rapid succession accurate shooter
+cost: 7
 lifetime: 0.90
 cooldown: 0.62
 burst_count: 2

@@ -1,6 +1,7 @@
 based_on: bouncer1
 name: bouncer2
 desc:  Good at bouncing
+cost: 12 
 speed: 324.88
 scale1: 1.09
 scale2: 1.03

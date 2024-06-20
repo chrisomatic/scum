@@ -2391,13 +2391,19 @@ void player_draw(Player* p)
             const char* desc = item_get_description(highlighted_item->type, highlighted_item);
             const char* name = item_get_name(highlighted_item->type);
 
+            int cost = 0;
+            if(highlighted_item->type == ITEM_GUN)
+            {
+                cost = room_gun_list[highlighted_item->user_data2].cost;
+            }
+
             if(strlen(desc) > 0)
             {
-                ui_message_set_small(0.1, "Item: %s (%s)", name, desc);
+                ui_message_set_small(0.1, "%s (%s) [Cost: %u]", name, desc, cost);
             }
             else
             {
-                ui_message_set_small(0.1, "Item: %s", name);
+                ui_message_set_small(0.1, "%s [Cost: %u]", name, cost);
             }
         }
 

@@ -1,6 +1,7 @@
 based_on: null
 name: chargeburst1
 desc: Burst of random shots
+cost: 10
 damage_min: 94.28
 damage_max: 94.28
 num: 10

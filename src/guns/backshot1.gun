@@ -1,6 +1,7 @@
 based_on: null
 name: backshot1
 desc: Shoots behind you
+cost: 2
 damage_min: 1.72
 damage_max: 5.17
 num: 1

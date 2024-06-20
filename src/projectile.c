@@ -1028,6 +1028,7 @@ void gun_save_to_file(Gun* gun, Gun* based_on)
 
     if(base_gun)
     {
+        fprintf(fp, "cost: %u\n", gun->cost);
         fprintf(fp, "damage_min: %3.2f\n", gun->damage_min);
         fprintf(fp, "damage_max: %3.2f\n", gun->damage_max);
         fprintf(fp, "num: %d\n", gun->num);
@@ -1080,6 +1081,7 @@ void gun_save_to_file(Gun* gun, Gun* based_on)
     }
     else
     {
+        if(gun->cost                 != based_on->cost)                 fprintf(fp, "cost: %u\n", gun->cost);
         if(gun->damage_min           != based_on->damage_min)           fprintf(fp, "damage_min: %3.2f\n", gun->damage_min);
         if(gun->damage_max           != based_on->damage_max)           fprintf(fp, "damage_max: %3.2f\n", gun->damage_max);
         if(gun->num                  != based_on->num)                  fprintf(fp, "num: %d\n", gun->num);
@@ -1138,6 +1140,7 @@ void gun_print(Gun* gun)
 {
     printf("name: %s\n", gun->name);
     printf("desc: %s\n", gun->desc);
+    printf("cost: %u\n", gun->cost);
     printf("damage_min: %3.2f\n", gun->damage_min);
     printf("damage_max: %3.2f\n", gun->damage_max);
     printf("num: %d\n", gun->num);
@@ -1332,6 +1335,8 @@ void gun_load_from_file(Gun* gun, const char* file_name)
                 memcpy(gun->name, val2, sizeof(char)*MIN(GUN_NAME_MAX_LEN, strlen(val2)));
             else if(STR_EQUAL(key, "desc"))
                 memcpy(gun->desc, val2, sizeof(char)*MIN(GUN_DESC_MAX_LEN, strlen(val2)));
+            else if(STR_EQUAL(key, "cost"))
+                gun->cost = atoi(val2);
             else if(STR_EQUAL(key, "damage_min"))
                 gun->damage_min = atof(val2);
             else if(STR_EQUAL(key, "damage_max"))

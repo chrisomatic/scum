@@ -1,6 +1,7 @@
 based_on: null
 name: coherence1
 desc: random split waves
+cost: 7
 damage_min: 1.72
 damage_max: 2.58
 num: 2

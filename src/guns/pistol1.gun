@@ -1,6 +1,7 @@
 based_on: null
 name: pistol1
 desc:   Basic starting player gun
+cost: 1
 damage_min: 1.00
 damage_max: 1.00
 num: 1

@@ -1,6 +1,7 @@
 based_on: plasmagun1
 name: plasmagun2
 desc: A mysterious alien weapon
+cost: 15
 damage_min: 2.58
 damage_max: 3.45
 scale1: 1.03

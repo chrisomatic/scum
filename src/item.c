@@ -271,7 +271,8 @@ static bool internal_item_use(Item* it, void* _player)
             {
                 if(visible_room->type == ROOM_TYPE_SHOP)
                 {
-                    int cost = 5;
+                    int cost = room_gun_list[it->user_data2].cost;
+
                     if(p->coins >= cost)
                     {
                         player_add_coins(p, -cost);

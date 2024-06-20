@@ -1,6 +1,7 @@
 based_on: null
 name: bouncer1
 desc: Good at bouncing
+cost: 6
 damage_min: 0.86
 damage_max: 1.72
 num: 1

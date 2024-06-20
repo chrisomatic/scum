@@ -1,6 +1,7 @@
 based_on: null
 name: ballthrower
 desc: lob a projectile
+cost: 2 
 damage_min: 3.45
 damage_max: 5.17
 num: 1

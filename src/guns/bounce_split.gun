@@ -1,6 +1,7 @@
 based_on: null
 name: bounce_split
 desc: 
+cost: 8
 
 damage_min: 41.04
 damage_max: 61.91

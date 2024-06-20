@@ -1,6 +1,7 @@
 based_on: null
 name: cluster_homing_op
 desc: todo
+cost: 50 
 damage_min: 12.90
 damage_max: 90.51
 num: 1

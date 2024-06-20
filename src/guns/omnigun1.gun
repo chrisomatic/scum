@@ -1,6 +1,7 @@
 based_on: null
 name: omnigun1
 desc:   Shoot in multiple directions
+cost: 5
 damage_min: 1.00
 damage_max: 1.00
 num: 2

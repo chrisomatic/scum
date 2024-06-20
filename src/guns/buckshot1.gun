@@ -1,6 +1,7 @@
 based_on: null
 name: buckshot1
 desc:    Get bucked
+cost: 5
 damage_min: 1.72
 damage_max: 2.58
 num: 5

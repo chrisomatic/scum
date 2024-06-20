@@ -1,6 +1,7 @@
 based_on: omnigun1
 name: omnigun2
 desc: Shoot in multiple directions
+cost: 12
 num: 4
 scale1: 0.62
 scale2: 0.66

@@ -1,6 +1,7 @@
 based_on: null
 name: stun_launcher
 desc: lob a projectile that stuns
+cost: 8
 damage_min: 0.86
 damage_max: 0.86
 num: 1

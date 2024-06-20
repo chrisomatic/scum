@@ -1,6 +1,7 @@
 based_on: backshot1
 name: backshot2
 desc: Shoots 2 behind you, and wavy
+cost: 5
 num: 2
 spread_type: 0
 spread: 40.32

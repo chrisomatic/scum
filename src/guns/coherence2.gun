@@ -1,6 +1,7 @@
 based_on: coherence1
 name: coherence2
 desc: random split waves
+cost: 15
 num: 4
 speed: 247.34
 burst_rate: 0.22
