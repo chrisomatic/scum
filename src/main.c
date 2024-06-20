@@ -860,7 +860,7 @@ void init()
     ascale = view_width / 1200.0;
     LOGI("   ascale: %.2f", ascale);
 
-    text_lst = text_list_init(50, 2.0, view_height - 40.0, 0.19*ascale, true, TEXT_ALIGN_LEFT, NOT_IN_WORLD, true);
+    text_lst = text_list_init(50, (view_width-100)/2.0, view_height - 40.0, 0.19*ascale, true, TEXT_ALIGN_LEFT, NOT_IN_WORLD, true);
 
     LOGI(" - Particles.");
     particles_init();
@@ -2252,7 +2252,7 @@ void draw()
 
     draw_minimap();
     draw_hearts();
-    draw_mp_bar();
+    draw_coins();
     draw_equipped_gun();
     draw_stats();
 

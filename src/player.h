@@ -225,7 +225,7 @@ void player_set_gun(Player* p, uint8_t room_gun_index, bool drop_old_gun);
 
 void draw_all_other_player_info();
 void draw_hearts();
-void draw_mp_bar();
+void draw_coins();
 void draw_equipped_gun();
 
 int get_xp_req(int level);

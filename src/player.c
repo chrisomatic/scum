@@ -951,7 +951,6 @@ static float sprite_index_to_angle(Player* p)
     return 0.0;
 }
 
-
 static void handle_room_collision(Player* p)
 {
     Room* room = level_get_room_by_index(&level, p->phys.curr_room);
@@ -2009,33 +2008,13 @@ void draw_hearts()
 
 }
 
-void draw_mp_bar()
+void draw_coins()
 {
-    float h = 10.0;
-    float w = 33.0 * 3.0 * ascale;
+    float x = 16.0;
+    float y = xp_bar_y + 10.0;
 
-    float x = 5.0;
-    float y = xp_bar_y + 5.0;
-
-    Rect in_r = {0};
-
-    in_r.w = w * ((float)player->phys.mp / (float)player->phys.mp_max);
-    in_r.h = h;
-    in_r.x = x;
-    in_r.y = y;
-
-    gfx_draw_rect_tl(&in_r, 0x000055CC, NOT_SCALED, NO_ROTATION, 0.6, true, NOT_IN_WORLD);
-
-    Rect out_r = {0};
-
-    out_r.w = w + 1.0;
-    out_r.h = h + 1.0;
-    out_r.x = x;
-    out_r.y = y;
-
-    gfx_draw_rect_tl(&out_r, 0x00CCCCCC, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
-
-    gfx_draw_string(x+1, y+h+2, COLOR_WHITE, 0.15*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "MP: %02d/%02d", player->phys.mp, player->phys.mp_max);
+    gfx_draw_image(items_image, ITEM_COIN_GOLD, x, y, COLOR_TINT_NONE, 3.0, 0.0, 1.0, false, NOT_IN_WORLD);
+    gfx_draw_string(x+12, y-9, 0xD4AF37, 0.25*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "%u", player->coins);
 }
 
 #if 0
