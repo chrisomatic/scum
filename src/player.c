@@ -535,14 +535,21 @@ bool player_add_stat(Player* p, StatType stat, int val)
     return true;
 }
 
-//TODO
 void player_add_coins(Player* p, int val)
 {
     if(p == player)
     {
-        text_list_add(ptext, COLOR_WHITE, 3.0, "+%d coin%s", val, val == 1 ? "" : "s");
+        text_list_add(ptext, COLOR_WHITE, 3.0, "%s%d coin%s",  val > 0 ? "+" : "", val, ABS(val) == 1 ? "" : "s");
     }
-    p->coins += val;
+
+    if(val < 0 && p->coins < ABS(val))
+    {
+        p->coins = 0;
+    }
+    else
+    {
+        p->coins += val;
+    }
 }
 
 bool player_add_mp(Player* p, int mp)

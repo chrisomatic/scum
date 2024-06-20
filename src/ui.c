@@ -122,10 +122,12 @@ static void ui_message_draw_small()
 
     float pad = 10.0;
 
+    // bottom right
     Rect bg = {0};
     bg.w = size.x + pad;
     bg.h = size.y + pad;
-    bg.x = bg.w/2.0 + 1.0;
+    // bg.x = bg.w/2.0 + 1.0; // bottom left
+    bg.x = view_width - bg.w/2.0 + 1.0; // bottom right
     bg.y = view_height - bg.h/2.0 - 1.0;
 
     gfx_draw_rect(&bg, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.6, true, NOT_IN_WORLD);

@@ -54,7 +54,7 @@ static bool item_func_chest(Item* it, Player* p)
     int num = player_get_active_count() + 1;
     ItemType lst[10] = {0};
 
-    if(rand() % 20 == 1)
+    if(rand() % 5 == 0)
     {
         num = rand()%5+5;
         for(int i = 0; i < num; ++i)
@@ -264,7 +264,30 @@ static bool internal_item_use(Item* it, void* _player)
     {
         case ITEM_GUN:
         {
-            player_set_gun(p, it->user_data2, true);
+            if(visible_room)
+            {
+                if(visible_room->type == ROOM_TYPE_SHOP)
+                {
+                    int cost = 5;
+                    if(p->coins >= cost)
+                    {
+                        player_add_coins(p, -cost);
+                        player_set_gun(p, it->user_data2, false);
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    player_set_gun(p, it->user_data2, true);
+                }
+            }
+            else
+            {
+                player_set_gun(p, it->user_data2, true);
+            }
         } break;
         case ITEM_HEART_FULL:
         {
@@ -352,11 +375,11 @@ static bool internal_item_use(Item* it, void* _player)
         } break;
         case ITEM_COIN_SILVER:
         {
-            player_add_coins(p, 5);
+            player_add_coins(p, 1);
         } break;
         case ITEM_COIN_GOLD:
         {
-            player_add_coins(p, 10);
+            player_add_coins(p, 1);
         } break;
 
         case ITEM_GAUNTLET_SLOT:
@@ -705,9 +728,9 @@ const char* item_get_description(ItemType type, Item* it)
         case ITEM_SHAMROCK: return "+1 luck";
         case ITEM_UPGRADE_ORB: return "upgrade stuff";
 
-        case ITEM_COIN_COPPER: return "+1 coin";
-        case ITEM_COIN_SILVER: return "+5 coins";
-        case ITEM_COIN_GOLD: return "+10 coins";
+        case ITEM_COIN_COPPER: return "1 coin";
+        case ITEM_COIN_SILVER: return "1 coin";
+        case ITEM_COIN_GOLD:   return "1 coin";
     }
     return "???";
 }

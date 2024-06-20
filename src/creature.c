@@ -460,7 +460,7 @@ void creature_init_props(Creature* c)
         } break;
         case CREATURE_TYPE_LEEPER:
         {
-            c->phys.scale = 0.4;
+            c->phys.scale = 1.0;
             c->phys.speed = 120.0;
             c->act_time_min = 0.2;
             c->act_time_max = 0.8;
@@ -1143,7 +1143,7 @@ void creature_die(Creature* c)
         projectile_orbital_kill(orb);
     }
 
-    bool mana = true;
+    bool drop_coin = true;
     bool blood = true;
 
     int effect_type = EFFECT_BLOOD2;
@@ -1151,10 +1151,8 @@ void creature_die(Creature* c)
     if(c->type == CREATURE_TYPE_ROCK)
     {
         effect_type = EFFECT_SMOKE2;
-        mana = false;
+        drop_coin = true;
         blood = false;
-
-        item_add(item_get_random_coin(), c->phys.collision_rect.x, c->phys.collision_rect.y, c->phys.curr_room);
     }
 
     ParticleEffect* eff = &particle_effects[effect_type];
@@ -1184,13 +1182,13 @@ void creature_die(Creature* c)
 
     status_effects_clear(&c->phys);
 
-    // player_add_xp(player, c->xp);
-    Room* room = level_get_room_by_index(&level, c->phys.curr_room);
-    if(room == NULL)
-    {
-        LOGE("room is null %u", c->phys.curr_room);
-        return;
-    }
+    // // player_add_xp(player, c->xp);
+    // Room* room = level_get_room_by_index(&level, c->phys.curr_room);
+    // if(room == NULL)
+    // {
+    //     LOGE("room is null %u", c->phys.curr_room);
+    //     return;
+    // }
 
     // printf("room xp %d -> ", room->xp);
     level_room_xp += c->xp;
@@ -1215,10 +1213,12 @@ void creature_die(Creature* c)
     }
 
 
-    if(mana && rand() % 10 == 0)
+    if(drop_coin && rand() % 2 == 0)
     {
         // drop item
-        item_add(ITEM_POTION_MANA, c->phys.collision_rect.x, c->phys.collision_rect.y, c->phys.curr_room);
+        int num = 1;
+        for(int i = 0; i < num; ++i)
+            item_add(item_get_random_coin(), c->phys.collision_rect.x, c->phys.collision_rect.y, c->phys.curr_room);
     }
 
     // handle_room_completion(c->phys.curr_room);
@@ -1289,7 +1289,7 @@ uint16_t creature_get_room_count(uint8_t room_index, bool count_passive)
         {
             if(count_passive)
                 count++;
-            else if(!creatures[i].passive)
+            else if(!creatures[i].passive && !creatures[i].invincible)
                 count++;
         }
     }
