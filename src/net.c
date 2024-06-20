@@ -2635,15 +2635,12 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
             stats[j] = bitpack_read(&client.bp, 3);
         }
 
-        uint32_t gauntlet_selection  = bitpack_read(&client.bp, 4);
-
         uint32_t invunerable_temp = bitpack_read(&client.bp, 1);
         uint32_t inv_temp_time    = bitpack_read(&client.bp, 6);
         uint32_t door             = bitpack_read(&client.bp, 4);
         uint32_t dead             = bitpack_read(&client.bp, 1);
 
         uint32_t weapon_state = bitpack_read(&client.bp, 2);
-
 
         //uint32_t weapon_x = 0.0;
         //uint32_t weapon_y = 0.0;
@@ -2746,6 +2743,9 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
             p->phys.pos.z = pos.z;
             p->weapon.scale = (float)(weapon_scale/255.0f);
         }
+
+        if(p == player)
+            visible_room = level_get_room_by_index(&level, p->phys.curr_room);
 
         for(int i = 0; i < 32; ++i)
         {
@@ -3028,12 +3028,16 @@ static void pack_items(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 10, (uint32_t)it->phys.pos.x);
         BPW(&server.bp, 10, (uint32_t)it->phys.pos.y);
         BPW(&server.bp, 6,  (uint32_t)it->phys.pos.z);
+        BPW(&server.bp, 8,  (uint32_t)(it->phys.scale*255.0f));
         BPW(&server.bp, 7,  (uint32_t)it->phys.curr_room);
-        BPW(&server.bp, 10,  (uint32_t)(it->angle));
+        BPW(&server.bp, 10, (uint32_t)(it->angle));
         BPW(&server.bp, 1,  (uint32_t)(it->used ? 0x01 : 0x00));
         BPW(&server.bp, 8,  (uint32_t)(it->user_data));
+        BPW(&server.bp, 8,  (uint32_t)(it->user_data2));
+        BPW(&server.bp, 32, (uint32_t)(it->seed));
 
         uint8_t dlen = strlen(it->desc);
+        // printf("[%u] dlen: %u '%s'\n", it->id, dlen, it->desc);
         if(dlen > 0)
         {
             BPW(&server.bp, 1, 0x01);
@@ -3066,10 +3070,13 @@ static void unpack_items(Packet* pkt, int* offset, WorldState* ws)
         uint32_t x           = bitpack_read(&client.bp, 10);
         uint32_t y           = bitpack_read(&client.bp, 10);
         uint32_t z           = bitpack_read(&client.bp, 6);
+        uint32_t _scale      = bitpack_read(&client.bp, 8);
         uint32_t c_room      = bitpack_read(&client.bp, 7);
         uint32_t _angle      = bitpack_read(&client.bp, 10);
         uint32_t used        = bitpack_read(&client.bp, 1);
         uint8_t user_data    = bitpack_read(&client.bp, 8);
+        uint8_t user_data2   = bitpack_read(&client.bp, 8);
+        uint32_t _seed       = bitpack_read(&client.bp, 32);
         bool has_desc        = bitpack_read(&client.bp, 1);
 
         if(has_desc)
@@ -3081,6 +3088,7 @@ static void unpack_items(Packet* pkt, int* offset, WorldState* ws)
                 desc[j] = (char)bitpack_read(&client.bp, 8);
             }
             memcpy(it->desc, desc, 32*sizeof(char));
+            // printf("[%u] dlen: %u '%s'\n", id, dlen, desc);
         }
 
         it->id = id;
@@ -3090,7 +3098,15 @@ static void unpack_items(Packet* pkt, int* offset, WorldState* ws)
         it->used = used == 1 ? true : false;
         float angle = (float)_angle;
         Vector3f pos = {(float)x,(float)y,(float)z};
+        it->phys.scale = (float)(_scale/255.0f);
         it->user_data = user_data;
+        it->user_data2 = user_data2;
+        it->seed = _seed;
+
+        // printf("%u\n", it->id);
+        // printf(" %d\n", it->type);
+        // printf(" %u\n", it->phys.curr_room);
+        // printf(" %d\n", it->used);
 
         it->lerp_t = 0.0;
 

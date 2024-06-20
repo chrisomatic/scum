@@ -114,6 +114,8 @@ void entity_build_all()
 {
     num_entities = 0;
 
+    if(!visible_room) return;
+
     // players
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
