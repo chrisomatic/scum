@@ -2068,14 +2068,14 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
     gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_RD, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, false, scale, 0.0, 1.0, false, false, false);
     gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_DL, r.x,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, false, scale, 0.0, 1.0, false, false, false);
 
-    uint8_t door_sprites[4] = {SPRITE_TILE_DOOR_UP, SPRITE_TILE_DOOR_RIGHT, SPRITE_TILE_DOOR_DOWN, SPRITE_TILE_DOOR_LEFT};
+    uint8_t door_sprites[4] = {SPRITE_TILE_DOOR_RIGHT, SPRITE_TILE_DOOR_UP, SPRITE_TILE_DOOR_LEFT, SPRITE_TILE_DOOR_DOWN};
 
     if(room->doors_locked)
     {
-        door_sprites[0] = SPRITE_TILE_DOOR_UP_CLOSED;
-        door_sprites[1] = SPRITE_TILE_DOOR_RIGHT_CLOSED;
-        door_sprites[2] = SPRITE_TILE_DOOR_DOWN_CLOSED;
-        door_sprites[3] = SPRITE_TILE_DOOR_LEFT_CLOSED;
+        door_sprites[0] = SPRITE_TILE_DOOR_RIGHT_CLOSED;
+        door_sprites[1] = SPRITE_TILE_DOOR_UP_CLOSED;
+        door_sprites[2] = SPRITE_TILE_DOOR_LEFT_CLOSED;
+        door_sprites[3] = SPRITE_TILE_DOOR_DOWN_CLOSED;
     }
 
     // center of the room
