@@ -270,12 +270,6 @@ void entity_handle_misc(float dt)
                 if(*floor_state < FLOOR_BROKE)
                 {
                     (*floor_state)++;
-
-                    if(*floor_state == FLOOR_BROKE)
-                    {
-                        // floor just broke, regenerate walls for level
-                        generate_walls(&level);
-                    }
                 }
             }
 
