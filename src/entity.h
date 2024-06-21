@@ -22,7 +22,6 @@ typedef struct
     void* ptr;
     int tile;   //TileType
     Physics* phys;
-    Vector2i curr_tile;
     Vector2f pos;
     bool draw_only;
     //bool shadow;

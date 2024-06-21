@@ -1422,6 +1422,10 @@ void player_update(Player* p, float dt)
     else
     {
         Vector2i c_tile = level_get_room_coords_by_pos(cx, cy);
+
+        p->phys.prior_tile.x = p->phys.curr_tile.x;
+        p->phys.prior_tile.y = p->phys.curr_tile.y;
+
         p->phys.curr_tile.x = RANGE(c_tile.x, 0, ROOM_TILE_SIZE_X-1);
         p->phys.curr_tile.y = RANGE(c_tile.y, 0, ROOM_TILE_SIZE_Y-1);
 

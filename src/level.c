@@ -1698,8 +1698,6 @@ void level_init()
     printf("Done with room files\n");
 }
 
-// void level_update_breakable_floors
-
 void level_update(float dt)
 {
 
@@ -1714,23 +1712,6 @@ void level_update(float dt)
     if(level_room_in_progress)
     {
         level_room_time += dt;
-    }
-
-    Vector2i breakable_tiles[] = {0};
-
-    // todo
-    for(int i = 0; i < MAX_PLAYERS; ++i)
-    {
-        Player* p = &players[i];
-        if(!p->active) continue;
-        if(p->phys.dead) continue;
-        if(p->phys.floating) continue;
-        if(p->phys.pos.z > 0) continue;
-        if(level_get_tile_type(visible_room, p->phys.curr_tile.x, p->phys.curr_tile.y) == TILE_BREAKABLE_FLOOR)
-        {
-            if(visible_room->breakable_floor_timer[p->phys.curr_tile.x][p->phys.curr_tile.y] < BREAKABLE_FLOOR_TIME_MAX)
-               visible_room->breakable_floor_timer[p->phys.curr_tile.x][p->phys.curr_tile.y] += dt;
-        }
     }
 
     handle_room_completion(visible_room);
@@ -1937,7 +1918,7 @@ TileType level_get_tile_type(Room* room, int x, int y)
 
     if(rdata->tiles[x][y] == TILE_BREAKABLE_FLOOR)
     {
-        if(room->breakable_floor_timer[x][y] >= BREAKABLE_FLOOR_TIME_MAX)
+        if(room->breakable_floor_state[x][y] >= FLOOR_BROKE)
             return TILE_PIT;
     }
 
@@ -2145,26 +2126,19 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
         for(int _x = 0; _x < ROOM_TILE_SIZE_X; ++_x)
         {
             
-            // TileType tt = rdata->tiles[_x][_y];
-            // uint8_t sprite = level_get_tile_sprite(tt);
-
-            // if(tt == TILE_BREAKABLE_FLOOR)
-            // {
-            //     if(room->breakable_floors_timer[_x][_y] >= BREAKABLE_FLOOR_TIME_MAX)
-            //     {
-            //         tt = TILE_PIT;
-            //     }
-            // }
-
             TileType tt = level_get_tile_type(room, _x, _y);
             uint8_t sprite = level_get_tile_sprite(tt);
 
-            float ftimer = room->breakable_floor_timer[_x][_y];
-            if(tt == TILE_BREAKABLE_FLOOR && ftimer < BREAKABLE_FLOOR_TIME_MAX)
+            uint8_t fstate = room->breakable_floor_state[_x][_y];
+            if(tt == TILE_BREAKABLE_FLOOR)
             {
-                if(ftimer < 0.25) sprite = SPRITE_TILE_FLOOR_BREAK1;
-                else if(ftimer < 0.50) sprite = SPRITE_TILE_FLOOR_BREAK2;
-                else sprite = SPRITE_TILE_FLOOR_BREAK3;
+                switch(fstate)
+                {
+                    case FLOOR_CRACKED:  sprite = SPRITE_TILE_FLOOR_BREAK1; break;
+                    case FLOOR_BREAKING: sprite = SPRITE_TILE_FLOOR_BREAK2; break;
+                    case FLOOR_REALLY_BREAKING: sprite = SPRITE_TILE_FLOOR_BREAK3; break;
+                    default: sprite = SPRITE_TILE_PIT;
+                }
             }
 
             if(tt == TILE_PIT)

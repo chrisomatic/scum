@@ -886,7 +886,8 @@ void creature_update(Creature* c, float dt)
         c->phys.pos.z = c->phys.height/2.0 + 10.0 + 3*sinf(5*c->phys.circular_dt);
     }
 
-    c->phys.curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
+    //c->phys.prior_tile = c->phys.curr_tile;
+    //c->phys.curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
 
     if(level_grace_time <= 0.0 && c->phys.stun_timer <= 0.0 && creatures_can_move)
     {
@@ -1043,6 +1044,7 @@ void creature_update(Creature* c, float dt)
     // }
 
 
+    c->phys.prior_tile = c->phys.curr_tile;
     c->phys.curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
 }
 

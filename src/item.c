@@ -1037,7 +1037,6 @@ void item_update_all(float dt)
             // p->highlighted_item = it;
             // player->highlighted_item = &items[near_items[player->highlighted_index].index];
             // player->highlighted_item->highlighted = true;
-
         }
         else
         {

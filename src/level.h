@@ -53,16 +53,24 @@ typedef enum
 
 typedef enum
 {
-    DIR_UP,
     DIR_RIGHT,
-    DIR_DOWN,
+    DIR_UP,
     DIR_LEFT,
+    DIR_DOWN,
     DIR_UP_RIGHT,
+    DIR_UP_LEFT,
     DIR_DOWN_LEFT,
     DIR_DOWN_RIGHT,
-    DIR_UP_LEFT,
     DIR_NONE,
 } Dir;
+
+typedef enum
+{
+    FLOOR_CRACKED = 0,
+    FLOOR_BREAKING = 1,
+    FLOOR_REALLY_BREAKING = 2,
+    FLOOR_BROKE = 3,
+} FloorState;
 
 typedef enum
 {
@@ -140,8 +148,7 @@ typedef struct
     bool doors_locked;
     uint32_t color;
 
-    float breakable_floor_timer[ROOM_TILE_SIZE_X][ROOM_TILE_SIZE_Y];
-    // uint8_t breakable_floor_state[ROOM_TILE_SIZE_X][ROOM_TILE_SIZE_Y];
+    uint8_t breakable_floor_state[ROOM_TILE_SIZE_X][ROOM_TILE_SIZE_Y];
 
     Wall walls[MAX_WALLS_PER_ROOM];
     int wall_count;

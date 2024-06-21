@@ -43,8 +43,6 @@ static void add_entity(EntityType type, void* ptr, Physics* phys)
         e->draw_only = true;
         e->ptr  = NULL;
         e->phys = NULL;
-        e->curr_tile.x = phys->curr_tile.x;
-        e->curr_tile.y = phys->curr_tile.y;
         return;
     }
 
@@ -255,6 +253,33 @@ void entity_handle_misc(float dt)
 
             if(e->phys->stun_timer < 0.0)
                e->phys->stun_timer = 0.0;
+        }
+
+        if(e->type == ENTITY_TYPE_PLAYER || e->type == ENTITY_TYPE_CREATURE)
+        {
+
+            uint8_t tt = level_get_tile_type(visible_room, e->phys->curr_tile.x, e->phys->curr_tile.y);
+            bool on_breakable_tile = (tt == TILE_BREAKABLE_FLOOR && e->phys->pos.z <= 3.0);
+            bool moved_tiles = (e->phys->curr_tile.x != e->phys->prior_tile.x || e->phys->curr_tile.y != e->phys->prior_tile.y);
+
+            if(e->phys->on_breakable_tile && (moved_tiles || !on_breakable_tile))
+            {
+                // update breakable floor state
+                uint8_t* floor_state = &visible_room->breakable_floor_state[e->phys->prior_tile.x][e->phys->prior_tile.y];
+
+                if(*floor_state < FLOOR_BROKE)
+                {
+                    (*floor_state)++;
+
+                    if(*floor_state == FLOOR_BROKE)
+                    {
+                        // floor just broke, regenerate walls for level
+                        generate_walls(&level);
+                    }
+                }
+            }
+
+            e->phys->on_breakable_tile = on_breakable_tile;
         }
     }
 }

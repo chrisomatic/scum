@@ -36,8 +36,11 @@ typedef struct
     float rotation_deg;
     float scale;
 
+    Vector2i prior_tile;
     Vector2i curr_tile;
     uint8_t curr_room;
+
+    bool on_breakable_tile;
 
     Rect vr;
     Rect collision_rect_prior;
