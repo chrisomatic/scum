@@ -8,7 +8,7 @@ num: 1
 speed: 239.58
 scale1: 0.66
 scale2: 0.66
-lifetime: 1.48
+lifetime: 0.88
 cooldown: 0.10
 burst_count: 0
 burst_rate: 0.20
@@ -30,6 +30,7 @@ ghost_chance: 0.00
 homing_chance: 0.00
 bounce_chance: 0.00
 penetration_chance: 0.00
+stun_chance: 0.00
 explosion_chance: 0.00
 explosion_radius: 15.00
 explosion_rate: 100.00

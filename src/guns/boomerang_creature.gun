@@ -1,14 +1,14 @@
 based_on: null
-name: boomerang1
+name: boomerang_creature
 desc: Watch out
 cost: 5
-damage_min: 1.72
-damage_max: 2.58
+damage_min: 0.86
+damage_max: 0.86
 num: 1
-speed: 495.49
-scale1: 1.28
-scale2: 0.82
-lifetime: 1.02
+speed: 836.69
+scale1: 0.97
+scale2: 0.97
+lifetime: 1.31
 cooldown: 0.64
 burst_count: 0
 burst_rate: 0.19
@@ -19,9 +19,9 @@ spread: 105.46
 gun_sprite_index: 0
 sprite_index: 11
 spin_factor: 1.00
-color1: EAAA07
-color2: 836068
-directional_accel: -0.78
+color1: 007200
+color2: 007200
+directional_accel: -1.00
 gravity_factor: 0.00
 air_friction: 0.38
 wave_amplitude: 0.00
@@ -42,9 +42,9 @@ chargeable: false
 charge_type: 0
 charge_time_max: 1.00
 cluster: false
-cluster_stages: 1
-cluster_num0: 2
-cluster_num1: 2
+cluster_stages: 2
+cluster_num0: 1
+cluster_num1: 1
 cluster_scale0: 0.60
 cluster_scale1: 0.60
 orbital: false

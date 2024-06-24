@@ -93,7 +93,7 @@ Vector2f transition_targets = {0};
 
 Level level;
 // unsigned int level_seed = 1383155466;
-unsigned int level_seed = 1;
+unsigned int level_seed = 31;
 int level_rank = 2;
 int level_transition = 0;
 int level_transition_state = 0;
