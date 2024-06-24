@@ -1233,6 +1233,11 @@ void level_generate_room_outer_walls(Room* room)
     wall_outer_left->type = WALL_TYPE_OUTER;
     room->wall_count++;
 
+
+    // making these wall types inner allows for clingers to move on the door
+    WallType door_wall_type = WALL_TYPE_INNER;
+    // WallType door_wall_type = WALL_TYPE_OUTER;
+
     // walls around doors
     if(room->doors[DIR_UP])
     {
@@ -1242,7 +1247,7 @@ void level_generate_room_outer_walls(Room* room)
         wall_door_up1->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+1);
         wall_door_up1->p1.y = y0+TILE_SIZE-wall_offset;
         wall_door_up1->dir = DIR_LEFT;
-        wall_door_up1->type = WALL_TYPE_OUTER;
+        wall_door_up1->type = door_wall_type;
         room->wall_count++;
 
         Wall* wall_door_up2 = &room->walls[room->wall_count];
@@ -1251,7 +1256,7 @@ void level_generate_room_outer_walls(Room* room)
         wall_door_up2->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+2);
         wall_door_up2->p1.y = y0+TILE_SIZE-wall_offset;
         wall_door_up2->dir = DIR_RIGHT;
-        wall_door_up2->type = WALL_TYPE_OUTER;
+        wall_door_up2->type = door_wall_type;
         room->wall_count++;
     }
 
@@ -1263,7 +1268,7 @@ void level_generate_room_outer_walls(Room* room)
         wall_door_right1->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2);
         wall_door_right1->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+1);
         wall_door_right1->dir = DIR_UP;
-        wall_door_right1->type = WALL_TYPE_OUTER;
+        wall_door_right1->type = door_wall_type;
         room->wall_count++;
 
         Wall* wall_door_right2 = &room->walls[room->wall_count];
@@ -1272,7 +1277,7 @@ void level_generate_room_outer_walls(Room* room)
         wall_door_right2->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2);
         wall_door_right2->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+2);
         wall_door_right2->dir = DIR_DOWN;
-        wall_door_right2->type = WALL_TYPE_OUTER;
+        wall_door_right2->type = door_wall_type;
         room->wall_count++;
     }
 
@@ -1284,7 +1289,7 @@ void level_generate_room_outer_walls(Room* room)
         wall_door_down1->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+1);
         wall_door_down1->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2);
         wall_door_down1->dir = DIR_LEFT;
-        wall_door_down1->type = WALL_TYPE_OUTER;
+        wall_door_down1->type = door_wall_type;
         room->wall_count++;
 
         Wall* wall_door_down2 = &room->walls[room->wall_count];
@@ -1293,7 +1298,7 @@ void level_generate_room_outer_walls(Room* room)
         wall_door_down2->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+2);
         wall_door_down2->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2);
         wall_door_down2->dir = DIR_RIGHT;
-        wall_door_down2->type = WALL_TYPE_OUTER;
+        wall_door_down2->type = door_wall_type;
         room->wall_count++;
     }
 
@@ -1305,7 +1310,7 @@ void level_generate_room_outer_walls(Room* room)
         wall_door_left1->p1.x = x0+TILE_SIZE-wall_offset;
         wall_door_left1->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+1);
         wall_door_left1->dir = DIR_UP;
-        wall_door_left1->type = WALL_TYPE_OUTER;
+        wall_door_left1->type = door_wall_type;
         room->wall_count++;
 
         Wall* wall_door_left2 = &room->walls[room->wall_count];
@@ -1314,7 +1319,7 @@ void level_generate_room_outer_walls(Room* room)
         wall_door_left2->p1.x = x0+TILE_SIZE-wall_offset;
         wall_door_left2->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+2);
         wall_door_left2->dir = DIR_DOWN;
-        wall_door_left2->type = WALL_TYPE_OUTER;
+        wall_door_left2->type = door_wall_type;
         room->wall_count++;
     }
 }

@@ -284,6 +284,7 @@ void creature_init_props(Creature* c)
         } break;
         case CREATURE_TYPE_CLINGER:
         {
+            c->phys.scale = 0.8;
             c->phys.speed = 40.0;
             c->act_time_min = 0.1;
             c->act_time_max = 0.3;
@@ -322,6 +323,7 @@ void creature_init_props(Creature* c)
         } break;
         case CREATURE_TYPE_FLOATER_BIG:
         {
+            c->phys.scale = 0.7;
             c->phys.speed = 80.0;
             c->act_time_min = 0.2;
             c->act_time_max = 0.5;
@@ -476,7 +478,7 @@ void creature_init_props(Creature* c)
         {
             c->phys.speed = 0.0;
             c->act_time_min = 1.0;
-            c->act_time_max = 3.0;
+            c->act_time_max = 1.5;
             c->phys.mass = 0.5;
             c->phys.base_friction = 20.0;
             c->phys.hp_max = 3.0;
@@ -502,6 +504,7 @@ void creature_init_props(Creature* c)
         } break;
         case CREATURE_TYPE_BEHEMOTH:
         {
+            c->phys.scale = 0.8;
             c->phys.speed = 50.0;
             c->act_time_min = 1.00;
             c->act_time_max = 2.00;

@@ -823,6 +823,11 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
     it.phys.vr = gfx_images[ item_props[it.type].image ].visible_rects[ item_props[it.type].sprite_index ];
     item_calc_phys_props(&it);
 
+    if(item_is_coin(type))
+    {
+        it.phys.radius *= 3.0;
+    }
+
     // x,y position passed in are meant to be the collision positions
     phys_calc_collision_rect(&it.phys);
     phys_set_collision_pos(&it.phys, x, y);

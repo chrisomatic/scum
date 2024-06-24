@@ -92,7 +92,7 @@ static void draw_entity_shadow(Physics* phys, EntityType type)
     if(type == ENTITY_TYPE_ITEM) return;
 
     // bool horizontal = (phys->rotation_deg == 0.0 || phys->rotation_deg == 180.0);
-    if(phys->crawling && phys->height < 24.0 && phys->pos.z == 0.0) return;
+    if(phys->crawling && phys->height < 32.0 && phys->pos.z == 0.0) return;
 
     // float scale = (phys->collision_rect.w/32.0);
 

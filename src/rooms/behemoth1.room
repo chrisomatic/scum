@@ -19,15 +19,16 @@ Ice
 Spikes
 Timed Spikes 1
 Timed Spikes 2
+Breakable Floor
 
 ; Tile Data
-1,1,1,1,1,1,1,1,1,1,1,1,1
-1,1,1,1,1,1,1,1,1,1,1,1,1
-1,1,1,1,1,1,1,1,1,1,1,1,1
-1,1,1,1,1,1,1,1,1,1,1,1,1
-1,1,1,1,1,1,1,1,1,1,1,1,1
-1,1,1,1,1,1,1,1,1,1,1,1,1
-1,1,1,1,1,1,1,1,1,1,1,1,1
+1,1,9,1,9,1,1,1,9,9,1,1,1
+1,9,1,1,1,1,1,9,1,1,9,1,1
+1,1,9,1,1,1,1,1,1,9,1,1,1
+9,1,1,1,9,1,9,1,1,1,9,9,1
+1,1,9,1,1,1,1,1,1,1,1,1,9
+1,9,1,9,1,1,9,1,1,9,1,1,1
+1,1,1,9,9,1,1,9,1,1,1,9,1
 
 ; Creature Mapping
 Slug
@@ -48,9 +49,16 @@ Leeper
 Spawn Egg
 Spawn Spider
 Behemoth
+Beacon Red
+Watcher
+Golem
+Phantom
+Rock Monster
+Rock
+Uniball
 
 ; Creatures
-17,7,4
+17,7,3,0
 
 ; Item Mapping
 Red Gem
@@ -68,19 +76,31 @@ Dragon Egg
 Shamrock
 Ruby Ring
 Potion of Strength
-Potion of Speed
-Potion of Range
+Potion of Mana
+Potion of Great Mana
 Potion of Purple
 +1 Gauntlet Slot
 New Level
-Glowing Orb
+Upgrade Orb
 ???
 ???
 ???
 Revive
 Skull
+Galaxy Pendant
+Feather
+Shield
+Wing
+Looking Glass
+Copper Coin
+Silver Coin
+Gold Coin
+???
 Chest
+Gun Chest
 Shrine
+Podium
+Gun
 
 ; Items
 25,1,1
@@ -92,7 +112,6 @@ Shrine
 25,1,7
 25,2,7
 25,11,7
-25,12,7
 25,13,7
 
 ; Doors

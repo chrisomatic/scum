@@ -193,20 +193,7 @@ void player_set_defaults(Player* p)
 
     player_set_class(p, p->settings.class);
 
-
-    // temp
-    // player_add_skill(p, SKILL_TYPE_RAISE_GOLEM);
-    // player_add_skill(p, SKILL_TYPE_MAGIC_MISSILE);
-    // player_add_skill(p, SKILL_TYPE_CROWN_OF_THORNS);
-    // // player_add_skill(p, SKILL_TYPE_MULTI_SHOT);
-    // player_add_skill(p, SKILL_TYPE_RABBITS_FOOT);
-    // player_add_skill(p, SKILL_TYPE_RABBITS_FOOT);
-    // player_add_skill(p, SKILL_TYPE_SENTIENCE);
-    // player_add_skill(p, SKILL_TYPE_ROCK_SHOWER);
-    // // player_add_skill(p, SKILL_TYPE_PHASE_SHOT);
-
     p->periodic_shot_counter = 0.0;
-
 }
 
 void player_init()

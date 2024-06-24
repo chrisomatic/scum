@@ -114,7 +114,6 @@ typedef enum
     WALL_TYPE_PIT,
     WALL_TYPE_INNER,
     WALL_TYPE_OUTER,
-
 } WallType;
 
 typedef struct
@@ -136,8 +135,6 @@ typedef enum
     ROOM_TYPE_SHOP,
     ROOM_TYPE_MAX
 } RoomType;
-
-#define BREAKABLE_FLOOR_TIME_MAX 0.75
 
 typedef struct
 {
