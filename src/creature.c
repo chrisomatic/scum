@@ -311,8 +311,8 @@ void creature_init_props(Creature* c)
         case CREATURE_TYPE_FLOATER:
         {
             c->phys.speed = 50.0;
-            c->act_time_min = 0.3;
-            c->act_time_max = 0.8;
+            c->act_time_min = 0.8;
+            c->act_time_max = 1.5;
             c->phys.mass = 1.0;
             c->phys.base_friction = 1.0;
             c->phys.hp_max = 2.0;
@@ -1243,13 +1243,13 @@ Creature* creature_get_by_id(uint16_t id)
 }
 
 
-void creature_hurt(Creature* c, float damage)
+bool creature_hurt(Creature* c, float damage)
 {
     if(c->invincible)
-        return;
+        return false;
 
     if(role == ROLE_CLIENT)
-        return;
+        return false;
 
     float hp = (float)c->phys.hp;
 
@@ -1276,7 +1276,10 @@ void creature_hurt(Creature* c, float damage)
     if(c->phys.hp <= 0)
     {
         creature_die(c);
+        return true;
     }
+
+    return false;
 }
 
 uint16_t creature_get_count()
@@ -1595,7 +1598,7 @@ static void creature_update_floater(Creature* c, float dt)
 
     if(act)
     {
-        if(ai_rand(4) == 0)
+        if(ai_rand(6) == 0)
         {
             creature_fire_projectile(c, 0.0);
             creature_fire_projectile(c, 90.0);

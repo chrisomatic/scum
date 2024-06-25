@@ -2256,6 +2256,7 @@ void draw()
     draw_revives();
     draw_equipped_gun();
     draw_stats();
+    draw_statistics();
 
     if(level_room_time > 0)
     {

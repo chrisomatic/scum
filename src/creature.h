@@ -121,7 +121,7 @@ void creature_lerp(Creature* c, float dt);
 void creature_update_all(float dt);
 void creature_draw(Creature* c);
 void creature_handle_collision(Creature* c, Entity* e);
-void creature_hurt(Creature* c, float damage);
+bool creature_hurt(Creature* c, float damage);
 void creature_die(Creature* c);
 Creature* creature_get_by_id(uint16_t id);
 CreatureType creature_get_random();

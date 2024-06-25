@@ -405,7 +405,11 @@ void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, uin
             // p.source_explode = audio_source_create(false);
             // audio_source_assign_buffer(p.source_explode, audio_buffer_explode);
 
-            list_add(plist, (void*)&p);
+            bool added = list_add(plist, (void*)&p);
+            if(added && from_player)
+            {
+                players[from_id].total_shots++;
+            }
         }
     }
 }
@@ -901,7 +905,14 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
                 case ENTITY_TYPE_CREATURE:
                     float damage = RAND_FLOAT(gun->damage_min, gun->damage_max);
                     // printf("%s damage: %.2f\n", __func__, damage);
-                    creature_hurt((Creature*)e->ptr, damage);
+                    bool killed = creature_hurt((Creature*)e->ptr, damage);
+                    if(killed)
+                    {
+                        if(proj->from_player)
+                        {
+                            players[proj->from_id].total_kills++;
+                        }
+                    }
                     break;
             }
         }

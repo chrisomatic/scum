@@ -177,6 +177,8 @@ void player_set_defaults(Player* p)
     p->anim.frame_sequence[3] = 3;
 
 
+    p->total_kills = 0;
+    p->total_shots = 0;
     p->total_hits = 0;
     p->level_hits = 0;
     p->room_hits = 0;
@@ -634,9 +636,11 @@ void player_die(Player* p)
     p->phys.floating = true;
     status_effects_clear(&p->phys);
 
-    p->total_hits = 0;
-    p->level_hits = 0;
-    p->room_hits = 0;
+    // p->total_kills = 0;
+    // p->total_shots = 0;
+    // p->total_hits = 0;
+    // p->level_hits = 0;
+    // p->room_hits = 0;
 
     ParticleEffect* eff = &particle_effects[EFFECT_BLOOD2];
     ParticleSpawner* ps = particles_spawn_effect(p->phys.pos.x,p->phys.pos.y, 0.0, eff, 0.5, true, false);
@@ -2213,8 +2217,24 @@ void draw_stats()
         y += len + margin;
     }
 
-    gfx_draw_string(x, y, COLOR_WHITE, 0.20, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%u, %u, %u", player->total_hits, player->level_hits, player->room_hits);
+    // gfx_draw_string(x, y, COLOR_WHITE, 0.17, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%u, %u %u, %u, %u", player->total_kills, player->total_shots, player->total_hits, player->level_hits, player->room_hits);
 
+}
+
+void draw_statistics()
+{
+    // if(!debug_enabled) return;
+    float scale = 0.16*ascale;
+    float x = 10.0;
+    float y = 90.0;
+    uint32_t color = COLOR_WHITE;
+    Vector2f size = gfx_string_get_size(scale, "|");
+
+    gfx_draw_string(x, y, color, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "Kills: %u", player->total_kills); y += size.y + 3.0;
+    gfx_draw_string(x, y, color, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "Hits:  %u/%u", player->total_hits, player->total_shots); y += size.y + 3.0;
+
+    // other stuff
+    // gfx_draw_string(10, 90, COLOR_WHITE, 0.17, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%u, %u %u, %u, %u", player->total_kills, player->total_shots, player->total_hits, player->level_hits, player->room_hits);
 }
 
 void draw_equipped_gun()

@@ -117,6 +117,8 @@ typedef struct
     Gun gun;
     uint8_t room_gun_index;
 
+    uint16_t total_kills;
+    uint32_t total_shots;
     uint16_t total_hits;
     uint16_t level_hits;
     uint16_t room_hits;
@@ -228,6 +230,7 @@ void player_set_gun(Player* p, uint8_t room_gun_index, bool drop_old_gun);
 void draw_all_other_player_info();
 void draw_hearts();
 void draw_coins();
+void draw_statistics();
 void draw_revives();
 void draw_equipped_gun();
 
