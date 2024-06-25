@@ -43,6 +43,7 @@ static int creature_image_golem;
 static int creature_image_phantom;
 static int creature_image_rock;
 static int creature_image_uniball;
+static int creature_image_slugzilla;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -68,6 +69,7 @@ static void creature_update_golem(Creature* c, float dt);
 static void creature_update_phantom(Creature* c, float dt);
 static void creature_update_rock(Creature* c, float dt);
 static void creature_update_uniball(Creature* c, float dt);
+static void creature_update_slugzilla(Creature* c, float dt);
 
 static void creature_fire_projectile(Creature* c, float angle);
 
@@ -108,6 +110,7 @@ void creature_init()
     creature_image_phantom = gfx_load_image("src/img/creature_phantom.png", false, false, 64, 64);
     creature_image_rock = gfx_load_image("src/img/rock1.png", false, false, 32, 32);
     creature_image_uniball = gfx_load_image("src/img/creature_uniball.png", false, false, 32, 32);
+    creature_image_slugzilla = gfx_load_image("src/img/creature_uniball.png", false, false, 32, 32);
 }
 
 char* creature_type_name(CreatureType type)
@@ -164,6 +167,8 @@ char* creature_type_name(CreatureType type)
             return "Rock";
         case CREATURE_TYPE_UNIBALL:
             return "Uniball";
+        case CREATURE_TYPE_SLUGZILLA:
+            return "Slugzilla";
         default:
             return "???";
     }
@@ -222,6 +227,8 @@ int creature_get_image(CreatureType type)
             return creature_image_rock;
         case CREATURE_TYPE_UNIBALL:
             return creature_image_uniball;
+        case CREATURE_TYPE_SLUGZILLA:
+            return creature_image_slugzilla;
         default:
             return -1;
     }
@@ -608,6 +615,25 @@ void creature_init_props(Creature* c)
             c->invincible = true;
             c->xp = 15;
         } break;
+        case CREATURE_TYPE_SLUGZILLA:
+        {
+            c->phys.speed = 100.0;
+            c->act_time_min = 0.5;
+            c->act_time_max = 0.5;
+            c->phys.mass = 10.0;
+            c->phys.base_friction = 0.0;
+            c->phys.hp_max = 5.0;
+            c->phys.elasticity = 1.0;
+            c->phys.ethereal = false;
+            c->painful_touch = true;
+            c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
+            c->phys.crawling = true;
+            c->phys.floating = false;
+            c->phys.bobbing = false;
+            c->passive = false;
+            c->invincible = false;
+            c->xp = 15;
+        } break;
     }
 
     if(c->phys.crawling)
@@ -968,6 +994,9 @@ void creature_update(Creature* c, float dt)
                 break;
             case CREATURE_TYPE_UNIBALL:
                 creature_update_uniball(c,dt);
+                break;
+            case CREATURE_TYPE_SLUGZILLA:
+                creature_update_slugzilla(c,dt);
                 break;
         }
     }
@@ -2745,4 +2774,77 @@ static void creature_update_uniball(Creature* c, float dt)
     {
         c->phys.vel.y = c->phys.speed;
     }
+}
+
+static void creature_update_slugzilla(Creature* c, float dt)
+{
+
+
+    if(!ai_has_target(c))
+    {
+        ai_stop_imm(c);
+
+#if 1
+        Dir directions[4] = {DIR_RIGHT, DIR_UP, DIR_LEFT, DIR_DOWN};
+        // Dir shuffled[4] = {0};
+        for(int i = 0; i < 4; ++i)
+        {
+            int r = rand() % (4-i);
+            // shuffled[i] = directions[r];
+            Dir direction = directions[r];
+            if(r != (4-i-1))
+            {
+                directions[r] = directions[4-i-1];  // shift last element to the spot that was selected from
+            }
+#else
+        for(;;)
+        {
+            Dir direction = rand() % 4;
+#endif
+            Vector2i o = get_dir_offsets(direction);
+            int tx = c->phys.curr_tile.x + o.x;
+            int ty = c->phys.curr_tile.y + o.y;
+            TileType tt = level_get_tile_type(visible_room, tx, ty);
+            if(IS_SAFE_TILE(tt))
+            {
+                // printf("%s\n", get_dir_name(direction));
+                c->target_tile.x = tx;
+                c->target_tile.y = ty;
+                Vector2f pos = level_get_pos_by_room_coords(tx, ty);
+                c->target_pos.x = pos.x;
+                c->target_pos.y = pos.y;
+                // printf("set target to %d, %d\n", c->target_tile.x, c->target_tile.y);
+                break;
+            }
+        }
+    }
+    else
+    {
+
+        Vector2f v = {c->target_pos.x - c->phys.collision_rect.x, c->target_pos.y - c->phys.collision_rect.y};
+        if(ABS(v.x) < 1.0 && ABS(v.y) < 1.0)
+        {
+            // printf("reached the target\n");
+            // reached target
+            c->target_tile.x = -1;
+            c->target_tile.x = -1;
+
+            // phys_set_collision_pos(&c->phys, c->target_pos.x, c->target_pos.y);
+
+            ai_stop_imm(c);
+        }
+        else
+        {
+            Dir direction = get_dir_from_pos(c->phys.collision_rect.x, c->phys.collision_rect.y, c->target_pos.x, c->target_pos.y);
+            // printf("moving %s\n", get_dir_name(direction));
+            float range = c->phys.speed/300.0*5.0;  //TODO
+            float speed = c->phys.speed;
+            if(ABS(v.x) <= range && ABS(v.y) <= range)
+                speed = MIN(80.0, c->phys.speed/4.0); //TODO
+
+            ai_move_imm(c, direction, speed);
+        }
+
+    }
+
 }

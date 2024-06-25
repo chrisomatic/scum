@@ -1,0 +1,618 @@
+diff --git a/src/editor.c b/src/editor.c
+index 27099d9..47dad57 100644
+--- a/src/editor.c
++++ b/src/editor.c
+@@ -825,11 +825,12 @@ void editor_draw()
+ 
+                             if(role != ROLE_CLIENT)
+                             {
++
+                                 for(int i = 0; i < 4; ++i)
+                                 {
+                                     if(search_room.doors[i])
+                                     {
+-                                        player_send_to_room(player, search_room.index, true, level_get_door_tile_coords(i));
++                                        player_send_to_room(player, search_room.index, true, level_get_door_tile_coords(i, &search_room));
+                                         break;
+                                     }
+                                 }
+diff --git a/src/level.c b/src/level.c
+index bada009..eecd091 100644
+--- a/src/level.c
++++ b/src/level.c
+@@ -1156,32 +1156,40 @@ static void shuffle_vector2i_list(Vector2i list[], int count)
+ void level_generate_room_outer_walls(Room* room)
+ {
+     const float wall_offset = 2.0;
+-    int x0 = room_area.x - room_area.w/2.0;
+-    int y0 = room_area.y - room_area.h/2.0;
++
++
++    RoomFileData* rdata = &room_list[room->layout];
++    int tile_size_x = rdata->size_x;
++    int tile_size_y = rdata->size_y;
++
++    int room_w = TILE_SIZE*(tile_size_x+2);
++    int room_h = TILE_SIZE*(tile_size_y+2);
++    int x0 = room_area.x - room_w/2.0;
++    int y0 = room_area.y - room_h/2.0;
+ 
+     // inner walls
+     Wall* wall_top = &room->walls[room->wall_count];
+     wall_top->p0.x = x0-wall_offset;
+     wall_top->p0.y = y0+TILE_SIZE-wall_offset;
+-    wall_top->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2)+wall_offset;
++    wall_top->p1.x = x0+TILE_SIZE*(tile_size_x+2)+wall_offset;
+     wall_top->p1.y = wall_top->p0.y;
+     wall_top->dir = DIR_DOWN;
+     wall_top->type = WALL_TYPE_INNER;
+     room->wall_count++;
+ 
+     Wall* wall_right = &room->walls[room->wall_count];
+-    wall_right->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+wall_offset;
++    wall_right->p0.x = x0+TILE_SIZE*(tile_size_x+1)+wall_offset;
+     wall_right->p0.y = y0-wall_offset;
+     wall_right->p1.x = wall_right->p0.x;
+-    wall_right->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2)+wall_offset;
++    wall_right->p1.y = y0+TILE_SIZE*(tile_size_y+2)+wall_offset;
+     wall_right->dir = DIR_LEFT;
+     wall_right->type = WALL_TYPE_INNER;
+     room->wall_count++;
+ 
+     Wall* wall_bottom = &room->walls[room->wall_count];
+     wall_bottom->p0.x = x0-wall_offset;
+-    wall_bottom->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+wall_offset;
+-    wall_bottom->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2)+wall_offset;
++    wall_bottom->p0.y = y0+TILE_SIZE*(tile_size_y+1)+wall_offset;
++    wall_bottom->p1.x = x0+TILE_SIZE*(tile_size_x+2)+wall_offset;
+     wall_bottom->p1.y = wall_bottom->p0.y;
+     wall_bottom->dir = DIR_UP;
+     wall_bottom->type = WALL_TYPE_INNER;
+@@ -1191,7 +1199,7 @@ void level_generate_room_outer_walls(Room* room)
+     wall_left->p0.x = x0+TILE_SIZE-wall_offset;
+     wall_left->p0.y = y0-wall_offset;
+     wall_left->p1.x = wall_left->p0.x;
+-    wall_left->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2)+wall_offset;
++    wall_left->p1.y = y0+TILE_SIZE*(tile_size_y+2)+wall_offset;
+     wall_left->dir = DIR_RIGHT;
+     wall_left->type = WALL_TYPE_INNER;
+     room->wall_count++;
+@@ -1200,25 +1208,25 @@ void level_generate_room_outer_walls(Room* room)
+     Wall* wall_outer_top = &room->walls[room->wall_count];
+     wall_outer_top->p0.x = x0;
+     wall_outer_top->p0.y = y0;
+-    wall_outer_top->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2);
++    wall_outer_top->p1.x = x0+TILE_SIZE*(tile_size_x+2);
+     wall_outer_top->p1.y = wall_outer_top->p0.y;
+     wall_outer_top->type = WALL_TYPE_OUTER;
+     wall_outer_top->dir = DIR_DOWN;
+     room->wall_count++;
+ 
+     Wall* wall_outer_right = &room->walls[room->wall_count];
+-    wall_outer_right->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2);
++    wall_outer_right->p0.x = x0+TILE_SIZE*(tile_size_x+2);
+     wall_outer_right->p0.y = y0;
+     wall_outer_right->p1.x = wall_outer_right->p0.x;
+-    wall_outer_right->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2);
++    wall_outer_right->p1.y = y0+TILE_SIZE*(tile_size_y+2);
+     wall_outer_right->dir = DIR_LEFT;
+     wall_outer_right->type = WALL_TYPE_OUTER;
+     room->wall_count++;
+ 
+     Wall* wall_outer_bottom = &room->walls[room->wall_count];
+     wall_outer_bottom->p0.x = x0;
+-    wall_outer_bottom->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2);
+-    wall_outer_bottom->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2);
++    wall_outer_bottom->p0.y = y0+TILE_SIZE*(tile_size_y+2);
++    wall_outer_bottom->p1.x = x0+TILE_SIZE*(tile_size_x+2);
+     wall_outer_bottom->p1.y = wall_outer_bottom->p0.y;
+     wall_outer_bottom->dir = DIR_UP;
+     wall_outer_bottom->type = WALL_TYPE_OUTER;
+@@ -1228,7 +1236,7 @@ void level_generate_room_outer_walls(Room* room)
+     wall_outer_left->p0.x = x0;
+     wall_outer_left->p0.y = y0;
+     wall_outer_left->p1.x = wall_outer_left->p0.x;
+-    wall_outer_left->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2);
++    wall_outer_left->p1.y = y0+TILE_SIZE*(tile_size_y+2);
+     wall_outer_left->dir = DIR_RIGHT;
+     wall_outer_left->type = WALL_TYPE_OUTER;
+     room->wall_count++;
+@@ -1242,18 +1250,18 @@ void level_generate_room_outer_walls(Room* room)
+     if(room->doors[DIR_UP])
+     {
+         Wall* wall_door_up1 = &room->walls[room->wall_count];
+-        wall_door_up1->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+1);
++        wall_door_up1->p0.x = x0+TILE_SIZE*(tile_size_x/2+1);
+         wall_door_up1->p0.y = y0;
+-        wall_door_up1->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+1);
++        wall_door_up1->p1.x = x0+TILE_SIZE*(tile_size_x/2+1);
+         wall_door_up1->p1.y = y0+TILE_SIZE-wall_offset;
+         wall_door_up1->dir = DIR_LEFT;
+         wall_door_up1->type = door_wall_type;
+         room->wall_count++;
+ 
+         Wall* wall_door_up2 = &room->walls[room->wall_count];
+-        wall_door_up2->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+2);
++        wall_door_up2->p0.x = x0+TILE_SIZE*(tile_size_x/2+2);
+         wall_door_up2->p0.y = y0;
+-        wall_door_up2->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+2);
++        wall_door_up2->p1.x = x0+TILE_SIZE*(tile_size_x/2+2);
+         wall_door_up2->p1.y = y0+TILE_SIZE-wall_offset;
+         wall_door_up2->dir = DIR_RIGHT;
+         wall_door_up2->type = door_wall_type;
+@@ -1263,19 +1271,19 @@ void level_generate_room_outer_walls(Room* room)
+     if(room->doors[DIR_RIGHT])
+     {
+         Wall* wall_door_right1 = &room->walls[room->wall_count];
+-        wall_door_right1->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+wall_offset;
+-        wall_door_right1->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+1);
+-        wall_door_right1->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2);
+-        wall_door_right1->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+1);
++        wall_door_right1->p0.x = x0+TILE_SIZE*(tile_size_x+1)+wall_offset;
++        wall_door_right1->p0.y = y0+TILE_SIZE*(tile_size_y/2+1);
++        wall_door_right1->p1.x = x0+TILE_SIZE*(tile_size_x+2);
++        wall_door_right1->p1.y = y0+TILE_SIZE*(tile_size_y/2+1);
+         wall_door_right1->dir = DIR_UP;
+         wall_door_right1->type = door_wall_type;
+         room->wall_count++;
+ 
+         Wall* wall_door_right2 = &room->walls[room->wall_count];
+-        wall_door_right2->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+1)+wall_offset;
+-        wall_door_right2->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+2);
+-        wall_door_right2->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X+2);
+-        wall_door_right2->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+2);
++        wall_door_right2->p0.x = x0+TILE_SIZE*(tile_size_x+1)+wall_offset;
++        wall_door_right2->p0.y = y0+TILE_SIZE*(tile_size_y/2+2);
++        wall_door_right2->p1.x = x0+TILE_SIZE*(tile_size_x+2);
++        wall_door_right2->p1.y = y0+TILE_SIZE*(tile_size_y/2+2);
+         wall_door_right2->dir = DIR_DOWN;
+         wall_door_right2->type = door_wall_type;
+         room->wall_count++;
+@@ -1284,19 +1292,19 @@ void level_generate_room_outer_walls(Room* room)
+     if(room->doors[DIR_DOWN])
+     {
+         Wall* wall_door_down1 = &room->walls[room->wall_count];
+-        wall_door_down1->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+1);
+-        wall_door_down1->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+wall_offset;
+-        wall_door_down1->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+1);
+-        wall_door_down1->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2);
++        wall_door_down1->p0.x = x0+TILE_SIZE*(tile_size_x/2+1);
++        wall_door_down1->p0.y = y0+TILE_SIZE*(tile_size_y+1)+wall_offset;
++        wall_door_down1->p1.x = x0+TILE_SIZE*(tile_size_x/2+1);
++        wall_door_down1->p1.y = y0+TILE_SIZE*(tile_size_y+2);
+         wall_door_down1->dir = DIR_LEFT;
+         wall_door_down1->type = door_wall_type;
+         room->wall_count++;
+ 
+         Wall* wall_door_down2 = &room->walls[room->wall_count];
+-        wall_door_down2->p0.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+2);
+-        wall_door_down2->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+1)+wall_offset;
+-        wall_door_down2->p1.x = x0+TILE_SIZE*(ROOM_TILE_SIZE_X/2+2);
+-        wall_door_down2->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y+2);
++        wall_door_down2->p0.x = x0+TILE_SIZE*(tile_size_x/2+2);
++        wall_door_down2->p0.y = y0+TILE_SIZE*(tile_size_y+1)+wall_offset;
++        wall_door_down2->p1.x = x0+TILE_SIZE*(tile_size_x/2+2);
++        wall_door_down2->p1.y = y0+TILE_SIZE*(tile_size_y+2);
+         wall_door_down2->dir = DIR_RIGHT;
+         wall_door_down2->type = door_wall_type;
+         room->wall_count++;
+@@ -1306,18 +1314,18 @@ void level_generate_room_outer_walls(Room* room)
+     {
+         Wall* wall_door_left1 = &room->walls[room->wall_count];
+         wall_door_left1->p0.x = x0;
+-        wall_door_left1->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+1);
++        wall_door_left1->p0.y = y0+TILE_SIZE*(tile_size_y/2+1);
+         wall_door_left1->p1.x = x0+TILE_SIZE-wall_offset;
+-        wall_door_left1->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+1);
++        wall_door_left1->p1.y = y0+TILE_SIZE*(tile_size_y/2+1);
+         wall_door_left1->dir = DIR_UP;
+         wall_door_left1->type = door_wall_type;
+         room->wall_count++;
+ 
+         Wall* wall_door_left2 = &room->walls[room->wall_count];
+         wall_door_left2->p0.x = x0;
+-        wall_door_left2->p0.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+2);
++        wall_door_left2->p0.y = y0+TILE_SIZE*(tile_size_y/2+2);
+         wall_door_left2->p1.x = x0+TILE_SIZE-wall_offset;
+-        wall_door_left2->p1.y = y0+TILE_SIZE*(ROOM_TILE_SIZE_Y/2+2);
++        wall_door_left2->p1.y = y0+TILE_SIZE*(tile_size_y/2+2);
+         wall_door_left2->dir = DIR_DOWN;
+         wall_door_left2->type = door_wall_type;
+         room->wall_count++;
+@@ -1347,15 +1355,17 @@ void generate_walls(Level* level)
+         for(int i = 0; i < MAX_ROOMS_GRID_X; ++i)
+         {
+             Room* room = &level->rooms[i][j];
+-
++        
+             if(room->valid)
+             {
+                 level_generate_room_outer_walls(room);
+ 
+                 RoomFileData* rdata = &room_list[room->layout];
++                int tile_size_x = rdata->size_x;
++                int tile_size_y = rdata->size_y;
+ 
+                 // create horizontal walls
+-                for(int rj = 0; rj < ROOM_TILE_SIZE_Y; ++rj)
++                for(int rj = 0; rj < tile_size_y; ++rj)
+                 {
+                     Vector2f up0 = {0.0, 0.0}; Vector2f up1 = {0.0, 0.0};
+                     Vector2f dn0 = {0.0, 0.0}; Vector2f dn1 = {0.0, 0.0};
+@@ -1363,7 +1373,7 @@ void generate_walls(Level* level)
+                     TileType tt = TILE_NONE;
+                     TileType tt_prior;
+ 
+-                    for(int ri = 0; ri < ROOM_TILE_SIZE_X; ++ri)
++                    for(int ri = 0; ri < tile_size_x; ++ri)
+                     {
+                         tt_prior = tt;
+                         tt = rdata->tiles[ri][rj];
+@@ -1446,7 +1456,7 @@ void generate_walls(Level* level)
+                 }
+                 
+                 // create vertical walls
+-                for(int ri = 0; ri < ROOM_TILE_SIZE_X; ++ri)
++                for(int ri = 0; ri < tile_size_x; ++ri)
+                 {
+                     Vector2f left0 = {0.0, 0.0}; Vector2f left1 = {0.0, 0.0};
+                     Vector2f right0 = {0.0, 0.0}; Vector2f right1 = {0.0, 0.0};
+@@ -1454,7 +1464,7 @@ void generate_walls(Level* level)
+                     TileType tt = TILE_NONE;
+                     TileType tt_prior;
+ 
+-                    for(int rj = 0; rj < ROOM_TILE_SIZE_Y; ++rj)
++                    for(int rj = 0; rj < tile_size_y; ++rj)
+                     {
+                         tt_prior = tt;
+                         tt = rdata->tiles[ri][rj];
+@@ -1774,7 +1784,7 @@ int level_every_tile_traversable_func(int x, int y)
+ 
+ Rect level_get_tile_rect(int x, int y)
+ {
+-#if 1
++#if 0
+     static Vector2f tile_positions[ROOM_TILE_SIZE_X][ROOM_TILE_SIZE_Y] = {0};
+     static bool _set = false;
+     if(!_set)
+@@ -1815,6 +1825,7 @@ Rect level_get_tile_rect(int x, int y)
+     Rect r = RECT(xc, yc, TILE_SIZE, TILE_SIZE);
+     return r;
+ #else
++    //TODO
+     float _x = room_area.x - room_area.w/2.0;
+     float _y = room_area.y - room_area.h/2.0;
+ 
+@@ -1903,8 +1914,6 @@ uint8_t level_get_tile_sprite(TileType tt)
+ 
+ TileType level_get_tile_type(Room* room, int x, int y)
+ {
+-    if(x < 0 || x >= ROOM_TILE_SIZE_X) return TILE_NONE;
+-    if(y < 0 || y >= ROOM_TILE_SIZE_Y) return TILE_NONE;
+     if(!room) return TILE_NONE;
+     if(room->layout >= MAX_ROOM_LIST_COUNT) return TILE_NONE;
+ 
+@@ -1918,9 +1927,14 @@ TileType level_get_tile_type(Room* room, int x, int y)
+     {
+         rdata = &room_list[room->layout];
+     }
+-
+     if(!rdata) return TILE_NONE;
+ 
++    int tile_size_x = rdata->size_x;
++    int tile_size_y = rdata->size_y;
++
++    if(x < 0 || x >= tile_size_x) return TILE_NONE;
++    if(y < 0 || y >= tile_size_y) return TILE_NONE;
++
+     if(rdata->tiles[x][y] == TILE_BREAKABLE_FLOOR)
+     {
+         if(room->breakable_floor_state[x][y] >= FLOOR_BROKE)
+@@ -1939,17 +1953,21 @@ TileType level_get_tile_type_by_pos(Room* room, float x, float y)
+ 
+ void level_get_safe_floor_tile(Room* room, Vector2i start, Vector2i* tile_coords, Vector2f* tile_pos)
+ {
+-    for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
++    RoomFileData* rdata = &room_list[room->layout];
++    int tile_size_x = rdata->size_x;
++    int tile_size_y = rdata->size_y;
++
++    for(int x = 0; x < tile_size_x; ++x)
+     {
+         int _x = start.x;
+         _x += ((x % 2 == 0) ? -1 : 1) * x/2;
+-        if(_x < 0 || _x >= ROOM_TILE_SIZE_X) continue;
++        if(_x < 0 || _x >= tile_size_x) continue;
+ 
+-        for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
++        for(int y = 0; y < tile_size_y; ++y)
+         {
+             int _y = start.y;
+             _y += ((y % 2 == 0) ? -1 : 1) * y/2;
+-            if( _y < 0 || _y >= ROOM_TILE_SIZE_Y) continue;
++            if( _y < 0 || _y >= tile_size_y) continue;
+ 
+             // TODO: item_is_on_tile and creature_is_on_tile only do simple collision checks
+             if(IS_SAFE_TILE(level_get_tile_type(room, _x, _y)) && !item_is_on_tile(room, _x, _y) && !creature_is_on_tile(room, _x, _y))
+@@ -1975,10 +1993,14 @@ void level_get_safe_floor_tile(Room* room, Vector2i start, Vector2i* tile_coords
+ 
+ void level_get_rand_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile_pos)
+ {
++    RoomFileData* rdata = &room_list[room->layout];
++    int tile_size_x = rdata->size_x;
++    int tile_size_y = rdata->size_y;
++
+     for(;;)
+     {
+-        int _x = rand() % ROOM_TILE_SIZE_X;
+-        int _y = rand() % ROOM_TILE_SIZE_Y;
++        int _x = rand() % tile_size_x;
++        int _y = rand() % tile_size_y;
+ 
+         if(IS_SAFE_TILE(level_get_tile_type(room, _x, _y)))
+         {
+@@ -1998,33 +2020,37 @@ void level_get_rand_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile
+     }
+ }
+ 
+-Vector2i level_get_door_tile_coords(Dir dir)
++Vector2i level_get_door_tile_coords(Dir dir, Room* room)
+ {
++    RoomFileData* rdata = &room_list[room->layout];
++    int tile_size_x = rdata->size_x;
++    int tile_size_y = rdata->size_y;
++
+     Vector2i c = {0};
+     if(dir == DIR_NONE)
+     {
+-        c.x = ROOM_TILE_SIZE_X/2;
+-        c.y = ROOM_TILE_SIZE_Y/2;
++        c.x = tile_size_x/2;
++        c.y = tile_size_y/2;
+     }
+     else if(dir == DIR_LEFT)
+     {
+         c.x = 0;
+-        c.y = ROOM_TILE_SIZE_Y/2;
++        c.y = tile_size_y/2;
+     }
+     else if(dir == DIR_RIGHT)
+     {
+-        c.x = ROOM_TILE_SIZE_X-1;
+-        c.y = ROOM_TILE_SIZE_Y/2;
++        c.x = tile_size_x-1;
++        c.y = tile_size_y/2;
+     }
+     else if(dir == DIR_UP)
+     {
+-        c.x = ROOM_TILE_SIZE_X/2;
++        c.x = tile_size_x/2;
+         c.y = 0;
+     }
+     else if(dir == DIR_DOWN)
+     {
+-        c.x = ROOM_TILE_SIZE_X/2;
+-        c.y = ROOM_TILE_SIZE_Y-1;
++        c.x = tile_size_x/2;
++        c.y = tile_size_y-1;
+     }
+     return c;
+ }
+@@ -2043,6 +2069,18 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
+     if(!room->valid)
+         return;
+ 
++    RoomFileData* rdata;
++    if(room_data != NULL)
++        rdata = room_data;
++    else
++        rdata = &room_list[room->layout];
++
++    int tile_size_x = rdata->size_x;
++    int tile_size_y = rdata->size_y;
++
++    int room_w = TILE_SIZE*(tile_size_x+2);
++    int room_h = TILE_SIZE*(tile_size_y+2);
++
+     float x = (room_area.x - room_area.w/2.0) + xoffset;
+     float y = (room_area.y - room_area.h/2.0) + yoffset;
+     float w = TILE_SIZE * scale;
+@@ -2054,24 +2092,25 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
+ 
+     gfx_sprite_batch_begin(true);
+ 
++
+     // draw walls
+-    for(int i = 1; i < ROOM_TILE_SIZE_X+1; ++i) // top
++    for(int i = 1; i < tile_size_x+1; ++i) // top
+         gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_UP, r.x + i*w,r.y, color, false, scale, 0.0, 1.0, false, false, false);
+ 
+-    for(int i = 1; i < ROOM_TILE_SIZE_Y+1; ++i) // right
+-        gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_RIGHT, r.x + (ROOM_TILE_SIZE_X+1)*w,r.y+i*h, color,false,  scale, 0.0, 1.0, false, false, false);
++    for(int i = 1; i < tile_size_y+1; ++i) // right
++        gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_RIGHT, r.x + (tile_size_x+1)*w,r.y+i*h, color,false,  scale, 0.0, 1.0, false, false, false);
+ 
+-    for(int i = 1; i < ROOM_TILE_SIZE_X+1; ++i) // bottom
+-        gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_DOWN, r.x + i*w,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, false, scale, 0.0, 1.0, false, false, false);
++    for(int i = 1; i < tile_size_x+1; ++i) // bottom
++        gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_DOWN, r.x + i*w,r.y+(tile_size_y+1)*h, color, false, scale, 0.0, 1.0, false, false, false);
+ 
+-    for(int i = 1; i < ROOM_TILE_SIZE_Y+1; ++i) // left
++    for(int i = 1; i < tile_size_y+1; ++i) // left
+         gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_LEFT, r.x,r.y+i*h, color, false, scale, 0.0, 1.0, false, false, false);
+ 
+     // wall corners
+     gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_LU, r.x,r.y, color, false, scale, 0.0, 1.0, false, false, false);
+-    gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_UR, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y, color, false, scale, 0.0, 1.0, false, false, false);
+-    gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_RD, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, false, scale, 0.0, 1.0, false, false, false);
+-    gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_DL, r.x,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, false, scale, 0.0, 1.0, false, false, false);
++    gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_UR, r.x+(tile_size_x+1)*w,r.y, color, false, scale, 0.0, 1.0, false, false, false);
++    gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_RD, r.x+(tile_size_x+1)*w,r.y+(tile_size_y+1)*h, color, false, scale, 0.0, 1.0, false, false, false);
++    gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_DL, r.x,r.y+(tile_size_y+1)*h, color, false, scale, 0.0, 1.0, false, false, false);
+ 
+     uint8_t door_sprites[4] = {SPRITE_TILE_DOOR_RIGHT, SPRITE_TILE_DOOR_UP, SPRITE_TILE_DOOR_LEFT, SPRITE_TILE_DOOR_DOWN};
+ 
+@@ -2084,8 +2123,8 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
+     }
+ 
+     // center of the room
+-    float halfw = TILE_SIZE*(ROOM_TILE_SIZE_X+1)/2.0 * scale;
+-    float halfh = TILE_SIZE*(ROOM_TILE_SIZE_Y+1)/2.0 * scale;
++    float halfw = TILE_SIZE*(tile_size_x+1)/2.0 * scale;
++    float halfh = TILE_SIZE*(tile_size_y+1)/2.0 * scale;
+     float centerx = r.x + halfw;
+     float centery = r.y + halfh;
+ 
+@@ -2116,19 +2155,14 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
+         gfx_sprite_batch_add(dungeon_image, door_sprites[i], _x, _y, dcolor, false, scale, 0.0, 1.0, false, false, false);
+     }
+ 
+-    RoomFileData* rdata;
+-    if(room_data != NULL)
+-        rdata = room_data;
+-    else    
+-        rdata = &room_list[room->layout];
+ 
+     // draw room
+ 
+     slrand(&rg_room, room->rand_seed);
+ 
+-    for(int _y = 0; _y < ROOM_TILE_SIZE_Y; ++_y)
++    for(int _y = 0; _y < tile_size_y; ++_y)
+     {
+-        for(int _x = 0; _x < ROOM_TILE_SIZE_X; ++_x)
++        for(int _x = 0; _x < tile_size_x; ++_x)
+         {
+             
+             TileType tt = level_get_tile_type(room, _x, _y);
+diff --git a/src/level.h b/src/level.h
+index 6664954..2cb1fd7 100644
+--- a/src/level.h
++++ b/src/level.h
+@@ -19,7 +19,7 @@
+ #define MAX_ROOMS 12
+ 
+ #define ROOM_TILE_SIZE_X 13
+-#define ROOM_TILE_SIZE_Y 7
++#define ROOM_TILE_SIZE_Y 9
+ 
+ #define TILE_SIZE 32
+ #define MAX_DOORS 4
+@@ -207,7 +207,7 @@ void level_get_rand_floor_tile(Room* room, Vector2i* tile_coords, Vector2f* tile
+ void level_get_safe_floor_tile(Room* room, Vector2i start, Vector2i* tile_coords, Vector2f* tile_pos);
+ 
+ // Note: DIR_NONE is center tile
+-Vector2i level_get_door_tile_coords(Dir dir);
++Vector2i level_get_door_tile_coords(Dir dir, Room* room);
+ 
+ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float yoffset, float scale, bool show_entities);
+ void room_draw_walls(Room* room);
+diff --git a/src/main.c b/src/main.c
+index c18106c..0b95c60 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -606,6 +606,28 @@ void init_areas()
+ 
+ }
+ 
++void update_areas()
++{
++    if(!visible_room) return;
++    RoomFileData* rfd = &room_list[visible_room->layout];
++    int room_w = TILE_SIZE*(rfd->size_x+2);
++    int room_h = TILE_SIZE*(rfd->size_y+2);
++
++    room_area.w = room_w;
++    room_area.h = room_h;
++    room_area.x = CENTER_X;
++    room_area.y = CENTER_Y;
++
++    floor_area.w = room_w - (TILE_SIZE*2);  //minus walls
++    floor_area.h = room_h - (TILE_SIZE*2);  //minus walls
++    floor_area.x = CENTER_X;
++    floor_area.y = CENTER_Y;
++
++    memcpy(&player_area, &room_area, sizeof(Rect));
++    player_area.w -= 32;
++    player_area.h -= 48;
++}
++
+ void start_server()
+ {
+     //init
+@@ -1647,7 +1669,7 @@ void draw_map(DrawLevelParams* params)
+                     for(int d = 0; d < MAX_DOORS; ++d)
+                     {
+                         if(!room->doors[d]) continue;
+-                        player_send_to_room(player, room->index, true, level_get_door_tile_coords(d));
++                        player_send_to_room(player, room->index, true, level_get_door_tile_coords(d, room));
+                         level_grace_time = 2.0;
+                         break;
+                     }
+diff --git a/src/main.h b/src/main.h
+index e2eb51f..fc15934 100644
+--- a/src/main.h
++++ b/src/main.h
+@@ -148,6 +148,8 @@ extern Rect moving_tile_prior;
+ 
+ extern RoomFileData room_data_editor;
+ 
++void update_areas();
++
+ void camera_set(bool immediate);
+ bool camera_can_be_limited(float x, float y, float z);
+ 
+diff --git a/src/player.c b/src/player.c
+index ed70874..446b1ce 100644
+--- a/src/player.c
++++ b/src/player.c
+@@ -384,6 +384,7 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
+     // room->doors_locked = (creature_get_room_count(room->index, false) != 0);
+ 
+     visible_room = room;
++    update_areas();
+     refresh_visible_room_gun_list();
+ 
+     Vector2f pos = {0};
+@@ -411,7 +412,7 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
+ void player_send_to_level_start(Player* p)
+ {
+     uint8_t idx = level_get_room_index(level.start.x, level.start.y);
+-    player_send_to_room(p, idx, true, level_get_door_tile_coords(DIR_NONE));
++    player_send_to_room(p, idx, true, level_get_door_tile_coords(DIR_NONE, &level.rooms[level.start.x][level.start.y]));
+ }
+ 
+ void player_init_keys()
+@@ -818,7 +819,8 @@ void player_start_room_transition(Player* p)
+                 break;
+         }
+ 
+-        Vector2i nt = level_get_door_tile_coords(other_door);
++        Room* room = level_get_room_by_index(&level, room_index);
++        Vector2i nt = level_get_door_tile_coords(other_door, room);
+ 
+         for(int i = 0; i < MAX_PLAYERS; ++i)
+         {
+@@ -1563,7 +1565,7 @@ void player_update(Player* p, float dt)
+             else
+             {
+                 LOGW("Sending to center!");
+-                player_send_to_room(p, p->phys.curr_room, true, level_get_door_tile_coords(DIR_NONE));
++                player_send_to_room(p, p->phys.curr_room, true, level_get_door_tile_coords(DIR_NONE, visible_room));
+                 // player_send_to_level_start(p);
+             }
+ 
+diff --git a/src/room_editor.c b/src/room_editor.c
+index a7c84ab..8e4dfb2 100644
+--- a/src/room_editor.c
++++ b/src/room_editor.c
+@@ -481,7 +481,8 @@ bool room_editor_update(float dt)
+         {
+             if(loaded_rfd.doors[i])
+             {
+-                player_send_to_room(player, room->index, true, level_get_door_tile_coords(i));
++                //TODO
++                player_send_to_room(player, room->index, true, level_get_door_tile_coords(i,room));
+                 break;
+             }
+         }

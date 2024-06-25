@@ -2560,6 +2560,40 @@ Dir get_dir_from_coords2(int x0, int y0, int x1, int y1)
     return DIR_NONE;
 }
 
+// only cardinal directions
+Dir get_dir_from_pos(float x0, float y0, float x1, float y1)
+{
+    bool xe = FEQ(x0, x1);
+    bool ye = FEQ(y0, y1);
+
+    if(xe && ye) return DIR_NONE;
+
+    if(xe)
+    {
+        if(y1 < y0) return DIR_UP;
+        else return DIR_DOWN;
+    }
+
+    if(ye)
+    {
+        if(x1 < x0) return DIR_LEFT;
+        else return DIR_RIGHT;
+    }
+
+    if(ABS(x0-x1) > ABS(y0-y1))
+    {
+        if(x1 < x0) return DIR_LEFT;
+        else return DIR_RIGHT;
+    }
+    else
+    {
+        if(y1 < y0) return DIR_UP;
+        else return DIR_DOWN;
+    }
+
+    return DIR_NONE;
+}
+
 const char* get_dir_name(Dir dir)
 {
     switch(dir)
