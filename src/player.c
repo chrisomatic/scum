@@ -1241,8 +1241,10 @@ static void player_handle_shooting(Player* p, float dt)
 
             if(!p->phys.dead)
             {
-                p->gun.charging = false;
-                p->gun.charge_time = 0.0;
+
+                Gun* proj_gun = &room_gun_list[p->room_gun_index];
+                proj_gun->charging = p->gun.charging;
+                proj_gun->charge_time = p->gun.charge_time;
 
                 Vector3f pos = {p->phys.pos.x, p->phys.pos.y, p->phys.height + p->phys.pos.z};
                 Vector3f vel = {p->phys.vel.x, p->phys.vel.y, 0.0};
@@ -1250,6 +1252,12 @@ static void player_handle_shooting(Player* p, float dt)
                 vel.z = MIN(1.0, p->gun.gravity_factor)*120.0;
 
                 projectile_add(pos, &vel, p->phys.curr_room, p->room_gun_index, p->aim_deg, true, &p->phys, p->index);
+
+                p->gun.charging = false;
+                p->gun.charge_time = 0.0;
+
+                proj_gun->charging = p->gun.charging;
+                proj_gun->charge_time = p->gun.charge_time;
 
                 gaudio_set_pitch(audio_shoot, RAND_FLOAT(0.9,1.1));
                 gaudio_play(audio_shoot);

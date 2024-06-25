@@ -167,44 +167,52 @@ void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, uin
 
     proj.from_id = from_id;
 
+    int proj_num = proj_gun->num;
+    int proj_burst_count = proj_gun->burst_count;
+    float proj_damage_min = proj_gun->damage_min;
+    float proj_damage_max = proj_gun->damage_max;
+    float proj_scale1 = proj_gun->scale1;
+    float proj_scale2 = proj_gun->scale2;
+
     if(proj_gun->charging)
     {
         proj_gun->charging = false;
         float factor  = (proj_gun->charge_time / proj_gun->charge_time_max);
+        proj_gun->charge_time = 0.0;
 
         switch(proj_gun->charge_type)
         {
             case CHARGE_TYPE_SCALE_DAMAGE:
             {
-                proj_gun->damage_min *= (1.0 + factor);
-                proj_gun->damage_max *= (1.0 + factor);
-                proj_gun->scale1 *= (1.0 + factor);
-                proj_gun->scale2 *= (1.0 + factor);
+                proj_damage_min *= (1.0 + factor);
+                proj_damage_max *= (1.0 + factor);
+                proj_scale1 *= (1.0 + factor);
+                proj_scale2 *= (1.0 + factor);
             }   break;
             case CHARGE_TYPE_SCALE_NUM:
             {
                 int num = (int)(factor*proj_gun->num);
-                proj_gun->num = MAX(1,num);
+                proj_num = MAX(1,num);
             } break;
             case CHARGE_TYPE_SCALE_BURST_COUNT:
             {
                 int burst_count = (int)(factor*proj_gun->burst_count);
-                proj_gun->burst_count = burst_count;
+                proj_burst_count = burst_count;
             } break;
         }
     }
 
     Rect vr = gfx_images[projectile_image].visible_rects[proj_gun->sprite_index];
 
-    // vr.w *= proj_gun->scale1;
-    // vr.h *= proj_gun->scale1;
+    // vr.w *= proj_scale1;
+    // vr.h *= proj_scale1;
 
     proj.color = proj_gun->color1;
     proj.sprite_index = proj_gun->sprite_index;
     proj.phys.height = vr.h;
     proj.phys.width =  vr.w;
     proj.phys.length = vr.h;
-    proj.phys.scale = proj_gun->scale1;
+    proj.phys.scale = proj_scale1;
     proj.phys.vr = vr;
     proj.phys.pos.x = pos.x;
     proj.phys.pos.y = pos.y;
@@ -213,7 +221,7 @@ void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, uin
     proj.phys.base_friction = proj_gun->air_friction;
     proj.phys.speed = proj_gun->speed;
     proj.phys.max_velocity = 2.0*proj_gun->speed;
-    proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * proj_gun->scale1;
+    proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * proj_scale1;
     proj.phys.rotation_deg = angle_deg;
 
     bool bouncy = RAND_FLOAT(0.0,1.0) <= proj_gun->bounce_chance;
@@ -314,8 +322,6 @@ void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, uin
             proj2->orbital_pos_prior.y = proj2->orbital_pos.y;
         }
     }
-
-    int proj_num = proj_gun->num;
     
     if(base_proj)
     {
@@ -324,7 +330,11 @@ void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, uin
         proj_gun->spread = 60.0;
     }
 
-    float spread = proj_gun->spread_type == SPREAD_TYPE_RANDOM ? proj_gun->spread/2.0 : proj_gun->spread / proj_gun->num;
+    float spread = proj_gun->spread/2.0;
+    if(proj_gun->spread_type == SPREAD_TYPE_UNIFORM)
+    {
+        spread = proj_num < 2 ? proj_gun->spread : (proj_gun->spread / (proj_num - 1));
+    }
     float spread_angle_start = angle_deg - (proj_gun->spread/2.0);
 
     uint16_t target_ids[32] = {0};
@@ -332,7 +342,7 @@ void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, uin
 
     for(int i = 0; i < proj_num; ++i)
     {
-        for(int j = 0; j < proj_gun->burst_count+1; ++j)
+        for(int j = 0; j < proj_burst_count+1; ++j)
         {
             Projectile p = {0};
             memcpy(&p, &proj, sizeof(Projectile));
@@ -357,11 +367,15 @@ void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, uin
                 {
                     p.angle_deg += RAND_FLOAT(-spread, spread);
                 }
-                else if(i > 0 && proj_gun->spread_type == SPREAD_TYPE_UNIFORM)
+                else if(proj_gun->spread_type == SPREAD_TYPE_UNIFORM)
                 {
-                    p.angle_deg = angle_deg + (i*spread);
+                    float spread_start = angle_deg - (proj_gun->spread/2.0);
+                    p.angle_deg = spread_start + (i*spread);
+
+                    /*
                     if(p.angle_deg > angle_deg + proj_gun->spread/2.0)
                         p.angle_deg += (360 - proj_gun->spread);
+                        */
                 }
             }
 

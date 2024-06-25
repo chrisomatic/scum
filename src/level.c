@@ -1692,9 +1692,9 @@ void level_init()
 {
     if(dungeon_image > 0) return;
 
-    dungeon_set_image1 = gfx_load_image("src/img/dungeon_set1.png", false, false, TILE_SIZE, TILE_SIZE);
+    dungeon_set_image1 = gfx_load_image("src/img/dungeon_facility.png", false, false, TILE_SIZE, TILE_SIZE);
     dungeon_set_image2 = gfx_load_image("src/img/dungeon_set2.png", false, false, TILE_SIZE, TILE_SIZE);
-    dungeon_set_image3 = gfx_load_image("src/img/dungeon_set3.png", false, false, TILE_SIZE, TILE_SIZE);
+    dungeon_set_image3 = gfx_load_image("src/img/dungeon_dirt.png", false, false, TILE_SIZE, TILE_SIZE);
 
     dungeon_image_wall = gfx_load_image("src/img/rock_wall.png", false, false, 32, 50);
     dungeon_image = dungeon_set_image2;
