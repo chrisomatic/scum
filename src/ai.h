@@ -187,6 +187,11 @@ bool ai_has_target(Creature* c)
     return (c->target_tile.x >= 0 && c->target_tile.y >= 0);
 }
 
+bool ai_has_subtarget(Creature* c)
+{
+    return (c->subtarget_tile.x >= 0 && c->subtarget_tile.y >= 0);
+}
+
 bool ai_on_target(Creature* c)
 {
     Vector2f target_pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);

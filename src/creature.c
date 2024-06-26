@@ -846,6 +846,9 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
         c.type = type;
         c.target_tile.x = -1;
         c.target_tile.y = -1;
+        c.subtarget_tile.x = -1;
+        c.subtarget_tile.y = -1;
+
 
         c.base_color = COLOR_TINT_NONE;
         c.color = c.base_color;
@@ -2779,72 +2782,114 @@ static void creature_update_uniball(Creature* c, float dt)
 static void creature_update_slugzilla(Creature* c, float dt)
 {
 
-
-    if(!ai_has_target(c))
+    if(c->ai_state == 0)
     {
-        ai_stop_imm(c);
-
-#if 1
-        Dir directions[4] = {DIR_RIGHT, DIR_UP, DIR_LEFT, DIR_DOWN};
-        // Dir shuffled[4] = {0};
-        for(int i = 0; i < 4; ++i)
+        if(!ai_has_target(c))
         {
-            int r = rand() % (4-i);
-            // shuffled[i] = directions[r];
-            Dir direction = directions[r];
-            if(r != (4-i-1))
+            for(int i = 0; i < 5; ++i)
             {
-                directions[r] = directions[4-i-1];  // shift last element to the spot that was selected from
+                level_get_rand_floor_tile(visible_room, &c->target_tile, &c->target_pos);
+                astar_set_traversable_func(&level.asd, level_tile_traversable_func);
+                bool traversable = astar_traverse(&level.asd, c->phys.curr_tile.x, c->phys.curr_tile.y, c->target_tile.x, c->target_tile.y);
+                if(!traversable)
+                {
+                    c->target_tile.x = -1;
+                    c->target_tile.y = -1;
+                }
+                else
+                {
+                    // printf("set the target to %d, %d\n", c->target_tile.x, c->target_tile.y);
+                    break;
+                }
             }
-#else
-        for(;;)
-        {
-            Dir direction = rand() % 4;
-#endif
-            Vector2i o = get_dir_offsets(direction);
-            int tx = c->phys.curr_tile.x + o.x;
-            int ty = c->phys.curr_tile.y + o.y;
-            TileType tt = level_get_tile_type(visible_room, tx, ty);
-            if(IS_SAFE_TILE(tt))
-            {
-                // printf("%s\n", get_dir_name(direction));
-                c->target_tile.x = tx;
-                c->target_tile.y = ty;
-                Vector2f pos = level_get_pos_by_room_coords(tx, ty);
-                c->target_pos.x = pos.x;
-                c->target_pos.y = pos.y;
-                // printf("set target to %d, %d\n", c->target_tile.x, c->target_tile.y);
-                break;
-            }
-        }
-    }
-    else
-    {
-
-        Vector2f v = {c->target_pos.x - c->phys.collision_rect.x, c->target_pos.y - c->phys.collision_rect.y};
-        if(ABS(v.x) < 1.0 && ABS(v.y) < 1.0)
-        {
-            // printf("reached the target\n");
-            // reached target
-            c->target_tile.x = -1;
-            c->target_tile.x = -1;
-
-            // phys_set_collision_pos(&c->phys, c->target_pos.x, c->target_pos.y);
-
-            ai_stop_imm(c);
         }
         else
         {
-            Dir direction = get_dir_from_pos(c->phys.collision_rect.x, c->phys.collision_rect.y, c->target_pos.x, c->target_pos.y);
-            // printf("moving %s\n", get_dir_name(direction));
-            float range = c->phys.speed/300.0*5.0;  //TODO
-            float speed = c->phys.speed;
-            if(ABS(v.x) <= range && ABS(v.y) <= range)
-                speed = MIN(80.0, c->phys.speed/4.0); //TODO
+            if(!ai_has_subtarget(c))
+            {
+                astar_set_traversable_func(&level.asd, level_tile_traversable_func);
+                bool traversable = astar_traverse(&level.asd, c->phys.curr_tile.x, c->phys.curr_tile.y, c->target_tile.x, c->target_tile.y);
+                if(!traversable)
+                {
+                    c->target_tile.x = -1;
+                    c->target_tile.y = -1;
+                    return;
+                }
 
-            ai_move_imm(c, direction, speed);
+
+                AStarNode_t* next = NULL;
+                if(level.asd.pathlen == 1)
+                    next = &level.asd.path[0];
+                else
+                    next = &level.asd.path[1];
+
+                Vector2i end = {.x=next->x, .y=next->y};
+
+                if(c->subtarget_tile.x != c->target_tile.x || c->subtarget_tile.y != c->target_tile.y)
+                {
+                    Vector2i dif = {0};
+                    dif.x = c->phys.curr_tile.x - next->x;
+                    dif.y = c->phys.curr_tile.y - next->y;
+
+                    // look for straight paths
+                    for(int i = 2; i < level.asd.pathlen; ++i)
+                    {
+
+                        AStarNode_t* n = &level.asd.path[i];
+
+                        Vector2i dif2 = {0};
+                        dif2.x = end.x - n->x;
+                        dif2.y = end.y - n->y;
+
+                        if(dif.x == dif2.x && dif.y == dif2.y)
+                        {
+                            end.x = n->x;
+                            end.y = n->y;
+                        }
+                        else
+                            break;
+                    }
+                }
+
+                c->subtarget_tile.x = end.x;
+                c->subtarget_tile.y = end.y;
+            }
+
+            Rect end_pos = level_get_tile_rect(c->subtarget_tile.x, c->subtarget_tile.y);
+            Vector2f v = {end_pos.x - c->phys.collision_rect.x, end_pos.y - c->phys.collision_rect.y};
+
+            if(ABS(v.x) < 1.0 && ABS(v.y) < 1.0)
+            {
+
+                ai_stop_imm(c);
+                if(c->subtarget_tile.x == c->target_tile.x && c->subtarget_tile.y == c->target_tile.y)
+                {
+                    // printf("reached the target\n");
+                    c->target_tile.x = -1;
+                    c->target_tile.y = -1;
+                    c->ai_state = 1;
+                    return;
+                }
+                c->subtarget_tile.x = -1;
+                c->subtarget_tile.y = -1;
+            }
+            else
+            {
+                Dir direction = get_dir_from_pos(c->phys.collision_rect.x, c->phys.collision_rect.y, end_pos.x, end_pos.y);
+                float range = c->phys.speed/300.0*5.0;  //TODO
+                float speed = c->phys.speed;
+                if(ABS(v.x) <= range && ABS(v.y) <= range)
+                    speed = MIN(80.0, c->phys.speed/4.0); //TODO
+
+                ai_move_imm(c, direction, speed);
+            }
+
         }
-
+    }
+    else if(c->ai_state == 1)
+    {
+        bool act = ai_update_action(c, dt);
+        if(act) c->ai_state = 0;
     }
 
 }

@@ -88,6 +88,7 @@ typedef struct
 
     Vector2i target_tile;
     Vector2f target_pos;
+    Vector2i subtarget_tile;
 
     int xp;
     uint8_t room_gun_index;

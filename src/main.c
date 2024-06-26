@@ -2266,8 +2266,13 @@ void draw()
 
     if(debug_enabled)
     {
-        Rect mr = RECT(mouse_x, mouse_y, 10*ascale, 10*ascale);
-        gfx_draw_rect(&mr, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
+        // Rect mr = RECT(mouse_x, mouse_y, 10*ascale, 10*ascale);
+        // gfx_draw_rect(&mr, COLOR_RED, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
+
+        Vector2i tile_coords = level_get_room_coords_by_pos(mouse_world_x, mouse_world_y);
+        Rect tr = level_get_tile_rect(tile_coords.x, tile_coords.y);
+        gfx_draw_rect(&tr, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 1.0, false, IN_WORLD);
+        gfx_draw_string(2+tr.x-tr.w/2.0, 2+tr.y-tr.h/2.0, COLOR_WHITE, 0.05, NO_ROTATION, 1.0, IN_WORLD, DROP_SHADOW, 0, "%d,%d", tile_coords.x, tile_coords.y);
     }
 
     draw_bigmap();
