@@ -92,18 +92,27 @@ Level level_generate(unsigned int seed, int rank)
     // seed PRNG
     slrand(&rg_level, seed);
 
-    if(rank > 2)
+    if(rank > 3)
     {
 #if !GENERATE_ROOMS_TEST
         LOGW("Overriding rank!");
 #endif
-        rank = 2;
+        rank = 3;
         level_rank = rank;
     }
 
 #if !GENERATE_ROOMS_TEST
     LOGI("Generating level, seed: %u, rank: %d", seed, rank);
 #endif
+
+    if(rank == 1)
+        dungeon_image = dungeon_set_image1;
+    else if(rank == 2)
+        dungeon_image = dungeon_set_image2;
+    else if(rank == 3)
+        dungeon_image = dungeon_set_image3;
+    else
+        dungeon_image = dungeon_set_image2;
 
     // fill out helpful room information
     room_count_monster = 0;
@@ -1693,11 +1702,11 @@ void level_init()
     if(dungeon_image > 0) return;
 
     dungeon_set_image1 = gfx_load_image("src/img/dungeon_facility.png", false, false, TILE_SIZE, TILE_SIZE);
-    dungeon_set_image2 = gfx_load_image("src/img/dungeon_set2.png", false, false, TILE_SIZE, TILE_SIZE);
+    dungeon_set_image2 = gfx_load_image("src/img/dungeon_basement.png", false, false, TILE_SIZE, TILE_SIZE);
     dungeon_set_image3 = gfx_load_image("src/img/dungeon_dirt.png", false, false, TILE_SIZE, TILE_SIZE);
 
     dungeon_image_wall = gfx_load_image("src/img/rock_wall.png", false, false, 32, 50);
-    dungeon_image = dungeon_set_image2;
+    dungeon_image = dungeon_set_image1;
 
     room_file_load_all(false);
     printf("Done with room files\n");
@@ -2172,7 +2181,7 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
 
             if(tt == TILE_BOULDER)
             {
-                gfx_sprite_batch_add(dungeon_image_wall, 0, draw_x, draw_y - 9.0, tcolor, false, scale, 0.0, 1.0, false, false, false);
+                gfx_sprite_batch_add(dungeon_image_wall, 0, draw_x, draw_y - 8.0, tcolor, false, scale, 0.0, 1.0, false, false, false);
             }
             else
             {
