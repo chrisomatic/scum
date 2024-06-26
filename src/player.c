@@ -1425,10 +1425,27 @@ void player_update(Player* p, float dt)
         p->phys.prior_tile.x = p->phys.curr_tile.x;
         p->phys.prior_tile.y = p->phys.curr_tile.y;
 
+        float prior_tile_counter = p->phys.curr_tile_counter;
         p->phys.curr_tile.x = RANGE(c_tile.x, 0, ROOM_TILE_SIZE_X-1);
         p->phys.curr_tile.y = RANGE(c_tile.y, 0, ROOM_TILE_SIZE_Y-1);
+        if(p->phys.curr_tile.x == p->phys.prior_tile.x && p->phys.curr_tile.y == p->phys.prior_tile.y)
+        {
+            p->phys.curr_tile_counter += dt;
+        }
+        else
+        {
+            p->phys.curr_tile_counter = 0.0;
+        }
 
         TileType tt = level_get_tile_type(room, p->phys.curr_tile.x, p->phys.curr_tile.y);
+        if(tt == TILE_BREAKABLE_FLOOR && !p->phys.floating && !p->phys.dead)
+        {
+            int tc1 = (int)prior_tile_counter;
+            int tc2 = (int)p->phys.curr_tile_counter;
+            if(tc2-tc1 >= 1)
+                room->breakable_floor_state[p->phys.curr_tile.x][p->phys.curr_tile.y]++;
+        }
+
         if(IS_SAFE_TILE(tt))
         {
             p->last_safe_tile = p->phys.curr_tile;

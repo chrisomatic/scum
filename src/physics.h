@@ -39,6 +39,7 @@ typedef struct
     Vector2i prior_tile;
     Vector2i curr_tile;
     uint8_t curr_room;
+    float curr_tile_counter;    //used for breakable floors
 
     bool on_breakable_tile;
 

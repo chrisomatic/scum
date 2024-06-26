@@ -438,6 +438,7 @@ void creature_init_props(Creature* c)
             c->phys.hp_max = 4.0;
             c->painful_touch = true;
             c->xp = 20;
+            c->phys.rotation_deg = 1.01;    // avoid horizontal bool in phys_calc_collision_rect()
         } break;
         case CREATURE_TYPE_GRAVITY_CRYSTAL:
         {
@@ -1081,6 +1082,27 @@ void creature_update(Creature* c, float dt)
 
     c->phys.prior_tile = c->phys.curr_tile;
     c->phys.curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
+
+    float prior_tile_counter = c->phys.curr_tile_counter;
+    if(c->phys.curr_tile.x == c->phys.prior_tile.x && c->phys.curr_tile.y == c->phys.prior_tile.y)
+    {
+        c->phys.curr_tile_counter += dt;
+    }
+    else
+    {
+        c->phys.curr_tile_counter = 0.0;
+    }
+
+    TileType tt = level_get_tile_type(visible_room, c->phys.curr_tile.x, c->phys.curr_tile.y);
+    if(tt == TILE_BREAKABLE_FLOOR && !c->phys.floating && !c->phys.dead)
+    {
+        int tc1 = (int)prior_tile_counter;
+        int tc2 = (int)c->phys.curr_tile_counter;
+        if(tc2-tc1 >= 1)
+            visible_room->breakable_floor_state[c->phys.curr_tile.x][c->phys.curr_tile.y]++;
+    }
+
+
 }
 
 void creature_lerp(Creature* c, float dt)
