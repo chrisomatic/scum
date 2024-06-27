@@ -2045,7 +2045,7 @@ void draw_hearts()
     coins_y = area.y + area.h/2.0;
     for(int i = 0; i < num; ++i)
     {
-        gfx_draw_image(image_full, si_full, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+        gfx_draw_image_ignore_light(image_full, si_full, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
         // Rect r = RECT(x, y, l, l);
         // gfx_draw_rect(&r, COLOR_BLACK, NOT_SCALED, NO_ROTATION, scale, false, NOT_IN_WORLD);
         x += (l+pad);
@@ -2053,14 +2053,14 @@ void draw_hearts()
 
     if(rem == 1)
     {
-        gfx_draw_image(image_half, si_half, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+        gfx_draw_image_ignore_light(image_half, si_half, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
         x += (l+pad);
     }
 
     int empties = max_num - num - rem;
     for(int i = 0; i < empties; ++i)
     {
-        gfx_draw_image(image_empty, si_empty, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+        gfx_draw_image_ignore_light(image_empty, si_empty, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
         x += (l+pad);
     }
 
@@ -2079,7 +2079,7 @@ void draw_coins()
     float h = gfx_images[image].visible_rects[sprite].h;
     revives_y = y + h;
 
-    gfx_draw_image(image, sprite, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+    gfx_draw_image_ignore_light(image, sprite, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
     gfx_draw_string(x+12, y-9, 0xD4AF37, 0.25*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "%u", player->coins);
 }
 
@@ -2092,7 +2092,7 @@ void draw_revives()
     int image = item_props[ITEM_REVIVE].image;
     float h = gfx_images[image].visible_rects[sprite].h;
 
-    gfx_draw_image(image, sprite, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+    gfx_draw_image_ignore_light(image, sprite, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
     gfx_draw_string(x+12, y-9, COLOR_TINT_NONE, 0.25*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "%u", player->revives);
 }
 
