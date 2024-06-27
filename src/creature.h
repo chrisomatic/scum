@@ -7,6 +7,7 @@
 #include "level.h"
 
 #define MAX_CREATURES 1024
+#define MAX_SEGMENTS 5
 #define ACTION_COUNTER_MAX 1.0 // seconds
 #define DAMAGED_TIME_MAX 0.2
 
@@ -45,6 +46,17 @@ typedef struct
 {
     Vector3f pos;
 } CreatureNetLerp;
+
+typedef struct
+{
+    Dir dir;
+    Vector3f pos;
+    Vector3f vel;
+    Rect collision_rect;
+
+    bool tail;
+
+} CreatureSegment;
 
 typedef struct
 {
@@ -89,6 +101,8 @@ typedef struct
     Vector2i target_tile;
     Vector2f target_pos;
     Vector2i subtarget_tile;
+
+    bool segmented;
 
     int xp;
     uint8_t room_gun_index;

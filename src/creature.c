@@ -17,6 +17,9 @@ Creature prior_creatures[MAX_CREATURES] = {0};
 Creature creatures[MAX_CREATURES] = {0};
 glist* clist = NULL;
 
+static int creature_segment_count;
+static CreatureSegment creature_segments[MAX_SEGMENTS]; // 0=first body segment 
+
 #define PROJ_COLOR 0x00FF5050
 
 static int creature_image_slug;
@@ -110,7 +113,7 @@ void creature_init()
     creature_image_phantom = gfx_load_image("src/img/creature_phantom.png", false, false, 64, 64);
     creature_image_rock = gfx_load_image("src/img/rock1.png", false, false, 32, 32);
     creature_image_uniball = gfx_load_image("src/img/creature_uniball.png", false, false, 32, 32);
-    creature_image_slugzilla = gfx_load_image("src/img/creature_uniball.png", false, false, 32, 32);
+    creature_image_slugzilla = gfx_load_image("src/img/creature_slugzilla.png", false, false, 32, 32);
 }
 
 char* creature_type_name(CreatureType type)
@@ -634,6 +637,7 @@ void creature_init_props(Creature* c)
             c->passive = false;
             c->invincible = false;
             c->xp = 15;
+            c->segmented = true;
         } break;
     }
 
@@ -1058,6 +1062,16 @@ void creature_update(Creature* c, float dt)
     c->phys.pos.x += dt*c->phys.vel.x;
     c->phys.pos.y += dt*c->phys.vel.y;
 
+    if(c->segmented)
+    {
+        for(int i = 0; i < creature_segment_count; ++i)
+        {
+            CreatureSegment* cs = &creature_segments[i];
+            cs->pos.x += dt*cs->vel.x;
+            cs->pos.y += dt*cs->vel.y;
+        }
+    }
+
     phys_apply_gravity(&c->phys, GRAVITY_EARTH, dt);
 
     Rect r = RECT(c->phys.pos.x, c->phys.pos.y, 1, 1);
@@ -1188,6 +1202,23 @@ void creature_draw(Creature* c)
     if(!c->phys.underground)
     {
         gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, color, false, c->phys.scale, 0.0, op, true, false, false);
+
+        if(c->segmented)
+        {
+            for(int i = 0; i < creature_segment_count; ++i)
+            {
+                CreatureSegment* cs = &creature_segments[i];
+
+                int sprite_index = cs->dir+4;
+                if(cs->tail)
+                {
+                    sprite_index += 8;
+                }
+
+                gfx_sprite_batch_add(c->image, sprite_index, cs->pos.x, cs->pos.y, color, false, c->phys.scale, 0.0, op, true, false, false);
+            }
+        }
+
     }
 }
 
@@ -2803,6 +2834,26 @@ static void creature_update_uniball(Creature* c, float dt)
 
 static void creature_update_slugzilla(Creature* c, float dt)
 {
+    if(creature_segment_count != 4)
+    {
+        // initialize segments
+        memset(creature_segments, 0, sizeof(CreatureSegment)*MAX_SEGMENTS);
+
+        for(int i = 0; i < 4;++i)
+        {
+            CreatureSegment* cs = &creature_segments[i];
+
+            cs->dir = angle_to_dir_cardinal(c->phys.rotation_deg);
+            cs->pos.x = c->phys.collision_rect.x - (TILE_SIZE*(i+1));
+            cs->pos.y = c->phys.collision_rect.y;
+            cs->pos.z = c->phys.pos.z;
+            cs->tail  = (i == 3);
+
+            memcpy(&cs->collision_rect, &c->phys.collision_rect, sizeof(Rect));
+
+            creature_segment_count++;
+        }
+    }
 
     if(c->ai_state == 0)
     {
@@ -2837,7 +2888,6 @@ static void creature_update_slugzilla(Creature* c, float dt)
                     c->target_tile.y = -1;
                     return;
                 }
-
 
                 AStarNode_t* next = NULL;
                 if(level.asd.pathlen == 1)
@@ -2882,7 +2932,6 @@ static void creature_update_slugzilla(Creature* c, float dt)
 
             if(ABS(v.x) < 1.0 && ABS(v.y) < 1.0)
             {
-
                 ai_stop_imm(c);
                 if(c->subtarget_tile.x == c->target_tile.x && c->subtarget_tile.y == c->target_tile.y)
                 {
@@ -2898,14 +2947,66 @@ static void creature_update_slugzilla(Creature* c, float dt)
             else
             {
                 Dir direction = get_dir_from_pos(c->phys.collision_rect.x, c->phys.collision_rect.y, end_pos.x, end_pos.y);
-                float range = c->phys.speed/300.0*5.0;  //TODO
+
+                _update_sprite_index(c, direction);
+
+                float range = c->phys.speed/300.0*5.0;
                 float speed = c->phys.speed;
                 if(ABS(v.x) <= range && ABS(v.y) <= range)
-                    speed = MIN(80.0, c->phys.speed/4.0); //TODO
+                    speed = MIN(80.0, c->phys.speed/4.0);
 
                 ai_move_imm(c, direction, speed);
-            }
 
+                for(int i = 0; i < creature_segment_count; ++i)
+                {
+                    CreatureSegment* cs = &creature_segments[i];
+
+                    // update direction
+
+                    float _posx = c->phys.collision_rect.x;
+                    float _posy = c->phys.pos.y;
+
+                    if(i > 0)
+                    {
+                        _posx = creature_segments[i-1].pos.x;
+                        _posy = creature_segments[i-1].pos.y;
+                    }
+                    
+                    float delta_x = _posx - cs->pos.x;
+                    float delta_y = _posy - cs->pos.y;
+
+                    if(ABS(delta_x) >= ABS(delta_y))
+                    {
+                        cs->dir = delta_x >= 0 ? DIR_RIGHT : DIR_LEFT;
+                    }
+                    else
+                    {
+                        cs->dir = delta_y >= 0 ? DIR_DOWN : DIR_UP;
+                    }
+
+                    // move segment
+                    switch(cs->dir)
+                    {
+                        case DIR_UP:
+                            cs->vel.x = 0.0;
+                            cs->vel.y = -speed;
+                            break;
+                        case DIR_RIGHT:
+                            cs->vel.x = +speed;
+                            cs->vel.y = 0.0;
+                            break;
+                        case DIR_DOWN:
+                            cs->vel.x = 0.0;
+                            cs->vel.y = +speed;
+                            break;
+                        case DIR_LEFT:
+                            cs->vel.x = -speed;
+                            cs->vel.y = 0.0;
+                            break;
+                    }
+
+                }
+            }
         }
     }
     else if(c->ai_state == 1)
