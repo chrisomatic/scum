@@ -105,14 +105,7 @@ Level level_generate(unsigned int seed, int rank)
     LOGI("Generating level, seed: %u, rank: %d", seed, rank);
 #endif
 
-    if(rank == 1)
-        dungeon_image = dungeon_set_image1;
-    else if(rank == 2)
-        dungeon_image = dungeon_set_image2;
-    else if(rank == 3)
-        dungeon_image = dungeon_set_image3;
-    else
-        dungeon_image = dungeon_set_image2;
+    level_set_dungeon_image(rank);
 
     // fill out helpful room information
     room_count_monster = 0;
@@ -543,6 +536,7 @@ void level_set_room_pointers(Level* level)
         }
     }
 }
+
 
 // assume asd path[0] is the same point as the end of path
 void level_astar_to_path(Level* level, AStar_t* asd, LevelPath* path)
@@ -2042,6 +2036,18 @@ void level_draw_wall_column(float x, float y)
 {
     int r = lrand(&rg_room) % 100;
     gfx_sprite_batch_add(dungeon_image_wall, r < 50 ? 0 : 1, x, y, COLOR_TINT_NONE, false, 1.0, 0.0, 1.0, false, false, false);
+}
+
+void level_set_dungeon_image(int rank)
+{
+    if(rank == 1)
+        dungeon_image = dungeon_set_image1;
+    else if(rank == 2)
+        dungeon_image = dungeon_set_image2;
+    else if(rank == 3)
+        dungeon_image = dungeon_set_image3;
+    else
+        dungeon_image = dungeon_set_image2;
 }
 
 void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float yoffset, float scale, bool show_entities)

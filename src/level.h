@@ -209,6 +209,7 @@ void level_get_safe_floor_tile(Room* room, Vector2i start, Vector2i* tile_coords
 // Note: DIR_NONE is center tile
 Vector2i level_get_door_tile_coords(Dir dir);
 
+void level_set_dungeon_image(int rank);
 void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float yoffset, float scale, bool show_entities);
 void room_draw_walls(Room* room);
 void level_draw_wall_column(float x, float y);

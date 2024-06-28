@@ -580,6 +580,8 @@ void room_editor_draw()
 {
     gfx_clear_buffer(background_color);
 
+    level_set_dungeon_image(room_rank);
+
     room.layout = -1;
     level_draw_room(&room, &room_data_editor, 0, 0, 1.0, false);
 

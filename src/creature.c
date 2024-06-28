@@ -2960,8 +2960,6 @@ static void creature_update_slugzilla(Creature* c, float dt)
             {
                 CreatureSegment* cs = &creature_segments[i];
 
-
-
                 if(cs->target_count == 0)
                 {
 #if _DEBUG_
@@ -3023,12 +3021,6 @@ static void creature_update_slugzilla(Creature* c, float dt)
                     // cs->target_count = 0;
                     cs->vel.x = 0;
                     cs->vel.y = 0;
-#if _DEBUG_
-                    // if(cs->tail)
-                    // {
-                    //     printf("clearing targets\n");
-                    // }
-#endif
                 }
 
                 return;
