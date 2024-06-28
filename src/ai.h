@@ -48,6 +48,18 @@ bool ai_update_action(Creature* c, float dt)
 
 static void _update_sprite_index(Creature* c, Dir dir)
 {
+    bool update = (c->type == CREATURE_TYPE_SLUG || 
+           c->type == CREATURE_TYPE_BUZZER ||
+           c->type == CREATURE_TYPE_SPIKED_SLUG ||
+           c->type == CREATURE_TYPE_INFECTED ||
+           c->type == CREATURE_TYPE_SPAWN_SPIDER ||
+           c->type == CREATURE_TYPE_PHANTOM || 
+           c->type == CREATURE_TYPE_SLUGZILLA ||
+           c->type == CREATURE_TYPE_GHOST);
+    
+    if(!update)
+        return;
+
     switch(dir)
     {
         case DIR_UP: case DIR_UP_RIGHT:
@@ -120,6 +132,8 @@ void ai_move_imm(Creature* c, Dir dir, float speed)
             c->phys.vel.y = -speed;
             break;
     }
+
+    _update_sprite_index(c, dir);
 }
 
 bool ai_move_to_tile(Creature* c, int x, int y)
@@ -152,18 +166,7 @@ void ai_walk_dir(Creature* c, Dir dir)
     c->h = o.x;
     c->v = o.y;
 
-    if(dir < DIR_NONE)
-    {
-        if(c->type == CREATURE_TYPE_SLUG || 
-           c->type == CREATURE_TYPE_BUZZER ||
-           c->type == CREATURE_TYPE_SPIKED_SLUG ||
-           c->type == CREATURE_TYPE_INFECTED ||
-           c->type == CREATURE_TYPE_SPAWN_SPIDER ||
-           c->type == CREATURE_TYPE_PHANTOM || 
-           c->type == CREATURE_TYPE_SLUGZILLA ||
-           c->type == CREATURE_TYPE_GHOST)
-            _update_sprite_index(c, dir);
-    }
+    _update_sprite_index(c, dir);
 }
 
 void ai_random_walk(Creature* c)

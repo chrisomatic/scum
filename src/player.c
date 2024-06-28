@@ -147,8 +147,12 @@ void player_set_defaults(Player* p)
 
     weapon_add(WEAPON_TYPE_SPEAR,&p->phys, &p->weapon, (p->weapon.type == WEAPON_TYPE_NONE ? true : false));
 
-    // char* gun_name = "pistol1";
+#if TESTING
     char* gun_name = "machinegun2";
+#else
+    char* gun_name = "pistol1";
+#endif
+
     if(!gun_get_by_name(gun_name, &p->gun))
     {
         LOGE("Couldn't find gun with name %s", gun_name);

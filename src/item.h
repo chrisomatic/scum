@@ -131,6 +131,7 @@ ItemType item_get_random_coin();
 const char* item_get_name(ItemType type);
 const char* item_get_description(ItemType type, Item* it);
 Item* item_add(ItemType type, float x, float y, uint8_t curr_room);
+Item* item_add_to_tile(ItemType type, int x, int y, uint8_t curr_room);
 Item* item_add_gun(uint8_t gun_index, uint32_t seed, float x, float y, uint8_t curr_room);
 void item_set_description(Item* it, char* fmt, ...);
 bool item_use(Item* it, void* _player);

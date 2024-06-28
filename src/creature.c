@@ -252,6 +252,7 @@ char* creature_get_gun_name(CreatureType type)
         case CREATURE_TYPE_GEIZER:     return "geizer";
         case CREATURE_TYPE_TOTEM_BLUE: return "totem_blue";
         case CREATURE_TYPE_WATCHER:    return "watcher";
+        case CREATURE_TYPE_GHOST:      return "chevrons";
         default:                       return "creature";
     }
 }
@@ -289,10 +290,10 @@ void creature_init_props(Creature* c)
         case CREATURE_TYPE_SLUG:
         {
             c->phys.speed = 60.0;
-            c->act_time_min = 0.5;
-            c->act_time_max = 2.0;
+            c->act_time_min = 1.0;
+            c->act_time_max = 1.0;
             c->phys.mass = 0.5;
-            c->phys.base_friction = 20.0;
+            c->phys.base_friction = 0.0;
             c->phys.hp_max = 1.0;
             c->painful_touch = true;
             c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
@@ -1526,7 +1527,7 @@ static void creature_update_slug(Creature* c, float dt)
     if(act)
     {
         ai_stop_imm(c);
-        ai_random_walk(c);
+        ai_move_imm(c, ai_rand(4), c->phys.speed);
     }
 }
 
@@ -3347,7 +3348,7 @@ static void creature_update_ghost(Creature* c, float dt)
         Decal d = {0};
         d.image = particles_image;
         d.sprite_index = 42;
-        d.tint = COLOR_ORANGE;
+        d.tint = COLOR_GREEN;
         d.scale = 1.0;
         d.rotation = 0.0;
         d.opacity = 0.5;

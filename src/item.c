@@ -837,6 +837,12 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
     return &items[item_list->count-1];
 }
 
+Item* item_add_to_tile(ItemType type, int x, int y, uint8_t curr_room)
+{
+    Vector2f pos = level_get_pos_by_room_coords(x, y);
+    return item_add(type, pos.x, pos.y, curr_room);
+}
+
 void item_calc_phys_props(Item* it)
 {
     if(it->phys.crawling)

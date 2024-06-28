@@ -477,6 +477,14 @@ void level_place_entities(Level* level)
     // creature_add(sroom, CREATURE_TYPE_ROCK_MONSTER, NULL, NULL);
     // creature_add(sroom, CREATURE_TYPE_PHANTOM, NULL, NULL);
 
+#if TESTING
+
+    item_add_to_tile(ITEM_CHEST, 1, 1, sroom->index);
+    item_add_to_tile(ITEM_CHEST_GUN, 1, 5, sroom->index);
+    item_add_to_tile(ITEM_CHEST_GUN, 2, 5, sroom->index);
+
+#endif
+
     for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
     {
         for(int x = 0; x < MAX_ROOMS_GRID_X; ++x)

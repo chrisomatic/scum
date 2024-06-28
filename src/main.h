@@ -18,6 +18,8 @@
 
 #include "glist.h"
 
+#define TESTING 1
+
 #if 1
 #define VIEW_WIDTH   1200
 #define VIEW_HEIGHT  800

@@ -4,10 +4,5 @@ desc: A mysterious alien weapon
 cost: 15
 damage_min: 2.58
 damage_max: 3.45
-scale1: 1.03
-scale2: 1.42
-lifetime: 0.90
-cooldown: 0.82
-spin_factor: 0.71
-air_friction: 0.46
+spread: 0.00
 cluster: true

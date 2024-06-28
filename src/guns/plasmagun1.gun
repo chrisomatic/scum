@@ -1,6 +1,6 @@
 based_on: null
 name: plasmagun1
-desc:  A mysterious alien weapon
+desc: A mysterious alien weapon
 cost: 8
 damage_min: 1.00
 damage_max: 1.00
@@ -15,7 +15,7 @@ burst_rate: 0.20
 critical_hit_chance: 0.00
 knockback_factor: 0.00
 spread_type: 1
-spread: 359.81
+spread: 0.00
 gun_sprite_index: 2
 sprite_index: 1
 spin_factor: 0.71
@@ -30,6 +30,7 @@ ghost_chance: 0.00
 homing_chance: 0.00
 bounce_chance: 0.00
 penetration_chance: 0.00
+stun_chance: 0.00
 explosion_chance: 0.00
 explosion_radius: 15.00
 explosion_rate: 100.00
