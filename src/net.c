@@ -2561,6 +2561,8 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             BPW(&server.bp, 8,  (uint32_t)p->phys.mp_max);
             BPW(&server.bp, 4,  (uint32_t)p->phys.hp);
             BPW(&server.bp, 4,  (uint32_t)p->phys.hp_max);
+            BPW(&server.bp, 8,  (uint32_t)p->coins);
+            BPW(&server.bp, 4,  (uint32_t)p->revives);
             BPW(&server.bp, 16, (uint32_t)(p->highlighted_item_id+1));
 
             // BPW(&server.bp, 12, (uint32_t)(p->xp));
@@ -2623,6 +2625,8 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         uint32_t mp_max              = bitpack_read(&client.bp, 8);
         uint32_t hp                  = bitpack_read(&client.bp, 4);
         uint32_t hp_max              = bitpack_read(&client.bp, 4);
+        uint32_t coins               = bitpack_read(&client.bp, 8);
+        uint32_t revives             = bitpack_read(&client.bp, 4);
         uint32_t highlighted_item_id = bitpack_read(&client.bp, 16);
 
         // uint32_t xp                  = bitpack_read(&client.bp, 12);
@@ -2675,6 +2679,8 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         p->phys.mp_max  = (uint8_t)mp_max;
         p->phys.hp  = (uint8_t)hp;
         p->phys.hp_max  = (uint8_t)hp_max;
+        p->coins  = (uint16_t)coins;
+        p->revives  = (uint8_t)revives;
 
         p->highlighted_item_id = ((int32_t)highlighted_item_id)-1;
 
