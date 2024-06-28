@@ -913,6 +913,30 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
     phys_set_collision_pos(&c.phys, c.phys.pos.x, c.phys.pos.y);
     // c->phys.radius = calc_radius_from_rect(&c->phys.collision_rect);
 
+
+    if(c.type == CREATURE_TYPE_SLUGZILLA)
+    {
+        // initialize segments
+        memset(creature_segments, 0, sizeof(CreatureSegment)*MAX_SEGMENTS);
+
+        for(int i = 0; i < 4;++i)
+        {
+            CreatureSegment* cs = &creature_segments[i];
+
+            cs->dir = angle_to_dir_cardinal(c.phys.rotation_deg);
+            cs->pos.x = c.phys.collision_rect.x - (TILE_SIZE*(i+1));
+            cs->pos.y = c.phys.collision_rect.y;
+            cs->pos.z = c.phys.pos.z;
+            cs->tail  = (i == 3);
+
+            memcpy(&cs->collision_rect, &c.phys.collision_rect, sizeof(Rect));
+            cs->collision_rect.x = cs->pos.x;
+            cs->collision_rect.y = cs->pos.y;
+
+            creature_segment_count++;
+        }
+    }
+
     list_add(clist, (void*)&c);
 
     return &creatures[clist->count-1];
@@ -1235,9 +1259,10 @@ void creature_draw(Creature* c)
                 CreatureSegment* cs = &creature_segments[i];
 
                 int sprite_index = cs->dir+4;
+                if(cs->dir == DIR_NONE) sprite_index = 4;
                 if(cs->tail)
                 {
-                    sprite_index += 8;
+                    sprite_index += 4;
                 }
 
                 gfx_sprite_batch_add(c->image, sprite_index, cs->pos.x, cs->pos.y, color, false, c->phys.scale, 0.0, op, true, false, false);
@@ -2847,6 +2872,226 @@ static void creature_update_uniball(Creature* c, float dt)
         c->phys.vel.y = c->phys.speed;
     }
 }
+#if 1
+
+static void creature_update_slugzilla(Creature* c, float dt)
+{
+
+#define _TEST_   0
+#define _DEBUG_   0
+
+    if(c->ai_state == 0)
+    {
+        if(!ai_has_target(c))
+        {
+#if !_TEST_
+            for(int i = 0; i < 5; ++i)
+            {
+                srand(time(0));
+                level_get_rand_floor_tile(visible_room, &c->target_tile, &c->target_pos);
+                astar_set_traversable_func(&level.asd, level_tile_traversable_func);
+                bool traversable = astar_traverse(&level.asd, c->phys.curr_tile.x, c->phys.curr_tile.y, c->target_tile.x, c->target_tile.y);
+                if(!traversable)
+                {
+                    c->target_tile.x = -1;
+                    c->target_tile.y = -1;
+                }
+                else
+                {
+                    // printf("set the target to %d, %d\n", c->target_tile.x, c->target_tile.y);
+                    break;
+                }
+            }
+#else
+            c->target_tile.x = c->phys.curr_tile.x+3;
+            c->target_tile.y = c->phys.curr_tile.y+2;
+#endif
+        }
+
+        if(!ai_has_subtarget(c))
+        {
+            astar_set_traversable_func(&level.asd, level_tile_traversable_func);
+            bool traversable = astar_traverse(&level.asd, c->phys.curr_tile.x, c->phys.curr_tile.y, c->target_tile.x, c->target_tile.y);
+            if(!traversable)
+            {
+                c->target_tile.x = -1;
+                c->target_tile.y = -1;
+                return;
+            }
+
+            AStarNode_t* next = NULL;
+            if(level.asd.pathlen == 1)
+                next = &level.asd.path[0];
+            else
+                next = &level.asd.path[1];
+
+            Vector2i end = {.x=next->x, .y=next->y};
+
+            if(c->subtarget_tile.x != c->target_tile.x || c->subtarget_tile.y != c->target_tile.y)
+            {
+                Vector2i dif = {0};
+                dif.x = c->phys.curr_tile.x - next->x;
+                dif.y = c->phys.curr_tile.y - next->y;
+
+                // look for straight paths
+                for(int i = 2; i < level.asd.pathlen; ++i)
+                {
+                    AStarNode_t* n = &level.asd.path[i];
+
+                    Vector2i dif2 = {0};
+                    dif2.x = end.x - n->x;
+                    dif2.y = end.y - n->y;
+
+                    if(dif.x == dif2.x && dif.y == dif2.y)
+                    {
+                        end.x = n->x;
+                        end.y = n->y;
+                    }
+                    else
+                        break;
+                }
+            }
+
+            c->subtarget_tile.x = end.x;
+            c->subtarget_tile.y = end.y;
+
+            Rect end_pos = level_get_tile_rect(c->subtarget_tile.x, c->subtarget_tile.y);
+            for(int i = 0; i < creature_segment_count; ++i)
+            {
+                CreatureSegment* cs = &creature_segments[i];
+
+                if(cs->target_count == 0)
+                {
+                    cs->target_tile[cs->target_count].x = c->phys.curr_tile.x;
+                    cs->target_tile[cs->target_count].y = c->phys.curr_tile.y;
+                    Rect pos = level_get_tile_rect(c->phys.curr_tile.x, c->phys.curr_tile.y);
+                    cs->target_pos[cs->target_count].x = pos.x;
+                    cs->target_pos[cs->target_count].y = pos.y;
+                    cs->target_count++;
+                }
+
+
+                cs->target_tile[cs->target_count].x = c->subtarget_tile.x;
+                cs->target_tile[cs->target_count].y = c->subtarget_tile.y;
+                cs->target_pos[cs->target_count].x = end_pos.x;
+                cs->target_pos[cs->target_count].y = end_pos.y;
+                cs->target_count++;
+#if _DEBUG_
+                if(i == 0)
+                {
+                    printf("Sub targets %d\n", cs->target_count);
+                    for(int j = 0; j < cs->target_count; ++j)
+                        printf("  %d) %d, %d\n", j, cs->target_tile[j].x, cs->target_tile[j].y);
+                }
+#endif
+            }
+
+        }
+
+        Rect end_pos = level_get_tile_rect(c->subtarget_tile.x, c->subtarget_tile.y);
+        Vector2f v = {end_pos.x - c->phys.collision_rect.x, end_pos.y - c->phys.collision_rect.y};
+
+        if(ABS(v.x) < 1.0 && ABS(v.y) < 1.0)
+        {
+
+            ai_stop_imm(c);
+            if(c->subtarget_tile.x == c->target_tile.x && c->subtarget_tile.y == c->target_tile.y)
+            {
+                // printf("reached the target\n");
+                c->target_tile.x = -1;
+                c->target_tile.y = -1;
+                c->ai_state = 1;
+
+                for(int i = 0; i < creature_segment_count; ++i)
+                {
+                    CreatureSegment* cs = &creature_segments[i];
+                    // memset(cs->target_tile, 0, 5*sizeof(Vector2i));
+                    cs->target_count = 0;
+                    cs->vel.x = 0;
+                    cs->vel.y = 0;
+                }
+
+                return;
+            }
+            c->subtarget_tile.x = -1;
+            c->subtarget_tile.y = -1;
+        }
+        else
+        {
+            Dir direction = get_dir_from_pos(c->phys.collision_rect.x, c->phys.collision_rect.y, end_pos.x, end_pos.y);
+
+            _update_sprite_index(c, direction);
+
+            float range = c->phys.speed/300.0*5.0;
+            float speed = c->phys.speed;
+            if(ABS(v.x) <= range && ABS(v.y) <= range)
+                speed = MIN(80.0, c->phys.speed/4.0);
+
+            c->curr_speed = speed;
+            ai_move_imm(c, direction, speed);
+
+        }
+
+        for(int i = 0; i < creature_segment_count; ++i)
+        {
+            CreatureSegment* cs = &creature_segments[i];
+            if(cs->target_count <= 0) continue;
+
+            Vector2f v = {cs->target_pos[0].x - cs->pos.x, cs->target_pos[0].y - cs->pos.y};
+
+            if(ABS(v.x) < 1.0 && ABS(v.y) < 1.0)
+            {
+#if _DEBUG_
+                printf("Reached %d, %d\n", cs->target_tile[0].x, cs->target_tile[0].y);
+#endif
+                cs->target_count--;
+                for(int j = 1; j < 5; ++j)
+                {
+                    memcpy(&cs->target_tile[j-1], &cs->target_tile[j], sizeof(Vector2i));
+                    memcpy(&cs->target_pos[j-1], &cs->target_pos[j], sizeof(Vector2f));
+                }
+                // v.x = cs->target_pos[0].x - cs->pos.x;
+                // v.y = cs->target_pos[0].y - cs->pos.y;
+#if _DEBUG_
+                if(i == 0)
+                {
+                    printf("(count: %d) moving to %d, %d\n", cs->target_count, cs->target_tile[0].x, cs->target_tile[0].y);
+                }
+#endif
+            }
+
+            if(cs->target_count > 0)
+            {
+                Dir direction = get_dir_from_pos(cs->pos.x, cs->pos.y, cs->target_pos[0].x, cs->target_pos[0].y);
+                cs->dir = direction;
+                Vector2i o = get_dir_offsets(direction);
+                cs->vel.x = o.x*c->curr_speed;
+                cs->vel.y = o.y*c->curr_speed;
+#if _DEBUG_
+                if(i == 0) printf("  moving %s  %.2f, %.2f -> %.2f, %.2f\n", get_dir_name(direction), cs->pos.x, cs->pos.y, cs->target_pos[0].x, cs->target_pos[0].y);
+#endif
+            }
+            else
+            {
+                cs->vel.x = 0.0;
+                cs->vel.y = 0.0;
+            }
+
+
+        }
+    }
+    else if(c->ai_state == 1)
+    {
+        bool act = ai_update_action(c, dt);
+#if !_TEST_
+        if(act) c->ai_state = 0;
+#endif
+    }
+
+}
+
+#else
+
 
 static void creature_update_slugzilla(Creature* c, float dt)
 {
@@ -3032,6 +3277,7 @@ static void creature_update_slugzilla(Creature* c, float dt)
     }
 
 }
+#endif
 
 static void creature_update_ghost(Creature* c, float dt)
 {

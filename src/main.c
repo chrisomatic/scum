@@ -92,10 +92,8 @@ Vector2f transition_offsets = {0};
 Vector2f transition_targets = {0};
 
 Level level;
-// unsigned int level_seed = 31;
-// int level_rank = 2;
-unsigned int level_seed = 0;
-int level_rank = 0;
+unsigned int level_seed = 5;
+int level_rank = 1;
 int level_transition = 0;
 int level_transition_state = 0;
 bool level_generate_triggered = false;

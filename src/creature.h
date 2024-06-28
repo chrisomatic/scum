@@ -50,6 +50,9 @@ typedef struct
 
 typedef struct
 {
+    Vector2i target_tile[5];
+    Vector2f target_pos[5];
+    int target_count;
     Dir dir;
     Vector3f pos;
     Vector3f vel;
@@ -104,6 +107,7 @@ typedef struct
     Vector2i subtarget_tile;
 
     bool segmented;
+    float curr_speed;
 
     int xp;
     uint8_t room_gun_index;
