@@ -846,7 +846,7 @@ void room_editor_draw()
                 }
 
                 int _creature_sel = creature_sel;
-                imgui_dropdown(creature_names, CREATURE_TYPE_MAX, "Select Creature", &creature_sel, &interacted);
+                imgui_listbox(creature_names, CREATURE_TYPE_MAX, "Selected Creature", &creature_sel, 10);
                 if(creature_sel != _creature_sel || interacted)
                 {
                     obj_sel = 2;

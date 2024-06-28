@@ -47,6 +47,7 @@ static int creature_image_phantom;
 static int creature_image_rock;
 static int creature_image_uniball;
 static int creature_image_slugzilla;
+static int creature_image_ghost;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -73,6 +74,7 @@ static void creature_update_phantom(Creature* c, float dt);
 static void creature_update_rock(Creature* c, float dt);
 static void creature_update_uniball(Creature* c, float dt);
 static void creature_update_slugzilla(Creature* c, float dt);
+static void creature_update_ghost(Creature* c, float dt);
 
 static void creature_fire_projectile(Creature* c, float angle);
 
@@ -114,6 +116,7 @@ void creature_init()
     creature_image_rock = gfx_load_image("src/img/rock1.png", false, false, 32, 32);
     creature_image_uniball = gfx_load_image("src/img/creature_uniball.png", false, false, 32, 32);
     creature_image_slugzilla = gfx_load_image("src/img/creature_slugzilla.png", false, false, 32, 32);
+    creature_image_ghost = gfx_load_image("src/img/creature_ghost.png", false, false, 24, 24);
 }
 
 char* creature_type_name(CreatureType type)
@@ -172,6 +175,8 @@ char* creature_type_name(CreatureType type)
             return "Uniball";
         case CREATURE_TYPE_SLUGZILLA:
             return "Slugzilla";
+        case CREATURE_TYPE_GHOST:
+            return "Ghost";
         default:
             return "???";
     }
@@ -232,6 +237,8 @@ int creature_get_image(CreatureType type)
             return creature_image_uniball;
         case CREATURE_TYPE_SLUGZILLA:
             return creature_image_slugzilla;
+        case CREATURE_TYPE_GHOST:
+            return creature_image_ghost;
         default:
             return -1;
     }
@@ -639,6 +646,21 @@ void creature_init_props(Creature* c)
             c->xp = 15;
             c->segmented = true;
         } break;
+        case CREATURE_TYPE_GHOST:
+        {
+            c->phys.speed = 60.0;
+            c->act_time_min = 0.5;
+            c->act_time_max = 2.0;
+            c->phys.mass = 0.5;
+            c->phys.base_friction = 20.0;
+            c->phys.hp_max = 1.0;
+            c->painful_touch = true;
+            c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
+            c->phys.floating = true;
+            c->phys.bobbing = true;
+            c->phys.crawling = false;
+            c->xp = 30;
+        } break;
     }
 
     if(c->phys.crawling)
@@ -1005,6 +1027,9 @@ void creature_update(Creature* c, float dt)
                 break;
             case CREATURE_TYPE_SLUGZILLA:
                 creature_update_slugzilla(c,dt);
+                break;
+            case CREATURE_TYPE_GHOST:
+                creature_update_ghost(c,dt);
                 break;
         }
     }
@@ -1471,17 +1496,12 @@ Creature* creature_get_nearest(uint8_t room_index, float x, float y)
 
 static void creature_update_slug(Creature* c, float dt)
 {
-
     bool act = ai_update_action(c, dt);
 
     if(act)
     {
         ai_stop_imm(c);
-
-        if(ai_flip_coin())
-        {
-            ai_random_walk(c);
-        }
+        ai_random_walk(c);
     }
 }
 
@@ -1532,11 +1552,7 @@ static void creature_update_spiked_slug(Creature* c, float dt)
         if(act)
         {
             ai_stop_imm(c);
-
-            if(ai_flip_coin())
-            {
-                ai_random_walk_cardinal(c);
-            }
+            ai_random_walk_cardinal(c);
         }
     }
 }
@@ -3015,4 +3031,72 @@ static void creature_update_slugzilla(Creature* c, float dt)
         if(act) c->ai_state = 0;
     }
 
+}
+
+static void creature_update_ghost(Creature* c, float dt)
+{
+    if(c->ai_state > 0)
+    {
+        c->ai_counter += dt;
+        if(c->ai_counter >= c->ai_counter_max)
+        {
+            c->ai_counter = 0.0;
+
+            if(c->ai_state == 1)
+            {
+                c->ai_state = 0;
+
+                Vector2f pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
+                c->phys.pos.x = pos.x;
+                c->phys.pos.y = pos.y;
+
+                // explode projectiles
+                int num_projectiles = 6;
+                float a = 0.0;
+                float aplus = 360.0 / num_projectiles;
+                for(int i = 0; i < num_projectiles; ++i)
+                {
+                    creature_fire_projectile(c, a);
+                    a += aplus;
+                }
+            }
+        }
+
+        return;
+    }
+
+    bool act = ai_update_action(c, dt);
+
+    if(act)
+    {
+        Room* room = level_get_room_by_index(&level, c->phys.curr_room);
+        Vector2i tilec = {0};
+        Vector2f tilep = {0};
+
+        level_get_rand_floor_tile(room, &tilec, &tilep);
+
+        float duration = 2.0;
+
+        Decal d = {0};
+        d.image = particles_image;
+        d.sprite_index = 42;
+        d.tint = COLOR_ORANGE;
+        d.scale = 1.0;
+        d.rotation = 0.0;
+        d.opacity = 0.5;
+        d.ttl = duration;
+        d.pos.x = tilep.x;
+        d.pos.y = tilep.y;
+        d.room = c->phys.curr_room;
+        d.fade_pattern = 1;
+        decal_add(d);
+
+        c->target_tile.x = tilec.x;
+        c->target_tile.y = tilec.y;
+
+        c->ai_state = 1;
+        c->ai_value = 0;
+        c->ai_counter = 0;
+        c->ai_counter_max = duration;
+    }
 }
