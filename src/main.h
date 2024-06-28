@@ -18,7 +18,7 @@
 
 #include "glist.h"
 
-#define TESTING 1
+#define TESTING 0
 
 #if 1
 #define VIEW_WIDTH   1200
