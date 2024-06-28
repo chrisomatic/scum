@@ -2877,7 +2877,7 @@ static void creature_update_uniball(Creature* c, float dt)
 static void creature_update_slugzilla(Creature* c, float dt)
 {
 
-#define _TEST_   0
+#define _TEST_    0
 #define _DEBUG_   0
 
     if(c->ai_state == 0)
@@ -2960,14 +2960,28 @@ static void creature_update_slugzilla(Creature* c, float dt)
             {
                 CreatureSegment* cs = &creature_segments[i];
 
+
+
                 if(cs->target_count == 0)
                 {
+#if _DEBUG_
+                    if(cs->tail)
+                    {
+                        printf("initializing targets\n");
+                    }
+#endif
                     cs->target_tile[cs->target_count].x = c->phys.curr_tile.x;
                     cs->target_tile[cs->target_count].y = c->phys.curr_tile.y;
                     Rect pos = level_get_tile_rect(c->phys.curr_tile.x, c->phys.curr_tile.y);
                     cs->target_pos[cs->target_count].x = pos.x;
                     cs->target_pos[cs->target_count].y = pos.y;
                     cs->target_count++;
+                }
+
+                if(cs->target_count == 5)
+                {
+                    printf("target count is too big!\n");
+                    continue;
                 }
 
 
@@ -2977,7 +2991,7 @@ static void creature_update_slugzilla(Creature* c, float dt)
                 cs->target_pos[cs->target_count].y = end_pos.y;
                 cs->target_count++;
 #if _DEBUG_
-                if(i == 0)
+                if(cs->tail)
                 {
                     printf("Sub targets %d\n", cs->target_count);
                     for(int j = 0; j < cs->target_count; ++j)
@@ -3006,9 +3020,15 @@ static void creature_update_slugzilla(Creature* c, float dt)
                 {
                     CreatureSegment* cs = &creature_segments[i];
                     // memset(cs->target_tile, 0, 5*sizeof(Vector2i));
-                    cs->target_count = 0;
+                    // cs->target_count = 0;
                     cs->vel.x = 0;
                     cs->vel.y = 0;
+#if _DEBUG_
+                    // if(cs->tail)
+                    // {
+                    //     printf("clearing targets\n");
+                    // }
+#endif
                 }
 
                 return;
@@ -3041,9 +3061,15 @@ static void creature_update_slugzilla(Creature* c, float dt)
 
             if(ABS(v.x) < 1.0 && ABS(v.y) < 1.0)
             {
+                cs->pos.x = cs->target_pos[0].x;
+                cs->pos.y = cs->target_pos[0].y;
 #if _DEBUG_
-                printf("Reached %d, %d\n", cs->target_tile[0].x, cs->target_tile[0].y);
+                if(cs->tail)
+                {
+                    printf("Reached %d, %d\n", cs->target_tile[0].x, cs->target_tile[0].y);
+                }
 #endif
+
                 cs->target_count--;
                 for(int j = 1; j < 5; ++j)
                 {
@@ -3053,7 +3079,7 @@ static void creature_update_slugzilla(Creature* c, float dt)
                 // v.x = cs->target_pos[0].x - cs->pos.x;
                 // v.y = cs->target_pos[0].y - cs->pos.y;
 #if _DEBUG_
-                if(i == 0)
+                if(cs->tail)
                 {
                     printf("(count: %d) moving to %d, %d\n", cs->target_count, cs->target_tile[0].x, cs->target_tile[0].y);
                 }
@@ -3068,7 +3094,10 @@ static void creature_update_slugzilla(Creature* c, float dt)
                 cs->vel.x = o.x*c->curr_speed;
                 cs->vel.y = o.y*c->curr_speed;
 #if _DEBUG_
-                if(i == 0) printf("  moving %s  %.2f, %.2f -> %.2f, %.2f\n", get_dir_name(direction), cs->pos.x, cs->pos.y, cs->target_pos[0].x, cs->target_pos[0].y);
+                if(cs->tail)
+                {
+                    printf("  moving %s  %.2f, %.2f -> %.2f, %.2f\n", get_dir_name(direction), cs->pos.x, cs->pos.y, cs->target_pos[0].x, cs->target_pos[0].y);
+                }
 #endif
             }
             else
