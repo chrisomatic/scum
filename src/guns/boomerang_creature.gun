@@ -2,8 +2,8 @@ based_on: null
 name: boomerang_creature
 desc: Watch out
 cost: 5
-damage_min: 0.86
-damage_max: 0.86
+damage_min: 1.00
+damage_max: 1.00
 num: 1
 speed: 836.69
 scale1: 0.97

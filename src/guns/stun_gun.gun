@@ -2,8 +2,8 @@ based_on: null
 name: stun_gun
 desc: shoot short-range stun beam
 cost: 6
-damage_min: 0.86
-damage_max: 0.86
+damage_min: 1.00
+damage_max: 1.00
 num: 1
 speed: 115.51
 scale1: 1.00

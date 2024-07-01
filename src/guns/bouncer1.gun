@@ -2,8 +2,8 @@ based_on: null
 name: bouncer1
 desc: Good at bouncing
 cost: 6
-damage_min: 0.86
-damage_max: 1.72
+damage_min: 1.00
+damage_max: 1.00
 num: 1
 speed: 270.60
 scale1: 0.89

@@ -2,8 +2,8 @@ based_on: null
 name: bounce_backshot1
 desc: bounces into many small projectiles
 cost: 8
-damage_min: 48.17
-damage_max: 48.17
+damage_min: 1.00
+damage_max: 1.00
 num: 1
 speed: 333.07
 scale1: 0.76

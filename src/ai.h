@@ -55,7 +55,8 @@ static void _update_sprite_index(Creature* c, Dir dir)
            c->type == CREATURE_TYPE_SPAWN_SPIDER ||
            c->type == CREATURE_TYPE_PHANTOM || 
            c->type == CREATURE_TYPE_SLUGZILLA ||
-           c->type == CREATURE_TYPE_GHOST);
+           c->type == CREATURE_TYPE_GHOST ||
+           c->type == CREATURE_TYPE_BOOMER);
     
     if(!update)
         return;

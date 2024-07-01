@@ -2,8 +2,8 @@ based_on: null
 name: ballthrower
 desc: lob a projectile
 cost: 2 
-damage_min: 3.45
-damage_max: 5.17
+damage_min: 1.00
+damage_max: 1.00
 num: 1
 speed: 270.60
 scale1: 1.00

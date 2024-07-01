@@ -3,8 +3,8 @@ name: crazy_bounce
 desc: test
 cost: 15
 
-damage_min: 34.68
-damage_max: 34.68
+damage_min: 1.00
+damage_max: 1.00
 num: 1
 speed: 853.89
 scale1: 1.02

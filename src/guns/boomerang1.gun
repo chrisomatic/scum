@@ -2,8 +2,8 @@ based_on: null
 name: boomerang1
 desc: Watch out
 cost: 5
-damage_min: 1.72
-damage_max: 2.58
+damage_min: 1.00
+damage_max: 1.00
 num: 1
 speed: 495.49
 scale1: 1.28

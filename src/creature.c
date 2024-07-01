@@ -48,6 +48,7 @@ static int creature_image_rock;
 static int creature_image_uniball;
 static int creature_image_slugzilla;
 static int creature_image_ghost;
+static int creature_image_boomer;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -75,6 +76,7 @@ static void creature_update_rock(Creature* c, float dt);
 static void creature_update_uniball(Creature* c, float dt);
 static void creature_update_slugzilla(Creature* c, float dt);
 static void creature_update_ghost(Creature* c, float dt);
+static void creature_update_boomer(Creature* c, float dt);
 
 static void creature_fire_projectile(Creature* c, float angle);
 
@@ -117,6 +119,7 @@ void creature_init()
     creature_image_uniball = gfx_load_image("src/img/creature_uniball.png", false, false, 32, 32);
     creature_image_slugzilla = gfx_load_image("src/img/creature_slugzilla.png", false, false, 32, 32);
     creature_image_ghost = gfx_load_image("src/img/creature_ghost.png", false, false, 24, 24);
+    creature_image_boomer = gfx_load_image("src/img/creature_boomer.png", false, false, 32, 32);
 }
 
 char* creature_type_name(CreatureType type)
@@ -177,6 +180,8 @@ char* creature_type_name(CreatureType type)
             return "Slugzilla";
         case CREATURE_TYPE_GHOST:
             return "Ghost";
+        case CREATURE_TYPE_BOOMER:
+            return "Boomer";
         default:
             return "???";
     }
@@ -239,6 +244,8 @@ int creature_get_image(CreatureType type)
             return creature_image_slugzilla;
         case CREATURE_TYPE_GHOST:
             return creature_image_ghost;
+        case CREATURE_TYPE_BOOMER:
+            return creature_image_boomer;
         default:
             return -1;
     }
@@ -253,6 +260,7 @@ char* creature_get_gun_name(CreatureType type)
         case CREATURE_TYPE_TOTEM_BLUE: return "totem_blue";
         case CREATURE_TYPE_WATCHER:    return "watcher";
         case CREATURE_TYPE_GHOST:      return "chevrons";
+        case CREATURE_TYPE_BOOMER:     return "boomerang_creature";
         default:                       return "creature";
     }
 }
@@ -662,6 +670,18 @@ void creature_init_props(Creature* c)
             c->phys.crawling = false;
             c->xp = 30;
         } break;
+        case CREATURE_TYPE_BOOMER:
+        {
+            c->phys.speed = 250.0;
+            c->act_time_min = 0.5;
+            c->act_time_max = 0.5;
+            c->phys.mass = 0.5;
+            c->phys.base_friction = 20.0;
+            c->phys.hp_max = 1.0;
+            c->painful_touch = true;
+            c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
+            c->xp = 30;
+        } break;
     }
 
     if(c->phys.crawling)
@@ -1055,6 +1075,9 @@ void creature_update(Creature* c, float dt)
                 break;
             case CREATURE_TYPE_GHOST:
                 creature_update_ghost(c,dt);
+                break;
+            case CREATURE_TYPE_BOOMER:
+                creature_update_boomer(c,dt);
                 break;
         }
     }
@@ -3366,5 +3389,28 @@ static void creature_update_ghost(Creature* c, float dt)
         c->ai_value = 0;
         c->ai_counter = 0;
         c->ai_counter_max = duration;
+    }
+}
+
+static void creature_update_boomer(Creature* c, float dt)
+{
+    bool act = ai_update_action(c, dt);
+
+    if(act)
+    {
+        ai_stop_imm(c);
+
+        if(c->ai_state < 3)
+        {
+            // walk
+            ai_random_walk_cardinal(c);
+            c->ai_state++;
+        }
+        else
+        {
+            // shoot
+            creature_fire_projectile(c, c->phys.rotation_deg);
+            c->ai_state = 0;
+        }
     }
 }

@@ -2,8 +2,6 @@ based_on: buckshot1
 name: buckshot3
 desc: Double shot
 cost: 20
-damage_min: 5.17
-damage_max: 6.03
 speed: 301.62
 scale1: 1.26
 scale2: 0.47
