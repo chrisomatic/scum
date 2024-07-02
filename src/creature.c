@@ -788,29 +788,29 @@ static void add_to_random_wall_tile(Creature* c)
 
     switch(wall)
     {
-        case DIR_UP:
-            creature_set_sprite_index(c, 2);
-            tile_x = (rand() % (ROOM_TILE_SIZE_X-1));
-            if(tile_x >= ROOM_TILE_SIZE_X/2.0)tile_x+=1;
-            tile_y = -1;
-            break;
         case DIR_RIGHT:
-            creature_set_sprite_index(c, 3);
+            creature_set_sprite_index(c, 2);
             tile_x = ROOM_TILE_SIZE_X;
             tile_y = (rand() % (ROOM_TILE_SIZE_Y-1));
             if(tile_y >= ROOM_TILE_SIZE_Y/2.0)tile_y+=1;
             break;
-        case DIR_DOWN:
-            creature_set_sprite_index(c, 0);
+        case DIR_UP:
+            creature_set_sprite_index(c, 3);
             tile_x = (rand() % (ROOM_TILE_SIZE_X-1));
             if(tile_x >= ROOM_TILE_SIZE_X/2.0)tile_x+=1;
-            tile_y = ROOM_TILE_SIZE_Y;
+            tile_y = -1;
             break;
         case DIR_LEFT:
-            creature_set_sprite_index(c, 1);
+            creature_set_sprite_index(c, 0);
             tile_x = -1;
             tile_y = (rand() % (ROOM_TILE_SIZE_Y-1));
             if(tile_y >= ROOM_TILE_SIZE_Y/2.0)tile_y+=1;
+            break;
+        case DIR_DOWN:
+            creature_set_sprite_index(c, 1);
+            tile_x = (rand() % (ROOM_TILE_SIZE_X-1));
+            if(tile_x >= ROOM_TILE_SIZE_X/2.0)tile_x+=1;
+            tile_y = ROOM_TILE_SIZE_Y;
             break;
     }
 
@@ -846,16 +846,16 @@ static void add_to_wall_tile(Creature* c, int tile_x, int tile_y)
 
     switch(wall)
     {
-        case DIR_UP:
+        case DIR_RIGHT:
             creature_set_sprite_index(c, 2);
             break;
-        case DIR_RIGHT:
+        case DIR_UP:
             creature_set_sprite_index(c, 3);
             break;
-        case DIR_DOWN:
+        case DIR_LEFT:
             creature_set_sprite_index(c, 0);
             break;
-        case DIR_LEFT:
+        case DIR_DOWN:
             creature_set_sprite_index(c, 1);
             break;
     }
