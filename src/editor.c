@@ -340,6 +340,7 @@ void editor_draw()
 
                     if(imgui_button("Hurt"))
                     {
+                        DEBUG();
                         player_hurt(p, 1);
                     }
 

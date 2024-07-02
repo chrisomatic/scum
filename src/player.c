@@ -1511,7 +1511,9 @@ void player_update(Player* p, float dt)
                 case TILE_TIMED_SPIKES1:
                 case TILE_TIMED_SPIKES2:
                     if(level_get_tile_sprite(tt) == SPRITE_TILE_SPIKES)
+                    {
                         player_hurt(p,1);
+                    }
                     break;
             }
         }
@@ -2631,17 +2633,21 @@ void player_handle_collision(Player* p, Entity* e)
             CollisionInfo ci = {0};
             bool collided = phys_collision_circles(&p->phys,&c->phys, &ci);
 
-            if(collided && p->phys.pos.z <= 3 && !p->phys.floating)
+            if(collided)
             {
                 //HACK
                 // if(level_transition_state)
-                phys_collision_correct(&p->phys, &c->phys,&ci);
+                if(p->phys.pos.z <= 3 && !p->phys.floating)
+                {
+                    phys_collision_correct(&p->phys, &c->phys,&ci);
+
+                }
+                if(c->painful_touch)
+                {
+                    player_hurt(p,c->damage);
+                }
             }
 
-            if(c->painful_touch)
-            {
-                player_hurt(p,c->damage);
-            }
 
             // check for weapon collision here?
             // it may be better to add weapons to the entity list

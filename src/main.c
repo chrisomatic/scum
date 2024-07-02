@@ -1852,9 +1852,8 @@ typedef struct
 } MenuCharacter;
 
 #define MC_MAX 50
-Dir mc_dir = DIR_DOWN;
+Dir mc_dir = DIR_RIGHT;
 MenuCharacter mc[MC_MAX] = {0};
-
 
 void update_menu_characters(float dt)
 {
