@@ -306,7 +306,7 @@ Level level_generate(unsigned int seed, int rank)
         }
     }
 
-    int rfd_list[100] = {0};
+    int rfd_list[256] = {0};
 
     for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
     {
@@ -365,14 +365,15 @@ Level level_generate(unsigned int seed, int rank)
                 }
 
                 // rooms that don't have extra possible doors
-                int rfd_list2[100] = {0};
+                int rfd_list2[256] = {0};
                 int rfd_count2 = 0;
                 rfd_count2 = get_usable_rooms(room->type, room->doors, rfd_list2, true);
 
                 if(rfd_count2 > 0)
                 {
-                    printf("using room with exact doors: %d, %d\n",room->grid.x, room->grid.y);
+                    // printf("using room with exact doors: %d, %d\n",room->grid.x, room->grid.y);
                     room->layout = rfd_list2[lrand(&rg_level)%rfd_count2];
+                    // printf("")
                 }
                 else if(rfd_count > 0)
                 {
@@ -412,27 +413,6 @@ Level level_generate(unsigned int seed, int rank)
                 used_room_list_empty[used_room_count_empty++] = room->layout;
             }
 
-            // if(role != ROLE_CLIENT)
-            // {
-            //     RoomFileData* rfd = &room_list[room->layout];
-            //     for(int i = 0; i < rfd->item_count; ++i)
-            //     {
-            //         Vector2f pos = level_get_pos_by_room_coords(rfd->item_locations_x[i]-1, rfd->item_locations_y[i]-1); // @convert room objects to tile grid coordinates
-            //         // LOGI("Adding item of type: %s to (%.2f %.2f)", item_get_name(rfd->item_types[i]), pos.x, pos.y);
-            //         item_add(rfd->item_types[i], pos.x, pos.y, room->index);
-            //     }
-
-            //     if(room->type == ROOM_TYPE_MONSTER || room->type == ROOM_TYPE_BOSS)
-            //     {
-            //         for(int i = 0; i < rfd->creature_count; ++i)
-            //         {
-            //             Vector2i g = {rfd->creature_locations_x[i], rfd->creature_locations_y[i]};
-            //             g.x--; g.y--; // @convert room objects to tile grid coordinates
-            //             Creature* c = creature_add(room, rfd->creature_types[i], &g, NULL);
-            //         }
-            //     }
-            // }
-            // room->doors_locked = (creature_get_room_count(room->index, false) != 0);
         }
     }
 
@@ -1337,6 +1317,19 @@ void level_generate_room_outer_walls(Room* room)
 
 static void add_wall(Room* room, Dir dir, WallType t, Vector2f* p0, Vector2f* p1)
 {
+    if(room->wall_count >= MAX_WALLS_PER_ROOM)
+    {
+        char* room_fname = room_files[room_list[room->layout].file_index];
+        LOGE("Too many walls! %s", room_fname);
+        return;
+    }
+
+    // char* room_fname = room_files[room_list[room->layout].file_index];
+    // if(STR_EQUAL("max_walls.room", room_fname))
+    // {
+    //     printf("walls: %d\n", room->wall_count+1);
+    // }
+
     Wall* w = &room->walls[room->wall_count++];
 
     w->dir = dir;

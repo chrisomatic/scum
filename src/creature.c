@@ -49,6 +49,7 @@ static int creature_image_uniball;
 static int creature_image_slugzilla;
 static int creature_image_ghost;
 static int creature_image_boomer;
+static int creature_image_wall_shooter;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -77,6 +78,7 @@ static void creature_update_uniball(Creature* c, float dt);
 static void creature_update_slugzilla(Creature* c, float dt);
 static void creature_update_ghost(Creature* c, float dt);
 static void creature_update_boomer(Creature* c, float dt);
+static void creature_update_wall_shooter(Creature* c, float dt);
 
 static void creature_fire_projectile(Creature* c, float angle);
 
@@ -120,6 +122,7 @@ void creature_init()
     creature_image_slugzilla = gfx_load_image("src/img/creature_slugzilla.png", false, false, 32, 32);
     creature_image_ghost = gfx_load_image("src/img/creature_ghost.png", false, false, 24, 24);
     creature_image_boomer = gfx_load_image("src/img/creature_boomer.png", false, false, 32, 32);
+    creature_image_wall_shooter = gfx_load_image("src/img/creature_wallshooter.png", false, false, 32, 32);
 }
 
 char* creature_type_name(CreatureType type)
@@ -182,6 +185,8 @@ char* creature_type_name(CreatureType type)
             return "Ghost";
         case CREATURE_TYPE_BOOMER:
             return "Boomer";
+        case CREATURE_TYPE_WALL_SHOOTER:
+            return "Wall Shooter";
         default:
             return "???";
     }
@@ -246,6 +251,8 @@ int creature_get_image(CreatureType type)
             return creature_image_ghost;
         case CREATURE_TYPE_BOOMER:
             return creature_image_boomer;
+        case CREATURE_TYPE_WALL_SHOOTER:
+            return creature_image_wall_shooter;
         default:
             return -1;
     }
@@ -255,6 +262,7 @@ char* creature_get_gun_name(CreatureType type)
 {
     switch(type)
     {
+        case CREATURE_TYPE_WALL_SHOOTER: return "machinegun2";
         case CREATURE_TYPE_CLINGER:    return "clinger";
         case CREATURE_TYPE_GEIZER:     return "geizer";
         case CREATURE_TYPE_TOTEM_BLUE: return "totem_blue";
@@ -682,6 +690,21 @@ void creature_init_props(Creature* c)
             c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
             c->xp = 30;
         } break;
+        case CREATURE_TYPE_WALL_SHOOTER:
+        {
+            c->phys.scale = 0.8;
+            c->phys.speed = 0.0;
+            c->act_time_min = 1.0;
+            c->act_time_max = 1.0;
+            c->phys.mass = 10000.0;
+            c->phys.base_friction = 0.0;
+            c->phys.hp_max = 2.0;
+            c->painful_touch = false;
+            c->windup_max = 0.5;
+            c->phys.crawling = true;
+            c->invincible = true;
+            c->xp = 25;
+        } break;
     }
 
     if(c->phys.crawling)
@@ -905,7 +928,7 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
 
         phys_calc_collision_rect(&c.phys);
 
-        if(c.type == CREATURE_TYPE_CLINGER)
+        if(c.type == CREATURE_TYPE_CLINGER || c.type == CREATURE_TYPE_WALL_SHOOTER)
         {
             if(tile)
                 add_to_wall_tile(&c, tile->x, tile->y);
@@ -1078,6 +1101,9 @@ void creature_update(Creature* c, float dt)
                 break;
             case CREATURE_TYPE_BOOMER:
                 creature_update_boomer(c,dt);
+                break;
+            case CREATURE_TYPE_WALL_SHOOTER:
+                creature_update_wall_shooter(c,dt);
                 break;
         }
     }
@@ -3412,5 +3438,16 @@ static void creature_update_boomer(Creature* c, float dt)
             creature_fire_projectile(c, c->phys.rotation_deg);
             c->ai_state = 0;
         }
+    }
+}
+
+static void creature_update_wall_shooter(Creature* c, float dt)
+{
+    bool act = ai_update_action(c, dt);
+    if(act)
+    {
+        bool horiz = (c->spawn_tile_y == -1 || c->spawn_tile_y == ROOM_TILE_SIZE_Y);
+        if(horiz) creature_fire_projectile(c, dir_to_angle_deg(c->spawn_tile_y == -1 ? DIR_DOWN : DIR_UP));
+        else      creature_fire_projectile(c, dir_to_angle_deg(c->spawn_tile_x == -1 ? DIR_RIGHT : DIR_LEFT));
     }
 }

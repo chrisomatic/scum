@@ -777,6 +777,7 @@ void editor_draw()
                     {
                         search_seed++;
                         Level search_level = level_generate(search_seed, search_rank);
+                        // level_set_room_pointers(&search_level);
 
                         for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
                         {
@@ -880,6 +881,7 @@ void editor_draw()
                         if(match_rank && match_room_type && match_filter_text)
                         {
                             _room_file_sel_index_map[_filtered_room_files_count] = i;
+                            // printf("_filtered_room_files_count = %d  (%d)\n", i, _filtered_room_files_count);
                             _filtered_room_files_count++;
                         }
                     }
@@ -915,6 +917,8 @@ void editor_draw()
                     imgui_text(selected_room_name_str);
 
                     // search_rank = room_list[ _room_file_sel_index_map[room_file_sel] ].rank;
+
+                    // printf("selection : %d\n", room_file_sel);
 
                     int layout = _room_file_sel_index_map[room_file_sel];
                     RoomFileData* rfd = &room_list[layout];

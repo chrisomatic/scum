@@ -703,7 +703,7 @@ void room_editor_draw()
 
         error |= out_of_area;
 
-        if(creature_sel == CREATURE_TYPE_CLINGER)
+        if(creature_sel == CREATURE_TYPE_CLINGER || creature_sel == CREATURE_TYPE_WALL_SHOOTER)
         {
             error |= !on_wall;
             // error |= on_door;

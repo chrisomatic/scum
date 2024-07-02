@@ -165,7 +165,7 @@ void draw_menu_characters();
 int main(int argc, char* argv[])
 {
 
-    // const rlim_t kStackSize = 64 * 1024 * 1024;   // min stack size = 16 MB
+    // const rlim_t kStackSize = 16 * 1024 * 1024;   // min stack size = 16 MB
     // struct rlimit rl;
     // int result;
     // result = getrlimit(RLIMIT_STACK, &rl);
@@ -187,7 +187,7 @@ int main(int argc, char* argv[])
     // {
     //     printf("%d\n", rl.rlim_cur);
     // }
-    // // exit(1);
+    // // // exit(1);
 
     init_timer();
     log_init(0);

@@ -23,9 +23,10 @@
 
 #define TILE_SIZE 32
 #define MAX_DOORS 4
-#define MAX_WALLS_PER_ROOM 200
+// #define MAX_WALLS_PER_ROOM 408       <-- max_walls.room
+#define MAX_WALLS_PER_ROOM 256
 
-#define MAX_ROOM_LIST_COUNT 200
+#define MAX_ROOM_LIST_COUNT 256
 
 #define ROOM_GRACE_TIME 1.0
 
