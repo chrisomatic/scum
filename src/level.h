@@ -23,8 +23,7 @@
 
 #define TILE_SIZE 32
 #define MAX_DOORS 4
-// #define MAX_WALLS_PER_ROOM 408       <-- max_walls.room
-#define MAX_WALLS_PER_ROOM 256
+#define MAX_WALLS 512
 
 #define MAX_ROOM_LIST_COUNT 256
 
@@ -148,12 +147,9 @@ typedef struct
 
     uint8_t breakable_floor_state[ROOM_TILE_SIZE_X][ROOM_TILE_SIZE_Y];
 
-    Wall walls[MAX_WALLS_PER_ROOM];
-    int wall_count;
     int layout; // rfd room_list index
 
     bool discovered;
-
     uint8_t index;
     Vector2i grid;
 } Room;
@@ -188,6 +184,9 @@ extern float level_room_time;   // time spent in room (until completed)
 extern int level_room_xp;
 extern bool level_room_in_progress;
 
+extern Wall walls[MAX_WALLS];
+extern int wall_count;
+
 void level_init();
 void level_update(float dt);
 void level_load_rooms();
@@ -215,7 +214,7 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
 void room_draw_walls(Room* room);
 void level_draw_wall_column(float x, float y);
 void level_print(Level* level);
-void level_sort_walls(Wall* walls, int wall_count, Physics* phys);
+void level_sort_walls(Physics* phys);
 void level_handle_room_collision(Room* room, Physics* phys, int entity_type, void* entity);
 Room* level_get_room(Level* level, int x, int y);
 Room* level_get_room_by_index(Level* level, int index);
@@ -240,7 +239,7 @@ Dir get_dir_from_coords(int x0, int y0, int x1, int y1);
 Dir get_dir_from_coords2(int x0, int y0, int x1, int y1);
 Dir get_dir_from_pos(float x0, float y0, float x1, float y1);
 void level_generate_room_outer_walls(Room* room);
-void generate_walls(Level* level);
+void generate_walls(Level* level, Room* room);
 
 const char* get_dir_name(Dir dir);
 const char* get_tile_name(TileType tt);

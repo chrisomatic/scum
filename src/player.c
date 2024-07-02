@@ -389,6 +389,7 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
 
     visible_room = room;
     refresh_visible_room_gun_list();
+    generate_walls(&level, visible_room);
 
     Vector2f pos = {0};
     level_get_safe_floor_tile(room, tile, NULL, &pos);

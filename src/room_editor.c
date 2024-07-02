@@ -147,7 +147,8 @@ void room_editor_start()
 
     room.valid = true;
     room.color = COLOR_TINT_NONE;
-    room.wall_count = 0;
+
+    wall_count = 0;
     level_generate_room_outer_walls(&room);
 
     window_controls_clear_keys();
@@ -471,7 +472,7 @@ bool room_editor_update(float dt)
         room->index = level_get_room_index(level.start.x, level.start.y);
         room->discovered = true;
 
-        generate_walls(&level);
+        generate_walls(&level, visible_room);
         level_place_entities(&level);
 
         player->phys.curr_room = room->index;
