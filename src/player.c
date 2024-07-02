@@ -187,7 +187,10 @@ void player_set_defaults(Player* p)
     p->level_hits = 0;
     p->room_hits = 0;
 
-    p->coins = 1;
+    p->coins = 2;
+#if TESTING
+    p->coins = 20;
+#endif
     p->revives = 0;
 
     p->xp = 0;
@@ -289,7 +292,6 @@ void player_drop_item(Player* p, Item* it)
     Vector2i o = get_dir_offsets(direction);
 
     float itr = it->phys.radius;
-    // float itr = 16;
 
     float px = p->phys.collision_rect.x;
     float py = p->phys.collision_rect.y;
@@ -301,9 +303,7 @@ void player_drop_item(Player* p, Item* it)
     ny += r*o.y - ABS(o.x)*10.0;
 
     Rect rect = RECT(nx,ny,itr,itr);
-    Vector2f adj = limit_rect_pos(&floor_area, &rect);
-    // nx += adj.x;
-    // ny += adj.y;
+    limit_rect_pos(&floor_area, &rect);
     nx = rect.x;
     ny = rect.y;
 
@@ -451,6 +451,9 @@ void player_init_keys()
 {
     if(player == NULL) return;
 
+    for(int i = 0;  i < PLAYER_ACTION_MAX; ++i)
+        memset(&player->actions[i], 0, sizeof(PlayerInput));
+
     // window_controls_clear_keys();
     window_controls_add_key(&player->actions[PLAYER_ACTION_UP].state, GLFW_KEY_W);
     window_controls_add_key(&player->actions[PLAYER_ACTION_DOWN].state, GLFW_KEY_S);
@@ -467,7 +470,9 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_ACTIVATE].state, GLFW_KEY_E);
 
     window_controls_add_key(&player->actions[PLAYER_ACTION_USE_ITEM].state, GLFW_KEY_U);
+
     window_controls_add_key(&player->actions[PLAYER_ACTION_DROP_ITEM].state, GLFW_KEY_N);
+    player->actions[PLAYER_ACTION_DROP_ITEM].hold_period = 0.1;
 
     window_controls_add_key(&player->actions[PLAYER_ACTION_REVIVE].state, GLFW_KEY_R);
 
@@ -483,9 +488,6 @@ void player_init_keys()
     window_controls_add_key(&player->actions[PLAYER_ACTION_TAB_CYCLE].state, GLFW_KEY_TAB);
 
     window_controls_add_key(&player->actions[PLAYER_ACTION_RSHIFT].state, GLFW_KEY_RIGHT_SHIFT);
-
-    for(int i = 0;  i < PLAYER_ACTION_MAX; ++i)
-        memset(&player->actions[i], 0, sizeof(PlayerInput));
 }
 
 void player2_init_keys()
@@ -1376,9 +1378,9 @@ void player_update(Player* p, float dt)
 
     bool activate = p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
     bool action_use = p->actions[PLAYER_ACTION_USE_ITEM].toggled_on;
-    bool action_drop = p->actions[PLAYER_ACTION_DROP_ITEM].toggled_on;
     bool tabbed = p->actions[PLAYER_ACTION_TAB_CYCLE].toggled_on;
     bool rshift = p->actions[PLAYER_ACTION_RSHIFT].state;
+    bool action_drop = p->actions[PLAYER_ACTION_DROP_ITEM].toggled_on || p->actions[PLAYER_ACTION_DROP_ITEM].hold;
     bool revive = p->actions[PLAYER_ACTION_REVIVE].toggled_on;
 
     if(p->revives > 0 && revive)
@@ -1804,7 +1806,7 @@ void player_update(Player* p, float dt)
     GFXImage* img = &gfx_images[p->image];
     Rect* vr = &img->visible_rects[p->sprite_index];
 
-
+#if 0
     if(p->settings.class == PLAYER_CLASS_ROBOT)
     {
         player_handle_melee(p, dt);
@@ -1814,6 +1816,7 @@ void player_update(Player* p, float dt)
         player_handle_orbitals(p,dt);
     }
     else
+#endif
     {
         player_handle_shooting(p, dt);
     }
@@ -2339,6 +2342,33 @@ void player_set_class(Player* p, PlayerClass class)
 {
     p->settings.class = class;
 
+#if 1
+    lookup_strength                     = lookup_spaceman_strength;
+    lookup_defense                      = lookup_spaceman_defense;
+    lookup_movement_speed               = lookup_spaceman_movement_speed;
+    lookup_movement_speed_max_vel       = lookup_spaceman_movement_speed_max_vel;
+    lookup_movement_speed_base_friction = lookup_spaceman_movement_speed_base_friction;
+    lookup_attack_speed                 = lookup_spaceman_attack_speed;
+    lookup_attack_range                 = lookup_spaceman_attack_range;
+    lookup_luck                         = lookup_spaceman_luck;
+
+    switch(class)
+    {
+        case PLAYER_CLASS_SPACEMAN:
+            p->image = class_image_spaceman;
+            break;
+        case PLAYER_CLASS_PHYSICIST:
+            p->image = class_image_physicist;
+            break;
+        case PLAYER_CLASS_ROBOT:
+            p->image = class_image_robot;
+            break;
+        default:
+            LOGE("Invalid class: %d", class);
+            p->image = class_image_robot;
+            break;
+    }
+#else
     switch(class)
     {
         case PLAYER_CLASS_SPACEMAN:
@@ -2391,6 +2421,7 @@ void player_set_class(Player* p, PlayerClass class)
             p->image = class_image_robot;
             break;
     }
+#endif
 
     Rect* vr = &gfx_images[p->image].visible_rects[0];
     // print_rect(vr);

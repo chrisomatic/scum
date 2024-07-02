@@ -935,7 +935,7 @@ void item_update_all(float dt)
         // remove previously used items
         if(it->used)
         {
-            if(!ITEM_USED_EXISTS(it->used))
+            if(!ITEM_USED_EXISTS(it->type))
             {
                 item_remove(it);
                 continue;
