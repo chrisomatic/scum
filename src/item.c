@@ -27,6 +27,8 @@ int guns_image = -1;
 static int chestables_index[ITEM_MAX] = {0};
 static int num_chestables = 0;
 
+#define ITEM_USED_EXISTS(_type_) (_type_ == ITEM_CHEST || _type_ == ITEM_CHEST_GUN || _type_ == ITEM_SHRINE || _type_ == ITEM_PODIUM)
+
 static uint16_t id_counter = 1;
 static uint16_t get_id()
 {
@@ -823,10 +825,10 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
     it.phys.vr = gfx_images[ item_props[it.type].image ].visible_rects[ item_props[it.type].sprite_index ];
     item_calc_phys_props(&it);
 
-    if(item_is_coin(type))
-    {
-        it.phys.radius *= 3.0;
-    }
+    // if(item_is_coin(type))
+    // {
+    //     it.phys.radius *= 3.0;
+    // }
 
     // x,y position passed in are meant to be the collision positions
     phys_calc_collision_rect(&it.phys);
@@ -889,7 +891,16 @@ void item_set_description(Item* it, char* fmt, ...)
 
 bool item_remove(Item* it)
 {
-    return list_remove_by_item(item_list, it);
+    // return list_remove_by_item(item_list, it);
+    for(int i = item_list->count-1; i >= 0; --i)
+    {
+        if(it->id == items[i].id)
+        {
+            list_remove(item_list, i);
+            return true;
+        }
+    }
+    return false;
 }
 
 void item_update(Item* it, float dt)
@@ -899,6 +910,8 @@ void item_update(Item* it, float dt)
 
     phys_apply_gravity(&it->phys, GRAVITY_EARTH, dt);
     phys_apply_friction(&it->phys, it->phys.base_friction, dt);
+
+    limit_rect_pos(&floor_area, &it->phys.collision_rect);
 
     if(it->type == ITEM_NEW_LEVEL)
     {
@@ -922,7 +935,7 @@ void item_update_all(float dt)
         // remove previously used items
         if(it->used)
         {
-            if(!(it->type == ITEM_CHEST || it->type == ITEM_CHEST_GUN || it->type == ITEM_SHRINE || it->type == ITEM_PODIUM))
+            if(!ITEM_USED_EXISTS(it->used))
             {
                 item_remove(it);
                 continue;
@@ -1072,6 +1085,12 @@ void item_draw(Item* it)
 
     int sprite_index = item_props[it->type].sprite_index;
 
+    if(it->used)
+    {
+        if(ITEM_USED_EXISTS(it->type)) sprite_index++;
+        else return;
+    }
+
     if(it->type == ITEM_GUN)
     {
         Gun* gun = &gun_catalog[it->user_data];
@@ -1083,11 +1102,6 @@ void item_draw(Item* it)
         {
             color = gun->color1;
         }
-    }
-
-    if(it->used)
-    {
-        sprite_index++;
     }
 
     float y = it->phys.pos.y - (it->phys.vr.h * it->phys.scale + it->phys.pos.z)/2.0;

@@ -187,7 +187,7 @@ void player_set_defaults(Player* p)
     p->level_hits = 0;
     p->room_hits = 0;
 
-    p->coins = 0;
+    p->coins = 1;
     p->revives = 0;
 
     p->xp = 0;
@@ -277,15 +277,37 @@ void player_drop_item(Player* p, Item* it)
     if(it == NULL) return;
     if(it->type == ITEM_NONE) return;
 
-    // float itr = it->phys.radius;
-    float itr = 16;
+    Dir direction = DIR_NONE;
+    if(p->sprite_index == SPRITE_UP)
+        direction = DIR_UP;
+    else if(p->sprite_index == SPRITE_DOWN)
+        direction = DIR_DOWN;
+    else if(p->sprite_index == SPRITE_LEFT)
+        direction = DIR_LEFT;
+    else if(p->sprite_index == SPRITE_RIGHT)
+        direction = DIR_RIGHT;
+    Vector2i o = get_dir_offsets(direction);
 
-    float px = p->phys.pos.x;
-    float py = p->phys.pos.y;
-    float r = p->phys.radius + itr + 2.0;
+    float itr = it->phys.radius;
+    // float itr = 16;
+
+    float px = p->phys.collision_rect.x;
+    float py = p->phys.collision_rect.y;
+    float r = p->phys.radius*2 + itr + 2.0;
     float nx = px;
     float ny = py;
 
+    nx += r*o.x;
+    ny += r*o.y - ABS(o.x)*10.0;
+
+    Rect rect = RECT(nx,ny,itr,itr);
+    Vector2f adj = limit_rect_pos(&floor_area, &rect);
+    // nx += adj.x;
+    // ny += adj.y;
+    nx = rect.x;
+    ny = rect.y;
+
+#if 0
     Room* room = level_get_room_by_index(&level, (int)p->phys.curr_room);
     if(!room) printf("room is null!\n");
 
@@ -320,8 +342,14 @@ void player_drop_item(Player* p, Item* it)
         //     print_rect(&rect);
         // }
     }
+#endif
+
     // printf("dropping item at %.2f, %.2f\n", nx, ny);
     Item* a = item_add(it->type, nx, ny, p->phys.curr_room);
+    a->phys.vel.x += o.x*100.0 + p->phys.vel.x;
+    a->phys.vel.y += o.y*100.0 + p->phys.vel.y;
+    a->phys.pos.z += p->phys.pos.z;
+
     item_set_description(a, "%s", it->desc);
     it->type = ITEM_NONE;
 }
@@ -1375,6 +1403,16 @@ void player_update(Player* p, float dt)
         }
     }
 
+    if(action_drop)
+    {
+        if(p->coins > 0)
+        {
+            Item it = {0};
+            it.type = ITEM_COIN_GOLD;
+            player_drop_item(p, &it);
+            p->coins--;
+        }
+    }
 
     Item* highlighted_item = NULL;
     if(p->highlighted_item_id != -1)
@@ -2593,16 +2631,16 @@ void player_handle_collision(Player* p, Entity* e)
             CollisionInfo ci = {0};
             bool collided = phys_collision_circles(&p->phys,&c->phys, &ci);
 
-            if(collided && p->phys.pos.z <= 0 && !p->phys.floating)
+            if(collided && p->phys.pos.z <= 3 && !p->phys.floating)
             {
                 //HACK
                 // if(level_transition_state)
                 phys_collision_correct(&p->phys, &c->phys,&ci);
+            }
 
-                if(c->painful_touch)
-                {
-                    player_hurt(p,c->damage);
-                }
+            if(c->painful_touch)
+            {
+                player_hurt(p,c->damage);
             }
 
             // check for weapon collision here?
@@ -2677,7 +2715,8 @@ void player_handle_collision(Player* p, Entity* e)
             if(collided)
             {
 
-                if(item_props[p2->type].touchable && p2->phys.pos.z <= 0)
+                // if(item_props[p2->type].touchable && p2->phys.pos.z <= 0)
+                if(item_props[p2->type].touchable)
                 {
                     item_use(p2, (void*)p);
                 }
