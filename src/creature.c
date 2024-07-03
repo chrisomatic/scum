@@ -961,6 +961,7 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
 
     if(c.type == CREATURE_TYPE_SLUGZILLA)
     {
+        creature_segment_count = 0;
         // initialize segments
         memset(creature_segments, 0, sizeof(CreatureSegment)*MAX_SEGMENTS);
 

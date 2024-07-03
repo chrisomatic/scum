@@ -27,7 +27,7 @@
 
 #define MAX_ROOM_LIST_COUNT 256
 
-#define ROOM_GRACE_TIME 2.0
+#define ROOM_GRACE_TIME 1.0
 
 // +2 for walls
 #define ROOM_W  TILE_SIZE*(ROOM_TILE_SIZE_X+2)
