@@ -1,6 +1,6 @@
 based_on: pistol1
 name: pistol2
-desc:   Basic starting player gun
+desc: Basic starting player gun
 cost: 5
 lifetime: 0.49
-spread: 9.31
+cooldown: 0.59

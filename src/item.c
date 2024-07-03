@@ -22,12 +22,13 @@ int items_image = -1;
 int chest_image = -1;
 int shrine_image = -1;
 int podium_image = -1;
+int portal_image = -1;
 int guns_image = -1;
 
 static int chestables_index[ITEM_MAX] = {0};
 static int num_chestables = 0;
 
-#define ITEM_USED_EXISTS(_type_) (_type_ == ITEM_CHEST || _type_ == ITEM_CHEST_GUN || _type_ == ITEM_SHRINE || _type_ == ITEM_PODIUM)
+#define ITEM_USED_EXISTS(_type_) (_type_ == ITEM_CHEST || _type_ == ITEM_CHEST_GUN || _type_ == ITEM_SHRINE || _type_ == ITEM_PODIUM || _type_ == ITEM_PORTAL)
 
 static uint16_t id_counter = 1;
 static uint16_t get_id()
@@ -179,6 +180,23 @@ static bool item_func_podium(Item* it, Player* p)
     return true;
 }
 
+static bool item_func_portal(Item* it, Player* p)
+{
+    if(it->used) return false;
+
+    it->used = true;
+
+    if(level_grace_time > 0) return false;
+
+    trigger_generate_level(rand(), level_rank+1, 2, __LINE__);
+    if(role == ROLE_SERVER)
+    {
+        NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
+        net_server_add_event(&ev);
+    }
+
+    return true;
+}
 
 static bool item_func_shrine(Item* it, Player* p)
 {
@@ -430,6 +448,11 @@ static bool internal_item_use(Item* it, void* _player)
             item_func_podium(it, p);
         } break;
 
+        case ITEM_PORTAL:
+        {
+            item_func_portal(it, p);
+        } break;
+
         default:
         {
             return false;
@@ -465,6 +488,7 @@ void item_init()
     chest_image = gfx_load_image("src/img/chest.png", false, false, 32, 32);
     shrine_image = gfx_load_image("src/img/shrine.png", false, false, 32, 48);
     podium_image = gfx_load_image("src/img/podium.png", false, false, 32, 48);
+    portal_image = gfx_load_image("src/img/portal.png", false, false, 40, 56);
     guns_image = gfx_load_image("src/img/guns.png", false, false, 32, 32);
 
     for(int i = 0; i < ITEM_MAX; ++i)
@@ -491,6 +515,11 @@ void item_init()
         else if(p->type == ITEM_PODIUM)
         {
             p->image = podium_image;
+            p->sprite_index = 0;
+        }
+        else if(p->type == ITEM_PORTAL)
+        {
+            p->image = portal_image;
             p->sprite_index = 0;
         }
         else if(p->type == ITEM_GUN)
@@ -625,6 +654,7 @@ ItemType item_rand(bool include_chest)
         if(item_is_chest(t) && !include_chest) continue;
         if(item_is_shrine(t)) continue;
         if(t == ITEM_NEW_LEVEL) continue;
+        if(t == ITEM_PORTAL) continue;
         if(t == ITEM_HEART_EMPTY) continue;
 
         //TEMP
@@ -646,6 +676,7 @@ const char* item_get_name(ItemType type)
         case ITEM_CHEST:      return "Chest";
         case ITEM_CHEST_GUN:  return "Gun Chest";
         case ITEM_PODIUM:      return "Podium";
+        case ITEM_PORTAL:      return "Portal";
 
         case ITEM_NEW_LEVEL:  return "New Level";
         case ITEM_SKULL:      return "Skull";
@@ -703,6 +734,7 @@ const char* item_get_description(ItemType type, Item* it)
         case ITEM_CHEST:      return "contains loot";
         case ITEM_CHEST_GUN:  return "contains guns";
         case ITEM_PODIUM:     return "this looks interesting";
+        case ITEM_PORTAL:     return "Looks otherworldly";
 
         case ITEM_NEW_LEVEL:  return "enter new level";
         case ITEM_SKULL:      return "unknown";
@@ -789,6 +821,13 @@ Item* item_add(ItemType type, float x, float y, uint8_t curr_room)
         } break;
 
         case ITEM_PODIUM:
+        {
+            it.phys.crawling = false;
+            it.phys.mass = 1000.0;
+            it.phys.base_friction = 50.0;
+            it.phys.elasticity = 0.2;
+        } break;
+        case ITEM_PORTAL:
         {
             it.phys.crawling = false;
             it.phys.mass = 1000.0;

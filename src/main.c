@@ -1406,7 +1406,7 @@ void handle_room_completion(Room* room)
             item_add(ITEM_CHEST, pos.x, pos.y, room_index);
 
             level_get_safe_floor_tile(room, start, NULL, &pos);
-            item_add(ITEM_NEW_LEVEL, pos.x, pos.y, room_index);
+            item_add(ITEM_PORTAL, pos.x, pos.y, room_index);
 
             level_get_safe_floor_tile(room, start, NULL, &pos);
             item_add(ITEM_REVIVE, pos.x, pos.y, room_index);

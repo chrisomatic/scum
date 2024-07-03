@@ -7,7 +7,7 @@
 3   # Boss
 
 ; Room Rank
-2
+3
 
 ; Tile Mapping
 None
@@ -56,6 +56,10 @@ Phantom
 Rock Monster
 Rock
 Uniball
+Slugzilla
+Ghost
+Boomer
+Wall Shooter
 
 ; Creatures
 17,7,3,0
@@ -96,10 +100,12 @@ Copper Coin
 Silver Coin
 Gold Coin
 ???
+???
 Chest
 Gun Chest
 Shrine
 Podium
+Portal
 Gun
 
 ; Items

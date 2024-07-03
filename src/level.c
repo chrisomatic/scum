@@ -19,6 +19,7 @@ int dungeon_image_wall = -1;
 int dungeon_set_image1 = -1;
 int dungeon_set_image2 = -1;
 int dungeon_set_image3 = -1;
+int dungeon_set_image4 = -1;
 float level_grace_time = 0.0;
 float level_room_time = 0;
 int level_room_xp = 0;
@@ -95,12 +96,12 @@ Level level_generate(unsigned int seed, int rank)
     // seed PRNG
     slrand(&rg_level, seed);
 
-    if(rank > 3)
+    if(rank > 4)
     {
 #if !GENERATE_ROOMS_TEST
         LOGW("Overriding rank!");
 #endif
-        rank = 3;
+        rank = 4;
         level_rank = rank;
     }
 
@@ -1690,6 +1691,7 @@ void level_init()
     dungeon_set_image1 = gfx_load_image("src/img/dungeon_facility.png", false, false, TILE_SIZE, TILE_SIZE);
     dungeon_set_image2 = gfx_load_image("src/img/dungeon_basement.png", false, false, TILE_SIZE, TILE_SIZE);
     dungeon_set_image3 = gfx_load_image("src/img/dungeon_dirt.png", false, false, TILE_SIZE, TILE_SIZE);
+    dungeon_set_image4 = gfx_load_image("src/img/dungeon_rock.png", false, false, TILE_SIZE, TILE_SIZE);
 
     dungeon_image_wall = gfx_load_image("src/img/rock_wall.png", false, false, 32, 50);
     dungeon_image = dungeon_set_image1;
@@ -2038,6 +2040,8 @@ void level_set_dungeon_image(int rank)
         dungeon_image = dungeon_set_image2;
     else if(rank == 3)
         dungeon_image = dungeon_set_image3;
+    else if(rank == 4)
+        dungeon_image = dungeon_set_image4;
     else
         dungeon_image = dungeon_set_image2;
 }
@@ -2061,24 +2065,34 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
 
     gfx_sprite_batch_begin(true);
 
-    // draw walls
-    for(int i = 1; i < ROOM_TILE_SIZE_X+1; ++i) // top
-        gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_UP, r.x + i*w,r.y, color, false, scale, 0.0, 1.0, false, false, false);
 
-    for(int i = 1; i < ROOM_TILE_SIZE_Y+1; ++i) // right
-        gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_RIGHT, r.x + (ROOM_TILE_SIZE_X+1)*w,r.y+i*h, color,false,  scale, 0.0, 1.0, false, false, false);
+    if(level_rank >= 5)
+    {
+        // draw stars
 
-    for(int i = 1; i < ROOM_TILE_SIZE_X+1; ++i) // bottom
-        gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_DOWN, r.x + i*w,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, false, scale, 0.0, 1.0, false, false, false);
+    }
+    else
+    {
+        // draw walls
+        for(int i = 1; i < ROOM_TILE_SIZE_X+1; ++i) // top
+            gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_UP, r.x + i*w,r.y, color, false, scale, 0.0, 1.0, false, false, false);
 
-    for(int i = 1; i < ROOM_TILE_SIZE_Y+1; ++i) // left
-        gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_LEFT, r.x,r.y+i*h, color, false, scale, 0.0, 1.0, false, false, false);
+        for(int i = 1; i < ROOM_TILE_SIZE_Y+1; ++i) // right
+            gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_RIGHT, r.x + (ROOM_TILE_SIZE_X+1)*w,r.y+i*h, color,false,  scale, 0.0, 1.0, false, false, false);
 
-    // wall corners
-    gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_LU, r.x,r.y, color, false, scale, 0.0, 1.0, false, false, false);
-    gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_UR, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y, color, false, scale, 0.0, 1.0, false, false, false);
-    gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_RD, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, false, scale, 0.0, 1.0, false, false, false);
-    gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_DL, r.x,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, false, scale, 0.0, 1.0, false, false, false);
+        for(int i = 1; i < ROOM_TILE_SIZE_X+1; ++i) // bottom
+            gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_DOWN, r.x + i*w,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, false, scale, 0.0, 1.0, false, false, false);
+
+        for(int i = 1; i < ROOM_TILE_SIZE_Y+1; ++i) // left
+            gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_LEFT, r.x,r.y+i*h, color, false, scale, 0.0, 1.0, false, false, false);
+
+        // wall corners
+        gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_LU, r.x,r.y, color, false, scale, 0.0, 1.0, false, false, false);
+        gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_UR, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y, color, false, scale, 0.0, 1.0, false, false, false);
+        gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_RD, r.x+(ROOM_TILE_SIZE_X+1)*w,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, false, scale, 0.0, 1.0, false, false, false);
+        gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_DL, r.x,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, false, scale, 0.0, 1.0, false, false, false);
+    }
+
 
     uint8_t door_sprites[4] = {SPRITE_TILE_DOOR_RIGHT, SPRITE_TILE_DOOR_UP, SPRITE_TILE_DOOR_LEFT, SPRITE_TILE_DOOR_DOWN};
 

@@ -1,6 +1,6 @@
 based_on: null
 name: pistol1
-desc:   Basic starting player gun
+desc: Basic starting player gun
 cost: 1
 damage_min: 1.00
 damage_max: 1.00
@@ -8,14 +8,15 @@ num: 1
 speed: 215.00
 scale1: 1.00
 scale2: 1.00
-lifetime: 0.40
-cooldown: 0.40
+lifetime: 0.44
+cooldown: 0.68
 burst_count: 0
 burst_rate: 0.20
 critical_hit_chance: 0.00
 knockback_factor: 0.00
 spread_type: 0
 spread: 9.31
+gun_sprite_index: 0
 sprite_index: 0
 spin_factor: 0.00
 color1: 50A0FF
@@ -29,6 +30,7 @@ ghost_chance: 0.00
 homing_chance: 0.00
 bounce_chance: 0.00
 penetration_chance: 0.00
+stun_chance: 0.00
 explosion_chance: 0.00
 explosion_radius: 15.00
 explosion_rate: 100.00

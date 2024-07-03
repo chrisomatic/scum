@@ -262,7 +262,7 @@ char* creature_get_gun_name(CreatureType type)
 {
     switch(type)
     {
-        case CREATURE_TYPE_WALL_SHOOTER: return "machinegun2";
+        case CREATURE_TYPE_WALL_SHOOTER: return "creature_straight";
         case CREATURE_TYPE_CLINGER:    return "clinger";
         case CREATURE_TYPE_GEIZER:     return "geizer";
         case CREATURE_TYPE_TOTEM_BLUE: return "totem_blue";
@@ -2665,10 +2665,10 @@ static void creature_update_behemoth(Creature* c, float dt)
             // add decal to show where projectile is going
             Decal d = {0};
             d.image = particles_image;
-            d.sprite_index = 42;
+            d.sprite_index = 80;
             d.tint = COLOR_RED;
             d.scale = 1.0;
-            d.rotation = rand() % 360;
+            d.rotation = 0.0; //rand() % 360;
             d.opacity = 0.6;
             d.ttl = 2.0;
             d.pos.x = rand_pos.x;
@@ -2696,7 +2696,7 @@ static void creature_update_beacon_red(Creature* c, float dt)
 
         Decal d = {
             .image = particles_image,
-            .sprite_index = 42,
+            .sprite_index = 80,
             .tint = COLOR_RED,
             .scale = 1.0,
             .rotation = 0.0,
@@ -2744,10 +2744,10 @@ static void creature_update_beacon_red(Creature* c, float dt)
         // add decal to show where projectile is going
         Decal d = {
             .image = particles_image,
-            .sprite_index = 42,
+            .sprite_index = 80,
             .tint = COLOR_RED,
             .scale = 1.0,
-            .rotation = rand() % 360,
+            .rotation = 0.0, //rand() % 360,
             .opacity = 0.6,
             .ttl = 2.0,
             .pos.x = rand_pos.x,

@@ -148,7 +148,7 @@ void editor_draw()
 
                 imgui_color_picker("Ambient Light", &ambient_light);
 
-                static char* dungeon_images[] = {"1", "2", "3"};
+                static char* dungeon_images[] = {"1", "2", "3", "4"};
                 static int first = true;
                 if(first)
                 {
@@ -162,6 +162,7 @@ void editor_draw()
                     case 0: dungeon_image = dungeon_set_image1; break;
                     case 1: dungeon_image = dungeon_set_image2; break;
                     case 2: dungeon_image = dungeon_set_image3; break;
+                    case 3: dungeon_image = dungeon_set_image4; break;
                     default: dungeon_image = dungeon_set_image1; break;
                 }
 

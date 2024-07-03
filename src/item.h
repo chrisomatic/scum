@@ -51,6 +51,7 @@ typedef enum
     ITEM_CHEST_GUN,
     ITEM_SHRINE,
     ITEM_PODIUM,
+    ITEM_PORTAL,
     ITEM_GUN,
 
     ITEM_MAX
@@ -105,6 +106,7 @@ extern int items_image;
 extern int chest_image;
 extern int shrine_image;
 extern int podium_image;
+extern int portal_image;
 extern int guns_image;
 
 extern glist* item_list;

@@ -1,11 +1,11 @@
 based_on: null
-name: geizer
-desc:  Spurting projectiles
-
+name: creature_straight
+desc: Shoots generic creature projectiles, no dropoff
+cost: 0
 damage_min: 1.00
 damage_max: 1.00
 num: 1
-speed: 100.00
+speed: 200.00
 scale1: 0.80
 scale2: 0.80
 lifetime: 3.00
@@ -14,22 +14,18 @@ burst_count: 0
 burst_rate: 0.20
 critical_hit_chance: 0.00
 knockback_factor: 0.00
-
 spread_type: 0
 spread: 0.00
-
+gun_sprite_index: 0
 sprite_index: 0
 spin_factor: 0.00
 color1: FF5050
 color2: FF5050
-
 directional_accel: 0.00
-gravity_factor: 0.50
+gravity_factor: 0.00
 air_friction: 0.00
-
 wave_amplitude: 0.00
 wave_period: 0.00
-
 ghost_chance: 0.00
 homing_chance: 0.00
 bounce_chance: 0.00
@@ -38,23 +34,19 @@ stun_chance: 0.00
 explosion_chance: 0.00
 explosion_radius: 15.00
 explosion_rate: 100.00
-
 fire_damage: 0.00
 cold_damage: 0.00
 lightning_damage: 0.00
 poison_damage: 0.00
-
 chargeable: false
 charge_type: 0
 charge_time_max: 0.00
-
 cluster: false
 cluster_stages: 0
 cluster_num0: 0
 cluster_num1: 0
 cluster_scale0: 0.00
 cluster_scale1: 0.00
-
 orbital: false
 orbital_max_count: 0
 orbital_distance: 0.00
