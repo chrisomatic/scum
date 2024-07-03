@@ -1,0 +1,119 @@
+[1] # version
+
+; Room Dimensions
+13,7
+
+; Room Type
+3   # Boss
+
+; Room Rank
+5
+
+; Tile Mapping
+None
+Floor
+Pit
+Boulder
+Mud
+Ice
+Spikes
+Timed Spikes 1
+Timed Spikes 2
+Breakable Floor
+
+; Tile Data
+1,1,9,1,9,1,1,1,9,9,1,1,1
+1,9,6,1,1,1,1,9,1,1,1,6,1
+1,1,9,1,1,1,1,1,1,1,1,1,1
+9,1,1,1,1,1,1,1,1,1,1,9,1
+1,1,1,1,1,1,1,1,1,1,1,1,1
+1,1,6,9,1,1,9,1,1,9,1,6,1
+1,1,1,9,9,1,1,9,1,1,1,1,1
+
+; Creature Mapping
+Slug
+Clinger
+Geizer
+Floater
+Big Floater
+Buzzer
+Totem Red
+Totem Blue
+Totem Yellow
+Shambler
+Spiked Slug
+Infected
+Gravity Crystal
+Peeper
+Leeper
+Spawn Egg
+Spawn Spider
+Behemoth
+Beacon Red
+Watcher
+Golem
+Phantom
+Rock Monster
+Rock
+Uniball
+Slugzilla
+Ghost
+Boomer
+Wall Shooter
+
+; Creatures
+9,5,2,0
+9,9,2,0
+9,5,5,0
+9,9,5,0
+
+; Item Mapping
+Red Gem
+Green Gem
+Blue Gem
+White Gem
+Yellow Gem
+Purple Gem
+Full Heart
+Half Heart
+Empty Heart
+Cosmic Full Heart
+Cosmic Half Heart
+Dragon Egg
+Shamrock
+Ruby Ring
+Potion of Strength
+Potion of Mana
+Potion of Great Mana
+Potion of Purple
++1 Gauntlet Slot
+New Level
+Upgrade Orb
+???
+???
+???
+Revive
+Skull
+Galaxy Pendant
+Feather
+Shield
+Wing
+Looking Glass
+Copper Coin
+Silver Coin
+Gold Coin
+???
+???
+Chest
+Gun Chest
+Shrine
+Podium
+Portal
+Gun
+
+; Items
+25,1,1
+
+; Doors
+1,1,1,1
+

@@ -179,6 +179,7 @@ extern int dungeon_set_image1;
 extern int dungeon_set_image2;
 extern int dungeon_set_image3;
 extern int dungeon_set_image4;
+extern int dungeon_set_image5;
 
 extern float level_grace_time;
 extern float level_room_time;   // time spent in room (until completed)

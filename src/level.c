@@ -13,6 +13,7 @@
 #include "room_editor.h"
 
 #define SMALL_LEVELS    1
+#define MAX_STARS 100
 
 int dungeon_image = -1;
 int dungeon_image_wall = -1;
@@ -20,6 +21,7 @@ int dungeon_set_image1 = -1;
 int dungeon_set_image2 = -1;
 int dungeon_set_image3 = -1;
 int dungeon_set_image4 = -1;
+int dungeon_set_image5 = -1;
 float level_grace_time = 0.0;
 float level_room_time = 0;
 int level_room_xp = 0;
@@ -50,6 +52,8 @@ static int used_room_count_empty = 0;
 static Level glevel = {0};
 static LevelPath gpath = {0};
 Vector2i asd_target = {0};
+
+Vector2f starfield[MAX_STARS];
 
 //TODO
 // indexed by level_rank
@@ -96,12 +100,12 @@ Level level_generate(unsigned int seed, int rank)
     // seed PRNG
     slrand(&rg_level, seed);
 
-    if(rank > 4)
+    if(rank > 5)
     {
 #if !GENERATE_ROOMS_TEST
         LOGW("Overriding rank!");
 #endif
-        rank = 4;
+        rank = 5;
         level_rank = rank;
     }
 
@@ -1692,9 +1696,17 @@ void level_init()
     dungeon_set_image2 = gfx_load_image("src/img/dungeon_basement.png", false, false, TILE_SIZE, TILE_SIZE);
     dungeon_set_image3 = gfx_load_image("src/img/dungeon_dirt.png", false, false, TILE_SIZE, TILE_SIZE);
     dungeon_set_image4 = gfx_load_image("src/img/dungeon_rock.png", false, false, TILE_SIZE, TILE_SIZE);
+    dungeon_set_image5 = gfx_load_image("src/img/dungeon_space.png", false, false, TILE_SIZE, TILE_SIZE);
 
     dungeon_image_wall = gfx_load_image("src/img/rock_wall.png", false, false, 32, 50);
     dungeon_image = dungeon_set_image1;
+
+    // init starfield
+    for(int i = 0; i < MAX_STARS; ++i)
+    {
+        starfield[i].x = rand() % VIEW_WIDTH;
+        starfield[i].y = rand() % VIEW_HEIGHT;
+    }
 
     room_file_load_all(false);
     printf("Done with room files\n");
@@ -1714,6 +1726,20 @@ void level_update(float dt)
     if(level_room_in_progress)
     {
         level_room_time += dt;
+    }
+
+    if(level_rank >= 5)
+    {
+        // simulate stars
+        for(int i = 0; i < MAX_STARS; ++i)
+        {
+            starfield[i].x += 30*dt;
+            starfield[i].y += 30*dt;
+            if(starfield[i].x > VIEW_WIDTH)
+                starfield[i].x = 0;
+            if(starfield[i].y > VIEW_HEIGHT)
+                starfield[i].y = 0;
+        }
     }
 
     handle_room_completion(visible_room);
@@ -2042,6 +2068,8 @@ void level_set_dungeon_image(int rank)
         dungeon_image = dungeon_set_image3;
     else if(rank == 4)
         dungeon_image = dungeon_set_image4;
+    else if(rank == 5)
+        dungeon_image = dungeon_set_image5;
     else
         dungeon_image = dungeon_set_image2;
 }
@@ -2069,7 +2097,10 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
     if(level_rank >= 5)
     {
         // draw stars
-
+        for(int i = 0; i < MAX_STARS; ++i)
+        {
+            gfx_draw_rect_xywh(starfield[i].x, starfield[i].y, 1, 1, COLOR_WHITE, 1.0, 0.0, 1.0, true, true);
+        }
     }
     else
     {
