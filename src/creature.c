@@ -269,6 +269,7 @@ char* creature_get_gun_name(CreatureType type)
         case CREATURE_TYPE_WATCHER:    return "watcher";
         case CREATURE_TYPE_GHOST:      return "chevrons";
         case CREATURE_TYPE_BOOMER:     return "boomerang_creature";
+        case CREATURE_TYPE_BEHEMOTH:   return "behemoth";
         default:                       return "creature";
     }
 }
@@ -1662,7 +1663,7 @@ static void creature_fire_projectile(Creature* c, float angle)
     projectile_add(pos, &vel, c->phys.curr_room, c->room_gun_index, angle, false, &c->phys, c->id);
 }
 
-static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float vel0_z, uint32_t color)
+static Vector3f creature_drop_projectile(Creature* c, int tile_x, int tile_y, float vel0_z, uint32_t color)
 {
     Gun* gun = &room_gun_list[c->room_gun_index];
 
@@ -1673,10 +1674,11 @@ static void creature_drop_projectile(Creature* c, int tile_x, int tile_y, float 
     // gun->scale2 += 0.80;
 
     Rect r = level_get_tile_rect(tile_x, tile_y);
-    Vector3f pos = {r.x, r.y, 400.0};
+    Vector3f pos = {r.x-r.w/2.0+rand()%(TILE_SIZE), r.y-r.h/2.0+rand()%(TILE_SIZE), 400.0};
 
     Vector3f vel = {0.0, 0.0, vel0_z};
     projectile_add(pos, &vel, c->phys.curr_room, c->room_gun_index, 0.0, false, &c->phys, c->id);
+    return pos;
 }
 
 static void creature_update_clinger(Creature* c, float dt)
@@ -2577,7 +2579,7 @@ static void creature_update_behemoth(Creature* c, float dt)
 
         int r = angry ? ai_rand(3) : ai_rand(2);
 
-        if(r == 0)
+        if(r == 0 && !c->phys.underground)
         {
             // go underground and spawn creatures
             c->phys.underground = true;
@@ -2592,8 +2594,8 @@ static void creature_update_behemoth(Creature* c, float dt)
             c->phys.underground = false;
             c->ai_state = 2;
             c->ai_value = 0;
-            c->act_time_min = angry ? 0.2 : 0.5;
-            c->act_time_max = angry ? 0.5 : 1.0;
+            c->act_time_min = angry ? 0.2 : 0.3;
+            c->act_time_max = angry ? 0.5 : 0.6;
             ai_choose_new_action_max(c);
         }
         return;
@@ -2641,6 +2643,140 @@ static void creature_update_behemoth(Creature* c, float dt)
         return;
     }
 
+#if 1
+    if(c->ai_state == 2)
+    {
+        if(c->ai_value == 0)
+        {
+            //choose starting point
+            Dir dir = rand()%4;
+            c->ai_value2 = dir;    // represents the direction of the wave of falling projectiles
+            if(dir == DIR_RIGHT)
+                c->ai_value3 = 0;
+            else if(dir == DIR_LEFT)
+                c->ai_value3 = ROOM_TILE_SIZE_X-1;
+            else if(dir == DIR_DOWN)
+                c->ai_value3 = 0;
+            else if(dir == DIR_UP)
+                c->ai_value3 = ROOM_TILE_SIZE_Y-1;
+
+        }
+
+        // if(c->ai_value % 10 == 0)
+        {
+            Dir dir = c->ai_value2;
+
+            int lst[ROOM_TILE_SIZE_X] = {0};
+            int lst_size = 0;
+            int num_projectiles = 0;
+            if(dir == DIR_LEFT || dir == DIR_RIGHT)
+            {
+                lst_size = ROOM_TILE_SIZE_Y;
+                num_projectiles = angry ? 7 : 5;
+            }
+            else
+            {
+                lst_size = ROOM_TILE_SIZE_X;
+                num_projectiles = angry ? 9 : 7;
+            }
+
+            for(int i = 0; i < lst_size; ++i)
+                lst[i] = i;
+
+            // "shuffle" the list
+            for(int i = 0; i < num_projectiles; ++i)
+            {
+                int r = rand() % (lst_size-i);
+                int value = lst[r];
+                lst[r] = lst[4-i-1];  // copy last element to the spot that was selected from
+
+                Vector2i tile = {0};
+
+                if(dir == DIR_LEFT || dir == DIR_RIGHT)
+                {
+                    tile.x = c->ai_value3;
+                    tile.y = value;
+                }
+                else
+                {
+                    tile.x = value;
+                    tile.y = c->ai_value3;
+                }
+
+                Rect trect = level_get_tile_rect(tile.x, tile.y);
+                Vector3f pos = creature_drop_projectile(c, tile.x, tile.y, (angry ? -400.0 : 0.0), COLOR_RED);
+
+                // add decal to show where projectile is going
+                Decal d = {0};
+                d.image = particles_image;
+                d.sprite_index = 80;
+                d.tint = COLOR_RED;
+                d.scale = 1.0;
+                d.rotation = 0;
+                d.opacity = 0.6;
+                d.ttl = 2.0;
+                d.pos.x = trect.x;
+                d.pos.y = trect.y;
+                d.room = c->phys.curr_room;
+                d.fade_pattern = 2;
+                decal_add(d);
+
+                printf("[%d]  %d,%d  %s\n", c->ai_value3, tile.x, tile.y, get_dir_name(c->ai_value2));
+            }
+
+            bool finished = false;
+            if(dir == DIR_LEFT)
+            {
+                c->ai_value3--;
+                if(c->ai_value3 < 0) finished = true;
+            }
+            else if(dir == DIR_RIGHT)
+            {
+                c->ai_value3++;
+                if(c->ai_value3 >= ROOM_TILE_SIZE_X) finished = true;
+            }
+            else if(dir == DIR_UP)
+            {
+                c->ai_value3--;
+                if(c->ai_value3 < 0) finished = true;
+            }
+            else if(dir == DIR_DOWN)
+            {
+                c->ai_value3++;
+                if(c->ai_value3 >= ROOM_TILE_SIZE_Y) finished = true;
+            }
+
+            if(finished)
+            {
+                c->act_time_min = 1.00;
+                c->act_time_max = 2.00;
+                ai_choose_new_action_max(c);
+                c->ai_state = 0;
+                c->phys.underground = false;
+            }
+
+        }
+
+        c->ai_value++;
+        return;
+
+
+
+        // Dir directions[4] = {DIR_RIGHT, DIR_UP, DIR_LEFT, DIR_DOWN};
+        // // Dir shuffled[4] = {0};
+        // for(int i = 0; i < 4; ++i)
+        // {
+        //     int r = rand() % (4-i);
+        //     // shuffled[i] = directions[r];
+        //     Dir direction = directions[r];
+        //     if(r != (4-i-1))
+        //     {
+        //         directions[r] = directions[4-i-1];  // shift last element to the spot that was selected from
+        //     }
+        // }
+
+    }
+#else
     if(c->ai_state == 2)
     {
         if(c->ai_value >= (angry ? 12 : 10))
@@ -2660,7 +2796,7 @@ static void creature_update_behemoth(Creature* c, float dt)
         for(int i = 0; i < n; ++i)
         {
             level_get_rand_floor_tile(room, &rand_tile, &rand_pos);
-            creature_drop_projectile(c, rand_tile.x, rand_tile.y, (angry ? -400.0 : 0.0), COLOR_RED);
+            Vector3f pos = creature_drop_projectile(c, rand_tile.x, rand_tile.y, (angry ? -400.0 : 0.0), COLOR_RED);
 
             // add decal to show where projectile is going
             Decal d = {0};
@@ -2671,8 +2807,8 @@ static void creature_update_behemoth(Creature* c, float dt)
             d.rotation = 0.0; //rand() % 360;
             d.opacity = 0.6;
             d.ttl = 2.0;
-            d.pos.x = rand_pos.x;
-            d.pos.y = rand_pos.y;
+            d.pos.x = pos.x;
+            d.pos.y = pos.y;
             d.room = c->phys.curr_room;
             d.fade_pattern = 1;
             decal_add(d);
@@ -2681,6 +2817,7 @@ static void creature_update_behemoth(Creature* c, float dt)
         c->ai_value++;
         return;
     }
+#endif
 }
 
 static void creature_update_beacon_red(Creature* c, float dt)

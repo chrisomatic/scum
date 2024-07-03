@@ -89,9 +89,10 @@ typedef struct
     bool damaged;
     float damaged_time;
 
-    bool invincible; // doesn't count toward creature total
-    bool passive;  // doesn't count toward creature total
-    bool friendly; // doesn't count toward creature total
+    // if any of these bools are true, then doesn't count toward creature total
+    bool invincible;
+    bool passive;
+    bool friendly;
 
     // AI
     float action_counter;
@@ -105,6 +106,8 @@ typedef struct
 
     int ai_state;
     int ai_value;
+    int ai_value2;
+    int ai_value3;
 
     bool windup;
     float windup_max;
@@ -113,13 +116,12 @@ typedef struct
     Vector2f target_pos;
     Vector2i subtarget_tile;
 
-    bool segmented;
     float curr_speed;
+    bool segmented;
 
     int xp;
     uint8_t room_gun_index;
 
-    // temp debug stuff
     int spawn_tile_x;    //room tile x
     int spawn_tile_y;    //room tile y
 

@@ -52,6 +52,10 @@ void decal_draw_all()
                 op = dt;
             }
         }
+        else if(d->fade_pattern == 2)
+        {
+            op = 1.0;
+        }
         gfx_draw_image(d->image, d->sprite_index, d->pos.x, d->pos.y, d->tint, d->scale, d->rotation, d->opacity*op, false, true);
     }
 }
