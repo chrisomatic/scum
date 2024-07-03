@@ -438,7 +438,7 @@ Level level_generate(unsigned int seed, int rank)
     int room_count = get_room_count(&glevel);
     printf("Total Room Count: %d\n", room_count);
     level_print(&glevel);
-    level_grace_time = 2.0;
+    level_grace_time = ROOM_GRACE_TIME;
 
     for(int i = 0; i < item_list->count; ++i)
     {

@@ -1207,7 +1207,7 @@ void creature_update(Creature* c, float dt)
     }
 
     TileType tt = level_get_tile_type(visible_room, c->phys.curr_tile.x, c->phys.curr_tile.y);
-    if(tt == TILE_BREAKABLE_FLOOR && !c->phys.floating && !c->phys.dead)
+    if(tt == TILE_BREAKABLE_FLOOR && !c->phys.floating && !c->phys.dead && !c->phys.underground)
     {
         int tc1 = (int)prior_tile_counter;
         int tc2 = (int)c->phys.curr_tile_counter;
@@ -1215,6 +1215,7 @@ void creature_update(Creature* c, float dt)
             visible_room->breakable_floor_state[c->phys.curr_tile.x][c->phys.curr_tile.y]++;
     }
 
+    c->hurt = false;
 
 }
 
@@ -1428,13 +1429,18 @@ Creature* creature_get_by_id(uint16_t id)
 }
 
 
-bool creature_hurt(Creature* c, float damage)
+bool creature_hurt(Creature* c, float damage, uint16_t from_id)
 {
     if(c->invincible)
         return false;
 
     if(role == ROLE_CLIENT)
         return false;
+
+    if(level_grace_time > 0)
+    {
+        return false;
+    }
 
     float hp = (float)c->phys.hp;
 
@@ -1454,6 +1460,12 @@ bool creature_hurt(Creature* c, float damage)
     }
 
     // printf("(%d)\n", c->phys.hp);
+
+    if(from_id != 0xFFFF)
+    {
+        c->hurt = true;
+        c->hurt_from_id = from_id;
+    }
 
     c->damaged = true;
     c->damaged_time = 0.0;

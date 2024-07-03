@@ -262,7 +262,7 @@ void entity_handle_misc(float dt)
             bool on_breakable_tile = (tt == TILE_BREAKABLE_FLOOR && e->phys->pos.z <= 3.0);
             bool moved_tiles = (e->phys->curr_tile.x != e->phys->prior_tile.x || e->phys->curr_tile.y != e->phys->prior_tile.y);
 
-            if(e->phys->on_breakable_tile && (moved_tiles || !on_breakable_tile))
+            if(e->phys->on_breakable_tile && (moved_tiles || !on_breakable_tile) && !e->phys->underground)
             {
                 // update breakable floor state
                 uint8_t* floor_state = &visible_room->breakable_floor_state[e->phys->prior_tile.x][e->phys->prior_tile.y];

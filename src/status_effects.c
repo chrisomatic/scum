@@ -29,7 +29,7 @@ static void status_effect_poison(void* entity, bool end)
                 player_hurt_no_inv((Player*)e->ptr,1);
                 break;
             case ENTITY_TYPE_CREATURE:
-                creature_hurt((Creature*)e->ptr,1);
+                creature_hurt((Creature*)e->ptr,1,0xFFFF);
                 break;
         }
     }
@@ -47,7 +47,7 @@ static void status_effect_fire(void* entity, bool end)
                 player_hurt_no_inv((Player*)e->ptr,1);
                 break;
             case ENTITY_TYPE_CREATURE:
-                creature_hurt((Creature*)e->ptr,1);
+                creature_hurt((Creature*)e->ptr,1,0xFFFF);
                 break;
         }
     }

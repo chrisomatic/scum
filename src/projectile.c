@@ -919,7 +919,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
                 case ENTITY_TYPE_CREATURE:
                     float damage = RAND_FLOAT(gun->damage_min, gun->damage_max);
                     // printf("%s damage: %.2f\n", __func__, damage);
-                    bool killed = creature_hurt((Creature*)e->ptr, damage);
+                    bool killed = creature_hurt((Creature*)e->ptr, damage, proj->from_id);
                     if(killed)
                     {
                         if(proj->from_player)

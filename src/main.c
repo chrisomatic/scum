@@ -1304,9 +1304,9 @@ void update(float dt)
         level_update(dt);
         player_update_all(dt);
         projectile_update_all(dt);
-        creature_update_all(dt);
-        item_update_all(dt);
         explosion_update_all(dt);
+        creature_update_all(dt);    // creature needs to come after player and projectile (hurt flag)
+        item_update_all(dt);
         decal_update_all(dt);
         particles_update(dt);
 
@@ -1647,7 +1647,7 @@ void draw_map(DrawLevelParams* params)
                     {
                         if(!room->doors[d]) continue;
                         player_send_to_room(player, room->index, true, level_get_door_tile_coords(d));
-                        level_grace_time = 2.0;
+                        level_grace_time = ROOM_GRACE_TIME;
                         break;
                     }
 

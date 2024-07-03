@@ -480,7 +480,7 @@ void player_init_keys()
     // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_2].state, GLFW_KEY_2);
     // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_3].state, GLFW_KEY_3);
     // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_4].state, GLFW_KEY_4);
-    // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM5].state, GLFW_KEY_5);
+    // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_5].state, GLFW_KEY_5);
     // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_6].state, GLFW_KEY_6);
     // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_7].state, GLFW_KEY_7);
     // window_controls_add_key(&player->actions[PLAYER_ACTION_ITEM_8].state, GLFW_KEY_8);
@@ -2719,7 +2719,7 @@ void player_handle_collision(Player* p, Entity* e)
                     if(!weapon_is_in_hit_list(&p->weapon, c->id))
                     {
                         weapon_add_hit_id(&p->weapon, c->id);
-                        creature_hurt(c, p->weapon.damage);
+                        creature_hurt(c, p->weapon.damage, p->index);
                     }
                 }
             }
