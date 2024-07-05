@@ -2,7 +2,7 @@
 
 #include "glist.h"
 
-#define MAX_POINT_LIGHTS 16
+#define MAX_POINT_LIGHTS 3 
 
 typedef struct
 {

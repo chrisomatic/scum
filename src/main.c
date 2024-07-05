@@ -517,7 +517,6 @@ bool camera_can_be_limited(float x, float y, float z)
 bool got_bad_seed = false;
 void run()
 {
-
     timer_set_fps(&game_timer,TARGET_FPS);
     timer_begin(&game_timer);
     double curr_time = timer_get_time();
@@ -2244,8 +2243,6 @@ void draw()
             }
 
         }
-
-
     }
 
     draw_minimap();

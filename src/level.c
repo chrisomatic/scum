@@ -2093,7 +2093,6 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
 
     gfx_sprite_batch_begin(true);
 
-
     if(level_rank >= 5)
     {
         // draw stars

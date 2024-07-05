@@ -52,7 +52,7 @@ typedef struct
 {
     bool in_world;
     bool ignore_light;
-    int image_indices[16];
+    int image_indices[8];
     int num_image_indices;
     int num_sprites;
     Sprite sprites[SPRITE_BATCH_MAX_SPRITES];
@@ -70,7 +70,7 @@ static GLuint batch_vao, batch_quad_vbo, batch_instance_vbo;
 
 static Matrix proj_matrix;
 
-static GLint loc_sprite_batch_image[16];
+static GLint loc_sprite_batch_image[8];
 static GLint loc_sprite_batch_ambient_color;
 static GLint loc_sprite_batch_ignore_light;
 static GLint loc_sprite_batch_mask_color;
@@ -249,7 +249,7 @@ void gfx_init(int width, int height)
     }
 
     // shader locations
-    for(int i = 0; i < 16; ++i)
+    for(int i = 0; i < 8; ++i)
     {
         snprintf(lookup_str,16,"images[%d]",i);
         loc_sprite_batch_image[i]         = glGetUniformLocation(program_sprite_batch, lookup_str);
@@ -286,6 +286,8 @@ void gfx_init(int width, int height)
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glDisable(GL_DEPTH_TEST);
 
     glEnable(GL_LINE_SMOOTH);
     glLineWidth(5.0);
@@ -490,7 +492,7 @@ bool gfx_sprite_batch_add(int img_index, int sprite_index, float x, float y, uin
 
     }
 
-    if(sprite_batch.num_image_indices < 16)
+    if(sprite_batch.num_image_indices < 8)
     {
         if(!is_index_in_batch)
         {
@@ -1495,7 +1497,7 @@ static int assign_image(GFXImageData image, bool linear_filter, int element_widt
                 {
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                    //glGenerateMipmap(GL_TEXTURE_2D);
+                    glGenerateMipmap(GL_TEXTURE_2D);
                 }
                 else
                 {

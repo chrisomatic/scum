@@ -19,6 +19,11 @@ static double _fps_hist[60] = {0};
 static int _fps_hist_count = 0;
 static int _fps_hist_max_count = 0;
 
+// used for profiling
+double _stopwatch_start = 0.0;
+double _stopwatch_time = 0.0;
+double _stopwatch_time_prior  = 0.0;
+
 #if _WIN32
 void usleep(__int64 usec)
 {
@@ -156,4 +161,33 @@ double timer_get_prior_frame_fps(Timer* timer)
 void timer_delay_us(int us)
 {
     usleep(us);
+}
+
+void stopwatch_start()
+{
+    printf("[STOPWATCH] 00:00.000 (BEGIN)\n");
+    _stopwatch_start = get_time();
+    _stopwatch_time = 0.0;
+}
+
+void stopwatch_capture(char* str)
+{
+    _stopwatch_time_prior = _stopwatch_time;
+    _stopwatch_time = (get_time() - _stopwatch_start);
+
+    double time_left = _stopwatch_time;
+
+    int min = (int)(time_left/60.0f); time_left -= (min*60.0);
+    int sec = (int)(time_left);       time_left -= (sec);
+    int ms = (int)(time_left*1000.0); 
+
+    float delta_time = _stopwatch_time - _stopwatch_time_prior;
+
+    //printf("[STOPWATCH] %02d:%02d.%03d [delta: %6.4f ms] (%s)\n", min, sec, ms, delta_time*1000.0, str);
+    printf("[STOPWATCH] %08.4f ms [delta: %08.4f ms] (%s)\n", _stopwatch_time*1000.0, delta_time*1000.0, str);
+}
+
+void stopwatch_reset()
+{
+    _stopwatch_time = 0.0;
 }

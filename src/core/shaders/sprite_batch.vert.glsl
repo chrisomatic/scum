@@ -19,9 +19,9 @@ flat out uint ignore_light0;
 flat out uint blending_mode0;
 flat out uint mask_color0;
 
-out vec2 to_light_vector[16];
+out vec2 to_light_vector[3];
 
-uniform vec2 light_pos[16];
+uniform vec2 light_pos[3];
 uniform mat4 view;
 uniform mat4 projection;
 
@@ -43,7 +43,7 @@ void main()
     //}
 
     vec4 world_pos = model * vec4(position.xy,0.0,1.0);
-    for(int i = 0; i < 16; ++i)
+    for(int i = 0; i < 3; ++i)
     {
         to_light_vector[i] = light_pos[i] - world_pos.xy;
     }

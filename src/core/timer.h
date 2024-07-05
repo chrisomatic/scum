@@ -11,6 +11,7 @@ typedef struct
     double frame_fps_avg;
 } Timer;
 
+
 void init_timer(void);
 
 void timer_begin(Timer* timer);
@@ -21,3 +22,7 @@ double timer_get_prior_frame_fps(Timer* timer);
 double timer_get_elapsed(Timer* timer);
 void timer_delay_us(int us);
 double timer_get_time();
+
+void stopwatch_start();
+void stopwatch_capture(char* str);
+void stopwatch_reset();

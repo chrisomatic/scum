@@ -7,14 +7,14 @@ flat in uint image_index0;
 flat in uint ignore_light0;
 flat in uint mask_color0;
 flat in uint blending_mode0;
-in vec2 to_light_vector[16];
+in vec2 to_light_vector[3];
 
 out vec4 outColor;
 
-uniform sampler2D images[16];
+uniform sampler2D images[8];
 uniform vec3 ambient_color;
-uniform vec3 light_color[16];
-uniform vec3 light_atten[16];
+uniform vec3 light_color[3];
+uniform vec3 light_atten[3];
 
 void main() {
 
@@ -36,7 +36,7 @@ void main() {
     vec3 total_diffuse = vec3(0.0);
 
     // point lights
-    for(int i = 0; i < 16; ++i)
+    for(int i = 0; i < 3; ++i)
     {
         float dist_to_light = length(to_light_vector[i]);
         float atten_factor = light_atten[i].x + light_atten[i].y*dist_to_light + light_atten[i].z*dist_to_light*dist_to_light;
@@ -48,7 +48,6 @@ void main() {
     total_diffuse = max(total_diffuse, ambient_color);
 
     vec4 my_color;
-
 
     if(ignore_light0 == uint(1))
     {
