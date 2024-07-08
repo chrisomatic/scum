@@ -10,15 +10,15 @@
 #include "particles.h"
 #include "creature.h"
 #include "effects.h"
-#include "ai.h"
 #include "decal.h"
+#include "ai.h"
 
 Creature prior_creatures[MAX_CREATURES] = {0};
 Creature creatures[MAX_CREATURES] = {0};
 glist* clist = NULL;
 
-static int creature_segment_count;
-static CreatureSegment creature_segments[MAX_SEGMENTS]; // 0=first body segment
+int creature_segment_count;
+CreatureSegment creature_segments[MAX_SEGMENTS]; // 0=first body segment
 
 #define PROJ_COLOR 0x00FF5050
 
@@ -50,6 +50,7 @@ static int creature_image_slugzilla;
 static int creature_image_ghost;
 static int creature_image_boomer;
 static int creature_image_wall_shooter;
+static int creature_image_spider_queen;
 
 static void creature_update_slug(Creature* c, float dt);
 static void creature_update_clinger(Creature* c, float dt);
@@ -79,6 +80,7 @@ static void creature_update_slugzilla(Creature* c, float dt);
 static void creature_update_ghost(Creature* c, float dt);
 static void creature_update_boomer(Creature* c, float dt);
 static void creature_update_wall_shooter(Creature* c, float dt);
+static void creature_update_spider_queen(Creature* c, float dt);
 
 static void creature_fire_projectile(Creature* c, float angle);
 
@@ -123,6 +125,7 @@ void creature_init()
     creature_image_ghost = gfx_load_image("src/img/creature_ghost.png", false, false, 24, 24);
     creature_image_boomer = gfx_load_image("src/img/creature_boomer.png", false, false, 32, 32);
     creature_image_wall_shooter = gfx_load_image("src/img/creature_wallshooter.png", false, false, 32, 32);
+    creature_image_spider_queen = gfx_load_image("src/img/creature_spiderqueen.png", false, false, 128, 128);
 }
 
 char* creature_type_name(CreatureType type)
@@ -187,6 +190,8 @@ char* creature_type_name(CreatureType type)
             return "Boomer";
         case CREATURE_TYPE_WALL_SHOOTER:
             return "Wall Shooter";
+        case CREATURE_TYPE_SPIDER_QUEEN:
+            return "Spider Queen";
         default:
             return "???";
     }
@@ -253,6 +258,8 @@ int creature_get_image(CreatureType type)
             return creature_image_boomer;
         case CREATURE_TYPE_WALL_SHOOTER:
             return creature_image_wall_shooter;
+        case CREATURE_TYPE_SPIDER_QUEEN:
+            return creature_image_spider_queen;
         default:
             return -1;
     }
@@ -649,10 +656,10 @@ void creature_init_props(Creature* c)
             c->phys.speed = 100.0;
             c->act_time_min = 0.5;
             c->act_time_max = 0.5;
-            c->phys.mass = 10.0;
+            c->phys.mass = 10000.0;
             c->phys.base_friction = 0.0;
             c->phys.hp_max = 25.0;
-            c->phys.elasticity = 1.0;
+            c->phys.elasticity = 0.0;
             c->phys.ethereal = false;
             c->painful_touch = true;
             c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
@@ -661,7 +668,7 @@ void creature_init_props(Creature* c)
             c->phys.bobbing = false;
             c->passive = false;
             c->invincible = false;
-            c->xp = 15;
+            c->xp = 100;
             c->segmented = true;
         } break;
         case CREATURE_TYPE_GHOST:
@@ -705,6 +712,21 @@ void creature_init_props(Creature* c)
             c->phys.crawling = true;
             c->invincible = true;
             c->xp = 25;
+        } break;
+        case CREATURE_TYPE_SPIDER_QUEEN:
+        {
+            c->phys.speed = 90.0;
+            c->act_time_min = 0.5;
+            c->act_time_max = 1.5;
+            c->phys.mass = 100.0;
+            c->phys.base_friction = 20.0;
+            c->phys.hp_max = 100.0;
+            c->painful_touch = true;
+            c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
+            c->phys.crawling = true;
+            c->xp = 100;
+            c->ai_state = 0;
+            c->ai_value = rand() % 8;
         } break;
     }
 
@@ -959,13 +981,13 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
     // c->phys.radius = calc_radius_from_rect(&c->phys.collision_rect);
 
 
-    if(c.type == CREATURE_TYPE_SLUGZILLA)
+    if(c.segmented)
     {
         creature_segment_count = 0;
         // initialize segments
         memset(creature_segments, 0, sizeof(CreatureSegment)*MAX_SEGMENTS);
 
-        for(int i = 0; i < 4;++i)
+        for(int i = 0; i < MAX_SEGMENTS;++i)
         {
             CreatureSegment* cs = &creature_segments[i];
 
@@ -973,11 +995,13 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
             cs->pos.x = c.phys.collision_rect.x - (TILE_SIZE*(i+1));
             cs->pos.y = c.phys.collision_rect.y;
             cs->pos.z = c.phys.pos.z;
-            cs->tail  = (i == 3);
+            cs->tail  = (i == (MAX_SEGMENTS-1));
 
             memcpy(&cs->collision_rect, &c.phys.collision_rect, sizeof(Rect));
             cs->collision_rect.x = cs->pos.x;
             cs->collision_rect.y = cs->pos.y;
+
+            cs->curr_tile = level_get_room_coords_by_pos(cs->collision_rect.x, cs->collision_rect.y);
 
             creature_segment_count++;
         }
@@ -1107,6 +1131,9 @@ void creature_update(Creature* c, float dt)
             case CREATURE_TYPE_WALL_SHOOTER:
                 creature_update_wall_shooter(c,dt);
                 break;
+            case CREATURE_TYPE_SPIDER_QUEEN:
+                creature_update_spider_queen(c,dt);
+                break;
         }
     }
     else
@@ -1168,8 +1195,11 @@ void creature_update(Creature* c, float dt)
         for(int i = 0; i < creature_segment_count; ++i)
         {
             CreatureSegment* cs = &creature_segments[i];
+
             cs->pos.x += dt*cs->vel.x;
             cs->pos.y += dt*cs->vel.y;
+            cs->collision_rect.x = cs->pos.x;
+            cs->collision_rect.y = cs->pos.y;
         }
     }
 
@@ -1197,6 +1227,15 @@ void creature_update(Creature* c, float dt)
 
     c->phys.prior_tile = c->phys.curr_tile;
     c->phys.curr_tile = level_get_room_coords_by_pos(c->phys.collision_rect.x, c->phys.collision_rect.y);
+
+    if(c->segmented)
+    {
+        for(int i = 0; i < creature_segment_count; ++i)
+        {
+            CreatureSegment* cs = &creature_segments[i];
+            cs->curr_tile = level_get_room_coords_by_pos(cs->collision_rect.x, cs->collision_rect.y);
+        }
+    }
 
     float prior_tile_counter = c->phys.curr_tile_counter;
     if(c->phys.curr_tile.x == c->phys.prior_tile.x && c->phys.curr_tile.y == c->phys.prior_tile.y)
@@ -1303,11 +1342,10 @@ void creature_draw(Creature* c)
 
     if(!c->phys.underground)
     {
-        gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, color, false, c->phys.scale, 0.0, op, true, false, false);
-
         if(c->segmented)
         {
-            for(int i = 0; i < creature_segment_count; ++i)
+            // draw segments if there are any
+            for(int i = creature_segment_count -1; i >= 0; --i)
             {
                 CreatureSegment* cs = &creature_segments[i];
 
@@ -1322,6 +1360,8 @@ void creature_draw(Creature* c)
             }
         }
 
+        // draw creature
+        gfx_sprite_batch_add(c->image, c->sprite_index, c->phys.pos.x, y, color, false, c->phys.scale, 0.0, op, true, false, false);
     }
 }
 
@@ -3032,8 +3072,75 @@ static void creature_update_uniball(Creature* c, float dt)
         c->phys.vel.y = c->phys.speed;
     }
 }
-#if 1
+static void creature_update_slugzilla(Creature* c, float dt)
+{
+    //ai_align_to_grid(c);
 
+    if(ai_on_target(c))
+    {
+        ai_clear_target(c);
+    }
+
+    if(!ai_has_target(c))
+    {
+        bool found_tile = ai_target_random_adjacent_tile(c);
+
+        if(!found_tile)
+        {
+            return;
+        }
+
+        //printf("Picking new target: [%d, %d]\n", c->target_tile.x, c->target_tile.y);
+        
+        if(c->target_tile.x > c->phys.curr_tile.x)      _update_sprite_index(c,DIR_RIGHT); 
+        else if(c->target_tile.x < c->phys.curr_tile.x) _update_sprite_index(c,DIR_LEFT);
+        else if(c->target_tile.y > c->phys.curr_tile.y) _update_sprite_index(c,DIR_DOWN);
+        else if(c->target_tile.y < c->phys.curr_tile.y) _update_sprite_index(c,DIR_UP);
+
+        // propagate targets to segments
+        for(int i = 0; i < MAX_SEGMENTS; ++i)
+        {
+            CreatureSegment* cs = &creature_segments[i];
+
+            if(i == 0)
+                cs->target_tile = c->phys.curr_tile;
+            else
+                cs->target_tile = creature_segments[i-1].curr_tile;
+
+            if(cs->target_tile.x > cs->curr_tile.x)      cs->dir = DIR_RIGHT;
+            else if(cs->target_tile.x < cs->curr_tile.x) cs->dir = DIR_LEFT;
+            else if(cs->target_tile.y > cs->curr_tile.y) cs->dir = DIR_DOWN;
+            else if(cs->target_tile.y < cs->curr_tile.y) cs->dir = DIR_UP;
+                
+            //printf("  Propagating target to segment %d: [%d, %d]\n", i, cs->target_tile.x, cs->target_tile.y);
+        }
+    }
+
+    // move head
+    ai_move_imm_to_target(c, dt);
+
+    // move segments
+    for(int i = 0; i < MAX_SEGMENTS; ++i)
+    {
+        CreatureSegment* seg = &creature_segments[i];
+
+        Vector2f target_pos = level_get_pos_by_room_coords(seg->target_tile.x, seg->target_tile.y);
+        Vector2f v = {target_pos.x - seg->pos.x, target_pos.y - seg->pos.y};
+
+        normalize(&v);
+
+        float speed = c->phys.speed*c->phys.speed_factor;
+
+        float h_speed = speed*v.x;
+        float v_speed = speed*v.y;
+
+        seg->vel.x = h_speed;
+        seg->vel.y = v_speed;
+    }
+}
+
+
+#if 0
 static void creature_update_slugzilla(Creature* c, float dt)
 {
 
@@ -3271,8 +3378,7 @@ static void creature_update_slugzilla(Creature* c, float dt)
 
 }
 
-#else
-
+//#else
 
 static void creature_update_slugzilla(Creature* c, float dt)
 {
@@ -3559,5 +3665,55 @@ static void creature_update_wall_shooter(Creature* c, float dt)
         bool horiz = (c->spawn_tile_y == -1 || c->spawn_tile_y == ROOM_TILE_SIZE_Y);
         if(horiz) creature_fire_projectile(c, dir_to_angle_deg(c->spawn_tile_y == -1 ? DIR_DOWN : DIR_UP));
         else      creature_fire_projectile(c, dir_to_angle_deg(c->spawn_tile_x == -1 ? DIR_RIGHT : DIR_LEFT));
+    }
+}
+
+static void creature_update_spider_queen(Creature* c, float dt)
+{
+    bool act = ai_update_action(c, dt);
+
+    if(act)
+    {
+        int r = ai_rand(2);
+
+        if(r == 0)
+        {
+            // move toward player
+            c->ai_state = 1;
+            c->act_time_min = 1.5;
+            c->act_time_min = 2.5;
+        }
+        else
+        {
+            // random movement
+            c->ai_state = 0;
+            c->ai_value = rand() % 8;
+            c->act_time_min = 0.2;
+            c->act_time_min = 0.3;
+            ai_stop_imm(c);
+        }
+    }
+
+    if(c->ai_state == 0)
+    {
+        ai_walk_dir(c,c->ai_value);
+        return;
+    }
+
+    if(c->ai_state == 1)
+    {
+        // move toward nearest player
+        Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
+
+        Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
+        normalize(&v);
+
+        float angle = calc_angle_deg(c->phys.pos.x, c->phys.pos.y, p->phys.pos.x, p->phys.pos.y);
+
+        Dir dir = angle_to_dir_cardinal(angle);
+        creature_set_sprite_index(c, dir);
+
+        c->phys.vel.x = c->phys.speed*v.x;
+        c->phys.vel.y = c->phys.speed*v.y;
     }
 }

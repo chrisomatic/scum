@@ -2661,24 +2661,37 @@ void player_handle_collision(Player* p, Entity* e)
         {
             Creature* c = (Creature*)e->ptr;
 
+            Physics cphys = c->phys;
+
             CollisionInfo ci = {0};
-            bool collided = phys_collision_circles(&p->phys,&c->phys, &ci);
+            bool collided = phys_collision_circles(&p->phys,&cphys, &ci);
+
+            if(c->segmented)
+            {
+                for(int i = 0; i < creature_segment_count; ++i)
+                {
+                    if(collided)
+                        break;
+
+                    CreatureSegment* cs = &creature_segments[i];
+                    cphys.collision_rect = cs->collision_rect;
+
+                    collided = phys_collision_circles(&p->phys,&cphys, &ci);
+                }
+            }
 
             if(collided)
             {
-                //HACK
-                // if(level_transition_state)
                 if(p->phys.pos.z <= 3 && !p->phys.floating)
                 {
-                    phys_collision_correct(&p->phys, &c->phys,&ci);
-
+                    phys_collision_correct(&p->phys, &cphys,&ci);
                 }
+
                 if(c->painful_touch)
                 {
                     player_hurt(p,c->damage);
                 }
             }
-
 
             // check for weapon collision here?
             // it may be better to add weapons to the entity list
@@ -2704,12 +2717,12 @@ void player_handle_collision(Player* p, Entity* e)
                 };
                 
                 Box check = {
-                    c->phys.collision_rect.x,
-                    c->phys.collision_rect.y,
-                    c->phys.pos.z + p->phys.height/2.0,
-                    c->phys.collision_rect.w,
-                    c->phys.collision_rect.h,
-                    c->phys.height*2,
+                    cphys.collision_rect.x,
+                    cphys.collision_rect.y,
+                    cphys.pos.z + p->phys.height/2.0,
+                    cphys.collision_rect.w,
+                    cphys.collision_rect.h,
+                    cphys.height*2,
                 };
 
                 bool hit = boxes_colliding(&weap_box, &check);

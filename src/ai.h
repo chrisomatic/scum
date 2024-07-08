@@ -200,8 +200,11 @@ bool ai_has_subtarget(Creature* c)
 
 bool ai_on_target(Creature* c)
 {
+    if(!ai_has_target(c))
+        return false;
+
     Vector2f target_pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
-    Vector2f v = {target_pos.x - c->phys.pos.x, target_pos.y - c->phys.pos.y};
+    Vector2f v = {target_pos.x - c->phys.collision_rect.x, target_pos.y - c->phys.collision_rect.y};
 
     return (ABS(v.x) < 3.0 && ABS(v.y) < 3.0);
 }
@@ -230,6 +233,34 @@ bool ai_move_to_target(Creature* c,float dt)
 
     return at_target;
 
+}
+
+bool ai_move_imm_to_target(Creature* c,float dt)
+{
+    Vector2f target_pos = level_get_pos_by_room_coords(c->target_tile.x, c->target_tile.y);
+    Vector2f v = {target_pos.x - c->phys.collision_rect.x, target_pos.y - c->phys.collision_rect.y};
+
+    bool at_target =  (ABS(v.x) < 3.0 && ABS(v.y) < 3.0);
+
+    c->h = 0.0;
+    c->v = 0.0;
+
+    if(at_target)
+    {
+        c->phys.vel.x = 0.0;
+        c->phys.vel.y = 0.0;
+    }
+    else
+    {
+        normalize(&v);
+        float speed = c->phys.speed*c->phys.speed_factor;
+
+        float h_speed = speed*v.x;
+        float v_speed = speed*v.y;
+
+        c->phys.vel.x = h_speed;
+        c->phys.vel.y = v_speed;
+    }
 }
 
 void ai_clear_target(Creature* c)
@@ -308,4 +339,123 @@ bool ai_path_find_to_target_tile(Creature* c)
 bool ai_flip_coin()
 {
     return (rand() % 2) == 0;
+}
+
+bool ai_target_random_adjacent_tile(Creature* c)
+{
+    int cx = c->phys.curr_tile.x;
+    int cy = c->phys.curr_tile.y;
+
+    Room* room  = level_get_room_by_index(&level, c->phys.curr_room);
+
+    TileType tt_r = level_get_tile_type(room, cx+1, cy);
+    TileType tt_u = level_get_tile_type(room, cx, cy-1);
+    TileType tt_l = level_get_tile_type(room, cx-1, cy);
+    TileType tt_d = level_get_tile_type(room, cx, cy+1);
+
+    bool has_segment_r = false;
+    bool has_segment_u = false;
+    bool has_segment_l = false;
+    bool has_segment_d = false;
+
+    for(int i = 0; i < creature_segment_count; ++i)
+    {
+        CreatureSegment* cs = &creature_segments[i];
+
+        if(cs->curr_tile.x == cx+1 && cs->curr_tile.y == cy) has_segment_r = true;
+        if(cs->curr_tile.x == cx && cs->curr_tile.y == cy-1) has_segment_u = true;
+        if(cs->curr_tile.x == cx-1 && cs->curr_tile.y == cy) has_segment_l = true;
+        if(cs->curr_tile.x == cx && cs->curr_tile.y == cy+1) has_segment_d = true;
+    }
+
+    Vector2i tile_options[4] = {0};
+    Vector2i tile_options2[4] = {0}; // don't care about segments in way, fallback
+
+    int tile_option_count = 0;
+    int tile_option_count2 = 0;
+
+    if(tt_r != TILE_NONE && tt_r != TILE_BOULDER && tt_r != TILE_PIT)
+    {
+        if(!has_segment_r)
+        {
+            tile_options[tile_option_count].x = cx+1;
+            tile_options[tile_option_count].y = cy;
+            tile_option_count++;
+        }
+
+        tile_options2[tile_option_count2].x = cx+1;
+        tile_options2[tile_option_count2].y = cy;
+        tile_option_count2++;
+    }
+
+    if(tt_u != TILE_NONE && tt_u != TILE_BOULDER && tt_u != TILE_PIT)
+    {
+        if(!has_segment_u)
+        {
+            tile_options[tile_option_count].x = cx;
+            tile_options[tile_option_count].y = cy-1;
+            tile_option_count++;
+        }
+
+        tile_options2[tile_option_count2].x = cx;
+        tile_options2[tile_option_count2].y = cy-1;
+        tile_option_count2++;
+    }
+
+    if(tt_l != TILE_NONE && tt_l != TILE_BOULDER && tt_l != TILE_PIT && !has_segment_l)
+    {
+        if(!has_segment_l)
+        {
+            tile_options[tile_option_count].x = cx-1;
+            tile_options[tile_option_count].y = cy;
+            tile_option_count++;
+        }
+
+        tile_options2[tile_option_count2].x = cx-1;
+        tile_options2[tile_option_count2].y = cy;
+        tile_option_count2++;
+    }
+
+    if(tt_d != TILE_NONE && tt_d != TILE_BOULDER && tt_d != TILE_PIT && !has_segment_d)
+    {
+        if(!has_segment_d)
+        {
+            tile_options[tile_option_count].x = cx;
+            tile_options[tile_option_count].y = cy+1;
+            tile_option_count++;
+        }
+
+        tile_options2[tile_option_count2].x = cx;
+        tile_options2[tile_option_count2].y = cy+1;
+        tile_option_count2++;
+    }
+
+    int selected_tile_index = 0;
+
+    if(tile_option_count == 0)
+    {
+        if(tile_option_count2 == 0)
+        {
+            LOGW("Slugzilla has nowhere to go!");
+            return false;
+        }
+
+        selected_tile_index = rand() % tile_option_count2;
+        
+        // set target tile
+        c->target_tile.x = tile_options2[selected_tile_index].x;
+        c->target_tile.y = tile_options2[selected_tile_index].y;
+
+        return true;
+    }
+
+    selected_tile_index = rand() % tile_option_count;
+
+    // set target tile
+    c->target_tile.x = tile_options[selected_tile_index].x;
+    c->target_tile.y = tile_options[selected_tile_index].y;
+
+
+    return true;
+
 }

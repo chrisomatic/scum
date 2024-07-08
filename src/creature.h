@@ -7,7 +7,7 @@
 #include "level.h"
 
 #define MAX_CREATURES 1024
-#define MAX_SEGMENTS 5
+#define MAX_SEGMENTS 4
 #define ACTION_COUNTER_MAX 1.0 // seconds
 #define DAMAGED_TIME_MAX 0.2
 
@@ -42,6 +42,7 @@ typedef enum
     CREATURE_TYPE_GHOST,
     CREATURE_TYPE_BOOMER,
     CREATURE_TYPE_WALL_SHOOTER,
+    CREATURE_TYPE_SPIDER_QUEEN,
     CREATURE_TYPE_MAX,
 } CreatureType;
 
@@ -52,8 +53,9 @@ typedef struct
 
 typedef struct
 {
-    Vector2i target_tile[5];
-    Vector2f target_pos[5];
+    Vector2i curr_tile;
+    Vector2i target_tile;
+    Vector2f target_pos;
     int target_count;
     Dir dir;
     Vector3f pos;
@@ -135,6 +137,9 @@ extern Creature prior_creatures[MAX_CREATURES];
 extern Creature creatures[MAX_CREATURES];
 extern glist* clist;
 
+extern int creature_segment_count;
+extern CreatureSegment creature_segments[MAX_SEGMENTS];
+
 void creature_init();
 char* creature_type_name(CreatureType type);
 int creature_get_image(CreatureType type);
@@ -159,4 +164,3 @@ Creature* creature_get_nearest(uint8_t room_index, float x, float y);
 uint16_t creature_get_count();
 uint16_t creature_get_room_count(uint8_t room_index, bool count_passive);
 bool creature_is_on_tile(Room* room, int tile_x, int tile_y);
-
