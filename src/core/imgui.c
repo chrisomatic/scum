@@ -52,6 +52,7 @@ typedef struct
 
 typedef struct
 {
+    uint32_t hash;
     float pos;
     float held_start_pos;
     bool scrollbar_held;
@@ -663,23 +664,15 @@ void imgui_set_button_select(int index, int num_buttons, char* button_labels[], 
     // }
 }
 
-int imgui_button_select(int num_buttons, char* button_labels[], char* label)
+void imgui_button_select(int num_buttons, char* button_labels[], char* label, int* selection)
 {
     if(num_buttons < 0 || num_buttons >= 32)
-        return 0;
+        return;
 
     char _str[100] = {0};
     snprintf(_str,99,"%s_%s##select%d",label,button_labels[0],num_buttons);
 
-    uint32_t hash = hash_str(_str,strlen(_str),0x0);
-    IntLookup* lookup = get_int_lookup(hash);
-    if (!lookup)
-        return 0;
-
-    int* val = &lookup->val;
-
     bool results[32] = {false};
-    int selection = 0;
 
     int prior_spacing = theme.spacing;
     imgui_set_spacing(1);
@@ -687,22 +680,21 @@ int imgui_button_select(int num_buttons, char* button_labels[], char* label)
 
     for(int i = 0; i < num_buttons; ++i)
     {
-        if(i == *val)
+        if(i == *selection)
         {
             results[i] = true;
         }
 
         imgui_toggle_button(&results[i], button_labels[i]);
+
         if(results[i])
         {
-            selection = i;
-            *val = i;
+            *selection = i;
         }
     }
     imgui_set_spacing(prior_spacing);
     imgui_text(label);
     imgui_horizontal_end();
-    return selection;
 }
 
 void imgui_dropdown(char* options[], int num_options, char* label, int* selected_index, bool* interacted)
@@ -840,6 +832,8 @@ void imgui_listbox(char* options[], int num_options, char* label, int* selected_
 
     float max_width = 0.0;
 
+    bool is_active_scroll = (ctx->scroll_props.hash == hash);
+
     for(int i = 0; i < num_options; ++i)
     {
         if(options[i])
@@ -855,7 +849,11 @@ void imgui_listbox(char* options[], int num_options, char* label, int* selected_
     Vector2f label_size = gfx_string_get_size(theme.text_scale, label);
     
     float mouse_dist_from_right_edge = theme.listbox_width - (ctx->mouse_x - ctx->curr.x);
-    ctx->scroll_props.in_gutter = (mouse_dist_from_right_edge > 0.0 && mouse_dist_from_right_edge < theme.listbox_gutter_width);
+
+    if(is_active_scroll)
+    {
+        ctx->scroll_props.in_gutter = (mouse_dist_from_right_edge > 0.0 && mouse_dist_from_right_edge < theme.listbox_gutter_width);
+    }
 
     float box_height = NOMINAL_FONT_SIZE*theme.text_scale + 2*theme.text_padding;
     float listbox_height = box_height * max_display;
@@ -864,29 +862,37 @@ void imgui_listbox(char* options[], int num_options, char* label, int* selected_
     float y_diff = ctx->mouse_y - (ctx->curr.y+label_size.y+theme.text_padding);
     bool show_scrollbar = num_options*box_height > listbox_height;
 
-    if(ctx->scroll_props.scrollbar_held)
+    if(is_active_scroll)
     {
-        if(window_mouse_left_went_up())
+        if(ctx->scroll_props.scrollbar_held)
         {
-            ctx->scroll_props.scrollbar_held = false;
-        }
-        else
-        {
-            float amt_moved = ctx->mouse_y - ctx->scroll_props.held_start_pos;
-            ctx->scroll_props.held_start_pos = ctx->mouse_y;
+            if(window_mouse_left_went_up())
+            {
+                ctx->scroll_props.scrollbar_held = false;
+            }
+            else
+            {
+                float amt_moved = ctx->mouse_y - ctx->scroll_props.held_start_pos;
+                ctx->scroll_props.held_start_pos = ctx->mouse_y;
 
-            *val += amt_moved;
-            *val = RANGE(*val,0,scrollbar_height_space);
+                *val += amt_moved;
+                *val = RANGE(*val,0,scrollbar_height_space);
+            }
         }
     }
 
-    double scroll_offset_x = 0.0;
-    double scroll_offset_y = 0.0;
-    if(window_has_scrolled())
-        window_get_scroll_offsets(&scroll_offset_x, &scroll_offset_y);
-
     if(is_highlighted(hash))
     {
+        ctx->scroll_props.hash = hash;
+
+        double scroll_offset_x = 0.0;
+        double scroll_offset_y = 0.0;
+
+        if(window_has_scrolled())
+        {
+            window_get_scroll_offsets(&scroll_offset_x, &scroll_offset_y);
+        }
+
         if(show_scrollbar && !ctx->scroll_props.scrollbar_held)
         {
             *val -= 0.5*box_height*scroll_offset_y;
@@ -1333,7 +1339,8 @@ Rect imgui_draw_demo(int x, int y)
         imgui_toggle_button(&toggle, "Toggle me");
 
         char* buttons[] = {"Apples", "Bananas", "Oranges"};
-        int selection = imgui_button_select(3, buttons, "Best Fruit");
+        static int selection = 0;
+        imgui_button_select(3, buttons, "Best Fruit", &selection);
 
         imgui_text_colored(0x00FF00FF,buttons[selection]);
 
@@ -2088,6 +2095,8 @@ static void draw_listbox(uint32_t hash, char* str, char* options[], int num_opti
 
     gfx_draw_rect_xywh(r->x + width/2.0, r->y + r->h/2.0, width, r->h, theme.color_background, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
 
+    bool is_active_scroll = (ctx->scroll_props.hash == hash);
+
     if(show_scrollbar)
     {
         // scrollbar gutter
@@ -2095,7 +2104,12 @@ static void draw_listbox(uint32_t hash, char* str, char* options[], int num_opti
 
         // scrollbar
         int scrollbar_height = listbox_height*(listbox_height / (num_options*box_height));
-        gfx_draw_rect_xywh(r->w+r->x-(theme.listbox_gutter_width/2.0), r->y + scrollbar_offset + scrollbar_height/2.0, theme.listbox_gutter_width, scrollbar_height, ctx->scroll_props.in_gutter ? theme.color_highlight : theme.color_slider, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
+        uint32_t color_slider = theme.color_slider;
+        if(is_active_scroll && ctx->scroll_props.in_gutter)
+        {
+            color_slider = theme.color_highlight;
+        }
+        gfx_draw_rect_xywh(r->w+r->x-(theme.listbox_gutter_width/2.0), r->y + scrollbar_offset + scrollbar_height/2.0, theme.listbox_gutter_width, scrollbar_height, color_slider, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
 
     }
 
@@ -2123,7 +2137,7 @@ static void draw_listbox(uint32_t hash, char* str, char* options[], int num_opti
         {
             gfx_draw_rect_xywh(r->x + width/2.0, r->y + i*box_height + box_height/2.0 - offset, width, box_height, theme.color_active, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
         }
-        else if(i == highlighted_index && !ctx->scroll_props.in_gutter)
+        else if(i == highlighted_index && is_active_scroll && !ctx->scroll_props.in_gutter)
         {
             gfx_draw_rect_xywh(r->x + width/2.0, r->y + i*box_height + box_height/2.0 - offset, width, box_height, theme.color_highlight, 1.0, 0.0, theme.button_opacity*ctx->global_opacity_scale, true,false);
         }

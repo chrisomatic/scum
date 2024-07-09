@@ -198,12 +198,12 @@ static void draw_room_file_gui()
 
         imgui_horizontal_begin();
         char* buttons[] = {"*", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
-        selected_rank = imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "Rank");
+        imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "Rank", &selected_rank);
         imgui_horizontal_end();
 
         imgui_horizontal_begin();
         char* buttons2[] = {"All", "Empty", "Monster", "Treasure", "Boss", "Shrine", "Shop"};
-        selected_room_type = imgui_button_select(IM_ARRAYSIZE(buttons2), buttons2, "Room Type");
+        imgui_button_select(IM_ARRAYSIZE(buttons2), buttons2, "Room Type", &selected_room_type);
         imgui_horizontal_end();
 
         float opacity_scale = imgui_is_mouse_inside() ? 1.0 : 0.4;
@@ -353,12 +353,11 @@ static void draw_room_file_gui()
         static char* star_labels[] = {" *", "**", "***", "****", "*****"};
         imgui_newline();
         imgui_horizontal_begin();
-            int selected_rating = imgui_button_select(5, star_labels, "Rating");
-            imgui_text("(%d Stars)", selected_rating+1);
+            imgui_button_select(5, star_labels, "Rating", &loaded_rfd.stars);
+            imgui_text("(%d Stars)", loaded_rfd.stars+1);
         imgui_horizontal_end();
 
-        static char comment[100] = {0};
-        imgui_text_box("Comment", comment, IM_ARRAYSIZE(comment));
+        imgui_text_box("Comment", loaded_rfd.comment, IM_ARRAYSIZE(loaded_rfd.comment));
 
         imgui_horizontal_line(2);
 
@@ -380,8 +379,10 @@ static void draw_room_file_gui()
                     .size_x = ROOM_TILE_SIZE_X,
                     .size_y = ROOM_TILE_SIZE_Y,
                     .type = room_type_sel,
-                    .rank = room_rank
+                    .rank = room_rank,
+                    .stars = loaded_rfd.stars
                 };
+
 
                 for(int y = 0; y < ROOM_TILE_SIZE_Y; ++y)
                     for(int x = 0; x < ROOM_TILE_SIZE_X; ++x)
@@ -415,6 +416,9 @@ static void draw_room_file_gui()
 
                 for(int i = 0; i < 4; ++i)
                     rfd.doors[i] = room.doors[i];
+
+                memset(rfd.comment, 0, 101);
+                memcpy(rfd.comment, loaded_rfd.comment, sizeof(loaded_rfd.comment));
 
                 room_file_save(&rfd, file_path);
                 // room_file_get_all();
@@ -758,7 +762,7 @@ void room_editor_draw()
 
         imgui_newline();
         char* buttons[] = {"Editor", "Info"};
-        tab_sel = imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "");
+        imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "", &tab_sel);
         imgui_horizontal_line(1);
 
         switch(tab_sel)

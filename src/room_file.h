@@ -30,10 +30,15 @@ typedef struct
 
     // doors
     bool doors[4];
+    
+    // review
+    int stars;
+    char comment[101];
 
     int file_index;
     time_t mtime;
     size_t fsize;
+
 
 } RoomFileData;
 

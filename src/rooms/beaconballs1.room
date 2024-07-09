@@ -58,6 +58,9 @@ Rock
 Uniball
 Slugzilla
 Ghost
+Boomer
+Wall Shooter
+Spider Queen
 
 ; Creatures
 24,2,2,3
@@ -104,10 +107,12 @@ Copper Coin
 Silver Coin
 Gold Coin
 ???
+???
 Chest
 Gun Chest
 Shrine
 Podium
+Portal
 Gun
 
 ; Items
@@ -115,3 +120,6 @@ Gun
 ; Doors
 1,1,1,1
 
+; Commentary
+3
+Pretty cool idea. Needs iteration.

@@ -28,7 +28,7 @@ uint32_t imgui_text_box(char* label, char* buf, int bufsize);
 uint32_t imgui_text_box_sized(char* label, char* buf, int bufsize, int width, int height);
 void imgui_focus_text_box(uint32_t hash);
 void imgui_set_button_select(int index, int num_buttons, char* button_labels[], char* label);
-int imgui_button_select(int num_buttons, char* button_labels[], char* label);
+void imgui_button_select(int num_buttons, char* button_labels[], char* label, int* selection);
 void imgui_dropdown(char* options[], int num_options, char* label, int* selected_index, bool* interacted);
 void imgui_listbox(char* options[], int num_options, char* label, int* selected_index, int max_display);
 void imgui_tooltip(char* tooltip, ...);

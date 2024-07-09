@@ -19,6 +19,7 @@ Ice
 Spikes
 Timed Spikes 1
 Timed Spikes 2
+Breakable Floor
 
 ; Tile Data
 2,2,1,1,2,2,2,2,2,1,1,2,2
@@ -49,15 +50,26 @@ Spawn Egg
 Spawn Spider
 Behemoth
 Beacon Red
+Watcher
+Golem
+Phantom
+Rock Monster
+Rock
+Uniball
+Slugzilla
+Ghost
+Boomer
+Wall Shooter
+Spider Queen
 
 ; Creatures
-13,4,2
-13,10,2
-13,4,4
-18,7,4
-13,10,4
-13,4,6
-13,10,6
+13,4,2,0
+13,10,2,0
+13,4,4,0
+18,7,4,0
+13,10,4,0
+13,4,6,0
+13,10,6,0
 
 ; Item Mapping
 Red Gem
@@ -75,22 +87,39 @@ Dragon Egg
 Shamrock
 Ruby Ring
 Potion of Strength
-Potion of Speed
-Potion of Range
+Potion of Mana
+Potion of Great Mana
 Potion of Purple
 +1 Gauntlet Slot
 New Level
-Glowing Orb
+Upgrade Orb
 ???
 ???
 ???
 Revive
 Skull
+Galaxy Pendant
+Feather
+Shield
+Wing
+Looking Glass
+Copper Coin
+Silver Coin
+Gold Coin
+???
+???
 Chest
+Gun Chest
 Shrine
+Podium
+Portal
+Gun
 
 ; Items
 
 ; Doors
-0,1,0,1
+1,0,1,0
 
+; Commentary
+2
+Too many peepers

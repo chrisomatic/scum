@@ -273,6 +273,7 @@ char* creature_get_gun_name(CreatureType type)
         case CREATURE_TYPE_CLINGER:    return "clinger";
         case CREATURE_TYPE_GEIZER:     return "geizer";
         case CREATURE_TYPE_TOTEM_BLUE: return "totem_blue";
+        case CREATURE_TYPE_TOTEM_YELLOW: return "creature_straight";
         case CREATURE_TYPE_WATCHER:    return "watcher";
         case CREATURE_TYPE_GHOST:      return "chevrons";
         case CREATURE_TYPE_BOOMER:     return "boomerang_creature";
@@ -352,11 +353,11 @@ void creature_init_props(Creature* c)
         } break;
         case CREATURE_TYPE_FLOATER:
         {
-            c->phys.speed = 50.0;
-            c->act_time_min = 0.8;
-            c->act_time_max = 1.5;
+            c->phys.speed = 80.0;
+            c->act_time_min = 0.2;
+            c->act_time_max = 0.4;
             c->phys.mass = 1.0;
-            c->phys.base_friction = 1.0;
+            c->phys.base_friction = 0.3;
             c->phys.hp_max = 2.0;
             c->phys.floating = true;
             c->phys.bobbing = true;
@@ -1829,17 +1830,7 @@ static void creature_update_floater(Creature* c, float dt)
 
     if(act)
     {
-        if(ai_rand(6) == 0)
-        {
-            creature_fire_projectile(c, 0.0);
-            creature_fire_projectile(c, 90.0);
-            creature_fire_projectile(c, 180.0);
-            creature_fire_projectile(c, 270.0);
-        }
-        else
-        {
-            ai_random_walk(c);
-        }
+        ai_random_walk(c);
     }
 }
 

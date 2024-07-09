@@ -106,6 +106,12 @@ void room_file_save(RoomFileData* rfd, char* path, ...)
 
         fputs("\n", fp);
 
+        fputs("; Commentary\n", fp);
+        fprintf(fp, "%d", rfd->stars);
+        fputs("\n", fp);
+        fprintf(fp, "%s", rfd->comment);
+        fputs("\n", fp);
+
         fclose(fp);
 
         struct stat stats = {0};
@@ -419,6 +425,13 @@ bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path
             rfd->doors[DIR_RIGHT] = (right == 1);
             rfd->doors[DIR_DOWN]  = (down == 1);
             rfd->doors[DIR_LEFT]  = (left == 1);
+        }
+        else if(STR_EQUAL(section,"Commentary"))
+        {
+            fgets(line,sizeof(line),fp); __line_num++;
+            sscanf(line,"%d",&rfd->stars);
+
+            fgets(rfd->comment,sizeof(line),fp); __line_num++;
         }
         else
         {

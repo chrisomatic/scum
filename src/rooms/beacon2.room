@@ -19,6 +19,7 @@ Ice
 Spikes
 Timed Spikes 1
 Timed Spikes 2
+Breakable Floor
 
 ; Tile Data
 1,1,1,1,1,1,1,1,1,1,1,1,1
@@ -49,19 +50,30 @@ Spawn Egg
 Spawn Spider
 Behemoth
 Beacon Red
+Watcher
+Golem
+Phantom
+Rock Monster
+Rock
+Uniball
+Slugzilla
+Ghost
+Boomer
+Wall Shooter
+Spider Queen
 
 ; Creatures
-0,2,2
-0,5,2
-0,9,2
-0,12,2
-3,4,3
-3,10,3
-18,7,4
-0,2,6
-0,5,6
-0,9,6
-0,12,6
+0,2,2,0
+0,5,2,0
+0,9,2,0
+0,12,2,0
+3,4,3,0
+3,10,3,0
+18,7,4,0
+0,2,6,0
+0,5,6,0
+0,9,6,0
+0,12,6,0
 
 ; Item Mapping
 Red Gem
@@ -98,13 +110,20 @@ Looking Glass
 Copper Coin
 Silver Coin
 Gold Coin
-Skill Book
+???
+???
 Chest
+Gun Chest
 Shrine
 Podium
+Portal
+Gun
 
 ; Items
 
 ; Doors
 1,1,1,1
 
+; Commentary
+1
+Weak.

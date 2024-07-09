@@ -81,7 +81,9 @@ void editor_draw()
 
         imgui_newline();
         char* buttons[] = {"General", "Level", "Players", "Creatures", "Projectiles", "Particles", "Theme Editor","Room Finder"};
-        int selection = imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "");
+
+        static int button_sel = 0;
+        imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "", &button_sel);
         imgui_horizontal_line(1);
 
         static int gun_sel = 0;
@@ -98,7 +100,7 @@ void editor_draw()
 
         Room* room = level_get_room_by_index(&level,player->phys.curr_room);
 
-        switch(selection)
+        switch(button_sel)
         {
             case 0: // general
             {
@@ -149,13 +151,8 @@ void editor_draw()
                 imgui_color_picker("Ambient Light", &ambient_light);
 
                 static char* dungeon_images[] = {"1", "2", "3", "4", "5"};
-                static int first = true;
-                if(first)
-                {
-                    imgui_set_button_select(1, IM_ARRAYSIZE(dungeon_images), dungeon_images, "Dungeon Set");
-                    first = false;
-                }
-                int dungeon_set_select = imgui_button_select(IM_ARRAYSIZE(dungeon_images), dungeon_images, "Dungeon Set");
+                int dungeon_set_select = 0;
+                imgui_button_select(IM_ARRAYSIZE(dungeon_images), dungeon_images, "Dungeon Set", &dungeon_set_select);
 
                 switch(dungeon_set_select)
                 {
@@ -857,12 +854,12 @@ void editor_draw()
 
                     imgui_horizontal_begin();
                     char* buttons[] = {"*", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
-                    selected_rank = imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "Rank");
+                    imgui_button_select(IM_ARRAYSIZE(buttons), buttons, "Rank", &selected_rank);
                     imgui_horizontal_end();
 
                     imgui_horizontal_begin();
                     char* buttons2[] = {"All", "Empty", "Monster", "Treasure", "Boss", "Shrine", "Library"};
-                    selected_room_type = imgui_button_select(IM_ARRAYSIZE(buttons2), buttons2, "Room Type");
+                    imgui_button_select(IM_ARRAYSIZE(buttons2), buttons2, "Room Type", &selected_room_type);
                     imgui_horizontal_end();
 
                     float opacity_scale = imgui_is_mouse_inside() ? 1.0 : 0.4;
@@ -947,13 +944,13 @@ void editor_draw()
 
         }
 
-    if(selection != 5)
+    if(button_sel != 5)
     {
         particle_spawner->hidden = true;
     }
     gui_size = imgui_end();
 
-    if(selection == 4)
+    if(button_sel == 4)
     {
         // projectiles
 
