@@ -805,16 +805,17 @@ void imgui_dropdown(char* options[], int num_options, char* label, int* selected
     //return ctx->dropdown_props.selected_index;
 }
 
-void imgui_listbox(char* options[], int num_options, char* label, int* selected_index, int max_display)
+bool imgui_listbox(char* options[], int num_options, char* label, int* selected_index, int max_display)
 {
     if(!options)
-        return;
+        return false;
 
     if(!options[0])
-        return;
+        return false;
 
     if(num_options < 0 || num_options >= 1000)
-        return;
+        return false;
+
 
     char _str[100] = {0};
     snprintf(_str,99,"%s_%s##listbox%d",label,options[0],num_options);
@@ -823,7 +824,7 @@ void imgui_listbox(char* options[], int num_options, char* label, int* selected_
 
     FloatLookup* lookup = get_float_lookup(hash);
     if (!lookup)
-        return;
+        return false;
 
     float *val = &lookup->val;
 
@@ -862,10 +863,13 @@ void imgui_listbox(char* options[], int num_options, char* label, int* selected_
     float y_diff = ctx->mouse_y - (ctx->curr.y+label_size.y+theme.text_padding);
     bool show_scrollbar = num_options*box_height > listbox_height;
 
+    bool _interacted = false;
+
     if(is_active_scroll)
     {
         if(ctx->scroll_props.scrollbar_held)
         {
+            _interacted = true;
             if(window_mouse_left_went_up())
             {
                 ctx->scroll_props.scrollbar_held = false;
@@ -890,6 +894,7 @@ void imgui_listbox(char* options[], int num_options, char* label, int* selected_
 
         if(window_has_scrolled())
         {
+            _interacted = true;
             window_get_scroll_offsets(&scroll_offset_x, &scroll_offset_y);
         }
 
@@ -903,6 +908,7 @@ void imgui_listbox(char* options[], int num_options, char* label, int* selected_
             // scrollbar
             if(!ctx->scroll_props.scrollbar_held && window_mouse_left_went_down())
             {
+                _interacted = true;
                 if(y_diff >= *val && y_diff <= *val + scrollbar_height)
                 {
                     ctx->scroll_props.scrollbar_held = true;
@@ -914,6 +920,7 @@ void imgui_listbox(char* options[], int num_options, char* label, int* selected_
         {
             if(!ctx->scroll_props.scrollbar_held && window_mouse_left_went_down())
             {
+                _interacted = true;
                 // make new selection
                 float ratio = (num_options*box_height) / listbox_height;
                 float offset = ratio*(*val);
@@ -939,6 +946,8 @@ void imgui_listbox(char* options[], int num_options, char* label, int* selected_
     ctx->curr.h = label_size.y + theme.text_padding + interactive.h + box_height + theme.spacing;
 
     progress_pos();
+
+    return _interacted;
 }
 
 void imgui_tooltip(char* tooltip, ...)

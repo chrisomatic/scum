@@ -419,12 +419,12 @@ bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path
             fgets(line,sizeof(line),fp); __line_num++;
 
             int up,right,down,left;
-            sscanf(line,"%d,%d,%d,%d",&up,&right,&down,&left);
+            sscanf(line,"%d,%d,%d,%d",&right,&up,&left,&down);
 
-            rfd->doors[DIR_UP]    = (up == 1);
             rfd->doors[DIR_RIGHT] = (right == 1);
-            rfd->doors[DIR_DOWN]  = (down == 1);
+            rfd->doors[DIR_UP]    = (up == 1);
             rfd->doors[DIR_LEFT]  = (left == 1);
+            rfd->doors[DIR_DOWN]  = (down == 1);
         }
         else if(STR_EQUAL(section,"Commentary"))
         {

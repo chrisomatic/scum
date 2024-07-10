@@ -853,20 +853,18 @@ void room_editor_draw()
                 }
 
                 int _creature_sel = creature_sel;
-                imgui_listbox(creature_names, CREATURE_TYPE_MAX, "Selected Creature", &creature_sel, 10);
+                interacted = imgui_listbox(creature_names, CREATURE_TYPE_MAX, "Selected Creature", &creature_sel, 10);
                 if(creature_sel != _creature_sel || interacted)
                 {
                     obj_sel = 2;
                 }
 
                 int _item_sel = item_sel;
-                imgui_listbox(item_names, ITEM_MAX, "Selected Item", &item_sel, 10);
-                // imgui_dropdown(item_names, ITEM_MAX, "Select Item", &item_sel, &interacted);
-                if(item_sel != _item_sel)
+                interacted = imgui_listbox(item_names, ITEM_MAX, "Selected Item", &item_sel, 10);
+                if(item_sel != _item_sel || interacted)
                 {
                     obj_sel = 3;
                 }
-
 
                 imgui_horizontal_line(2);
 
@@ -922,6 +920,7 @@ void room_editor_draw()
                     error = false;
                 }
             }
+
             obj_sel = 1;
             door_sel = 1;
         }
