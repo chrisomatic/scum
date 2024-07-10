@@ -7,7 +7,7 @@
 1   # Monster
 
 ; Room Rank
-2
+3
 
 ; Tile Mapping
 None
@@ -56,6 +56,11 @@ Phantom
 Rock Monster
 Rock
 Uniball
+Slugzilla
+Ghost
+Boomer
+Wall Shooter
+Spider Queen
 
 ; Creatures
 16,3,1,0
@@ -108,14 +113,19 @@ Copper Coin
 Silver Coin
 Gold Coin
 ???
+???
 Chest
 Gun Chest
 Shrine
 Podium
+Portal
 Gun
 
 ; Items
 
 ; Doors
 1,1,1,1
+
+; Commentary
+0
 

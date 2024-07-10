@@ -7,7 +7,7 @@
 1   # Monster
 
 ; Room Rank
-2
+3
 
 ; Tile Mapping
 None
@@ -17,7 +17,9 @@ Boulder
 Mud
 Ice
 Spikes
-Timed Spikes
+Timed Spikes 1
+Timed Spikes 2
+Breakable Floor
 
 ; Tile Data
 1,1,1,1,1,1,1,1,1,1,1,1,1
@@ -46,13 +48,26 @@ Peeper
 Leeper
 Spawn Egg
 Spawn Spider
+Behemoth
+Beacon Red
+Watcher
+Golem
+Phantom
+Rock Monster
+Rock
+Uniball
+Slugzilla
+Ghost
+Boomer
+Wall Shooter
+Spider Queen
 
 ; Creatures
-15,3,2
-15,11,2
-13,7,4
-15,3,6
-15,11,6
+15,3,2,0
+15,11,2,0
+13,7,4,0
+15,3,6,0
+15,11,6,0
 
 ; Item Mapping
 Red Gem
@@ -70,22 +85,39 @@ Dragon Egg
 Shamrock
 Ruby Ring
 Potion of Strength
-Potion of Speed
-Potion of Range
+Potion of Mana
+Potion of Great Mana
 Potion of Purple
 +1 Gauntlet Slot
 New Level
-Glowing Orb
+Upgrade Orb
 ???
 ???
 ???
 Revive
 Skull
+Galaxy Pendant
+Feather
+Shield
+Wing
+Looking Glass
+Copper Coin
+Silver Coin
+Gold Coin
+???
+???
 Chest
+Gun Chest
 Shrine
+Podium
+Portal
+Gun
 
 ; Items
 
 ; Doors
 1,0,1,0
+
+; Commentary
+0
 

@@ -57,6 +57,7 @@ typedef struct
     float held_start_pos;
     bool scrollbar_held;
     bool in_gutter;
+    float press_time;
 } ScrollProps;
 
 typedef struct
@@ -851,17 +852,50 @@ bool imgui_listbox(char* options[], int num_options, char* label, int* selected_
     
     float mouse_dist_from_right_edge = theme.listbox_width - (ctx->mouse_x - ctx->curr.x);
 
-    if(is_active_scroll)
-    {
-        ctx->scroll_props.in_gutter = (mouse_dist_from_right_edge > 0.0 && mouse_dist_from_right_edge < theme.listbox_gutter_width);
-    }
-
     float box_height = NOMINAL_FONT_SIZE*theme.text_scale + 2*theme.text_padding;
     float listbox_height = box_height * max_display;
     int scrollbar_height = listbox_height*(listbox_height / (num_options*box_height));
     int scrollbar_height_space = listbox_height - scrollbar_height;
     float y_diff = ctx->mouse_y - (ctx->curr.y+label_size.y+theme.text_padding);
     bool show_scrollbar = num_options*box_height > listbox_height;
+
+    if(ctx->scroll_props.press_time > 0.25)
+        ctx->scroll_props.press_time = 0.00;
+
+    if(is_active_scroll && is_highlighted(hash))
+    {
+        ctx->scroll_props.in_gutter = (mouse_dist_from_right_edge > 0.0 && mouse_dist_from_right_edge < theme.listbox_gutter_width);
+
+        if(window_controls_is_key_state(GLFW_KEY_DOWN, GLFW_PRESS))
+        {
+            if(ctx->scroll_props.press_time == 0.0)
+            {
+                if(*selected_index < num_options -1) (*selected_index)++;
+
+                *val = (MAX(0, (*selected_index-(max_display/2.0))) / (float)num_options)*listbox_height;
+                *val = RANGE(*val,0,scrollbar_height_space);
+            }
+
+            ctx->scroll_props.press_time += 0.01667;
+        }
+        else if(window_controls_is_key_state(GLFW_KEY_UP, GLFW_PRESS))
+        {
+            if(ctx->scroll_props.press_time == 0.00)
+            {
+                if(*selected_index > 0) (*selected_index)--;
+
+                *val = (MAX(0, (*selected_index-(max_display/2.0))) / (float)num_options)*listbox_height;
+                *val = RANGE(*val,0,scrollbar_height_space);
+            }
+
+            ctx->scroll_props.press_time += 0.01667;
+        }
+        else
+        {
+            ctx->scroll_props.press_time = 0.00;
+        }
+
+    }
 
     bool _interacted = false;
 

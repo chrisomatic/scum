@@ -19,6 +19,7 @@ Ice
 Spikes
 Timed Spikes 1
 Timed Spikes 2
+Breakable Floor
 
 ; Tile Data
 1,1,1,1,1,1,1,1,1,1,1,1,1
@@ -54,43 +55,38 @@ Golem
 Phantom
 Rock Monster
 Rock
+Uniball
+Slugzilla
+Ghost
+Boomer
+Wall Shooter
+Spider Queen
 
 ; Creatures
-23,3,2
-23,4,2
-23,5,2
-23,6,2
-23,7,2
-23,8,2
-23,9,2
-23,10,2
-23,11,2
-23,3,3
-23,4,3
-23,10,3
-23,11,3
-23,3,4
-23,4,4
-23,5,4
-23,6,4
-23,7,4
-23,8,4
-23,9,4
-23,10,4
-23,11,4
-23,3,5
-23,4,5
-23,10,5
-23,11,5
-23,3,6
-23,4,6
-23,5,6
-23,6,6
-23,7,6
-23,8,6
-23,9,6
-23,10,6
-23,11,6
+23,5,2,0
+23,6,2,0
+23,7,2,0
+23,8,2,0
+23,9,2,0
+23,5,3,0
+23,6,3,0
+23,7,3,0
+23,8,3,0
+23,9,3,0
+23,5,4,0
+23,6,4,0
+23,8,4,0
+23,9,4,0
+23,5,5,0
+23,6,5,0
+23,7,5,0
+23,8,5,0
+23,9,5,0
+23,5,6,0
+23,6,6,0
+23,7,6,0
+23,8,6,0
+23,9,6,0
 
 ; Item Mapping
 Red Gem
@@ -127,14 +123,22 @@ Looking Glass
 Copper Coin
 Silver Coin
 Gold Coin
-Skill Book
+???
 ???
 Chest
+Gun Chest
 Shrine
 Podium
+Portal
+Gun
 
 ; Items
+6,7,4
 
 ; Doors
 1,1,1,1
+
+; Commentary
+0
+
 
