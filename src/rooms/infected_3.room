@@ -22,13 +22,13 @@ Timed Spikes 2
 Breakable Floor
 
 ; Tile Data
-1,1,9,1,1,1,4,1,1,4,1,9,1
-1,4,4,1,1,1,9,1,1,1,1,1,1
+1,1,9,1,1,1,4,1,1,4,2,9,1
+1,4,2,1,1,1,9,1,1,1,2,1,1
 1,1,9,1,1,1,1,1,1,1,4,1,9
 1,1,1,1,1,9,4,1,1,1,1,1,1
-1,9,1,1,1,4,1,4,9,1,1,1,1
-1,1,9,4,1,1,1,9,9,1,1,1,4
-4,4,1,9,1,1,1,1,4,1,1,9,1
+1,9,1,1,1,4,1,4,1,1,2,1,1
+1,1,2,4,1,1,1,9,9,1,2,1,4
+4,4,2,9,1,1,1,1,2,2,2,9,1
 
 ; Creature Mapping
 Slug
@@ -56,12 +56,17 @@ Phantom
 Rock Monster
 Rock
 Uniball
+Slugzilla
+Ghost
+Boomer
+Wall Shooter
+Spider Queen
 
 ; Creatures
 11,5,2,0
 11,9,2,0
-11,3,5,0
-11,11,5,0
+11,5,5,0
+11,9,5,0
 
 ; Item Mapping
 Red Gem
@@ -99,14 +104,21 @@ Copper Coin
 Silver Coin
 Gold Coin
 ???
+???
 Chest
 Gun Chest
 Shrine
 Podium
+Portal
 Gun
 
 ; Items
+25,13,1
+25,1,7
 
 ; Doors
 1,1,1,1
+
+; Commentary
+0
 

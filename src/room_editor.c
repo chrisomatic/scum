@@ -176,7 +176,7 @@ static void draw_room_file_gui()
     static int prior_room_file_sel = 0;
     static int room_file_sel = 0;
     static int room_file_sel_index_map[MAX_ROOM_LIST_COUNT] = {0}; // filtered list mapped to room_list index
-    static char* filtered_room_files[256] = {0};
+    static char* filtered_room_files[512] = {0};
     static int filtered_room_files_count = 0;
     static char file_filter_str[32] = {0};
     static char selected_room_name_str[100] = {0};

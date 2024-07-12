@@ -333,7 +333,7 @@ void creature_init_props(Creature* c)
             c->act_time_max = 0.3;
             c->phys.mass = 1000.0;
             c->phys.base_friction = 0.0;
-            c->phys.hp_max = 2.0;
+            c->phys.hp_max = 3.0;
             c->painful_touch = false;
             c->windup_max = 0.5;
             c->phys.crawling = true;
@@ -346,7 +346,7 @@ void creature_init_props(Creature* c)
             c->act_time_max = 0.50;
             c->phys.mass = 1000.0; // so it doesn't slide when hit
             c->phys.base_friction = 50.0;
-            c->phys.hp_max = 3.0;
+            c->phys.hp_max = 4.0;
             c->painful_touch = false;
             c->windup_max = 0.5;
             c->xp = 35;
@@ -371,7 +371,7 @@ void creature_init_props(Creature* c)
             c->act_time_min = 0.2;
             c->act_time_max = 0.5;
             c->phys.mass = 1000.0;
-            c->phys.hp_max = 3.0;
+            c->phys.hp_max = 5.0;
             c->phys.base_friction = 0.0;
             c->phys.elasticity = 1.0;
             c->phys.floating = true;
@@ -386,7 +386,7 @@ void creature_init_props(Creature* c)
             c->act_time_max = 1.00;
             c->phys.mass = 1.0;
             c->phys.base_friction = 10.0;
-            c->phys.hp_max = 2.0;
+            c->phys.hp_max = 3.0;
             c->phys.floating = true;
             c->phys.bobbing = true;
             c->painful_touch = true;
@@ -458,7 +458,7 @@ void creature_init_props(Creature* c)
             c->act_time_max = 1.0;
             c->phys.mass = 1.0;
             c->phys.base_friction = 20.0;
-            c->phys.hp_max = 2.0;
+            c->phys.hp_max = 3.0;
             c->painful_touch = true;
             c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
             c->phys.crawling = true;
@@ -525,7 +525,7 @@ void creature_init_props(Creature* c)
             c->act_time_max = 1.5;
             c->phys.mass = 0.5;
             c->phys.base_friction = 20.0;
-            c->phys.hp_max = 3.0;
+            c->phys.hp_max = 4.0;
             c->painful_touch = true;
             c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
             c->phys.crawling = true;
@@ -538,7 +538,7 @@ void creature_init_props(Creature* c)
             c->act_time_max = 1.5;
             c->phys.mass = 0.1;
             c->phys.base_friction = 20.0;
-            c->phys.hp_max = 1.0;
+            c->phys.hp_max = 2.0;
             c->painful_touch = true;
             c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
             c->phys.crawling = true;
@@ -554,7 +554,7 @@ void creature_init_props(Creature* c)
             c->act_time_max = 2.00;
             c->phys.mass = 1000.0;
             c->phys.base_friction = 15.0;
-            c->phys.hp_max = 80.0;
+            c->phys.hp_max = 100.0;
             c->phys.floating = false;
             c->painful_touch = true;
             c->windup_max = 0.5;
@@ -640,7 +640,7 @@ void creature_init_props(Creature* c)
             c->act_time_max = 2.0;
             c->phys.mass = 10000.0;
             c->phys.base_friction = 0.0;
-            c->phys.hp_max = 1.0;
+            c->phys.hp_max = 127.0;
             c->phys.elasticity = 1.0;
             c->phys.ethereal = false;
             c->painful_touch = true;
@@ -679,7 +679,7 @@ void creature_init_props(Creature* c)
             c->act_time_max = 2.0;
             c->phys.mass = 0.5;
             c->phys.base_friction = 20.0;
-            c->phys.hp_max = 1.0;
+            c->phys.hp_max = 3.0;
             c->painful_touch = true;
             c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
             c->phys.floating = true;
@@ -694,7 +694,7 @@ void creature_init_props(Creature* c)
             c->act_time_max = 0.5;
             c->phys.mass = 0.5;
             c->phys.base_friction = 20.0;
-            c->phys.hp_max = 1.0;
+            c->phys.hp_max = 4.0;
             c->painful_touch = true;
             c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
             c->xp = 30;
@@ -707,7 +707,7 @@ void creature_init_props(Creature* c)
             c->act_time_max = 1.0;
             c->phys.mass = 10000.0;
             c->phys.base_friction = 0.0;
-            c->phys.hp_max = 2.0;
+            c->phys.hp_max = 127.0;
             c->painful_touch = false;
             c->windup_max = 0.5;
             c->phys.crawling = true;
@@ -721,7 +721,7 @@ void creature_init_props(Creature* c)
             c->act_time_max = 1.5;
             c->phys.mass = 100.0;
             c->phys.base_friction = 20.0;
-            c->phys.hp_max = 100.0;
+            c->phys.hp_max = 80.0;
             c->painful_touch = true;
             c->phys.radius = 0.5*MAX(c->phys.width,c->phys.height);
             c->phys.crawling = true;

@@ -10,8 +10,8 @@
 
 static int __line_num;
 
-char room_files[256][32] = {0};
-char* p_room_files[256] = {0};
+char room_files[512][32] = {0};
+char* p_room_files[512] = {0};
 int  room_file_count = 0;
 
 RoomFileData room_list[MAX_ROOM_LIST_COUNT] = {0};
@@ -23,7 +23,7 @@ void room_file_save(RoomFileData* rfd, char* path, ...)
 {
     va_list args;
     va_start(args, path);
-    char fpath[256] = {0};
+    char fpath[512] = {0};
     vsprintf(fpath, path, args);
     va_end(args);
 
@@ -130,7 +130,7 @@ bool room_file_load(RoomFileData* rfd, bool force, bool print_errors, char* path
 {
     va_list args;
     va_start(args, path);
-    char filename[256] = {0};
+    char filename[512] = {0};
     vsprintf(filename, path, args);
     va_end(args);
 
@@ -478,7 +478,7 @@ bool room_file_load_all(bool force)
 
 bool room_file_get_all(bool force)
 {
-    char temp_room_files[256][32] = {0};
+    char temp_room_files[512][32] = {0};
     int temp_room_file_count = io_get_files_in_dir("src/rooms",".room", temp_room_files);
 
     // insertion sort
@@ -500,10 +500,10 @@ bool room_file_get_all(bool force)
 
     if(temp_room_file_count != room_file_count || force)
     {
-        if(memcmp(temp_room_files, room_files, sizeof(char)*256*32) != 0 || force)
+        if(memcmp(temp_room_files, room_files, sizeof(char)*512*32) != 0 || force)
         {
             room_file_count = temp_room_file_count;
-            memcpy(room_files, temp_room_files, sizeof(char)*256*32);
+            memcpy(room_files, temp_room_files, sizeof(char)*512*32);
 
             // copy to pointer array
             for(int i = 0; i < room_file_count; ++i)

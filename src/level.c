@@ -13,7 +13,7 @@
 #include "room_editor.h"
 
 #define SMALL_LEVELS    1
-#define MAX_STARS 100
+#define MAX_STARS 256
 
 int dungeon_image = -1;
 int dungeon_image_wall = -1;
@@ -132,8 +132,11 @@ Level level_generate(unsigned int seed, int rank)
 
         if(rfd->type == ROOM_TYPE_MONSTER)
         {
-            if(rfd->rank > rank) continue;
-            if(rfd->rank < rank-1) continue;
+            // @TODO: Add chance % to rooms being chosen so we can use multiple ranks per floor
+            if(rfd->rank != rank) continue;
+
+            //if(rfd->rank > rank) continue;
+            //if(rfd->rank < rank-1) continue;
         }
 
         if(rfd->type == ROOM_TYPE_BOSS)
@@ -314,7 +317,7 @@ Level level_generate(unsigned int seed, int rank)
         }
     }
 
-    int rfd_list[256] = {0};
+    int rfd_list[512] = {0};
 
     for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
     {
@@ -373,7 +376,7 @@ Level level_generate(unsigned int seed, int rank)
                 }
 
                 // rooms that don't have extra possible doors
-                int rfd_list2[256] = {0};
+                int rfd_list2[512] = {0};
                 int rfd_count2 = 0;
                 rfd_count2 = get_usable_rooms(room->type, room->doors, rfd_list2, true);
 

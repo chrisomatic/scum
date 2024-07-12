@@ -42,12 +42,11 @@ typedef struct
 
 } RoomFileData;
 
-extern char room_files[256][32];
-extern char* p_room_files[256];
+extern char room_files[512][32];
+extern char* p_room_files[512];
 extern int  room_file_count;
 
-// extern RoomFileData room_list[MAX_ROOM_LIST_COUNT];
-extern RoomFileData room_list[256];     // <- MAX_ROOM_LIST_COUNT
+extern RoomFileData room_list[512];     // <- MAX_ROOM_LIST_COUNT
 extern int room_list_count;
 
 void room_file_save(RoomFileData* rfd, char* path, ...);
