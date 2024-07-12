@@ -19,6 +19,7 @@ Ice
 Spikes
 Timed Spikes 1
 Timed Spikes 2
+Breakable Floor
 
 ; Tile Data
 1,1,1,1,1,1,1,1,1,1,1,1,1
@@ -49,6 +50,17 @@ Spawn Egg
 Spawn Spider
 Behemoth
 Beacon Red
+Watcher
+Golem
+Phantom
+Rock Monster
+Rock
+Uniball
+Slugzilla
+Ghost
+Boomer
+Wall Shooter
+Spider Queen
 
 ; Creatures
 
@@ -87,21 +99,23 @@ Looking Glass
 Copper Coin
 Silver Coin
 Gold Coin
-Skill Book
+???
+???
 Chest
+Gun Chest
 Shrine
 Podium
+Portal
+Gun
 
 ; Items
-31,4,2
-31,8,2
-31,9,2
-31,12,4
-31,4,5
-31,11,5
-31,12,5
-31,8,7
+33,5,4
+33,7,4
+33,9,4
 
 ; Doors
 1,1,1,1
+
+; Commentary
+0
 

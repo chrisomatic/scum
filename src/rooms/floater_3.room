@@ -7,7 +7,7 @@
 1   # Monster
 
 ; Room Rank
-2
+1
 
 ; Tile Mapping
 None
@@ -17,16 +17,18 @@ Boulder
 Mud
 Ice
 Spikes
-Timed Spikes
+Timed Spikes 1
+Timed Spikes 2
+Breakable Floor
 
 ; Tile Data
-1,4,2,2,2,1,1,1,1,1,1,4,4
-4,1,3,2,2,1,1,1,1,1,1,1,4
+1,1,2,2,2,1,1,1,1,1,1,4,4
+1,1,3,2,2,1,1,1,1,1,1,1,4
 4,1,3,2,2,1,1,1,1,1,3,1,1
 1,1,3,2,2,3,3,3,1,1,3,1,1
 1,1,3,2,1,1,1,1,1,1,3,1,1
-4,1,4,1,1,1,1,1,1,2,3,1,4
-2,4,1,1,1,1,1,1,2,2,2,4,4
+4,1,4,1,1,1,1,1,1,2,3,1,1
+2,4,1,1,1,1,1,1,2,2,2,1,4
 
 ; Creature Mapping
 Slug
@@ -46,21 +48,28 @@ Peeper
 Leeper
 Spawn Egg
 Spawn Spider
+Behemoth
+Beacon Red
+Watcher
+Golem
+Phantom
+Rock Monster
+Rock
+Uniball
+Slugzilla
+Ghost
+Boomer
+Wall Shooter
+Spider Queen
 
 ; Creatures
-3,2,1
-3,12,1
-3,1,2
-3,9,2
-3,13,2
-3,7,3
-3,7,5
-3,1,6
-3,5,6
-3,9,6
-3,13,6
-3,2,7
-3,12,7
+3,12,1,0
+3,13,2,0
+3,7,5,0
+3,1,6,0
+3,5,6,0
+3,9,6,0
+3,2,7,0
 
 ; Item Mapping
 Red Gem
@@ -78,22 +87,39 @@ Dragon Egg
 Shamrock
 Ruby Ring
 Potion of Strength
-Potion of Speed
-Potion of Range
+Potion of Mana
+Potion of Great Mana
 Potion of Purple
 +1 Gauntlet Slot
 New Level
-Glowing Orb
+Upgrade Orb
 ???
 ???
 ???
 Revive
 Skull
+Galaxy Pendant
+Feather
+Shield
+Wing
+Looking Glass
+Copper Coin
+Silver Coin
+Gold Coin
+???
+???
 Chest
+Gun Chest
 Shrine
+Podium
+Portal
+Gun
 
 ; Items
 
 ; Doors
 1,1,1,1
+
+; Commentary
+0
 

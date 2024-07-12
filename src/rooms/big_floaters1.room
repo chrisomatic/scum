@@ -7,7 +7,7 @@
 1   # Monster
 
 ; Room Rank
-1
+2
 
 ; Tile Mapping
 None
@@ -118,3 +118,4 @@ Gun
 ; Commentary
 2
 Ehhh. It's alright.
+

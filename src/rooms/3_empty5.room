@@ -7,7 +7,7 @@
 0   # Empty
 
 ; Room Rank
-1
+3
 
 ; Tile Mapping
 None
@@ -19,15 +19,16 @@ Ice
 Spikes
 Timed Spikes 1
 Timed Spikes 2
+Breakable Floor
 
 ; Tile Data
-1,1,1,1,1,1,1,1,1,1,1,1,1
-1,1,1,1,1,1,1,1,1,1,1,1,1
-1,1,1,1,1,1,1,1,1,1,1,1,1
-1,1,1,1,1,1,1,1,1,1,1,1,1
-1,1,1,1,1,1,1,1,1,1,1,1,1
-1,1,1,1,1,1,1,1,1,1,1,1,1
-1,1,1,1,1,1,1,1,1,1,1,1,1
+2,2,2,2,3,4,1,4,3,2,2,2,2
+2,2,4,2,3,1,1,4,3,2,4,2,2
+2,2,2,2,3,1,1,1,3,2,2,2,2
+2,2,2,2,3,1,1,1,3,2,2,2,2
+2,4,2,2,3,1,1,4,3,2,2,4,2
+2,2,2,2,3,4,1,1,3,2,2,2,2
+2,2,2,2,3,4,1,1,3,2,2,2,2
 
 ; Creature Mapping
 Slug
@@ -49,6 +50,17 @@ Spawn Egg
 Spawn Spider
 Behemoth
 Beacon Red
+Watcher
+Golem
+Phantom
+Rock Monster
+Rock
+Uniball
+Slugzilla
+Ghost
+Boomer
+Wall Shooter
+Spider Queen
 
 ; Creatures
 
@@ -87,18 +99,25 @@ Looking Glass
 Copper Coin
 Silver Coin
 Gold Coin
-Skill Book
+???
+???
 Chest
+Gun Chest
 Shrine
 Podium
+Portal
+Gun
 
 ; Items
-33,13,1
-31,5,2
-32,7,4
-31,5,6
-31,12,6
+25,3,2
+25,11,2
+25,2,5
+25,12,5
 
 ; Doors
-1,1,1,1
+0,1,0,1
+
+; Commentary
+0
+
 
