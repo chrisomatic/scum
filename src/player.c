@@ -221,10 +221,10 @@ void player_init()
         ptext = text_list_init(5, 0, 0, 0.07, true, TEXT_ALIGN_LEFT, IN_WORLD, true);
 
         // load sounds
-        audio_run1  = gaudio_add("src/audio/footsteps1.wav", true, false, false, NULL)->id;
-        audio_run2  = gaudio_add("src/audio/footsteps2.wav", true, false, false, NULL)->id;
-        audio_jump  = gaudio_add("src/audio/jump1.wav",      true, false, false, NULL)->id;
-        audio_shoot = gaudio_add("src/audio/laserShoot.wav", true, false, false, NULL)->id;
+        //audio_run1  = gaudio_add("src/audio/footsteps1.wav", true, false, false, NULL)->id;
+        //audio_run2  = gaudio_add("src/audio/footsteps2.wav", true, false, false, NULL)->id;
+        //audio_jump  = gaudio_add("src/audio/jump1.wav",      true, false, false, NULL)->id;
+        //audio_shoot = gaudio_add("src/audio/laserShoot.wav", true, false, false, NULL)->id;
 
         _initialized = true;
     }
@@ -1294,8 +1294,8 @@ static void player_handle_shooting(Player* p, float dt)
                 proj_gun->charging = p->gun.charging;
                 proj_gun->charge_time = p->gun.charge_time;
 
-                gaudio_set_pitch(audio_shoot, RAND_FLOAT(0.9,1.1));
-                gaudio_play(audio_shoot);
+                //gaudio_set_pitch(audio_shoot, RAND_FLOAT(0.9,1.1));
+                //gaudio_play(audio_shoot);
             }
 
             // text_list_add(text_lst, 5.0, "projectile");
@@ -1723,7 +1723,7 @@ void player_update(Player* p, float dt)
     {
         p->phys.vel.z = jump_vel_z;
 
-        gaudio_play(audio_jump);
+        //gaudio_play(audio_jump);
     }
 
     if(!p->phys.falling)
@@ -1850,11 +1850,11 @@ void player_update(Player* p, float dt)
         {
             if(p->anim.curr_frame == 1)
             {
-                gaudio_play(audio_run1);
+                //gaudio_play(audio_run1);
             }
             else if(p->anim.curr_frame == 3)
             {
-                gaudio_play(audio_run2);
+                //gaudio_play(audio_run2);
             }
         }
     }

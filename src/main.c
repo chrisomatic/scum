@@ -616,8 +616,8 @@ void start_server()
     gfx_image_init();
 
     LOGI(" - Audio.");
-    audio_init();
-    gaudio_init();
+    //audio_init();
+    //gaudio_init();
 
     LOGI(" - Weapon.");
     weapon_init();
@@ -866,9 +866,10 @@ void init()
     LOGI(" - Camera.");
     camera_init();
 
-    LOGI(" - Audio.");
-    audio_init();
+    //LOGI(" - Audio.");
+    //audio_init();
 
+    /*
     gaudio_init();
     Gaudio* ga = gaudio_add("src/audio/milky_way_mountaineer.wav", true, true, false, NULL);
     // Gaudio* ga = gaudio_add("src/audio/bounce.raw", false, false, true, test_cb);
@@ -877,6 +878,7 @@ void init()
         music_id = ga->id;
         gaudio_play(music_id);
     }
+    */
 
     LOGI(" - Lighting.");
     lighting_init();
@@ -1214,7 +1216,7 @@ void update_level_transition(float dt)
 
 void update(float dt)
 {
-    gaudio_update(dt);
+    //gaudio_update(dt);
 
     // static int kam = 0;
     // kam++;
