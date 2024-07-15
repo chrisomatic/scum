@@ -218,7 +218,6 @@ void player_init()
         class_image_physicist = gfx_load_image("src/img/physicist.png", false, false, 32, 32);
 
         // player_image = class_image_spaceman;
-
         shadow_image = gfx_load_image("src/img/shadow.png", false, true, 32, 32);
         card_image   = gfx_load_image("src/img/card.png", false, false, 200, 100);
 

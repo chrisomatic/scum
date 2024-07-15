@@ -1497,7 +1497,7 @@ static int assign_image(GFXImageData image, bool linear_filter, int element_widt
                 {
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                    glGenerateMipmap(GL_TEXTURE_2D);
+                    //glGenerateMipmap(GL_TEXTURE_2D);
                 }
                 else
                 {
