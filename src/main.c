@@ -28,8 +28,11 @@
 #include "astar.h"
 #include "decal.h"
 #include "settings.h"
+
+#if AUDIO_ENABLE
 #include "audio.h"
 #include "gaudio.h"
+#endif
 
 // =========================
 // Global Vars
@@ -615,9 +618,11 @@ void start_server()
     LOGI(" - Image.");
     gfx_image_init();
 
+#if AUDIO_ENABLE
     LOGI(" - Audio.");
-    //audio_init();
-    //gaudio_init();
+    audio_init();
+    gaudio_init();
+#endif
 
     LOGI(" - Weapon.");
     weapon_init();
@@ -866,19 +871,19 @@ void init()
     LOGI(" - Camera.");
     camera_init();
 
+#if AUDIO_ENABLE
     //LOGI(" - Audio.");
-    //audio_init();
 
-    /*
+    audio_init();
+
     gaudio_init();
     Gaudio* ga = gaudio_add("src/audio/milky_way_mountaineer.wav", true, true, false, NULL);
-    // Gaudio* ga = gaudio_add("src/audio/bounce.raw", false, false, true, test_cb);
     if(ga)
     {
         music_id = ga->id;
         gaudio_play(music_id);
     }
-    */
+#endif
 
     LOGI(" - Lighting.");
     lighting_init();
@@ -1216,7 +1221,8 @@ void update_level_transition(float dt)
 
 void update(float dt)
 {
-    //gaudio_update(dt);
+#if AUDIO_ENABLE
+    gaudio_update(dt);
 
     // static int kam = 0;
     // kam++;
@@ -1243,6 +1249,8 @@ void update(float dt)
     // {
     //     gaudio_remove(music_id);
     // }
+#endif
+
 
 
     if(game_state == GAME_STATE_EDITOR)

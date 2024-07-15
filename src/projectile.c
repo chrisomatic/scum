@@ -14,7 +14,9 @@
 #include "projectile.h"
 #include "effects.h"
 #include "decal.h"
+#if AUDIO_ENABLE
 #include "audio.h"
+#endif
 #include "str.h"
 #include "core/files.h"
 
@@ -25,7 +27,9 @@ glist* plist = NULL;
 static ProjectileOrbital orbitals[MAX_ORBITALS] = {0};
 static int orbital_count = 0;
 
+#if AUDIO_ENABLE
 static int audio_buffer_explode = -1;
+#endif
 
 // @TEMP
 static const uint32_t orbital_colors[] = {
@@ -115,8 +119,10 @@ void projectile_init()
     plist = list_create((void*)projectiles, MAX_PROJECTILES, sizeof(Projectile), false);
     projectile_image = gfx_load_image("src/img/projectiles.png", false, false, 16, 16);
 
+#if AUDIO_ENABLE
     // Audio Buffers
     audio_buffer_explode = audio_load_file("src/audio/splat1.wav");
+#endif
 
     gun_refresh_list();
 

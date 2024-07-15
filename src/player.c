@@ -12,7 +12,9 @@
 #include "ui.h"
 #include "weapon.h"
 #include "decal.h"
+#if AUDIO_ENABLE
 #include "gaudio.h"
+#endif
 #include "player.h"
 
 void player_ai_move_to_target(Player* p, Player* target);
@@ -79,10 +81,12 @@ int class_image_spaceman = -1;
 int class_image_robot = -1;
 int class_image_physicist = -1;
 
+#if AUDIO_ENABLE
 static uint16_t audio_run1  = -1;
 static uint16_t audio_run2  = -1;
 static uint16_t audio_jump  = -1;
 static uint16_t audio_shoot = -1;
+#endif
 
 Room* visible_room; // pointer to currently visible room
 
@@ -1901,6 +1905,7 @@ void player_update(Player* p, float dt)
         }
     }
 
+#if AUDIO_ENABLE
     // update audio positions
     
     audio_source_update_position(p->source_run1,  p->phys.pos.x, p->phys.pos.y, p->phys.pos.z);
@@ -1911,6 +1916,7 @@ void player_update(Player* p, float dt)
     {
         audio_set_listener_pos(p->phys.pos.x, p->phys.pos.y, p->phys.pos.z);
     }
+#endif
 }
 
 void player_ai_move_to_target(Player* p, Player* target)
