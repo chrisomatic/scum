@@ -2567,11 +2567,6 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             // BPW(&server.bp, 5, (uint32_t)(p->level));
             // BPW(&server.bp, 5, (uint32_t)(p->new_levels));
 
-            for(int j = 0; j < MAX_STAT_TYPE; ++j)
-            {
-                BPW(&server.bp, 3, (uint32_t)p->stats[j]);
-            }
-
             BPW(&server.bp, 1, (uint32_t)(p->invulnerable_temp ? 1 : 0));
             BPW(&server.bp, 6, (uint32_t)p->invulnerable_temp_time);
             BPW(&server.bp, 4, (uint32_t)p->door);
@@ -2629,12 +2624,6 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         // uint32_t level               = bitpack_read(&client.bp, 5);
         // uint32_t new_levels          = bitpack_read(&client.bp, 5);
 
-        uint8_t stats[MAX_STAT_TYPE] = {0};
-        for(int j = 0; j < MAX_STAT_TYPE; ++j)
-        {
-            stats[j] = bitpack_read(&client.bp, 3);
-        }
-
         uint32_t invunerable_temp = bitpack_read(&client.bp, 1);
         uint32_t inv_temp_time    = bitpack_read(&client.bp, 6);
         uint32_t door             = bitpack_read(&client.bp, 4);
@@ -2681,11 +2670,6 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         // p->xp = (uint16_t)xp;
         // p->level = (uint8_t)level;
         // p->new_levels = (uint8_t)new_levels;
-
-        for(int j = 0; j < MAX_STAT_TYPE; ++j)
-        {
-            p->stats[j] = stats[j];
-        }
 
         p->invulnerable_temp = invunerable_temp == 1 ? true : false;
         float invulnerable_temp_time = (float)inv_temp_time;
