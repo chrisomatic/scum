@@ -32,7 +32,7 @@
 #define ADDR_FMT "%u.%u.%u.%u:%u"
 #define ADDR_LST(addr) (addr)->a,(addr)->b,(addr)->c,(addr)->d,(addr)->port
 
-//#define SERVER_PRINT_SIMPLE 1
+#define SERVER_PRINT_SIMPLE 1
 // #define SERVER_PRINT_VERBOSE 1
 
 #if SERVER_PRINT_VERBOSE
@@ -2557,10 +2557,8 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             BPW(&server.bp, 6,  (uint32_t)p->phys.pos.z);
             BPW(&server.bp, 5,  (uint32_t)p->sprite_index+p->anim.curr_frame);
             BPW(&server.bp, 7,  (uint32_t)p->phys.curr_room);
-            BPW(&server.bp, 8,  (uint32_t)p->phys.mp);
-            BPW(&server.bp, 8,  (uint32_t)p->phys.mp_max);
-            BPW(&server.bp, 4,  (uint32_t)p->phys.hp);
-            BPW(&server.bp, 4,  (uint32_t)p->phys.hp_max);
+            BPW(&server.bp, 8,  (uint32_t)p->phys.hp);
+            BPW(&server.bp, 8,  (uint32_t)p->phys.hp_max);
             BPW(&server.bp, 8,  (uint32_t)p->coins);
             BPW(&server.bp, 4,  (uint32_t)p->revives);
             BPW(&server.bp, 16, (uint32_t)(p->highlighted_item_id+1));
@@ -2621,10 +2619,8 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         uint32_t z                   = bitpack_read(&client.bp, 6);
         uint32_t sprite_index        = bitpack_read(&client.bp, 5);
         uint32_t c_room              = bitpack_read(&client.bp, 7);
-        uint32_t mp                  = bitpack_read(&client.bp, 8);
-        uint32_t mp_max              = bitpack_read(&client.bp, 8);
-        uint32_t hp                  = bitpack_read(&client.bp, 4);
-        uint32_t hp_max              = bitpack_read(&client.bp, 4);
+        uint32_t hp                  = bitpack_read(&client.bp, 8);
+        uint32_t hp_max              = bitpack_read(&client.bp, 8);
         uint32_t coins               = bitpack_read(&client.bp, 8);
         uint32_t revives             = bitpack_read(&client.bp, 4);
         uint32_t highlighted_item_id = bitpack_read(&client.bp, 16);
@@ -2675,8 +2671,6 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         Vector3f pos = {(float)x,(float)y,(float)z};
         p->sprite_index = (uint8_t)sprite_index;
         uint8_t curr_room  = (uint8_t)c_room;
-        p->phys.mp  = (uint8_t)mp;
-        p->phys.mp_max  = (uint8_t)mp_max;
         p->phys.hp  = (uint8_t)hp;
         p->phys.hp_max  = (uint8_t)hp_max;
         p->coins  = (uint16_t)coins;

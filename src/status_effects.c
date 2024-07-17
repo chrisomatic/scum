@@ -170,9 +170,9 @@ void status_effects_add_type(void* physics, uint8_t curr_room, StatusEffectType 
             effect->period = 1.0;
             effect->lifetime_max = 5.0;
             effect->func = status_effect_fire;
-            effect->particles = particles_spawn_effect(phys->pos.x,phys->pos.y, 0.0, &particle_effects[EFFECT_FIRE], 0.0, true, false);
+            //effect->particles = particles_spawn_effect(phys->pos.x,phys->pos.y, 0.0, &particle_effects[EFFECT_FIRE], 0.0, true, false);
 
-            effect->particles->userdata = curr_room;
+            //effect->particles->userdata = curr_room;
             break;
     }
 }
