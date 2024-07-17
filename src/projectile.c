@@ -228,6 +228,10 @@ void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, uin
     proj.phys.speed = proj_gun->speed;
     proj.phys.max_velocity = 2.0*proj_gun->speed;
     proj.phys.radius = (MAX(proj.phys.length, proj.phys.width) / 2.0) * proj_scale1;
+
+    if(angle_deg < 0.0) angle_deg = 0.0;
+    if(angle_deg > 360.0) angle_deg = 360.0;
+
     proj.phys.rotation_deg = angle_deg;
 
     bool bouncy = RAND_FLOAT(0.0,1.0) <= proj_gun->bounce_chance;

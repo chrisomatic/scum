@@ -2903,6 +2903,9 @@ static void pack_projectiles(Packet* pkt, ClientInfo* cli)
         uint8_t g = (p->color >>  8) & 0xFF;
         uint8_t b = (p->color >>  0) & 0xFF;
 
+        if(p->phys.rotation_deg < 0.0) p->phys.rotation_deg = 0.0;
+        else if(p->phys.rotation_deg > 360.0) fmod(p->phys.rotation_deg, 360.0);
+
         BPW(&server.bp, 16, (uint32_t)p->id);
         BPW(&server.bp, 5,  (uint32_t)p->sprite_index);
         BPW(&server.bp, 10, (uint32_t)p->phys.pos.x);
