@@ -615,6 +615,9 @@ void player_hurt_no_inv(Player* p, int damage)
     if(p->invulnerable)
         return;
 
+    if(level_grace_time == 0)
+        return;
+
     // printf("player_hurt_no_inv\n");
 
     player_add_hp(p,-damage);
@@ -2527,16 +2530,23 @@ void player_draw(Player* p)
             int cost = 0;
             if(highlighted_item->type == ITEM_GUN)
             {
-                cost = room_gun_list[highlighted_item->user_data2].cost;
+                if(highlighted_item->user_data2 < MAX_ROOM_GUNS)
+                    cost = room_gun_list[highlighted_item->user_data2].cost;
+            }
+
+            char cost_str[32] = {0};
+            if(cost > 0)
+            {
+                sprintf(cost_str, " [Cost: %u]", cost);
             }
 
             if(strlen(desc) > 0)
             {
-                ui_message_set_small(0.1, "%s (%s) [Cost: %u]", name, desc, cost);
+                ui_message_set_small(0.1, "%s (%s)%s", name, desc, cost_str);
             }
             else
             {
-                ui_message_set_small(0.1, "%s [Cost: %u]", name, cost);
+                ui_message_set_small(0.1, "%s%s", name, cost_str);
             }
         }
 

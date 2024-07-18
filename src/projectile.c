@@ -936,6 +936,22 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
                         {
                             players[proj->from_id].total_kills++;
                         }
+
+                        // TEMP: for fun spawn coins
+                        if(rand() % 50 == 0)
+                        {
+                            int num = 15 + rand()%10;
+                            for(int i = 0; i < 20; ++i)
+                            {
+                                Item* it = item_add(item_get_random_coin(), proj->phys.pos.x, proj->phys.pos.y, proj->phys.curr_room);
+                                if(it)
+                                {
+                                    it->phys.vel.z = rand()%200+100.0;
+                                    it->phys.vel.x = RAND_PN()*RAND_FLOAT(50,100);
+                                    it->phys.vel.y = RAND_PN()*RAND_FLOAT(50,100);
+                                }
+                            }
+                        }
                     }
                     break;
             }

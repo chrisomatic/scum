@@ -671,6 +671,7 @@ static void server_send(PacketType type, ClientInfo* cli)
             pack_u8(&pkt, (uint8_t)cli->client_id);
             net_send(&server.info,&cli->address,&pkt, 1);
 
+            refresh_visible_room_gun_list();
             server_send_message(TO_ALL, FROM_SERVER, "client added %u", cli->client_id);
         } break;
 
