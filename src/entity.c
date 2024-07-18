@@ -270,6 +270,20 @@ void entity_handle_misc(float dt)
                 if(*floor_state < FLOOR_BROKE)
                 {
                     (*floor_state)++;
+
+                    if(role == ROLE_SERVER)
+                    {
+                        NetEvent ev = {
+                            .type = EVENT_TYPE_FLOOR_STATE,
+                            .data.floor_state.x = e->phys->prior_tile.x,
+                            .data.floor_state.y = e->phys->prior_tile.y,
+                            .data.floor_state.state = (*floor_state)
+                        };
+
+                        net_server_add_event(&ev);
+                    }
+
+
                 }
             }
 

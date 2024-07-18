@@ -237,6 +237,7 @@ typedef enum
     EVENT_TYPE_MESSAGE,
     EVENT_TYPE_PARTICLES,
     EVENT_TYPE_NEW_LEVEL,
+    EVENT_TYPE_FLOOR_STATE,
 } NetEventType;
 
 typedef struct
@@ -260,12 +261,20 @@ typedef struct
 
 typedef struct
 {
+    uint8_t x;
+    uint8_t y;
+    uint8_t state;
+} NetEventFloorState;
+
+typedef struct
+{
     NetEventType type;
 
     union
     {
         NetEventMessage   message;
         NetEventParticles particles;
+        NetEventFloorState floor_state;
         // ...
     } data;
 } NetEvent;

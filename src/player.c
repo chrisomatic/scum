@@ -1490,8 +1490,24 @@ void player_update(Player* p, float dt)
         {
             int tc1 = (int)prior_tile_counter;
             int tc2 = (int)p->phys.curr_tile_counter;
+
             if(tc2-tc1 >= 1)
+            {
                 room->breakable_floor_state[p->phys.curr_tile.x][p->phys.curr_tile.y]++;
+
+                if(role == ROLE_SERVER)
+                {
+                    NetEvent ev = {
+                        .type = EVENT_TYPE_FLOOR_STATE,
+                        .data.floor_state.x = p->phys.curr_tile.x,
+                        .data.floor_state.y = p->phys.curr_tile.y,
+                        .data.floor_state.state = room->breakable_floor_state[p->phys.curr_tile.x][p->phys.curr_tile.y],
+                    };
+
+                    net_server_add_event(&ev);
+                }
+
+            }
         }
 
         if(IS_SAFE_TILE(tt))

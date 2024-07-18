@@ -2809,6 +2809,22 @@ static void pack_creatures(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 8,  (uint32_t)r);
         BPW(&server.bp, 8,  (uint32_t)g);
         BPW(&server.bp, 8,  (uint32_t)b);
+
+        BPW(&server.bp, 1,  (uint32_t)c->segmented ? 0x01 : 0x00);
+        if(c->segmented)
+        {
+            BPW(&server.bp, 3, (uint32_t)creature_segment_count);
+
+            for(int i = 0; i < creature_segment_count; ++i)
+            {
+                CreatureSegment* cs = &creature_segments[i];
+
+                BPW(&server.bp, 4, (uint32_t)cs->curr_tile.x);
+                BPW(&server.bp, 4, (uint32_t)cs->curr_tile.y);
+                BPW(&server.bp, 3, (uint32_t)cs->dir);
+                BPW(&server.bp, 1, (uint32_t)(cs->tail ? 0x01 : 0x00));
+            }
+        }
     }
 }
 
@@ -2834,6 +2850,29 @@ static void unpack_creatures(Packet* pkt, int* offset, WorldState* ws)
         uint32_t r            = bitpack_read(&client.bp, 8);
         uint32_t g            = bitpack_read(&client.bp, 8);
         uint32_t b            = bitpack_read(&client.bp, 8);
+        uint32_t segmented    = bitpack_read(&client.bp, 1);
+
+        if(segmented > 0x00)
+        {
+            uint32_t num_segments = bitpack_read(&client.bp, 3);
+
+            creature_segment_count = 0;
+
+            for(int j = 0; j < num_segments; ++j)
+            {
+                uint32_t seg_tile_x = bitpack_read(&client.bp, 4);
+                uint32_t seg_tile_y = bitpack_read(&client.bp, 4);
+                uint32_t seg_dir = bitpack_read(&client.bp, 3);
+                uint32_t seg_tail = bitpack_read(&client.bp, 1);
+
+                CreatureSegment* cs = &creature_segments[creature_segment_count++];
+
+                cs->curr_tile.x = seg_tile_x;
+                cs->curr_tile.y = seg_tile_y;
+                cs->dir = (Dir)seg_dir;
+                cs->tail = (seg_tail == 0x00 ? false : true);
+            }
+        }
 
         Creature creature = {0};
         creature.id = (uint16_t)id;
@@ -3244,7 +3283,14 @@ static void pack_events(Packet* pkt, ClientInfo* cli)
             {
                 BPW(&server.bp, 32,  (uint32_t)level_seed);
                 BPW(&server.bp,  8,  (uint32_t)level_rank);
-            }
+            } break;
+
+            case EVENT_TYPE_FLOOR_STATE:
+            {
+                BPW(&server.bp, 4,  (uint32_t)ev->data.floor_state.x);
+                BPW(&server.bp, 4,  (uint32_t)ev->data.floor_state.y);
+                BPW(&server.bp, 3,  (uint32_t)ev->data.floor_state.state);
+            } break;
 
             default:
                 break;
@@ -3302,7 +3348,16 @@ static void unpack_events(Packet* pkt, int* offset, WorldState* ws)
 
                 // printf("[event] new level\n");
                 trigger_generate_level(level_seed, level_rank, 1, __LINE__);
-            }
+            } break;
+
+            case EVENT_TYPE_FLOOR_STATE:
+            {
+                uint8_t x  = (uint8_t)bitpack_read(&client.bp,4);
+                uint8_t y  = (uint8_t)bitpack_read(&client.bp,4);
+                uint8_t st = (uint8_t)bitpack_read(&client.bp,3);
+
+                visible_room->breakable_floor_state[x][y] = st;
+            } break;
 
             default:
                 break;
