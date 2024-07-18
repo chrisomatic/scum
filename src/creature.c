@@ -982,29 +982,32 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
     // c->phys.radius = calc_radius_from_rect(&c->phys.collision_rect);
 
 
-    if(c.segmented)
+    if(role != ROLE_CLIENT)
     {
-        creature_segment_count = 0;
-        // initialize segments
-        memset(creature_segments, 0, sizeof(CreatureSegment)*MAX_SEGMENTS);
-
-        for(int i = 0; i < MAX_SEGMENTS;++i)
+        if(c.segmented)
         {
-            CreatureSegment* cs = &creature_segments[i];
+            creature_segment_count = 0;
+            // initialize segments
+            memset(creature_segments, 0, sizeof(CreatureSegment)*MAX_SEGMENTS);
 
-            cs->dir = angle_to_dir_cardinal(c.phys.rotation_deg);
-            cs->pos.x = c.phys.collision_rect.x - (TILE_SIZE*(i+1));
-            cs->pos.y = c.phys.collision_rect.y;
-            cs->pos.z = c.phys.pos.z;
-            cs->tail  = (i == (MAX_SEGMENTS-1));
+            for(int i = 0; i < MAX_SEGMENTS;++i)
+            {
+                CreatureSegment* cs = &creature_segments[i];
 
-            memcpy(&cs->collision_rect, &c.phys.collision_rect, sizeof(Rect));
-            cs->collision_rect.x = cs->pos.x;
-            cs->collision_rect.y = cs->pos.y;
+                cs->dir = angle_to_dir_cardinal(c.phys.rotation_deg);
+                cs->pos.x = c.phys.collision_rect.x - (TILE_SIZE*(i+1));
+                cs->pos.y = c.phys.collision_rect.y;
+                cs->pos.z = c.phys.pos.z;
+                cs->tail  = (i == (MAX_SEGMENTS-1));
 
-            cs->curr_tile = level_get_room_coords_by_pos(cs->collision_rect.x, cs->collision_rect.y);
+                memcpy(&cs->collision_rect, &c.phys.collision_rect, sizeof(Rect));
+                cs->collision_rect.x = cs->pos.x;
+                cs->collision_rect.y = cs->pos.y;
 
-            creature_segment_count++;
+                cs->curr_tile = level_get_room_coords_by_pos(cs->collision_rect.x, cs->collision_rect.y);
+
+                creature_segment_count++;
+            }
         }
     }
 
