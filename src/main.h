@@ -18,7 +18,7 @@
 
 #include "glist.h"
 
-#define TESTING 1
+#define TESTING 0
 #define AUDIO_ENABLE 0
 
 #if 1
