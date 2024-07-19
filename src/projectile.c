@@ -332,20 +332,21 @@ void projectile_add_internal(Vector3f pos, Vector3f* vel, uint8_t curr_room, uin
             proj2->orbital_pos_prior.y = proj2->orbital_pos.y;
         }
     }
+
+    float spread = proj_gun->spread;
     
     if(base_proj)
     {
         proj_num = proj_gun->cluster_num[proj.cluster_stage];
         proj.cluster_stage = base_proj->cluster_stage+1;
-        proj_gun->spread = 60.0;
+        spread = 60.0;
     }
 
-    float spread = proj_gun->spread/2.0;
     if(proj_gun->spread_type == SPREAD_TYPE_UNIFORM)
     {
-        spread = proj_num < 2 ? proj_gun->spread : (proj_gun->spread / (proj_num - 1));
+        spread = proj_num < 2 ? spread : (spread / (proj_num - 1));
     }
-    float spread_angle_start = angle_deg - (proj_gun->spread/2.0);
+    float spread_angle_start = angle_deg - (spread/2.0);
 
     uint16_t target_ids[32] = {0};
     int target_count = 0;

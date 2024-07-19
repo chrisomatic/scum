@@ -13,9 +13,9 @@ cooldown: 1.00
 burst_count: 0
 burst_rate: 0.10
 critical_hit_chance: 0.20
-knockback_factor: 0.38
+knockback_factor: 0.00
 spread_type: 1
-spread: 270.05
+spread: 360.00
 gun_sprite_index: 2
 sprite_index: 0
 spin_factor: 0.00
@@ -30,6 +30,7 @@ ghost_chance: 0.00
 homing_chance: 0.00
 bounce_chance: 0.00
 penetration_chance: 0.00
+stun_chance: 0.00
 explosion_chance: 0.00
 explosion_radius: 15.00
 explosion_rate: 100.00
