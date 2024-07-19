@@ -1449,13 +1449,24 @@ void creature_die(Creature* c)
         decal_add(d);
     }
 
-
-    if(drop_coin && rand() % 2 == 0)
+    if(drop_coin)
     {
-        // drop item
-        int num = 1;
-        for(int i = 0; i < num; ++i)
-            item_add(item_get_random_coin(), c->phys.collision_rect.x, c->phys.collision_rect.y, c->phys.curr_room);
+        int num = 0;
+        int r = rand()%100+1;
+        if(r <= 60)
+            num = 0;
+        else if(r <= 90)
+            num = 1;
+        else if(r <= 98)
+            num = 2;
+        else if(r <= 99)
+            num = 10+rand()%11;
+
+        if(num > 0)
+        {
+            for(int i = 0; i < num; ++i)
+                item_add(item_get_random_coin(), c->phys.collision_rect.x, c->phys.collision_rect.y, c->phys.curr_room);
+        }
     }
 
     // handle_room_completion(c->phys.curr_room);

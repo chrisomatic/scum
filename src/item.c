@@ -57,17 +57,12 @@ static bool item_func_chest(Item* it, Player* p)
     int num = player_get_active_count() + 1;
     ItemType lst[10] = {0};
 
-    if(rand() % 5 == 0)
-    {
-        num = rand()%5+5;
-        for(int i = 0; i < num; ++i)
-            item_add(item_get_random_coin(), x, y, croom);
-        return true;
-    }
-
     for(int i = 0; i < num; ++i)
     {
-        // item_add(item_get_random_chestable(), x, y, croom);
+#if 1
+        item_add(item_get_random_chestable(), x, y, croom);
+#else
+        // this code drops unique items
         for(;;)
         {
             ItemType type = item_get_random_chestable();
@@ -82,13 +77,14 @@ static bool item_func_chest(Item* it, Player* p)
                     break;
                 }
             }
-            if(dup) continue;
+            if(i >= num_chestables) dup = false;
+            if(dup) continue;    //ignore dup check for now
 
             item_add(type, x, y, croom);
             lst[i] = type;
             break;
         }
-
+#endif
     }
 
     return true;
@@ -543,9 +539,14 @@ void item_init()
             case ITEM_HEART_FULL:
             case ITEM_COSMIC_HEART_HALF:
             case ITEM_COSMIC_HEART_FULL:
-            case ITEM_GUN:
             {
                 p->chestable = true;
+                p->touchable = false;
+            } break;
+
+            case ITEM_GUN:
+            {
+                p->chestable = false;
                 p->touchable = false;
             } break;
 
