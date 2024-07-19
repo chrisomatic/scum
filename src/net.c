@@ -32,7 +32,7 @@
 #define ADDR_FMT "%u.%u.%u.%u:%u"
 #define ADDR_LST(addr) (addr)->a,(addr)->b,(addr)->c,(addr)->d,(addr)->port
 
-// #define SERVER_PRINT_SIMPLE 1
+#define SERVER_PRINT_SIMPLE 1
 // #define SERVER_PRINT_VERBOSE 1
 
 #if SERVER_PRINT_VERBOSE
@@ -373,6 +373,14 @@ static bool has_data_waiting(int socket)
 
 static int net_send(NodeInfo* node_info, Address* to, Packet* pkt, int count)
 {
+
+    // static bool f = false;
+    // if(!f)
+    // {
+    //     f = true;
+    //     node_info->local_latest_packet_id = 32500;
+    // }
+
     int pkt_len = get_packet_size(pkt);
     int sent_bytes = 0;
 
@@ -1984,7 +1992,10 @@ void net_client_update()
             {
                 bool is_latest = is_packet_id_greater(srvpkt.hdr.id, client.info.remote_latest_packet_id);
                 if(!is_latest)
+                {
+                    LOGN("[RECV] not the latest (%u, %u)", srvpkt.hdr.id, client.info.remote_latest_packet_id);
                     break;
+                }
 
                 // copy received state into small queue
                 if(client.state_packet_count == 0)
@@ -2065,7 +2076,9 @@ void net_client_update()
                 client.id = -1;
                 break;
         }
+        client.info.remote_latest_packet_id = srvpkt.hdr.id;
     }
+
 
     // apply state to client
     if(client.state_packet_count > 0)
