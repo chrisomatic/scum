@@ -2846,8 +2846,8 @@ static void pack_creatures(Packet* pkt, ClientInfo* cli)
             {
                 CreatureSegment* cs = &creature_segments[i];
 
-                BPW(&server.bp, 4, (uint32_t)cs->curr_tile.x);
-                BPW(&server.bp, 4, (uint32_t)cs->curr_tile.y);
+                BPW(&server.bp, 10, (uint32_t)cs->pos.x);
+                BPW(&server.bp, 10, (uint32_t)cs->pos.y);
                 BPW(&server.bp, 3, (uint32_t)cs->dir);
                 BPW(&server.bp, 1, (uint32_t)(cs->tail ? 0x01 : 0x00));
             }
@@ -2887,15 +2887,15 @@ static void unpack_creatures(Packet* pkt, int* offset, WorldState* ws)
 
             for(int j = 0; j < num_segments; ++j)
             {
-                uint32_t seg_tile_x = bitpack_read(&client.bp, 4);
-                uint32_t seg_tile_y = bitpack_read(&client.bp, 4);
+                uint32_t seg_pos_x = bitpack_read(&client.bp, 10);
+                uint32_t seg_pos_y = bitpack_read(&client.bp, 10);
                 uint32_t seg_dir = bitpack_read(&client.bp, 3);
                 uint32_t seg_tail = bitpack_read(&client.bp, 1);
 
                 CreatureSegment* cs = &creature_segments[creature_segment_count++];
 
-                cs->curr_tile.x = seg_tile_x;
-                cs->curr_tile.y = seg_tile_y;
+                cs->pos.x = seg_pos_x;
+                cs->pos.y = seg_pos_y;
                 cs->dir = (Dir)seg_dir;
                 cs->tail = (seg_tail == 0x00 ? false : true);
             }
