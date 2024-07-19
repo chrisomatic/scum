@@ -116,7 +116,8 @@ static bool item_func_chest_gun(Item* it, Player* p)
         int r = rand() % gun_catalog_count;
         Item* it = item_add_gun(r, rand(), x, y, croom);
         if(!it) continue;
-        add_to_room_gun_list(it);
+        refresh_visible_room_gun_list();
+        // add_to_room_gun_list(it);
     }
 
     return true;
@@ -296,7 +297,7 @@ static bool internal_item_use(Item* it, void* _player)
                     if(p->coins >= cost)
                     {
                         player_add_coins(p, -cost);
-                        player_set_gun(p, it->user_data2, false);
+                        player_set_gun(p, it->user_data2, true);
                     }
                     else
                     {

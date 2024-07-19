@@ -203,7 +203,7 @@ Level level_generate(unsigned int seed, int rank)
 #if 1
 
 #if SMALL_LEVELS
-    if(lrand(&rg_level) % 100 <= 50)
+    // if(lrand(&rg_level) % 100 <= 50)
     {
         troom = place_room_and_path(&glevel, NULL, ROOM_TYPE_TREASURE, sroom, 2, 3, &tpath, false);
     }

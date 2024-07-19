@@ -32,7 +32,7 @@
 #define ADDR_FMT "%u.%u.%u.%u:%u"
 #define ADDR_LST(addr) (addr)->a,(addr)->b,(addr)->c,(addr)->d,(addr)->port
 
-#define SERVER_PRINT_SIMPLE 1
+// #define SERVER_PRINT_SIMPLE 1
 // #define SERVER_PRINT_VERBOSE 1
 
 #if SERVER_PRINT_VERBOSE
@@ -149,6 +149,8 @@ struct
 
 static int input_count = 0;
 static int inputs_per_packet = 1.0; //(TARGET_FPS/TICK_RATE);
+
+static bool refreshed_room_gun_list = false;    //needed for the client/player
 
 static inline void pack_bool(Packet* pkt, bool d);
 static inline void pack_u8(Packet* pkt, uint8_t d);
@@ -1241,7 +1243,6 @@ bool net_server_add_event(NetEvent* event)
 
 void server_send_message(uint8_t to, uint8_t from, char* fmt, ...)
 {
-
     va_list args, args2;
     va_start(args, fmt);
     va_copy(args2, args);
@@ -2563,6 +2564,7 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             BPW(&server.bp, 8,  (uint32_t)p->coins);
             BPW(&server.bp, 4,  (uint32_t)p->revives);
             BPW(&server.bp, 16, (uint32_t)(p->highlighted_item_id+1));
+            BPW(&server.bp, 5,  (uint32_t)(p->room_gun_index));
 
             // BPW(&server.bp, 12, (uint32_t)(p->xp));
             // BPW(&server.bp, 5, (uint32_t)(p->level));
@@ -2620,6 +2622,7 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         uint32_t coins               = bitpack_read(&client.bp, 8);
         uint32_t revives             = bitpack_read(&client.bp, 4);
         uint32_t highlighted_item_id = bitpack_read(&client.bp, 16);
+        uint32_t room_gun_index      = bitpack_read(&client.bp, 5);
 
         // uint32_t xp                  = bitpack_read(&client.bp, 12);
         // uint32_t level               = bitpack_read(&client.bp, 5);
@@ -2667,6 +2670,16 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         p->revives  = (uint8_t)revives;
 
         p->highlighted_item_id = ((int32_t)highlighted_item_id)-1;
+
+        bool set_player_gun = (p->room_gun_index != room_gun_index || refreshed_room_gun_list);
+
+        p->room_gun_index = (uint8_t)room_gun_index;
+
+        if(set_player_gun)
+        {
+            refreshed_room_gun_list = false;
+            gun_get_by_name(room_gun_list[room_gun_index].name, &p->gun);
+        }
 
         // p->xp = (uint16_t)xp;
         // p->level = (uint8_t)level;
@@ -3293,6 +3306,18 @@ static void pack_events(Packet* pkt, ClientInfo* cli)
                 BPW(&server.bp, 3,  (uint32_t)ev->data.floor_state.state);
             } break;
 
+            case EVENT_TYPE_GUN_LIST:
+            {
+                BPW(&server.bp, 5,  (uint32_t)ev->data.gun_list.count);
+                for(int j = 0; j < ev->data.gun_list.count; ++j)
+                {
+                    for(int k = 0; k < GUN_NAME_MAX_LEN; ++k)
+                    {
+                        BPW(&server.bp, 8, (uint32_t)ev->data.gun_list.gun_names[j][k]);
+                    }
+                }
+            } break;
+
             default:
                 break;
         }
@@ -3358,6 +3383,22 @@ static void unpack_events(Packet* pkt, int* offset, WorldState* ws)
                 uint8_t st = (uint8_t)bitpack_read(&client.bp,3);
 
                 visible_room->breakable_floor_state[x][y] = st;
+            } break;
+
+            case EVENT_TYPE_GUN_LIST:
+            {
+                refreshed_room_gun_list = true;
+                uint8_t count  = (uint8_t)bitpack_read(&client.bp,5);
+                room_gun_count = count;
+                for(int j = 0; j < room_gun_count; ++j)
+                {
+                    char gname[32+1] = {0};
+                    for(int k = 0; k < GUN_NAME_MAX_LEN; ++k)
+                    {
+                        gname[k] = (char)bitpack_read(&client.bp, 8);
+                    }
+                    gun_get_by_name(gname, &room_gun_list[j]);
+                }
             } break;
 
             default:

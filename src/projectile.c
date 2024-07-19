@@ -1889,6 +1889,13 @@ void apply_gun_perks(Gun* gun)
 
 void refresh_visible_room_gun_list()
 {
+
+    if(role == ROLE_CLIENT)
+    {
+        return;
+    }
+
+
     if(!visible_room)
         return;
 
@@ -1941,6 +1948,7 @@ void refresh_visible_room_gun_list()
         c->room_gun_index = room_gun_count-1;
     }
     
+    //TODO: check for uniqueness
     // add room item guns
     for(int i = 0; i < item_list->count; ++i)
     {
@@ -1961,10 +1969,25 @@ void refresh_visible_room_gun_list()
     printf("Refreshing room gun list. Count: %d\n", room_gun_count);
     for(int i = 0; i < room_gun_count; ++i)
         printf("  %d) %s\n", i, room_gun_list[i].name);
+
+    if(role == ROLE_SERVER)
+    {
+        NetEvent ev = {0};
+        ev.type = EVENT_TYPE_GUN_LIST;
+        ev.data.gun_list.count = room_gun_count;
+        for(int i = 0; i < ev.data.gun_list.count; ++i)
+        {
+            memcpy(ev.data.gun_list.gun_names[i], room_gun_list[i].name, GUN_NAME_MAX_LEN);
+        }
+        net_server_add_event(&ev);
+    }
 }
 
 void add_to_room_gun_list(void* it)
 {
+    if(!it)
+        return;
+
     if(!visible_room)
         return;
 
@@ -1983,6 +2006,9 @@ void add_to_room_gun_list(void* it)
 
 void add_to_room_gun_list_creature(void* creature)
 {
+    if(!creature)
+        return;
+
     if(!visible_room)
         return;
 

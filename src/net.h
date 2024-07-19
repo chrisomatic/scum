@@ -238,6 +238,7 @@ typedef enum
     EVENT_TYPE_PARTICLES,
     EVENT_TYPE_NEW_LEVEL,
     EVENT_TYPE_FLOOR_STATE,
+    EVENT_TYPE_GUN_LIST,
 } NetEventType;
 
 typedef struct
@@ -266,6 +267,14 @@ typedef struct
     uint8_t state;
 } NetEventFloorState;
 
+
+typedef struct
+{
+    uint8_t count;
+    char gun_names[16][32+1]; //[MAX_ROOM_GUNS][GUN_NAME_MAX_LEN+1]
+    // uint32_t seed[MAX_ROOM_GUNS]; //TODO
+} NetEventGunList;
+
 typedef struct
 {
     NetEventType type;
@@ -275,6 +284,7 @@ typedef struct
         NetEventMessage   message;
         NetEventParticles particles;
         NetEventFloorState floor_state;
+        NetEventGunList gun_list;
         // ...
     } data;
 } NetEvent;

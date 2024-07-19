@@ -2655,7 +2655,8 @@ static void creature_update_behemoth(Creature* c, float dt)
             Creature* c = creature_add(visible_room, CREATURE_TYPE_PEEPER, &rand_tile, NULL);
             if(c)
             {
-                add_to_room_gun_list_creature(c);
+                refresh_visible_room_gun_list();
+                // add_to_room_gun_list_creature(c);
                 ParticleSpawner* ps = particles_spawn_effect(rand_pos.x,rand_pos.y, 0.0, &particle_effects[EFFECT_SMOKE], 0.3, true, false);
                 if(ps != NULL) ps->userdata = (int)c->phys.curr_room;
             }

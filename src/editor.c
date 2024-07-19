@@ -192,7 +192,20 @@ void editor_draw()
                     imgui_listbox(item_names, ITEM_MAX, "Item", &item_sel, 4);
                     if(imgui_button("Add Item '%s'", item_names[item_sel]))
                     {
-                        item_add(item_sel, player->phys.pos.x, player->phys.pos.y, player->phys.curr_room);
+                        if(item_sel == ITEM_GUN)
+                        {
+                            int r = rand() % gun_catalog_count;
+                            Item* it = item_add_gun(r, rand(), player->phys.pos.x, player->phys.pos.y, player->phys.curr_room);
+                            if(it)
+                            {
+                                refresh_visible_room_gun_list();
+                                // add_to_room_gun_list(it);
+                            }
+                        }
+                        else
+                        {
+                            item_add(item_sel, player->phys.pos.x, player->phys.pos.y, player->phys.curr_room);
+                        }
                     }
 
                     // if(imgui_button("Add Item 'New Level'"))
