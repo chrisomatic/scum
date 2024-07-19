@@ -759,7 +759,7 @@ void editor_draw()
                 imgui_theme_editor();
             } break;
 
-            case 7: //SCUM
+            case 7: // room finder
             {
                 static bool searching_for_seed = false;
                 static int search_seed = 0;
@@ -770,14 +770,13 @@ void editor_draw()
                 static int prior_room_file_sel = 0;
                 static int room_file_sel = 0;
                 static int room_file_sel_index_map[MAX_ROOM_LIST_COUNT] = {0}; // filtered list mapped to room_list index
-                static char* filtered_room_files[256] = {0};
+                static char* filtered_room_files[MAX_ROOM_LIST_COUNT] = {0};
                 static int filtered_room_files_count = 0;
                 static char file_filter_str[32] = {0};
                 static char selected_room_name_str[100] = {0};
                 static char selected_room_name[32] = {0};
                 static int selected_rank = 0;
                 static int selected_room_type = 0;
-
 
                 if(searching_for_seed)
                 {
@@ -822,7 +821,6 @@ void editor_draw()
                     {
                         imgui_text("Seed: %d, Rank: %d", search_seed, search_rank);
 
-
                         if(role == ROLE_CLIENT)
                         {
                             search_success = false;
@@ -853,14 +851,19 @@ void editor_draw()
 
                     }
 
-                    if(imgui_button("Start Search"))
+                    bool start_search = imgui_button("Start Search");
+
+                    static char seed_str[32] = {0};
+                    imgui_text_box("Starting Seed##input seed",seed_str,32);
+                    int _seed = atoi(seed_str);
+
+                    if(start_search)
                     {
-                        search_seed = -1;
+                        search_seed = _seed-1;
                         search_rank = 1;
                         searching_for_seed = true;
                         search_success = false;
                     }
-
 
                     const float big = 16.0;
                     imgui_text_sized(big,"Filter");
@@ -912,6 +915,7 @@ void editor_draw()
                         room_file_sel = 0;
                         for(int i = 0; i < filtered_room_files_count; ++i)
                         {
+                            if(!filtered_room_files[i]) continue;
                             if(strcmp(selected_room_name, filtered_room_files[i]) == 0)
                             {
                                 room_file_sel = i;

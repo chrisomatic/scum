@@ -238,7 +238,7 @@ Level level_generate(unsigned int seed, int rank)
     print_room(&glevel, lroom);
 
 #if SMALL_LEVELS
-    if(lrand(&rg_level) % 100 <= 20)
+    if(lrand(&rg_level) % 100 <= 50)
 #else
     if(lrand(&rg_level) % 100 <= 75)
 #endif
