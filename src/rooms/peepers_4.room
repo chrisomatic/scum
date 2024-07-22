@@ -63,11 +63,9 @@ Wall Shooter
 Spider Queen
 
 ; Creatures
-13,10,2,0
 13,5,3,0
 13,7,4,0
 13,9,5,0
-13,4,6,0
 
 ; Item Mapping
 Red Gem
@@ -120,4 +118,5 @@ Gun
 
 ; Commentary
 0
+
 
