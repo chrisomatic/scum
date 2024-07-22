@@ -474,6 +474,9 @@ void player_init_keys()
 
     window_controls_add_key(&player->actions[PLAYER_ACTION_USE_ITEM].state, GLFW_KEY_U);
 
+    window_controls_add_key(&player->actions[PLAYER_ACTION_DISPLAY_MAP].state, GLFW_KEY_M);
+
+
     window_controls_add_key(&player->actions[PLAYER_ACTION_DROP_ITEM].state, GLFW_KEY_N);
     player->actions[PLAYER_ACTION_DROP_ITEM].hold_period = 0.1;
 
@@ -1671,6 +1674,108 @@ void player_update(Player* p, float dt)
     bool left  = p->actions[PLAYER_ACTION_LEFT].state;
     bool right = p->actions[PLAYER_ACTION_RIGHT].state;
 
+    // handle map navigation
+    bool show_map = p->actions[PLAYER_ACTION_DISPLAY_MAP].toggled_on;
+    if(show_map)
+    {
+        // show_big_map = !show_big_map;
+        p->show_map = !p->show_map;
+        if(p->show_map)
+        {
+            Room* room = level_get_room_by_index(&level, p->phys.curr_room);
+            if(room)
+            {
+                p->nav_sel.x = room->grid.x;
+                p->nav_sel.y = room->grid.y;
+            }
+        }
+    }
+
+    if(p->show_map)
+    {
+        up    = p->actions[PLAYER_ACTION_UP].toggled_on;
+        down  = p->actions[PLAYER_ACTION_DOWN].toggled_on;
+        left  = p->actions[PLAYER_ACTION_LEFT].toggled_on;
+        right = p->actions[PLAYER_ACTION_RIGHT].toggled_on;
+
+        Dir dir = DIR_NONE;
+        if(up) dir = DIR_UP;
+        if(down) dir = DIR_DOWN;
+        if(left) dir = DIR_LEFT;
+        if(right) dir = DIR_RIGHT;
+
+        if(dir != DIR_NONE)
+        {
+            Vector2i o = get_dir_offsets(dir);
+            // Vector2i temp = big_map_sel;
+
+            o.x += p->nav_sel.x;
+            o.y += p->nav_sel.y;
+
+            if(level_is_room_valid(&level, o.x, o.y))
+            {
+                Room* troom = &level.rooms[o.x][o.y];
+
+                bool can_travel = false;
+
+                if(role == ROLE_SERVER && troom->discovered)
+                    can_travel = true;
+                else if(role == ROLE_LOCAL && (troom->discovered || debug_enabled))
+                    can_travel = true;
+
+                if(can_travel)
+                {
+                    p->nav_sel.x = o.x;
+                    p->nav_sel.y = o.y;
+                }
+
+            }
+        }
+
+        if(activate)
+        {
+            Room* target_room = &level.rooms[p->nav_sel.x][p->nav_sel.y];
+            if(target_room->valid)
+            {
+                Dir door = DIR_NONE;
+                for(int d = 0; d < MAX_DOORS; ++d)
+                {
+                    if(!target_room->doors[d]) continue;
+                    door = d;
+                    break;
+                }
+
+                Vector2i nt = level_get_door_tile_coords(door);
+                bool sent_someone = false;
+                for(int i = 0; i < MAX_PLAYERS; ++i)
+                {
+                    Player* p2 = &players[i];
+                    if(!p2->active) continue;
+                    if(p2->phys.curr_room == target_room->index)
+                    {
+                        continue;
+                    }
+                    sent_someone = true;
+                    player_send_to_room(p2, target_room->index, false, nt);
+                }
+
+                if(sent_someone)
+                {
+                    level_grace_time = ROOM_GRACE_TIME;
+                    level_room_time = 0.0;
+                    level_room_xp = 0;
+                }
+            }
+
+            p->show_map = false;
+        }
+
+        up = false;
+        down = false;
+        left = false;
+        right = false;
+    }
+
     // update velocity
 
     Vector2f vel_dir = {0.0,0.0};
@@ -1849,7 +1954,7 @@ void player_update(Player* p, float dt)
 
     player_check_stuck_in_wall(p);
 
-    if(p == player)
+    // if(p == player)  //removed: maybe important idk?
     {
         Room* room = level_get_room_by_index(&level, (int)p->phys.curr_room);
 

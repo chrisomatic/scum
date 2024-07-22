@@ -49,6 +49,7 @@ bool debug_enabled = false;
 bool editor_enabled = false;
 bool client_chat_enabled = false;
 bool paused = false;
+Vector2i big_map_sel = {0};
 bool show_big_map = false;
 bool show_walls = false;
 bool show_tile_grid = false;
@@ -945,6 +946,7 @@ void init()
     camera_update(VIEW_WIDTH, VIEW_HEIGHT);
 
     DrawLevelParams* params = &minimap_params;
+    params->is_big = false;
     params->show_all = false;
     params->color_bg = COLOR_BLACK;
     params->opacity_bg = 0.0;
@@ -960,6 +962,7 @@ void init()
     params->opacity_border = 0.0;
 
     params = &bigmap_params;
+    params->is_big = true;
     params->show_all = true;
     params->color_bg = COLOR_BLACK;
     params->opacity_bg = 0.0;
@@ -1462,6 +1465,7 @@ int room_traversable_doors(int x, int y)
 void draw_map(DrawLevelParams* params)
 {
     bool astar = false;
+#if 0
     if(params->show_all)
     {
         if(mouse_map_room.x != -1 && mouse_map_room.y != -1)
@@ -1476,7 +1480,7 @@ void draw_map(DrawLevelParams* params)
                 roomxy.x = mouse_map_start_room.x;
                 roomxy.y = mouse_map_start_room.y;
             }
-            
+
             astar = astar_traverse(&map_asd, roomxy.x, roomxy.y, mouse_map_room.x, mouse_map_room.y);
             if(astar)
             {
@@ -1485,6 +1489,7 @@ void draw_map(DrawLevelParams* params)
             }
         }
     }
+#endif
 
     Rect mouse_rect = {0};
     mouse_rect.x = mouse_x;
@@ -1569,11 +1574,11 @@ void draw_map(DrawLevelParams* params)
             {
                 if(debug_enabled)
                 {
-                    gfx_draw_rect(&room_rect, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
+                    gfx_draw_rect(&room_rect, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.5, false, NOT_IN_WORLD);
 
                     room_rect.w -= 1.0;
                     room_rect.h -= 1.0;
-                    gfx_draw_rect(&room_rect, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 1.0, false, NOT_IN_WORLD);
+                    gfx_draw_rect(&room_rect, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.5, false, NOT_IN_WORLD);
                 }
                 continue;
             }
@@ -1613,6 +1618,12 @@ void draw_map(DrawLevelParams* params)
                         break;
                     }
                 }
+            }
+
+            if(params->is_big && x == player->nav_sel.x && y == player->nav_sel.y)
+            {
+                _color = gfx_blend_colors(params->color_room, COLOR_GREEN, 0.5);
+                // _color = COLOR_GREEN;
             }
 
             gfx_draw_rect(&room_rect, _color, NOT_SCALED, NO_ROTATION, _opacity, true, NOT_IN_WORLD);
@@ -1748,14 +1759,33 @@ void draw_minimap()
     draw_map(&minimap_params);
 }
 
+// void draw_bigmap()
+// {
+//     if(!show_big_map) return;
+//     float len = MIN(view_width, view_height) * 0.5;
+//     // float len = MIN(room_area.w, room_area.h);
+//     // // len /= (camera_get_zoom()/2.0);
+//     Rect area = RECT(room_area.x, room_area.y, len, len);
+//     bigmap_params.area = area;
+//     draw_map(&bigmap_params);
+// }
+
 void draw_bigmap()
 {
-    if(!show_big_map) return;
+    if(!player->show_map) return;
     float len = MIN(view_width, view_height) * 0.5;
     // float len = MIN(room_area.w, room_area.h);
     // // len /= (camera_get_zoom()/2.0);
     Rect area = RECT(room_area.x, room_area.y, len, len);
     bigmap_params.area = area;
+
+    if(role == ROLE_CLIENT)
+        bigmap_params.show_all = false;
+    else if(debug_enabled)
+        bigmap_params.show_all = true;
+    else
+        bigmap_params.show_all = false;
+
     draw_map(&bigmap_params);
 }
 
@@ -2374,13 +2404,13 @@ void key_cb(GLFWwindow* window, int key, int scan_code, int action, int mods)
                         paused = !paused;
                     }
                 }
-                else if(key == GLFW_KEY_M)
-                {
-                    if(role == ROLE_LOCAL && game_state == GAME_STATE_PLAYING)
-                    {
-                        show_big_map = !show_big_map;
-                    }
-                }
+                // else if(key == GLFW_KEY_M)
+                // {
+                //     if(role == ROLE_LOCAL && game_state == GAME_STATE_PLAYING)
+                //     {
+                //         show_big_map = !show_big_map;
+                //     }
+                // }
 
             }
 

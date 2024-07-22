@@ -2579,6 +2579,11 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             BPW(&server.bp, 16, (uint32_t)(p->highlighted_item_id+1));
             BPW(&server.bp, 5,  (uint32_t)(p->room_gun_index));
 
+            BPW(&server.bp, 5,  (uint32_t)(p->nav_sel.x));
+            BPW(&server.bp, 5,  (uint32_t)(p->nav_sel.y));
+            BPW(&server.bp, 1,  (uint32_t)(p->show_map));
+
+
             // BPW(&server.bp, 12, (uint32_t)(p->xp));
             // BPW(&server.bp, 5, (uint32_t)(p->level));
             // BPW(&server.bp, 5, (uint32_t)(p->new_levels));
@@ -2637,6 +2642,10 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         uint32_t highlighted_item_id = bitpack_read(&client.bp, 16);
         uint32_t room_gun_index      = bitpack_read(&client.bp, 5);
 
+        uint32_t nav_sel_x = bitpack_read(&client.bp, 5);
+        uint32_t nav_sel_y = bitpack_read(&client.bp, 5);
+        uint32_t show_map  = bitpack_read(&client.bp, 1);
+
         // uint32_t xp                  = bitpack_read(&client.bp, 12);
         // uint32_t level               = bitpack_read(&client.bp, 5);
         // uint32_t new_levels          = bitpack_read(&client.bp, 5);
@@ -2681,6 +2690,14 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         p->phys.hp_max  = (uint8_t)hp_max;
         p->coins  = (uint16_t)coins;
         p->revives  = (uint8_t)revives;
+
+        p->nav_sel.x = nav_sel_x;
+        p->nav_sel.y = nav_sel_y;
+        p->show_map = show_map;
+
+        // big_map_sel.x = nav_sel_x;
+        // big_map_sel.y = nav_sel_y;
+        // show_big_map = show_map;
 
         p->highlighted_item_id = ((int32_t)highlighted_item_id)-1;
 

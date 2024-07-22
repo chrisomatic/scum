@@ -39,6 +39,8 @@ typedef enum
     PLAYER_ACTION_DROP_ITEM,
     PLAYER_ACTION_REVIVE,
 
+    PLAYER_ACTION_DISPLAY_MAP,
+
     PLAYER_ACTION_TAB_CYCLE,
     PLAYER_ACTION_RSHIFT,
 
@@ -140,6 +142,10 @@ typedef struct
     int highlighted_index;
     ItemSort near_items[NUM_NEAR_ITEMS];
     int near_items_count;
+
+    // map navigation
+    Vector2i nav_sel;
+    bool show_map;
 
     // periodic shot
     float periodic_shot_counter;
