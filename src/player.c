@@ -762,13 +762,6 @@ void player_die(Player* p)
     }
 
     all_players_dead = true;
-    trigger_generate_level(rand(), level_rank, 2, __LINE__);
-
-    if(role == ROLE_SERVER)
-    {
-        NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
-        net_server_add_event(&ev);
-    }
 }
 
 void player_reset(Player* p)
@@ -1361,7 +1354,28 @@ void player_update(Player* p, float dt)
 {
     if(!p->active) return;
 
-    if(all_players_dead) return;
+    if(all_players_dead)
+    {
+        PlayerInput* pa = &p->actions[PLAYER_ACTION_REVIVE];
+        update_input_state(pa, dt);
+
+        bool revive = p->actions[PLAYER_ACTION_REVIVE].toggled_on;
+
+        if(revive)
+        {
+            trigger_generate_level(rand(), level_rank, 2, __LINE__);
+
+            if(role == ROLE_SERVER)
+            {
+                NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
+                net_server_add_event(&ev);
+            }
+
+        }
+
+        if(role == ROLE_LOCAL)
+            return;
+    }
 
     // has to be role local because server doesn't know about transition_room
     if(role == ROLE_LOCAL && p == player)
@@ -1378,6 +1392,22 @@ void player_update(Player* p, float dt)
             return;
         }
         */
+
+        bool _all_players_dead = true;
+        for(int i = 0; i < MAX_PLAYERS; ++i)
+        {
+            Player* p2 = &players[i];
+            
+            if(!p2->active) continue;
+            if(!p2->phys.dead)
+            {
+                _all_players_dead = false;
+                break;
+            }
+        }
+
+        all_players_dead = _all_players_dead;
+
         if(p == player)
         {
             p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);

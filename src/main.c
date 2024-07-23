@@ -1255,7 +1255,6 @@ void update(float dt)
 #endif
 
 
-
     if(game_state == GAME_STATE_EDITOR)
     {
         bool res = room_editor_update(dt);
@@ -1310,6 +1309,7 @@ void update(float dt)
         return;
     }
 
+
     if(!paused)
     {
         lighting_point_light_clear_all();
@@ -1332,7 +1332,6 @@ void update(float dt)
         // TODO: make this into a function
         if(player->phys.curr_room == player->transition_room)
         {
-
             Room* room = level_get_room_by_index(&level, player->phys.curr_room);
             if(room)
             {
@@ -1356,9 +1355,14 @@ void update(float dt)
 
             }
         }
-
+        if(all_players_dead)
+        {
+            ambient_light = 0x00800000;
+            ui_message_set_title(0.2, COLOR_WHITE, 1.2, "YOU ARE DEAD");
+            ui_message_set_small(0.2, "Press R to Restart");
+        }
     }
-    else
+    else if(!all_players_dead)
     {
         ui_message_set_title(0.2, COLOR_WHITE, 1.2, "PAUSED");
     }
@@ -2154,7 +2158,10 @@ void draw()
     }
 
     uint32_t _ambient_light = ambient_light;
+
     if(level.darkness_curse) ambient_light = 0x00404040;
+    else if(all_players_dead) ambient_light = 0x00400000;
+    else ambient_light = ambient_light_default;
 
     // draw game
 
@@ -2167,13 +2174,11 @@ void draw()
     }
     else
     {
-
         bool connected = true;
         if(role == ROLE_CLIENT) connected = (net_client_get_state() == CONNECTED);
 
         if(connected)
         {
-
             Room* room = level_get_room_by_index(&level, player->phys.curr_room);
             if(!room) LOGW("room is null");
             level_draw_room(room, NULL, 0, 0, 1.0, false);
