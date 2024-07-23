@@ -151,17 +151,22 @@ void editor_draw()
                 imgui_color_picker("Ambient Light", &ambient_light);
 
                 static char* dungeon_images[] = {"1", "2", "3", "4", "5"};
-                int dungeon_set_select = 0;
+                static int dungeon_set_select = 0;
                 imgui_button_select(IM_ARRAYSIZE(dungeon_images), dungeon_images, "Dungeon Set", &dungeon_set_select);
 
+                int _dungeon_image = 0;
                 switch(dungeon_set_select)
                 {
-                    case 0: dungeon_image = dungeon_set_image1; break;
-                    case 1: dungeon_image = dungeon_set_image2; break;
-                    case 2: dungeon_image = dungeon_set_image3; break;
-                    case 3: dungeon_image = dungeon_set_image4; break;
-                    case 4: dungeon_image = dungeon_set_image5; break;
-                    default: dungeon_image = dungeon_set_image1; break;
+                    case 0: _dungeon_image = dungeon_set_image1; break;
+                    case 1: _dungeon_image = dungeon_set_image2; break;
+                    case 2: _dungeon_image = dungeon_set_image3; break;
+                    case 3: _dungeon_image = dungeon_set_image4; break;
+                    case 4: _dungeon_image = dungeon_set_image5; break;
+                    default: _dungeon_image = dungeon_set_image1; break;
+                }
+                if(dungeon_image != _dungeon_image)
+                {
+                    dungeon_image = _dungeon_image;
                 }
 
                 imgui_text("Current Seed: %u", level_seed);
@@ -170,10 +175,7 @@ void editor_draw()
                 if(role == ROLE_LOCAL)
                 {
 
-                    if(imgui_button("Generate Random Level"))
-                    {
-                        trigger_generate_level(rand(), level_rank, 1, __LINE__);
-                    }
+                    bool gen_rand_lvl = imgui_button("Generate Random Level");
 
                     static char seed_str[32] = {0};
                     imgui_text_box("Input Seed##input seed",seed_str,32);
@@ -181,6 +183,12 @@ void editor_draw()
 
                     static int _rank = 1;
                     imgui_number_box("Input Rank", 1, 10, &_rank);
+
+
+                    if(gen_rand_lvl)
+                    {
+                        trigger_generate_level(rand(), _rank, 1, __LINE__);
+                    }
 
                     if(imgui_button("Generate New Level"))
                     {

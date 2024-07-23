@@ -1399,7 +1399,7 @@ void creature_die(Creature* c)
         NetEvent ev = {
             .type = EVENT_TYPE_PARTICLES,
             .data.particles.effect_index = effect_type,
-            .data.particles.pos = { c->phys.pos.x, c->phys.pos.y },
+            .data.particles.pos = { c->phys.collision_rect.x, c->phys.collision_rect.y },
             .data.particles.scale = 1.0,
             .data.particles.color1 = eff->color1,
             .data.particles.color2 = eff->color2,
@@ -1415,7 +1415,6 @@ void creature_die(Creature* c)
         ParticleSpawner* ps = particles_spawn_effect(c->phys.collision_rect.x,c->phys.collision_rect.y, 0.0, eff, 0.5, true, false);
         if(ps != NULL) ps->userdata = (int)c->phys.curr_room;
     }
-
 
     status_effects_clear(&c->phys);
 
@@ -1459,13 +1458,24 @@ void creature_die(Creature* c)
             num = 1;
         else if(r <= 98)
             num = 2;
-        else if(r <= 99)
+        else if(r <= 99)    // 1/100 chance
+        {
+            if(rand()%4 == 0)   // 1/4 chance
             num = 10+rand()%11;
+        }
 
         if(num > 0)
         {
             for(int i = 0; i < num; ++i)
-                item_add(item_get_random_coin(), c->phys.collision_rect.x, c->phys.collision_rect.y, c->phys.curr_room);
+            {
+                Item* it = item_add(item_get_random_coin(), c->phys.collision_rect.x, c->phys.collision_rect.y, c->phys.curr_room);
+                if(it)
+                {
+                    it->phys.vel.z = rand()%200+100.0;
+                    it->phys.vel.x = RAND_PN()*RAND_FLOAT(0,100);
+                    it->phys.vel.y = RAND_PN()*RAND_FLOAT(0,100);
+                }
+            }
         }
     }
 

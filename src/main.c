@@ -1952,7 +1952,7 @@ void update_menu_characters(float dt)
                 if(class == PLAYER_CLASS_SPACEMAN) p->image = class_image_spaceman;
                 else if(class == PLAYER_CLASS_PHYSICIST) p->image = class_image_physicist;
                 else if(class == PLAYER_CLASS_ROBOT) p->image = class_image_robot;
-                p->speed = rand_float_between(50.0,100.0);
+                p->speed = rand_float_between(50.0,200.0);
                 p->anim_factor = RANGE(p->speed/80.0, 0.3, 1.0);
                 p->scale = rand_float_between(0.8,2.0);
                 break;

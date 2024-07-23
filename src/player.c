@@ -357,6 +357,22 @@ void player_drop_item(Player* p, Item* it)
     it->type = ITEM_NONE;
 }
 
+void player_drop_coins(Player* p)
+{
+    for(int i = 0; i < p->coins; ++i)
+    {
+        Item* it = item_add(item_get_random_coin(), p->phys.collision_rect.x, p->phys.collision_rect.y, p->phys.curr_room);
+        if(it)
+        {
+            it->phys.vel.z = rand()%200+100.0;
+            it->phys.vel.x = RAND_PN()*RAND_FLOAT(0,100);
+            it->phys.vel.y = RAND_PN()*RAND_FLOAT(0,100);
+        }
+    }
+    p->coins = 0;
+}
+
+
 void player_set_active(Player* p, bool active)
 {
     p->active = active;
@@ -670,6 +686,31 @@ void player_die(Player* p)
         p->revives--;
         p->phys.hp = 2;
         text_list_add(text_lst, COLOR_WHITE, 3.0, "Revived!");
+
+        ParticleEffect* eff = &particle_effects[EFFECT_HEAL2];
+        if(role == ROLE_SERVER)
+        {
+            NetEvent ev = {
+                .type = EVENT_TYPE_PARTICLES,
+                .data.particles.effect_index = EFFECT_HEAL2,
+                .data.particles.pos = { p->phys.collision_rect.x, p->phys.collision_rect.y },
+                .data.particles.scale = 1.0,
+                .data.particles.color1 = eff->color1,
+                .data.particles.color2 = eff->color2,
+                .data.particles.color3 = eff->color3,
+                .data.particles.lifetime = 0.5,
+                .data.particles.room_index = p->phys.curr_room,
+            };
+
+            net_server_add_event(&ev);
+        }
+        else
+        {
+            ParticleSpawner* ps = particles_spawn_effect(p->phys.collision_rect.x,p->phys.collision_rect.y, 0.0, eff, 0.5, true, false);
+            if(ps != NULL) ps->userdata = (int)p->phys.curr_room;
+        }
+
+        player_drop_coins(p);
         return;
     }
 
@@ -706,6 +747,8 @@ void player_die(Player* p)
     Item skull = {.type = ITEM_SKULL, .phys.pos.x = p->phys.pos.x, .phys.pos.y = p->phys.pos.y};
     item_set_description(&skull, "%s", p->settings.name);
     player_drop_item(p, &skull);
+
+    player_drop_coins(p);
 
     p->phys.falling = false;
     p->phys.scale = 1.0;
@@ -1735,7 +1778,7 @@ void player_update(Player* p, float dt)
         if(activate)
         {
             Room* target_room = &level.rooms[p->nav_sel.x][p->nav_sel.y];
-            if(target_room->valid)
+            if(target_room->valid && !visible_room->doors_locked)
             {
                 Dir door = DIR_NONE;
                 for(int d = 0; d < MAX_DOORS; ++d)
@@ -2893,6 +2936,8 @@ void player_handle_collision(Player* p, Entity* e)
         case ENTITY_TYPE_ITEM:
         {
             Item* p2 = (Item*)e->ptr;
+
+            if(p2->used) break;
 
 
             CollisionInfo ci = {0};

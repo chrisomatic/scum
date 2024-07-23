@@ -464,7 +464,7 @@ bool room_file_load_all(bool force)
         bool success = room_file_load(&room_list[room_list_count], force, true, "src/rooms/%s", p_room_files[i]);
         if(!success)
         {
-            printf("Failed to open room file!\n");
+            printf("Failed to open room file: %s\n", p_room_files[i]);
             continue;
         }
 

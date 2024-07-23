@@ -230,6 +230,10 @@ static void draw_room_file_gui()
                 _room_file_sel_index_map[_filtered_room_files_count] = i;
                 _filtered_room_files_count++;
             }
+            // else
+            // {
+            //     printf("%d not added (%d)\n", i, room_list_count);
+            // }
         }
 
         // rebuild the filtered list

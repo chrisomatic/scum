@@ -188,6 +188,7 @@ extern int shadow_image;
 
 void player_init();
 void player_drop_item(Player* p, Item* it);
+void player_drop_coins(Player* p);
 void player_init_keys();
 void player2_init_keys();
 void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i tile);

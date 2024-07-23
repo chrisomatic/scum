@@ -1184,8 +1184,10 @@ void item_handle_collision(Item* it, Entity* e)
         {
             Item* p2 = (Item*)e->ptr;
 
-            if(item_is_chest(p2->type) &&  p2->used)
-                return;
+            if(p2->used || it->used) return;
+
+            // if(item_is_chest(p2->type) &&  p2->used)
+            //     return;
 
             CollisionInfo ci = {0};
             bool collided = phys_collision_circles(&it->phys,&p2->phys, &ci);
@@ -1195,10 +1197,10 @@ void item_handle_collision(Item* it, Entity* e)
                 phys_collision_correct(&it->phys, &p2->phys,&ci);
             }
 
-            if(item_is_chest(it->type) && it->used)
-            {
-                it->phys.pos = ppos;
-            }
+            // if(item_is_chest(it->type) && it->used)
+            // {
+            //     it->phys.pos = ppos;
+            // }
 
         } break;
     }
