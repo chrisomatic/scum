@@ -276,6 +276,33 @@ static bool item_func_shrine(Item* it, Player* p)
     return true;
 }
 
+
+/*
+
+ITEM_COSMIC_HEART_FULL: Increase Hearts by 1
+ITEM_COSMIC_HEART_HALF: Increase Hearts by 1/2
+ITEM_DRAGON_EGG:        Giant (size increase)
+ITEM_SHAMROCK:          Higher chance to drop coin/heart after room clear
+ITEM_RUBY_RING:         Falling in pits does half damage
+ITEM_POTION_STRENGTH:   Massive (Push Heavy things)
+ITEM_POTION_MANA:       Speed Increase
+ITEM_POTION_GREAT_MANA: Decrease Mud Slowdown
+ITEM_POTION_PURPLE:     Ignore Mud
+ITEM_GAUNTLET_SLOT:     Increase Chance to Block Hits
+ITEM_UPGRADE_ORB:       Periodically shoot projectiles from self
+ITEM_GALAXY_PENDANT:    Chance to shoot homing projectiles when taking damage
+ITEM_FEATHER:           Floating jump
+ITEM_SHIELD:            Defence Increase
+ITEM_WING:              Floating
+ITEM_LOOKING_GLASS:     Reveal Map
+ITEM_BOOK:              Chance to Open Doors early
+ITEM_GEM_WHITE:         Chance of Ethereal per room (pass through walls)
+ITEM_GEM_YELLOW:        Dwarf (size decrease)
+ITEM_GEM_PURPLE:        Falling rocks on death
+
+
+*/
+
 static bool internal_item_use(Item* it, void* _player)
 {
     Player* p = (Player*)_player;
@@ -363,7 +390,7 @@ static bool internal_item_use(Item* it, void* _player)
         // [STAT] Movement Speed
         case ITEM_FEATHER:
         {
-            return player_add_stat(p, MOVEMENT_SPEED, 1);
+            p->phys.floating = true;
         } break;
 
         // [STAT] Attack Speed
@@ -550,12 +577,14 @@ void item_init()
                 p->touchable = false;
             } break;
 
+            case ITEM_FEATHER:
+                p->chestable = true;
+                break;
             case ITEM_POTION_MANA:
             case ITEM_POTION_GREAT_MANA:
             case ITEM_GALAXY_PENDANT:
             case ITEM_POTION_STRENGTH:
             case ITEM_SHIELD:
-            case ITEM_FEATHER:
             case ITEM_WING:
             case ITEM_LOOKING_GLASS:
             case ITEM_SHAMROCK:

@@ -139,7 +139,6 @@ void player_set_defaults(Player* p)
 
     p->phys.scale = 1.0;
     p->phys.falling = false;
-    p->phys.floating = false;
 
     static bool _prnt = false;
     if(!_prnt)
