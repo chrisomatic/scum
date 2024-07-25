@@ -17,7 +17,7 @@
 #include "lighting.h"
 #include "camera.h"
 
-#define ASCII_NUMS {"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"}
+#define STRING_NUMS {"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"}
 
 static char particles_file_name[33] = {0};
 static ParticleSpawner* particle_spawner;
@@ -281,7 +281,7 @@ void editor_draw()
 
                     imgui_toggle_button(&players_invincible, "Invincibility");
 
-                    char* pnames[] = ASCII_NUMS;
+                    char* pnames[] = STRING_NUMS;
                     // imgui_dropdown(player_names, name_count, "Select Player", &player_selection, NULL);
                     imgui_dropdown(pnames, MAX_PLAYERS, "Select Player", &player_selection, NULL);
                     Player* p = &players[player_selection];
@@ -624,7 +624,7 @@ void editor_draw()
                     imgui_horizontal_begin();
                         imgui_slider_float("Base Speed", 100.0,1000.0,&gun.speed);
                         imgui_slider_float("Lifetime", 0.2,3.0,&gun.lifetime);
-                        imgui_slider_float("Cooldown", 0.1,1.0,&gun.cooldown);
+                        imgui_slider_float("Cooldown", 0.02,1.0,&gun.cooldown);
                     imgui_horizontal_end();
 
                     imgui_horizontal_begin();

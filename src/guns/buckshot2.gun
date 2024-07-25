@@ -1,9 +1,9 @@
 based_on: buckshot1
 name: buckshot2
-desc:  Get bucked
+desc: Get bucked
 cost: 10
 num: 7
 speed: 301.62
 scale1: 0.91
 scale2: 0.68
-spread: 130.28
+spread: 71.34

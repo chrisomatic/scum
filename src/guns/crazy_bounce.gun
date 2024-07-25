@@ -2,7 +2,6 @@ based_on: null
 name: crazy_bounce
 desc: test
 cost: 15
-
 damage_min: 1.00
 damage_max: 1.00
 num: 1
@@ -11,50 +10,43 @@ scale1: 1.02
 scale2: 0.88
 lifetime: 1.45
 cooldown: 0.72
-burst_count: 1
+burst_count: 0
 burst_rate: 0.17
 critical_hit_chance: 0.20
-knockback_factor: 0.38
-
+knockback_factor: 0.00
 spread_type: 1
 spread: 14.84
-
+gun_sprite_index: 0
 sprite_index: 0
 spin_factor: 0.00
 color1: 7ECCE9
 color2: C1E5C1
-
 directional_accel: 0.00
 gravity_factor: 1.79
 air_friction: 0.83
-
 wave_amplitude: 110.88
 wave_period: 0.68
-
 ghost_chance: 0.85
 homing_chance: 0.00
 bounce_chance: 0.77
 penetration_chance: 0.00
+stun_chance: 0.00
 explosion_chance: 0.00
 explosion_radius: 15.00
 explosion_rate: 100.00
-
 fire_damage: 0.00
 cold_damage: 0.00
 lightning_damage: 0.00
 poison_damage: 0.00
-
 chargeable: false
 charge_type: 1
 charge_time_max: 1.15
-
 cluster: true
 cluster_stages: 1
 cluster_num0: 3
 cluster_num1: 4
 cluster_scale0: 0.57
 cluster_scale1: 1.81
-
 orbital: false
 orbital_max_count: 0
 orbital_distance: 0.00

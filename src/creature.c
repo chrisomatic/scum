@@ -1836,13 +1836,26 @@ static void creature_update_clinger(Creature* c, float dt)
 
 static void creature_update_geizer(Creature* c, float dt)
 {
+
+    // intialize
+    if(c->ai_value2 == 0)
+    {
+        c->ai_value2 = RAND_PN();
+        c->ai_value = rand() % 360;
+    }
+
     bool act = ai_update_action(c, dt);
     if(act)
     {
         int n_orbs = rand() % 4 + 3;
         for(int i = 0; i < n_orbs; ++i)
         {
-            int angle = rand() % 360;
+
+            c->ai_value += 5*c->ai_value2;
+            if(c->ai_value > 360) c->ai_value = 0;
+            else if(c->ai_value < 0) c->ai_value = 360;
+
+            float angle = c->ai_value + RAND_FLOAT(-10.0,10.0);
             creature_fire_projectile(c, angle);
         }
     }
