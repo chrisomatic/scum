@@ -41,6 +41,9 @@ typedef struct
     uint8_t curr_room;
     float curr_tile_counter;    //used for breakable floors
 
+    float mud_ignore_factor;
+    float pit_damage_factor;
+
     bool on_breakable_tile;
 
     Rect vr;

@@ -89,6 +89,7 @@ typedef struct
 
     Physics phys;
     float anim_factor;
+    float gravity;
 
     float aim_deg;
 

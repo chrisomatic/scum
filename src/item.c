@@ -279,25 +279,25 @@ static bool item_func_shrine(Item* it, Player* p)
 
 /*
 
-ITEM_COSMIC_HEART_FULL: Increase Hearts by 1
-ITEM_COSMIC_HEART_HALF: Increase Hearts by 1/2
-ITEM_DRAGON_EGG:        Giant (size increase)
++ ITEM_COSMIC_HEART_FULL: Increase Hearts by 1
++ ITEM_COSMIC_HEART_HALF: Increase Hearts by 1/2
++ ITEM_DRAGON_EGG:        Giant (size increase)
++ ITEM_GEM_YELLOW:        Dwarf (size decrease)
++ ITEM_WING:              Floating
++ ITEM_FEATHER:           Floating jump
++ ITEM_RUBY_RING:         Falling in pits does half damage
++ ITEM_POTION_STRENGTH:   Massive (Push Heavy things)
++ ITEM_POTION_MANA:       Speed Increase
++ ITEM_POTION_GREAT_MANA: Decrease Mud Slowdown
++ ITEM_POTION_PURPLE:     Ignore Mud
 ITEM_SHAMROCK:          Higher chance to drop coin/heart after room clear
-ITEM_RUBY_RING:         Falling in pits does half damage
-ITEM_POTION_STRENGTH:   Massive (Push Heavy things)
-ITEM_POTION_MANA:       Speed Increase
-ITEM_POTION_GREAT_MANA: Decrease Mud Slowdown
-ITEM_POTION_PURPLE:     Ignore Mud
 ITEM_GAUNTLET_SLOT:     Increase Chance to Block Hits
 ITEM_UPGRADE_ORB:       Periodically shoot projectiles from self
 ITEM_GALAXY_PENDANT:    Chance to shoot homing projectiles when taking damage
-ITEM_FEATHER:           Floating jump
 ITEM_SHIELD:            Defence Increase
-ITEM_WING:              Floating
 ITEM_LOOKING_GLASS:     Reveal Map
 ITEM_BOOK:              Chance to Open Doors early
 ITEM_GEM_WHITE:         Chance of Ethereal per room (pass through walls)
-ITEM_GEM_YELLOW:        Dwarf (size decrease)
 ITEM_GEM_PURPLE:        Falling rocks on death
 
 
@@ -349,12 +349,17 @@ static bool internal_item_use(Item* it, void* _player)
 
         case ITEM_POTION_MANA:
         {
-            return player_add_mp(p, 5);
+            return player_add_stat(p, MOVEMENT_SPEED, 1);
         } break;
 
         case ITEM_POTION_GREAT_MANA:
         {
-            return player_add_mp(p, 20);
+            p->phys.mud_ignore_factor = 0.8;
+        } break;
+
+        case ITEM_POTION_PURPLE:
+        {
+            p->phys.mud_ignore_factor = 2.5;
         } break;
 
         case ITEM_COSMIC_HEART_FULL:
@@ -375,28 +380,39 @@ static bool internal_item_use(Item* it, void* _player)
             player_add_mp(p,30);
         } break;
 
-        // [STAT] Strength
         case ITEM_POTION_STRENGTH:
         {
-            return player_add_stat(p, STRENGTH, 1);
+            p->phys.mass = 10.0;
         } break;
 
-        // [STAT] Defense
         case ITEM_SHIELD:
         {
             return player_add_stat(p, DEFENSE, 1);
         } break;
 
-        // [STAT] Movement Speed
         case ITEM_FEATHER:
+        {
+            p->gravity = 0.5;
+        } break;
+
+        case ITEM_WING:
         {
             p->phys.floating = true;
         } break;
 
-        // [STAT] Attack Speed
-        case ITEM_WING:
+        case ITEM_DRAGON_EGG:
         {
-            return player_add_stat(p, ATTACK_SPEED, 1);
+            p->phys.scale = 1.2;
+        } break;
+
+        case ITEM_GEM_YELLOW:
+        {
+            p->phys.scale = 0.8;
+        } break;
+
+        case ITEM_RUBY_RING:
+        {
+            p->phys.pit_damage_factor = 0.0;
         } break;
 
         // [STAT] Range
@@ -562,30 +578,27 @@ void item_init()
 
         switch(p->type)
         {
-            case ITEM_HEART_HALF:
-            case ITEM_HEART_FULL:
-            case ITEM_COSMIC_HEART_HALF:
             case ITEM_COSMIC_HEART_FULL:
+            case ITEM_HEART_FULL:
+            case ITEM_DRAGON_EGG:
+            case ITEM_GEM_YELLOW:
+            case ITEM_WING:
+            case ITEM_FEATHER:
+            case ITEM_RUBY_RING:
+            case ITEM_POTION_STRENGTH:
+            case ITEM_POTION_MANA:
+            case ITEM_POTION_GREAT_MANA:
+            case ITEM_POTION_PURPLE:
             {
                 p->chestable = true;
                 p->touchable = false;
             } break;
 
             case ITEM_GUN:
-            {
-                p->chestable = false;
-                p->touchable = false;
-            } break;
-
-            case ITEM_FEATHER:
-                p->chestable = true;
-                break;
-            case ITEM_POTION_MANA:
-            case ITEM_POTION_GREAT_MANA:
+            case ITEM_HEART_HALF:
+            case ITEM_COSMIC_HEART_HALF:
             case ITEM_GALAXY_PENDANT:
-            case ITEM_POTION_STRENGTH:
             case ITEM_SHIELD:
-            case ITEM_WING:
             case ITEM_LOOKING_GLASS:
             case ITEM_SHAMROCK:
             case ITEM_UPGRADE_ORB:
@@ -773,26 +786,26 @@ const char* item_get_description(ItemType type, Item* it)
         case ITEM_GEM_GREEN:  return "";
         case ITEM_GEM_BLUE:   return "";
         case ITEM_GEM_WHITE:  return "";
-        case ITEM_GEM_YELLOW: return "";
+        case ITEM_GEM_YELLOW: return "Dwarfism";
         case ITEM_GEM_PURPLE: return "";
         case ITEM_HEART_EMPTY: return "";
-        case ITEM_DRAGON_EGG: return "";
-        case ITEM_RUBY_RING: return "";
-        case ITEM_POTION_PURPLE: return "";
+        case ITEM_DRAGON_EGG: return "Gigantism";
+        case ITEM_RUBY_RING: return "Ignore Pit Damage";
+        case ITEM_POTION_PURPLE: return "Ignore Mud";
         case ITEM_GAUNTLET_SLOT: return "";
 
         case ITEM_HEART_FULL: return "heal 1 heart";
         case ITEM_HEART_HALF: return "heal 1/2 heart";
-        case ITEM_POTION_MANA: return "replenish mana";
-        case ITEM_POTION_GREAT_MANA: return "greatly replenish mana";
+        case ITEM_POTION_MANA: return "Speed Increase";
+        case ITEM_POTION_GREAT_MANA: return "Decrease Mud Slowdown";
         case ITEM_COSMIC_HEART_FULL: return "increase hp by 1 heart";
         case ITEM_COSMIC_HEART_HALF: return "increase hp by 1/2 heart";
 
         case ITEM_GALAXY_PENDANT: return "increase mana";
-        case ITEM_POTION_STRENGTH: return "+1 strength";
+        case ITEM_POTION_STRENGTH: return "Massive";
         case ITEM_SHIELD: return "+1 defense";
-        case ITEM_FEATHER: return "+1 movement speed";
-        case ITEM_WING: return "+1 attack speed";
+        case ITEM_FEATHER: return "Slow Fall";
+        case ITEM_WING: return "Float";
         case ITEM_LOOKING_GLASS: return "+1 range";
         case ITEM_SHAMROCK: return "+1 luck";
         case ITEM_UPGRADE_ORB: return "upgrade stuff";

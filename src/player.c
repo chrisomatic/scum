@@ -123,6 +123,8 @@ void player_set_defaults(Player* p)
     p->phys.elasticity = 0.1;
     p->phys.vr = *vr;
     p->phys.stun_timer = 0.0;
+    p->phys.pit_damage_factor = 1.0;
+    p->phys.mud_ignore_factor = 0.0;
 
     memset(p->stats,0,sizeof(uint8_t)*MAX_STAT_TYPE);
 
@@ -136,6 +138,7 @@ void player_set_defaults(Player* p)
 
     p->invulnerable = false;
     p->invulnerable_temp_time = 0.0;
+    p->gravity = GRAVITY_EARTH;
 
     p->phys.scale = 1.0;
     p->phys.falling = false;
@@ -1599,6 +1602,7 @@ void player_update(Player* p, float dt)
             {
                 case TILE_MUD:
                     mud_factor = 0.4;
+                    mud_factor *= (1.0 + p->phys.mud_ignore_factor);
                     break;
                 case TILE_ICE:
                     mud_factor = 0.4;
@@ -1710,7 +1714,7 @@ void player_update(Player* p, float dt)
             if(rectangles_colliding(&tile_pit_rect, &player_pit_rect))
             {
                 p->phys.falling = true;
-                player_hurt(p, 1);
+                player_hurt(p, p->phys.pit_damage_factor);
             }
         }
     }
@@ -1914,7 +1918,7 @@ void player_update(Player* p, float dt)
 
     }
 
-    phys_apply_gravity(&p->phys,GRAVITY_EARTH,dt);
+    phys_apply_gravity(&p->phys,p->gravity,dt);
 
     bool jump = p->actions[PLAYER_ACTION_JUMP].state;
     if(p->phys.falling) jump = false;
@@ -2652,7 +2656,7 @@ void player_draw(Player* p)
     }
 
     //uint32_t color = gfx_blend_colors(COLOR_BLUE, COLOR_TINT_NONE, p->phys.speed_factor);
-    float y = p->phys.pos.y - (p->phys.vr.h + p->phys.pos.z)/2.0;
+    float y = p->phys.pos.y - (p->phys.vr.h*p->phys.scale + p->phys.pos.z)/2.0;
     bool ret = gfx_sprite_batch_add(p->image, p->sprite_index+p->anim.curr_frame, p->phys.pos.x, y, p->settings.color, true, p->phys.scale, 0.0, opacity, false, false, false);
     if(!ret) printf("Failed to add player to batch!\n");
 
