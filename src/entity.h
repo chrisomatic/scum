@@ -8,6 +8,7 @@ typedef enum
 {
     ENTITY_TYPE_PLAYER,
     ENTITY_TYPE_CREATURE,
+    ENTITY_TYPE_CREATURE_SEGMENT,
     ENTITY_TYPE_PROJECTILE,
     ENTITY_TYPE_ITEM,
     ENTITY_TYPE_EXPLOSION,
@@ -24,6 +25,7 @@ typedef struct
     Physics* phys;
     Vector2f pos;
     bool draw_only;
+    Rect* collision;
     //bool shadow;
 } Entity;
 

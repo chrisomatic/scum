@@ -53,6 +53,7 @@ typedef struct
 
 typedef struct
 {
+    uint16_t creature_id;
     Vector2i curr_tile;
     Vector2i target_tile;
     Vector2f target_pos;
@@ -61,6 +62,7 @@ typedef struct
     Vector3f pos;
     Vector3f vel;
     Rect collision_rect;
+    Physics phys;//todo
 
     bool tail;
 

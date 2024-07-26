@@ -818,7 +818,10 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
     uint8_t curr_room = 0;
     Physics* phys = NULL;
 
+
     bool player_hitting_creature = proj->from_player && e->type == ENTITY_TYPE_CREATURE;
+    bool player_hitting_creature_seg = proj->from_player && e->type == ENTITY_TYPE_CREATURE_SEGMENT;
+    // Physics phys_seg = {0};
 
     if(player_hitting_creature)
     {
@@ -829,6 +832,23 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
 
         curr_room = c->phys.curr_room;
         phys = &c->phys;
+    }
+    else if(player_hitting_creature_seg)
+    {
+        CreatureSegment* cs = (CreatureSegment*)e->ptr;
+        Creature* c = creature_get_by_id(cs->creature_id);
+        printf("checking %p\n", c);
+        if(!c) return;
+        curr_room = cs->phys.curr_room;
+        phys = &cs->phys;
+        // curr_room = c->phys.curr_room;
+        // phys = &phys_seg;
+        // phys->collision_rect = cs->collision_rect;
+        // // phys->collision_rect.x = cs->pos.x;
+        // // phys->collision_rect.y = cs->pos.y;
+        // // phys->collision_rect.w = c->phys.collision_rect.w;
+        // // phys->collision_rect.h = c->phys.collision_rect.h;
+        // phys->height = c->phys.height;
     }
     else if(!proj->from_player && e->type == ENTITY_TYPE_PLAYER)
     {
@@ -881,7 +901,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
         if(hit)
         {
 
-            if(player_hitting_creature)
+            if(player_hitting_creature || player_hitting_creature_seg)
             {
                 players[proj->from_id].total_hits++;
                 players[proj->from_id].level_hits++;
@@ -928,6 +948,8 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
                     player_hurt((Player*)e->ptr, RAND_FLOAT(gun->damage_min, gun->damage_max));
                     break;
                 case ENTITY_TYPE_CREATURE:
+                {
+
                     float damage = RAND_FLOAT(gun->damage_min, gun->damage_max);
                     // printf("%s damage: %.2f\n", __func__, damage);
                     bool killed = creature_hurt((Creature*)e->ptr, damage, proj->from_id);
@@ -938,7 +960,23 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
                             players[proj->from_id].total_kills++;
                         }
                     }
-                    break;
+                } break;
+                case ENTITY_TYPE_CREATURE_SEGMENT:
+                {
+
+                    CreatureSegment* cs = (CreatureSegment*)e->ptr;
+                    Creature* c = creature_get_by_id(cs->creature_id);
+                    float damage = RAND_FLOAT(gun->damage_min, gun->damage_max);
+                    // printf("%s damage: %.2f\n", __func__, damage);
+                    bool killed = creature_hurt(c, damage, proj->from_id);
+                    if(killed)
+                    {
+                        if(proj->from_player)
+                        {
+                            players[proj->from_id].total_kills++;
+                        }
+                    }
+                } break;
             }
         }
     }

@@ -132,7 +132,27 @@ void entity_build_all()
 
         bool ghost = c->phys.dead ? true : false;
         add_entity(ENTITY_TYPE_CREATURE,c, &c->phys);
+
+
+        if(c->segmented)
+        {
+
+            for(int i = 0; i < creature_segment_count; ++i)
+            {
+                Entity* e = &entities[num_entities++];
+                e->type = ENTITY_TYPE_CREATURE_SEGMENT;
+                e->phys = &creature_segments[i].phys;
+                e->ptr = &creature_segments[i];
+                e->phys->curr_room = c->phys.curr_room;
+                e->phys->collision_rect = creature_segments[i].collision_rect;
+                e->phys->height = c->phys.height;
+                e->pos.x = creature_segments[i].pos.x;
+                e->pos.y = creature_segments[i].pos.y;
+            }
+        }
+
     }
+
 
     // projectiles
     for(int i = 0; i < plist->count; ++i)
@@ -299,6 +319,7 @@ void entity_handle_collisions()
 
     for(int i = 0; i < num_entities; ++i)
     {
+        if(entities[i].type == ENTITY_TYPE_CREATURE_SEGMENT) continue;
         phys_calc_collision_rect(entities[i].phys);
     }
 
@@ -360,6 +381,7 @@ void entity_handle_collisions()
         Entity* e = &entities[i];
 
         if(e->draw_only) continue;
+        if(!e->phys) continue;
         if(e->phys->ethereal) continue;
         if(e->type == ENTITY_TYPE_EXPLOSION) continue;
 
@@ -393,6 +415,9 @@ void entity_draw_all()
         Entity* e = &entities[i];
 
         if(e->type == ENTITY_TYPE_WALL_COLUMN)
+            continue;
+
+        if(e->phys == NULL)
             continue;
 
         if(e->phys->curr_room != player->phys.curr_room)
@@ -440,6 +465,7 @@ void entity_draw_all()
                 break;
         }
 
+        if(e->phys == NULL) continue;
         // draw any status effects
         status_effects_draw((void*)e->phys);
 

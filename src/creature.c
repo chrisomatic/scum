@@ -994,6 +994,7 @@ Creature* creature_add(Room* room, CreatureType type, Vector2i* tile, Creature* 
             {
                 CreatureSegment* cs = &creature_segments[i];
 
+                cs->creature_id = c.id;
                 cs->dir = angle_to_dir_cardinal(c.phys.rotation_deg);
                 cs->pos.x = c.phys.collision_rect.x - (TILE_SIZE*(i+1));
                 cs->pos.y = c.phys.collision_rect.y;
