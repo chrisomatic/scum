@@ -172,6 +172,16 @@ void editor_draw()
                 imgui_text("Current Seed: %u", level_seed);
                 imgui_text("Current Rank: %u", level_rank);
 
+
+                if(imgui_button("Discover Rooms"))
+                {
+
+                    for(int i = 0; i < MAX_ROOMS_GRID; ++i)
+                    {
+                        level.rooms_ptr[i]->discovered = true;
+                    }
+                }
+
                 if(role == ROLE_LOCAL)
                 {
 

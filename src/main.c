@@ -1419,19 +1419,19 @@ void handle_room_completion(Room* room)
             Vector2i start = {.x = ROOM_TILE_SIZE_X/2, .y = ROOM_TILE_SIZE_Y/2};
 
             level_get_safe_floor_tile(room, start, NULL, &pos);
-            item_add(ITEM_CHEST, pos.x, pos.y, room_index);
-
-            level_get_safe_floor_tile(room, start, NULL, &pos);
             item_add(ITEM_PORTAL, pos.x, pos.y, room_index);
 
-            level_get_safe_floor_tile(room, start, NULL, &pos);
-            item_add(ITEM_REVIVE, pos.x, pos.y, room_index);
+            if(rand() % 2 == 0) //TODO: probability
+            {
+                level_get_safe_floor_tile(room, start, NULL, &pos);
+                item_add(ITEM_REVIVE, pos.x, pos.y, room_index);
+            }
         }
         else
         {
             if(room->type != ROOM_TYPE_SHRINE)
             {
-                if(rand() % 5 == 0) //TODO: probability
+                if(rand() % 3 == 0) //TODO: probability
                 {
                     Vector2f pos = {0};
                     Vector2i start = {.x = ROOM_TILE_SIZE_X/2, .y = ROOM_TILE_SIZE_Y/2};
@@ -1524,7 +1524,7 @@ void draw_map(DrawLevelParams* params)
         }
     }
 
-    bool dbg = params->show_all && debug_enabled;
+    bool dbg = params->show_all && debug_enabled && role == ROLE_LOCAL;
 
     gfx_draw_rect(&params->area, params->color_bg, NOT_SCALED, NO_ROTATION, params->opacity_bg, true, NOT_IN_WORLD);
     gfx_draw_rect(&params->area, params->color_border, NOT_SCALED, NO_ROTATION, params->opacity_border, false, NOT_IN_WORLD);
@@ -1632,6 +1632,26 @@ void draw_map(DrawLevelParams* params)
 
             gfx_draw_rect(&room_rect, _color, NOT_SCALED, NO_ROTATION, _opacity, true, NOT_IN_WORLD);
 
+            if(!dbg && discovered && params->is_big)
+            {
+                const char* room_name = "";
+                if(room->type == ROOM_TYPE_BOSS)
+                    room_name = get_room_type_name(room->type);
+                else if(room->type == ROOM_TYPE_SHOP)
+                    room_name = get_room_type_name(room->type);
+                else if(room->type == ROOM_TYPE_TREASURE)
+                    room_name = get_room_type_name(room->type);
+                else if(room->type == ROOM_TYPE_SHRINE)
+                    room_name = get_room_type_name(room->type);
+
+                if(strlen(room_name) > 0)
+                {
+                    float tlx = room_rect.x - room_rect.w/2.0 + 1.0;
+                    float tly = room_rect.y - room_rect.h/2.0;
+                    gfx_draw_string(tlx, tly, COLOR_WHITE, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "%s", room_name);
+                }
+            }
+
             // reset color (so it's not green)
             _color = __color;
 
@@ -1653,12 +1673,12 @@ void draw_map(DrawLevelParams* params)
 
             if(dbg)
             {
-                float tlx = room_rect.x - room_rect.w/2.0 + 1.0;
-                float tly = room_rect.y - room_rect.h/2.0;
-                gfx_draw_string(tlx, tly, COLOR_BLACK, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "(%d, %d, %u) %d", room->grid.x, room->grid.y, room->index, creature_get_room_count(room->index, true));
+                float _tlx = room_rect.x - room_rect.w/2.0 + 1.0;
+                float _tly = room_rect.y - room_rect.h/2.0;
+                gfx_draw_string(_tlx, _tly, COLOR_BLACK, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, 0, "(%d, %d, %u) %d", room->grid.x, room->grid.y, room->index, creature_get_room_count(room->index, true));
 
                 Vector2f size = gfx_string_get_size(tscale, "|");
-                gfx_draw_string(tlx, tly+size.y, COLOR_BLACK, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, room_rect.w, "%s", room_files[room_list[room->layout].file_index]);
+                gfx_draw_string(_tlx, _tly+size.y, COLOR_BLACK, tscale, NO_ROTATION, 1.0, NOT_IN_WORLD, NO_DROP_SHADOW, room_rect.w, "%s", room_files[room_list[room->layout].file_index]);
             }
 
             if(!IS_RECT_EMPTY(&send_to_room_rect) && params->show_all && room->index != player->phys.curr_room)
@@ -1728,6 +1748,44 @@ void draw_map(DrawLevelParams* params)
         mouse_map_room.y = -1;
     }
 
+
+
+    bool heart_rooms[MAX_ROOMS_GRID] = {0};
+    for(int i = 0; i < item_list->count; ++i)
+    {
+        Item* it = &items[i];
+        if(item_is_heart(it->type))
+        {
+            if(level.rooms_ptr[it->phys.curr_room]->discovered || dbg)
+            {
+
+                if(heart_rooms[it->phys.curr_room]) continue;
+                heart_rooms[it->phys.curr_room] = true;
+
+
+                float px = it->phys.collision_rect.x - rect_tlx(&room_area);
+                float py = it->phys.collision_rect.y - rect_tly(&room_area);
+                px *= (room_wh/room_area.w);
+                py *= (room_wh/room_area.h);
+                Rect pr = RECT(px, py, margin, margin);
+
+                // translate to minimap
+                // Vector2i roomxy = level_get_room_coords(room->index);
+                Vector2i roomxy = level.rooms_ptr[it->phys.curr_room]->grid;
+                float draw_x = tlx + roomxy.x*len + r;
+                float draw_y = tly + roomxy.y*len + r;
+
+                int image = item_props[ITEM_HEART_FULL].image;
+                int sprite = item_props[ITEM_HEART_FULL].sprite_index;
+
+                Rect ir = gfx_images[image].visible_rects[sprite];
+                float scale = (len/6.0) / MAX(ir.w,ir.h);
+
+                gfx_draw_image_ignore_light(image, sprite, draw_x, draw_y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, false);
+            }
+        }
+    }
+
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         Player* p = &players[i];
@@ -1747,7 +1805,7 @@ void draw_map(DrawLevelParams* params)
         Rect r = RECT(draw_x, draw_y, room_wh, room_wh);
         gfx_get_absolute_coords(&pr, ALIGN_CENTER, &r, ALIGN_CENTER);
 
-        gfx_draw_rect(&pr, params->color_player, NOT_SCALED, NO_ROTATION, params->opacity_player, true, NOT_IN_WORLD);
+        gfx_draw_rect(&pr, COLOR_WHITE /*params->color_player*/, NOT_SCALED, NO_ROTATION, params->opacity_player, true, NOT_IN_WORLD);
     }
 }
 
