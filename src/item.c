@@ -54,7 +54,7 @@ static bool item_func_chest(Item* it, Player* p)
     float y = it->phys.pos.y;
     int croom = it->phys.curr_room;
 
-    int num = player_get_active_count() + 1;
+    int num = player_get_active_count();
     ItemType lst[10] = {0};
 
     for(int i = 0; i < num; ++i)
@@ -354,12 +354,12 @@ static bool internal_item_use(Item* it, void* _player)
 
         case ITEM_POTION_GREAT_MANA:
         {
-            p->phys.mud_ignore_factor = 0.8;
+            p->phys.mud_ignore_factor = 0.3;
         } break;
 
         case ITEM_POTION_PURPLE:
         {
-            p->phys.mud_ignore_factor = 2.5;
+            p->phys.mud_ignore_factor = 0.6;
         } break;
 
         case ITEM_COSMIC_HEART_FULL:
@@ -412,7 +412,7 @@ static bool internal_item_use(Item* it, void* _player)
 
         case ITEM_RUBY_RING:
         {
-            p->phys.pit_damage_factor = 0.0;
+            p->phys.pit_damage = 0;
         } break;
 
         // [STAT] Range
@@ -579,7 +579,9 @@ void item_init()
         switch(p->type)
         {
             case ITEM_COSMIC_HEART_FULL:
+            case ITEM_COSMIC_HEART_HALF:
             case ITEM_HEART_FULL:
+            case ITEM_HEART_HALF:
             case ITEM_DRAGON_EGG:
             case ITEM_GEM_YELLOW:
             case ITEM_WING:
@@ -596,8 +598,6 @@ void item_init()
             } break;
 
             case ITEM_GUN:
-            case ITEM_HEART_HALF:
-            case ITEM_COSMIC_HEART_HALF:
             case ITEM_GALAXY_PENDANT:
             case ITEM_SHIELD:
             case ITEM_LOOKING_GLASS:

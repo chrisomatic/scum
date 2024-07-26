@@ -123,8 +123,8 @@ void player_set_defaults(Player* p)
     p->phys.elasticity = 0.1;
     p->phys.vr = *vr;
     p->phys.stun_timer = 0.0;
-    p->phys.ethereal = true;
-    p->phys.pit_damage_factor = 1.0;
+    p->phys.ethereal = false;
+    p->phys.pit_damage = 1;
     p->phys.mud_ignore_factor = 0.0;
 
     memset(p->stats,0,sizeof(uint8_t)*MAX_STAT_TYPE);
@@ -653,6 +653,9 @@ void player_hurt_no_inv(Player* p, int damage)
 
 void player_hurt(Player* p, int damage)
 {
+    if(damage == 0)
+        return;
+
     if(players_invincible)
         return;
 
@@ -665,7 +668,7 @@ void player_hurt(Player* p, int damage)
     if(role == ROLE_CLIENT)
         return;
 
-    float actual_damage = MAX(1.0, damage * (1.0 - lookup_defense[p->stats[DEFENSE]]));
+    float actual_damage = MAX(0.0, damage * (1.0 - lookup_defense[p->stats[DEFENSE]]));
 
     player_add_hp(p,-actual_damage);
 
@@ -1603,7 +1606,8 @@ void player_update(Player* p, float dt)
             {
                 case TILE_MUD:
                     mud_factor = 0.4;
-                    mud_factor *= (1.0 + p->phys.mud_ignore_factor);
+                    mud_factor += p->phys.mud_ignore_factor;
+                    mud_factor = MIN(1.0, mud_factor);
                     break;
                 case TILE_ICE:
                     mud_factor = 0.4;
@@ -1715,7 +1719,7 @@ void player_update(Player* p, float dt)
             if(rectangles_colliding(&tile_pit_rect, &player_pit_rect))
             {
                 p->phys.falling = true;
-                player_hurt(p, p->phys.pit_damage_factor);
+                player_hurt(p, p->phys.pit_damage);
             }
         }
     }

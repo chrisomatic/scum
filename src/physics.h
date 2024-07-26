@@ -42,7 +42,7 @@ typedef struct
     float curr_tile_counter;    //used for breakable floors
 
     float mud_ignore_factor;
-    float pit_damage_factor;
+    int pit_damage;
 
     bool on_breakable_tile;
 

@@ -32,7 +32,7 @@
 #define ADDR_FMT "%u.%u.%u.%u:%u"
 #define ADDR_LST(addr) (addr)->a,(addr)->b,(addr)->c,(addr)->d,(addr)->port
 
-#define SERVER_PRINT_SIMPLE 1
+// #define SERVER_PRINT_SIMPLE 1
 // #define SERVER_PRINT_VERBOSE 1
 
 #if SERVER_PRINT_VERBOSE
@@ -2578,6 +2578,7 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             BPW(&server.bp, 4,  (uint32_t)p->revives);
             BPW(&server.bp, 16, (uint32_t)(p->highlighted_item_id+1));
             BPW(&server.bp, 5,  (uint32_t)(p->room_gun_index));
+            BPW(&server.bp, 8,  (uint32_t)(p->phys.scale*10.0));
 
             BPW(&server.bp, 5,  (uint32_t)(p->nav_sel.x));
             BPW(&server.bp, 5,  (uint32_t)(p->nav_sel.y));
@@ -2641,6 +2642,7 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         uint32_t revives             = bitpack_read(&client.bp, 4);
         uint32_t highlighted_item_id = bitpack_read(&client.bp, 16);
         uint32_t room_gun_index      = bitpack_read(&client.bp, 5);
+        uint32_t scale               = bitpack_read(&client.bp, 8);
 
         uint32_t nav_sel_x = bitpack_read(&client.bp, 5);
         uint32_t nav_sel_y = bitpack_read(&client.bp, 5);
@@ -2715,6 +2717,7 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         // p->level = (uint8_t)level;
         // p->new_levels = (uint8_t)new_levels;
 
+        p->phys.scale = MAX(0.1, (scale / 10.0));
         p->invulnerable_temp = invunerable_temp == 1 ? true : false;
         float invulnerable_temp_time = (float)inv_temp_time;
         p->door  = (Dir)door;
