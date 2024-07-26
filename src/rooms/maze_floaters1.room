@@ -64,6 +64,7 @@ Spider Queen
 
 ; Creatures
 3,10,1,0
+0,11,3,0
 3,9,5,0
 3,3,6,0
 
@@ -119,4 +120,5 @@ Gun
 
 ; Commentary
 0
+
 

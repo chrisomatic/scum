@@ -1429,13 +1429,42 @@ void handle_room_completion(Room* room)
         }
         else
         {
-            if(room->type != ROOM_TYPE_SHRINE)
+            if(room->type == ROOM_TYPE_MONSTER)
             {
-                if(rand() % 3 == 0) //TODO: probability
+                Vector2f pos = {0};
+                Vector2i start = {.x = ROOM_TILE_SIZE_X/2, .y = ROOM_TILE_SIZE_Y/2};
+                level_get_safe_floor_tile(room, start, NULL, &pos);
+
+                if(rand() % 2 == 0) 
                 {
-                    Vector2f pos = {0};
-                    Vector2i start = {.x = ROOM_TILE_SIZE_X/2, .y = ROOM_TILE_SIZE_Y/2};
-                    level_get_safe_floor_tile(room, start, NULL, &pos);
+                    // reward players with coins
+                    int num_coins = rand() % 3 + 1;
+
+                    for(int c = 0; c < num_coins; ++c)
+                    {
+                        item_add(item_get_random_coin(), pos.x, pos.y, room_index);
+                    }
+                }
+
+                float avg_player_luck = 0.0;
+                int num_players = 0;
+                for(int i = 0; i < MAX_PLAYERS; ++i)
+                {
+                    Player* p = &players[i];
+                    if(!p->active) continue;
+                    if(p->phys.dead) continue;
+
+                    avg_player_luck += lookup_luck[p->stats[LUCK]];
+                    num_players++;
+                }
+
+                if(num_players > 0)
+                    avg_player_luck /= num_players;
+
+                float chance_for_heart = 0.1 * avg_player_luck;
+
+                if(RAND_FLOAT(0.0,1.0) < chance_for_heart)
+                {
                     item_add(item_get_random_heart(), pos.x, pos.y, room_index);
                 }
             }

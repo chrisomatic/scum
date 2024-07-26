@@ -102,6 +102,8 @@ typedef struct
 
     uint8_t stats[MAX_STAT_TYPE];
 
+    float luck;
+
     Settings settings;
     PlayerInput actions[PLAYER_ACTION_MAX];
 
@@ -177,6 +179,15 @@ extern text_list_t* ptext;
 extern int xp_levels[];
 extern char* class_strs[];
 extern Room* visible_room;
+
+extern float *lookup_strength;
+extern float *lookup_defense;
+extern float *lookup_movement_speed;
+extern float *lookup_movement_speed_max_vel;
+extern float *lookup_movement_speed_base_friction;
+extern float *lookup_attack_speed;
+extern float *lookup_attack_range;
+extern float *lookup_luck;
 
 extern int class_image_spaceman;
 extern int class_image_robot;

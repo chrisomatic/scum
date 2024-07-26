@@ -290,7 +290,7 @@ static bool item_func_shrine(Item* it, Player* p)
 + ITEM_POTION_MANA:       Speed Increase
 + ITEM_POTION_GREAT_MANA: Decrease Mud Slowdown
 + ITEM_POTION_PURPLE:     Ignore Mud
-ITEM_SHAMROCK:          Higher chance to drop coin/heart after room clear
++ ITEM_SHAMROCK:          Higher chance to drop coin/heart after room clear
 ITEM_GAUNTLET_SLOT:     Increase Chance to Block Hits
 ITEM_UPGRADE_ORB:       Periodically shoot projectiles from self
 ITEM_GALAXY_PENDANT:    Chance to shoot homing projectiles when taking damage
@@ -589,6 +589,7 @@ void item_init()
             case ITEM_POTION_MANA:
             case ITEM_POTION_GREAT_MANA:
             case ITEM_POTION_PURPLE:
+            case ITEM_SHAMROCK:
             {
                 p->chestable = true;
                 p->touchable = false;
@@ -600,7 +601,6 @@ void item_init()
             case ITEM_GALAXY_PENDANT:
             case ITEM_SHIELD:
             case ITEM_LOOKING_GLASS:
-            case ITEM_SHAMROCK:
             case ITEM_UPGRADE_ORB:
             {
                 p->chestable = false;

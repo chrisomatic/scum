@@ -1380,7 +1380,7 @@ void creature_die(Creature* c)
         projectile_orbital_kill(orb);
     }
 
-    bool drop_coin = true;
+    bool drop_coin = false;
     bool blood = true;
 
     int effect_type = EFFECT_BLOOD2;
@@ -1388,7 +1388,7 @@ void creature_die(Creature* c)
     if(c->type == CREATURE_TYPE_ROCK)
     {
         effect_type = EFFECT_SMOKE2;
-        drop_coin = true;
+        drop_coin = false;
         blood = false;
     }
 

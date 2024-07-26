@@ -123,6 +123,7 @@ void player_set_defaults(Player* p)
     p->phys.elasticity = 0.1;
     p->phys.vr = *vr;
     p->phys.stun_timer = 0.0;
+    p->phys.ethereal = true;
     p->phys.pit_damage_factor = 1.0;
     p->phys.mud_ignore_factor = 0.0;
 
