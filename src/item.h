@@ -90,8 +90,6 @@ typedef struct
     uint8_t user_data2;
 
     // Networking
-    float lerp_t;
-    ItemNetLerp server_state_prior;
     ItemNetLerp server_state_target;
 } Item;
 

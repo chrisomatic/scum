@@ -1026,19 +1026,10 @@ void projectile_orbital_kill(ProjectileOrbital* orb)
 
 void projectile_lerp(Projectile* p, double dt)
 {
-    p->lerp_t += dt;
+    const float decay = 16.0;
+    p->phys.pos = exp_decay3f(p->phys.pos, p->server_state_target.pos, decay, dt);
 
-    float tick_time = 1.0/TICK_RATE;
-    float t = (p->lerp_t / tick_time);
-
-    Vector3f lp = lerp3f(&p->server_state_prior.pos,&p->server_state_target.pos,t);
-    p->phys.pos.x = lp.x;
-    p->phys.pos.y = lp.y;
-    p->phys.pos.z = lp.z;
-
-    p->phys.rotation_deg = lerp_angle_deg(p->server_state_prior.angle, p->server_state_target.angle, t);
-
-    //printf("prior_pos: %f %f, target_pos: %f %f, pos: %f %f, t: %f\n",p->server_state_prior.pos.x, p->server_state_prior.pos.y, p->server_state_target.pos.x, p->server_state_target.pos.y, p->phys.pos.x, p->phys.pos.y, t);
+    //p->phys.rotation_deg = lerp_angle_deg(p->server_state_prior.angle, p->server_state_target.angle, t);
 }
 
 const char* projectile_def_get_name(ProjectileType proj_type)

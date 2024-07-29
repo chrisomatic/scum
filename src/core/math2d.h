@@ -171,6 +171,11 @@ float lerp(float a, float b, float t);
 Vector2f lerp2f(Vector2f* a, Vector2f* b, float t);
 Vector3f lerp3f(Vector3f* a, Vector3f* b, float t);
 
+float exp_decay(float a, float b, float decay, float dt);
+
+Vector2f exp_decay2f(Vector2f a, Vector2f b, float decay, float dt);
+Vector3f exp_decay3f(Vector3f a, Vector3f b, float decay, float dt);
+
 // only works with positives
 float rand_float_between(float lower, float upper);
 

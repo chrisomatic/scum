@@ -2747,36 +2747,11 @@ void player_lerp(Player* p, float dt)
 {
     if(!p->active) return;
 
-#if 0
-    Vector3f delta = {
-        p->server_state_target.pos.x - p->phys.pos.x,
-        p->server_state_target.pos.y - p->phys.pos.y,
-        p->server_state_target.pos.z - p->phys.pos.z
-    };
+    const float decay = 16.0;
 
-    if(delta.x < 1.0 && delta.y < 1.0 && delta.z < 1.0)
-    {
-        return;
-    }
-#endif
-
-    p->lerp_t += dt;
-
-    float tick_time = 1.0/TICK_RATE;
-    float t = (p->lerp_t / tick_time);
-
-    // printf("[lerp prior]  %.2f, %.2f\n", p->server_state_prior.pos.x, p->server_state_prior.pos.y);
-    // printf("[lerp target] %.2f, %.2f\n", p->server_state_target.pos.x, p->server_state_target.pos.y);
-
-    Vector3f lp = lerp3f(&p->server_state_prior.pos, &p->server_state_target.pos, t);
-    p->phys.pos.x = lp.x;
-    p->phys.pos.y = lp.y;
-    p->phys.pos.z = lp.z;
-
-    // printf("[lerping player] t: %.2f, x: %.2f -> %.2f = %.2f\n", t, p->server_state_prior.pos.x, p->server_state_target.pos.x, lp.x);
-
-    p->invulnerable_temp_time = lerp(p->server_state_prior.invulnerable_temp_time, p->server_state_target.invulnerable_temp_time, t);
-    p->weapon.scale = lerp(p->server_state_prior.weapon_scale, p->server_state_target.weapon_scale, t);
+    p->phys.pos = exp_decay3f(p->phys.pos, p->server_state_target.pos, decay, dt);
+    p->invulnerable_temp_time = exp_decay(p->invulnerable_temp_time, p->server_state_target.invulnerable_temp_time, decay, dt);
+    p->weapon.scale = exp_decay(p->weapon.scale, p->server_state_target.weapon_scale, decay, dt);
 }
 
 void player_handle_net_inputs(Player* p, double dt)

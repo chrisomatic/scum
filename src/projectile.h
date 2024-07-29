@@ -251,8 +251,6 @@ typedef struct
     int source_explode;
 
     // Networking
-    float lerp_t;
-    ProjectileNetLerp server_state_prior;
     ProjectileNetLerp server_state_target;
 
 } Projectile;

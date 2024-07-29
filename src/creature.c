@@ -1269,18 +1269,8 @@ void creature_lerp(Creature* c, float dt)
 {
     if(c->phys.dead) return;
 
-    c->lerp_t += dt;
-
-    float tick_time = 1.0/TICK_RATE;
-    float t = (c->lerp_t / tick_time);
-
-
-    Vector3f lp = lerp3f(&c->server_state_prior.pos, &c->server_state_target.pos, t);
-    c->phys.pos.x = lp.x;
-    c->phys.pos.y = lp.y;
-    c->phys.pos.z = lp.z;
-
-    // printf("%.1f | %.1f -> %.1f  =  %.1f\n", t, c->server_state_prior.pos.x, c->server_state_target.pos.x, lp.x);
+    const float decay = 16.0;
+    c->phys.pos = exp_decay3f(c->phys.pos, c->server_state_target.pos, decay, dt);
 }
 
 void creature_update_all(float dt)

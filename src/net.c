@@ -2791,14 +2791,6 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
             }
         }
 
-        p->lerp_t = 0.0;
-
-        p->server_state_prior.pos.x = p->phys.pos.x;
-        p->server_state_prior.pos.y = p->phys.pos.y;
-        p->server_state_prior.pos.z = p->phys.pos.z;
-        p->server_state_prior.weapon_scale = p->weapon.scale;
-        p->server_state_prior.invulnerable_temp_time = p->invulnerable_temp_time;
-
         p->server_state_target.pos.x = pos.x;
         p->server_state_target.pos.y = pos.y;
         p->server_state_target.pos.z = pos.z;
@@ -2808,7 +2800,7 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         if(!prior_active[client_id])
         {
             printf("first state packet for %d\n", client_id);
-            memcpy(&p->server_state_prior, &p->server_state_target, sizeof(p->server_state_target));
+            p->phys.pos = p->server_state_target.pos;
             p->transition_room = p->phys.curr_room;
         }
 
@@ -2939,24 +2931,28 @@ static void unpack_creatures(Packet* pkt, int* offset, WorldState* ws)
 
         c->phys.underground = (bool)(underground == 0x01);
 
-        c->server_state_prior.pos.x = x;
-        c->server_state_prior.pos.y = y;
-        c->server_state_prior.pos.z = z;
-
         //find the prior
+        bool found_prior = false;
         for(int j = i; j < MAX_CREATURES; ++j)
         {
             Creature* cj = &prior_creatures[j];
             if(cj->id == c->id)
             {
-                c->server_state_prior.pos.x = cj->phys.pos.x;
-                c->server_state_prior.pos.y = cj->phys.pos.y;
-                c->server_state_prior.pos.z = cj->phys.pos.z;
+                c->phys.pos.x = cj->phys.pos.x;
+                c->phys.pos.y = cj->phys.pos.y;
+                c->phys.pos.z = cj->phys.pos.z;
+                found_prior = true;
                 break;
             }
         }
 
-        c->lerp_t = 0.0;
+        if(!found_prior)
+        {
+            c->phys.pos.x = (float)x;
+            c->phys.pos.y = (float)y;
+            c->phys.pos.z = (float)z;
+        }
+
         c->server_state_target.pos.x = x;
         c->server_state_target.pos.y = y;
         c->server_state_target.pos.z = z;
@@ -3046,25 +3042,28 @@ static void unpack_projectiles(Packet* pkt, int* offset, WorldState* ws)
         p->phys.scale = (float)(scale / 255.0f);
         p->from_player = from_player == 0x01 ? true : false;
         p->player_id = (uint8_t)pid;
-        p->lerp_t = 0.0;
-
-        p->server_state_prior.pos.x = (float)x;
-        p->server_state_prior.pos.y = (float)y;
-        p->server_state_prior.pos.z = (float)z;
-        p->server_state_prior.angle = angle;
 
         //find the prior
+        bool found_prior = false;
         for(int j = i; j < MAX_PROJECTILES; ++j)
         {
             Projectile* pj = &prior_projectiles[j];
             if(pj->id == p->id)
             {
-                p->server_state_prior.pos.x = pj->phys.pos.x;
-                p->server_state_prior.pos.y = pj->phys.pos.y;
-                p->server_state_prior.pos.z = pj->phys.pos.z;
-                p->server_state_prior.angle = pj->phys.rotation_deg;
+                p->phys.pos.x = pj->phys.pos.x;
+                p->phys.pos.y = pj->phys.pos.y;
+                p->phys.pos.z = pj->phys.pos.z;
+                p->phys.rotation_deg = pj->phys.rotation_deg;
+                found_prior = true;
                 break;
             }
+        }
+
+        if(!found_prior)
+        {
+            p->phys.pos.x = (float)x;
+            p->phys.pos.y = (float)y;
+            p->phys.pos.z = (float)z;
         }
 
         p->server_state_target.pos.x = (float)x;
@@ -3181,13 +3180,6 @@ static void unpack_items(Packet* pkt, int* offset, WorldState* ws)
         // printf(" %u\n", it->phys.curr_room);
         // printf(" %d\n", it->used);
 
-        it->lerp_t = 0.0;
-
-        it->server_state_prior.pos.x = pos.x;
-        it->server_state_prior.pos.y = pos.y;
-        it->server_state_prior.pos.z = pos.z;
-        it->server_state_prior.angle = angle;
-
         bool found_prior = false;
 
         //find the prior
@@ -3199,28 +3191,26 @@ static void unpack_items(Packet* pkt, int* offset, WorldState* ws)
             {
                 // printf("found prior: %d\n", itj->id);
                 found_prior = true;
-                it->server_state_prior.pos.x = itj->phys.pos.x;
-                it->server_state_prior.pos.y = itj->phys.pos.y;
-                it->server_state_prior.pos.z = itj->phys.pos.z;
-                it->server_state_prior.angle = itj->angle;
+                it->phys.pos.x = itj->phys.pos.x;
+                it->phys.pos.y = itj->phys.pos.y;
+                it->phys.pos.z = itj->phys.pos.z;
+                it->phys.rotation_deg = itj->angle;
                 break;
             }
+        }
+
+        if(!found_prior)
+        {
+            it->phys.pos.x = pos.x;
+            it->phys.pos.y = pos.y;
+            it->phys.pos.z = pos.z;
+            it->phys.rotation_deg = angle;
         }
 
         it->server_state_target.pos.x = pos.x;
         it->server_state_target.pos.y = pos.y;
         it->server_state_target.pos.z = pos.z;
         it->server_state_target.angle = angle;
-
-        if(!found_prior)
-        {
-            // printf("didn't find prior\n");
-            it->server_state_prior.pos.x = it->server_state_target.pos.x;
-            it->server_state_prior.pos.y = it->server_state_target.pos.y;
-            it->server_state_prior.pos.z = it->server_state_target.pos.z;
-            it->server_state_prior.angle = it->server_state_target.angle;
-        }
-
     }
 }
 

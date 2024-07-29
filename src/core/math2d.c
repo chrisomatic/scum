@@ -49,6 +49,30 @@ Vector3f lerp3f(Vector3f* a, Vector3f* b, float t)
     return r;
 }
 
+float exp_decay(float a, float b, float decay, float dt)
+{
+    return b + (a - b)*exp(-decay*dt);
+}
+
+Vector2f exp_decay2f(Vector2f a, Vector2f b, float decay, float dt)
+{
+    float rx = exp_decay(a.x, b.x, decay, dt);
+    float ry = exp_decay(a.y, b.y, decay, dt);
+
+    Vector2f r = {rx, ry};
+    return r;
+}
+
+Vector3f exp_decay3f(Vector3f a, Vector3f b, float decay, float dt)
+{
+    float rx = exp_decay(a.x, b.x, decay, dt);
+    float ry = exp_decay(a.y, b.y, decay, dt);
+    float rz = exp_decay(a.z, b.z, decay, dt);
+
+    Vector3f r = {rx, ry, rz};
+    return r;
+}
+
 void ortho(Matrix* m, float left, float right, float bottom, float top, float znear, float zfar)
 {
     memcpy(m,&IDENTITY_MATRIX,sizeof(Matrix));

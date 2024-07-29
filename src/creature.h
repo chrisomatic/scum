@@ -129,8 +129,6 @@ typedef struct
     int spawn_tile_x;    //room tile x
     int spawn_tile_y;    //room tile y
 
-    float lerp_t;
-    CreatureNetLerp server_state_prior;
     CreatureNetLerp server_state_target;
 
 } Creature;

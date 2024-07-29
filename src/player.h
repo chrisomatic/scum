@@ -164,9 +164,6 @@ typedef struct
     // Networking
     NetPlayerInput input;
     NetPlayerInput input_prior;
-
-    float lerp_t;
-    PlayerNetLerp server_state_prior;
     PlayerNetLerp server_state_target;
 
 } Player;

@@ -1194,16 +1194,9 @@ void item_draw(Item* it)
 
 void item_lerp(Item* it, double dt)
 {
-    it->lerp_t += dt;
-
-    float tick_time = 1.0/TICK_RATE;
-    float t = (it->lerp_t / tick_time);
-
-    Vector3f lp = lerp3f(&it->server_state_prior.pos, &it->server_state_target.pos, t);
-    it->phys.pos.x = lp.x;
-    it->phys.pos.y = lp.y;
-    it->phys.pos.z = lp.z;
-    //printf("prior_pos: %f %f, target_pos: %f %f, pos: %f %f, t: %f\n",p->server_state_prior.pos.x, p->server_state_prior.pos.y, p->server_state_target.pos.x, p->server_state_target.pos.y, p->phys.pos.x, p->phys.pos.y, t);
+    const float decay = 16.0;
+    it->phys.pos = exp_decay3f(it->phys.pos, it->server_state_target.pos, decay, dt);
+    //it->angle = lerp_angle_deg(it->server_state_prior.angle, it->server_state_target.angle, t);
 
 #if 1
     if(it->type == ITEM_NEW_LEVEL)
@@ -1211,8 +1204,6 @@ void item_lerp(Item* it, double dt)
         it->angle += 80.0 * dt;
         it->angle = fmod(it->angle, 360.0f);
     }
-#else
-    it->angle = lerp_angle_deg(it->server_state_prior.angle, it->server_state_target.angle, t);
 #endif
 }
 
