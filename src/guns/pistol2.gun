@@ -3,4 +3,4 @@ name: pistol2
 desc: Basic starting player gun
 cost: 5
 lifetime: 0.49
-cooldown: 0.59
+cooldown: 0.45

@@ -9,7 +9,7 @@ speed: 215.00
 scale1: 1.00
 scale2: 1.00
 lifetime: 0.44
-cooldown: 0.68
+cooldown: 0.55
 burst_count: 0
 burst_rate: 0.20
 critical_hit_chance: 0.00

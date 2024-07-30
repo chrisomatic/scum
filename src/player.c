@@ -126,6 +126,7 @@ void player_set_defaults(Player* p)
     p->phys.ethereal = false;
     p->phys.pit_damage = 1;
     p->phys.mud_ignore_factor = 0.0;
+    p->phys.floating = false;
 
     memset(p->stats,0,sizeof(uint8_t)*MAX_STAT_TYPE);
 
@@ -1371,6 +1372,11 @@ void player_update(Player* p, float dt)
         {
             trigger_generate_level(rand(), level_rank, 2, __LINE__);
 
+            for(int i = 0; i < MAX_PLAYERS; ++i)
+            {
+                player_set_defaults(&players[i]);
+            }
+
             if(role == ROLE_SERVER)
             {
                 NetEvent ev = {.type = EVENT_TYPE_NEW_LEVEL};
@@ -1414,7 +1420,7 @@ void player_update(Player* p, float dt)
 
         all_players_dead = _all_players_dead;
 
-        if(p == player)
+        if(p == player && !p->phys.dead)
         {
             p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
         }
@@ -1464,11 +1470,11 @@ void player_update(Player* p, float dt)
         update_input_state(pa, dt);
     }
 
-    bool activate = p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
-    bool action_use = p->actions[PLAYER_ACTION_USE_ITEM].toggled_on;
-    bool tabbed = p->actions[PLAYER_ACTION_TAB_CYCLE].toggled_on;
-    bool rshift = p->actions[PLAYER_ACTION_RSHIFT].state;
-    bool action_drop = p->actions[PLAYER_ACTION_DROP_ITEM].toggled_on || p->actions[PLAYER_ACTION_DROP_ITEM].hold;
+    bool activate = !all_players_dead && p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
+    bool action_use = !all_players_dead && p->actions[PLAYER_ACTION_USE_ITEM].toggled_on;
+    bool tabbed = !all_players_dead && p->actions[PLAYER_ACTION_TAB_CYCLE].toggled_on;
+    bool rshift = !all_players_dead && p->actions[PLAYER_ACTION_RSHIFT].state;
+    bool action_drop = !all_players_dead && p->actions[PLAYER_ACTION_DROP_ITEM].toggled_on || p->actions[PLAYER_ACTION_DROP_ITEM].hold;
     bool revive = p->actions[PLAYER_ACTION_REVIVE].toggled_on;
 
     if(p->revives > 0 && revive)
@@ -1750,13 +1756,13 @@ void player_update(Player* p, float dt)
 
     phys_add_circular_time(&p->phys, dt);
 
-    bool up    = p->actions[PLAYER_ACTION_UP].state;
-    bool down  = p->actions[PLAYER_ACTION_DOWN].state;
-    bool left  = p->actions[PLAYER_ACTION_LEFT].state;
-    bool right = p->actions[PLAYER_ACTION_RIGHT].state;
+    bool up    = !all_players_dead && p->actions[PLAYER_ACTION_UP].state;
+    bool down  = !all_players_dead && p->actions[PLAYER_ACTION_DOWN].state;
+    bool left  = !all_players_dead && p->actions[PLAYER_ACTION_LEFT].state;
+    bool right = !all_players_dead && p->actions[PLAYER_ACTION_RIGHT].state;
 
     // handle map navigation
-    bool show_map = p->actions[PLAYER_ACTION_DISPLAY_MAP].toggled_on;
+    bool show_map = !all_players_dead && p->actions[PLAYER_ACTION_DISPLAY_MAP].toggled_on;
     if(show_map)
     {
         // show_big_map = !show_big_map;
@@ -1925,7 +1931,7 @@ void player_update(Player* p, float dt)
 
     phys_apply_gravity(&p->phys,p->gravity,dt);
 
-    bool jump = p->actions[PLAYER_ACTION_JUMP].state;
+    bool jump = !all_players_dead && p->actions[PLAYER_ACTION_JUMP].state;
     if(p->phys.falling) jump = false;
     if(jump && p->phys.pos.z == 0.0)
     {

@@ -1026,9 +1026,8 @@ void projectile_orbital_kill(ProjectileOrbital* orb)
 
 void projectile_lerp(Projectile* p, double dt)
 {
-    const float decay = 16.0;
+    const float decay = 20.0;
     p->phys.pos = exp_decay3f(p->phys.pos, p->server_state_target.pos, decay, dt);
-
     //p->phys.rotation_deg = lerp_angle_deg(p->server_state_prior.angle, p->server_state_target.angle, t);
 }
 
