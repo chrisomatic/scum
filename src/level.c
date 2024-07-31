@@ -2156,11 +2156,17 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
         if(aroom != NULL)
         {
             if(aroom->type == ROOM_TYPE_TREASURE)
+            {
                 dcolor = aroom->color;
+            }
             else if(aroom->type == ROOM_TYPE_SHRINE)
+            {
                 dcolor = aroom->color;
+            }
             else if(aroom->type == ROOM_TYPE_BOSS)
+            {
                 dcolor = aroom->color;
+            }
             // else if(aroom->type == ROOM_TYPE_SHOP)
             //     dcolor = aroom->color;
         }
