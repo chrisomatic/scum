@@ -837,7 +837,7 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
     {
         CreatureSegment* cs = (CreatureSegment*)e->ptr;
         Creature* c = creature_get_by_id(cs->creature_id);
-        printf("checking %p\n", c);
+        //printf("checking %p\n", c);
         if(!c) return;
         curr_room = cs->phys.curr_room;
         phys = &cs->phys;

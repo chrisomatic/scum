@@ -401,7 +401,7 @@ Level level_generate(unsigned int seed, int rank)
             }
 
             if(room->type == ROOM_TYPE_BOSS)
-                room->color = COLOR(100,100,200);
+                room->color = COLOR(200,100,100);
             else if(room->type == ROOM_TYPE_TREASURE)
                 room->color = COLOR(200,200,100);
             else if(room->type == ROOM_TYPE_SHRINE)
@@ -409,7 +409,7 @@ Level level_generate(unsigned int seed, int rank)
             else if(room->type == ROOM_TYPE_SHOP)
                 room->color = COLOR(100,200,200);
             else if(room->type == ROOM_TYPE_MONSTER)
-                room->color = COLOR(200,100,100);
+                room->color = COLOR(100,100,200);
             else
                 room->color = COLOR(200,200,200);
 
@@ -2126,17 +2126,6 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
         gfx_sprite_batch_add(dungeon_image, SPRITE_TILE_WALL_CORNER_DL, r.x,r.y+(ROOM_TILE_SIZE_Y+1)*h, color, false, scale, 0.0, 1.0, false, false, false);
     }
 
-
-    uint8_t door_sprites[4] = {SPRITE_TILE_DOOR_RIGHT, SPRITE_TILE_DOOR_UP, SPRITE_TILE_DOOR_LEFT, SPRITE_TILE_DOOR_DOWN};
-
-    if(room->doors_locked)
-    {
-        door_sprites[0] = SPRITE_TILE_DOOR_RIGHT_CLOSED;
-        door_sprites[1] = SPRITE_TILE_DOOR_UP_CLOSED;
-        door_sprites[2] = SPRITE_TILE_DOOR_LEFT_CLOSED;
-        door_sprites[3] = SPRITE_TILE_DOOR_DOWN_CLOSED;
-    }
-
     // center of the room
     float halfw = TILE_SIZE*(ROOM_TILE_SIZE_X+1)/2.0 * scale;
     float halfh = TILE_SIZE*(ROOM_TILE_SIZE_Y+1)/2.0 * scale;
@@ -2152,28 +2141,23 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
 
         uint32_t dcolor = color;
 
+        uint8_t door_sprite = room->doors_locked ? SPRITE_TILE_DOOR_CLOSED : SPRITE_TILE_DOOR;
+
         Room* aroom = level_get_room(&level, c.x+o.x, c.y+o.y);
-        if(aroom != NULL)
-        {
-            if(aroom->type == ROOM_TYPE_TREASURE)
-            {
-                dcolor = aroom->color;
-            }
-            else if(aroom->type == ROOM_TYPE_SHRINE)
-            {
-                dcolor = aroom->color;
-            }
-            else if(aroom->type == ROOM_TYPE_BOSS)
-            {
-                dcolor = aroom->color;
-            }
-            // else if(aroom->type == ROOM_TYPE_SHOP)
-            //     dcolor = aroom->color;
-        }
+
+        if(aroom->type == ROOM_TYPE_BOSS)
+            door_sprite = room->doors_locked ? SPRITE_TILE_DOOR_BOSS_CLOSED : SPRITE_TILE_DOOR_BOSS;
+        else if(aroom->type == ROOM_TYPE_TREASURE)
+            door_sprite = room->doors_locked ? SPRITE_TILE_DOOR_TREASURE_CLOSED : SPRITE_TILE_DOOR_TREASURE;
+        else if(aroom->type == ROOM_TYPE_SHRINE)
+            door_sprite = room->doors_locked ? SPRITE_TILE_DOOR_SHRINE_CLOSED : SPRITE_TILE_DOOR_SHRINE;
+
         float _x = centerx + halfw*o.x;
         float _y = centery + halfh*o.y;
 
-        gfx_sprite_batch_add(dungeon_image, door_sprites[i], _x, _y, dcolor, false, scale, 0.0, 1.0, false, false, false);
+        float rotation = dir_to_angle_deg(i);
+
+        gfx_sprite_batch_add(dungeon_image, door_sprite, _x, _y, dcolor, false, scale, rotation, 1.0, false, false, false);
     }
 
     RoomFileData* rdata;

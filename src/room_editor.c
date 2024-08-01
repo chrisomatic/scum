@@ -692,7 +692,7 @@ void room_editor_draw()
     {
         error |= !on_door;
 
-        int sprite = SPRITE_TILE_DOOR_UP;
+        int sprite = SPRITE_TILE_DOOR;
 
         if(door_sel == 1)
         {
