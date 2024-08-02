@@ -2593,6 +2593,7 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             BPW(&server.bp, 6, (uint32_t)p->invulnerable_temp_time);
             BPW(&server.bp, 4, (uint32_t)p->door);
             BPW(&server.bp, 1, (uint32_t)(p->phys.dead ? 1 : 0));
+            BPW(&server.bp, 32, (uint32_t)(p->artifacts));
 
             BPW(&server.bp, 2,  (uint32_t)p->weapon.state);
             if(p->weapon.state > WEAPON_STATE_NONE)
@@ -2656,6 +2657,7 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         uint32_t inv_temp_time    = bitpack_read(&client.bp, 6);
         uint32_t door             = bitpack_read(&client.bp, 4);
         uint32_t dead             = bitpack_read(&client.bp, 1);
+        uint32_t artifacts        = bitpack_read(&client.bp, 32);
 
         uint32_t weapon_state = bitpack_read(&client.bp, 2);
 
@@ -2722,6 +2724,7 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         float invulnerable_temp_time = (float)inv_temp_time;
         p->door  = (Dir)door;
         p->phys.dead  = dead == 1 ? true: false;
+        p->artifacts = artifacts;
 
         p->weapon.state = (WeaponState)weapon_state;
         //p->weapon.pos.x = (float)weapon_x;

@@ -71,6 +71,7 @@ typedef struct
     bool underground; // doesn't interact
 
     float stun_timer; // seconds. 0.0 = not stunned, counts down
+    float chance_to_block;
 
     StatusEffect status_effects[MAX_STATUS_EFFECTS];
     int status_effects_count;

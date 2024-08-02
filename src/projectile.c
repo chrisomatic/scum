@@ -920,63 +920,77 @@ void projectile_handle_collision(Projectile* proj, Entity* e)
                 proj->phys.collided = true;
                 projectile_kill(proj);
             }
-
-            bool stun = RAND_FLOAT(0.0,1.0) <= gun->stun_chance;
-            if(stun)
+            
+            // roll for block
+            bool blocked = (RAND_FLOAT(0.0, 1.0) < e->phys->chance_to_block);
+            if(blocked)
             {
-                phys->stun_timer = 1.0;
-            }
-
-            if(proj->cold)
-            {
-                status_effects_add_type(phys,proj->phys.curr_room, STATUS_EFFECT_COLD);
-            }
-
-            if(proj->poison)
-            {
-                status_effects_add_type(phys,proj->phys.curr_room, STATUS_EFFECT_POISON);
-            }
-
-            if(proj->fire)
-            {
-                status_effects_add_type(phys,proj->phys.curr_room, STATUS_EFFECT_FIRE);
-            }
-
-            switch(e->type)
-            {
-                case ENTITY_TYPE_PLAYER:
-                    player_hurt((Player*)e->ptr, RAND_FLOAT(gun->damage_min, gun->damage_max));
-                    break;
-                case ENTITY_TYPE_CREATURE:
+                if(role == ROLE_SERVER)
                 {
 
-                    float damage = RAND_FLOAT(gun->damage_min, gun->damage_max);
-                    // printf("%s damage: %.2f\n", __func__, damage);
-                    bool killed = creature_hurt((Creature*)e->ptr, damage, proj->from_id);
-                    if(killed)
-                    {
-                        if(proj->from_player)
-                        {
-                            players[proj->from_id].total_kills++;
-                        }
-                    }
-                } break;
-                case ENTITY_TYPE_CREATURE_SEGMENT:
+                }
+                else
                 {
+                    text_list_add(ptext, COLOR_WHITE, 3.0, "**BLOCKED**");
+                }
+            }
+            else
+            {
+                bool stun = RAND_FLOAT(0.0,1.0) <= gun->stun_chance;
+                if(stun)
+                {
+                    phys->stun_timer = 1.0;
+                }
 
-                    CreatureSegment* cs = (CreatureSegment*)e->ptr;
-                    Creature* c = creature_get_by_id(cs->creature_id);
-                    float damage = RAND_FLOAT(gun->damage_min, gun->damage_max);
-                    // printf("%s damage: %.2f\n", __func__, damage);
-                    bool killed = creature_hurt(c, damage, proj->from_id);
-                    if(killed)
+                if(proj->cold)
+                {
+                    status_effects_add_type(phys,proj->phys.curr_room, STATUS_EFFECT_COLD);
+                }
+
+                if(proj->poison)
+                {
+                    status_effects_add_type(phys,proj->phys.curr_room, STATUS_EFFECT_POISON);
+                }
+
+                if(proj->fire)
+                {
+                    status_effects_add_type(phys,proj->phys.curr_room, STATUS_EFFECT_FIRE);
+                }
+
+                switch(e->type)
+                {
+                    case ENTITY_TYPE_PLAYER:
+                        player_hurt((Player*)e->ptr, RAND_FLOAT(gun->damage_min, gun->damage_max));
+                        break;
+                    case ENTITY_TYPE_CREATURE:
                     {
-                        if(proj->from_player)
+                        float damage = RAND_FLOAT(gun->damage_min, gun->damage_max);
+                        // printf("%s damage: %.2f\n", __func__, damage);
+                        bool killed = creature_hurt((Creature*)e->ptr, damage, proj->from_id);
+                        if(killed)
                         {
-                            players[proj->from_id].total_kills++;
+                            if(proj->from_player)
+                            {
+                                players[proj->from_id].total_kills++;
+                            }
                         }
-                    }
-                } break;
+                    } break;
+                    case ENTITY_TYPE_CREATURE_SEGMENT:
+                    {
+                        CreatureSegment* cs = (CreatureSegment*)e->ptr;
+                        Creature* c = creature_get_by_id(cs->creature_id);
+                        float damage = RAND_FLOAT(gun->damage_min, gun->damage_max);
+                        // printf("%s damage: %.2f\n", __func__, damage);
+                        bool killed = creature_hurt(c, damage, proj->from_id);
+                        if(killed)
+                        {
+                            if(proj->from_player)
+                            {
+                                players[proj->from_id].total_kills++;
+                            }
+                        }
+                    } break;
+                }
             }
         }
     }

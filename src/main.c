@@ -1309,7 +1309,6 @@ void update(float dt)
         return;
     }
 
-
     if(!paused)
     {
         lighting_point_light_clear_all();
@@ -2384,6 +2383,7 @@ void draw()
     draw_equipped_gun();
     draw_stats();
     draw_statistics();
+    draw_artifacts();
 
     if(level_room_time > 0)
     {

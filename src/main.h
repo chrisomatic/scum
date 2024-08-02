@@ -35,6 +35,12 @@
 #define STR_EQUAL(x,y)    (strncmp((x),(y),strlen((x))) == 0 && strlen(x) == strlen(y))
 #define STRN_EQUAL(x,y,n) (strncmp((x),(y),(n)) == 0)
 
+// bit operations
+#define BIT_SET(byte,n)   ((byte) |= (1UL<<(n)))
+#define BIT_CLR(byte,n)   ((byte) &= ~(1UL<<(n)))
+#define BIT_FLIP(byte,n)  ((byte) ^= (1UL<<(n)))
+#define BIT_CHECK(byte,n) ((byte) & (1UL<<(n)))
+
 #define FREE(p) do{ if(p != NULL) {free(p); p = NULL;} }while(0)
 
 #define BOOLSTR(c) ((c) ? "true" : "false")

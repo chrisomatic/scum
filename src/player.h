@@ -154,6 +154,8 @@ typedef struct
     float periodic_shot_counter;
     float periodic_shot_counter_max;
 
+    uint32_t artifacts;
+
     // Audio
     int source_run1;
     int source_run2;
@@ -231,6 +233,8 @@ void player_handle_collision(Player* p, Entity* e);
 bool is_any_player_room(uint8_t curr_room);
 int player_get_count_in_room(uint8_t curr_room);
 Player* player_get_nearest(uint8_t room_index, float x, float y);
+bool player_has_artifact(Player* p, uint32_t artifact_slot);
+void player_apply_artifacts(Player* p);
 
 void player_set_gun(Player* p, uint8_t room_gun_index, bool drop_old_gun);
 
@@ -240,6 +244,7 @@ void draw_coins();
 void draw_statistics();
 void draw_revives();
 void draw_equipped_gun();
+void draw_artifacts();
 
 int get_xp_req(int level);
 

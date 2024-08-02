@@ -127,6 +127,7 @@ void player_set_defaults(Player* p)
     p->phys.pit_damage = 1;
     p->phys.mud_ignore_factor = 0.0;
     p->phys.floating = false;
+    p->phys.chance_to_block = 0.0;
 
     memset(p->stats,0,sizeof(uint8_t)*MAX_STAT_TYPE);
 
@@ -141,6 +142,7 @@ void player_set_defaults(Player* p)
     p->invulnerable = false;
     p->invulnerable_temp_time = 0.0;
     p->gravity = GRAVITY_EARTH;
+    p->artifacts = 0x00;
 
     p->phys.scale = 1.0;
     p->phys.falling = false;
@@ -1123,7 +1125,6 @@ static void player_handle_orbitals(Player* p, float dt)
 {
     ProjectileOrbital* orb = projectile_orbital_get(&p->phys, p->gun.orbital_distance);
     
-
     if(p->actions[PLAYER_ACTION_SHOOT_UP].state)
     {
         // eject an orbital
@@ -1468,6 +1469,20 @@ void player_update(Player* p, float dt)
     {
         PlayerInput* pa = &p->actions[i];
         update_input_state(pa, dt);
+    }
+
+    // artifacts... @HACK
+    if(!p->phys.falling)
+    {
+        if(player_has_artifact(p, ARTIFACT_SLOT_GEM_YELLOW))
+        {
+            p->phys.scale = 0.8;
+        }
+
+        if(player_has_artifact(p, ARTIFACT_SLOT_DRAGON_EGG))
+        {
+            p->phys.scale = 1.2;
+        }
     }
 
     bool activate = !all_players_dead && p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
@@ -2526,6 +2541,49 @@ void draw_statistics()
     // gfx_draw_string(10, 90, COLOR_WHITE, 0.17, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%u, %u %u, %u, %u", player->total_kills, player->total_shots, player->total_hits, player->level_hits, player->room_hits);
 }
 
+void draw_artifacts()
+{
+
+    const float spacer = 20;
+    float x = VIEW_WIDTH - spacer;
+    float y = VIEW_HEIGHT - 32;
+
+    uint32_t artifact_count = 0;
+    for(int i  = 0; i < 32; ++i)
+    {
+        int has_artifact = ((player->artifacts >> i) & 0x1);
+        if(has_artifact)
+        {
+            ItemType it = -1;
+            switch(i)
+            {
+                case ARTIFACT_SLOT_DRAGON_EGG:        it = ITEM_DRAGON_EGG; break;
+                case ARTIFACT_SLOT_GEM_YELLOW:        it = ITEM_GEM_YELLOW; break;
+                case ARTIFACT_SLOT_WING:              it = ITEM_WING; break;
+                case ARTIFACT_SLOT_FEATHER:           it = ITEM_FEATHER; break;
+                case ARTIFACT_SLOT_RUBY_RING:         it = ITEM_RUBY_RING; break;
+                case ARTIFACT_SLOT_POTION_STRENGTH:   it = ITEM_POTION_STRENGTH; break;
+                case ARTIFACT_SLOT_POTION_MANA:       it = ITEM_POTION_MANA; break;
+                case ARTIFACT_SLOT_POTION_GREAT_MANA: it = ITEM_POTION_GREAT_MANA; break;
+                case ARTIFACT_SLOT_POTION_PURPLE:     it = ITEM_POTION_PURPLE; break;
+                case ARTIFACT_SLOT_SHAMROCK:          it = ITEM_SHAMROCK; break;
+                case ARTIFACT_SLOT_GAUNTLET_SLOT:     it = ITEM_GAUNTLET_SLOT; break;
+                case ARTIFACT_SLOT_UPGRADE_ORB:       it = ITEM_UPGRADE_ORB; break;
+                case ARTIFACT_SLOT_GALAXY_PENDANT:    it = ITEM_GALAXY_PENDANT; break;
+                case ARTIFACT_SLOT_SHIELD:            it = ITEM_SHIELD; break;
+                case ARTIFACT_SLOT_LOOKING_GLASS:     it = ITEM_LOOKING_GLASS; break;
+                case ARTIFACT_SLOT_BOOK:              it = ITEM_BOOK; break;
+                case ARTIFACT_SLOT_GEM_WHITE:         it = ITEM_GEM_WHITE; break;
+                case ARTIFACT_SLOT_GEM_PURPLE:        it = ITEM_GEM_PURPLE; break;
+            }
+
+            gfx_draw_image_ignore_light(items_image, it, x - (spacer*artifact_count), y, COLOR_TINT_NONE, 1.0, 0.0, 0.8, false, NOT_IN_WORLD);
+
+            artifact_count ++;
+        }
+    }
+}
+
 void draw_equipped_gun()
 {
     float box_w = 60.0;
@@ -2994,6 +3052,11 @@ bool is_any_player_room(uint8_t curr_room)
     }
 
     return false;
+}
+
+bool player_has_artifact(Player* p, uint32_t artifact_slot)
+{
+    return BIT_CHECK(p->artifacts, artifact_slot);
 }
 
 int player_get_count_in_room(uint8_t curr_room)

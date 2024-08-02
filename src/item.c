@@ -291,7 +291,7 @@ static bool item_func_shrine(Item* it, Player* p)
 + ITEM_POTION_GREAT_MANA: Decrease Mud Slowdown
 + ITEM_POTION_PURPLE:     Ignore Mud
 + ITEM_SHAMROCK:          Higher chance to drop coin/heart after room clear
-ITEM_GAUNTLET_SLOT:     Increase Chance to Block Hits
++ ITEM_GAUNTLET_SLOT:     Increase Chance to Block Hits
 ITEM_UPGRADE_ORB:       Periodically shoot projectiles from self
 ITEM_GALAXY_PENDANT:    Chance to shoot homing projectiles when taking damage
 ITEM_SHIELD:            Defence Increase
@@ -349,16 +349,19 @@ static bool internal_item_use(Item* it, void* _player)
 
         case ITEM_POTION_MANA:
         {
+            BIT_SET(p->artifacts,ARTIFACT_SLOT_POTION_MANA);
             return player_add_stat(p, MOVEMENT_SPEED, 1);
         } break;
 
         case ITEM_POTION_GREAT_MANA:
         {
+            BIT_SET(p->artifacts,ARTIFACT_SLOT_POTION_GREAT_MANA);
             p->phys.mud_ignore_factor = 0.3;
         } break;
 
         case ITEM_POTION_PURPLE:
         {
+            BIT_SET(p->artifacts,ARTIFACT_SLOT_POTION_PURPLE);
             p->phys.mud_ignore_factor = 0.6;
         } break;
 
@@ -376,60 +379,71 @@ static bool internal_item_use(Item* it, void* _player)
 
         case ITEM_GALAXY_PENDANT:
         {
+            BIT_SET(p->artifacts,ARTIFACT_SLOT_GALAXY_PENDANT);
             p->phys.mp_max += 30;
             player_add_mp(p,30);
         } break;
 
         case ITEM_POTION_STRENGTH:
         {
+            BIT_SET(p->artifacts,ARTIFACT_SLOT_POTION_STRENGTH);
             p->phys.mass = 10.0;
         } break;
 
         case ITEM_SHIELD:
         {
+            BIT_SET(p->artifacts,ARTIFACT_SLOT_SHIELD);
             return player_add_stat(p, DEFENSE, 1);
         } break;
 
         case ITEM_FEATHER:
         {
+            BIT_SET(p->artifacts,ARTIFACT_SLOT_FEATHER);
             p->gravity = 0.5;
         } break;
 
         case ITEM_WING:
         {
+            BIT_SET(p->artifacts,ARTIFACT_SLOT_WING);
             p->phys.floating = true;
         } break;
 
         case ITEM_DRAGON_EGG:
         {
+            BIT_SET(p->artifacts,ARTIFACT_SLOT_DRAGON_EGG);
             p->phys.scale = 1.2;
         } break;
 
         case ITEM_GEM_YELLOW:
         {
+            BIT_SET(p->artifacts,ARTIFACT_SLOT_GEM_YELLOW);
             p->phys.scale = 0.8;
         } break;
 
         case ITEM_RUBY_RING:
         {
+            BIT_SET(p->artifacts,ARTIFACT_SLOT_RUBY_RING);
             p->phys.pit_damage = 0;
         } break;
 
         // [STAT] Range
         case ITEM_LOOKING_GLASS:
         {
+            BIT_SET(p->artifacts,ARTIFACT_SLOT_LOOKING_GLASS);
             return player_add_stat(p, ATTACK_RANGE, 1);
         } break;
 
         // [STAT] Luck
         case ITEM_SHAMROCK:
         {
+            BIT_SET(p->artifacts,ARTIFACT_SLOT_SHAMROCK);
             return player_add_stat(p, LUCK, 1);
         } break;
 
         // [STAT]
         case ITEM_UPGRADE_ORB:
         {
+            BIT_SET(p->artifacts,ARTIFACT_SLOT_UPGRADE_ORB);
             return player_add_stat(p, rand() % MAX_STAT_TYPE, 1);
         } break;
 
@@ -448,7 +462,8 @@ static bool internal_item_use(Item* it, void* _player)
 
         case ITEM_GAUNTLET_SLOT:
         {
-
+            BIT_SET(p->artifacts,ARTIFACT_SLOT_GAUNTLET_SLOT);
+            p->phys.chance_to_block = 0.25;
         } break;
 
         case ITEM_NEW_LEVEL:
@@ -592,6 +607,7 @@ void item_init()
             case ITEM_POTION_GREAT_MANA:
             case ITEM_POTION_PURPLE:
             case ITEM_SHAMROCK:
+            case ITEM_GAUNTLET_SLOT:
             {
                 p->chestable = true;
                 p->touchable = false;
@@ -792,7 +808,7 @@ const char* item_get_description(ItemType type, Item* it)
         case ITEM_DRAGON_EGG: return "Gigantism";
         case ITEM_RUBY_RING: return "Ignore Pit Damage";
         case ITEM_POTION_PURPLE: return "Ignore Mud";
-        case ITEM_GAUNTLET_SLOT: return "";
+        case ITEM_GAUNTLET_SLOT: return "Chance to block projectiles";
 
         case ITEM_HEART_FULL: return "heal 1 heart";
         case ITEM_HEART_HALF: return "heal 1/2 heart";
