@@ -1113,7 +1113,6 @@ bool client_handle_connection()
 
 void update_main_menu(float dt)
 {
-
     update_menu_characters(dt);
 
     for(int i = 0; i < MENU_KEY_MAX; ++i)
@@ -1316,9 +1315,6 @@ void update(float dt)
         return;
     }
 
-    player_handle_net_inputs(player, dt);
-    net_client_send_inputs();
-
     if(!paused)
     {
         lighting_point_light_clear_all();
@@ -1335,6 +1331,8 @@ void update(float dt)
         entity_update_all(dt);
 
         update_level_transition(dt);
+
+        net_client_send_inputs();
 
         // TODO: make this into a function
         if(player->phys.curr_room == player->transition_room)

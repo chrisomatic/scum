@@ -806,7 +806,7 @@ static void server_simulate()
         if(cli->input_count == 0)
         {
 DBG();
-            player_update(p,dt);
+            player_update(p,dt, false, 0);
         }
         else
         {
@@ -820,7 +820,7 @@ DBG();
                 }
 
 DBG();
-                player_update(p,cli->net_player_inputs[i].delta_t);
+                player_update(p,cli->net_player_inputs[i].delta_t, false, 0);
             }
 
             cli->input_count = 0;

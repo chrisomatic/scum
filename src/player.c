@@ -1123,7 +1123,7 @@ void player_update_all(float dt)
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
         Player* p = &players[i];
-        player_update(p, dt);
+        player_update(p, dt, false, 0);
     }
 }
 
@@ -1364,10 +1364,11 @@ static void player_handle_shooting(Player* p, float dt)
     }
 }
 
-void player_update(Player* p, float dt)
+void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 {
     if(!p->active) return;
 
+    player_handle_net_inputs(p, dt);
 
     if(all_players_dead)
     {

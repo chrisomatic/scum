@@ -205,7 +205,7 @@ void player2_init_keys();
 void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i tile);
 void player_send_to_level_start(Player* p);
 void player_update_all(float dt);
-void player_update(Player* p, float dt);
+void player_update(Player* p, float dt, bool custom_keys, uint32_t keys);
 void player_draw(Player* p);
 void player_draw_debug(Player* p);
 void player_lerp(Player* p, float dt);
