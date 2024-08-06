@@ -2133,6 +2133,13 @@ void net_client_update()
         }
     }
 
+}
+
+void net_client_send_inputs()
+{
+    if(role != ROLE_CLIENT)
+        return;
+
     // handle publishing inputs
     if(input_count >= inputs_per_packet)
     {
@@ -2199,9 +2206,7 @@ bool net_client_received_init_packet()
 void net_client_send_message(char* fmt, ...)
 {
     if(role != ROLE_CLIENT)
-    {
         return;
-    }
 
     Packet pkt = {
         .hdr.game_id = GAME_ID,
@@ -2781,6 +2786,7 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         if(p == player)
             visible_room = level_get_room_by_index(&level, p->phys.curr_room);
 
+#if !DUMB_CLIENT
         for(int i = 0; i < 32; ++i)
         {
             ClientMove* move = (ClientMove*)circbuf_get_item(&client.client_moves, i);
@@ -2788,11 +2794,22 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
             //if(move->time > pkt->hdr.time && i > 0)
             if(move->id != pkt->hdr.ack)
             {
-                //move = (ClientMove*)circbuf_get_item(&client.client_moves, i-1);
-                //printf("Found move! (time %f, server %f). Client Pos: %f %f %f, Server Pos: %f %f %f\n", move->time, pkt->hdr.time, p->phys.pos.x, p->phys.pos.y, p->phys.pos.z, pos.x, pos.y, pos.z);
+                move = (ClientMove*)circbuf_get_item(&client.client_moves, i-1);
+
+                float delta_x = p->phys.pos.x - pos.x;
+                float delta_y = p->phys.pos.y - pos.y;
+                float delta_z = p->phys.pos.z - pos.z;
+
+                if(delta_x > 1.0 || delta_y > 1.0 || delta_z > 1.0)
+                {
+
+                }
+
+                printf("Found move! Client Pos: %f %f %f, Server Pos: %f %f %f\n", p->phys.pos.x, p->phys.pos.y, p->phys.pos.z, pos.x, pos.y, pos.z);
                 break;
             }
         }
+#endif
 
         p->server_state_target.pos.x = pos.x;
         p->server_state_target.pos.y = pos.y;
@@ -3102,7 +3119,7 @@ static void pack_items(Packet* pkt, ClientInfo* cli)
         BPW(&server.bp, 6,  (uint32_t)(it->type + 1));
         BPW(&server.bp, 10, (uint32_t)it->phys.pos.x);
         BPW(&server.bp, 10, (uint32_t)it->phys.pos.y);
-        BPW(&server.bp, 6,  (uint32_t)it->phys.pos.z);
+        BPW(&server.bp, 7,  (uint32_t)it->phys.pos.z);
         BPW(&server.bp, 8,  (uint32_t)(it->phys.scale*255.0f));
         BPW(&server.bp, 7,  (uint32_t)it->phys.curr_room);
         BPW(&server.bp, 10, (uint32_t)(it->angle));
@@ -3144,7 +3161,7 @@ static void unpack_items(Packet* pkt, int* offset, WorldState* ws)
         uint32_t type        = bitpack_read(&client.bp, 6);
         uint32_t x           = bitpack_read(&client.bp, 10);
         uint32_t y           = bitpack_read(&client.bp, 10);
-        uint32_t z           = bitpack_read(&client.bp, 6);
+        uint32_t z           = bitpack_read(&client.bp, 7);
         uint32_t _scale      = bitpack_read(&client.bp, 8);
         uint32_t c_room      = bitpack_read(&client.bp, 7);
         uint32_t _angle      = bitpack_read(&client.bp, 10);

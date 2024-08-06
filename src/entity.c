@@ -203,7 +203,8 @@ void entity_build_all()
 
 void entity_handle_status_effects(float dt)
 {
-    if(role == ROLE_CLIENT) return;
+    if(role == ROLE_CLIENT)
+        return;
 
     for(int i = 0; i < num_entities; ++i)
     {
@@ -314,7 +315,11 @@ void entity_handle_misc(float dt)
 
 void entity_handle_collisions()
 {
-    if(role == ROLE_CLIENT) return;
+#if DUMB_CLIENT
+    if(role == ROLE_CLIENT)
+        return;
+#endif
+
     //printf("num entities: %d\n",num_entities);
 
     for(int i = 0; i < num_entities; ++i)

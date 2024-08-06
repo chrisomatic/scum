@@ -713,7 +713,12 @@ void game_generate_level()
     level_place_entities(&level);
     ui_message_set_title(2.0, 0x00CCCCCC, 1.2, "Level %d", level_rank);
 
-    if(role == ROLE_CLIENT) return;
+#if DUMB_CLIENT
+    if(role == ROLE_CLIENT)
+    {
+        return;
+    }
+#endif
 
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
@@ -1047,7 +1052,8 @@ void parse_args(int argc, char* argv[])
 
 bool client_handle_connection()
 {
-    if(role != ROLE_CLIENT) return true;
+    if(role != ROLE_CLIENT)
+        return true;
 
     ConnectionState check_state = net_client_get_state();
 
@@ -1300,6 +1306,7 @@ void update(float dt)
     ui_update(dt);
 
     bool conn = client_handle_connection();
+
     if(!conn)
     {
         creature_clear_all();
@@ -1308,6 +1315,9 @@ void update(float dt)
         // particles_delete_all_spawners(); //doesn't work properly
         return;
     }
+
+    player_handle_net_inputs(player, dt);
+    net_client_send_inputs();
 
     if(!paused)
     {
@@ -1325,8 +1335,6 @@ void update(float dt)
         entity_update_all(dt);
 
         update_level_transition(dt);
-
-        player_handle_net_inputs(player, dt);
 
         // TODO: make this into a function
         if(player->phys.curr_room == player->transition_room)
@@ -1382,7 +1390,11 @@ void update(float dt)
 
 void handle_room_completion(Room* room)
 {
+
+#if DUMB_CLIENT
     if(role == ROLE_CLIENT) return;
+#endif
+
     if(!room) return;
 
     // Room* room = level_get_room_by_index(&level, room_index);
@@ -2261,7 +2273,8 @@ void draw()
     else
     {
         bool connected = true;
-        if(role == ROLE_CLIENT) connected = (net_client_get_state() == CONNECTED);
+        if(role == ROLE_CLIENT)
+            connected = (net_client_get_state() == CONNECTED);
 
         if(connected)
         {

@@ -452,7 +452,9 @@ void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i t
 
     p->ignore_player_collision = true;
 
+#if DUMB_CLIENT
     if(role == ROLE_SERVER || role == ROLE_LOCAL)
+#endif
     {
        // if(level.rooms_ptr[room_index]->doors_locked)
         if(creature_get_room_count(room_index, false) != 0)
@@ -668,8 +670,10 @@ void player_hurt(Player* p, int damage)
     if(p->invulnerable_temp)
         return;
 
+#if DUMB_CLIENT
     if(role == ROLE_CLIENT)
         return;
+#endif
 
     float actual_damage = MAX(0.0, damage * (1.0 - lookup_defense[p->stats[DEFENSE]]));
 
@@ -871,7 +875,9 @@ void player_start_room_transition(Player* p)
 
     uint8_t room_index = 0;
 
+#if DUMB_CLIENT
     if(role == ROLE_SERVER || role == ROLE_LOCAL)
+#endif
     {
         p->transition_room = p->phys.curr_room;
 
@@ -1362,6 +1368,7 @@ void player_update(Player* p, float dt)
 {
     if(!p->active) return;
 
+
     if(all_players_dead)
     {
         PlayerInput* pa = &p->actions[PLAYER_ACTION_REVIVE];
@@ -1398,14 +1405,6 @@ void player_update(Player* p, float dt)
 
     if(role == ROLE_CLIENT)
     {
-        /*
-        if(p != player)
-        {
-            player_lerp(p, dt);
-            return;
-        }
-        */
-
         bool _all_players_dead = true;
         for(int i = 0; i < MAX_PLAYERS; ++i)
         {
@@ -1426,41 +1425,25 @@ void player_update(Player* p, float dt)
             p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
         }
 
+#if DUMB_CLIENT
         player_lerp(p, dt);
+#else
+        if(p != player)
+            player_lerp(p, dt);
+#endif
 
         Room* room = level_get_room_by_index(&level, (int)p->phys.curr_room);
         if(!room) return;
 
         room->discovered = true;
+        
+#if DUMB_CLIENT
         return;
-    }
-
-#if 0
-    if(role == ROLE_CLIENT)
-    {
-        player_lerp(p, dt);
-        if(p->phys.curr_room == player->phys.curr_room)
-        {
-            p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
-        }
-
-        if(p == player)
-        {
-            Room* room = level_get_room_by_index(&level, (int)p->phys.curr_room);
-
-            if(room)
-                room->discovered = true;
-
-            for(int t = 0; t < MAX_TIMED_ITEMS; ++t)
-            {
-                if(p->timed_items[t] == ITEM_NONE) continue;
-                p->timed_items_ttl[t] -= dt;
-            }
-        }
-
-        return;
-    }
+#else
+        if(p != player)
+            return;
 #endif
+    }
 
     float prior_x = p->phys.pos.x;
     float prior_y = p->phys.pos.y;
@@ -1777,11 +1760,12 @@ void player_update(Player* p, float dt)
     bool right = !all_players_dead && p->actions[PLAYER_ACTION_RIGHT].state;
 
     // handle map navigation
-    bool show_map = !all_players_dead && p->actions[PLAYER_ACTION_DISPLAY_MAP].toggled_on;
-    if(show_map)
+    bool show_map = !all_players_dead && p->actions[PLAYER_ACTION_DISPLAY_MAP].state;
+
+    if(show_map != p->show_map)
     {
-        // show_big_map = !show_big_map;
-        p->show_map = !p->show_map;
+        p->show_map = show_map;
+
         if(p->show_map)
         {
             Room* room = level_get_room_by_index(&level, p->phys.curr_room);
@@ -1869,7 +1853,7 @@ void player_update(Player* p, float dt)
                 }
             }
 
-            p->show_map = false;
+            //p->show_map = false;
         }
 
         up = false;
@@ -2142,6 +2126,11 @@ void player_update(Player* p, float dt)
         audio_set_listener_pos(p->phys.pos.x, p->phys.pos.y, p->phys.pos.z);
     }
 #endif
+}
+
+void player_update_with_input(Player* p, float dt)
+{
+
 }
 
 void player_ai_move_to_target(Player* p, Player* target)
@@ -2820,13 +2809,10 @@ void player_lerp(Player* p, float dt)
 
 void player_handle_net_inputs(Player* p, double dt)
 {
-    if(role != ROLE_CLIENT) return;
-
     // handle input
     memcpy(&p->input_prior, &p->input, sizeof(NetPlayerInput));
 
     p->input.delta_t = dt;
-
     p->input.keys = 0;
 
     for(int i = 0; i < PLAYER_ACTION_MAX; ++i)
@@ -2841,6 +2827,9 @@ void player_handle_net_inputs(Player* p, double dt)
     {
         p->input.keys = 0;
     }
+
+    if(role != ROLE_CLIENT)
+        return;
 
     if(p->input.keys != p->input_prior.keys && (player_ignore_input == 0))
     {

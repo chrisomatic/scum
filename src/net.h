@@ -314,6 +314,7 @@ bool net_client_received_init_packet();
 bool net_client_is_connected();
 void net_client_disconnect();
 void net_client_send_settings();
+void net_client_send_inputs();
 bool net_client_set_server_ip(char* address);
 void net_client_get_server_ip_str(char* ip_str);
 int net_client_data_waiting();
