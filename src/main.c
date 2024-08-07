@@ -312,6 +312,7 @@ void set_game_state(GameState state)
                 if(role == ROLE_LOCAL)
                 {
                     player_set_active(player, true);
+
                 }
                 memcpy(&player->settings, &menu_settings,sizeof(Settings));
                 player_set_class(player, player->settings.class);
@@ -657,6 +658,8 @@ void start_server()
 
     // start
     net_server_start();
+
+
 }
 
 float level_trans_time = 0.0;
@@ -985,6 +988,7 @@ void init()
         net_client_init();
         set_game_state(GAME_STATE_PLAYING);
     }
+
 
 }
 
@@ -1319,6 +1323,7 @@ void update(float dt)
     {
         lighting_point_light_clear_all();
         level_update(dt);
+
         player_update_all(dt);
         projectile_update_all(dt);
         explosion_update_all(dt);

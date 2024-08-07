@@ -1131,7 +1131,7 @@ static void player_handle_orbitals(Player* p, float dt)
 {
     ProjectileOrbital* orb = projectile_orbital_get(&p->phys, p->gun.orbital_distance);
     
-    if(p->actions[PLAYER_ACTION_SHOOT_UP].state)
+    if(p->actions_tmp[PLAYER_ACTION_SHOOT_UP].state)
     {
         // eject an orbital
         
@@ -1176,14 +1176,14 @@ static void player_handle_orbitals(Player* p, float dt)
             break;
         }
     }
-    else if(p->actions[PLAYER_ACTION_SHOOT_RIGHT].state)
+    else if(p->actions_tmp[PLAYER_ACTION_SHOOT_RIGHT].state)
     {
     }
-    else if(p->actions[PLAYER_ACTION_SHOOT_DOWN].state)
+    else if(p->actions_tmp[PLAYER_ACTION_SHOOT_DOWN].state)
     {
 
     }
-    else if(p->actions[PLAYER_ACTION_SHOOT_LEFT].state)
+    else if(p->actions_tmp[PLAYER_ACTION_SHOOT_LEFT].state)
     {
         Gun temp = p->gun;
         temp.damage_min += lookup_strength[p->stats[STRENGTH]];
@@ -1211,25 +1211,25 @@ static void player_handle_melee(Player* p, float dt)
 {
     bool attacked = false;
 
-    if(p->actions[PLAYER_ACTION_SHOOT_UP].state)
+    if(p->actions_tmp[PLAYER_ACTION_SHOOT_UP].state)
     {
         player_set_sprite_index(p, SPRITE_UP);
         p->weapon.rotation_deg = 90.0;
         attacked = true;
     }
-    else if(p->actions[PLAYER_ACTION_SHOOT_RIGHT].state)
+    else if(p->actions_tmp[PLAYER_ACTION_SHOOT_RIGHT].state)
     {
         player_set_sprite_index(p, SPRITE_RIGHT);
         p->weapon.rotation_deg = 0.0;
         attacked = true;
     }
-    else if(p->actions[PLAYER_ACTION_SHOOT_DOWN].state)
+    else if(p->actions_tmp[PLAYER_ACTION_SHOOT_DOWN].state)
     {
         player_set_sprite_index(p, SPRITE_DOWN);
         p->weapon.rotation_deg = 270.0;
         attacked = true;
     }
-    else if(p->actions[PLAYER_ACTION_SHOOT_LEFT].state)
+    else if(p->actions_tmp[PLAYER_ACTION_SHOOT_LEFT].state)
     {
         player_set_sprite_index(p, SPRITE_LEFT);
         p->weapon.rotation_deg = 180.0;
@@ -1257,7 +1257,7 @@ static void player_handle_shooting(Player* p, float dt)
 
     for(int i = 0; i < 4; ++i)
     {
-        if(p->actions[PLAYER_ACTION_SHOOT_UP+i].toggled_on)
+        if(p->actions_tmp[PLAYER_ACTION_SHOOT_UP+i].toggled_on)
         {
             if(p->gun.chargeable && p->proj_cooldown == 0.0)
             {
@@ -1274,7 +1274,7 @@ static void player_handle_shooting(Player* p, float dt)
     {
         if(p->gun.chargeable)
         {
-            if(!p->gun.charging && p->actions[p->last_shoot_action].state && p->proj_cooldown == 0.0)
+            if(!p->gun.charging && p->actions_tmp[p->last_shoot_action].state && p->proj_cooldown == 0.0)
             {
                 p->gun.charging = true;
             }
@@ -1286,13 +1286,13 @@ static void player_handle_shooting(Player* p, float dt)
             }
         }
 
-        bool shoot = p->gun.chargeable ? false : p->actions[p->last_shoot_action].state && p->proj_cooldown == 0.0;
+        bool shoot = p->gun.chargeable ? false : p->actions_tmp[p->last_shoot_action].state && p->proj_cooldown == 0.0;
 
-        if(p->actions[p->last_shoot_action].toggled_off)
+        if(p->actions_tmp[p->last_shoot_action].toggled_off)
         {
             for(int i = 0; i < 4; ++i)
             {
-                if(p->actions[PLAYER_ACTION_SHOOT_UP+i].state)
+                if(p->actions_tmp[PLAYER_ACTION_SHOOT_UP+i].state)
                 {
                     p->last_shoot_action = PLAYER_ACTION_SHOOT_UP+i;
                     break;
@@ -1370,12 +1370,35 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 
     player_handle_net_inputs(p, dt);
 
+    if(custom_keys)
+    {
+        printf("CUSTOM KEY!\n");
+
+        memset(p->actions_tmp, 0, PLAYER_ACTION_MAX*sizeof(PlayerInput));
+
+        // set custom_keys
+        for(int i = 0; i < PLAYER_ACTION_MAX; ++i)
+        {
+            bool b = ((keys >> i) & 0x01) == 1;
+            if(b)
+            {
+                printf("%d key is set\n", i);
+                p->actions_tmp[i].state = true;   
+                p->actions_tmp[i].toggled_on = true;   
+            }
+        }
+    }
+    else
+    {
+        memcpy(p->actions_tmp, p->actions, PLAYER_ACTION_MAX*sizeof(PlayerInput));
+    }
+
     if(all_players_dead)
     {
-        PlayerInput* pa = &p->actions[PLAYER_ACTION_REVIVE];
+        PlayerInput* pa = &p->actions_tmp[PLAYER_ACTION_REVIVE];
         update_input_state(pa, dt);
 
-        bool revive = p->actions[PLAYER_ACTION_REVIVE].toggled_on;
+        bool revive = p->actions_tmp[PLAYER_ACTION_REVIVE].toggled_on;
 
         if(revive)
         {
@@ -1411,7 +1434,9 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
         {
             Player* p2 = &players[i];
             
-            if(!p2->active) continue;
+            if(!p2->active)
+                continue;
+
             if(!p2->phys.dead)
             {
                 _all_players_dead = false;
@@ -1429,8 +1454,7 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 #if DUMB_CLIENT
         player_lerp(p, dt);
 #else
-        if(p != player)
-            player_lerp(p, dt);
+        player_lerp(p, dt);
 #endif
 
         Room* room = level_get_room_by_index(&level, (int)p->phys.curr_room);
@@ -1451,7 +1475,7 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 
     for(int i = 0; i < PLAYER_ACTION_MAX; ++i)
     {
-        PlayerInput* pa = &p->actions[i];
+        PlayerInput* pa = &p->actions_tmp[i];
         update_input_state(pa, dt);
     }
 
@@ -1469,12 +1493,12 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
         }
     }
 
-    bool activate = !all_players_dead && p->actions[PLAYER_ACTION_ACTIVATE].toggled_on;
-    bool action_use = !all_players_dead && p->actions[PLAYER_ACTION_USE_ITEM].toggled_on;
-    bool tabbed = !all_players_dead && p->actions[PLAYER_ACTION_TAB_CYCLE].toggled_on;
-    bool rshift = !all_players_dead && p->actions[PLAYER_ACTION_RSHIFT].state;
-    bool action_drop = !all_players_dead && p->actions[PLAYER_ACTION_DROP_ITEM].toggled_on || p->actions[PLAYER_ACTION_DROP_ITEM].hold;
-    bool revive = p->actions[PLAYER_ACTION_REVIVE].toggled_on;
+    bool activate = !all_players_dead && p->actions_tmp[PLAYER_ACTION_ACTIVATE].toggled_on;
+    bool action_use = !all_players_dead && p->actions_tmp[PLAYER_ACTION_USE_ITEM].toggled_on;
+    bool tabbed = !all_players_dead && p->actions_tmp[PLAYER_ACTION_TAB_CYCLE].toggled_on;
+    bool rshift = !all_players_dead && p->actions_tmp[PLAYER_ACTION_RSHIFT].state;
+    bool action_drop = !all_players_dead && p->actions_tmp[PLAYER_ACTION_DROP_ITEM].toggled_on || p->actions_tmp[PLAYER_ACTION_DROP_ITEM].hold;
+    bool revive = p->actions_tmp[PLAYER_ACTION_REVIVE].toggled_on;
 
     if(p->revives > 0 && revive)
     {
@@ -1755,13 +1779,13 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 
     phys_add_circular_time(&p->phys, dt);
 
-    bool up    = !all_players_dead && p->actions[PLAYER_ACTION_UP].state;
-    bool down  = !all_players_dead && p->actions[PLAYER_ACTION_DOWN].state;
-    bool left  = !all_players_dead && p->actions[PLAYER_ACTION_LEFT].state;
-    bool right = !all_players_dead && p->actions[PLAYER_ACTION_RIGHT].state;
+    bool up    = !all_players_dead && p->actions_tmp[PLAYER_ACTION_UP].state;
+    bool down  = !all_players_dead && p->actions_tmp[PLAYER_ACTION_DOWN].state;
+    bool left  = !all_players_dead && p->actions_tmp[PLAYER_ACTION_LEFT].state;
+    bool right = !all_players_dead && p->actions_tmp[PLAYER_ACTION_RIGHT].state;
 
     // handle map navigation
-    bool show_map = !all_players_dead && p->actions[PLAYER_ACTION_DISPLAY_MAP].state;
+    bool show_map = !all_players_dead && p->actions_tmp[PLAYER_ACTION_DISPLAY_MAP].state;
 
     if(show_map != p->show_map)
     {
@@ -1780,10 +1804,10 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 
     if(p->show_map)
     {
-        up    = p->actions[PLAYER_ACTION_UP].toggled_on;
-        down  = p->actions[PLAYER_ACTION_DOWN].toggled_on;
-        left  = p->actions[PLAYER_ACTION_LEFT].toggled_on;
-        right = p->actions[PLAYER_ACTION_RIGHT].toggled_on;
+        up    = p->actions_tmp[PLAYER_ACTION_UP].toggled_on;
+        down  = p->actions_tmp[PLAYER_ACTION_DOWN].toggled_on;
+        left  = p->actions_tmp[PLAYER_ACTION_LEFT].toggled_on;
+        right = p->actions_tmp[PLAYER_ACTION_RIGHT].toggled_on;
 
         Dir dir = DIR_NONE;
         if(up) dir = DIR_UP;
@@ -1931,7 +1955,7 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 
     phys_apply_gravity(&p->phys,p->gravity,dt);
 
-    bool jump = !all_players_dead && p->actions[PLAYER_ACTION_JUMP].state;
+    bool jump = !all_players_dead && p->actions_tmp[PLAYER_ACTION_JUMP].state;
     if(p->phys.falling) jump = false;
     if(jump && p->phys.pos.z == 0.0)
     {
@@ -2127,11 +2151,6 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
         audio_set_listener_pos(p->phys.pos.x, p->phys.pos.y, p->phys.pos.z);
     }
 #endif
-}
-
-void player_update_with_input(Player* p, float dt)
-{
-
 }
 
 void player_ai_move_to_target(Player* p, Player* target)
@@ -2799,7 +2818,18 @@ void player_draw(Player* p)
 
 void player_lerp(Player* p, float dt)
 {
-    if(!p->active) return;
+    if(!p->active)
+        return;
+
+    bool no_target = (p->server_state_target.pos.x == 0.0 && p->server_state_target.pos.y == 0.0 && p->server_state_target.pos.z == 0.0);
+
+    if(no_target)
+        return;
+
+    bool equal_state = (p->phys.pos.x == p->server_state_target.pos.x && p->phys.pos.y != p->server_state_target.pos.y && p->phys.pos.z != p->server_state_target.pos.z);
+
+    if(equal_state)
+        return;
 
     const float decay = 16.0;
 
@@ -2810,6 +2840,9 @@ void player_lerp(Player* p, float dt)
 
 void player_handle_net_inputs(Player* p, double dt)
 {
+    if(role == ROLE_SERVER)
+        return;
+
     // handle input
     memcpy(&p->input_prior, &p->input, sizeof(NetPlayerInput));
 
@@ -2819,15 +2852,11 @@ void player_handle_net_inputs(Player* p, double dt)
     for(int i = 0; i < PLAYER_ACTION_MAX; ++i)
     {
         if(p->actions[i].state && (player_ignore_input == 0))
-        {
             p->input.keys |= (1<<i);
-        }
     }
 
     if(p->phys.curr_room != p->transition_room || paused)
-    {
         p->input.keys = 0;
-    }
 
     if(role != ROLE_CLIENT)
         return;

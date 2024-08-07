@@ -105,7 +105,9 @@ typedef struct
     float luck;
 
     Settings settings;
+
     PlayerInput actions[PLAYER_ACTION_MAX];
+    PlayerInput actions_tmp[PLAYER_ACTION_MAX]; // Used to support playback of recorded player actions
 
     PlayerActions last_shoot_action;
     float shoot_sprite_cooldown;

@@ -817,6 +817,7 @@ DBG();
                 {
                     bool key_state = (cli->net_player_inputs[i].keys & ((uint32_t)1<<j)) != 0;
                     p->actions[j].state = key_state;
+                    p->actions[j].toggled_on = key_state;
                 }
 
 DBG();
@@ -2079,7 +2080,6 @@ void net_client_update()
         client.info.remote_latest_packet_id = srvpkt.hdr.id;
     }
 
-
     // apply state to client
     if(client.state_packet_count > 0)
     {
@@ -2776,6 +2776,7 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
                 p->transition_room = curr_room;
                 p->phys.curr_room = curr_room;
             }
+
             // avoid lerping
             p->phys.pos.x = pos.x;
             p->phys.pos.y = pos.y;
@@ -2786,41 +2787,75 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         if(p == player)
             visible_room = level_get_room_by_index(&level, p->phys.curr_room);
 
-#if !DUMB_CLIENT
-        for(int i = 0; i < 32; ++i)
+#if DUMB_CLIENT
+
+        p->server_state_target.pos.x = pos.x;
+        p->server_state_target.pos.y = pos.y;
+        p->server_state_target.pos.z = pos.z;
+
+#else
+
+        p->server_state_target.pos.x = 0.0;
+        p->server_state_target.pos.y = 0.0;
+        p->server_state_target.pos.z = 0.0;
+
+
+        for(int i = 0; i < client.client_moves.count; ++i)
         {
             ClientMove* move = (ClientMove*)circbuf_get_item(&client.client_moves, i);
 
             //if(move->time > pkt->hdr.time && i > 0)
-            if(move->id != pkt->hdr.ack)
+            if(move->id == pkt->hdr.ack)
             {
-                move = (ClientMove*)circbuf_get_item(&client.client_moves, i-1);
+                move = (ClientMove*)circbuf_get_item(&client.client_moves, i);
 
-                float delta_x = p->phys.pos.x - pos.x;
-                float delta_y = p->phys.pos.y - pos.y;
-                float delta_z = p->phys.pos.z - pos.z;
+                Vector3f* move_pos = &move->state.players[0].pos;
 
-                if(delta_x > 1.0 || delta_y > 1.0 || delta_z > 1.0)
+                float delta_x = move_pos->x - pos.x;
+                float delta_y = move_pos->y - pos.y;
+                float delta_z = move_pos->z - pos.z;
+
+                if(ABS(delta_x) > 1.0 || ABS(delta_y) > 1.0 || ABS(delta_z) > 1.0)
                 {
+                    printf("Simulated Client Pos correction: %f %f %f -> %f %f %f\n", move_pos->x, move_pos->y, move_pos->z, pos.x, pos.y, pos.z);
 
+                    move_pos->x = pos.x;
+                    move_pos->y = pos.y;
+                    move_pos->z = pos.z;
+
+                    float x = pos.x;
+                    float y = pos.y;
+                    float z = pos.z;
+
+                    p->phys.pos.x = pos.x;
+                    p->phys.pos.y = pos.y;
+                    p->phys.pos.z = pos.z;
+
+                    // Simulate forward
+                    for(int j = i+1; j < client.client_moves.count; ++j)
+                    {
+                        ClientMove* m2 = (ClientMove*)circbuf_get_item(&client.client_moves, j);
+                        player_update(p, m2->input.delta_t, true, m2->input.keys);
+
+                        // fix client move history
+                        m2->state.players[0].pos.x = p->phys.pos.x;
+                        m2->state.players[0].pos.y = p->phys.pos.y;
+                        m2->state.players[0].pos.z = p->phys.pos.z;
+                    }
                 }
 
-                printf("Found move! Client Pos: %f %f %f, Server Pos: %f %f %f\n", p->phys.pos.x, p->phys.pos.y, p->phys.pos.z, pos.x, pos.y, pos.z);
                 break;
             }
         }
 #endif
 
-        p->server_state_target.pos.x = pos.x;
-        p->server_state_target.pos.y = pos.y;
-        p->server_state_target.pos.z = pos.z;
         p->server_state_target.weapon_scale = (float)(weapon_scale/255.0f);
         p->server_state_target.invulnerable_temp_time = invulnerable_temp_time;
 
         if(!prior_active[client_id])
         {
             printf("first state packet for %d\n", client_id);
-            p->phys.pos = p->server_state_target.pos;
+            p->phys.pos = pos;
             p->transition_room = p->phys.curr_room;
         }
 
