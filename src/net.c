@@ -28,7 +28,6 @@
 #define COOL_SERVER_PLAYER_LOGIC 1
 #define REDUNDANT_INPUTS 1
 
-
 #define ADDR_FMT "%u.%u.%u.%u:%u"
 #define ADDR_LST(addr) (addr)->a,(addr)->b,(addr)->c,(addr)->d,(addr)->port
 
@@ -53,6 +52,7 @@
 #define INPUT_QUEUE_MAX 16
 #define TIMESTAMP_HISTORY_MAX 32
 #define MAX_NET_EVENTS 255
+#define INPUTS_PER_PACKET 1
 
 typedef struct
 {
@@ -125,6 +125,8 @@ struct
     Packet state_packets[2]; // for jitter compensation
     int state_packet_count;
 
+    int input_count;
+
     double rtt;
 
     uint32_t bytes_received;
@@ -146,9 +148,6 @@ struct
 #define RAND_MAX_WIDTH IMAX_BITS(RAND_MAX)
 
 // ---
-
-static int input_count = 0;
-static int inputs_per_packet = 1.0; //(TARGET_FPS/TICK_RATE);
 
 static bool refreshed_room_gun_list = false;    //needed for the client/player
 
@@ -183,19 +182,19 @@ static inline Vector3f unpack_vec3(Packet* pkt, int* offset);
 static inline ItemType unpack_itemtype(Packet* pkt, int* offset);
 
 static void pack_players(Packet* pkt, ClientInfo* cli); // temp
-static void unpack_players(Packet* pkt, int* offset, WorldState* ws);
+static void unpack_players(Packet* pkt, int* offset);
 static void pack_creatures(Packet* pkt, ClientInfo* cli);
-static void unpack_creatures(Packet* pkt, int* offset, WorldState* ws);
+static void unpack_creatures(Packet* pkt, int* offset);
 static void pack_projectiles(Packet* pkt, ClientInfo* cli);
-static void unpack_projectiles(Packet* pkt, int* offset, WorldState* ws);
+static void unpack_projectiles(Packet* pkt, int* offset);
 static void pack_items(Packet* pkt, ClientInfo* cli);
-static void unpack_items(Packet* pkt, int* offset, WorldState* ws);
+static void unpack_items(Packet* pkt, int* offset);
 static void pack_decals(Packet* pkt, ClientInfo* cli);
-static void unpack_decals(Packet* pkt, int* offset, WorldState* ws);
+static void unpack_decals(Packet* pkt, int* offset);
 static void pack_other(Packet* pkt, ClientInfo* cli);
-static void unpack_other(Packet* pkt, int* offset, WorldState* ws);
+static void unpack_other(Packet* pkt, int* offset);
 static void pack_events(Packet* pkt, ClientInfo* cli);
-static void unpack_events(Packet* pkt, int* offset, WorldState* ws);
+static void unpack_events(Packet* pkt, int* offset);
 
 static uint64_t rand64(void)
 {
@@ -1536,19 +1535,19 @@ bool server_process_command(char* argv[20], int argc, int client_id)
 
 bool net_client_add_player_input(NetPlayerInput* input, WorldState* state)
 {
-    if(input_count >= INPUT_QUEUE_MAX)
+    if(client.input_count >= INPUT_QUEUE_MAX)
     {
         LOGW("Input array is full!");
         return false;
     }
 
-    memcpy(&client.net_player_inputs[input_count], input, sizeof(NetPlayerInput));
+    memcpy(&client.net_player_inputs[client.input_count], input, sizeof(NetPlayerInput));
 
     if(state)
     {
         ClientMove m = {0};
 
-        m.id            = client.info.local_latest_packet_id + input_count;
+        m.id            = client.info.local_latest_packet_id;
         m.input.delta_t = input->delta_t;
         m.input.keys    = input->keys;
 
@@ -1557,14 +1556,14 @@ bool net_client_add_player_input(NetPlayerInput* input, WorldState* state)
         circbuf_add(&client.client_moves,&m);
     }
 
-    input_count++;
+    client.input_count++;
 
     return true;
 }
 
 int net_client_get_input_count()
 {
-    return input_count;
+    return client.input_count;
 }
 
 uint8_t net_client_get_player_count()
@@ -1739,8 +1738,8 @@ static void client_send(PacketType type)
         case PACKET_TYPE_INPUT:
         {
             pack_bytes(&pkt, (uint8_t*)client.xor_salts, 8);
-            pack_u8(&pkt, input_count);
-            for(int i = 0; i < input_count; ++i)
+            pack_u8(&pkt, client.input_count);
+            for(int i = 0; i < client.input_count; ++i)
             {
                 pack_bytes(&pkt, (uint8_t*)&client.net_player_inputs[i], sizeof(NetPlayerInput));
             }
@@ -2093,17 +2092,13 @@ void net_client_update()
         bitpack_seek_begin(&client.bp);
         //bitpack_print(&client.bp);
 
-        WorldState world_state = {0};
-
-        unpack_players(pkt, &offset, &world_state);
-        unpack_creatures(pkt, &offset, &world_state);
-        unpack_projectiles(pkt, &offset, &world_state);
-        unpack_items(pkt, &offset, &world_state);
-        unpack_decals(pkt, &offset, &world_state);
-        unpack_events(pkt,&offset, &world_state);
-        unpack_other(pkt, &offset, &world_state);
-
-        //apply_world_state_to_game(&world_state);
+        unpack_players(pkt, &offset);
+        unpack_creatures(pkt, &offset);
+        unpack_projectiles(pkt, &offset);
+        unpack_items(pkt, &offset);
+        unpack_decals(pkt, &offset);
+        unpack_events(pkt,&offset);
+        unpack_other(pkt, &offset);
 
         int bytes_read = 4*(client.bp.word_index+1);
         offset += bytes_read;
@@ -2141,10 +2136,10 @@ void net_client_send_inputs()
         return;
 
     // handle publishing inputs
-    if(input_count >= inputs_per_packet)
+    if(client.input_count >= INPUTS_PER_PACKET)
     {
         client_send(PACKET_TYPE_INPUT);
-        input_count = 0;
+        client.input_count = 0;
     }
 }
 
@@ -2622,7 +2617,7 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
     }
 }
 
-static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
+static void unpack_players(Packet* pkt, int* offset)
 {
     uint8_t player_count = (uint8_t)bitpack_read(&client.bp, 4);
     client.player_count = player_count;
@@ -2799,8 +2794,23 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
         p->server_state_target.pos.y = 0.0;
         p->server_state_target.pos.z = 0.0;
 
+#if 0
+        // @DEBUG
+        printf("DEBUG!!!\n");
+        printf("    Packet ACK: %d, Server pos: %f %f %f\n", pkt->hdr.ack, pos.x, pos.y, pos.z);
 
         for(int i = 0; i < client.client_moves.count; ++i)
+        {
+            ClientMove* move = (ClientMove*)circbuf_get_item(&client.client_moves, i);
+            Vector3f* move_pos = &move->state.players[0].pos;
+
+            printf("    %d: Move ID: %d, Client pos: %f %f %f\n", i, move->id, move_pos->x, move_pos->y, move_pos->z);
+        }
+
+        printf("\n\n");
+#endif
+
+        for(int i = client.client_moves.count - 1; i >= 0; --i)
         {
             ClientMove* move = (ClientMove*)circbuf_get_item(&client.client_moves, i);
 
@@ -2815,6 +2825,9 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
                 float delta_y = move_pos->y - pos.y;
                 float delta_z = move_pos->z - pos.z;
 
+                printf("Found Client Move for ID %d: %f %f %f =?= %f %f %f (delta: %f %f %f)\n", move->id, move_pos->x, move_pos->y, move_pos->z, pos.x, pos.y, pos.z, delta_x, delta_y, delta_z);
+
+#if 1
                 if(ABS(delta_x) > 1.0 || ABS(delta_y) > 1.0 || ABS(delta_z) > 1.0)
                 {
                     printf("Simulated Client Pos correction: %f %f %f -> %f %f %f\n", move_pos->x, move_pos->y, move_pos->z, pos.x, pos.y, pos.z);
@@ -2823,13 +2836,12 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
                     move_pos->y = pos.y;
                     move_pos->z = pos.z;
 
-                    float x = pos.x;
-                    float y = pos.y;
-                    float z = pos.z;
-
-                    p->phys.pos.x = pos.x;
-                    p->phys.pos.y = pos.y;
-                    p->phys.pos.z = pos.z;
+                    if(i+1 >= client.client_moves.count)
+                    {
+                        p->phys.pos.x = pos.x;
+                        p->phys.pos.y = pos.y;
+                        p->phys.pos.z = pos.z;
+                    }
 
                     // Simulate forward
                     for(int j = i+1; j < client.client_moves.count; ++j)
@@ -2841,8 +2853,17 @@ static void unpack_players(Packet* pkt, int* offset, WorldState* ws)
                         m2->state.players[0].pos.x = p->phys.pos.x;
                         m2->state.players[0].pos.y = p->phys.pos.y;
                         m2->state.players[0].pos.z = p->phys.pos.z;
+
+                        if(j == client.client_moves.count -1)
+                        {
+                            p->phys.pos.x = pos.x;
+                            p->phys.pos.y = pos.y;
+                            p->phys.pos.z = pos.z;
+                        }
+
                     }
                 }
+#endif
 
                 break;
             }
@@ -2922,7 +2943,7 @@ static void pack_creatures(Packet* pkt, ClientInfo* cli)
     }
 }
 
-static void unpack_creatures(Packet* pkt, int* offset, WorldState* ws)
+static void unpack_creatures(Packet* pkt, int* offset)
 {
     memcpy(prior_creatures, creatures, sizeof(Creature)*MAX_CREATURES);
     creature_clear_all();
@@ -3059,7 +3080,7 @@ static void pack_projectiles(Packet* pkt, ClientInfo* cli)
     }
 }
 
-static void unpack_projectiles(Packet* pkt, int* offset, WorldState* ws)
+static void unpack_projectiles(Packet* pkt, int* offset)
 {
     memcpy(prior_projectiles, projectiles, sizeof(Projectile)*MAX_PROJECTILES);
 
@@ -3180,7 +3201,7 @@ static void pack_items(Packet* pkt, ClientInfo* cli)
     }
 }
 
-static void unpack_items(Packet* pkt, int* offset, WorldState* ws)
+static void unpack_items(Packet* pkt, int* offset)
 {
     memcpy(prior_items, items, sizeof(Item)*MAX_ITEMS);
 
@@ -3290,7 +3311,7 @@ static void pack_decals(Packet* pkt, ClientInfo* cli)
     }
 }
 
-static void unpack_decals(Packet* pkt, int* offset, WorldState* ws)
+static void unpack_decals(Packet* pkt, int* offset)
 {
     uint8_t count = (uint8_t)bitpack_read(&client.bp, 7);
 
@@ -3325,7 +3346,7 @@ static void pack_other(Packet* pkt, ClientInfo* cli)
     BPW(&server.bp, 1,  (uint32_t)((int)(g_timer) % 2 == 0 ? 0x01 : 0x00));
 }
 
-static void unpack_other(Packet* pkt, int* offset, WorldState* ws)
+static void unpack_other(Packet* pkt, int* offset)
 {
     Room* room = level_get_room_by_index(&level, (int)player->phys.curr_room);
 
@@ -3402,7 +3423,7 @@ static void pack_events(Packet* pkt, ClientInfo* cli)
     }
 }
 
-static void unpack_events(Packet* pkt, int* offset, WorldState* ws)
+static void unpack_events(Packet* pkt, int* offset)
 {
     uint8_t event_count = (uint8_t)bitpack_read(&client.bp,8);
 
@@ -3484,18 +3505,3 @@ static void unpack_events(Packet* pkt, int* offset, WorldState* ws)
         }
     }
 }
-
-
-/*
-void apply_world_state_to_game(WorldState* ws)
-{
-    // players
-    for(int i = 0; i < ws->player_count; ++i)
-    {
-        _apply_world_state_to_player(ws, &players[i]);
-    }
-
-
-
-}
-*/

@@ -102,34 +102,7 @@ typedef struct NetPlayerInput NetPlayerInput;
 
 typedef struct
 {
-    uint8_t  id;
     Vector3f pos;
-    uint8_t  sprite_index;
-    uint8_t  curr_room;
-    int8_t   hp;
-    int8_t   hp_max;
-    int32_t  highlighted_item_id;
-    uint8_t  skill_count;
-    uint16_t skills[20];
-    uint16_t xp;
-    uint8_t  level;
-    uint8_t  new_levels;
-    bool     show_skill_selection;
-    uint8_t  skill_selection;
-    uint8_t  num_skill_selection_choices;
-    uint16_t skill_choices[6];
-    uint8_t  gauntlet_selection;
-    uint8_t  gauntlet_slots;
-    int8_t   gauntlet_types[8];
-    bool     invulnerable_temp;
-    float    invulnerable_temp_time;
-    uint8_t  door;
-    bool     dead;
-    int      timed_items[10];
-    float    timed_items_ttl[10];
-
-    // @TODO
-
 } PlayerState;
 
 typedef struct
@@ -198,26 +171,7 @@ typedef struct
 
 typedef struct
 {
-    int             player_count;
-    PlayerState     players[4];
-
-    int             creature_count;
-    CreatureState   creatures[1024];
-
-    int             projectile_count;
-    ProjectileState projectiles[4096];
-
-    int             item_count;
-    ItemState       items[500];
-
-    int             decal_count;
-    DecalState      decals[100];
-
-    int             event_count;
-    EventState      events[255];
-
-    OtherState      other;
-
+    PlayerState     players[1];
 } WorldState;
 
 typedef struct

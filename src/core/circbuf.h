@@ -33,14 +33,16 @@ void circbuf_add(CircBuf* cb, void* item)
 {
     int index = cb->count;
 
-    char* p = (char*)cb->buf;
+    unsigned char* p = (unsigned char*)cb->buf;
 
     if (cb->count == cb->max_count)
     {
         // shift
         for (int i = 1; i <= cb->max_count - 1; ++i)
         {
-            memcpy(p + (i - 1), p + i, cb->item_size);
+            unsigned char* p1 = p + (i*cb->item_size);
+            unsigned char* p2 = p + ((i-1)*cb->item_size);
+            memcpy(p2, p1, cb->item_size);
         }
 
         index--;
@@ -50,8 +52,27 @@ void circbuf_add(CircBuf* cb, void* item)
         cb->count++;
     }
 
-    void* it = (p+index);
+    void* it = (p+(index*cb->item_size));
     memcpy(it,item,cb->item_size);
+}
+
+void circbuf_print(CircBuf* cb)
+{
+    printf("CircBuf (%p) [Item Count: %d, Item Size: %d]:\n", cb, cb->count, cb->item_size);
+
+    for(int i = 0; i < cb->count; ++i)
+    {
+        printf(" Item %d: [", i);
+        unsigned char* p = cb->buf + (i*cb->item_size);
+
+        for(int j = 0; j < cb->item_size; ++j)
+        {
+            printf(" %02X", p[j]);
+        }
+        printf(" ]\n");
+    }
+
+    printf("\n");
 }
 
 void* circbuf_get_item(CircBuf* cb,int index)
@@ -59,6 +80,6 @@ void* circbuf_get_item(CircBuf* cb,int index)
     if(index < 0 || index >= cb->max_count)
         return NULL;
 
-    char* p = (char*)cb->buf;
-    return (p+index);
+    unsigned char* p = (unsigned char*)cb->buf;
+    return (p+(index*cb->item_size));
 }

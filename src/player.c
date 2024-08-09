@@ -1368,8 +1368,6 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 {
     if(!p->active) return;
 
-    player_handle_net_inputs(p, dt);
-
     if(custom_keys)
     {
         printf("CUSTOM KEY!\n");
@@ -1463,6 +1461,8 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
         room->discovered = true;
         
 #if DUMB_CLIENT
+
+        player_handle_net_inputs(p, dt);
         return;
 #else
         if(p != player)
@@ -2151,6 +2151,9 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
         audio_set_listener_pos(p->phys.pos.x, p->phys.pos.y, p->phys.pos.z);
     }
 #endif
+
+    player_handle_net_inputs(p, dt);
+
 }
 
 void player_ai_move_to_target(Player* p, Player* target)
