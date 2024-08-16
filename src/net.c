@@ -816,7 +816,6 @@ DBG();
                 {
                     bool key_state = (cli->net_player_inputs[i].keys & ((uint32_t)1<<j)) != 0;
                     p->actions[j].state = key_state;
-                    p->actions[j].toggled_on = key_state;
                 }
 
 DBG();

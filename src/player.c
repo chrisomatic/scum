@@ -1368,6 +1368,12 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 {
     if(!p->active) return;
 
+    for(int i = 0; i < PLAYER_ACTION_MAX; ++i)
+    {
+        PlayerInput* pa = &p->actions[i];
+        update_input_state(pa, dt);
+    }
+
     if(custom_keys)
     {
         printf("CUSTOM KEY!\n");
@@ -1382,7 +1388,6 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
             {
                 printf("%d key is set\n", i);
                 p->actions_tmp[i].state = true;   
-                p->actions_tmp[i].toggled_on = true;   
             }
         }
     }
@@ -1470,14 +1475,9 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 #endif
     }
 
+
     float prior_x = p->phys.pos.x;
     float prior_y = p->phys.pos.y;
-
-    for(int i = 0; i < PLAYER_ACTION_MAX; ++i)
-    {
-        PlayerInput* pa = &p->actions_tmp[i];
-        update_input_state(pa, dt);
-    }
 
     // artifacts... @HACK
     if(!p->phys.falling)
@@ -1779,10 +1779,10 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 
     phys_add_circular_time(&p->phys, dt);
 
-    bool up    = !all_players_dead && p->actions_tmp[PLAYER_ACTION_UP].state;
-    bool down  = !all_players_dead && p->actions_tmp[PLAYER_ACTION_DOWN].state;
-    bool left  = !all_players_dead && p->actions_tmp[PLAYER_ACTION_LEFT].state;
-    bool right = !all_players_dead && p->actions_tmp[PLAYER_ACTION_RIGHT].state;
+    bool up    = p->actions_tmp[PLAYER_ACTION_UP].state;
+    bool down  = p->actions_tmp[PLAYER_ACTION_DOWN].state;
+    bool left  = p->actions_tmp[PLAYER_ACTION_LEFT].state;
+    bool right = p->actions_tmp[PLAYER_ACTION_RIGHT].state;
 
     // handle map navigation
     bool show_map = !all_players_dead && p->actions_tmp[PLAYER_ACTION_DISPLAY_MAP].state;

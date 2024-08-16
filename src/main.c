@@ -231,6 +231,7 @@ void update_input_state(PlayerInput* input, float dt)
     {
         input->toggled_on = false;
     }
+
     if(!input->state && input->prior_state)
     {
         input->toggled_off = true;
