@@ -128,6 +128,12 @@ bool list_clear(glist* list)
     list->count = 0;
 }
 
+bool list_clear_full(glist* list)
+{
+    list_clear(list);
+    memset(list->buf, 0, list->item_size*list->max_count);
+}
+
 bool list_is_full(glist* list)
 {
     return (list->count >= list->max_count);

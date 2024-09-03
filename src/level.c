@@ -491,7 +491,17 @@ void level_place_entities(Level* level)
                 Vector2f pos = level_get_pos_by_room_coords(rfd->item_locations_x[i]-1, rfd->item_locations_y[i]-1); // @convert room objects to tile grid coordinates
                 // LOGI("Adding item of type: %s to (%.2f %.2f)", item_get_name(rfd->item_types[i]), pos.x, pos.y);
                 if(rfd->item_types[i] == ITEM_GUN)
-                    it = item_add_gun(lrand(&rg_room) % gun_catalog_count, lrand(&rg_room), pos.x, pos.y, room->index);
+                {
+                    for(;;)
+                    {
+                        int index = lrand(&rg_room) % gun_catalog_count;
+                        if(gun_catalog[index].cost > 0)
+                        {
+                            it = item_add_gun(index, lrand(&rg_room), pos.x, pos.y, room->index);
+                            break;
+                        }
+                    }
+                }
                 else
                     it = item_add(rfd->item_types[i], pos.x, pos.y, room->index);
 

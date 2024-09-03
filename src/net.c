@@ -3213,7 +3213,7 @@ static void unpack_items(Packet* pkt, int* offset)
 
     uint32_t num_items   = bitpack_read(&client.bp, 6);
 
-    list_clear(item_list);
+    list_clear_full(item_list);
     item_list->count = num_items;
 
     for(int i = 0; i < num_items; ++i)
@@ -3235,7 +3235,7 @@ static void unpack_items(Packet* pkt, int* offset)
 
         if(has_desc)
         {
-            char desc[32] = {0};
+            char desc[33] = {0};
             uint8_t dlen = bitpack_read(&client.bp, 8);
             for(int j = 0; j < dlen; ++j)
             {
