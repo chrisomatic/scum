@@ -1376,8 +1376,6 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 
     if(custom_keys)
     {
-        printf("CUSTOM KEY!\n");
-
         memset(p->actions_tmp, 0, PLAYER_ACTION_MAX*sizeof(PlayerInput));
 
         // set custom_keys
@@ -1398,9 +1396,6 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 
     if(all_players_dead)
     {
-        PlayerInput* pa = &p->actions_tmp[PLAYER_ACTION_REVIVE];
-        update_input_state(pa, dt);
-
         bool revive = p->actions_tmp[PLAYER_ACTION_REVIVE].toggled_on;
 
         if(revive)
@@ -1449,16 +1444,14 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 
         all_players_dead = _all_players_dead;
 
-        if(p == player && !p->phys.dead)
+#if DUMB_CLIENT
+        if(p == player && !p->phys.dead && !custom_keys)
         {
             p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
         }
-
-#if DUMB_CLIENT
-        player_lerp(p, dt);
-#else
-        player_lerp(p, dt);
 #endif
+
+        player_lerp(p, dt);
 
         Room* room = level_get_room_by_index(&level, (int)p->phys.curr_room);
         if(!room) return;
@@ -1474,7 +1467,6 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
             return;
 #endif
     }
-
 
     float prior_x = p->phys.pos.x;
     float prior_y = p->phys.pos.y;
@@ -2868,10 +2860,12 @@ void player_handle_net_inputs(Player* p, double dt)
     {
         // printf("enter state: %d\n", p->actions[PLAYER_ACTION_ACTIVATE].state);
         // printf("add player input: %d\n", player_ignore_input);
-        WorldState s = {
-            .players[0].pos = p->phys.pos
-        };
-        net_client_add_player_input(&p->input, &s);
+
+        net_client_add_player_input(&p->input);
+
+        WorldState s = {.players[0].pos = p->phys.pos};
+        net_client_record_player_state(&p->input, &s);
+
     }
 
     if(player_ignore_input > 0)

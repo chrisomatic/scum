@@ -1532,7 +1532,7 @@ bool server_process_command(char* argv[20], int argc, int client_id)
 // @CLIENT
 // =========
 
-bool net_client_add_player_input(NetPlayerInput* input, WorldState* state)
+bool net_client_add_player_input(NetPlayerInput* input)
 {
     if(client.input_count >= INPUT_QUEUE_MAX)
     {
@@ -1542,6 +1542,13 @@ bool net_client_add_player_input(NetPlayerInput* input, WorldState* state)
 
     memcpy(&client.net_player_inputs[client.input_count], input, sizeof(NetPlayerInput));
 
+    client.input_count++;
+
+    return true;
+}
+
+bool net_client_record_player_state(NetPlayerInput* input, WorldState* state)
+{
     if(state)
     {
         ClientMove m = {0};
@@ -1554,8 +1561,6 @@ bool net_client_add_player_input(NetPlayerInput* input, WorldState* state)
 
         circbuf_add(&client.client_moves,&m);
     }
-
-    client.input_count++;
 
     return true;
 }
@@ -2793,28 +2798,13 @@ static void unpack_players(Packet* pkt, int* offset)
         p->server_state_target.pos.y = 0.0;
         p->server_state_target.pos.z = 0.0;
 
-#if 0
-        // @DEBUG
-        printf("DEBUG!!!\n");
-        printf("    Packet ACK: %d, Server pos: %f %f %f\n", pkt->hdr.ack, pos.x, pos.y, pos.z);
-
-        for(int i = 0; i < client.client_moves.count; ++i)
-        {
-            ClientMove* move = (ClientMove*)circbuf_get_item(&client.client_moves, i);
-            Vector3f* move_pos = &move->state.players[0].pos;
-
-            printf("    %d: Move ID: %d, Client pos: %f %f %f\n", i, move->id, move_pos->x, move_pos->y, move_pos->z);
-        }
-
-        printf("\n\n");
-#endif
 
         for(int i = client.client_moves.count - 1; i >= 0; --i)
         {
             ClientMove* move = (ClientMove*)circbuf_get_item(&client.client_moves, i);
 
             //if(move->time > pkt->hdr.time && i > 0)
-            if(move->id == pkt->hdr.ack)
+            if(move->id <= pkt->hdr.ack)
             {
                 move = (ClientMove*)circbuf_get_item(&client.client_moves, i);
 
@@ -2824,12 +2814,29 @@ static void unpack_players(Packet* pkt, int* offset)
                 float delta_y = move_pos->y - pos.y;
                 float delta_z = move_pos->z - pos.z;
 
-                printf("Found Client Move for ID %d: %f %f %f =?= %f %f %f (delta: %f %f %f)\n", move->id, move_pos->x, move_pos->y, move_pos->z, pos.x, pos.y, pos.z, delta_x, delta_y, delta_z);
+                //printf("Found Client Move for ID %d: %f %f %f =?= %f %f %f (delta: %f %f %f)\n", move->id, move_pos->x, move_pos->y, move_pos->z, pos.x, pos.y, pos.z, delta_x, delta_y, delta_z);
 
 #if 1
                 if(ABS(delta_x) > 1.0 || ABS(delta_y) > 1.0 || ABS(delta_z) > 1.0)
                 {
-                    printf("Simulated Client Pos correction: %f %f %f -> %f %f %f\n", move_pos->x, move_pos->y, move_pos->z, pos.x, pos.y, pos.z);
+                    printf("Simulated Client Pos correction: %f %f %f -> %f %f %f (%f %f %f)\n", move_pos->x, move_pos->y, move_pos->z, pos.x, pos.y, pos.z, delta_x, delta_y, delta_z);
+
+#if 0
+        // @DEBUG
+        printf("DEBUG!!!\n");
+        printf("    Packet ACK: %d, Server pos: %f %f %f\n", pkt->hdr.ack, pos.x, pos.y, pos.z);
+
+        for(int j = 0; j < client.client_moves.count; ++j)
+        {
+            ClientMove* m = (ClientMove*)circbuf_get_item(&client.client_moves, j);
+            Vector3f* mp = &m->state.players[0].pos;
+
+            printf("    %d: Move ID: %d, Client pos: %f %f %f\n", j, m->id, mp->x, mp->y, mp->z);
+        }
+
+        printf("\n\n");
+#endif
+                    //circbuf_print(&client.client_moves);
 
                     move_pos->x = pos.x;
                     move_pos->y = pos.y;
