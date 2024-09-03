@@ -212,7 +212,7 @@ static bool item_func_shrine(Item* it, Player* p)
     uint32_t message_color = 0x00CC00CC;
     float message_scale = 1.0;
 
-    const char* message = ""
+    const char* message = "";
 
     switch(r)
     {
@@ -237,7 +237,7 @@ static bool item_func_shrine(Item* it, Player* p)
         }   break;
         case 3:
         {
-            message = "Phantom"
+            message = "Phantom";
             creature_add(level.rooms_ptr[croom], CREATURE_TYPE_PHANTOM, NULL, NULL);
         }   break;
         case 4:
@@ -264,8 +264,8 @@ static bool item_func_shrine(Item* it, Player* p)
         } break;
     }
 
-    ui_message_set_title(2.0, message_color, message_scale, message);
-    server_send_message(TO_ALL, FROM_SERVER, message);
+    ui_message_set_title(2.0, message_color, message_scale, (char*)message);
+    server_send_message(TO_ALL, FROM_SERVER, (char*)message);
     return true;
 }
 
