@@ -2144,13 +2144,15 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
         uint8_t door_sprite = room->doors_locked ? SPRITE_TILE_DOOR_CLOSED : SPRITE_TILE_DOOR;
 
         Room* aroom = level_get_room(&level, c.x+o.x, c.y+o.y);
-
-        if(aroom->type == ROOM_TYPE_BOSS)
-            door_sprite = room->doors_locked ? SPRITE_TILE_DOOR_BOSS_CLOSED : SPRITE_TILE_DOOR_BOSS;
-        else if(aroom->type == ROOM_TYPE_TREASURE)
-            door_sprite = room->doors_locked ? SPRITE_TILE_DOOR_TREASURE_CLOSED : SPRITE_TILE_DOOR_TREASURE;
-        else if(aroom->type == ROOM_TYPE_SHRINE)
-            door_sprite = room->doors_locked ? SPRITE_TILE_DOOR_SHRINE_CLOSED : SPRITE_TILE_DOOR_SHRINE;
+        if(aroom != NULL)
+        {
+            if(aroom->type == ROOM_TYPE_BOSS)
+                door_sprite = room->doors_locked ? SPRITE_TILE_DOOR_BOSS_CLOSED : SPRITE_TILE_DOOR_BOSS;
+            else if(aroom->type == ROOM_TYPE_TREASURE)
+                door_sprite = room->doors_locked ? SPRITE_TILE_DOOR_TREASURE_CLOSED : SPRITE_TILE_DOOR_TREASURE;
+            else if(aroom->type == ROOM_TYPE_SHRINE)
+                door_sprite = room->doors_locked ? SPRITE_TILE_DOOR_SHRINE_CLOSED : SPRITE_TILE_DOOR_SHRINE;
+        }
 
         float _x = centerx + halfw*o.x;
         float _y = centery + halfh*o.y;
@@ -2163,7 +2165,7 @@ void level_draw_room(Room* room, RoomFileData* room_data, float xoffset, float y
     RoomFileData* rdata;
     if(room_data != NULL)
         rdata = room_data;
-    else    
+    else
         rdata = &room_list[room->layout];
 
     // draw room
