@@ -2388,7 +2388,11 @@ static void creature_update_infected(Creature* c, float dt)
         }
         else
         {
-            ai_path_find_to_target_tile(c);
+            if(!ai_path_find_to_target_tile(c))
+            {
+                // move straight to target
+                ai_move_imm_to_target(c,dt);
+            }
         }
     }
 }

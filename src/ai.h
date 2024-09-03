@@ -320,7 +320,6 @@ bool ai_path_find_to_target_tile(Creature* c)
 
         if(!traversable)
         {
-            printf("%u not traversable\n", c->id);
             return false;
         }
 
