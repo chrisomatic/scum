@@ -1450,10 +1450,10 @@ void handle_room_completion(Room* room)
                 Vector2i start = {.x = ROOM_TILE_SIZE_X/2, .y = ROOM_TILE_SIZE_Y/2};
                 level_get_safe_floor_tile(room, start, NULL, &pos);
 
-                if(rand() % 2 == 0) 
+                if(rand() % 2 == 0)
                 {
                     // reward players with coins
-                    int num_coins = rand() % 3 + 1;
+                    int num_coins = rand() % 4 + 1;
 
                     for(int c = 0; c < num_coins; ++c)
                     {
@@ -1476,7 +1476,7 @@ void handle_room_completion(Room* room)
                 if(num_players > 0)
                     avg_player_luck /= num_players;
 
-                float chance_for_heart = 0.1 * avg_player_luck;
+                float chance_for_heart = MIN(0.15 * avg_player_luck, 0.8);
 
                 if(RAND_FLOAT(0.0,1.0) < chance_for_heart)
                 {

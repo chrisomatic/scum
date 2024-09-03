@@ -56,6 +56,11 @@ Phantom
 Rock Monster
 Rock
 Uniball
+Slugzilla
+Ghost
+Boomer
+Wall Shooter
+Spider Queen
 
 ; Creatures
 
@@ -95,21 +100,29 @@ Copper Coin
 Silver Coin
 Gold Coin
 ???
+???
 Chest
 Gun Chest
 Shrine
 Podium
+Portal
 Gun
 
 ; Items
 25,1,1
+32,12,1
 25,13,1
-39,5,4
-39,7,4
-39,9,4
+41,5,4
+41,7,4
+41,9,4
+41,6,5
+41,8,5
 25,1,7
 25,13,7
 
 ; Doors
 1,1,1,1
+
+; Commentary
+0
 

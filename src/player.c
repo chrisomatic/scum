@@ -1689,7 +1689,7 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 
             Rect pit_rect = level_get_tile_rect(_curr_tile_x, _curr_tile_y);
 
-            float shrink_fac = 0.7;
+            float shrink_fac = 0.6;
             float adj_fac = (1.0 - shrink_fac) / 2.0;
 
             tile_pit_rect = pit_rect;
