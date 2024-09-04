@@ -10,6 +10,8 @@ glist* lighting_list = NULL;
 uint32_t ambient_light_default = 0x00404040;
 uint32_t ambient_light = 0x00404040;
 
+float attenuation[3] = {0.90, 0.004, 0.0001};
+
 void lighting_init()
 {
     lighting_list = list_create((void*)point_lights,MAX_POINT_LIGHTS,sizeof(PointLight), false);
@@ -45,9 +47,9 @@ int lighting_point_light_add(float x, float y, float r, float g, float b, float 
     pl->lifetime_max = lifetime;
     pl->lifetime = 0.0;
 
-    pl->attenuation.x = 0.85;
-    pl->attenuation.y = 0.01 / radius;
-    pl->attenuation.z = 0.0001 / radius;
+    pl->attenuation.x = attenuation[0];
+    pl->attenuation.y = attenuation[1] / radius;
+    pl->attenuation.z = attenuation[2] / radius;
 
     list_add(lighting_list,pl);
 

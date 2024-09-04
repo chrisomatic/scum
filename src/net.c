@@ -776,17 +776,13 @@ static void server_send(PacketType type, ClientInfo* cli)
     }
 }
 
-#define DBG() if(dbg) printf("%s(): %d\n", __func__, __LINE__)
-
 static void server_simulate()
 {
-    static bool dbg = false;
     if(paused) return;
 
     if(level_generate_triggered)
     {
         game_generate_level();
-        dbg = true;
         return;
     }
 
@@ -804,7 +800,6 @@ static void server_simulate()
 
         if(cli->input_count == 0)
         {
-DBG();
             player_update(p,dt, false, 0);
         }
         else
@@ -818,7 +813,6 @@ DBG();
                     p->actions[j].state = key_state;
                 }
 
-DBG();
                 player_update(p,cli->net_player_inputs[i].delta_t, false, 0);
             }
 
@@ -826,26 +820,15 @@ DBG();
         }
     }
 
-DBG();
     level_update(dt);
-DBG();
     projectile_update_all(dt);
-DBG();
     creature_update_all(dt);
-DBG();
     item_update_all(dt);
-DBG();
     explosion_update_all(dt);
-DBG();
     decal_update_all(dt);
 
-DBG();
     entity_build_all();
-DBG();
     entity_update_all(dt);
-DBG();
-
-    dbg = false;
 }
 
 int net_server_start()

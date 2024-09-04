@@ -17,6 +17,8 @@ typedef struct
 extern PointLight point_lights[MAX_POINT_LIGHTS];
 extern glist* lighting_list;
 
+extern float attenuation[3];
+
 extern uint32_t ambient_light;
 extern uint32_t ambient_light_default;
 

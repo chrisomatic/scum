@@ -150,6 +150,10 @@ void editor_draw()
 
                 imgui_color_picker("Ambient Light", &ambient_light);
 
+                imgui_slider_float("Attenuation 0", 0.0, 2.0, &attenuation[0]);
+                imgui_slider_float("Attenuation 1", 0.00, 0.05, &attenuation[1]);
+                imgui_slider_float("Attenuation 2", 0.00001, 0.001, &attenuation[2]);
+
                 static char* dungeon_images[] = {"1", "2", "3", "4", "5"};
                 static int dungeon_set_select = 0;
                 imgui_button_select(IM_ARRAYSIZE(dungeon_images), dungeon_images, "Dungeon Set", &dungeon_set_select);

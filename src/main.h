@@ -20,7 +20,6 @@
 
 #define TESTING 0
 #define AUDIO_ENABLE 0
-#define DUMB_CLIENT 1
 
 #if 1
 #define VIEW_WIDTH   1200
