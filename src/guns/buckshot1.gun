@@ -1,11 +1,11 @@
 based_on: null
 name: buckshot1
 desc: Get bucked
-cost: 5
+cost: 7
 damage_min: 1.00
 damage_max: 1.00
 num: 5
-speed: 215.00
+speed: 247.34
 scale1: 0.74
 scale2: 0.55
 lifetime: 0.30
@@ -15,7 +15,7 @@ burst_rate: 0.19
 critical_hit_chance: 0.00
 knockback_factor: 0.00
 spread_type: 0
-spread: 71.34
+spread: 65.14
 gun_sprite_index: 1
 sprite_index: 12
 spin_factor: 0.00

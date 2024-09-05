@@ -1,7 +1,7 @@
 based_on: null
 name: cluster_homing_op
 desc: todo
-cost: 50 
+cost: 40
 damage_min: 1.00
 damage_max: 1.00
 num: 1
@@ -13,7 +13,7 @@ cooldown: 0.22
 burst_count: 0
 burst_rate: 0.00
 critical_hit_chance: 0.10
-knockback_factor: 0.18
+knockback_factor: 0.00
 spread_type: 1
 spread: 9.08
 gun_sprite_index: 2
@@ -30,6 +30,7 @@ ghost_chance: 0.00
 homing_chance: 0.97
 bounce_chance: 0.41
 penetration_chance: 0.00
+stun_chance: 0.00
 explosion_chance: 0.61
 explosion_radius: 15.00
 explosion_rate: 100.00

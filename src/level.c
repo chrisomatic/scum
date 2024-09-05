@@ -12,7 +12,6 @@
 #include "player.h"
 #include "room_editor.h"
 
-#define SMALL_LEVELS    1
 #define MAX_STARS 256
 
 int dungeon_image = -1;
@@ -191,78 +190,39 @@ Level level_generate(unsigned int seed, int rank)
 
     LevelPath bpath = {0};
     Room* broom = NULL;
-#if SMALL_LEVELS
     broom = place_room_and_path(&glevel, NULL, ROOM_TYPE_BOSS, sroom, 2, 3, &bpath, false);
-#else
-    broom = place_room_and_path(&glevel, NULL, ROOM_TYPE_BOSS, sroom, 2, 4, &bpath, false);
-#endif
     set_doors_from_path(&glevel, &bpath);
 
     LevelPath tpath = {0};
     Room* troom = NULL;
-#if 1
-
-#if SMALL_LEVELS
-    // if(lrand(&rg_level) % 100 <= 50)
-    {
-        troom = place_room_and_path(&glevel, NULL, ROOM_TYPE_TREASURE, sroom, 2, 3, &tpath, false);
-    }
-#else
-    troom = place_room_and_path(&glevel, NULL, ROOM_TYPE_TREASURE, sroom, 2, 4, &tpath, false);
-#endif
-
+    troom = place_room_and_path(&glevel, NULL, ROOM_TYPE_TREASURE, sroom, 2, 3, &tpath, false);
     set_doors_from_path(&glevel, &tpath);
 
-#else
-
-    for(;;)
-    {
-        Vector2i pos = {.x=broom->grid.x, .y=broom->grid.y};
-        pos.x += (lrand() % 2 == 0 ? -1 : 1) * (lrand()%1+1);
-        pos.y += (lrand() % 2 == 0 ? -1 : 1) * (lrand()%1+1);
-        troom = place_room_and_path(&glevel, &pos, ROOM_TYPE_TREASURE, sroom, 2, 4, &tpath, false);
-        if(troom) break;
-    }
-    set_doors_from_path(&glevel, &tpath);
-
-#endif
 
     LevelPath lpath = {0};
     Room* lroom = NULL;
-#if SMALL_LEVELS
-    lroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_SHOP, sroom, 1, 2, &lpath, false);
-#else
-    lroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_SHOP, sroom, 1, 4, &lpath, false);
-#endif
+    lroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_SHOP, sroom, 2, 2, &lpath, false);
     set_doors_from_path(&glevel, &lpath);
     print_room(&glevel, lroom);
 
-#if SMALL_LEVELS
-    if(lrand(&rg_level) % 100 <= 50)
-#else
-    if(lrand(&rg_level) % 100 <= 75)
-#endif
+    // if(lrand(&rg_level) % 100 <= 75)
     {
         LevelPath shpath = {0};
         Room* shroom = NULL;
-#if SMALL_LEVELS
-        shroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_SHRINE, sroom, 2, 2, &shpath, false);
-#else
         shroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_SHRINE, sroom, 2, 4, &shpath, false);
-#endif
         if(shroom) set_doors_from_path(&glevel, &shpath);
     }
 
+    // extra room
     if(lrand(&rg_level) % 100 <= 5)
     {
         LevelPath epath = {0};
         Room* eroom = NULL;
-        eroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_MONSTER, sroom, 5, 10, &epath, true);
+        eroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_MONSTER, sroom, 3, 10, &epath, true);
         set_doors_from_path(&glevel, &epath);
     }
 
-// #if !SMALL_LEVELS
-    for(;;)
+    for(int i = 0; i < 10; ++i)
     {
         int room_count = get_room_count(&glevel);
         if(room_count >= 7) break;
@@ -272,7 +232,6 @@ Level level_generate(unsigned int seed, int rank)
         eroom = place_room_and_path(&glevel, NULL, ROOM_TYPE_MONSTER, sroom, 1, 3, &epath, false);
         set_doors_from_path(&glevel, &epath);
     }
-// #endif
 
     // add some doors between surrounding rooms
     for(int y = 0; y < MAX_ROOMS_GRID_Y; ++y)
@@ -801,7 +760,7 @@ static Room* place_room_and_path(Level* level, Vector2i* pos, RoomType type, Roo
     }
     else
     {
-        int path_max_dist = MAX(asd.pathlen * 1.4, asd.pathlen+3);
+        int path_max_dist = MAX(asd.pathlen * 1.5, asd.pathlen+5);
         bool ret = generate_room_path(level, start, room, &gpath, path_max_dist, 5);
         if(!ret)
         {

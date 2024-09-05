@@ -1,7 +1,7 @@
 based_on: null
 name: repeater1
 desc: Rapid succession accurate shooter
-cost: 3
+cost: 5
 damage_min: 1.00
 damage_max: 1.00
 num: 1
@@ -16,6 +16,7 @@ critical_hit_chance: 0.00
 knockback_factor: 0.00
 spread_type: 0
 spread: 0.00
+gun_sprite_index: 0
 sprite_index: 6
 spin_factor: 0.00
 color1: 50A0FF
@@ -29,6 +30,7 @@ ghost_chance: 0.00
 homing_chance: 0.00
 bounce_chance: 0.00
 penetration_chance: 0.00
+stun_chance: 0.00
 explosion_chance: 0.00
 explosion_radius: 15.00
 explosion_rate: 100.00

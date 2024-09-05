@@ -87,6 +87,16 @@ static bool item_func_chest(Item* it, Player* p)
 #endif
     }
 
+    if(rand() % 4 == 0) //TODO: probability
+    {
+        int num_coins = rand() % 3 + 1;
+        for(int c = 0; c < num_coins; ++c)
+        {
+            item_add(item_get_random_coin(), x, y, croom);
+        }
+    }
+
+
     return true;
 }
 

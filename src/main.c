@@ -1792,20 +1792,19 @@ void draw_map(DrawLevelParams* params)
         mouse_map_room.y = -1;
     }
 
-
-
     bool heart_rooms[MAX_ROOMS_GRID] = {0};
     for(int i = 0; i < item_list->count; ++i)
     {
         Item* it = &items[i];
+
         if(item_is_heart(it->type))
         {
+            if(level.rooms_ptr[it->phys.curr_room] == NULL) continue;
             if(level.rooms_ptr[it->phys.curr_room]->discovered || dbg)
             {
 
                 if(heart_rooms[it->phys.curr_room]) continue;
                 heart_rooms[it->phys.curr_room] = true;
-
 
                 float px = it->phys.collision_rect.x - rect_tlx(&room_area);
                 float py = it->phys.collision_rect.y - rect_tly(&room_area);
@@ -2359,7 +2358,6 @@ void draw()
                 gfx_draw_rect(&moving_tile, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 0.5, true, IN_WORLD);
             }
 #endif
-
             decal_draw_all();
             entity_draw_all();
             explosion_draw_all();

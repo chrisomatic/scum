@@ -3146,9 +3146,8 @@ static void pack_items(Packet* pkt, ClientInfo* cli)
     for(int i = 0; i < num_items; ++i)
     {
         Item* it = &items[i];
-        if(!is_any_player_room(it->phys.curr_room))
-            continue;
-        num_visible_items++;
+        if(is_any_player_room(it->phys.curr_room) || item_is_heart(it->type))
+            num_visible_items++;
     }
 
     BPW(&server.bp, 6,  (uint32_t)num_visible_items);
@@ -3157,7 +3156,7 @@ static void pack_items(Packet* pkt, ClientInfo* cli)
     {
         Item* it = &items[i];
 
-        if(!is_any_player_room(it->phys.curr_room))
+        if(!is_any_player_room(it->phys.curr_room) && !item_is_heart(it->type))
             continue;
 
         BPW(&server.bp, 16, (uint32_t)it->id);

@@ -751,6 +751,10 @@ void editor_draw()
                     imgui_text_sized(16.0,"Appearance");
                     imgui_horizontal_line(1);
 
+                    int cost = gun.cost;
+                    imgui_number_box("Cost", 0,40, &cost);
+                    gun.cost = cost;
+
                     imgui_number_box("Gun Sprite Index", 0,3, &gun.gun_sprite_index);
                     imgui_number_box("Sprite Index", 0,12, &gun.sprite_index);
 
