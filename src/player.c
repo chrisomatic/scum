@@ -1364,6 +1364,8 @@ static void player_handle_shooting(Player* p, float dt)
     }
 }
 
+long frame_no = 0;
+
 void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 {
     if(!p->active) return;
@@ -1450,6 +1452,11 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
             p->light_index = lighting_point_light_add(p->phys.pos.x, p->phys.pos.y, 1.0, 1.0, 1.0, p->light_radius,0.0);
         }
 #endif
+        uint16_t pkt_id = net_client_get_latest_local_packet_id() - 1;
+        //LOGN("[frame: %d] [packet id: %d] pos: %f, %f, %f", frame_no,pkt_id,p->phys.pos.x,p->phys.pos.y, p->phys.pos.z);
+        frame_no++;
+        if(frame_no > 255)
+            frame_no = 0;
 
         player_lerp(p, dt);
 
@@ -2862,11 +2869,10 @@ void player_handle_net_inputs(Player* p, double dt)
         // printf("add player input: %d\n", player_ignore_input);
 
         net_client_add_player_input(&p->input);
-
-        WorldState s = {.players[0].pos = p->phys.pos};
-        net_client_record_player_state(&p->input, &s);
-
     }
+
+    WorldState s = {.players[0].pos = p->phys.pos};
+    net_client_record_player_state(&p->input, &s);
 
     if(player_ignore_input > 0)
     {

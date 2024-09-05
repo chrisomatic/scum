@@ -76,7 +76,7 @@ PACK(struct PacketHeader
     uint16_t id;
     uint16_t ack;
     uint32_t ack_bitfield;
-    //double  time;
+    uint8_t frame_no;
     uint8_t type;
     uint8_t pad[3]; // pad to be 4-byte aligned
 });

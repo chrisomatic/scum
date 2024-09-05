@@ -53,6 +53,7 @@
 #define TIMESTAMP_HISTORY_MAX 32
 #define MAX_NET_EVENTS 255
 #define INPUTS_PER_PACKET 1
+#define MAX_CLIENT_MOVES 256
 
 typedef struct
 {
@@ -99,6 +100,7 @@ struct
     double start_time;
     int event_count;
     int num_clients;
+    uint8_t frame_no;
 } server = {0};
 
 struct
@@ -117,7 +119,6 @@ struct
     double time_of_latest_sent_packet;
     double time_of_last_ping;
     double time_of_last_received_ping;
-    double server_connect_time;
 
     glist* timestamp_history_list;
     PacketTimestamp timestamp_history[TIMESTAMP_HISTORY_MAX];
@@ -126,6 +127,7 @@ struct
     int state_packet_count;
 
     int input_count;
+    uint8_t frame_no;
 
     double rtt;
 
@@ -644,6 +646,7 @@ static void server_send(PacketType type, ClientInfo* cli)
         .hdr.game_id = GAME_ID,
         .hdr.id = server.info.local_latest_packet_id,
         .hdr.ack = cli->remote_latest_packet_id,
+        .hdr.frame_no = server.frame_no,
         .hdr.type = type
     };
 
@@ -655,7 +658,7 @@ static void server_send(PacketType type, ClientInfo* cli)
         {
             pack_u32(&pkt,level_seed);
             pack_u8(&pkt,(uint8_t)level_rank);
-            pack_double(&pkt,timer_get_time() - server.start_time); // client connect time
+            pack_u8(&pkt,server.frame_no); // client connect time
             net_send(&server.info,&cli->address,&pkt, 1);
         } break;
 
@@ -776,7 +779,7 @@ static void server_send(PacketType type, ClientInfo* cli)
     }
 }
 
-static void server_simulate()
+static void server_simulate(double dt)
 {
     if(paused) return;
 
@@ -786,7 +789,7 @@ static void server_simulate()
         return;
     }
 
-    float dt = 1.0/TARGET_FPS;
+    int player_count = 0;
 
     for(int i = 0; i < MAX_CLIENTS; ++i)
     {
@@ -794,6 +797,7 @@ static void server_simulate()
         if(cli->state != CONNECTED)
             continue;
 
+        player_count++;
         Player* p = &players[cli->client_id];
 
         //printf("Applying inputs to player. input count: %d\n", cli->input_count);
@@ -818,6 +822,8 @@ static void server_simulate()
 
             cli->input_count = 0;
         }
+
+        //LOGN("[frame: %d] [packet id: %d] [client %d] pos: %f, %f, %f", frame_no,cli->remote_latest_packet_id,i, p->phys.pos.x,p->phys.pos.y, p->phys.pos.z);
     }
 
     level_update(dt);
@@ -829,6 +835,13 @@ static void server_simulate()
 
     entity_build_all();
     entity_update_all(dt);
+
+    if(player_count > 0)
+    {
+        server.frame_no++;
+        if(server.frame_no > 255)
+            server.frame_no = 0;
+    }
 }
 
 int net_server_start()
@@ -1166,7 +1179,7 @@ int net_server_start()
         while(accum_g >= _dt)
         {
             g_timer += _dt;
-            server_simulate();
+            server_simulate(_dt);
             accum_g -= _dt;
         }
 
@@ -1536,7 +1549,7 @@ bool net_client_record_player_state(NetPlayerInput* input, WorldState* state)
     {
         ClientMove m = {0};
 
-        m.id            = client.info.local_latest_packet_id;
+        m.id            = client.info.local_latest_packet_id-1;
         m.input.delta_t = input->delta_t;
         m.input.keys    = input->keys;
 
@@ -1580,11 +1593,6 @@ void net_client_get_server_ip_str(char* ip_str)
 
     sprintf(ip_str,"%u.%u.%u.%u:%u",server.address.a,server.address.b, server.address.c, server.address.d, server.address.port);
     return;
-}
-
-double net_client_get_server_time()
-{
-    return (timer_get_time() - client.server_connect_time);
 }
 
 bool net_client_set_server_ip(char* address)
@@ -1632,7 +1640,7 @@ bool net_client_init()
 
     client.id = -1;
     client.info.socket = sock;
-    circbuf_create(&client.client_moves, 32, sizeof(ClientMove));
+    circbuf_create(&client.client_moves, MAX_CLIENT_MOVES, sizeof(ClientMove));
 
     client.timestamp_history_list = list_create(client.timestamp_history, TIMESTAMP_HISTORY_MAX,sizeof(PacketTimestamp), true);
 
@@ -1967,9 +1975,7 @@ void net_client_update()
             {
                 int seed = unpack_u32(&srvpkt,&offset);
                 uint8_t rank = unpack_u8(&srvpkt,&offset);
-                client.server_connect_time = unpack_double(&srvpkt,&offset);
-
-                printf("Server start time: %.3f\n", client.server_connect_time);
+                client.frame_no = unpack_u8(&srvpkt,&offset);
 
                 trigger_generate_level(seed,rank,0, __LINE__);
 
@@ -2781,7 +2787,6 @@ static void unpack_players(Packet* pkt, int* offset)
         p->server_state_target.pos.y = 0.0;
         p->server_state_target.pos.z = 0.0;
 
-
         for(int i = client.client_moves.count - 1; i >= 0; --i)
         {
             ClientMove* move = (ClientMove*)circbuf_get_item(&client.client_moves, i);
@@ -2797,9 +2802,10 @@ static void unpack_players(Packet* pkt, int* offset)
                 float delta_y = move_pos->y - pos.y;
                 float delta_z = move_pos->z - pos.z;
 
+                //printf("RECEIVED STATE. Frame No: %d, Packet ID: %d, Position: %f %f %f\n", pkt->hdr.frame_no, pkt->hdr.ack, pos.x, pos.y, pos.z);;
                 //printf("Found Client Move for ID %d: %f %f %f =?= %f %f %f (delta: %f %f %f)\n", move->id, move_pos->x, move_pos->y, move_pos->z, pos.x, pos.y, pos.z, delta_x, delta_y, delta_z);
 
-#if 1
+#if 0
                 if(ABS(delta_x) > 1.0 || ABS(delta_y) > 1.0 || ABS(delta_z) > 1.0)
                 {
                     printf("Simulated Client Pos correction: %f %f %f -> %f %f %f (%f %f %f)\n", move_pos->x, move_pos->y, move_pos->z, pos.x, pos.y, pos.z, delta_x, delta_y, delta_z);
