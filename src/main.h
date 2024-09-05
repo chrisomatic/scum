@@ -18,8 +18,8 @@
 
 #include "glist.h"
 
-#define TESTING 0
-#define AUDIO_ENABLE 0
+#define TESTING       0
+#define AUDIO_ENABLE  0
 
 #if 1
 #define VIEW_WIDTH   1200

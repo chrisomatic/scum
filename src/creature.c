@@ -1750,7 +1750,7 @@ static void creature_update_clinger(Creature* c, float dt)
         // firing state
 
         if(c->ai_counter == 0.0)
-            c->ai_counter_max = 0.3; // time between shots
+            c->ai_counter_max = 0.4; // time between shots
 
         c->ai_counter += dt;
         if(c->ai_counter >= c->ai_counter_max)
@@ -2369,11 +2369,20 @@ static void creature_update_shambler(Creature* c, float dt)
 
 static void creature_update_infected(Creature* c, float dt)
 {
+
+    bool rando = false;
+
     // target closest player
     Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
 
     if(p)
     {
+        if(c->target_tile.x == p->phys.curr_tile.x && c->target_tile.y == p->phys.curr_tile.y)
+        {
+            c->action_counter += dt;
+            // printf("%u %.2f\n", c->id, c->action_counter);
+        }
+
         c->target_tile.x = p->phys.curr_tile.x;
         c->target_tile.y = p->phys.curr_tile.y;
 
@@ -2381,20 +2390,91 @@ static void creature_update_infected(Creature* c, float dt)
         if(ai_on_target_tile(c))
         {
             // on player tile move to player
-            Vector2f v = {p->phys.pos.x - c->phys.pos.x, p->phys.pos.y - c->phys.pos.y};
+            Vector2f v = {p->phys.collision_rect.x - c->phys.collision_rect.x, p->phys.collision_rect.y - c->phys.collision_rect.y};
             normalize(&v);
             c->phys.vel.x = c->phys.speed*v.x;
             c->phys.vel.y = c->phys.speed*v.y;
         }
         else
         {
-            if(!ai_path_find_to_target_tile(c))
+            bool traversable = false;
+            ai_path_find_to_target_tile(c, &traversable);
+            if(!traversable)
             {
-                // move straight to target
-                ai_move_imm_to_target(c,dt);
+                ai_clear_target(c);
+                rando = true;
+                c->action_counter = 0.0;
             }
         }
     }
+    else
+        rando = true;
+
+    if(rando)
+    {
+        // copy to main target
+        c->target_tile.x = c->subtarget_tile.x;
+        c->target_tile.y = c->subtarget_tile.y;
+
+        if(ai_has_target(c))
+        {
+            // path find to tile
+            bool traversable = false;
+            bool ret = ai_path_find_to_target_tile(c, &traversable);
+            if(ret)
+            {
+                // reached the target tile
+                ai_clear_target(c);
+                ai_clear_subtarget(c);
+                c->ai_counter = 0.0;
+                c->ai_counter_max = RAND_FLOAT(1.0,4.0);
+                c->action_counter = 0.0;
+            }
+            else if(!traversable)
+            {
+                ai_clear_target(c);
+                ai_clear_subtarget(c);
+                c->action_counter = 0.0;
+                c->ai_counter_max = 0.5;
+            }
+            else
+            {
+                c->action_counter += dt;
+            }
+        }
+        else
+        {
+            c->ai_counter += dt;
+            if(c->ai_counter >= c->ai_counter_max)
+            {
+                // choose a random tile
+                ai_target_rand_tile(c);
+                c->subtarget_tile.x = c->target_tile.x;
+                c->subtarget_tile.y = c->target_tile.y;
+                c->action_counter = 0.0;
+            }
+
+        }
+
+    }
+
+    // printf("  %u %.2f\n", c->id, c->action_counter);
+    if(c->action_counter >= 7.0)
+    {
+        if(c->ai_state == 0)
+        {
+            // printf("moving randomly\n");
+            ai_random_walk(c);
+            c->ai_state = 1;
+        }
+
+        if(c->action_counter >= 7.5)
+        {
+            c->action_counter = 0.0;
+            c->ai_state = 0;
+        }
+    }
+
 }
 
 static void creature_update_gravity_crystal(Creature* c, float dt)
@@ -2456,7 +2536,7 @@ static void creature_update_peeper(Creature* c, float dt)
         if(ai_has_target(c))
         {
             // path find to tile
-            if(ai_path_find_to_target_tile(c))
+            if(ai_path_find_to_target_tile(c,NULL))
             {
                 ai_clear_target(c);
                 c->ai_state = 1;
@@ -2951,68 +3031,6 @@ static void creature_update_watcher(Creature* c, float dt)
 
 static void creature_update_golem(Creature* c, float dt)
 {
-    Vector2i target = {0};
-    Vector2f target_pos = {0};
-
-    // target closest creature
-    Creature* ct = creature_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
-    if(ct)
-    {
-        printf("found creature target\n");
-        target.x = c->phys.curr_tile.x;
-        target.y = c->phys.curr_tile.y;
-        target_pos.x = ct->phys.collision_rect.x;
-        target_pos.y = ct->phys.collision_rect.y;
-    }
-    else
-    {
-        Player* p = player_get_nearest(c->phys.curr_room, c->phys.pos.x, c->phys.pos.y);
-        if(!p) return;
-        target.x = p->phys.curr_tile.x;
-        target.y = p->phys.curr_tile.y;
-        target_pos.x = p->phys.collision_rect.x;
-        target_pos.y = p->phys.collision_rect.y;
-    }
-
-    Dir dir = get_dir_from_coords2(target.x, target.y, c->phys.curr_tile.x, c->phys.curr_tile.y);
-    if(dir == DIR_NONE)
-    {
-        float angle_deg = calc_angle_deg(target_pos.x, target_pos.y, c->phys.pos.x, c->phys.pos.y);
-        dir = angle_to_dir_cardinal(angle_deg);
-    }
-
-
-    Vector2i o = get_dir_offsets(dir);
-
-    //TODO
-    o.x *= 1;
-    o.y *= 1;
-
-
-    target.x += o.x;
-    target.y += o.y;
-
-    c->target_tile.x = target.x;
-    c->target_tile.y = target.y;
-
-    printf("%s  (%d, %d) -> (%d, %d)\n", get_dir_name(dir), c->phys.curr_tile.x, c->phys.curr_tile.y, c->target_tile.x, c->target_tile.y);
-
-    // Vector2f pos = level_get_pos_by_room_coords(target.x, target.y);
-
-    if(ai_on_target_tile(c))
-    {
-        printf("on target\n");
-        // // on player tile move to target
-        // Vector2f v = {pos.x - c->phys.pos.x, pos.y - c->phys.pos.y};
-        // normalize(&v);
-        // c->phys.vel.x = c->phys.speed*v.x;
-        // c->phys.vel.y = c->phys.speed*v.y;
-    }
-    else
-    {
-        printf("finding path\n");
-        ai_path_find_to_target_tile(c);
-    }
 
 }
 
@@ -3077,7 +3095,7 @@ static void creature_update_rock(Creature* c, float dt)
 
 static void creature_update_uniball(Creature* c, float dt)
 {
-    printf("creature rot deg: %f, vel: %f %f\n", c->phys.rotation_deg, c->phys.vel.x, c->phys.vel.y);
+    // printf("creature rot deg: %f, vel: %f %f\n", c->phys.rotation_deg, c->phys.vel.x, c->phys.vel.y);
 
     if(c->phys.rotation_deg == 0.0 && c->phys.vel.x == 0.0)
     {

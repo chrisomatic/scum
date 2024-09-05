@@ -1533,16 +1533,16 @@ void level_handle_room_collision(Room* room, Physics* phys, int entity_type, voi
         if(entity_type == ENTITY_TYPE_PROJECTILE && (wall->type == WALL_TYPE_PIT || wall->type == WALL_TYPE_INNER))
             continue;
 
-        if(entity_type == ENTITY_TYPE_CREATURE && (wall->type == WALL_TYPE_INNER))
+        if(entity_type == ENTITY_TYPE_CREATURE)
         {
             Creature* c = (Creature*)e->ptr;
-            if(c->type == CREATURE_TYPE_CLINGER)
-            {
+            if(wall->type == WALL_TYPE_INNER && c->type == CREATURE_TYPE_CLINGER)
                 continue;
-            }
+            if(wall->type == WALL_TYPE_PIT && c->phys.floating)
+                continue;
         }
 
-        if(entity_type == ENTITY_TYPE_PROJECTILE && wall->type == WALL_TYPE_BLOCK && phys->pos.z > 36.0)
+        if(entity_type == ENTITY_TYPE_PROJECTILE && wall->type == WALL_TYPE_BLOCK && phys->pos.z > 50.0)
             continue;
 
         if(entity_type == ENTITY_TYPE_PLAYER && wall->type == WALL_TYPE_PIT)

@@ -141,8 +141,26 @@ bool ai_move_to_tile(Creature* c, int x, int y)
 {
     Rect r = level_get_tile_rect(x, y);
 
-    Vector2f v = {r.x - c->phys.pos.x, r.y - c->phys.pos.y};
+    Vector2f v = {r.x - c->phys.collision_rect.x, r.y - c->phys.collision_rect.y};
 
+#if 0
+
+    if(ABS(v.x) < 1.0 && ABS(v.y) < 1.0)
+    {
+        ai_stop_imm(c);
+        return true;
+    }
+
+
+    Dir direction = get_dir_from_pos(c->phys.collision_rect.x, c->phys.collision_rect.y, r.x, r.y);
+    float range = c->phys.speed/300.0*5.0;
+    float speed = c->phys.speed;
+    if(ABS(v.x) <= range && ABS(v.y) <= range)
+        speed = MIN(80.0, c->phys.speed/4.0);
+    // c->curr_speed = speed;
+    ai_move_imm(c, direction, speed);
+
+#else
     if(ABS(v.x) < 3.0 && ABS(v.y) < 3.0)
     {
         // reached tile
@@ -156,7 +174,7 @@ bool ai_move_to_tile(Creature* c, int x, int y)
     // set velocity to move toward tile
     c->phys.vel.x = c->phys.speed*v.x;
     c->phys.vel.y = c->phys.speed*v.y;
-
+#endif
     return false;
 }
 
@@ -269,6 +287,12 @@ void ai_clear_target(Creature* c)
     c->target_tile.y = -1;
 }
 
+void ai_clear_subtarget(Creature* c)
+{
+    c->subtarget_tile.x = -1;
+    c->subtarget_tile.y = -1;
+}
+
 int ai_rand(int max)
 {
     return rand() % max;
@@ -307,7 +331,8 @@ bool ai_on_target_tile(Creature* c)
     return false;
 }
 
-bool ai_path_find_to_target_tile(Creature* c)
+// returns true if on the target
+bool ai_path_find_to_target_tile(Creature* c, bool* traversable)
 {
     if(!ai_on_target_tile(c))
     {
@@ -315,10 +340,11 @@ bool ai_path_find_to_target_tile(Creature* c)
         {
             astar_set_traversable_func(&level.asd, level_every_tile_traversable_func);
         }
-        bool traversable = astar_traverse(&level.asd, c->phys.curr_tile.x, c->phys.curr_tile.y, c->target_tile.x, c->target_tile.y);
+        bool _traversable = astar_traverse(&level.asd, c->phys.curr_tile.x, c->phys.curr_tile.y, c->target_tile.x, c->target_tile.y);
         astar_set_traversable_func(&level.asd, level_tile_traversable_func);//set back to default
+        if(traversable != NULL) *traversable = _traversable;
 
-        if(!traversable)
+        if(!_traversable)
         {
             return false;
         }
