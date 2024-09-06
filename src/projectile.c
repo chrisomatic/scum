@@ -608,17 +608,22 @@ void projectile_update_all(float dt)
 {
     // printf("projectile update\n");
 
+    if(role == ROLE_CLIENT)
+    {
+        for(int i = plist->count - 1; i >= 0; --i)
+        {
+            Projectile* proj = &projectiles[i];
+            projectile_lerp(proj, dt);
+            continue;
+        }
+        return;
+    }
+
     for(int i = plist->count - 1; i >= 0; --i)
     {
         Projectile* proj = &projectiles[i];
 
         Gun* proj_gun = &room_gun_list[proj->room_gun_index];
-
-        if(role == ROLE_CLIENT)
-        {
-            projectile_lerp(proj, dt);
-            continue;
-        }
 
         if(proj->phys.dead)
             continue;

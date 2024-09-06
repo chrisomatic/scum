@@ -21,6 +21,7 @@
 #include "effects.h"
 #include "projectile.h"
 #include "explosion.h"
+#include "lighting.h"
 #include "settings.h"
 #include "glist.h"
 #include "decal.h"
@@ -658,7 +659,7 @@ static void server_send(PacketType type, ClientInfo* cli)
         {
             pack_u32(&pkt,level_seed);
             pack_u8(&pkt,(uint8_t)level_rank);
-            pack_u8(&pkt,server.frame_no); // client connect time
+            pack_u8(&pkt,server.frame_no); // for client-side prediction
             net_send(&server.info,&cli->address,&pkt, 1);
         } break;
 
@@ -823,7 +824,7 @@ static void server_simulate(double dt)
             cli->input_count = 0;
         }
 
-        //LOGN("[frame: %d] [packet id: %d] [client %d] pos: %f, %f, %f", frame_no,cli->remote_latest_packet_id,i, p->phys.pos.x,p->phys.pos.y, p->phys.pos.z);
+        //LOGN("[frame: %d] [packet id: %d] [client %d] pos: %f, %f, %f", server.frame_no,cli->remote_latest_packet_id,i, p->phys.pos.x,p->phys.pos.y, p->phys.pos.z);
     }
 
     level_update(dt);
@@ -836,12 +837,10 @@ static void server_simulate(double dt)
     entity_build_all();
     entity_update_all(dt);
 
-    if(player_count > 0)
-    {
-        server.frame_no++;
-        if(server.frame_no > 255)
-            server.frame_no = 0;
-    }
+
+    server.frame_no++;
+    if(server.frame_no > 255)
+        server.frame_no = 0;
 }
 
 int net_server_start()
@@ -1551,7 +1550,7 @@ bool net_client_record_player_state(NetPlayerInput* input, WorldState* state)
     {
         ClientMove m = {0};
 
-        m.id            = client.info.local_latest_packet_id-1;
+        m.id            = client.frame_no;
         m.input.delta_t = input->delta_t;
         m.input.keys    = input->keys;
 
@@ -2122,7 +2121,6 @@ void net_client_update()
             net_client_disconnect();
         }
     }
-
 }
 
 void net_client_send_inputs()
@@ -2186,6 +2184,18 @@ void net_client_disconnect()
 void net_client_send_settings()
 {
     client_send(PACKET_TYPE_SETTINGS);
+}
+
+void net_client_increment_frame_no()
+{
+    client.frame_no++;
+    if(client.frame_no > 255)
+        client.frame_no = 0;
+}
+
+uint8_t net_client_get_frame_no()
+{
+    return client.frame_no;
 }
 
 bool net_client_received_init_packet()
@@ -2565,7 +2575,11 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             BPW(&server.bp, 10, (uint32_t)p->phys.pos.x);
             BPW(&server.bp, 10, (uint32_t)p->phys.pos.y);
             BPW(&server.bp, 6,  (uint32_t)p->phys.pos.z);
+#if DUMB_CLIENT
             BPW(&server.bp, 5,  (uint32_t)p->sprite_index+p->anim.curr_frame);
+#else
+            BPW(&server.bp, 5,  (uint32_t)p->sprite_index);
+#endif
             BPW(&server.bp, 7,  (uint32_t)p->phys.curr_room);
             BPW(&server.bp, 8,  (uint32_t)p->phys.hp);
             BPW(&server.bp, 8,  (uint32_t)p->phys.hp_max);
@@ -2755,6 +2769,9 @@ static void unpack_players(Packet* pkt, int* offset)
 
                 if(level_transition_state == 0 && !level_generate_triggered)
                 {
+                    Room* room = level_get_room_by_index(&level, curr_room);
+                    visible_room = room;
+                    generate_walls(&level, visible_room);
                     player_start_room_transition(p);
                 }
                 else
@@ -2784,87 +2801,106 @@ static void unpack_players(Packet* pkt, int* offset)
         p->server_state_target.pos.x = pos.x;
         p->server_state_target.pos.y = pos.y;
         p->server_state_target.pos.z = pos.z;
-
 #else
 
         p->server_state_target.pos.x = 0.0;
         p->server_state_target.pos.y = 0.0;
         p->server_state_target.pos.z = 0.0;
 
+        int found_index = -1;
+        
         for(int i = client.client_moves.count - 1; i >= 0; --i)
         {
             ClientMove* move = (ClientMove*)circbuf_get_item(&client.client_moves, i);
 
             //if(move->time > pkt->hdr.time && i > 0)
-            if(move->id <= pkt->hdr.ack)
+            if(move->id == pkt->hdr.frame_no)
             {
-                move = (ClientMove*)circbuf_get_item(&client.client_moves, i);
-
-                Vector3f* move_pos = &move->state.players[0].pos;
-
-                float delta_x = move_pos->x - pos.x;
-                float delta_y = move_pos->y - pos.y;
-                float delta_z = move_pos->z - pos.z;
-
-                //printf("RECEIVED STATE. Frame No: %d, Packet ID: %d, Position: %f %f %f\n", pkt->hdr.frame_no, pkt->hdr.ack, pos.x, pos.y, pos.z);;
-                //printf("Found Client Move for ID %d: %f %f %f =?= %f %f %f (delta: %f %f %f)\n", move->id, move_pos->x, move_pos->y, move_pos->z, pos.x, pos.y, pos.z, delta_x, delta_y, delta_z);
-
-#if 0
-                if(ABS(delta_x) > 1.0 || ABS(delta_y) > 1.0 || ABS(delta_z) > 1.0)
-                {
-                    printf("Simulated Client Pos correction: %f %f %f -> %f %f %f (%f %f %f)\n", move_pos->x, move_pos->y, move_pos->z, pos.x, pos.y, pos.z, delta_x, delta_y, delta_z);
-
-#if 0
-        // @DEBUG
-        printf("DEBUG!!!\n");
-        printf("    Packet ACK: %d, Server pos: %f %f %f\n", pkt->hdr.ack, pos.x, pos.y, pos.z);
-
-        for(int j = 0; j < client.client_moves.count; ++j)
-        {
-            ClientMove* m = (ClientMove*)circbuf_get_item(&client.client_moves, j);
-            Vector3f* mp = &m->state.players[0].pos;
-
-            printf("    %d: Move ID: %d, Client pos: %f %f %f\n", j, m->id, mp->x, mp->y, mp->z);
+                found_index = i;
+                break;
+            }
         }
 
-        printf("\n\n");
-#endif
-                    //circbuf_print(&client.client_moves);
+        if(found_index == -1)
+        {
+            //printf("Failed to find frame %u!\n", pkt->hdr.frame_no);
+            if(client.client_moves.count > 0)
+            {
+                //printf("Updating frame no...\n");
+                client.frame_no = pkt->hdr.frame_no;
+                found_index = client.client_moves.count-1;
+            }
+        }
 
-                    move_pos->x = pos.x;
-                    move_pos->y = pos.y;
-                    move_pos->z = pos.z;
+        if(found_index >= 0)
+        {
+            ClientMove* move = (ClientMove*)circbuf_get_item(&client.client_moves, found_index);
 
-                    if(i+1 >= client.client_moves.count)
+            Vector3f* move_pos = &move->state.players[0].pos;
+
+            float delta_x = move_pos->x - pos.x;
+            float delta_y = move_pos->y - pos.y;
+            float delta_z = move_pos->z - pos.z;
+
+            //printf("RECEIVED STATE. Frame No: %d, Position: %f %f %f\n", pkt->hdr.frame_no, pkt->hdr.ack, pos.x, pos.y, pos.z);;
+            //printf("Found Client Move for ID %d: %f %f %f =?= %f %f %f (delta: %f %f %f)\n", move->id, move_pos->x, move_pos->y, move_pos->z, pos.x, pos.y, pos.z, delta_x, delta_y, delta_z);
+
+            if(ABS(delta_x) > 1.0 || ABS(delta_y) > 1.0 || ABS(delta_z) > 1.0)
+            {
+                //printf("Simulated Client Pos correction: %f %f %f -> %f %f %f (%f %f %f)\n", move_pos->x, move_pos->y, move_pos->z, pos.x, pos.y, pos.z, delta_x, delta_y, delta_z);
+
+                // @DEBUG
+                // printf("DEBUG!!!\n");
+                // printf("    Packet ACK: %d, Server pos: %f %f %f\n", pkt->hdr.ack, pos.x, pos.y, pos.z);
+
+                // for(int j = 0; j < client.client_moves.count; ++j)
+                // {
+                //    ClientMove* m = (ClientMove*)circbuf_get_item(&client.client_moves, j);
+                //    Vector3f* mp = &m->state.players[0].pos;
+
+                //    printf("    %d: Move ID: %d, Client pos: %f %f %f\n", j, m->id, mp->x, mp->y, mp->z);
+                // }
+
+                // printf("\n\n");
+                //circbuf_print(&client.client_moves);
+
+                move_pos->x = pos.x;
+                move_pos->y = pos.y;
+                move_pos->z = pos.z;
+
+                //if(found_index+1 >= client.client_moves.count)
+                //{
+                    p->server_state_target.pos.x = pos.x;
+                    p->server_state_target.pos.y = pos.y;
+                    p->server_state_target.pos.z = pos.z;
+
+                    //p->phys.pos.x = pos.x;
+                    //p->phys.pos.y = pos.y;
+                    //p->phys.pos.z = pos.z;
+                //}
+#if 0
+
+                // Simulate forward
+                lighting_point_light_clear_all();
+                for(int j = i+1; j < client.client_moves.count; ++j)
+                {
+                    ClientMove* m2 = (ClientMove*)circbuf_get_item(&client.client_moves, j);
+                    player_update(p, m2->input.delta_t, true, m2->input.keys);
+
+                    // fix client move history
+                    m2->state.players[0].pos.x = p->phys.pos.x;
+                    m2->state.players[0].pos.y = p->phys.pos.y;
+                    m2->state.players[0].pos.z = p->phys.pos.z;
+
+                    if(j == client.client_moves.count -1)
                     {
                         p->phys.pos.x = pos.x;
                         p->phys.pos.y = pos.y;
                         p->phys.pos.z = pos.z;
                     }
 
-                    // Simulate forward
-                    for(int j = i+1; j < client.client_moves.count; ++j)
-                    {
-                        ClientMove* m2 = (ClientMove*)circbuf_get_item(&client.client_moves, j);
-                        player_update(p, m2->input.delta_t, true, m2->input.keys);
-
-                        // fix client move history
-                        m2->state.players[0].pos.x = p->phys.pos.x;
-                        m2->state.players[0].pos.y = p->phys.pos.y;
-                        m2->state.players[0].pos.z = p->phys.pos.z;
-
-                        if(j == client.client_moves.count -1)
-                        {
-                            p->phys.pos.x = pos.x;
-                            p->phys.pos.y = pos.y;
-                            p->phys.pos.z = pos.z;
-                        }
-
-                    }
                 }
 #endif
-
-                break;
             }
         }
 #endif

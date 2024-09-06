@@ -26,7 +26,7 @@
 #define CONN_RC_REJECTED      (-3)
 #define CONN_RC_NO_DATA       (-4)
 
-#define DUMB_CLIENT 1
+#define DUMB_CLIENT 0
 
 typedef enum
 {
@@ -275,7 +275,8 @@ void net_client_send_inputs();
 bool net_client_set_server_ip(char* address);
 void net_client_get_server_ip_str(char* ip_str);
 int net_client_data_waiting();
-double net_client_get_server_time();
+void net_client_increment_frame_no();
+uint8_t net_client_get_frame_no();
 double net_client_get_rtt();
 double net_client_get_connected_time();
 uint32_t net_client_get_sent_bytes();

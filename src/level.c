@@ -1686,7 +1686,6 @@ void level_init()
 
 void level_update(float dt)
 {
-
     level_grace_time -= dt;
     level_grace_time = MAX(0.0, level_grace_time);
 

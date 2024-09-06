@@ -1057,9 +1057,6 @@ void parse_args(int argc, char* argv[])
 
 bool client_handle_connection()
 {
-    if(role != ROLE_CLIENT)
-        return true;
-
     ConnectionState check_state = net_client_get_state();
 
     if(check_state != CONNECTED)
@@ -1104,12 +1101,10 @@ bool client_handle_connection()
             return false;
     }
 
-    // Client connected
-    net_client_update();
-
     if(!net_client_received_init_packet())
     {
         // haven't received init packet from server yet
+        net_client_update();
         return false;
     }
 
@@ -1309,36 +1304,64 @@ void update(float dt)
 
     ui_update(dt);
 
-    bool conn = client_handle_connection();
-
-    if(!conn)
+    if(role == ROLE_CLIENT)
     {
-        creature_clear_all();
-        item_clear_all();
-        decal_clear_all();
-        // particles_delete_all_spawners(); //doesn't work properly
-        return;
+        bool conn = client_handle_connection();
+
+        if(!conn)
+        {
+            creature_clear_all();
+            item_clear_all();
+            decal_clear_all();
+            // particles_delete_all_spawners(); //doesn't work properly
+            return;
+        }
     }
 
     if(!paused)
     {
-        lighting_point_light_clear_all();
-        level_update(dt);
 
-        player_update_all(dt);
-        projectile_update_all(dt);
-        explosion_update_all(dt);
-        creature_update_all(dt);    // creature needs to come after player and projectile (hurt flag)
-        item_update_all(dt);
-        decal_update_all(dt);
-        particles_update(dt);
+        lighting_point_light_clear_all();
+
+        if(role == ROLE_CLIENT)
+        {
+
+            net_client_increment_frame_no();
+
+#if DUMB_CLIENT
+            net_client_update();
+#endif
+            player_update_all(dt);
+            projectile_update_all(dt);
+            explosion_update_all(dt);
+            creature_update_all(dt);    // creature needs to come after player and projectile (hurt flag)
+            item_update_all(dt);
+            decal_update_all(dt);
+            particles_update(dt);
+
+            net_client_send_inputs();
+
+#if !DUMB_CLIENT
+            net_client_update();
+#endif
+        }
+        else
+        {
+            level_update(dt);
+
+            player_update_all(dt);
+            projectile_update_all(dt);
+            explosion_update_all(dt);
+            creature_update_all(dt);    // creature needs to come after player and projectile (hurt flag)
+            item_update_all(dt);
+            decal_update_all(dt);
+            particles_update(dt);
+        }
 
         entity_build_all();
         entity_update_all(dt);
 
         update_level_transition(dt);
-
-        net_client_send_inputs();
 
         // TODO: make this into a function
         if(player->phys.curr_room == player->transition_room)
