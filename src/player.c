@@ -211,7 +211,6 @@ void player_set_defaults(Player* p)
     p->highlighted_item_id = -1;
     p->highlighted_index = 0;
 
-    p->settings.class = -1; //force the next function
     player_set_class(p, p->settings.class);
 
     p->periodic_shot_counter = 0.0;
@@ -249,7 +248,6 @@ void player_init()
         p->phys.pos.z = 0.0;
         p->weapon.rotation_deg = 0.0;
         player_set_sprite_index(p, 4);
-        p->settings.class = -1; //force the next function
         player_set_class(p, PLAYER_CLASS_SPACEMAN);
 
         player_set_defaults(p);
@@ -2693,7 +2691,6 @@ void draw_equipped_gun()
 
 void player_set_class(Player* p, PlayerClass class)
 {
-    if(class == p->settings.class) return;
     p->settings.class = class;
 
 #if 1

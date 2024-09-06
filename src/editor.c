@@ -331,7 +331,8 @@ void editor_draw()
 
                     int selected_class = p->settings.class;
                     imgui_dropdown(class_strs, 3, "Select Class", &selected_class, NULL);
-                    player_set_class(p, (PlayerClass)selected_class);
+                    if(selected_class != p->settings.class)
+                        player_set_class(p, (PlayerClass)selected_class);
 
                     int hp = p->phys.hp;
                     imgui_number_box("HP", 0, p->phys.hp_max, &hp);
