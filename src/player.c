@@ -146,6 +146,7 @@ void player_set_defaults(Player* p)
 
     p->phys.scale = 1.0;
     p->phys.falling = false;
+    p->fall_counter = 0;
 
     static bool _prnt = false;
     if(!_prnt)
@@ -198,8 +199,10 @@ void player_set_defaults(Player* p)
     p->room_hits = 0;
 
     p->coins = 2;
+    p->skulls = 0;
 #if TESTING
     p->coins = 20;
+    p->skulls = 100;
 #endif
     p->revives = 0;
 
@@ -376,6 +379,21 @@ void player_drop_coins(Player* p)
         }
     }
     p->coins = 0;
+}
+
+void player_drop_skulls(Player* p)
+{
+    for(int i = 0; i < p->skulls; ++i)
+    {
+        Item* it = item_add(ITEM_SKULL, p->phys.collision_rect.x, p->phys.collision_rect.y, p->phys.curr_room);
+        if(it)
+        {
+            it->phys.vel.z = rand()%200+100.0;
+            it->phys.vel.x = RAND_PN()*RAND_FLOAT(0,100);
+            it->phys.vel.y = RAND_PN()*RAND_FLOAT(0,100);
+        }
+    }
+    p->skulls = 0;
 }
 
 
@@ -724,6 +742,7 @@ void player_die(Player* p)
         }
 
         player_drop_coins(p);
+        player_drop_skulls(p);
         return;
     }
 
@@ -762,6 +781,7 @@ void player_die(Player* p)
     player_drop_item(p, &skull);
 
     player_drop_coins(p);
+    player_drop_skulls(p);
 
     p->phys.falling = false;
     p->phys.scale = 1.0;
@@ -1530,6 +1550,13 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
             player_drop_item(p, &it);
             p->coins--;
         }
+        else if(p->skulls > 0)
+        {
+            Item it = {0};
+            it.type = ITEM_SKULL;
+            player_drop_item(p, &it);
+            p->skulls--;
+        }
     }
 
     Item* highlighted_item = NULL;
@@ -1746,8 +1773,13 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
 
             if(rectangles_colliding(&tile_pit_rect, &player_pit_rect))
             {
-                p->phys.falling = true;
-                player_hurt(p, p->phys.pit_damage);
+                p->fall_counter++;
+                if(p->fall_counter >= 0)
+                {
+                    p->fall_counter = 0;
+                    p->phys.falling = true;
+                    player_hurt(p, p->phys.pit_damage);
+                }
             }
         }
     }
@@ -1757,8 +1789,15 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
         p->phys.scale -= 0.04;
         if(p->phys.scale < 0)
         {
-            p->phys.scale = 1.0;
+            int has_artifact1 = ((p->artifacts >> ARTIFACT_SLOT_DRAGON_EGG) & 0x1);
+            int has_artifact2 = ((p->artifacts >> ARTIFACT_SLOT_GEM_YELLOW) & 0x1);
+
+            if(has_artifact1) p->phys.scale = PLAYER_INCREASE_SCALE;
+            else if(has_artifact2) p->phys.scale = PLAYER_DECREASE_SCALE;
+            else p->phys.scale = 1.0;
+
             p->phys.falling = false;
+            p->fall_counter = 0;
 
             TileType tt = level_get_tile_type(room, p->last_safe_tile.x, p->last_safe_tile.y);
             if(IS_SAFE_TILE(tt))
@@ -1845,7 +1884,7 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
         if(activate)
         {
             Room* target_room = &level.rooms[p->nav_sel.x][p->nav_sel.y];
-            if(target_room->valid && !visible_room->doors_locked)
+            if(target_room->valid && (!visible_room->doors_locked || role == ROLE_LOCAL))
             {
                 Dir door = DIR_NONE;
                 for(int d = 0; d < MAX_DOORS; ++d)
@@ -2358,7 +2397,7 @@ void draw_hearts()
 
 }
 
-float revives_y = 0.0;
+float skulls_y = 0.0;
 void draw_coins()
 {
     float x = 16.0;
@@ -2367,23 +2406,56 @@ void draw_coins()
     int sprite = item_props[ITEM_COIN_GOLD].sprite_index;
     int image = item_props[ITEM_COIN_GOLD].image;
     float h = gfx_images[image].visible_rects[sprite].h;
-    revives_y = y + h;
+    skulls_y = y + h * scale;
 
     gfx_draw_image_ignore_light(image, sprite, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
     gfx_draw_string(x+12, y-9, 0xD4AF37, 0.25*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "%u", player->coins);
 }
 
+float revives_y = 0.0;
+void draw_skulls()
+{
+    float x = 16.0;
+    float y = skulls_y + 5.0;
+    float scale = 1.4*ascale;
+    int sprite = item_props[ITEM_SKULL].sprite_index;
+    int image = item_props[ITEM_SKULL].image;
+    float h = gfx_images[image].visible_rects[sprite].h;
+    revives_y = y + h * scale;
+
+    gfx_draw_image_ignore_light(image, sprite, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
+    gfx_draw_string(x+12, y-9, COLOR_TINT_NONE, 0.25*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "%u", player->skulls);
+}
+
+float stats_y = 0.0;
 void draw_revives()
 {
     float x = 16.0;
-    float y = revives_y + 15.0;
+    float y = revives_y + 5.0;
     float scale = 1.4*ascale;
     int sprite = item_props[ITEM_REVIVE].sprite_index;
     int image = item_props[ITEM_REVIVE].image;
     float h = gfx_images[image].visible_rects[sprite].h;
+    stats_y = y + h * scale;
 
     gfx_draw_image_ignore_light(image, sprite, x, y, COLOR_TINT_NONE, scale, 0.0, 1.0, false, NOT_IN_WORLD);
     gfx_draw_string(x+12, y-9, COLOR_TINT_NONE, 0.25*ascale, NO_ROTATION, 1.0, NOT_IN_WORLD, DROP_SHADOW, 0, "%u", player->revives);
+}
+
+void draw_statistics()
+{
+    // if(!debug_enabled) return;
+    float scale = 0.16*ascale;
+    float x = 10.0;
+    float y = stats_y + 5.0;//90.0;
+    uint32_t color = COLOR_WHITE;
+    Vector2f size = gfx_string_get_size(scale, "|");
+
+    gfx_draw_string(x, y, color, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "Kills: %u", player->total_kills); y += size.y + 3.0;
+    gfx_draw_string(x, y, color, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "Hits:  %u/%u", player->total_hits, player->total_shots); y += size.y + 3.0;
+
+    // other stuff
+    // gfx_draw_string(10, 90, COLOR_WHITE, 0.17, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%u, %u %u, %u, %u", player->total_kills, player->total_shots, player->total_hits, player->level_hits, player->room_hits);
 }
 
 #if 0
@@ -2534,22 +2606,6 @@ void draw_stats()
 
     // gfx_draw_string(x, y, COLOR_WHITE, 0.17, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%u, %u %u, %u, %u", player->total_kills, player->total_shots, player->total_hits, player->level_hits, player->room_hits);
 
-}
-
-void draw_statistics()
-{
-    // if(!debug_enabled) return;
-    float scale = 0.16*ascale;
-    float x = 10.0;
-    float y = 90.0;
-    uint32_t color = COLOR_WHITE;
-    Vector2f size = gfx_string_get_size(scale, "|");
-
-    gfx_draw_string(x, y, color, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "Kills: %u", player->total_kills); y += size.y + 3.0;
-    gfx_draw_string(x, y, color, scale, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "Hits:  %u/%u", player->total_hits, player->total_shots); y += size.y + 3.0;
-
-    // other stuff
-    // gfx_draw_string(10, 90, COLOR_WHITE, 0.17, NO_ROTATION, 0.9, NOT_IN_WORLD, DROP_SHADOW, 0, "%u, %u %u, %u, %u", player->total_kills, player->total_shots, player->total_hits, player->level_hits, player->room_hits);
 }
 
 void draw_artifacts()
@@ -2960,7 +3016,7 @@ void player_handle_collision(Player* p, Entity* e)
 
             if(collided)
             {
-                if(p->phys.pos.z <= 3 && !p->phys.floating)
+                if(p->phys.pos.z <= 4 && !p->phys.floating)
                 {
                     phys_collision_correct(&p->phys, &cphys,&ci);
                 }
@@ -3052,7 +3108,10 @@ void player_handle_collision(Player* p, Entity* e)
                 }
                 else
                 {
-                    phys_collision_correct(&p->phys, &p2->phys,&ci);
+                    if(p->phys.pos.z <= 4 && !p->phys.floating)
+                    {
+                        phys_collision_correct(&p->phys, &p2->phys,&ci);
+                    }
                     //phys_collision_correct_no_bounce(&p->phys, &p2->phys, &ci);
                 }
 

@@ -1319,6 +1319,8 @@ $kill player <target>
 
 $get id
 
+$level seed rank
+
 */
 
 bool server_process_command(char* argv[20], int argc, int client_id)
@@ -2568,6 +2570,7 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             BPW(&server.bp, 8,  (uint32_t)p->phys.hp);
             BPW(&server.bp, 8,  (uint32_t)p->phys.hp_max);
             BPW(&server.bp, 8,  (uint32_t)p->coins);
+            BPW(&server.bp, 4,  (uint32_t)p->skulls);
             BPW(&server.bp, 4,  (uint32_t)p->revives);
             BPW(&server.bp, 16, (uint32_t)(p->highlighted_item_id+1));
             BPW(&server.bp, 5,  (uint32_t)(p->room_gun_index));
@@ -2576,7 +2579,6 @@ static void pack_players(Packet* pkt, ClientInfo* cli)
             BPW(&server.bp, 5,  (uint32_t)(p->nav_sel.x));
             BPW(&server.bp, 5,  (uint32_t)(p->nav_sel.y));
             BPW(&server.bp, 1,  (uint32_t)(p->show_map));
-
 
             // BPW(&server.bp, 12, (uint32_t)(p->xp));
             // BPW(&server.bp, 5, (uint32_t)(p->level));
@@ -2633,6 +2635,7 @@ static void unpack_players(Packet* pkt, int* offset)
         uint32_t hp                  = bitpack_read(&client.bp, 8);
         uint32_t hp_max              = bitpack_read(&client.bp, 8);
         uint32_t coins               = bitpack_read(&client.bp, 8);
+        uint32_t skulls              = bitpack_read(&client.bp, 4);
         uint32_t revives             = bitpack_read(&client.bp, 4);
         uint32_t highlighted_item_id = bitpack_read(&client.bp, 16);
         uint32_t room_gun_index      = bitpack_read(&client.bp, 5);
@@ -2686,6 +2689,7 @@ static void unpack_players(Packet* pkt, int* offset)
         p->phys.hp  = (uint8_t)hp;
         p->phys.hp_max  = (uint8_t)hp_max;
         p->coins  = (uint16_t)coins;
+        p->skulls  = (uint8_t)skulls;
         p->revives  = (uint8_t)revives;
 
         p->nav_sel.x = nav_sel_x;
@@ -3276,6 +3280,11 @@ static void unpack_items(Packet* pkt, int* offset)
             it->phys.pos.z = pos.z;
             it->phys.rotation_deg = angle;
         }
+
+        it->phys.vr = gfx_images[ item_props[it->type].image ].visible_rects[ item_props[it->type].sprite_index ];
+        item_calc_phys_props(it);
+        phys_calc_collision_rect(&it->phys);
+        // phys_set_collision_pos(&it->phys, x, y);
 
         it->server_state_target.pos.x = pos.x;
         it->server_state_target.pos.y = pos.y;

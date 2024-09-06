@@ -1848,6 +1848,11 @@ static void creature_update_geizer(Creature* c, float dt)
 
             float angle = c->ai_value + RAND_FLOAT(-10.0,10.0);
             creature_fire_projectile(c, angle);
+
+            if(i == 0 && rand()%2==0)
+            {
+                creature_fire_projectile(c, angle+RAND_FLOAT(150.0,210.0));
+            }
         }
     }
 }

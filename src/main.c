@@ -2395,9 +2395,10 @@ void draw()
     draw_hearts();
     draw_coins();
     draw_revives();
+    draw_skulls();
+    draw_statistics();
     draw_equipped_gun();
     draw_stats();
-    draw_statistics();
     draw_artifacts();
 
     if(level_room_time > 0)

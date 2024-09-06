@@ -95,6 +95,7 @@ typedef struct
 
     uint16_t coins;
     uint8_t revives;
+    uint8_t skulls;
 
     uint16_t xp;
     uint8_t level;
@@ -142,6 +143,8 @@ typedef struct
     bool invulnerable_temp;
     float invulnerable_temp_time;
     float invulnerable_temp_max;
+
+    uint8_t fall_counter;
 
     int32_t highlighted_item_id;
     int highlighted_index;
@@ -202,6 +205,7 @@ extern int shadow_image;
 void player_init();
 void player_drop_item(Player* p, Item* it);
 void player_drop_coins(Player* p);
+void player_drop_skulls(Player* p);
 void player_init_keys();
 void player2_init_keys();
 void player_send_to_room(Player* p, uint8_t room_index, bool instant, Vector2i tile);
@@ -243,8 +247,9 @@ void player_set_gun(Player* p, uint8_t room_gun_index, bool drop_old_gun);
 void draw_all_other_player_info();
 void draw_hearts();
 void draw_coins();
-void draw_statistics();
 void draw_revives();
+void draw_skulls();
+void draw_statistics();
 void draw_equipped_gun();
 void draw_artifacts();
 

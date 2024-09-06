@@ -3,6 +3,9 @@
 #define MAX_ITEMS 500
 #define ITEM_PICKUP_RADIUS 28.0
 
+#define PLAYER_INCREASE_SCALE 1.2
+#define PLAYER_DECREASE_SCALE 0.8
+
 // order matters!
 typedef enum
 {

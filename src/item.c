@@ -414,13 +414,13 @@ static bool internal_item_use(Item* it, void* _player)
         case ITEM_DRAGON_EGG:
         {
             BIT_SET(p->artifacts,ARTIFACT_SLOT_DRAGON_EGG);
-            p->phys.scale = 1.2;
+            p->phys.scale = PLAYER_INCREASE_SCALE;
         } break;
 
         case ITEM_GEM_YELLOW:
         {
             BIT_SET(p->artifacts,ARTIFACT_SLOT_GEM_YELLOW);
-            p->phys.scale = 0.8;
+            p->phys.scale = PLAYER_DECREASE_SCALE;
         } break;
 
         case ITEM_RUBY_RING:
@@ -461,6 +461,11 @@ static bool internal_item_use(Item* it, void* _player)
         case ITEM_COIN_GOLD:
         {
             player_add_coins(p, 1);
+        } break;
+
+        case ITEM_SKULL:
+        {
+            p->skulls++;
         } break;
 
         case ITEM_GAUNTLET_SLOT:
@@ -630,8 +635,14 @@ void item_init()
             case ITEM_COIN_SILVER:
             case ITEM_COIN_GOLD:
             {
-                p->chestable = true;
+                p->chestable = false;   //@NOTE: it is chestable, but a bonus thing
                 p->touchable = true;
+            } break;
+
+            case ITEM_SKULL:
+            {
+                p->chestable = false;
+                p->touchable = false;
             } break;
         }
     }
