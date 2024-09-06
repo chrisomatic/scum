@@ -145,7 +145,7 @@ void entity_build_all()
                 e->ptr = &creature_segments[i];
                 e->phys->curr_room = c->phys.curr_room;
                 e->phys->collision_rect = creature_segments[i].collision_rect;
-                e->phys->height = c->phys.height;
+                e->phys->height = c->phys.height*c->phys.scale;
                 e->pos.x = creature_segments[i].pos.x;
                 e->pos.y = creature_segments[i].pos.y;
             }
@@ -511,7 +511,7 @@ void entity_draw_all()
 
             // draw boundingbox
             gfx_draw_rect_xywh(cx, cy, e->phys->collision_rect.w, e->phys->collision_rect.h, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true); // bottom rect
-            gfx_draw_rect_xywh(cx, cy - e->phys->height, e->phys->collision_rect.w, e->phys->collision_rect.h, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true); // top rect
+            gfx_draw_rect_xywh(cx, cy - e->phys->height*e->phys->scale, e->phys->collision_rect.w, e->phys->collision_rect.h, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 1.0, false, true); // top rect
 
             float x0 = vx;
             float y0 = vy;

@@ -300,6 +300,13 @@ void editor_draw()
                     imgui_dropdown(pnames, MAX_PLAYERS, "Select Player", &player_selection, NULL);
                     Player* p = &players[player_selection];
 
+                    int scale = p->phys.scale*100;
+                    imgui_number_box("Scale", 1, 200, &scale);
+                    if(scale != (int)(p->phys.scale*100))
+                    {
+                        player_set_scale(p,(float)scale/100.0);
+                    }
+
                     if(p != player)
                     {
                         // imgui_toggle_button(&p->active, "Active");

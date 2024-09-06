@@ -401,12 +401,14 @@ static bool internal_item_use(Item* it, void* _player)
 
         case ITEM_FEATHER:
         {
+            if(BIT_CHECK(p->artifacts,ARTIFACT_SLOT_FEATHER)) return false;
             BIT_SET(p->artifacts,ARTIFACT_SLOT_FEATHER);
             p->gravity = 0.5;
         } break;
 
         case ITEM_WING:
         {
+            if(BIT_CHECK(p->artifacts,ARTIFACT_SLOT_WING)) return false;
             BIT_SET(p->artifacts,ARTIFACT_SLOT_WING);
             p->phys.floating = true;
         } break;
@@ -414,17 +416,18 @@ static bool internal_item_use(Item* it, void* _player)
         case ITEM_DRAGON_EGG:
         {
             BIT_SET(p->artifacts,ARTIFACT_SLOT_DRAGON_EGG);
-            p->phys.scale = PLAYER_INCREASE_SCALE;
+            player_set_scale(p, p->phys.scale*PLAYER_INCREASE_SCALE);
         } break;
 
         case ITEM_GEM_YELLOW:
         {
             BIT_SET(p->artifacts,ARTIFACT_SLOT_GEM_YELLOW);
-            p->phys.scale = PLAYER_DECREASE_SCALE;
+            player_set_scale(p, p->phys.scale*PLAYER_DECREASE_SCALE);
         } break;
 
         case ITEM_RUBY_RING:
         {
+            if(BIT_CHECK(p->artifacts,ARTIFACT_SLOT_RUBY_RING)) return false;
             BIT_SET(p->artifacts,ARTIFACT_SLOT_RUBY_RING);
             p->phys.pit_damage = 0;
         } break;
@@ -470,6 +473,7 @@ static bool internal_item_use(Item* it, void* _player)
 
         case ITEM_GAUNTLET_SLOT:
         {
+            if(BIT_CHECK(p->artifacts,ARTIFACT_SLOT_GAUNTLET_SLOT)) return false;
             BIT_SET(p->artifacts,ARTIFACT_SLOT_GAUNTLET_SLOT);
             p->phys.chance_to_block = 0.25;
         } break;

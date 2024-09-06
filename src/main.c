@@ -2306,58 +2306,6 @@ void draw()
             //     level_draw_room(r, NULL, room_area.w*o.x, room_area.h*o.y, 1.0, false);
             // }
 
-#if 0
-            if(debug_enabled)
-            {
-                if(moving_tile.x == 0.0)
-                {
-                    moving_tile.x = CENTER_X;
-                    moving_tile.y = CENTER_Y;
-                    moving_tile.w = 20.0;
-                    moving_tile.h = 20.0;
-                }
-                moving_tile_prior = moving_tile;
-
-                static int dx = 1;
-                static int dy = 0;
-                moving_tile.x += dx*TILE_SIZE*4*(1.0/60.0);
-                moving_tile.y += dy*TILE_SIZE*4*(1.0/60.0);
-
-                float rx = floor_area.x + floor_area.w/2.0 - moving_tile.w/2.0;
-                float lx = floor_area.x - floor_area.w/2.0 + moving_tile.w/2.0;
-                float ty = floor_area.y - floor_area.h/2.0 + moving_tile.h/2.0;
-                float by = floor_area.y + floor_area.h/2.0 - moving_tile.h/2.0;
-                if(moving_tile.x > rx)
-                {
-                    // printf("rx\n");
-                    moving_tile.x = rx;
-                    dx = 0;
-                    dy = -1;
-                }
-                if(moving_tile.x < lx)
-                {
-                    // printf("lx\n");
-                    moving_tile.x = lx;
-                    dx = 0;
-                    dy = 1;
-                }
-                if(moving_tile.y < ty)
-                {
-                    // printf("ty\n");
-                    moving_tile.y = ty;
-                    dx = -1;
-                    dy = 0;
-                }
-                if(moving_tile.y > by)
-                {
-                    // printf("by\n");
-                    moving_tile.y = by;
-                    dx = 1;
-                    dy = 0;
-                }
-                gfx_draw_rect(&moving_tile, COLOR_GREEN, NOT_SCALED, NO_ROTATION, 0.5, true, IN_WORLD);
-            }
-#endif
             decal_draw_all();
             entity_draw_all();
             explosion_draw_all();

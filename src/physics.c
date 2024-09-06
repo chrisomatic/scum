@@ -180,7 +180,7 @@ void phys_calc_collision_rect(Physics* phys)
 {
     if(!phys) return;
 
-    bool _dbg_ = FEQ(phys->rotation_deg, 1.01);
+    // bool _dbg_ = FEQ(phys->rotation_deg, 1.01);
 
     memcpy(&phys->collision_rect_prior, &phys->collision_rect, sizeof(Rect));
 

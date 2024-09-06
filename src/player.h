@@ -88,6 +88,7 @@ typedef struct
     bool ignore_player_collision;
 
     Physics phys;
+    float temp_scale;
     float anim_factor;
     float gravity;
 
@@ -203,7 +204,8 @@ extern float jump_vel_z;
 extern int shadow_image;
 
 void player_init();
-void player_drop_item(Player* p, Item* it);
+void player_set_scale(Player* p, float scale);
+Item* player_drop_item(Player* p, Item* it);
 void player_drop_coins(Player* p);
 void player_drop_skulls(Player* p);
 void player_init_keys();

@@ -110,18 +110,18 @@ void player_set_defaults(Player* p)
 
     Rect* vr = &gfx_images[p->image].visible_rects[0];
 
+    p->phys.vr = *vr;
     p->phys.speed = 700.0;
     p->phys.speed_factor = 1.0;
     p->phys.max_velocity = 120.0;
     p->phys.base_friction = 8.0;
     p->phys.vel.x = 0.0;
     p->phys.vel.y = 0.0;
-    p->phys.height = vr->h * 0.80;
-    p->phys.width  = vr->w * 0.60;
-    p->phys.length = vr->w * 0.60;
+    // p->phys.height = vr->h * 0.80;
+    // p->phys.width  = vr->w * 0.60;
+    // p->phys.length = vr->w * 0.60;
     p->phys.mass = 1.0;
     p->phys.elasticity = 0.1;
-    p->phys.vr = *vr;
     p->phys.stun_timer = 0.0;
     p->phys.ethereal = false;
     p->phys.pit_damage = 1;
@@ -131,8 +131,7 @@ void player_set_defaults(Player* p)
 
     memset(p->stats,0,sizeof(uint8_t)*MAX_STAT_TYPE);
 
-    phys_calc_collision_rect(&p->phys);
-    p->phys.radius = calc_radius_from_rect(&p->phys.collision_rect)*0.8;
+    player_set_scale(p,1.0);
 
     p->phys.hp_max = 6;
     p->phys.hp = p->phys.hp_max;
@@ -144,7 +143,6 @@ void player_set_defaults(Player* p)
     p->gravity = GRAVITY_EARTH;
     p->artifacts = 0x00;
 
-    p->phys.scale = 1.0;
     p->phys.falling = false;
     p->fall_counter = 0;
 
@@ -213,6 +211,7 @@ void player_set_defaults(Player* p)
     p->highlighted_item_id = -1;
     p->highlighted_index = 0;
 
+    p->settings.class = -1; //force the next function
     player_set_class(p, p->settings.class);
 
     p->periodic_shot_counter = 0.0;
@@ -250,6 +249,7 @@ void player_init()
         p->phys.pos.z = 0.0;
         p->weapon.rotation_deg = 0.0;
         player_set_sprite_index(p, 4);
+        p->settings.class = -1; //force the next function
         player_set_class(p, PLAYER_CLASS_SPACEMAN);
 
         player_set_defaults(p);
@@ -262,6 +262,19 @@ void player_init()
 
         p->active = false;
     }
+}
+
+void player_set_scale(Player* p, float scale)
+{
+    // printf("set scale: %.2f\n", scale);
+    p->phys.scale = RANGE(scale,0.3,1.6);
+    // these 3 values don't get scaled, just like vr
+    p->phys.width  = p->phys.vr.w * 0.60;
+    p->phys.height = p->phys.vr.h * 0.80;
+    p->phys.length = p->phys.vr.w * 0.60;
+    phys_calc_collision_rect(&p->phys);
+    p->phys.radius = calc_radius_from_rect(&p->phys.collision_rect)*0.75;
+    // printf("whlr: %.2f, %.2f, %.2f, %.2f\n", p->phys.width, p->phys.height, p->phys.length, p->phys.radius);
 }
 
 void player_print(Player* p)
@@ -287,10 +300,10 @@ void player_print(Player* p)
     printf("==========================:\n");
 }
 
-void player_drop_item(Player* p, Item* it)
+Item* player_drop_item(Player* p, Item* it)
 {
-    if(it == NULL) return;
-    if(it->type == ITEM_NONE) return;
+    if(it == NULL) return NULL;
+    if(it->type == ITEM_NONE) return NULL;
 
     Dir direction = DIR_NONE;
     if(p->sprite_index == SPRITE_UP)
@@ -358,12 +371,14 @@ void player_drop_item(Player* p, Item* it)
 
     // printf("dropping item at %.2f, %.2f\n", nx, ny);
     Item* a = item_add(it->type, nx, ny, p->phys.curr_room);
+    if(!a) return NULL;
     a->phys.vel.x += o.x*100.0 + p->phys.vel.x;
     a->phys.vel.y += o.y*100.0 + p->phys.vel.y;
     a->phys.pos.z += p->phys.pos.z;
 
     item_set_description(a, "%s", it->desc);
     it->type = ITEM_NONE;
+    return a;
 }
 
 void player_drop_coins(Player* p)
@@ -778,13 +793,17 @@ void player_die(Player* p)
 
     Item skull = {.type = ITEM_SKULL, .phys.pos.x = p->phys.pos.x, .phys.pos.y = p->phys.pos.y};
     item_set_description(&skull, "%s", p->settings.name);
-    player_drop_item(p, &skull);
+    Item* it = player_drop_item(p, &skull);
+    if(it)
+    {
+        it->phys.scale = p->phys.scale;
+        item_calc_phys_props(it);
+    }
 
     player_drop_coins(p);
     player_drop_skulls(p);
 
     p->phys.falling = false;
-    p->phys.scale = 1.0;
 
     for(int i = 0; i < MAX_PLAYERS; ++i)
     {
@@ -1100,18 +1119,18 @@ static void handle_room_collision(Player* p)
         {
             case DIR_UP:
                 door_point.x = x0 + TILE_SIZE*((ROOM_TILE_SIZE_X+2)/2.0);
-                door_point.y = y0 + TILE_SIZE*(1);
+                door_point.y = y0 + TILE_SIZE*(1)+1;
                 break;
             case DIR_RIGHT:
-                door_point.x = x0 + TILE_SIZE*(ROOM_TILE_SIZE_X+1);
+                door_point.x = x0 + TILE_SIZE*(ROOM_TILE_SIZE_X+1)-1;
                 door_point.y = y0 + TILE_SIZE*((ROOM_TILE_SIZE_Y+2)/2.0);
                 break;
             case DIR_DOWN:
                 door_point.x = x0 + TILE_SIZE*((ROOM_TILE_SIZE_X+2)/2.0);
-                door_point.y = y0 + TILE_SIZE*(ROOM_TILE_SIZE_Y+1);
+                door_point.y = y0 + TILE_SIZE*(ROOM_TILE_SIZE_Y+1)-1;
                 break;
             case DIR_LEFT:
-                door_point.x = x0 + TILE_SIZE*(1);
+                door_point.x = x0 + TILE_SIZE*(1)+1;
                 door_point.y = y0 + TILE_SIZE*((ROOM_TILE_SIZE_Y+2)/2.0);
                 break;
         }
@@ -1214,7 +1233,7 @@ static void player_handle_orbitals(Player* p, float dt)
         int max = p->gun.orbital_max_count;
         if(orb) max -= orb->count;
 
-        Vector3f pos = {p->phys.pos.x, p->phys.pos.y, p->phys.height + p->phys.pos.z};
+        Vector3f pos = {p->phys.pos.x, p->phys.pos.y, p->phys.height*p->phys.scale + p->phys.pos.z};
         Vector3f vel = {p->phys.vel.x, p->phys.vel.y, 0.0};
 
         vel.z = MIN(1.0, p->gun.gravity_factor)*120.0;
@@ -1360,7 +1379,7 @@ static void player_handle_shooting(Player* p, float dt)
                 proj_gun->charging = p->gun.charging;
                 proj_gun->charge_time = p->gun.charge_time;
 
-                Vector3f pos = {p->phys.pos.x, p->phys.pos.y, p->phys.height + p->phys.pos.z};
+                Vector3f pos = {p->phys.pos.x, p->phys.pos.y, p->phys.height*p->phys.scale + p->phys.pos.z};
                 Vector3f vel = {p->phys.vel.x, p->phys.vel.y, 0.0};
 
                 vel.z = MIN(1.0, p->gun.gravity_factor)*120.0;
@@ -1498,19 +1517,19 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
     float prior_x = p->phys.pos.x;
     float prior_y = p->phys.pos.y;
 
-    // artifacts... @HACK
-    if(!p->phys.falling)
-    {
-        if(player_has_artifact(p, ARTIFACT_SLOT_GEM_YELLOW))
-        {
-            p->phys.scale = 0.8;
-        }
+    // // artifacts... @HACK
+    // if(!p->phys.falling)
+    // {
+    //     if(player_has_artifact(p, ARTIFACT_SLOT_GEM_YELLOW))
+    //     {
+    //         p->phys.scale = 0.8;
+    //     }
 
-        if(player_has_artifact(p, ARTIFACT_SLOT_DRAGON_EGG))
-        {
-            p->phys.scale = 1.2;
-        }
-    }
+    //     if(player_has_artifact(p, ARTIFACT_SLOT_DRAGON_EGG))
+    //     {
+    //         p->phys.scale = 1.2;
+    //     }
+    // }
 
     bool activate = !all_players_dead && p->actions_tmp[PLAYER_ACTION_ACTIVATE].toggled_on;
     bool action_use = !all_players_dead && p->actions_tmp[PLAYER_ACTION_USE_ITEM].toggled_on;
@@ -1778,6 +1797,7 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
                 {
                     p->fall_counter = 0;
                     p->phys.falling = true;
+                    p->temp_scale = p->phys.scale;
                     player_hurt(p, p->phys.pit_damage);
                 }
             }
@@ -1789,12 +1809,7 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
         p->phys.scale -= 0.04;
         if(p->phys.scale < 0)
         {
-            int has_artifact1 = ((p->artifacts >> ARTIFACT_SLOT_DRAGON_EGG) & 0x1);
-            int has_artifact2 = ((p->artifacts >> ARTIFACT_SLOT_GEM_YELLOW) & 0x1);
-
-            if(has_artifact1) p->phys.scale = PLAYER_INCREASE_SCALE;
-            else if(has_artifact2) p->phys.scale = PLAYER_DECREASE_SCALE;
-            else p->phys.scale = 1.0;
+            player_set_scale(p,p->temp_scale);
 
             p->phys.falling = false;
             p->fall_counter = 0;
@@ -2156,7 +2171,7 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
     if(p == player)
     {
         ptext->x = p->phys.pos.x - p->phys.radius/2.0 - 2.0;
-        ptext->y = (p->phys.pos.y - p->phys.pos.z/2.0) - p->phys.vr.h - ptext->text_height - 4.0;
+        ptext->y = (p->phys.pos.y - p->phys.pos.z/2.0) - p->phys.vr.h*p->phys.scale - ptext->text_height - 4.0;
         text_list_update(ptext, dt);
     }
 
@@ -2681,6 +2696,7 @@ void draw_equipped_gun()
 
 void player_set_class(Player* p, PlayerClass class)
 {
+    if(class == p->settings.class) return;
     p->settings.class = class;
 
 #if 1
@@ -2767,8 +2783,7 @@ void player_set_class(Player* p, PlayerClass class)
     Rect* vr = &gfx_images[p->image].visible_rects[0];
     // print_rect(vr);
     p->phys.vr = *vr;
-    phys_calc_collision_rect(&p->phys);
-    p->phys.radius = calc_radius_from_rect(&p->phys.collision_rect)*0.75;
+    player_set_scale(p, 1.0);
 }
 
 void player_draw(Player* p)
@@ -2807,7 +2822,7 @@ void player_draw(Player* p)
         const float bar_height = 2;
 
         const float x = p->phys.pos.x - bar_width/2.0;
-        const float y = p->phys.pos.y - p->phys.height - bar_height - 10;
+        const float y = p->phys.pos.y - p->phys.height*p->phys.scale - bar_height - 10;
 
         gfx_draw_rect_xywh_tl(x, y, bar_width, bar_height, COLOR_BLACK, NOT_SCALED, NO_ROTATION, 0.4, true, true);
         gfx_draw_rect_xywh_tl(x, y, bar_width*(p->gun.charge_time / p->gun.charge_time_max), bar_height, COLOR_YELLOW, NOT_SCALED, NO_ROTATION, 0.4, true, true);
@@ -3053,7 +3068,7 @@ void player_handle_collision(Player* p, Entity* e)
                 Box check = {
                     cphys.collision_rect.x,
                     cphys.collision_rect.y,
-                    cphys.pos.z + p->phys.height/2.0,
+                    cphys.pos.z + p->phys.height/2.0*p->phys.scale,
                     cphys.collision_rect.w,
                     cphys.collision_rect.h,
                     cphys.height*2,
