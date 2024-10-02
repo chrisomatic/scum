@@ -1790,7 +1790,7 @@ void player_update(Player* p, float dt, bool custom_keys, uint32_t keys)
                     p->fall_counter = 0;
                     p->phys.falling = true;
                     p->temp_scale = p->phys.scale;
-                    player_hurt(p, p->phys.pit_damage);
+                    // player_hurt(p, p->phys.pit_damage);
                 }
             }
         }
