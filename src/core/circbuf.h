@@ -63,7 +63,7 @@ void circbuf_print(CircBuf* cb)
     for(int i = 0; i < cb->count; ++i)
     {
         printf(" Item %d: [", i);
-        unsigned char* p = cb->buf + (i*cb->item_size);
+        unsigned char* p = (unsigned char*)cb->buf + (i*cb->item_size);
 
         for(int j = 0; j < cb->item_size; ++j)
         {

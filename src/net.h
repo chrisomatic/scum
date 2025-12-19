@@ -26,7 +26,7 @@
 #define CONN_RC_REJECTED      (-3)
 #define CONN_RC_NO_DATA       (-4)
 
-#define DUMB_CLIENT 0
+#define DUMB_CLIENT 1
 
 typedef enum
 {

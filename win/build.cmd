@@ -20,6 +20,7 @@ xcopy %srcdir%\effects %bindir%\src\effects
 xcopy %srcdir%\themes %bindir%\src\themes
 xcopy %srcdir%\rooms %bindir%\src\rooms
 xcopy %srcdir%\audio %bindir%\src\audio
+xcopy %srcdir%\guns %bindir%\src\guns
 xcopy ..\dlls\*.dll %bindir%
 
 xcopy %srcdir%\core\shaders %bindir%\src\core\shaders
