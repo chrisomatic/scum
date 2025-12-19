@@ -66,7 +66,7 @@ bool imgui_text_get_ctrl_enter();
 void imgui_indent_begin(int indentpx);
 void imgui_indent_end();
 void imgui_newline();
-void imgui_horizontal_line();
+void imgui_horizontal_line(int thickness);
 void imgui_horizontal_begin();
 void imgui_horizontal_end();
 void imgui_deselect_text_box();

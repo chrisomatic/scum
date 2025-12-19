@@ -1038,7 +1038,7 @@ static const char* get_orientation_str(int _orientation)
 }
 
 // returns true is number of doors is 0 or 1
-static bool check_no_door_placement(int x, int y)
+static bool check_no_door_placement()
 {
     bool error = false;
     int count = 0;

@@ -214,6 +214,6 @@ Rect calc_camera_rect(float x, float y, float z, int _view_width, int _view_heig
 
 bool is_in_camera_view(Rect* r)
 {
-    Rect r1 = get_camera_rect(&r1);
+    Rect r1 = get_camera_rect();
     return rectangles_colliding(&r1, r);
 }

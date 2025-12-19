@@ -180,7 +180,7 @@ static inline void clear_active();
 
 static void assign_context(uint32_t hash);
 static void handle_highlighting(uint32_t hash, Rect* r);
-static void handle_tooltip();
+static void handle_tooltip(uint32_t hash);
 static bool dropdown_on_top(uint32_t hash, Rect* r);
 static void imgui_slider_float_internal(char* label, float min, float max, float* result, char* format);
 static IntLookup* get_int_lookup(uint32_t hash);
